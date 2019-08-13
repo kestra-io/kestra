@@ -1,0 +1,4 @@
+rootProject.name="floworc"
+
+include 'cli'
+include 'core'

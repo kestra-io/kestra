@@ -1,0 +1,13 @@
+sourceCompatibility = 11
+
+dependencies {
+    // serializers
+    compile group: "org.apache.avro", name: "avro", version: avroVersion
+
+    // yaml
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9.2'
+    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.9'
+
+    // validations
+    compile group: 'org.hibernate.validator', name: 'hibernate-validator', version: '6.0.17.Final'
+}

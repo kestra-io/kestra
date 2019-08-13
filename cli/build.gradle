@@ -1,0 +1,11 @@
+sourceCompatibility = 11
+
+dependencies {
+    // micronaut
+    compile "io.micronaut:micronaut-management"
+    compile "io.micronaut:micronaut-http-client"
+    compile "io.micronaut:micronaut-http-server-netty"
+
+    // modules
+    compile project(":core")
+}

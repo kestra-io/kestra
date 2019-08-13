@@ -1,0 +1,107 @@
+id: full
+namespace: com.leroymerlin.data.supply
+
+#triggers:
+#- type: schedule
+#  expression: 42 4 1 * *
+#  backfill:
+#    start: 2018-01-01
+#
+
+tasks:
+- id: 1st
+  type: org.floworc.core.tasks.scripts.Bash
+  commands:
+  - 'echo "first"'
+
+- id: 2nd
+  type: org.floworc.core.tasks.debugs.Echo
+  format: second {{todo}}
+
+- id: 3rd
+  type: org.floworc.core.tasks.debugs.Echo
+  format: third all optionnal args {{todo}}
+  timeout: 1000
+  retry:
+    limit: 5
+    type: CONSTANT
+    interval: PT15M
+
+- id: 4th
+  type: org.floworc.core.tasks.flows.Parallel
+  concurrent: 3
+  tasks:
+  - id: 4th - 1st
+    type: org.floworc.core.tasks.scripts.Bash
+    commands:
+    - echo "{{id}}"
+  - id: 4th - 2nd
+    type: org.floworc.core.tasks.scripts.Bash
+    commands:
+    - echo "{{id}}"
+  - id: 4th - 3rd
+    type: org.floworc.core.tasks.scripts.Bash
+    commands:
+    - echo "{{id}}"
+  - id: 4th - 4th
+    type: org.floworc.core.tasks.scripts.Bash
+    commands:
+    - echo "{{id}}"
+  - id: 4th - 5th
+    type: org.floworc.core.tasks.scripts.Bash
+    commands:
+    - echo "{{id}}"
+
+#- type: python
+#  commands:
+#  - print(bla)
+#- type: each
+#  values: {{selector}}
+#  tasks:
+#  - type: org.floworc.core.tasks.scripts.Bash
+#    commands:
+#    - echo {{item}}
+#
+#- type: switch
+#  expression: {{selector}}
+#  cases:
+#     - value: hello
+#       tasks:
+#         - type: org.floworc.core.tasks.debugs.Echo
+#           text: hello world
+#     - value: bye
+#       tasks:
+#         - type: org.floworc.core.tasks.debugs.Echo
+#           text: goodbye world
+#  default:
+#    - tasks:
+#        -type: org.floworc.core.tasks.debugs.Echo
+#         text: something else
+#
+#- type: branch
+#  branches:
+#    first:
+#    - type: org.floworc.core.tasks.scripts.Bash
+#      commands:
+#      - echo "first branch - step 1"
+#    - type: org.floworc.core.tasks.scripts.Bash
+#      commands:
+#      - echo "first branch - step 2"
+#    second:
+#    - type: org.floworc.core.tasks.scripts.Bash
+#      commands:
+#      - echo "second branch - step 1"
+#    - type: org.floworc.core.tasks.scripts.Bash
+#      commands:
+#      - echo "second branch - step 2"
+#
+#- type: org.floworc.core.tasks.scripts.Bash
+#  commands: sleep 5
+#  timeout: 1
+#  errors:
+#    - type: org.floworc.core.tasks.scripts.Bash
+#      commands:
+#      - echo "first branch - step 1"
+#    - type: org.floworc.core.tasks.scripts.Bash
+#      commands:
+#      - echo "first branch - step 2"

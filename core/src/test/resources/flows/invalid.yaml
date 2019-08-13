@@ -1,0 +1,4 @@
+tasks:
+- type: org.floworc.core.tasks.scripts.Bash
+  commands:
+  - echo "bla"

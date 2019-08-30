@@ -1,5 +1,6 @@
 package org.floworc.core.flows;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Value;
 import org.floworc.core.executions.TaskRun;
 
@@ -47,10 +48,12 @@ public class State {
         return duration.substring(0, duration.length() - 4) + "s";
     }
 
+    @JsonIgnore
     public boolean isTerninated() {
         return this.current == Type.SKIPPED || this.current == Type.FAILED || this.current == Type.SUCCESS;
     }
 
+    @JsonIgnore
     public boolean isRunning() {
         return this.current == Type.RUNNING;
     }

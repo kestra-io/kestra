@@ -3,6 +3,7 @@ package org.floworc.core.runners.types;
 import com.devskiller.friendly_id.FriendlyId;
 import lombok.extern.slf4j.Slf4j;
 import org.floworc.core.executions.Execution;
+import org.floworc.core.executions.ExecutionService;
 import org.floworc.core.executions.WorkerTask;
 import org.floworc.core.flows.Flow;
 import org.floworc.core.flows.State;
@@ -28,12 +29,15 @@ public class StandAloneRunner implements RunnerInterface {
     private LocalQueue<WorkerTask> workerTaskResultQueue;
     private LocalRepository localRepository;
     private ThreadPoolExecutor poolExecutor;
+    private ExecutionService executionService;
 
     public StandAloneRunner(File basePath) {
         this.executionQueue = new LocalQueue<>(QueueName.EXECUTIONS);
         this.workerTaskQueue = new LocalQueue<>(QueueName.WORKERS);
         this.workerTaskResultQueue = new LocalQueue<>(QueueName.WORKERS_RESULT);
+
         this.localRepository = new LocalRepository(basePath);
+        this.executionService = new ExecutionService(this.workerTaskResultQueue);
     }
 
     @Override
@@ -42,7 +46,8 @@ public class StandAloneRunner implements RunnerInterface {
         poolExecutor.execute(new Executor(
             this.executionQueue,
             this.workerTaskQueue,
-            this.localRepository
+            this.localRepository,
+            this.executionService
         ));
 
         poolExecutor.execute(new ExecutionState(

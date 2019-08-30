@@ -19,15 +19,18 @@ public class Executor implements Runnable {
     private QueueInterface<Execution> executionQueue;
     private QueueInterface<WorkerTask> workerTaskQueue;
     private RepositoryInterface repository;
+    private ExecutionService executionService;
 
     public Executor(
         QueueInterface<Execution> executionQueue,
         QueueInterface<WorkerTask> workerTaskQueue,
-        RepositoryInterface repositoryInterface
+        RepositoryInterface repositoryInterface,
+        ExecutionService executionService
     ) {
         this.executionQueue = executionQueue;
         this.workerTaskQueue = workerTaskQueue;
         this.repository = repositoryInterface;
+        this.executionService = executionService;
     }
 
     @Override
@@ -35,17 +38,19 @@ public class Executor implements Runnable {
         this.executionQueue.receive(message -> {
             Execution execution = message.getBody();
 
-            if (!execution.getState().isTerninated()) {
-                Flow flow = this.repository
-                    .getFlowById(execution.getFlowId())
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
-
-                ExecutionService.getNexts(execution, flow.getTasks())
-                    .ifPresentOrElse(
-                        nexts -> this.onNexts(flow, execution, nexts),
-                        () -> this.onEnd(flow, execution)
-                    );
+            if (execution.getState().isTerninated()) {
+                return;
             }
+
+            Flow flow = this.repository
+                .getFlowById(execution.getFlowId())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
+
+            this.executionService.getNexts(execution, flow.getTasks())
+                .ifPresentOrElse(
+                    nexts -> this.onNexts(flow, execution, nexts),
+                    () -> this.onEnd(flow, execution)
+                );
         });
     }
 
@@ -59,8 +64,9 @@ public class Executor implements Runnable {
             return;
         } else {
             flow.logger().trace(
-                "[execution: {}] Found nexts {}",
+                "[execution: {}] Found {} next(s) {}",
                 execution.getId(),
+                nexts.size(),
                 nexts
             );
         }
@@ -75,6 +81,7 @@ public class Executor implements Runnable {
             executionTasksRun.addAll(nexts);
         }
 
+        // update Execution
         newExecution = execution.withTaskRunList(executionTasksRun);
 
         if (execution.getState().getCurrent() == State.Type.CREATED) {
@@ -93,6 +100,7 @@ public class Executor implements Runnable {
                 .build()
         );
 
+        // submit TaskRun
         final Execution finalNewExecution = newExecution;
         nexts.forEach(taskRun -> this.workerTaskQueue.emit(QueueMessage.<WorkerTask>builder()
             .key(finalNewExecution.getId())

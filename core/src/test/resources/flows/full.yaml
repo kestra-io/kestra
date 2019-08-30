@@ -1,5 +1,5 @@
 id: full
-namespace: com.leroymerlin.data.supply
+namespace: org.floworc.tests
 
 #triggers:
 #- type: schedule
@@ -34,23 +34,38 @@ tasks:
   - id: 4th - 1st
     type: org.floworc.core.tasks.scripts.Bash
     commands:
-    - echo "{{id}}"
+    - echo "4th - 1st {{id}}"
   - id: 4th - 2nd
     type: org.floworc.core.tasks.scripts.Bash
     commands:
-    - echo "{{id}}"
+    - echo "4th - 2nd {{id}}"
   - id: 4th - 3rd
     type: org.floworc.core.tasks.scripts.Bash
     commands:
-    - echo "{{id}}"
+    - echo "4th- 3rd {{id}}"
   - id: 4th - 4th
-    type: org.floworc.core.tasks.scripts.Bash
-    commands:
-    - echo "{{id}}"
-  - id: 4th - 5th
-    type: org.floworc.core.tasks.scripts.Bash
-    commands:
-    - echo "{{id}}"
+    type: org.floworc.core.tasks.flows.Parallel
+    tasks:
+      - id: 4th - 4th - 1st
+        type: org.floworc.core.tasks.flows.Parallel
+        tasks:
+        - id: 4th - 4th - 1st - 1st
+          type: org.floworc.core.tasks.flows.Parallel
+          tasks:
+          - id: 4th - 4th - 1st - 1st - 1st
+            type: org.floworc.core.tasks.flows.Parallel
+            tasks:
+            - id: 4th - 4th - 1st - 1st - 1st - last
+              type: org.floworc.core.tasks.scripts.Bash
+              commands:
+                - echo "4th - 4th - 1st - 1st - 1st - last{{id}}"
+
+
+- id: lastte
+  type: org.floworc.core.tasks.scripts.Bash
+  commands:
+    - 'echo "last"'
+    - 'sleep 1'
 
 #- type: python
 #  commands:

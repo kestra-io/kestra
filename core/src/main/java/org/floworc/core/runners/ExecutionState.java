@@ -11,8 +11,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class ExecutionState implements Runnable {
-    private QueueInterface<Execution> executionQueue;
-    private QueueInterface<WorkerTask> workerTaskResultQueue;
+    private final QueueInterface<Execution> executionQueue;
+    private final QueueInterface<WorkerTask> workerTaskResultQueue;
     private static ConcurrentHashMap<String, Execution> executions = new ConcurrentHashMap<>();
 
     public ExecutionState(
@@ -31,7 +31,9 @@ public class ExecutionState implements Runnable {
             if (execution.getState().isTerninated()) {
                 executions.remove(message.getKey());
             } else {
-                executions.put(message.getKey(), execution);
+                synchronized (executionQueue) {
+                    executions.put(message.getKey(), execution);
+                }
             }
         });
 
@@ -43,8 +45,8 @@ public class ExecutionState implements Runnable {
             }
 
             Execution execution = executions.get(taskRun.getExecutionId());
-
             Execution newExecution = execution.withTaskRun(taskRun);
+
             this.executionQueue.emit(
                 QueueMessage.<Execution>builder()
                     .key(newExecution.getId())

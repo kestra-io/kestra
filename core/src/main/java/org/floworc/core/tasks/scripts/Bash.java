@@ -1,10 +1,10 @@
 package org.floworc.core.tasks.scripts;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.floworc.core.tasks.RunnableTask;
 import org.floworc.core.tasks.Task;
 
 import java.io.BufferedReader;
@@ -14,12 +14,11 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 
-
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @Value
 @Slf4j
-public class Bash extends Task {
+public class Bash extends Task  implements RunnableTask {
     private String[] commands;
 
     @Override

@@ -28,7 +28,7 @@ class StandAloneRunnerTest {
         Flow flow = Utils.parse("flows/full.yaml");
         Execution execution = runner.run(flow);
 
-        assertThat(execution.getTaskRunList(), hasSize(4));
+        assertThat(execution.getTaskRunList(), hasSize(13));
     }
 
 }

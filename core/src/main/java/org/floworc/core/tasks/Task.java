@@ -27,14 +27,8 @@ abstract public class Task {
 
     private List<Task> errors;
 
-    abstract public Void run() throws Exception;
-
     public List<TaskRun> toTaskRun(Execution execution) {
         return Collections.singletonList(TaskRun.of(execution, this));
-    }
-
-    public Optional<List<TaskRun>> getChildTaskRun(Execution execution) {
-        return Optional.of(new ArrayList<>());
     }
 
     public Optional<Task> findById(String id) {

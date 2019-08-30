@@ -18,7 +18,7 @@ class YamlFlowParserTest {
         Flow flow = Utils.parse("flows/full.yaml");
 
         assertThat(flow.getId(), is("full"));
-        assertThat(flow.getTasks().size(), is(4));
+        assertThat(flow.getTasks().size(), is(5));
 
         // third with all optionnals
         Task optionnals = flow.getTasks().get(2);

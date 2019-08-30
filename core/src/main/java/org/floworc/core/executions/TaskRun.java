@@ -57,5 +57,4 @@ public class TaskRun {
             .state(new State())
             .build();
     }
-
 }

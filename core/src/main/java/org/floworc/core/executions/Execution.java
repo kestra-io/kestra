@@ -20,6 +20,7 @@ public class Execution {
     private String flowId;
 
     @Wither
+    @Builder.Default
     private List<TaskRun> taskRunList;
 
     @Wither
@@ -41,10 +42,10 @@ public class Execution {
     public TaskRun findTaskRunById(String id) {
         Optional<TaskRun> find = this.taskRunList
             .stream()
-            .filter(task -> task.getId().equals(id))
+            .filter(taskRun -> taskRun.getId().equals(id))
             .findFirst();
 
-        if (!find.isPresent()) {
+        if (find.isEmpty()) {
             throw new IllegalArgumentException("Can't find taskrun with id '" + id + "' on execution '" + this.id + "'");
         }
 

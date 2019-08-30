@@ -39,10 +39,10 @@ public class Flow {
     public Task findTaskById(String id) {
         Optional<Task> find = this.tasks
             .stream()
-            .filter(task -> task.getId().equals(id))
+            .flatMap(task -> task.findById(id).stream())
             .findFirst();
 
-        if (!find.isPresent()) {
+        if (find.isEmpty()) {
             throw new IllegalArgumentException("Can't find task with id '" + id + "' on flow '" + this.id + "'");
         }
 

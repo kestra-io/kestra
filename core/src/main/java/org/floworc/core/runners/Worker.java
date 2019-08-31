@@ -1,10 +1,9 @@
 package org.floworc.core.runners;
 
-import org.floworc.core.executions.WorkerTask;
-import org.floworc.core.flows.State;
+import org.floworc.core.models.flows.State;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.queues.QueueMessage;
-import org.floworc.core.tasks.RunnableTask;
+import org.floworc.core.models.tasks.RunnableTask;
 
 public class Worker implements Runnable {
     private QueueInterface<WorkerTask> workerTaskQueue;

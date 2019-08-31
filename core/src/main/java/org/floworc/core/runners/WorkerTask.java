@@ -1,9 +1,10 @@
-package org.floworc.core.executions;
+package org.floworc.core.runners;
 
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Wither;
-import org.floworc.core.tasks.Task;
+import org.floworc.core.models.executions.TaskRun;
+import org.floworc.core.models.tasks.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

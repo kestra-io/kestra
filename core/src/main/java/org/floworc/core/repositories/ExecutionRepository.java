@@ -1,6 +1,6 @@
 package org.floworc.core.repositories;
 
-import org.floworc.core.executions.Execution;
+import org.floworc.core.models.executions.Execution;
 
 import java.util.List;
 

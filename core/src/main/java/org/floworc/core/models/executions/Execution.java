@@ -1,9 +1,9 @@
-package org.floworc.core.executions;
+package org.floworc.core.models.executions;
 
 import lombok.*;
 import lombok.experimental.Wither;
-import org.floworc.core.flows.State;
-import org.floworc.core.tasks.Task;
+import org.floworc.core.models.flows.State;
+import org.floworc.core.models.tasks.Task;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;

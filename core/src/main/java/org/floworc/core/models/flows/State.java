@@ -1,8 +1,7 @@
-package org.floworc.core.flows;
+package org.floworc.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Value;
-import org.floworc.core.executions.TaskRun;
 
 import java.time.Duration;
 import java.time.Instant;

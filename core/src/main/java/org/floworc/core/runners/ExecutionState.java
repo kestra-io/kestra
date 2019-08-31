@@ -1,9 +1,8 @@
 package org.floworc.core.runners;
 
 import lombok.extern.slf4j.Slf4j;
-import org.floworc.core.executions.Execution;
-import org.floworc.core.executions.TaskRun;
-import org.floworc.core.executions.WorkerTask;
+import org.floworc.core.models.executions.Execution;
+import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.queues.QueueMessage;
 

@@ -1,8 +1,8 @@
-package org.floworc.core.flows;
+package org.floworc.core.models.flows;
 
 import lombok.*;
-import org.floworc.core.tasks.Task;
-import org.floworc.core.triggers.Trigger;
+import org.floworc.core.models.tasks.Task;
+import org.floworc.core.models.triggers.Trigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

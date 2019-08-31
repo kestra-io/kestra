@@ -1,6 +1,6 @@
 package org.floworc.core.repositories;
 
-import org.floworc.core.flows.Flow;
+import org.floworc.core.models.flows.Flow;
 
 import java.util.List;
 import java.util.Optional;

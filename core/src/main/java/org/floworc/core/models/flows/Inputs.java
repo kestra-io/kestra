@@ -1,11 +1,10 @@
-package org.floworc.core.flows;
+package org.floworc.core.models.flows;
 
-
-import lombok.Data;
+import lombok.Value;
 
 import javax.validation.constraints.NotNull;
 
-@Data
+@Value
 public class Inputs {
     @NotNull
     private String name;

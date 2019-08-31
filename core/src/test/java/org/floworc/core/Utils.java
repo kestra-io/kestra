@@ -1,6 +1,6 @@
 package org.floworc.core;
 
-import org.floworc.core.flows.Flow;
+import org.floworc.core.models.flows.Flow;
 import org.floworc.core.serializers.YamlFlowParser;
 
 import java.io.File;

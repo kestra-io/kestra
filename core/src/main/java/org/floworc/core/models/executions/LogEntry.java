@@ -1,11 +1,11 @@
-package org.floworc.core.executions;
+package org.floworc.core.models.executions;
 
-import lombok.Data;
+import lombok.Value;
 import org.slf4j.event.Level;
 
 import java.time.Instant;
 
-@Data
+@Value
 public class LogEntry {
     Instant timestamp;
 

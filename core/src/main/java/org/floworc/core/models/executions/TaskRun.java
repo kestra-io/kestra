@@ -1,10 +1,10 @@
-package org.floworc.core.executions;
+package org.floworc.core.models.executions;
 
 import com.devskiller.friendly_id.FriendlyId;
 import lombok.Builder;
 import lombok.Value;
-import org.floworc.core.flows.State;
-import org.floworc.core.tasks.Task;
+import org.floworc.core.models.flows.State;
+import org.floworc.core.models.tasks.Task;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;

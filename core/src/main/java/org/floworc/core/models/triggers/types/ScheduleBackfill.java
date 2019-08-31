@@ -1,10 +1,10 @@
-package org.floworc.core.triggers.types;
+package org.floworc.core.models.triggers.types;
 
-import lombok.*;
+import lombok.Value;
 
 import java.time.Instant;
 
-@Data
+@Value
 public class ScheduleBackfill {
     private Instant start;
 }

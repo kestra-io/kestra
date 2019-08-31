@@ -1,12 +1,12 @@
-package org.floworc.core.tasks;
+package org.floworc.core.models.tasks;
 
-import lombok.Data;
-import org.floworc.core.flows.State;
+import lombok.Value;
+import org.floworc.core.models.flows.State;
 
 import java.time.Duration;
 import java.time.Instant;
 
-@Data
+@Value
 public class TaskResult {
     private State state;
 

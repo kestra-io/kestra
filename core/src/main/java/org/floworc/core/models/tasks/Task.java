@@ -1,13 +1,12 @@
-package org.floworc.core.tasks;
+package org.floworc.core.models.tasks;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import org.apache.avro.reflect.Nullable;
-import org.floworc.core.executions.Execution;
-import org.floworc.core.executions.TaskRun;
+import org.floworc.core.models.executions.Execution;
+import org.floworc.core.models.executions.TaskRun;
 
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;

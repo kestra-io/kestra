@@ -4,8 +4,8 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.floworc.core.tasks.RunnableTask;
-import org.floworc.core.tasks.Task;
+import org.floworc.core.models.tasks.RunnableTask;
+import org.floworc.core.models.tasks.Task;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Value
 @Slf4j
-public class Bash extends Task  implements RunnableTask {
+public class Bash extends Task implements RunnableTask {
     private String[] commands;
 
     @Override

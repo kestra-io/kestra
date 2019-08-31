@@ -5,7 +5,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
-import org.floworc.core.flows.Flow;
+import org.floworc.core.models.flows.Flow;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;

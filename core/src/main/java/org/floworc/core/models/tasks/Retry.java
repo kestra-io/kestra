@@ -1,10 +1,10 @@
-package org.floworc.core.tasks;
+package org.floworc.core.models.tasks;
 
-import lombok.*;
+import lombok.Value;
 
 import java.time.Duration;
 
-@Data
+@Value
 public class Retry {
     private int limit;
 

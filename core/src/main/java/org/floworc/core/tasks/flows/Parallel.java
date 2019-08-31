@@ -3,10 +3,11 @@ package org.floworc.core.tasks.flows;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.floworc.core.executions.Execution;
-import org.floworc.core.tasks.FlowableTask;
-import org.floworc.core.tasks.Task;
+import org.floworc.core.models.executions.Execution;
+import org.floworc.core.models.tasks.FlowableTask;
+import org.floworc.core.models.tasks.Task;
 
 import javax.validation.Valid;
 import java.util.List;

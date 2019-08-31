@@ -1,4 +1,4 @@
-package org.floworc.core.triggers;
+package org.floworc.core.models.triggers;
 
 import lombok.Data;
 

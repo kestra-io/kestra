@@ -2,8 +2,8 @@ package org.floworc.core.runners;
 
 import org.junit.jupiter.api.Test;
 import org.floworc.core.Utils;
-import org.floworc.core.executions.Execution;
-import org.floworc.core.flows.Flow;
+import org.floworc.core.models.executions.Execution;
+import org.floworc.core.models.flows.Flow;
 import org.floworc.core.runners.types.StandAloneRunner;
 
 import java.io.File;

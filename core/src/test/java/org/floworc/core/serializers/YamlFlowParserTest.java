@@ -2,9 +2,9 @@ package org.floworc.core.serializers;
 
 import org.junit.jupiter.api.Test;
 import org.floworc.core.Utils;
-import org.floworc.core.flows.Flow;
-import org.floworc.core.tasks.RetryIntervalType;
-import org.floworc.core.tasks.Task;
+import org.floworc.core.models.flows.Flow;
+import org.floworc.core.models.tasks.RetryIntervalType;
+import org.floworc.core.models.tasks.Task;
 
 import java.io.IOException;
 

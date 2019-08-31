@@ -1,7 +1,7 @@
 package org.floworc.core.serializers;
 
 import lombok.Getter;
-import org.floworc.core.flows.Flow;
+import org.floworc.core.models.flows.Flow;
 
 import javax.validation.ConstraintViolation;
 import java.util.List;

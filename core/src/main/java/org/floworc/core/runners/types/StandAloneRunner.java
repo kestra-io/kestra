@@ -2,11 +2,11 @@ package org.floworc.core.runners.types;
 
 import com.devskiller.friendly_id.FriendlyId;
 import lombok.extern.slf4j.Slf4j;
-import org.floworc.core.executions.Execution;
-import org.floworc.core.executions.ExecutionService;
-import org.floworc.core.executions.WorkerTask;
-import org.floworc.core.flows.Flow;
-import org.floworc.core.flows.State;
+import org.floworc.core.models.executions.Execution;
+import org.floworc.core.runners.ExecutionService;
+import org.floworc.core.runners.WorkerTask;
+import org.floworc.core.models.flows.Flow;
+import org.floworc.core.models.flows.State;
 import org.floworc.core.queues.QueueMessage;
 import org.floworc.core.queues.QueueName;
 import org.floworc.core.queues.types.LocalQueue;

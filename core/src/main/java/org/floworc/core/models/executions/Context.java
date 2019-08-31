@@ -1,11 +1,11 @@
-package org.floworc.core.executions;
+package org.floworc.core.models.executions;
 
-import lombok.Data;
-import org.floworc.core.flows.State;
+import lombok.Value;
+import org.floworc.core.models.flows.State;
 
 import java.util.Map;
 
-@Data
+@Value
 public class Context {
     private Map<String, Object> inputs;
 

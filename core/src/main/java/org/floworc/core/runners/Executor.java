@@ -1,12 +1,10 @@
 package org.floworc.core.runners;
 
 import lombok.extern.slf4j.Slf4j;
-import org.floworc.core.executions.Execution;
-import org.floworc.core.executions.ExecutionService;
-import org.floworc.core.executions.TaskRun;
-import org.floworc.core.executions.WorkerTask;
-import org.floworc.core.flows.Flow;
-import org.floworc.core.flows.State;
+import org.floworc.core.models.executions.Execution;
+import org.floworc.core.models.executions.TaskRun;
+import org.floworc.core.models.flows.Flow;
+import org.floworc.core.models.flows.State;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.queues.QueueMessage;
 import org.floworc.core.repositories.RepositoryInterface;

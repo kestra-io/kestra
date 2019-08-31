@@ -1,4 +1,4 @@
-package org.floworc.core.tasks;
+package org.floworc.core.models.tasks;
 
 public enum RetryIntervalType {
     CONSTANT,

@@ -1,6 +1,6 @@
-package org.floworc.core.tasks;
+package org.floworc.core.models.tasks;
 
-import org.floworc.core.executions.Execution;
+import org.floworc.core.models.executions.Execution;
 
 import java.util.List;
 import java.util.Optional;

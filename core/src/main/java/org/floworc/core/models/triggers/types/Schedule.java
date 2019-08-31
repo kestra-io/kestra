@@ -1,11 +1,11 @@
-package org.floworc.core.triggers.types;
+package org.floworc.core.models.triggers.types;
 
 import lombok.*;
-import org.floworc.core.triggers.Trigger;
+import org.floworc.core.models.triggers.Trigger;
 
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@Data
+@Value
 public class Schedule extends Trigger {
     private String expression;
 

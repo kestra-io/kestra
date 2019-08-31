@@ -3,12 +3,14 @@ package org.floworc.core.executions;
 import lombok.*;
 import lombok.experimental.Wither;
 import org.floworc.core.flows.State;
+import org.floworc.core.tasks.Task;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Value
 @Builder
@@ -20,7 +22,6 @@ public class Execution {
     private String flowId;
 
     @Wither
-    @Builder.Default
     private List<TaskRun> taskRunList;
 
     @Wither
@@ -50,6 +51,30 @@ public class Execution {
         }
 
         return find.get();
+    }
+
+    public List<TaskRun> findTaskRunByTask(List<Task> tasks) {
+        List<String> taskIds = tasks
+            .stream()
+            .map(Task::getId)
+            .collect(Collectors.toList());
+
+        return this.taskRunList
+            .stream()
+            .filter(taskRun -> taskIds.contains(taskRun.getTaskId()))
+            .collect(Collectors.toList());
+    }
+
+    public boolean hasFailed() {
+        return this.taskRunList
+            .stream()
+            .anyMatch(taskRun -> taskRun.getState().isFailed());
+    }
+
+    public boolean hasFailed(List<Task> tasks) {
+        return this.findTaskRunByTask(tasks)
+            .stream()
+            .anyMatch(taskRun -> taskRun.getState().isFailed());
     }
 
     public Execution withTaskRun(TaskRun taskRun) {

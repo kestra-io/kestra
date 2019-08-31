@@ -36,6 +36,13 @@ abstract public class Task {
             return Optional.of(this);
         }
 
+        if (this.errors != null) {
+            return this.errors
+                .stream()
+                .flatMap(task -> task.findById(id).stream())
+                .findFirst();
+        }
+
         return Optional.empty();
     }
 }

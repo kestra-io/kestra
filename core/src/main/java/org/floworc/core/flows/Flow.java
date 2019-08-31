@@ -42,10 +42,21 @@ public class Flow {
             .flatMap(task -> task.findById(id).stream())
             .findFirst();
 
-        if (find.isEmpty()) {
-            throw new IllegalArgumentException("Can't find task with id '" + id + "' on flow '" + this.id + "'");
+        if (find.isPresent()) {
+            return find.get();
         }
 
-        return find.get();
+        if (this.errors != null) {
+            Optional<Task> errors = this.errors
+                .stream()
+                .flatMap(task -> task.findById(id).stream())
+                .findFirst();
+
+            if (errors.isPresent()) {
+                return errors.get();
+            }
+        }
+
+        throw new IllegalArgumentException("Can't find task with id '" + id + "' on flow '" + this.id + "'");
     }
 }

@@ -90,8 +90,7 @@ public class StandAloneRunner implements RunnerInterface {
                 .build()
         );
 
-
-        this.poolExecutor.awaitTermination(5, TimeUnit.MINUTES);
+        this.poolExecutor.awaitTermination(1, TimeUnit.MINUTES);
 
         return receive.get();
     }

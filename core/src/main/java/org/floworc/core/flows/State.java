@@ -58,6 +58,11 @@ public class State {
         return this.current == Type.RUNNING;
     }
 
+    @JsonIgnore
+    public boolean isFailed() {
+        return this.current == Type.FAILED;
+    }
+
     public enum Type {
         CREATED,
         RUNNING,

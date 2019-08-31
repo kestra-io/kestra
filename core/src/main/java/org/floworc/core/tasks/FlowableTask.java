@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FlowableTask {
-
     default boolean hasChildTasks() {
         return false;
     }

@@ -48,16 +48,6 @@ public class ExecutionService {
             return Optional.of(tasks.get(0).toTaskRun(execution));
         }
 
-        // all done
-        long terminatedCount = taskRunList
-            .stream()
-            .filter(taskRun -> taskRun.getState().isTerninated())
-            .count();
-
-        if (terminatedCount == tasks.size()) {
-            return Optional.empty();
-        }
-
         // find first running to handle child tasks
         Optional<TaskRun> firstRunning = taskRunList
             .stream()
@@ -93,16 +83,23 @@ public class ExecutionService {
             .filter(taskRun -> taskRun.getState().isTerninated())
             .findFirst();
 
-        if (lastTerminated.isPresent()) {
-            if (lastTerminated.get().getState().getCurrent() == State.Type.FAILED) {
-                log.warn("Must find errors path");
-                return Optional.of(new ArrayList<>());
-            } else {
-                int index = taskRunList.indexOf(lastTerminated.get());
+        // all done
+        long terminatedCount = taskRunList
+            .stream()
+            .filter(taskRun -> taskRun.getState().isTerninated())
+            .count();
 
-                if (tasks.size() > index - 1) {
+        if (lastTerminated.isPresent()) {
+            int lastIndex = taskRunList.indexOf(lastTerminated.get());
+
+            if (lastTerminated.get().getState().isFailed()) {
+                return this.getNexts(execution, tasks.get(lastIndex).getErrors());
+            } else if (terminatedCount == tasks.size()) {
+                return Optional.empty();
+            } else {
+                if (tasks.size() > lastIndex - 1) {
                     return Optional.of(tasks
-                        .get(index + 1)
+                        .get(lastIndex + 1)
                         .toTaskRun(execution)
                     );
                 }
@@ -129,7 +126,10 @@ public class ExecutionService {
         // all childs are done, continue the main flow
         if (nexts.isEmpty()) {
             WorkerTask workerTask = WorkerTask.builder()
-                .taskRun(execution.findTaskRunById(parentTaskRun.getId()).withState(State.Type.SUCCESS))
+                .taskRun(execution
+                    .findTaskRunById(parentTaskRun.getId())
+                    .withState(execution.hasFailed(childs.get()) ? State.Type.FAILED : State.Type.SUCCESS)
+                )
                 .task(parent)
                 .build();
 
@@ -142,6 +142,7 @@ public class ExecutionService {
             return Optional.of(new ArrayList<>());
         }
 
+        // give more works
         return nexts;
     }
 }

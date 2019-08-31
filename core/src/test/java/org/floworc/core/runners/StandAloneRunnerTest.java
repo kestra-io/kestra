@@ -24,11 +24,19 @@ class StandAloneRunnerTest {
     }
 
     @Test
-    void run() throws IOException, InterruptedException {
+    void full() throws IOException, InterruptedException {
         Flow flow = Utils.parse("flows/full.yaml");
         Execution execution = runner.run(flow);
 
         assertThat(execution.getTaskRunList(), hasSize(13));
+    }
+
+    @Test
+    void errors() throws IOException, InterruptedException {
+        Flow flow = Utils.parse("flows/errors.yaml");
+        Execution execution = runner.run(flow);
+
+        assertThat(execution.getTaskRunList(), hasSize(7));
     }
 
 }

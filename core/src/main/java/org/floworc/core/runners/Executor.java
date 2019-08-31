@@ -114,7 +114,9 @@ public class Executor implements Runnable {
     }
 
     private void onEnd(Flow flow, Execution execution) {
-        Execution newExecution = execution.withState(State.Type.SUCCESS);
+        Execution newExecution = execution.withState(
+            execution.hasFailed() ? State.Type.FAILED : State.Type.SUCCESS
+        );
 
         flow.logger().info(
             "[execution: {}] Flow completed with state {} in {}",

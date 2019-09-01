@@ -7,7 +7,7 @@ import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.queues.QueueMessage;
-import org.floworc.core.repositories.RepositoryInterface;
+import org.floworc.core.repositories.FlowRepositoryInterface;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,18 +16,18 @@ import java.util.List;
 public class Executor implements Runnable {
     private QueueInterface<Execution> executionQueue;
     private QueueInterface<WorkerTask> workerTaskQueue;
-    private RepositoryInterface repository;
+    private FlowRepositoryInterface flowRepository;
     private ExecutionService executionService;
 
     public Executor(
         QueueInterface<Execution> executionQueue,
         QueueInterface<WorkerTask> workerTaskQueue,
-        RepositoryInterface repositoryInterface,
+        FlowRepositoryInterface flowRepositoryInterface,
         ExecutionService executionService
     ) {
         this.executionQueue = executionQueue;
         this.workerTaskQueue = workerTaskQueue;
-        this.repository = repositoryInterface;
+        this.flowRepository = flowRepositoryInterface;
         this.executionService = executionService;
     }
 
@@ -40,7 +40,7 @@ public class Executor implements Runnable {
                 return;
             }
 
-            Flow flow = this.repository
+            Flow flow = this.flowRepository
                 .getFlowById(execution.getFlowId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
 

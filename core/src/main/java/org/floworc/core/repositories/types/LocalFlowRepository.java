@@ -1,7 +1,7 @@
 package org.floworc.core.repositories.types;
 
 import org.floworc.core.models.flows.Flow;
-import org.floworc.core.repositories.RepositoryInterface;
+import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.serializers.YamlFlowParser;
 
 import java.io.File;
@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class LocalRepository implements RepositoryInterface {
+public class LocalFlowRepository implements FlowRepositoryInterface {
     private File basePath;
     private static final YamlFlowParser yamlFlowParser = new YamlFlowParser();
 
-    public LocalRepository(File basePath) {
+    public LocalFlowRepository(File basePath) {
         this.basePath = basePath;
     }
 

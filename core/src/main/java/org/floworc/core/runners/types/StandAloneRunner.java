@@ -10,7 +10,7 @@ import org.floworc.core.models.flows.State;
 import org.floworc.core.queues.QueueMessage;
 import org.floworc.core.queues.QueueName;
 import org.floworc.core.queues.types.LocalQueue;
-import org.floworc.core.repositories.types.LocalRepository;
+import org.floworc.core.repositories.types.LocalFlowRepository;
 import org.floworc.core.runners.ExecutionState;
 import org.floworc.core.runners.Executor;
 import org.floworc.core.runners.RunnerInterface;
@@ -27,7 +27,7 @@ public class StandAloneRunner implements RunnerInterface {
     private LocalQueue<Execution> executionQueue;
     private LocalQueue<WorkerTask> workerTaskQueue;
     private LocalQueue<WorkerTask> workerTaskResultQueue;
-    private LocalRepository localRepository;
+    private LocalFlowRepository localRepository;
     private ThreadPoolExecutor poolExecutor;
     private ExecutionService executionService;
 
@@ -36,7 +36,7 @@ public class StandAloneRunner implements RunnerInterface {
         this.workerTaskQueue = new LocalQueue<>(QueueName.WORKERS);
         this.workerTaskResultQueue = new LocalQueue<>(QueueName.WORKERS_RESULT);
 
-        this.localRepository = new LocalRepository(basePath);
+        this.localRepository = new LocalFlowRepository(basePath);
         this.executionService = new ExecutionService(this.workerTaskResultQueue);
     }
 

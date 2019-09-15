@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.queues.QueueInterface;
-import org.floworc.core.queues.QueueMessage;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,12 +11,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ExecutionState implements Runnable {
     private final Object lock = new Object();
     private final QueueInterface<Execution> executionQueue;
-    private final QueueInterface<WorkerTask> workerTaskResultQueue;
+    private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private static ConcurrentHashMap<String, Execution> executions = new ConcurrentHashMap<>();
 
     public ExecutionState(
         QueueInterface<Execution> executionQueue,
-        QueueInterface<WorkerTask> workerTaskResultQueue
+        QueueInterface<WorkerTaskResult> workerTaskResultQueue
     ) {
         this.executionQueue = executionQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
@@ -25,21 +24,19 @@ public class ExecutionState implements Runnable {
 
     @Override
     public void run() {
-        this.executionQueue.receive(message -> {
+        this.executionQueue.receive(ExecutionState.class, execution -> {
             synchronized (lock) {
-                Execution execution = message.getBody();
-
                 if (execution.getState().isTerninated()) {
-                    executions.remove(message.getKey());
+                    executions.remove(execution.getId());
                 } else {
-                    executions.put(message.getKey(), execution);
+                    executions.put(execution.getId(), execution);
                 }
             }
         });
 
-        this.workerTaskResultQueue.receive(message -> {
+        this.workerTaskResultQueue.receive(ExecutionState.class, message -> {
             synchronized (lock) {
-                TaskRun taskRun = message.getBody().getTaskRun();
+                TaskRun taskRun = message.getTaskRun();
 
                 if (!executions.containsKey(taskRun.getExecutionId())) {
                     throw new RuntimeException("Unable to find execution '" + taskRun.getExecutionId() + "' on ExecutionState");
@@ -48,12 +45,7 @@ public class ExecutionState implements Runnable {
                 Execution execution = executions.get(taskRun.getExecutionId());
                 Execution newExecution = execution.withTaskRun(taskRun);
 
-                this.executionQueue.emit(
-                    QueueMessage.<Execution>builder()
-                        .key(newExecution.getId())
-                        .body(newExecution)
-                        .build()
-                );
+                this.executionQueue.emit(newExecution);
             }
         });
     }

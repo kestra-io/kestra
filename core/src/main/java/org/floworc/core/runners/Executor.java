@@ -6,7 +6,6 @@ import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.queues.QueueInterface;
-import org.floworc.core.queues.QueueMessage;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 
 import java.util.ArrayList;
@@ -33,9 +32,7 @@ public class Executor implements Runnable {
 
     @Override
     public void run() {
-        this.executionQueue.receive(message -> {
-            Execution execution = message.getBody();
-
+        this.executionQueue.receive(Executor.class, execution -> {
             if (execution.getState().isTerninated()) {
                 return;
             }
@@ -91,23 +88,14 @@ public class Executor implements Runnable {
             newExecution = newExecution.withState(State.Type.RUNNING);
         }
 
-        this.executionQueue.emit(
-            QueueMessage.<Execution>builder()
-                .key(newExecution.getId())
-                .body(newExecution)
-                .build()
-        );
+        this.executionQueue.emit(newExecution);
 
         // submit TaskRun
-        final Execution finalNewExecution = newExecution;
-        nexts.forEach(taskRun -> this.workerTaskQueue.emit(QueueMessage.<WorkerTask>builder()
-            .key(finalNewExecution.getId())
-            .body(WorkerTask.builder()
+        nexts.forEach(taskRun -> this.workerTaskQueue.emit(
+            WorkerTask.builder()
                 .taskRun(taskRun)
                 .task(flow.findTaskById(taskRun.getTaskId()))
                 .build()
-            )
-            .build()
         ));
     }
 
@@ -123,11 +111,6 @@ public class Executor implements Runnable {
             newExecution.getState().humanDuration()
         );
 
-        this.executionQueue.emit(
-            QueueMessage.<Execution>builder()
-                .key(newExecution.getId())
-                .body(newExecution)
-                .build()
-        );
+        this.executionQueue.emit(newExecution);
     }
 }

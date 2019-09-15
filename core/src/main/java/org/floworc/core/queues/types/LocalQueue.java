@@ -2,60 +2,56 @@ package org.floworc.core.queues.types;
 
 import lombok.extern.slf4j.Slf4j;
 import org.floworc.core.queues.QueueInterface;
-import org.floworc.core.queues.QueueMessage;
-import org.floworc.core.queues.QueueName;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 
 @Slf4j
 public class LocalQueue <T> implements QueueInterface<T> {
-    private static ThreadPoolExecutor poolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    private QueueName topic;
-    private List<QueueMessage<T>> messages = new ArrayList<>();
-    private List<Consumer<QueueMessage<T>>> consumers = new ArrayList<>();
+    private Class<T> cls;
+    private static ExecutorService poolExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private Map<String, List<Consumer<T>>> consumers = new HashMap<>();
 
-    public LocalQueue(QueueName topic) {
-        this.topic = topic;
+    public LocalQueue(Class<T> cls) {
+        this.cls = cls;
     }
 
     @Override
-    public boolean emit(QueueMessage<T> message) {
+    public void emit(T message) {
         if (log.isTraceEnabled()) {
-            log.trace("New message: topic '{}', key '{}', value {}", this.topic, message.getKey(), message.getBody());
+            log.trace("New message: topic '{}', value {}", this.cls.getName(), message);
         }
 
-        this.messages.add(message);
-
-       if (this.consumers != null) {
-            if (this.topic.isPubSub()) {
-                this.consumers
-                    .forEach(consumers ->
-                        poolExecutor.execute(() ->
-                            consumers.accept(message)
-                        )
-                    );
-            } else {
+        this.consumers
+            .forEach((consumerGroup, consumers) -> {
                 poolExecutor.execute(() -> {
-                    this.consumers.get((new Random()).nextInt(this.consumers.size())).accept(message);
+                    consumers.get((new Random()).nextInt(consumers.size())).accept(message);
                 });
-            }
+
+            });
+    }
+
+    @Override
+    public synchronized void receive(Class consumerGroup, Consumer<T> consumer) {
+        if (!this.consumers.containsKey(consumerGroup.getName())) {
+            this.consumers.put(consumerGroup.getName(), new ArrayList<>());
         }
 
-        return true;
+        this.consumers.get(consumerGroup.getName()).add(consumer);
+    }
+
+    public int getSubscribersCount() {
+        return this.consumers
+            .values()
+            .stream()
+            .map(List::size)
+            .reduce(0, Integer::sum);
     }
 
     @Override
-    public void receive(Consumer<QueueMessage<T>> consumer) {
-        this.consumers.add(consumer);
-    }
-
-    @Override
-    public void ack(QueueMessage<T> message) {
-        this.messages.remove(message);
+    public void ack(T message) {
+        // no ack needed with local queues
     }
 }

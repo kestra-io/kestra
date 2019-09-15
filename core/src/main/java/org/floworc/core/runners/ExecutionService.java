@@ -5,7 +5,6 @@ import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.queues.QueueInterface;
-import org.floworc.core.queues.QueueMessage;
 import org.floworc.core.models.tasks.FlowableTask;
 import org.floworc.core.models.tasks.Task;
 
@@ -17,9 +16,9 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class ExecutionService {
-    private QueueInterface<WorkerTask> workerTaskResultQueue;
+    private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
-    public ExecutionService(QueueInterface<WorkerTask> workerTaskResultQueue) {
+    public ExecutionService(QueueInterface<WorkerTaskResult> workerTaskResultQueue) {
         this.workerTaskResultQueue = workerTaskResultQueue;
     }
 
@@ -127,19 +126,12 @@ public class ExecutionService {
 
         // all childs are done, continue the main flow
         if (nexts.isEmpty()) {
-            WorkerTask workerTask = WorkerTask.builder()
-                .taskRun(execution
+            this.workerTaskResultQueue.emit(new WorkerTaskResult(
+                execution
                     .findTaskRunById(parentTaskRun.getId())
-                    .withState(execution.hasFailed(childs.get()) ? State.Type.FAILED : State.Type.SUCCESS)
-                )
-                .task(parent)
-                .build();
-
-            this.workerTaskResultQueue.emit(QueueMessage.<WorkerTask>builder()
-                .key(workerTask.getTaskRun().getExecutionId())
-                .body(workerTask)
-                .build()
-            );
+                    .withState(execution.hasFailed(childs.get()) ? State.Type.FAILED : State.Type.SUCCESS),
+                parent
+            ));
 
             return Optional.of(new ArrayList<>());
         }

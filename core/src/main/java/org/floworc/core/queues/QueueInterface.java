@@ -2,10 +2,10 @@ package org.floworc.core.queues;
 
 import java.util.function.Consumer;
 
-public interface QueueInterface <T> {
-    boolean emit(QueueMessage<T> message);
+public interface QueueInterface<T> {
+    void emit(T message);
 
-    void receive(Consumer<QueueMessage<T>> consumer);
+    void receive(Class consumerGroup, Consumer<T> consumer);
 
-    void ack(QueueMessage<T> message);
+    void ack(T message);
 }

@@ -1,11 +1,9 @@
 package org.floworc.core.tasks;
 
-import org.junit.jupiter.api.Test;
-import org.floworc.core.runners.types.StandAloneRunner;
 import org.floworc.core.tasks.scripts.Bash;
+import org.junit.jupiter.api.Test;
 
 class BashTest {
-
     @Test
     void run() throws Exception {
         Bash bash = new Bash(

@@ -1,7 +1,7 @@
 package org.floworc.core.runners;
 
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 import lombok.experimental.Wither;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.tasks.Task;
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.NotNull;
 
-@Value
+@Data
 @Builder
 public class WorkerTask {
     @NotNull

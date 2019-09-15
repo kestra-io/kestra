@@ -1,24 +1,21 @@
 package org.floworc.core.runners;
 
 import org.floworc.core.models.flows.State;
-import org.floworc.core.queues.QueueInterface;
-import org.floworc.core.queues.QueueMessage;
 import org.floworc.core.models.tasks.RunnableTask;
+import org.floworc.core.queues.QueueInterface;
 
 public class Worker implements Runnable {
     private QueueInterface<WorkerTask> workerTaskQueue;
-    private QueueInterface<WorkerTask> workerTaskResultQueue;
+    private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
-    public Worker(QueueInterface<WorkerTask> workerTaskQueue, QueueInterface<WorkerTask> workerTaskResultQueue) {
+    public Worker(QueueInterface<WorkerTask> workerTaskQueue, QueueInterface<WorkerTaskResult> workerTaskResultQueue) {
         this.workerTaskQueue = workerTaskQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
     }
 
     @Override
     public void run() {
-        this.workerTaskQueue.receive(message -> {
-            this.run(message.getBody());
-        });
+        this.workerTaskQueue.receive(Worker.class, this::run);
     }
 
     public void run(WorkerTask workerTask) {
@@ -29,10 +26,8 @@ public class Worker implements Runnable {
             workerTask.getTask().getClass().getSimpleName()
         );
 
-        this.workerTaskResultQueue.emit(QueueMessage.<WorkerTask>builder()
-            .key(workerTask.getTaskRun().getExecutionId())
-            .body(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING)))
-            .build()
+        this.workerTaskResultQueue.emit(
+            new WorkerTaskResult(workerTask, State.Type.RUNNING)
         );
 
         if (workerTask.getTask() instanceof RunnableTask) {
@@ -40,19 +35,13 @@ public class Worker implements Runnable {
             try {
                 task.run();
 
-                this.workerTaskResultQueue.emit(QueueMessage.<WorkerTask>builder()
-                    .key(workerTask.getTaskRun().getExecutionId())
-                    .body(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.SUCCESS)))
-                    .build()
+                this.workerTaskResultQueue.emit(
+                    new WorkerTaskResult(workerTask, State.Type.SUCCESS)
                 );
             } catch (Exception e) {
                 workerTask.logger().error("Failed task", e);
 
-                this.workerTaskResultQueue.emit(QueueMessage.<WorkerTask>builder()
-                    .key(workerTask.getTaskRun().getExecutionId())
-                    .body(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.FAILED)))
-                    .build()
-                );
+                this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask, State.Type.FAILED));
             }
 
             workerTask.logger().info(

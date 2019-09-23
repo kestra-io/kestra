@@ -7,7 +7,13 @@ dependencies {
     // yaml
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9.2'
     compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.9'
+    compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.9.9'
 
     // validations
     compile group: 'org.hibernate.validator', name: 'hibernate-validator', version: '6.0.17.Final'
+
+    // redis
+    implementation 'com.github.lettuce-io:lettuce-core:master'
+
+
 }

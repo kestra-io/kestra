@@ -2,3 +2,9 @@ rootProject.name="floworc"
 
 include 'cli'
 include 'core'
+
+include 'runner-memory'
+include 'runner-kafka'
+
+include 'repository-local'
+

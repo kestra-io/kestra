@@ -1,20 +1,21 @@
-package org.floworc.core.queues.types;
+package org.floworc.runner.memory;
 
 import lombok.extern.slf4j.Slf4j;
 import org.floworc.core.queues.QueueInterface;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @Slf4j
-public class LocalQueue <T> implements QueueInterface<T> {
+public class MemoryQueue<T> implements QueueInterface<T> {
     private Class<T> cls;
     private static ExecutorService poolExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private Map<String, List<Consumer<T>>> consumers = new HashMap<>();
 
-    public LocalQueue(Class<T> cls) {
+    public MemoryQueue(Class<T> cls) {
         this.cls = cls;
     }
 
@@ -53,5 +54,12 @@ public class LocalQueue <T> implements QueueInterface<T> {
     @Override
     public void ack(T message) {
         // no ack needed with local queues
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (!poolExecutor.isShutdown()) {
+            poolExecutor.shutdown();
+        }
     }
 }

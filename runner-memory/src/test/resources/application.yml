@@ -1,0 +1,4 @@
+floworc:
+  repository:
+    local:
+      base-path: ../core/src/test/resources/flows/

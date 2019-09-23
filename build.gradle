@@ -46,6 +46,7 @@ allprojects {
         mavenCentral()
         maven { url "https://jcenter.bintray.com" }
         maven { url "http://packages.confluent.io/maven/" }
+        maven { url 'https://jitpack.io' }
     }
 
     // micronaut

@@ -9,7 +9,7 @@ dependencies {
     // modules
     compile project(":core")
 
-    compile project(":repository-local")
+    compile project(":repository-memory")
 
     compile project(":runner-memory")
     compile project(":runner-kafka")

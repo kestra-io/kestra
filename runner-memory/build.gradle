@@ -4,5 +4,5 @@ dependencies {
     compile project(":core")
 
     testCompile project(':core').sourceSets.test.output
-    testCompile project(':repository-local').sourceSets.main.output
+    testCompile project(':repository-memory').sourceSets.main.output
 }

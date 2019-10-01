@@ -6,5 +6,5 @@ include 'core'
 include 'runner-memory'
 include 'runner-kafka'
 
-include 'repository-local'
+include 'repository-memory'
 

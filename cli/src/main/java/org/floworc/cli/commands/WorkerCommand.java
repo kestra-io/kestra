@@ -1,4 +1,4 @@
-package org.floworc.core.commands;
+package org.floworc.cli.commands;
 
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
@@ -27,5 +27,7 @@ public class WorkerCommand implements Runnable {
         for (int i = 0; i < thread; i++) {
             poolExecutor.execute(applicationContext.getBean(Worker.class));
         }
+
+        log.info("Workers started with {} thread(s)", this.thread);
     }
 }

@@ -6,7 +6,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FlowRepositoryInterface {
-    Optional<Flow> getFlowById(String id);
+    Optional<Flow> findById(String id);
 
-    List<Flow> getFlows();
+    List<Flow> findAll();
+
+    void save(Flow flow);
+
+    void insert(Flow flow);
+
+    void update(Flow flow);
+
+    void delete(Flow flow);
 }

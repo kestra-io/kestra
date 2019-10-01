@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class YamlFlowParserTest {
     @Test
     void parse() throws IOException {
-        Flow flow = Utils.parse("flows/full.yaml");
+        Flow flow = Utils.parse("flows/valids/full.yaml");
 
         assertThat(flow.getId(), is("full"));
         assertThat(flow.getTasks().size(), is(5));
@@ -31,11 +31,11 @@ class YamlFlowParserTest {
     @Test
     void validation() throws IOException {
         assertThrows(InvalidDefinitionException.class, () -> {
-            Utils.parse("flows/invalid.yaml");
+            Utils.parse("flows/invalids/invalid.yaml");
         });
 
         try {
-            Utils.parse("flows/invalid.yaml");
+            Utils.parse("flows/invalids/invalid.yaml");
         } catch (InvalidDefinitionException e) {
             assertThat(e.getViolations().size(), is(3));
         }

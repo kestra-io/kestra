@@ -15,9 +15,7 @@ import java.io.IOException;
 import java.util.Set;
 
 public class YamlFlowParser {
-    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory())
-        .registerModule(new Jdk8Module())
-        .registerModule(new JavaTimeModule());
+    private static final ObjectMapper mapper = JacksonMapper.ofYaml();
 
     private static final Validator validator = Validation.byDefaultProvider()
         .configure()

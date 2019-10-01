@@ -3,6 +3,7 @@ package org.floworc.core.runners;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import org.floworc.core.models.executions.Execution;
+import org.floworc.core.queues.QueueFactoryInterface;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 
@@ -14,9 +15,9 @@ public class RunnerProcessFactory {
     @Prototype
     @Inject
     public Worker worker(
-        @Named("executionQueue") QueueInterface<Execution> executionQueue,
-        @Named("workerTaskQueue") QueueInterface<WorkerTask> workerTaskQueue,
-        @Named("workerTaskResultQueue") QueueInterface<WorkerTaskResult> workerTaskResultQueue
+        @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
+        @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
+        @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue
     ) {
         return new Worker(
             workerTaskQueue,
@@ -26,9 +27,9 @@ public class RunnerProcessFactory {
 
     @Prototype
     public Executor executor(
-        @Named("executionQueue") QueueInterface<Execution> executionQueue,
-        @Named("workerTaskQueue") QueueInterface<WorkerTask> workerTaskQueue,
-        @Named("workerTaskResultQueue") QueueInterface<WorkerTaskResult> workerTaskResultQueue,
+        @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
+        @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
+        @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue,
         FlowRepositoryInterface flowRepository,
         ExecutionService executionService
     ) {
@@ -42,7 +43,7 @@ public class RunnerProcessFactory {
 
     @Prototype
     public ExecutionService executionService(
-        @Named("workerTaskResultQueue") QueueInterface<WorkerTaskResult> workerTaskResultQueue
+        @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue
     ) {
         return new ExecutionService(workerTaskResultQueue);
     }

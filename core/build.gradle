@@ -11,9 +11,4 @@ dependencies {
 
     // validations
     compile group: 'org.hibernate.validator', name: 'hibernate-validator', version: '6.0.17.Final'
-
-    // redis
-    implementation 'com.github.lettuce-io:lettuce-core:master'
-
-
 }

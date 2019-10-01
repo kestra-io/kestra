@@ -1,3 +1,41 @@
 micronaut:
   application:
     name: floworc
+
+floworc:
+  kafka:
+    defaults:
+      topic:
+        partitions: 64
+        replication-factor: 1
+        properties:
+          compression.type: "lz4"
+
+      consumer:
+        properties:
+          isolation.level: "read_committed"
+          auto.offset.reset: "earliest"
+          enable.auto.commit: "false"
+
+      producer:
+        properties:
+          acks: "all"
+
+      stream:
+        properties:
+          processing.guarantee: "exactly_once"
+          replication.factor: "${floworc.kafka.defaults.topic.replication-factor}"
+          acks: "all"
+
+    topics:
+      org.floworc.core.models.executions.Execution:
+        name: "floworc_execution"
+        properties:
+          cleanup.policy: "compact"
+          retention.ms: "-1"
+
+      org.floworc.core.runners.WorkerTask:
+        name: "floworc_workertask"
+
+      org.floworc.core.runners.WorkerTaskResult:
+        name: "floworc_workertaskresult"

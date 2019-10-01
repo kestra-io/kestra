@@ -1,0 +1,42 @@
+floworc:
+  queue:
+    type: kafka
+
+  kafka:
+    client:
+      properties:
+        bootstrap.servers: "kafka:9092"
+
+    defaults:
+      topic:
+        properties:
+          compression.type: "lz4"
+
+      consumer:
+        properties:
+          isolation.level: "read_committed"
+          auto.offset.reset: "earliest"
+          enable.auto.commit: "false"
+
+      producer:
+        properties:
+          acks: "all"
+
+      stream:
+        properties:
+          processing.guarantee: "exactly_once"
+          acks: "all"
+          state.dir: "/tmp/floworc/kafka/state"
+
+    topics:
+      org-floworc-core-models-executions-execution:
+        name: "floworc_execution"
+        properties:
+          cleanup.policy: "compact"
+          retention.ms: "-1"
+
+      org-floworc-core-runners-workertask:
+        name: "floworc_workertask"
+
+      org-floworc-core-runners-workertaskresult:
+        name: "floworc_workertaskresult"

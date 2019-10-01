@@ -31,24 +31,27 @@ public class Worker implements Runnable {
         );
 
         if (workerTask.getTask() instanceof RunnableTask) {
+            State.Type state;
+
             RunnableTask task = (RunnableTask) workerTask.getTask();
             try {
                 task.run();
-
-                this.workerTaskResultQueue.emit(
-                    new WorkerTaskResult(workerTask, State.Type.SUCCESS)
-                );
+                state = State.Type.SUCCESS;
             } catch (Exception e) {
                 workerTask.logger().error("Failed task", e);
-
-                this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask, State.Type.FAILED));
+                state = State.Type.FAILED;
             }
 
+            this.workerTaskResultQueue.emit(
+                new WorkerTaskResult(workerTask, state)
+            );
+
             workerTask.logger().info(
-                "[execution: {}] [taskrun: {}] Task {} completed in {}",
+                "[execution: {}] [taskrun: {}] Task {} with state {} completed in {}",
                 workerTask.getTaskRun().getExecutionId(),
                 workerTask.getTaskRun().getId(),
                 workerTask.getTask().getClass().getSimpleName(),
+                state,
                 workerTask.getTaskRun().getState().humanDuration()
             );
         }

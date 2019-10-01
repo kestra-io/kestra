@@ -1,8 +1,8 @@
-package org.floworc.core;
+package org.floworc.cli;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
-import org.floworc.core.commands.TestCommand;
-import org.floworc.core.commands.WorkerCommand;
+import org.floworc.cli.commands.TestCommand;
+import org.floworc.cli.commands.WorkerCommand;
 import picocli.CommandLine;
 
 import java.util.concurrent.Callable;

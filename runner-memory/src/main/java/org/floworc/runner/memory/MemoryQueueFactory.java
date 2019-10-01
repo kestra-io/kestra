@@ -10,21 +10,22 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Factory
+@MemoryQueueEnabled
 public class MemoryQueueFactory implements QueueFactoryInterface {
     @Singleton
-    @Named("executionQueue")
+    @Named(QueueFactoryInterface.EXECUTION_NAMED)
     public QueueInterface<Execution> execution() {
         return new MemoryQueue<>(Execution.class);
     }
 
     @Singleton
-    @Named("workerTaskQueue")
+    @Named(QueueFactoryInterface.WORKERTASK_NAMED)
     public QueueInterface<WorkerTask> workerTask() {
         return new MemoryQueue<>(WorkerTask.class);
     }
 
     @Singleton
-    @Named("workerTaskResultQueue")
+    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
     public QueueInterface<WorkerTaskResult> workerTaskResult() {
         return new MemoryQueue<>(WorkerTaskResult.class);
     }

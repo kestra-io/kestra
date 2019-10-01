@@ -1,9 +1,10 @@
 buildscript {
     ext {
-        micronautVersion = "1.2.0"
+        micronautVersion = "1.2.3"
         confluentVersion = "5.2.1"
         kafkaVersion = "2.3.0"
         avroVersion = "1.9.0"
+        lombokVersion = "1.18.10"
     }
 }
 
@@ -15,6 +16,9 @@ plugins {
     id "net.ltgt.apt-idea" version "0.21"
     id "com.github.johnrengelman.shadow" version "4.0.2"
     id "application"
+
+    // test
+    id 'com.adarshr.test-logger' version '1.7.0'
 }
 
 idea {
@@ -32,6 +36,7 @@ sourceCompatibility = 11
 
 dependencies {
     compile project(":cli")
+    testCompile project(":repository-memory")
 }
 
 
@@ -53,7 +58,10 @@ allprojects {
     apply plugin:"java"
     apply plugin:"net.ltgt.apt-eclipse"
     apply plugin:"net.ltgt.apt-idea"
-    apply plugin: "io.spring.dependency-management"
+    apply plugin:"io.spring.dependency-management"
+
+    // test
+    apply plugin:"com.adarshr.test-logger"
 
     dependencyManagement {
         imports {
@@ -71,8 +79,8 @@ allprojects {
         // utils
         runtime "ch.qos.logback:logback-classic:1.2.3"
         compile group: 'com.google.guava', name: 'guava', version: '27.1-jre'
-        compileOnly 'org.projectlombok:lombok:1.18.8'
-        annotationProcessor "org.projectlombok:lombok:1.18.8"
+        compileOnly 'org.projectlombok:lombok:' + lombokVersion
+        annotationProcessor "org.projectlombok:lombok:" + lombokVersion
 
         // micronaut
         annotationProcessor "io.micronaut:micronaut-inject-java"
@@ -96,6 +104,22 @@ allprojects {
         // floworc
         compile group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
     }
+
+    // test
+    test {
+        useJUnitPlatform()
+
+        testLogging {
+            exceptionFormat = "full"
+        }
+    }
+
+    testlogger {
+        theme 'mocha-parallel'
+        showExceptions true
+        slowThreshold 2000
+        showStandardStreams true
+    }
 }
 
 /**********************************************************************************************************************\
@@ -115,16 +139,6 @@ run.jvmArgs(
     "-Dcom.sun.management.jmxremote",
     '-Dmicronaut.environments=dev,override'
 )
-/**********************************************************************************************************************\
- * Test
- **********************************************************************************************************************/
-test {
-    useJUnitPlatform()
-
-    testLogging {
-        exceptionFormat = "full"
-    }
-}
 
 /**********************************************************************************************************************\
  * Jar

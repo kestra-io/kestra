@@ -1,6 +1,7 @@
 package org.floworc.core.models.executions;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Value;
 import lombok.experimental.Wither;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.Task;

@@ -28,7 +28,7 @@ public class RunnerUtils {
         return this.runOne(
             flowRepository
                 .findById(flowId)
-                .orElseThrow(() -> new IllegalArgumentException("Unable to find execution '" + flowId + "'"))
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'"))
         );
     }
 

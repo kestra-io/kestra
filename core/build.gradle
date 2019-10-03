@@ -1,6 +1,9 @@
 sourceCompatibility = 11
 
 dependencies {
+    // log
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+
     // serializers
     compile group: "org.apache.avro", name: "avro", version: avroVersion
 
@@ -11,4 +14,8 @@ dependencies {
 
     // validations
     compile group: 'org.hibernate.validator', name: 'hibernate-validator', version: '6.0.17.Final'
+
+    // test
+    testCompile project(':repository-memory').sourceSets.main.output
+    testCompile project(':runner-memory').sourceSets.main.output
 }

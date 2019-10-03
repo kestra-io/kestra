@@ -3,6 +3,7 @@ package org.floworc.core.models.executions;
 import com.devskiller.friendly_id.FriendlyId;
 import lombok.Builder;
 import lombok.Value;
+import lombok.experimental.Wither;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.Task;
 
@@ -26,8 +27,8 @@ public class TaskRun {
 
     private Context context;
 
-    @Builder.Default
-    private List<LogEntry> logs = new ArrayList<>();
+    @Wither
+    private List<LogEntry> logs;
 
     @Builder.Default
     private List<MetricEntry> metrics = new ArrayList<>();

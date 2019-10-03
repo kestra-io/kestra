@@ -6,6 +6,8 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.models.tasks.Task;
+import org.floworc.core.runners.RunContext;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,17 +24,19 @@ public class Bash extends Task implements RunnableTask {
     private String[] commands;
 
     @Override
-    public Void run() throws Exception {
+    public Void run(RunContext runContext) throws Exception {
+        Logger logger = runContext.logger(this.getClass());
+
         List<String> commands = Arrays.asList("/bin/sh", "-c", String.join("\n", this.commands));
 
-        log.debug("Starting command [{}]", String.join("; ", this.commands));
+        logger.debug("Starting command [{}]", String.join("; ", this.commands));
 
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(commands);
 
         Process process = processBuilder.start();
-        readInput(process.getInputStream(), false);
-        readInput(process.getErrorStream(), true);
+        readInput(logger, process.getInputStream(), false);
+        readInput(logger, process.getErrorStream(), true);
 
         // process.pid();
 
@@ -41,13 +45,13 @@ public class Bash extends Task implements RunnableTask {
         if (exitCode != 0) {
             throw new RuntimeException("Command failed with code " + exitCode);
         } else {
-            log.debug("Command succeed with code " + exitCode);
+            logger.debug("Command succeed with code " + exitCode);
         }
 
         return null;
     }
 
-    private void readInput(InputStream inputStream, boolean isStdErr) {
+    private void readInput(Logger logger, InputStream inputStream, boolean isStdErr) {
         Thread thread = new Thread(() -> {
             try {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
@@ -55,9 +59,9 @@ public class Bash extends Task implements RunnableTask {
                 String line;
                 while ((line = bufferedReader.readLine()) != null) {
                     if (isStdErr) {
-                        log.warn(line);
+                        logger.warn(line);
                     } else {
-                        log.info(line);
+                        logger.info(line);
                     }
                 }
             } catch (IOException e) {

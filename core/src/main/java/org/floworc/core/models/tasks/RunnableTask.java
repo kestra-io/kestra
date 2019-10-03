@@ -1,5 +1,7 @@
 package org.floworc.core.models.tasks;
 
+import org.floworc.core.runners.RunContext;
+
 public interface RunnableTask {
-    Void run() throws Exception;
+    Void run(RunContext runContext) throws Exception;
 }

@@ -6,6 +6,7 @@ import lombok.Value;
 import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.runners.RunContext;
+import org.floworc.core.runners.RunOutput;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
@@ -18,24 +19,26 @@ public class Echo extends Task implements RunnableTask {
     private Level level = Level.INFO;
 
     @Override
-    public Void run(RunContext runContext) throws Exception {
+    public RunOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger(Echo.class);
 
+        String render = runContext.render(this.format);
+        
         switch (this.level) {
             case TRACE:
-                logger.trace(this.format);
+                logger.trace(render);
                 break;
             case DEBUG:
-                logger.debug(this.format);
+                logger.debug(render);
                 break;
             case INFO:
-                logger.info(this.format);
+                logger.info(render);
                 break;
             case WARN:
-                logger.warn(this.format);
+                logger.warn(render);
                 break;
             case ERROR:
-                logger.error(this.format);
+                logger.error(render);
                 break;
             default:
                 throw new IllegalArgumentException("Invalid log level '" + this.level + "'");

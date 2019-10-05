@@ -5,26 +5,15 @@ import org.floworc.core.queues.QueueInterface;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @Slf4j
 public class MemoryQueue<T> implements QueueInterface<T> {
     private Class<T> cls;
-    // private static ExecutorService poolExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    private static ExecutorService poolExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private static int threads = Runtime.getRuntime().availableProcessors();
-    private static ExecutorService poolExecutor = new ThreadPoolExecutor(
-        threads,
-        threads,
-        0L, TimeUnit.MILLISECONDS,
-        new LinkedBlockingQueue<>(),
-        new RejectedExecutionHandler() {
-            @Override
-            public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                log.info("sdfsdf");
-            }
-        }
-    );
 
     private Map<String, List<Consumer<T>>> consumers = new HashMap<>();
 

@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Value
 public class State {
@@ -35,6 +36,18 @@ public class State {
             this.histories.get(0).getDate(),
             this.histories.size() > 1 ? this.histories.get(this.histories.size() - 1).getDate() : Instant.now()
         );
+    }
+
+    public Instant startDate() {
+        return this.histories.get(0).getDate();
+    }
+
+    public Optional<Instant> endDate() {
+        if (!this.isTerninated()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(this.histories.get(this.histories.size() - 1).getDate());
     }
 
     public String humanDuration() {

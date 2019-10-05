@@ -20,6 +20,9 @@ public class WorkerTask {
     @NotNull
     private Task task;
 
+    @NotNull
+    private RunContext runContext;
+
     public Logger logger() {
         return LoggerFactory.getLogger(
             "flow." + this.getTaskRun().getFlowId() + "." +

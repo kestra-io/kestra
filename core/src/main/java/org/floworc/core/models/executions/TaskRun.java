@@ -8,8 +8,8 @@ import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.Task;
 
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Value
 @Builder
@@ -25,13 +25,14 @@ public class TaskRun {
     @NotNull
     private String taskId;
 
-    private Context context;
-
     @Wither
     private List<LogEntry> logs;
 
-    @Builder.Default
-    private List<MetricEntry> metrics = new ArrayList<>();
+    @Wither
+    private Map<String, Object> outputs;
+
+    @Wither
+    private List<MetricEntry> metrics;
 
     @NotNull
     private State state;
@@ -42,8 +43,8 @@ public class TaskRun {
             this.executionId,
             this.flowId,
             this.taskId,
-            this.context,
             this.logs,
+            this.outputs,
             this.metrics,
             this.state.withState(state)
         );

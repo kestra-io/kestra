@@ -12,6 +12,8 @@ import org.floworc.core.utils.Await;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -25,16 +27,27 @@ public class RunnerUtils {
     private FlowRepositoryInterface flowRepository;
 
     public Execution runOne(String flowId) throws TimeoutException {
+        return this.runOne(flowId, null, null);
+    }
+
+    public Execution runOne(String flowId, Map<String, Object> inputs, Duration duration) throws TimeoutException {
         return this.runOne(
             flowRepository
                 .findById(flowId)
-                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'"))
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+            inputs,
+            duration
         );
     }
 
-    private Execution runOne(Flow flow) throws TimeoutException {
+    private Execution runOne(Flow flow, Map<String, Object> inputs, Duration duration) throws TimeoutException {
+        if (duration == null) {
+            duration = Duration.ofSeconds(5);
+        }
+
         Execution execution = Execution.builder()
             .id(FriendlyId.createFriendlyId())
+            .inputs(inputs)
             .flowId(flow.getId())
             .state(new State())
             .build();
@@ -49,7 +62,7 @@ public class RunnerUtils {
 
         this.executionQueue.emit(execution);
 
-        Await.until(() -> receive.get() != null, 5 * 1000);
+        Await.until(() -> receive.get() != null, duration);
 
         cancel.run();
 

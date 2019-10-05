@@ -5,6 +5,7 @@ import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
+import org.floworc.core.models.tasks.Task;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 
@@ -91,12 +92,18 @@ public class Executor implements Runnable {
         this.executionQueue.emit(newExecution);
 
         // submit TaskRun
-        nexts.forEach(taskRun -> this.workerTaskQueue.emit(
-            WorkerTask.builder()
-                .taskRun(taskRun)
-                .task(flow.findTaskById(taskRun.getTaskId()))
-                .build()
-        ));
+        nexts.forEach(taskRun -> {
+                Task task = flow.findTaskById(taskRun.getTaskId());
+
+                this.workerTaskQueue.emit(
+                    WorkerTask.builder()
+                        .runContext(new RunContext(execution, taskRun, task))
+                        .taskRun(taskRun)
+                        .task(task)
+                        .build()
+                );
+            }
+        );
     }
 
     private void onEnd(Flow flow, Execution execution) {

@@ -7,10 +7,7 @@ import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.Task;
 
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Value
@@ -25,8 +22,7 @@ public class Execution {
     @Wither
     private List<TaskRun> taskRunList;
 
-    @Wither
-    private Context context;
+    private Map<String, Object> inputs;
 
     @NotNull
     private State state;
@@ -36,7 +32,7 @@ public class Execution {
             this.id,
             this.flowId,
             this.taskRunList,
-            this.context,
+            this.inputs,
             this.state.withState(state)
         );
     }
@@ -92,7 +88,7 @@ public class Execution {
             this.id,
             this.flowId,
             newTaskRunList,
-            this.context,
+            this.inputs,
             this.state
         );
     }

@@ -1,6 +1,7 @@
 
 package org.floworc.core.serializers;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -23,6 +24,7 @@ abstract public class JacksonMapper {
     private static ObjectMapper configure(ObjectMapper mapper) {
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .registerModule(new JavaTimeModule())
             .registerModule(new ParameterNamesModule());
     }

@@ -35,19 +35,24 @@ public class Worker implements Runnable {
 
             // run
             RunnableTask task = (RunnableTask) workerTask.getTask();
-            RunContext runContext = new RunContext();
+            RunContext runContext = workerTask.getRunContext();
+            RunOutput output = null;
             try {
-                task.run(runContext);
+                output = task.run(runContext);
                 state = State.Type.SUCCESS;
             } catch (Exception e) {
                 workerTask.logger().error("Failed task", e);
                 state = State.Type.FAILED;
             }
 
-            // save logs
-            workerTask = workerTask.withTaskRun(
-                workerTask.getTaskRun().withLogs(runContext.logs())
-            );
+            // save outputs
+            workerTask = workerTask
+                .withTaskRun(
+                    workerTask.getTaskRun()
+                        .withLogs(runContext.logs())
+                        .withMetrics(runContext.metrics())
+                        .withOutputs(output != null ? output.getOutputs() : null)
+                );
 
             // emit
             this.workerTaskResultQueue.emit(

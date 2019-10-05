@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -36,14 +37,14 @@ class KafkaRunnerTest {
 
     @Test
     void full() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("full");
+        Execution execution = runnerUtils.runOne("full", null, Duration.ofSeconds(15));
 
         assertThat(execution.getTaskRunList(), hasSize(13));
     }
 
     @Test
     void errors() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("errors");
+        Execution execution = runnerUtils.runOne("errors", null, Duration.ofSeconds(15));
 
         assertThat(execution.getTaskRunList(), hasSize(7));
     }

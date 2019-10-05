@@ -90,6 +90,8 @@ allprojects {
         compile "io.micronaut:micronaut-validation"
         compile "info.picocli:picocli"
         compile "io.micronaut.configuration:micronaut-picocli"
+        compile 'io.micronaut:micronaut-views'
+        compile 'com.github.jknack:handlebars:4.1.2'
 
         // test
         testCompile "org.junit.jupiter:junit-jupiter-api"

@@ -12,50 +12,62 @@ tasks:
 - id: 1st
   type: org.floworc.core.tasks.scripts.Bash
   commands:
-  - 'echo "first"'
+  - 'echo "{{ task.id }}"'
 
 - id: 2nd
-  type: org.floworc.core.tasks.debugs.Echo
-  format: second {{todo}}
+  type: org.floworc.core.tasks.debugs.Return
+  format: second {{ execution.id }}
 
 - id: 3rd
   type: org.floworc.core.tasks.debugs.Echo
-  format: third all optionnal args {{todo}}
+  format: third all optionnal args {{ outputs.2nd.return }}
   timeout: 1000
   retry:
     limit: 5
     type: CONSTANT
     interval: PT15M
+#
+#- id: 4th
+#  type: org.floworc.core.tasks.flows.Each
+#  values: [
+#    1,
+#    2,
+#    3
+#  ]
+#  tasks:
+#  - id: 4th - Each
+#    type: org.floworc.core.tasks.debugs.Echo
+#    format: each {{item}}
 
-- id: 4th
+- id: 5th
   type: org.floworc.core.tasks.flows.Parallel
   concurrent: 3
   tasks:
-  - id: 4th - 1st
+  - id: 5th - 1st
     type: org.floworc.core.tasks.scripts.Bash
     commands:
     - echo "4th - 1st {{id}}"
-  - id: 4th - 2nd
+  - id: 5th - 2nd
     type: org.floworc.core.tasks.scripts.Bash
     commands:
     - echo "4th - 2nd {{id}}"
-  - id: 4th - 3rd
+  - id: 5th - 3rd
     type: org.floworc.core.tasks.scripts.Bash
     commands:
     - echo "4th- 3rd {{id}}"
-  - id: 4th - 4th
+  - id: 5th - 4th
     type: org.floworc.core.tasks.flows.Parallel
     tasks:
-      - id: 4th - 4th - 1st
+      - id: 5th - 4th - 1st
         type: org.floworc.core.tasks.flows.Parallel
         tasks:
-        - id: 4th - 4th - 1st - 1st
+        - id: 5th - 4th - 1st - 1st
           type: org.floworc.core.tasks.flows.Parallel
           tasks:
-          - id: 4th - 4th - 1st - 1st - 1st
+          - id: 5th - 4th - 1st - 1st - 1st
             type: org.floworc.core.tasks.flows.Parallel
             tasks:
-            - id: 4th - 4th - 1st - 1st - 1st - last
+            - id: 5th - 4th - 1st - 1st - 1st - last
               type: org.floworc.core.tasks.scripts.Bash
               commands:
                 - echo "4th - 4th - 1st - 1st - 1st - last{{id}}"

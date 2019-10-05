@@ -23,10 +23,8 @@ public class ExecutionService {
     }
 
     public Optional<List<TaskRun>> getNexts(Execution execution, List<Task> tasks) {
-        if (tasks.size() == 0) {
-            throw new IllegalStateException("Invalid execution " + execution.getId() + " on flow " +
-                execution.getFlowId() + " with 0 task"
-            );
+        if (tasks == null || tasks.size() == 0) {
+            return Optional.empty();
         }
 
         // first one

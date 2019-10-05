@@ -1,0 +1,10 @@
+id: failed-first
+namespace: org.floworc.tests
+
+tasks:
+- id: 1st
+  type: org.floworc.core.tasks.debugs.Return
+  format: "{{missingVar}}"
+- id: 2nd
+  type: org.floworc.core.tasks.debugs.Return
+  format: Never Happen

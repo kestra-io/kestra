@@ -37,7 +37,10 @@ public class RunContext {
         .registerHelpers(LogHelper.class)
         .registerHelpers(StringHelpers.class)
         .registerHelpers(UnlessHelper.class)
-        .registerHelpers(WithHelper.class);
+        .registerHelpers(WithHelper.class)
+        .registerHelperMissing((context, options) -> {
+            throw new IllegalStateException("Missing variable: " + options.helperName);
+        });
 
     private Map<String, Object> variables;
 

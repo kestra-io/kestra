@@ -46,15 +46,15 @@ tasks:
   - id: 5th - 1st
     type: org.floworc.core.tasks.scripts.Bash
     commands:
-    - echo "4th - 1st {{id}}"
+    - echo "4th - 1st {{execution.id}}"
   - id: 5th - 2nd
     type: org.floworc.core.tasks.scripts.Bash
     commands:
-    - echo "4th - 2nd {{id}}"
+    - echo "4th - 2nd {{execution.id}}"
   - id: 5th - 3rd
     type: org.floworc.core.tasks.scripts.Bash
     commands:
-    - echo "4th- 3rd {{id}}"
+    - echo "4th- 3rd {{execution.id}}"
   - id: 5th - 4th
     type: org.floworc.core.tasks.flows.Parallel
     tasks:
@@ -70,7 +70,7 @@ tasks:
             - id: 5th - 4th - 1st - 1st - 1st - last
               type: org.floworc.core.tasks.scripts.Bash
               commands:
-                - echo "4th - 4th - 1st - 1st - 1st - last{{id}}"
+                - 'echo "4th - 4th - 1st - 1st - 1st - last : {{execution.id}}"'
 
 
 - id: lastte

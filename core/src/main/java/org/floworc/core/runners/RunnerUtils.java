@@ -1,8 +1,10 @@
 package org.floworc.core.runners;
 
 import com.devskiller.friendly_id.FriendlyId;
+import org.floworc.core.exceptions.MissingRequiredInput;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.flows.Flow;
+import org.floworc.core.models.flows.Input;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.queues.QueueFactoryInterface;
 import org.floworc.core.queues.QueueInterface;
@@ -13,9 +15,15 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 
 @Singleton
 public class RunnerUtils {
@@ -28,6 +36,59 @@ public class RunnerUtils {
 
     public Execution runOne(String flowId) throws TimeoutException {
         return this.runOne(flowId, null, null);
+    }
+
+    public Map<String, Object> typedInputs(String flowId, Map<String, String> in) {
+        Flow flow = flowRepository
+            .findById(flowId)
+            .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'"));
+
+        return flow
+            .getInputs()
+            .stream()
+            .map((Function<Input, Optional<AbstractMap.SimpleEntry<String, Object>>>) input -> {
+                String current = in.get(input.getName());
+
+                if (input.getRequired() && current == null) {
+                    throw new MissingRequiredInput("Missing required input value '" + input.getName() + "'");
+                }
+
+                if (!input.getRequired() && current == null) {
+                    return Optional.empty();
+                }
+
+                switch (input.getType()) {
+                    case STRING:
+                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                            input.getName(),
+                            current
+                        ));
+                    case INT:
+                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                            input.getName(),
+                            Integer.valueOf(current)
+                        ));
+                    case FLOAT:
+                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                            input.getName(),
+                            Float.valueOf(current)
+                        ));
+                    case DATETIME:
+                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                            input.getName(),
+                            Instant.parse(current)
+                        ));
+                    default:
+                        throw new MissingRequiredInput("Invalid input type '" + input.getType() + "' for '" + input.getName() + "'");
+                }
+            })
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    public Execution runOne(String flowId, Map<String, Object> inputs) throws TimeoutException {
+        return this.runOne(flowId, inputs, null);
     }
 
     public Execution runOne(String flowId, Map<String, Object> inputs, Duration duration) throws TimeoutException {

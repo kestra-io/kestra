@@ -1,6 +1,7 @@
 package org.floworc.cli.commands;
 
 import lombok.extern.slf4j.Slf4j;
+import org.floworc.core.exceptions.MissingRequiredInput;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.repositories.LocalFlowRepositoryLoader;
@@ -11,7 +12,9 @@ import picocli.CommandLine;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 @CommandLine.Command(
@@ -20,8 +23,14 @@ import java.util.concurrent.TimeoutException;
 )
 @Slf4j
 public class TestCommand implements Runnable {
-    @CommandLine.Parameters(description = "the flow file to test")
+    @CommandLine.Parameters(index = "0", description = "the flow file to test")
     private Path file;
+
+    @CommandLine.Parameters(index = "1..*", description = "the inputs to pass as key pair value")
+    private List<String> inputs;
+
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
 
     @Inject
     private MemoryRunner runner;
@@ -36,6 +45,16 @@ public class TestCommand implements Runnable {
     private RunnerUtils runnerUtils;
 
     public void run() {
+        Map<String, String> inputs = new HashMap<>();
+
+        for (int i = 0; i < this.inputs.size(); i=i+2) {
+            if (this.inputs.size() <= i + 1) {
+                throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid key pair value for inputs");
+            }
+
+            inputs.put(this.inputs.get(i), this.inputs.get(i+1));
+        }
+
         try {
             runner.run();
             repositoryLoader.load(file.toFile());
@@ -45,11 +64,15 @@ public class TestCommand implements Runnable {
                 throw new IllegalArgumentException("Too many flow found, need 1, found " + all.size());
             }
 
-            runnerUtils.runOne(all.get(0).getId());
+            runnerUtils.runOne(
+                all.get(0).getId(),
+                runnerUtils.typedInputs(all.get(0).getId(), inputs)
+            );
             runner.close();
+        } catch (MissingRequiredInput e) {
+            throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());
         } catch (IOException | TimeoutException e) {
             throw new IllegalStateException(e);
         }
-
     }
 }

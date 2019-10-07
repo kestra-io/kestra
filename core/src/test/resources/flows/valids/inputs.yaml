@@ -1,0 +1,29 @@
+id: inputs
+namespace: org.floworc.tests
+
+inputs:
+- name: string
+  type: STRING
+- name: optionnal
+  type: STRING
+  required: true
+- name: int
+  type: INT
+- name: float
+  type: FLOAT
+- name: instant
+  type: DATETIME
+
+tasks:
+- id: string
+  type: org.floworc.core.tasks.debugs.Return
+  format: "{{inputs.string}}"
+- id: int
+  type: org.floworc.core.tasks.debugs.Return
+  format: "{{inputs.int}}"
+- id: float
+  type: org.floworc.core.tasks.debugs.Return
+  format: "{{inputs.float}}"
+- id: instant
+  type: org.floworc.core.tasks.debugs.Return
+  format: "{{inputs.instant}}"

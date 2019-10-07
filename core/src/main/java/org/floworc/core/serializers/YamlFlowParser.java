@@ -1,9 +1,7 @@
 package org.floworc.core.serializers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.floworc.core.exceptions.InvalidFlowException;
 import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator;
 import org.floworc.core.models.flows.Flow;
 
@@ -29,7 +27,7 @@ public class YamlFlowParser {
         Set<ConstraintViolation<Flow>> violations = validator.validate(flow);
 
         if (violations.size() > 0) {
-            throw InvalidDefinitionException.of(violations);
+            throw InvalidFlowException.of(violations);
         }
 
         return flow;

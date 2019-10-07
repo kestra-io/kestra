@@ -1,5 +1,6 @@
 package org.floworc.core.serializers;
 
+import org.floworc.core.exceptions.InvalidFlowException;
 import org.junit.jupiter.api.Test;
 import org.floworc.core.Utils;
 import org.floworc.core.models.flows.Flow;
@@ -30,13 +31,13 @@ class YamlFlowParserTest {
 
     @Test
     void validation() throws IOException {
-        assertThrows(InvalidDefinitionException.class, () -> {
+        assertThrows(InvalidFlowException.class, () -> {
             Utils.parse("flows/invalids/invalid.yaml");
         });
 
         try {
             Utils.parse("flows/invalids/invalid.yaml");
-        } catch (InvalidDefinitionException e) {
+        } catch (InvalidFlowException e) {
             assertThat(e.getViolations().size(), is(3));
         }
     }

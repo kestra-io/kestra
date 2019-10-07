@@ -21,7 +21,7 @@ public class Flow {
     private String namespace;
 
     @Valid
-    private List<Inputs> inputs;
+    private List<Input> inputs;
 
     @Valid
     private List<Task> tasks;

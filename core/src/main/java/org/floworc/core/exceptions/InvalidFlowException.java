@@ -1,4 +1,4 @@
-package org.floworc.core.serializers;
+package org.floworc.core.exceptions;
 
 import lombok.Getter;
 import org.floworc.core.models.flows.Flow;
@@ -9,18 +9,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Getter
-public class InvalidDefinitionException extends IllegalArgumentException {
+public class InvalidFlowException extends IllegalArgumentException {
     private Set<ConstraintViolation<Flow>> violations;
 
-    private InvalidDefinitionException(String message, Set<ConstraintViolation<Flow>> violations) {
+    private InvalidFlowException(String message, Set<ConstraintViolation<Flow>> violations) {
         super(message);
         this.violations = violations;
     }
 
-    public static InvalidDefinitionException of(Set<ConstraintViolation<Flow>> violations) {
+    public static InvalidFlowException of(Set<ConstraintViolation<Flow>> violations) {
         List<String> errors = violations.stream().map(Object::toString).collect(Collectors.toList());
 
-        return new InvalidDefinitionException(
+        return new InvalidFlowException(
             "Invalid Flow definitions with errors: \n- " + String.join("\n- ", errors),
             violations
         );

@@ -18,5 +18,6 @@ public class Input {
         INT,
         FLOAT,
         DATETIME,
+        FILE
     }
 }

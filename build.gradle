@@ -1,7 +1,7 @@
 buildscript {
     ext {
-        micronautVersion = "1.2.3"
-        confluentVersion = "5.2.1"
+        micronautVersion = "1.2.4"
+        confluentVersion = "5.3.1"
         kafkaVersion = "2.3.0"
         avroVersion = "1.9.0"
         lombokVersion = "1.18.10"
@@ -10,7 +10,6 @@ buildscript {
 
 plugins {
     // micronaut
-    id "io.spring.dependency-management" version "1.0.6.RELEASE"
     id "java"
     id "net.ltgt.apt-eclipse" version "0.21"
     id "net.ltgt.apt-idea" version "0.21"
@@ -36,7 +35,7 @@ sourceCompatibility = 11
 
 dependencies {
     compile project(":cli")
-    testCompile project(":repository-memory")
+    testCompile project(":cli")
 }
 
 
@@ -58,16 +57,9 @@ allprojects {
     apply plugin:"java"
     apply plugin:"net.ltgt.apt-eclipse"
     apply plugin:"net.ltgt.apt-idea"
-    apply plugin:"io.spring.dependency-management"
 
     // test
     apply plugin:"com.adarshr.test-logger"
-
-    dependencyManagement {
-        imports {
-            mavenBom "io.micronaut:micronaut-bom:" + micronautVersion
-        }
-    }
 
     configurations {
         // for dependencies that are needed for development only
@@ -77,29 +69,33 @@ allprojects {
     // dependencies
     dependencies {
         // utils
+        annotationProcessor "org.projectlombok:lombok:" + lombokVersion
         runtime "ch.qos.logback:logback-classic:1.2.3"
         compile group: 'com.google.guava', name: 'guava', version: '27.1-jre'
         compileOnly 'org.projectlombok:lombok:' + lombokVersion
-        annotationProcessor "org.projectlombok:lombok:" + lombokVersion
-
-        // micronaut
-        annotationProcessor "io.micronaut:micronaut-inject-java"
-        annotationProcessor "io.micronaut:micronaut-validation"
-        compile "io.micronaut:micronaut-runtime"
-        compile "io.micronaut:micronaut-inject"
-        compile "io.micronaut:micronaut-validation"
-        compile "info.picocli:picocli"
-        compile "io.micronaut.configuration:micronaut-picocli"
-        compile 'io.micronaut:micronaut-views'
         compile 'com.github.jknack:handlebars:4.1.2'
 
+        // micronaut
+        annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+        annotationProcessor "io.micronaut:micronaut-inject-java"
+        annotationProcessor "io.micronaut:micronaut-validation"
+        implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+        implementation "io.micronaut:micronaut-inject"
+        implementation "io.micronaut:micronaut-validation"
+        implementation "io.micronaut:micronaut-runtime"
+        compile 'io.micronaut:micronaut-views'
+
+
         // test
-        testCompile "org.junit.jupiter:junit-jupiter-api"
-        testRuntime "org.junit.jupiter:junit-jupiter-engine"
-        testRuntime "org.junit.jupiter:junit-jupiter-params"
+        testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
         testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-        testCompile "io.micronaut.test:micronaut-test-junit5"
-        testCompile "io.micronaut:micronaut-inject-java"
+        testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+        testImplementation "org.junit.jupiter:junit-jupiter-api"
+        testImplementation "io.micronaut.test:micronaut-test-junit5"
+        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
+        testRuntime "org.junit.jupiter:junit-jupiter-params"
+
+        // hamcrest
         testImplementation 'org.hamcrest:hamcrest:2.1'
         testImplementation 'org.hamcrest:hamcrest-library:2.1'
         testCompile group: 'org.exparity', name: 'hamcrest-date', version: '2.0.7'

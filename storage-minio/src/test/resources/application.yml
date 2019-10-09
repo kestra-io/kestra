@@ -1,0 +1,10 @@
+floworc:
+  storage:
+    type: minio
+    minio:
+      endpoint: 127.8.9.13
+      port: 9000
+      accessKey: AKIAIOSFODNN7EXAMPLE
+      secretKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      bucket: "unittest" #"${random.shortuuid}"
+

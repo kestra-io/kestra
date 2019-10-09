@@ -18,4 +18,5 @@ dependencies {
     // test
     testCompile project(':repository-memory').sourceSets.main.output
     testCompile project(':runner-memory').sourceSets.main.output
+    testCompile project(':storage-local').sourceSets.main.output
 }

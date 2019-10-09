@@ -9,11 +9,13 @@ import org.floworc.core.models.flows.State;
 import org.floworc.core.queues.QueueFactoryInterface;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.repositories.FlowRepositoryInterface;
+import org.floworc.core.storages.StorageInterface;
 import org.floworc.core.utils.Await;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap;
@@ -21,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -34,15 +37,14 @@ public class RunnerUtils {
     @Inject
     private FlowRepositoryInterface flowRepository;
 
+    @Inject
+    private StorageInterface storageInterface;
+
     public Execution runOne(String flowId) throws TimeoutException {
         return this.runOne(flowId, null, null);
     }
 
-    public Map<String, Object> typedInputs(String flowId, Map<String, String> in) {
-        Flow flow = flowRepository
-            .findById(flowId)
-            .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'"));
-
+    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, String> in) {
         return flow
             .getInputs()
             .stream()
@@ -63,21 +65,35 @@ public class RunnerUtils {
                             input.getName(),
                             current
                         ));
+
                     case INT:
                         return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
                             input.getName(),
                             Integer.valueOf(current)
                         ));
+
                     case FLOAT:
                         return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
                             input.getName(),
                             Float.valueOf(current)
                         ));
+
                     case DATETIME:
                         return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
                             input.getName(),
                             Instant.parse(current)
                         ));
+
+                    case FILE:
+                        try {
+                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                                input.getName(),
+                                storageInterface.from(flow, execution, input, new File(current))
+                            ));
+                        } catch (Exception e) {
+                            throw new MissingRequiredInput("Invalid input for '" + input.getName() + "'", e);
+                        }
+
                     default:
                         throw new MissingRequiredInput("Invalid input type '" + input.getType() + "' for '" + input.getName() + "'");
                 }
@@ -87,11 +103,11 @@ public class RunnerUtils {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    public Execution runOne(String flowId, Map<String, Object> inputs) throws TimeoutException {
+    public Execution runOne(String flowId, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
         return this.runOne(flowId, inputs, null);
     }
 
-    public Execution runOne(String flowId, Map<String, Object> inputs, Duration duration) throws TimeoutException {
+    public Execution runOne(String flowId, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
         return this.runOne(
             flowRepository
                 .findById(flowId)
@@ -101,29 +117,34 @@ public class RunnerUtils {
         );
     }
 
-    private Execution runOne(Flow flow, Map<String, Object> inputs, Duration duration) throws TimeoutException {
+    private Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
         if (duration == null) {
             duration = Duration.ofSeconds(5);
         }
 
         Execution execution = Execution.builder()
             .id(FriendlyId.createFriendlyId())
-            .inputs(inputs)
             .flowId(flow.getId())
             .state(new State())
             .build();
 
+        if (inputs != null) {
+            execution = execution.withInputs(inputs.apply(flow, execution));
+        }
+
+        final String executionId = execution.getId();
+
         AtomicReference<Execution> receive = new AtomicReference<>();
 
         Runnable cancel = this.executionQueue.receive(StandAloneRunner.class, current -> {
-            if (current.getId().equals(execution.getId()) && current.getState().isTerninated()) {
+            if (current.getId().equals(executionId) && current.getState().isTerninated()) {
                 receive.set(current);
             }
         });
 
         this.executionQueue.emit(execution);
 
-        Await.until(() -> receive.get() != null, duration);
+        Await.until(() -> receive.get() != null, null, duration);
 
         cancel.run();
 

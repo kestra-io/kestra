@@ -13,5 +13,6 @@ out/
 .classpath
 .attach*
 docker-compose.override.yml
+.env
 
 cli/src/main/resources/application-override.yml

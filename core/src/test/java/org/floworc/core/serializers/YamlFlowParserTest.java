@@ -21,12 +21,12 @@ class YamlFlowParserTest {
         assertThat(flow.getId(), is("full"));
         assertThat(flow.getTasks().size(), is(5));
 
-        // third with all optionnals
-        Task optionnals = flow.getTasks().get(2);
-        assertThat(optionnals.getTimeout(), is(1000));
-        assertThat(optionnals.getRetry().getInterval().getSeconds(), is(900L));
-        assertThat(optionnals.getRetry().getType(), is(RetryIntervalType.CONSTANT));
-        assertThat(optionnals.getRetry().getLimit(), is(5));
+        // third with all optionals
+        Task optionals = flow.getTasks().get(2);
+        assertThat(optionals.getTimeout(), is(1000));
+        assertThat(optionals.getRetry().getInterval().getSeconds(), is(900L));
+        assertThat(optionals.getRetry().getType(), is(RetryIntervalType.CONSTANT));
+        assertThat(optionals.getRetry().getLimit(), is(5));
     }
 
     @Test

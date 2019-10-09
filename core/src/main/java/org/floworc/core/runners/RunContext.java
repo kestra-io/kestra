@@ -23,9 +23,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 @NoArgsConstructor
@@ -134,7 +134,7 @@ public class RunContext {
     }
 
     public static class ContextAppender extends AppenderBase<ILoggingEvent> {
-        private final List<ILoggingEvent> events = new ArrayList<>();
+        private final ConcurrentLinkedQueue<ILoggingEvent> events = new ConcurrentLinkedQueue<>();
 
         @Override
         public void start() {

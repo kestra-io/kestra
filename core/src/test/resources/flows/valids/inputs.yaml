@@ -4,15 +4,17 @@ namespace: org.floworc.tests
 inputs:
 - name: string
   type: STRING
-- name: optionnal
+- name: optional
   type: STRING
-  required: true
+  required: false
 - name: int
   type: INT
 - name: float
   type: FLOAT
 - name: instant
   type: DATETIME
+- name: file
+  type: FILE
 
 tasks:
 - id: string
@@ -27,3 +29,12 @@ tasks:
 - id: instant
   type: org.floworc.core.tasks.debugs.Return
   format: "{{inputs.instant}}"
+- id: file-content
+  type: org.floworc.core.tasks.debugs.Return
+  format: "{{inputs.file.content}}"
+- id: file
+  type: org.floworc.core.tasks.debugs.Return
+  format: "{{inputs.file}}"
+- id: file-uri
+  type: org.floworc.core.tasks.debugs.Return
+  format: "{{inputs.file.uri}}"

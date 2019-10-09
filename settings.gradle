@@ -6,5 +6,9 @@ include 'core'
 include 'runner-memory'
 include 'runner-kafka'
 
+include 'storage-local'
+include 'storage-gcs'
+include 'storage-minio'
+
 include 'repository-memory'
 

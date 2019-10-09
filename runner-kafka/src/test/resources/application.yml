@@ -1,6 +1,10 @@
 floworc:
   queue:
     type: kafka
+  storage:
+    type: local
+    local:
+      base-path: /tmp/unittest
 
   kafka:
     client:
@@ -26,7 +30,7 @@ floworc:
         properties:
           processing.guarantee: "exactly_once"
           acks: "all"
-          state.dir: "/tmp/floworc/kafka/state"
+          state.dir: "/tmp/"
 
     topics:
       org-floworc-core-models-executions-execution:

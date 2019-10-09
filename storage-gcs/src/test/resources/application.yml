@@ -1,0 +1,6 @@
+floworc:
+  storage:
+    type: gcs
+    gcs:
+      bucket: "floworc-unit-test"
+

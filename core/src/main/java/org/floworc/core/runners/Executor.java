@@ -92,18 +92,17 @@ public class Executor implements Runnable {
         this.executionQueue.emit(newExecution);
 
         // submit TaskRun
-        nexts.forEach(taskRun -> {
-                Task task = flow.findTaskById(taskRun.getTaskId());
+        for (TaskRun taskRun: nexts) {
+            Task task = flow.findTaskById(taskRun.getTaskId());
 
-                this.workerTaskQueue.emit(
-                    WorkerTask.builder()
-                        .runContext(new RunContext(execution, taskRun, task))
-                        .taskRun(taskRun)
-                        .task(task)
-                        .build()
-                );
-            }
-        );
+            this.workerTaskQueue.emit(
+                WorkerTask.builder()
+                    .runContext(new RunContext(execution, taskRun, task))
+                    .taskRun(taskRun)
+                    .task(task)
+                    .build()
+            );
+        }
     }
 
     private void onEnd(Flow flow, Execution execution) {

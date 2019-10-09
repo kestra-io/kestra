@@ -66,7 +66,9 @@ public class TestCommand implements Runnable {
 
             runnerUtils.runOne(
                 all.get(0).getId(),
-                runnerUtils.typedInputs(all.get(0).getId(), inputs)
+                (flow, execution) -> {
+                    return runnerUtils.typedInputs(flow, execution, inputs);
+                }
             );
             runner.close();
         } catch (MissingRequiredInput e) {

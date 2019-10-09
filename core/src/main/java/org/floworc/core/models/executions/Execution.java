@@ -22,6 +22,7 @@ public class Execution {
     @Wither
     private List<TaskRun> taskRunList;
 
+    @Wither
     private Map<String, Object> inputs;
 
     @NotNull
@@ -37,6 +38,19 @@ public class Execution {
         );
     }
 
+    public TaskRun findTaskRunByTaskId(String id) {
+        Optional<TaskRun> find = this.taskRunList
+            .stream()
+            .filter(taskRun -> taskRun.getTaskId().equals(id))
+            .findFirst();
+
+        if (find.isEmpty()) {
+            throw new IllegalArgumentException("Can't find taskrun with task id '" + id + "' on execution '" + this.id + "'");
+        }
+
+        return find.get();
+    }
+
     public TaskRun findTaskRunById(String id) {
         Optional<TaskRun> find = this.taskRunList
             .stream()
@@ -44,7 +58,7 @@ public class Execution {
             .findFirst();
 
         if (find.isEmpty()) {
-            throw new IllegalArgumentException("Can't find taskrun with id '" + id + "' on execution '" + this.id + "'");
+            throw new IllegalArgumentException("Can't find taskrun with taskrun id '" + id + "' on execution '" + this.id + "'");
         }
 
         return find.get();

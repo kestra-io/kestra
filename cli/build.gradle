@@ -20,5 +20,6 @@ dependencies {
     compile project(":storage-gcs")
     compile project(":storage-minio")
 
+    compile project(":task-avro")
     compile project(":task-gcp")
 }

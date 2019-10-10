@@ -1,0 +1,24 @@
+{
+    "name": "insurance",
+    "type": "record",
+    "fields": [
+        {"name":"policyID", "type":"string"},
+        {"name":"statecode", "type":"string"},
+        {"name":"county", "type":"string"},
+        {"name":"eq_site_limit", "type":"string"},
+        {"name":"hu_site_limit", "type":"string"},
+        {"name":"fl_site_limit", "type":"string"},
+        {"name":"fr_site_limit", "type":"string"},
+        {"name":"tiv_2011", "type":"string"},
+        {"name":"tiv_2012", "type":"string"},
+        {"name":"eq_site_deductible", "type":"string"},
+        {"name":"hu_site_deductible", "type":"string"},
+        {"name":"fl_site_deductible", "type":"string"},
+        {"name":"fr_site_deductible", "type":"string"},
+        {"name":"point_latitude", "type":"string"},
+        {"name":"point_longitude", "type":"string"},
+        {"name":"line", "type":"string"},
+        {"name":"construction", "type":"string"},
+        {"name":"point_granularity", "type":["null","string"]}
+    ]
+}

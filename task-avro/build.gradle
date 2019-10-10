@@ -1,0 +1,14 @@
+buildscript {
+    ext {
+        avroVersion = "1.9.0"
+    }
+}
+
+sourceCompatibility = 11
+
+dependencies {
+    compile project(":core")
+
+    compile group: "org.apache.avro", name: "avro", version: avroVersion
+    compile 'de.siegmar:fastcsv:1.0.3'
+}

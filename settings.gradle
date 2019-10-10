@@ -12,4 +12,5 @@ include 'storage-minio'
 
 include 'repository-memory'
 
+include 'task-avro'
 include 'task-gcp'

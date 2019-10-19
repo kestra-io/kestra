@@ -1,0 +1,9 @@
+sourceCompatibility = 11
+
+dependencies {
+    compile project(":core")
+    compile 'com.google.cloud:google-cloud-bigquery:1.96.0'
+    compile 'com.google.cloud:google-cloud-storage:1.96.0'
+
+    testCompile project(':core').sourceSets.test.output
+}

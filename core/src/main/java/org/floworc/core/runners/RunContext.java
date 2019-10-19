@@ -6,6 +6,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import com.github.jknack.handlebars.EscapingStrategy;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 @Getter
 public class RunContext {
     private static Handlebars handlebars = new Handlebars()
+        .with(EscapingStrategy.NOOP)
         .registerHelpers(ConditionalHelpers.class)
         .registerHelpers(EachHelper.class)
         .registerHelpers(LogHelper.class)

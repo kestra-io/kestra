@@ -19,4 +19,6 @@ dependencies {
     compile project(":storage-local")
     compile project(":storage-gcs")
     compile project(":storage-minio")
+
+    compile project(":task-gcp")
 }

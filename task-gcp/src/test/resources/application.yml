@@ -1,0 +1,4 @@
+floworc:
+  tasks:
+    gcs:
+      bucket: "floworc-unit-test"

@@ -1,8 +1,8 @@
 package org.floworc.core.tasks.debugs;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.Value;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.runners.RunContext;
@@ -10,12 +10,16 @@ import org.floworc.core.runners.RunOutput;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
+@SuperBuilder
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@Value
+@Getter
+@FieldDefaults(level= AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Echo extends Task implements RunnableTask {
     private String format;
 
+    @Builder.Default
     private Level level = Level.INFO;
 
     @Override

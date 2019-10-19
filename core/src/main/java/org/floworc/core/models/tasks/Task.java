@@ -1,7 +1,9 @@
 package org.floworc.core.models.tasks;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.Data;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.apache.avro.reflect.Nullable;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
@@ -12,7 +14,11 @@ import java.util.List;
 import java.util.Optional;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true)
-@Data
+@SuperBuilder
+@Getter
+@FieldDefaults(level= AccessLevel.PROTECTED)
+@AllArgsConstructor
+@NoArgsConstructor
 abstract public class Task {
     @NotNull
     private String id;

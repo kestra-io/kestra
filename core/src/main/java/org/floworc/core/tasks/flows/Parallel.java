@@ -1,10 +1,8 @@
 package org.floworc.core.tasks.flows;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.tasks.FlowableTask;
 import org.floworc.core.models.tasks.Task;
@@ -14,10 +12,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@SuperBuilder
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@Data
-@Slf4j
+@Getter
+@FieldDefaults(level= AccessLevel.PROTECTED)
+@AllArgsConstructor
+@NoArgsConstructor
 public class Parallel extends Task implements FlowableTask {
     private Integer concurrent;
 

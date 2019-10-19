@@ -1,16 +1,17 @@
 package org.floworc.core.tasks.flows;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
+@SuperBuilder
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@Value
-@Slf4j
+@Getter
+@FieldDefaults(level= AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Each extends Parallel {
     private List<String> values;
 }

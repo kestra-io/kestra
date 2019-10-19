@@ -1,9 +1,8 @@
 package org.floworc.core.tasks.scripts;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.runners.RunContext;
@@ -18,10 +17,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@SuperBuilder
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-@Value
-@Slf4j
+@Getter
+@FieldDefaults(level= AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class Bash extends Task implements RunnableTask {
     private String[] commands;
 

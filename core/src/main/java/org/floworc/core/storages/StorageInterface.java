@@ -1,8 +1,11 @@
 package org.floworc.core.storages;
 
 import org.floworc.core.models.executions.Execution;
+import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.Input;
+import org.floworc.core.models.tasks.Task;
+import org.floworc.core.utils.Slugify;
 
 import java.io.*;
 import java.net.URI;
@@ -16,11 +19,11 @@ public interface StorageInterface {
 
     default StorageObject from(Flow flow, Execution execution, Input input, File file) throws IOException {
         try {
-            URI uri = new URI(String.join(
+            URI uri = new URI("/" + String.join(
                 "/",
                 Arrays.asList(
                     flow.getNamespace().replace(".", "/"),
-                    flow.getId(),
+                    Slugify.of(flow.getId()),
                     "executions",
                     execution.getId(),
                     "inputs",
@@ -32,6 +35,25 @@ public interface StorageInterface {
             return this.put(uri, new FileInputStream(file));
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    static URI outputPrefix(Flow flow, Task task, Execution execution, TaskRun taskRun)  {
+        try {
+            return new URI(String.join(
+                "/",
+                Arrays.asList(
+                    flow.getNamespace().replace(".", "/"),
+                    Slugify.of(flow.getId()),
+                    "executions",
+                    execution.getId(),
+                    "tasks",
+                    Slugify.of(task.getId()),
+                    taskRun.getId()
+                )
+            ));
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
         }
     }
 }

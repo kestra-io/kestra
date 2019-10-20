@@ -24,11 +24,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     private URI getUri(URI uri) {
-        try {
-            return new URI(this.config.getBasePath() + File.separator + uri.toString());
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
-        }
+        return URI.create(this.config.getBasePath() + File.separator + uri.getPath());
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -36,13 +32,9 @@ public class LocalStorage implements StorageInterface {
         File file;
 
         if (append != null) {
-            try {
-                URI uri = new URI(config.getBasePath().toString() + File.separator + append.toString());
-                Path path = Paths.get(uri);
-                file = path.getParent().toFile();
-            } catch (URISyntaxException e) {
-                throw new IllegalArgumentException(e);
-            }
+            URI uri = URI.create(config.getBasePath().toString() + File.separator + append.toString());
+            Path path = Paths.get(uri);
+            file = path.getParent().toFile();
         } else {
             file = new File(config.getBasePath());
         }
@@ -72,6 +64,8 @@ public class LocalStorage implements StorageInterface {
         outStream.close();
         data.close();
 
-        return new StorageObject(this, uri);
+        URI result = URI.create("floworc://" + uri.getPath());
+
+        return new StorageObject(this, result);
     }
 }

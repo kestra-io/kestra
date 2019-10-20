@@ -1,17 +1,17 @@
 package org.floworc.task.avro;
 
+import com.google.common.collect.ImmutableMap;
 import de.siegmar.fastcsv.reader.CsvParser;
 import de.siegmar.fastcsv.reader.CsvReader;
 import de.siegmar.fastcsv.reader.CsvRow;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableOnSubscribe;
+import io.reactivex.Single;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.generic.GenericData;
@@ -22,54 +22,72 @@ import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.runners.RunContext;
 import org.floworc.core.runners.RunOutput;
-import org.floworc.core.storages.StorageObject;
 
+import javax.validation.constraints.NotNull;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStreamReader;
+import java.net.URI;
 
+@SuperBuilder
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @Value
 @Slf4j
 public class CsvToAvro extends Task implements RunnableTask {
-    private File source;
+    @NotNull
+    private URI source;
+
+    @NotNull
     private Schema schema;
 
-    private Boolean header;
-    private Character fieldSeparator;
-    private Character textDelimiter;
-    private Boolean skipEmptyRows;
+    @Builder.Default
+    private Boolean header = true;
+
+    @Builder.Default
+    private Character fieldSeparator = ",".charAt(0);
+
+    @Builder.Default
+    private Character textDelimiter = "\"".charAt(0);
+
+    @Builder.Default
+    private Boolean skipEmptyRows = false;
 
     @Override
     public RunOutput run(RunContext runContext) throws Exception {
-        CsvReader csvReader = this.getReader();
-        CsvParser csvParser = csvReader.parse(source, StandardCharsets.UTF_8);
+        // reader
+        CsvReader csvReader = this.csvReader();
+        CsvParser csvParser = csvReader.parse(new InputStreamReader(runContext.uriToInputStream(source)));
 
-        BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream("fileName"));
+        // temp file
+        File tempFile = File.createTempFile(this.getClass().getSimpleName().toLowerCase() + "_", ".avro");
+        BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile));
+
+        // avro writer
         DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(schema);
         DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
         dataFileWriter.create(schema, output);
 
-        //noinspection ResultOfMethodCallIgnored
-        Flowable
+        // convert
+        Flowable<GenericData.Record> flowable = Flowable
             .create(this.nextRow(csvParser), BackpressureStrategy.BUFFER)
             .observeOn(Schedulers.computation())
             .map(this.convertToAvro())
             .observeOn(Schedulers.io())
-            .subscribe(
-                dataFileWriter::append,
-                error -> {
-                    throw new RuntimeException(error);
-                },
-                () -> {
-                    dataFileWriter.close();
-                    csvParser.close();
-                }
-            );
+            .doOnNext(dataFileWriter::append)
+            .doOnComplete(() -> {
+                dataFileWriter.close();
+                csvParser.close();
+            });
 
-        return null;
+        // metrics & finalize
+        Single<Long> count = flowable.count();
+        Long lineCount = count.blockingGet();
+
+        return RunOutput.builder()
+            .outputs(ImmutableMap.of("uri", runContext.putFile(tempFile).getUri()))
+            .build();
     }
 
     private Function<CsvRow, GenericData.Record> convertToAvro() {
@@ -95,7 +113,7 @@ public class CsvToAvro extends Task implements RunnableTask {
         };
     }
 
-    private CsvReader getReader() {
+    private CsvReader csvReader() {
         CsvReader csvReader = new CsvReader();
 
         if (this.header != null) {

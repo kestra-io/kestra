@@ -97,7 +97,7 @@ public class Executor implements Runnable {
 
             this.workerTaskQueue.emit(
                 WorkerTask.builder()
-                    .runContext(new RunContext(execution, taskRun, task))
+                    .runContext(new RunContext(flow, task, execution, taskRun))
                     .taskRun(taskRun)
                     .task(task)
                     .build()

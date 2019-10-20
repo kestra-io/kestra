@@ -5,6 +5,3 @@ floworc:
     type: local
     local:
       base-path: /tmp/unittest
-  tasks:
-    gcs:
-      bucket: "floworc-unit-test"

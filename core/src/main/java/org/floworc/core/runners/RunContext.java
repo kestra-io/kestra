@@ -12,16 +12,22 @@ import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Wither;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.LogEntry;
 import org.floworc.core.models.executions.MetricEntry;
 import org.floworc.core.models.executions.TaskRun;
+import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.tasks.Task;
+import org.floworc.core.storages.StorageInterface;
+import org.floworc.core.storages.StorageObject;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.io.*;
+import java.net.URI;
 import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.List;
@@ -29,6 +35,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 @NoArgsConstructor
 @Getter
 public class RunContext {
@@ -44,6 +51,11 @@ public class RunContext {
             throw new IllegalStateException("Missing variable: " + options.helperName);
         });
 
+    @Wither
+    private StorageInterface storageInterface;
+
+    private URI storageOutputPrefix;
+
     private Map<String, Object> variables;
 
     private List<MetricEntry> metrics;
@@ -52,18 +64,22 @@ public class RunContext {
 
     private Logger logger;
 
-    public RunContext(Execution execution, TaskRun taskRun, Task task) {
+
+    public RunContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
+        this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
+
         ImmutableMap.Builder<String, Object> variblesBuilder = ImmutableMap.<String, Object>builder()
-            .put("execution", ImmutableMap.of(
-                "id", execution.getId(),
-                "startDate", execution.getState().startDate()
-            ))
             .put("flow", ImmutableMap.of(
-                "id", execution.getFlowId()
+                "id", flow.getId(),
+                "namespace", flow.getNamespace()
             ))
             .put("task", ImmutableMap.of(
                 "id", task.getId(),
                 "type", task.getType()
+            ))
+            .put("execution", ImmutableMap.of(
+                "id", execution.getId(),
+                "startDate", execution.getState().startDate()
             ))
             .put("taskrun", ImmutableMap.of(
                 "id", taskRun.getId(),
@@ -90,7 +106,9 @@ public class RunContext {
     }
 
     @VisibleForTesting
-    public RunContext(Map<String, Object> variables) {
+    public RunContext(StorageInterface storageInterface, Map<String, Object> variables) {
+        this.storageInterface = storageInterface;
+        this.storageOutputPrefix = URI.create("");
         this.variables = variables;
     }
 
@@ -129,6 +147,25 @@ public class RunContext {
                 .build()
             )
             .collect(Collectors.toList());
+    }
+
+    public InputStream uriToInputStream(URI uri) throws FileNotFoundException {
+        if (uri.getScheme().equals("floworc")) {
+            return this.storageInterface.get(uri);
+        }
+
+        if (uri.getScheme().equals("file")) {
+            return new FileInputStream(uri.toString());
+        }
+
+        throw new IllegalArgumentException("Invalid scheme for uri '" + uri + "'");
+    }
+
+    public StorageObject putFile(File file) throws IOException {
+        URI uri = URI.create(this.storageOutputPrefix.toString());
+        URI resolve = uri.resolve(uri.getPath() + "/" + file.getName());
+
+        return this.storageInterface.put(resolve, new FileInputStream(file));
     }
 
     public List<MetricEntry> metrics() {

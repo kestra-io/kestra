@@ -85,7 +85,7 @@ class InputsTest extends AbstractMemoryRunnerTest {
         Map<String, Object> typeds = typedInputs(this.inputs);
         StorageObject file = (StorageObject) typeds.get("file");
 
-        assertThat(file.getUri(), is(new URI("org/floworc/tests/inputs/executions/test/inputs/file/application.yml")));
+        assertThat(file.getUri(), is(new URI("floworc:///org/floworc/tests/inputs/executions/test/inputs/file/application.yml")));
         assertThat(file.getClass(), is(StorageObject.class));
         assertThat(
             file.getContent(),
@@ -109,7 +109,7 @@ class InputsTest extends AbstractMemoryRunnerTest {
         Arrays.asList("file-uri", "file").forEach(o ->
             assertThat(
                 (String) execution.findTaskRunByTaskId(o).getOutputs().get("return"),
-                matchesRegex("org/floworc/tests/inputs/executions/.*/inputs/file/application.yml")
+                matchesRegex("floworc:///org/floworc/tests/inputs/executions/.*/inputs/file/application.yml")
             )
         );
     }

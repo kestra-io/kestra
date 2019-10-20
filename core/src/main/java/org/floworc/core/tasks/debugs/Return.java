@@ -11,11 +11,10 @@ import org.floworc.core.runners.RunOutput;
 import org.slf4j.Logger;
 
 @SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@ToString
+@EqualsAndHashCode
 @Getter
-@FieldDefaults(level= AccessLevel.PROTECTED)
-@AllArgsConstructor
+@NoArgsConstructor
 public class Return extends Task implements RunnableTask {
     private String format;
 

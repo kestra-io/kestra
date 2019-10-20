@@ -13,11 +13,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@ToString
+@EqualsAndHashCode
 @Getter
-@FieldDefaults(level= AccessLevel.PROTECTED)
-@AllArgsConstructor
 @NoArgsConstructor
 public class Parallel extends Task implements FlowableTask {
     private Integer concurrent;

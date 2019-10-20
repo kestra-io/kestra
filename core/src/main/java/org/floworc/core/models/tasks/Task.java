@@ -16,21 +16,19 @@ import java.util.Optional;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true)
 @SuperBuilder
 @Getter
-@FieldDefaults(level= AccessLevel.PROTECTED)
-@AllArgsConstructor
 @NoArgsConstructor
 abstract public class Task {
     @NotNull
-    private String id;
+    protected String id;
 
-    private String type;
+    protected String type;
 
     @Nullable
-    private Retry retry;
+    protected Retry retry;
 
-    private int timeout;
+    protected int timeout;
 
-    private List<Task> errors;
+    protected List<Task> errors;
 
     public List<TaskRun> toTaskRun(Execution execution) {
         return Collections.singletonList(TaskRun.of(execution, this));

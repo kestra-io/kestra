@@ -31,10 +31,10 @@ import java.io.InputStreamReader;
 import java.net.URI;
 
 @SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
-@Value
-@Slf4j
+@ToString
+@EqualsAndHashCode
+@Getter
+@NoArgsConstructor
 public class CsvToAvro extends Task implements RunnableTask {
     @NotNull
     private URI source;

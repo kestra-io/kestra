@@ -7,11 +7,10 @@ import lombok.experimental.SuperBuilder;
 import java.util.List;
 
 @SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@ToString
+@EqualsAndHashCode
 @Getter
-@FieldDefaults(level= AccessLevel.PROTECTED)
-@AllArgsConstructor
+@NoArgsConstructor
 public class Each extends Parallel {
     private List<String> values;
 }

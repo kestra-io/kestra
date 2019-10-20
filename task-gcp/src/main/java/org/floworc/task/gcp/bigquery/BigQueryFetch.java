@@ -23,11 +23,10 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@ToString
+@EqualsAndHashCode
 @Getter
-@FieldDefaults(level= AccessLevel.PROTECTED)
-@AllArgsConstructor
+@NoArgsConstructor
 public class BigQueryFetch extends Task implements RunnableTask {
     private String sql;
     @Builder.Default
@@ -35,6 +34,7 @@ public class BigQueryFetch extends Task implements RunnableTask {
     private List<String> positionalParameters;
     private Map<String, String> namedParameters;
 
+    @Builder.Default
     private transient BigQuery connection = new BigQueryConnection().of();
 
     @Override

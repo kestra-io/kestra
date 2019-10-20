@@ -10,11 +10,10 @@ import java.util.List;
 import java.util.Map;
 
 @SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@ToString
+@EqualsAndHashCode
 @Getter
-@FieldDefaults(level= AccessLevel.PROTECTED)
-@AllArgsConstructor
+@NoArgsConstructor
 public class Switch extends Task implements FlowableTask {
     private Map<String, List<Task>> cases;
 

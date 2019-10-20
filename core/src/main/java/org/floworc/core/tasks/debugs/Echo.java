@@ -11,11 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
 @SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@ToString
+@EqualsAndHashCode
 @Getter
-@FieldDefaults(level= AccessLevel.PROTECTED)
-@AllArgsConstructor
+@NoArgsConstructor
 public class Echo extends Task implements RunnableTask {
     private String format;
 

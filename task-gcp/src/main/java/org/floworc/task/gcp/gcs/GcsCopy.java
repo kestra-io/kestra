@@ -16,17 +16,18 @@ import org.slf4j.Logger;
 import java.net.URI;
 
 @SuperBuilder
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
+@ToString
+@EqualsAndHashCode
 @Getter
-@FieldDefaults(level= AccessLevel.PROTECTED)
-@AllArgsConstructor
+@NoArgsConstructor
 public class GcsCopy extends Task implements RunnableTask {
     private String from;
     private String to;
+
     @Builder.Default
     private boolean delete = false;
 
+    @Builder.Default
     private transient GcsConnection gcsConnection = new GcsConnection();
 
     @Override

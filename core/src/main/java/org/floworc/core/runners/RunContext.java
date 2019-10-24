@@ -64,7 +64,6 @@ public class RunContext {
 
     private Logger logger;
 
-
     public RunContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
 

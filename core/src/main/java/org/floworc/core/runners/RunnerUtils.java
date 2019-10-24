@@ -136,7 +136,7 @@ public class RunnerUtils {
 
         AtomicReference<Execution> receive = new AtomicReference<>();
 
-        Runnable cancel = this.executionQueue.receive(StandAloneRunner.class, current -> {
+        Runnable cancel = this.executionQueue.receive(current -> {
             if (current.getId().equals(executionId) && current.getState().isTerninated()) {
                 receive.set(current);
             }

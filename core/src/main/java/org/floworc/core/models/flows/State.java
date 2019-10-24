@@ -62,7 +62,7 @@ public class State {
 
     @JsonIgnore
     public boolean isTerninated() {
-        return this.current == Type.SKIPPED || this.current == Type.FAILED || this.current == Type.SUCCESS;
+        return this.current == Type.FAILED || this.current == Type.SUCCESS;
     }
 
     @JsonIgnore
@@ -80,8 +80,6 @@ public class State {
         RUNNING,
         SUCCESS,
         FAILED,
-        SKIPPED,
-        PAUSED;
     }
 
     @Value

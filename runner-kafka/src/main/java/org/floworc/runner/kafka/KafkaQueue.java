@@ -2,6 +2,7 @@ package org.floworc.runner.kafka;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -22,22 +23,29 @@ import org.floworc.runner.kafka.services.KafkaProducerService;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class KafkaQueue<T> implements QueueInterface<T> {
     private Class<T> cls;
+    private KafkaAdminService kafkaAdminService;
     private KafkaConsumerService kafkaConsumerService;
     private KafkaProducerService kafkaProducerService;
     private TopicsConfig topicsConfig;
-    private static ExecutorService poolExecutor = Executors.newCachedThreadPool();
+    private static ExecutorService poolExecutor = Executors.newCachedThreadPool(
+        new ThreadFactoryBuilder().setNameFormat("kakfa-queue-%d").build()
+    );
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
         this.cls = cls;
+        this.kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
         this.kafkaProducerService = applicationContext.getBean(KafkaProducerService.class);
         this.topicsConfig = applicationContext
@@ -47,9 +55,7 @@ public class KafkaQueue<T> implements QueueInterface<T> {
             .findFirst()
             .orElseThrow();
 
-        applicationContext
-            .getBean(KafkaAdminService.class)
-            .createIfNotExist(this.cls);
+        this.kafkaAdminService.createIfNotExist(this.cls);
     }
 
     private String key(Object object) {
@@ -81,34 +87,64 @@ public class KafkaQueue<T> implements QueueInterface<T> {
     }
 
     @Override
+    public Runnable receive(Consumer<T> consumer) {
+        return this.receive(null, consumer);
+    }
+
+    @Override
     public Runnable receive(Class consumerGroup, Consumer<T> consumer) {
         AtomicBoolean running = new AtomicBoolean(true);
-        Runnable exitCallback = () -> running.set(false);
 
-        poolExecutor.execute(() -> {
-            KafkaConsumer<String, T>  kafkaConsumer = kafkaConsumerService.of(
+        Future<?> submit = poolExecutor.submit(() -> {
+            KafkaConsumer<String, T> kafkaConsumer = kafkaConsumerService.of(
                 consumerGroup,
                 JsonSerde.of(this.cls)
             );
-
-            kafkaConsumer.subscribe(Collections.singleton(topicsConfig.getName()));
+            if (consumerGroup != null) {
+                kafkaConsumer.subscribe(Collections.singleton(topicsConfig.getName()));
+            } else {
+                kafkaConsumer.assign(this.getTopicPartition());
+            }
 
             while (running.get()) {
                 ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofSeconds(1));
 
                 records.forEach(record -> {
                     consumer.accept(record.value());
-                    kafkaConsumer.commitSync(
-                        ImmutableMap.of(
-                            new TopicPartition(record.topic(), record.partition()),
-                            new OffsetAndMetadata(record.offset())
-                        )
-                    );
+
+                    if (consumerGroup != null) {
+                        kafkaConsumer.commitSync(
+                            ImmutableMap.of(
+                                new TopicPartition(record.topic(), record.partition()),
+                                new OffsetAndMetadata(record.offset() + 1)
+                            )
+                        );
+                    }
                 });
             }
         });
 
-        return exitCallback;
+        return () -> {
+            running.set(false);
+        };
+    }
+
+    private List<TopicPartition> getTopicPartition() {
+        try {
+            return this.kafkaAdminService.of()
+                .describeTopics(Collections.singleton(topicsConfig.getName()))
+                .all()
+                .get()
+                .entrySet()
+                .stream()
+                .flatMap(e -> e.getValue().partitions()
+                    .stream()
+                    .map(i -> new TopicPartition(e.getValue().name(), i.partition()))
+                )
+                .collect(Collectors.toList());
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static String getConsumerGroupName(Class group) {

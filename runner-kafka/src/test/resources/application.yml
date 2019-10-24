@@ -13,6 +13,7 @@ floworc:
 
     defaults:
       topic:
+        partitions: 1
         properties:
           compression.type: "lz4"
 

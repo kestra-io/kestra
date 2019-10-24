@@ -31,6 +31,7 @@ class KafkaRunnerTest {
 
     @BeforeEach
     private void init() throws IOException, URISyntaxException {
+        runner.setThreads(1);
         runner.run();
         Utils.loads(repositoryLoader);
     }

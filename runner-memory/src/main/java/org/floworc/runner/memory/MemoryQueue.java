@@ -1,10 +1,12 @@
 package org.floworc.runner.memory;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.floworc.core.queues.QueueInterface;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -12,10 +14,14 @@ import java.util.function.Consumer;
 @Slf4j
 public class MemoryQueue<T> implements QueueInterface<T> {
     private Class<T> cls;
-    private static ExecutorService poolExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-    private static int threads = Runtime.getRuntime().availableProcessors();
+    private static ExecutorService poolExecutor = Executors.newFixedThreadPool(
+        Runtime.getRuntime().availableProcessors(),
+        new ThreadFactoryBuilder().setNameFormat("memory-queue-%d").build()
 
-    private Map<String, List<Consumer<T>>> consumers = new HashMap<>();
+    );
+    private static final Object lock = new Object();
+
+    private Map<String, List<Consumer<T>>> consumers = new ConcurrentHashMap<>();
 
     public MemoryQueue(Class<T> cls) {
         this.cls = cls;
@@ -30,25 +36,47 @@ public class MemoryQueue<T> implements QueueInterface<T> {
         this.consumers
             .forEach((consumerGroup, consumers) -> {
                 poolExecutor.execute(() -> {
-                    consumers.get((new Random()).nextInt(consumers.size())).accept(message);
+                    if (consumers.size() == 0) {
+                        log.debug("No consumer connected on queue '" + this.cls.getName() + "'");
+                        return;
+                    }
+
+                    int i = (new Random()).nextInt(consumers.size());
+                    consumers.get(i).accept(message);
                 });
             });
     }
 
     @Override
-    public synchronized Runnable receive(Class consumerGroup, Consumer<T> consumer) {
-        if (!this.consumers.containsKey(consumerGroup.getName())) {
-            this.consumers.put(consumerGroup.getName(), new ArrayList<>());
+    public Runnable receive(Consumer<T> consumer) {
+        return this.receive(null, consumer);
+    }
+
+    @Override
+    public Runnable receive(Class consumerGroup, Consumer<T> consumer) {
+        String consumerGroupName;
+        if (consumerGroup == null) {
+            consumerGroupName = UUID.randomUUID().toString();
+        } else {
+            consumerGroupName = consumerGroup.getSimpleName();
         }
 
-        synchronized (this) {
-            this.consumers.get(consumerGroup.getName()).add(consumer);
-            int index = this.consumers.get(consumerGroup.getName()).size() - 1;
-
-            return () -> {
-                this.consumers.get(consumerGroup.getName()).remove(index);
-            };
+        if (!this.consumers.containsKey(consumerGroupName)) {
+            this.consumers.put(consumerGroupName, new ArrayList<>());
         }
+
+        this.consumers.get(consumerGroupName).add(consumer);
+        int index = this.consumers.get(consumerGroupName).size() - 1;
+
+        return () -> {
+            synchronized (lock) {
+                this.consumers.get(consumerGroupName).remove(index);
+
+                if (this.consumers.get(consumerGroupName).size() == 0) {
+                    this.consumers.remove(consumerGroupName);
+                }
+            }
+        };
     }
 
     public int getSubscribersCount() {

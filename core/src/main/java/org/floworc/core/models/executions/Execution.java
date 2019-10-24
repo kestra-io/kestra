@@ -20,7 +20,8 @@ public class Execution {
     private String flowId;
 
     @Wither
-    private List<TaskRun> taskRunList;
+    @Builder.Default
+    private List<TaskRun> taskRunList = new ArrayList<>();
 
     @Wither
     private Map<String, Object> inputs;
@@ -91,12 +92,15 @@ public class Execution {
     public Execution withTaskRun(TaskRun taskRun) {
         ArrayList<TaskRun> newTaskRunList = new ArrayList<>(this.taskRunList);
 
-        //noinspection ResultOfMethodCallIgnored
-        Collections.replaceAll(
+        boolean b = Collections.replaceAll(
             newTaskRunList,
             this.findTaskRunById(taskRun.getId()),
             taskRun
         );
+
+        if (!b) {
+            throw new IllegalStateException("Can't replace taskRun '" +  taskRun.getId() + "' on execution'" +  this.getId() + "'");
+        }
 
         return new Execution(
             this.id,

@@ -1,5 +1,6 @@
 package org.floworc.core.runners;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.floworc.core.models.executions.Execution;
@@ -16,7 +17,14 @@ import java.util.concurrent.Executors;
 
 @Slf4j
 public class StandAloneRunner implements RunnerInterface, Closeable {
-    private ExecutorService poolExecutor = Executors.newCachedThreadPool();
+    private ExecutorService poolExecutor = Executors.newCachedThreadPool(
+        new ThreadFactoryBuilder().setNameFormat("standalone-runner-%d").build()
+    );
+    private int threads = Math.max(3, Runtime.getRuntime().availableProcessors());
+
+    public void setThreads(int threads) {
+        this.threads = threads;
+    }
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
@@ -42,8 +50,7 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
     public void run() {
         this.running = true;
 
-        int processors = Math.max(3, Runtime.getRuntime().availableProcessors());
-        for (int i = 0; i < processors; i++) {
+        for (int i = 0; i < this.threads; i++) {
             poolExecutor.execute(applicationContext.getBean(Executor.class));
 
             poolExecutor.execute(applicationContext.getBean(ExecutionStateInterface.class));

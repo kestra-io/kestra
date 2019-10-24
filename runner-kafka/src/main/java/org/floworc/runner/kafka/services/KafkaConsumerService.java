@@ -36,8 +36,12 @@ public class KafkaConsumerService {
             properties.putAll(consumerConfig.getProperties());
         }
 
-        properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
-        properties.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
+        if (group != null) {
+            properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
+            properties.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
+        } else {
+            properties.remove(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG);
+        }
 
         return new Consumer<>(properties, serde);
     }

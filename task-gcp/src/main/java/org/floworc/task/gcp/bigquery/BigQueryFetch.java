@@ -3,7 +3,6 @@ package org.floworc.task.gcp.bigquery;
 import com.google.cloud.bigquery.*;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
-import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.models.tasks.Task;
@@ -93,6 +92,10 @@ public class BigQueryFetch extends Task implements RunnableTask {
                 .stream()
                 .map(fieldValue -> this.convertCell(field, fieldValue, true))
                 .collect(Collectors.toList());
+        }
+
+        if (value.isNull()) {
+            return null;
         }
 
         if (LegacySQLTypeName.BOOLEAN.equals(field.getType())) {

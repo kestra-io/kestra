@@ -14,6 +14,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
@@ -31,6 +32,7 @@ class BigQueryFetchTest {
             ImmutableMap.of(
                 "sql", "SELECT " +
                     "  \"hello\" as string," +
+                    "  NULL AS `nullable`," +
                     "  1 as int," +
                     "  1.25 AS float," +
                     "  DATE(\"2008-12-25\") AS date," +
@@ -53,6 +55,7 @@ class BigQueryFetchTest {
         assertThat(rows.size(), is(1));
 
         assertThat(rows.get(0).get("string"), is("hello"));
+        assertThat(rows.get(0).get("nullable"), is(nullValue()));
         assertThat(rows.get(0).get("int"), is(1L));
         assertThat(rows.get(0).get("float"), is(1.25D));
         assertThat(rows.get(0).get("date"), is(LocalDate.parse("2008-12-25")));

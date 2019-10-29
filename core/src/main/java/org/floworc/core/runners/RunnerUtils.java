@@ -1,6 +1,11 @@
 package org.floworc.core.runners;
 
 import com.devskiller.friendly_id.FriendlyId;
+import com.google.common.collect.ImmutableMap;
+import io.micronaut.http.multipart.StreamingFileUpload;
+import io.reactivex.Flowable;
+import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import org.floworc.core.exceptions.MissingRequiredInput;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.flows.Flow;
@@ -10,15 +15,19 @@ import org.floworc.core.queues.QueueFactoryInterface;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.storages.StorageInterface;
+import org.floworc.core.storages.StorageObject;
 import org.floworc.core.utils.Await;
+import org.reactivestreams.Publisher;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import java.io.File;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -26,7 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 
 @Singleton
 public class RunnerUtils {
@@ -44,7 +52,43 @@ public class RunnerUtils {
         return this.runOne(flowId, null, null);
     }
 
+    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, String> in, Publisher<StreamingFileUpload> files) {
+        if (files == null) {
+            return this.typedInputs(flow, execution, in);
+        }
+
+        Map<String, String> uploads = Flowable.fromPublisher(files)
+            .subscribeOn(Schedulers.io())
+            .map(file -> {
+                File tempFile = File.createTempFile(file.getFilename() + "_", ".upl");
+                Publisher<Boolean> uploadPublisher = file.transferTo(tempFile);
+                Boolean bool = Single.fromPublisher(uploadPublisher).blockingGet();
+
+                if (!bool) {
+                    throw new RuntimeException("Can't upload");
+                }
+
+                StorageObject from = storageInterface.from(flow, execution, file.getFilename(), tempFile);
+
+                return new AbstractMap.SimpleEntry<>(
+                    file.getFilename(),
+                    from.getUri().toString()
+                );
+            })
+            .toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
+            .blockingGet();
+
+        HashMap<String, String> merged = new HashMap<>(in);
+        merged.putAll(uploads);
+
+        return this.typedInputs(flow, execution, merged);
+    }
+
     public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, String> in) {
+        if (flow.getInputs() == null) {
+            return ImmutableMap.of();
+        }
+
         return flow
             .getInputs()
             .stream()
@@ -86,10 +130,20 @@ public class RunnerUtils {
 
                     case FILE:
                         try {
-                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                                input.getName(),
-                                storageInterface.from(flow, execution, input, new File(current))
-                            ));
+                            URI uri = URI.create(current);
+
+                            if (uri.getScheme().equals("floworc")) {
+                                return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                                    input.getName(),
+                                    new StorageObject(this.storageInterface, uri)
+                                ));
+                            } else {
+                                return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                                    input.getName(),
+                                    storageInterface.from(flow, execution, input, new File(current))
+                                ));
+                            }
+
                         } catch (Exception e) {
                             throw new MissingRequiredInput("Invalid input for '" + input.getName() + "'", e);
                         }
@@ -117,11 +171,7 @@ public class RunnerUtils {
         );
     }
 
-    private Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
-        if (duration == null) {
-            duration = Duration.ofSeconds(5);
-        }
-
+    public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) {
         Execution execution = Execution.builder()
             .id(FriendlyId.createFriendlyId())
             .flowId(flow.getId())
@@ -131,6 +181,16 @@ public class RunnerUtils {
         if (inputs != null) {
             execution = execution.withInputs(inputs.apply(flow, execution));
         }
+
+        return execution;
+    }
+
+    private Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+        if (duration == null) {
+            duration = Duration.ofSeconds(5);
+        }
+
+        Execution execution = this.newExecution(flow, inputs);
 
         final String executionId = execution.getId();
 
@@ -150,5 +210,4 @@ public class RunnerUtils {
 
         return receive.get();
     }
-
 }

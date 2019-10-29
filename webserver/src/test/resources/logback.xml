@@ -8,42 +8,20 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.out</target>
         <immediateFlush>true</immediateFlush>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-            <onMatch>DENY</onMatch>
-        </filter>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>WARN</level>
-            <onMatch>DENY</onMatch>
-        </filter>
         <encoder>
             <pattern>${pattern}</pattern>
         </encoder>
     </appender>
 
-    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
-        <target>System.err</target>
-        <immediateFlush>true</immediateFlush>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
-        </filter>
-        <encoder>
-            <pattern>${pattern}</pattern>
-        </encoder>
-    </appender>
 
     <root level="WARN">
         <appender-ref ref="STDOUT" />
-        <appender-ref ref="STDERR" />
     </root>
 
     <logger name="org.floworc" level="INFO" />
     <logger name="flow" level="INFO" />
 
     <logger name="org.floworc.runner.kafka.services" level="WARN" />
-
-    <!-- Micronaut  -->
-    <logger name="io.micronaut.context.env.DefaultEnvironment" level="INFO" />
 
     <!-- The configuration '%s' was supplied but isn't a known config. > https://github.com/apache/kafka/pull/5876 -->
     <logger name="org.apache.kafka.clients.producer.ProducerConfig" level="ERROR" />

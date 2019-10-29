@@ -1,6 +1,23 @@
 micronaut:
   application:
     name: floworc
+  router:
+    static-resources:
+      swagger:
+        paths: classpath:META-INF/swagger
+        mapping: /swagger/**
+
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
+
+endpoints:
+  all:
+    enabled: true
+    sensitive: false
+  health:
+    path: /
+    details-visible: ANONYMOUS
 
 floworc:
   kafka:
@@ -28,14 +45,14 @@ floworc:
           acks: "all"
 
     topics:
-      org.floworc.core.models.executions.Execution:
+      org-floworc-core-models-executions-execution:
         name: "floworc_execution"
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
-      org.floworc.core.runners.WorkerTask:
+      org-floworc-core-runners-workertask:
         name: "floworc_workertask"
 
-      org.floworc.core.runners.WorkerTaskResult:
+      org-floworc-core-runners-workertaskresult:
         name: "floworc_workertaskresult"

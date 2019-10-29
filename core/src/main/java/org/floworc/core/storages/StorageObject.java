@@ -1,5 +1,6 @@
 package org.floworc.core.storages;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.io.CharStreams;
 import lombok.AllArgsConstructor;
 
@@ -18,6 +19,7 @@ public class StorageObject {
         return uri;
     }
 
+    @JsonIgnore
     public String getContent() throws IOException {
         InputStreamReader inputStreamReader = new InputStreamReader(storageInterface.get(this.uri));
         String content = CharStreams.toString(inputStreamReader);
@@ -26,6 +28,7 @@ public class StorageObject {
         return content;
     }
 
+    @JsonIgnore
     public InputStream getInputStream() throws FileNotFoundException {
         return storageInterface.get(this.uri);
     }

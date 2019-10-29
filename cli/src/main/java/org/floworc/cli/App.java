@@ -1,8 +1,10 @@
 package org.floworc.cli;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
+import org.floworc.cli.commands.servers.StandAloneCommand;
 import org.floworc.cli.commands.TestCommand;
-import org.floworc.cli.commands.WorkerCommand;
+import org.floworc.cli.commands.servers.WebServerCommand;
+import org.floworc.cli.commands.servers.WorkerCommand;
 import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
@@ -17,8 +19,10 @@ import java.util.concurrent.Callable;
 
     mixinStandardHelpOptions = true,
     subcommands = {
+        StandAloneCommand.class,
         TestCommand.class,
-        WorkerCommand.class
+        WebServerCommand.class,
+        WorkerCommand.class,
     }
 )
 public class App implements Callable<Object> {

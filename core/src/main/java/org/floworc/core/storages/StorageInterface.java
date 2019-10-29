@@ -17,25 +17,34 @@ public interface StorageInterface {
 
     StorageObject put(URI uri, InputStream data) throws IOException;
 
-    default StorageObject from(Flow flow, Execution execution, Input input, File file) throws IOException {
-        try {
-            URI uri = new URI("/" + String.join(
-                "/",
-                Arrays.asList(
-                    flow.getNamespace().replace(".", "/"),
-                    Slugify.of(flow.getId()),
-                    "executions",
-                    execution.getId(),
-                    "inputs",
-                    input.getName(),
-                    file.getName()
-                )
-            ));
+    default URI uri(Flow flow, Execution execution, String inputName, String file) throws  URISyntaxException {
+        return new URI("/" + String.join(
+            "/",
+            Arrays.asList(
+                flow.getNamespace().replace(".", "/"),
+                Slugify.of(flow.getId()),
+                "executions",
+                execution.getId(),
+                "inputs",
+                inputName,
+                file
+            )
+        ));
+    }
 
-            return this.put(uri, new FileInputStream(file));
+    default StorageObject from(Flow flow, Execution execution, String input, File file) throws IOException {
+        try {
+            return this.put(
+                this.uri(flow, execution, input, file.getName()),
+                new FileInputStream(file)
+            );
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    default StorageObject from(Flow flow, Execution execution, Input input, File file) throws IOException {
+        return this.from(flow, execution, input.getName(), file);
     }
 
     static URI outputPrefix(Flow flow, Task task, Execution execution, TaskRun taskRun)  {

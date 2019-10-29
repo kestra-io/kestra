@@ -14,3 +14,5 @@ include 'repository-memory'
 
 include 'task-avro'
 include 'task-gcp'
+
+include 'webserver'

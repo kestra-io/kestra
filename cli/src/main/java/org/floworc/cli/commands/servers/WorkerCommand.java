@@ -1,7 +1,9 @@
-package org.floworc.cli.commands;
+package org.floworc.cli.commands.servers;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
+import org.floworc.cli.AbstractCommand;
 import org.floworc.core.runners.Worker;
 import picocli.CommandLine;
 
@@ -14,8 +16,10 @@ import java.util.concurrent.Executors;
     description = "start a worker"
 )
 @Slf4j
-public class WorkerCommand implements Runnable {
-    private ExecutorService poolExecutor = Executors.newCachedThreadPool();
+public class WorkerCommand extends AbstractCommand {
+    private ExecutorService poolExecutor = Executors.newCachedThreadPool(
+        new ThreadFactoryBuilder().setNameFormat("worker-%d").build()
+    );
 
     @Inject
     private ApplicationContext applicationContext;
@@ -23,7 +27,14 @@ public class WorkerCommand implements Runnable {
     @CommandLine.Option(names = {"-t", "--thread"}, description = "the number of concurrent threads to launch")
     private int thread = Runtime.getRuntime().availableProcessors();
 
+    public WorkerCommand() {
+        super(true);
+    }
+
+    @Override
     public void run() {
+        super.run();
+
         for (int i = 0; i < thread; i++) {
             poolExecutor.execute(applicationContext.getBean(Worker.class));
         }

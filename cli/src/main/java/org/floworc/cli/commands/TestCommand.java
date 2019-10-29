@@ -1,6 +1,7 @@
 package org.floworc.cli.commands;
 
 import lombok.extern.slf4j.Slf4j;
+import org.floworc.cli.AbstractCommand;
 import org.floworc.core.exceptions.MissingRequiredInput;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.repositories.FlowRepositoryInterface;
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeoutException;
     description = "test a flow"
 )
 @Slf4j
-public class TestCommand implements Runnable {
+public class TestCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0", description = "the flow file to test")
     private Path file;
 
@@ -44,7 +45,14 @@ public class TestCommand implements Runnable {
     @Inject
     private RunnerUtils runnerUtils;
 
+    public TestCommand() {
+        super(true);
+    }
+
+    @Override
     public void run() {
+        super.run();
+
         Map<String, String> inputs = new HashMap<>();
 
         for (int i = 0; i < this.inputs.size(); i=i+2) {

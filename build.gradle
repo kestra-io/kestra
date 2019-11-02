@@ -57,6 +57,7 @@ allprojects {
     apply plugin:"java"
     apply plugin:"net.ltgt.apt-eclipse"
     apply plugin:"net.ltgt.apt-idea"
+    apply plugin: "jacoco"
 
     // test
     apply plugin:"com.adarshr.test-logger"
@@ -150,4 +151,39 @@ jar {
 
 shadowJar {
     mergeServiceFiles()
+}
+
+
+/**********************************************************************************************************************\
+ * Jacoco
+ **********************************************************************************************************************/
+subprojects {
+    test {
+        finalizedBy jacocoTestReport
+    }
+
+    jacoco {
+        toolVersion = "0.8.4"
+    }
+
+    jacocoTestReport {
+        getAdditionalSourceDirs().setFrom(files(sourceSets.main.allSource.srcDirs))
+        getSourceDirectories().setFrom(files(sourceSets.main.allSource.srcDirs))
+        getClassDirectories().setFrom(files(sourceSets.main.output))
+    }
+}
+
+task jacoco(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
+    dependsOn = subprojects.test
+
+    getAdditionalSourceDirs().setFrom(files(subprojects.sourceSets.main.allSource.srcDirs))
+    getSourceDirectories().setFrom(files(subprojects.sourceSets.main.allSource.srcDirs))
+    getClassDirectories().setFrom(files(subprojects.sourceSets.main.output))
+    getExecutionData().setFrom(files(subprojects.jacocoTestReport.executionData))
+
+    reports {
+        html.enabled = true
+        xml.enabled = true
+        csv.enabled = true
+    }
 }

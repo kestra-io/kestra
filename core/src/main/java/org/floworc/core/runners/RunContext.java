@@ -15,7 +15,7 @@ import com.google.common.collect.ImmutableMap;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Wither;
+import lombok.With;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.LogEntry;
 import org.floworc.core.models.executions.MetricEntry;
@@ -51,7 +51,7 @@ public class RunContext {
             throw new IllegalStateException("Missing variable: " + options.helperName);
         });
 
-    @Wither
+    @With
     private StorageInterface storageInterface;
 
     private URI storageOutputPrefix;

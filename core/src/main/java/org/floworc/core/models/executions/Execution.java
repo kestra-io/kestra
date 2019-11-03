@@ -2,7 +2,7 @@ package org.floworc.core.models.executions;
 
 import lombok.Builder;
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.Task;
 
@@ -25,11 +25,11 @@ public class Execution {
     @NotNull
     private Integer flowRevision;
 
-    @Wither
+    @With
     @Builder.Default
     private List<TaskRun> taskRunList = new ArrayList<>();
 
-    @Wither
+    @With
     private Map<String, Object> inputs;
 
     @NotNull

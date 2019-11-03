@@ -1,7 +1,8 @@
 package org.floworc.core.models.flows;
 
-import lombok.*;
-import lombok.experimental.Wither;
+import lombok.Builder;
+import lombok.Value;
+import lombok.With;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.models.triggers.Trigger;
 import org.slf4j.Logger;
@@ -21,7 +22,7 @@ public class Flow {
     @NotNull
     private String namespace;
 
-    @Wither
+    @With
     private Integer revision;
 
     @Valid

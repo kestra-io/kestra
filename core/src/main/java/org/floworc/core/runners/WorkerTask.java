@@ -2,7 +2,7 @@ package org.floworc.core.runners;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.experimental.Wither;
+import lombok.With;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.tasks.Task;
 import org.slf4j.Logger;
@@ -14,7 +14,7 @@ import javax.validation.constraints.NotNull;
 @Builder
 public class WorkerTask {
     @NotNull
-    @Wither
+    @With
     private TaskRun taskRun;
 
     @NotNull

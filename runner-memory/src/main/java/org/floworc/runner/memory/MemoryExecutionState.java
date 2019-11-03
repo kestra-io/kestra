@@ -62,7 +62,7 @@ public class MemoryExecutionState implements ExecutionStateInterface {
                 .collect(Collectors.toList());
 
             Flow flow = this.flowRepository
-                .findById(execution.getFlowId())
+                .findByExecution(execution)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
 
             for (TaskRun taskRun: nexts) {

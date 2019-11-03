@@ -17,7 +17,13 @@ public class Execution {
     private String id;
 
     @NotNull
+    private String namespace;
+
+    @NotNull
     private String flowId;
+
+    @NotNull
+    private Integer flowRevision;
 
     @Wither
     @Builder.Default
@@ -32,7 +38,9 @@ public class Execution {
     public Execution withState(State.Type state) {
         return new Execution(
             this.id,
+            this.namespace,
             this.flowId,
+            this.flowRevision,
             this.taskRunList,
             this.inputs,
             this.state.withState(state)
@@ -104,7 +112,9 @@ public class Execution {
 
         return new Execution(
             this.id,
+            this.namespace,
             this.flowId,
+            this.flowRevision,
             newTaskRunList,
             this.inputs,
             this.state

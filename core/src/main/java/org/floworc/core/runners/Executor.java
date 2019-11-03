@@ -38,7 +38,7 @@ public class Executor implements Runnable {
             }
 
             Flow flow = this.flowRepository
-                .findById(execution.getFlowId())
+                .findByExecution(execution)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
 
             this.executionService.getNexts(execution, flow.getTasks())

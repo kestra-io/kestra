@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.is;
 class RunContextTest extends AbstractMemoryRunnerTest {
     @Test
     void logs() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("logs");
+        Execution execution = runnerUtils.runOne("org.floworc.tests", "logs");
 
         assertThat(execution.getTaskRunList(), hasSize(3));
 
@@ -36,7 +36,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Test
     void variables() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("return");
+        Execution execution = runnerUtils.runOne("org.floworc.tests", "return");
 
         assertThat(execution.getTaskRunList(), hasSize(3));
 

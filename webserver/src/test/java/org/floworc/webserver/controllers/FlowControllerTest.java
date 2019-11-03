@@ -23,7 +23,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void id() {
-        Flow result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/TODO/full"), Flow.class);
+        Flow result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.tests/full"), Flow.class);
 
         assertThat(result.getId(), is("full"));
         assertThat(result.getTasks().size(), is(5));
@@ -32,7 +32,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @Test
     void idNotFound() {
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/TODO/notFound"));
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.tests/notFound"));
         });
 
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));

@@ -84,7 +84,7 @@ public class KafkaExecutionState implements ExecutionStateInterface {
             @Override
             public Iterable<WorkerTask> apply(String readOnlyKey, org.floworc.core.models.executions.Execution execution) {
                 Flow flow = this.flowRepository
-                    .findById(execution.getFlowId())
+                    .findByExecution(execution)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
 
                 List<TaskRun> nexts = execution

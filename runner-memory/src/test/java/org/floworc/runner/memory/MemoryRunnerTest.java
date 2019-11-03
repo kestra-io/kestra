@@ -12,14 +12,14 @@ import static org.hamcrest.Matchers.hasSize;
 class MemoryRunnerTest extends AbstractMemoryRunnerTest {
     @Test
     void full() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("full");
+        Execution execution = runnerUtils.runOne("org.floworc.tests", "full");
 
         assertThat(execution.getTaskRunList(), hasSize(13));
     }
 
     @Test
     void errors() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("errors");
+        Execution execution = runnerUtils.runOne("org.floworc.tests", "errors");
 
         assertThat(execution.getTaskRunList(), hasSize(7));
     }

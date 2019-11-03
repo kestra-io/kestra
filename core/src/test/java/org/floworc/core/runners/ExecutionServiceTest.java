@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.is;
 class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     @Test
     void failedFirst() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("failed-first");
+        Execution execution = runnerUtils.runOne("org.floworc.tests", "failed-first");
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));

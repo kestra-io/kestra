@@ -24,7 +24,7 @@ public class FlowController {
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     public Maybe<Flow> index(String namespace, String id) {
         return flowRepository
-            .findById(id)
+            .findById(namespace, id)
             .map(Maybe::just)
             .orElse(Maybe.empty());
     }

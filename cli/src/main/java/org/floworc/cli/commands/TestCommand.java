@@ -73,10 +73,8 @@ public class TestCommand extends AbstractCommand {
             }
 
             runnerUtils.runOne(
-                all.get(0).getId(),
-                (flow, execution) -> {
-                    return runnerUtils.typedInputs(flow, execution, inputs);
-                }
+                all.get(0),
+                (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs)
             );
             runner.close();
         } catch (MissingRequiredInput e) {

@@ -48,10 +48,6 @@ public class RunnerUtils {
     @Inject
     private StorageInterface storageInterface;
 
-    public Execution runOne(String flowId) throws TimeoutException {
-        return this.runOne(flowId, null, null);
-    }
-
     public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, String> in, Publisher<StreamingFileUpload> files) {
         if (files == null) {
             return this.typedInputs(flow, execution, in);
@@ -132,7 +128,7 @@ public class RunnerUtils {
                         try {
                             URI uri = URI.create(current);
 
-                            if (uri.getScheme().equals("floworc")) {
+                            if (uri.getScheme() != null && uri.getScheme().equals("floworc")) {
                                 return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
                                     input.getName(),
                                     new StorageObject(this.storageInterface, uri)
@@ -143,7 +139,6 @@ public class RunnerUtils {
                                     storageInterface.from(flow, execution, input, new File(current))
                                 ));
                             }
-
                         } catch (Exception e) {
                             throw new MissingRequiredInput("Invalid input for '" + input.getName() + "'", e);
                         }
@@ -157,32 +152,30 @@ public class RunnerUtils {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    public Execution runOne(String flowId, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
-        return this.runOne(flowId, inputs, null);
+    public Execution runOne(String namespace, String flowId) throws TimeoutException {
+        return this.runOne(namespace, flowId, null, null, null);
     }
 
-    public Execution runOne(String flowId, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+    public Execution runOne(String namespace, String flowId, Integer revision) throws TimeoutException {
+        return this.runOne(namespace, flowId, revision, null, null);
+    }
+
+    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
+        return this.runOne(namespace, flowId, revision, inputs, null);
+    }
+
+    public Execution runOne(String namespace, String flowId, Integer revision, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
         return this.runOne(
             flowRepository
-                .findById(flowId)
+                .findById(namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
                 .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
             inputs,
             duration
         );
     }
 
-    public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) {
-        Execution execution = Execution.builder()
-            .id(FriendlyId.createFriendlyId())
-            .flowId(flow.getId())
-            .state(new State())
-            .build();
-
-        if (inputs != null) {
-            execution = execution.withInputs(inputs.apply(flow, execution));
-        }
-
-        return execution;
+    public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
+        return this.runOne(flow, inputs, null);
     }
 
     private Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
@@ -210,4 +203,21 @@ public class RunnerUtils {
 
         return receive.get();
     }
+
+    public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) {
+        Execution execution = Execution.builder()
+            .id(FriendlyId.createFriendlyId())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(flow.getRevision())
+            .state(new State())
+            .build();
+
+        if (inputs != null) {
+            execution = execution.withInputs(inputs.apply(flow, execution));
+        }
+
+        return execution;
+    }
+
 }

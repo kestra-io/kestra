@@ -41,9 +41,11 @@ class InputsTest extends AbstractMemoryRunnerTest {
 
     private Map<String, Object> typedInputs(Map<String, String> map) {
         return runnerUtils.typedInputs(
-            flowRepository.findById("inputs").get(),
+            flowRepository.findById("org.floworc.tests", "inputs").get(),
             Execution.builder()
                 .id("test")
+                .namespace("test")
+                .flowRevision(1)
                 .build(),
             map
         );
@@ -100,7 +102,9 @@ class InputsTest extends AbstractMemoryRunnerTest {
     @Test
     void inputFlow() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
+            "org.floworc.tests",
             "inputs",
+            null,
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, this.inputs)
         );
 

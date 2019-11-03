@@ -52,7 +52,7 @@ public class ExecutionController {
         @Nullable Map<String, String> inputs,
         @Nullable Publisher<StreamingFileUpload> files
     ) {
-        Optional<Flow> find = flowRepository.findById(id);
+        Optional<Flow> find = flowRepository.findById(namespace, id);
         if (find.isEmpty()) {
             return Maybe.empty();
         }
@@ -76,7 +76,7 @@ public class ExecutionController {
      * @return execution sse event
      */
     @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_JSON)
-    public Flowable<Event<Execution>> triggerAndFollow(String namespace, String id, String executionId) throws Exception {
+    public Flowable<Event<Execution>> triggerAndFollow(String namespace, String id, String executionId) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
         return Flowable

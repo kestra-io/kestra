@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Singleton
+@MemoryRepositoryEnabled
 public class MemoryFlowRepository implements FlowRepositoryInterface {
     private HashMap<String, HashMap<String, Map<Integer, Flow>>> flows = new HashMap<>();
 

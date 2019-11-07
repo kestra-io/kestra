@@ -5,11 +5,15 @@ import io.micronaut.context.annotation.Value;
 import io.micronaut.test.annotation.MicronautTest;
 import org.floworc.core.runners.RunContext;
 import org.floworc.core.runners.RunOutput;
+import org.floworc.core.storages.AbstractLocalStorageTest;
 import org.floworc.core.storages.StorageInterface;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
+import java.io.FileInputStream;
 import java.net.URI;
+import java.net.URL;
+import java.util.Objects;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -31,6 +35,11 @@ class GcsCopyTest {
             )
         );
 
+        storageInterface.put(
+            new URI("file/storage/get.yml"),
+            new FileInputStream(Objects.requireNonNull(AbstractLocalStorageTest.class.getClassLoader().getResource("application.yml")).getFile())
+        );
+
         GcsCopy task = GcsCopy.builder()
             .from("gs://{{bucket}}/file/storage/get.yml")
             .to("gs://{{bucket}}/file/storage/get2.yml")
@@ -38,6 +47,6 @@ class GcsCopyTest {
 
         RunOutput run = task.run(runContext);
 
-        assertThat(run.getOutputs().get("uri"), is(new URI("gs://airflow_tmp_lmfr-ddp-dcp-dev/file/storage/get2.yml")));
+        assertThat(run.getOutputs().get("uri"), is(new URI("gs://" + bucket + "/file/storage/get2.yml")));
     }
 }

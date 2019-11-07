@@ -157,6 +157,14 @@ public class RunContext {
             return new FileInputStream(uri.toString());
         }
 
+        if (uri.getScheme().equals("http")) {
+            try {
+                return uri.toURL().openStream();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         throw new IllegalArgumentException("Invalid scheme for uri '" + uri + "'");
     }
 

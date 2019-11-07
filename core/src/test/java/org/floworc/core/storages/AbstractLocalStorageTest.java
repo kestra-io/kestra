@@ -22,9 +22,9 @@ abstract public class AbstractLocalStorageTest {
     @Inject
     StorageInterface storageInterface;
 
-    private StorageObject putFile(URL resource, String Path) throws Exception {
+    private StorageObject putFile(URL resource, String path) throws Exception {
         return storageInterface.put(
-            new URI(Path),
+            new URI(path),
             new FileInputStream(Objects.requireNonNull(resource).getFile())
         );
     }

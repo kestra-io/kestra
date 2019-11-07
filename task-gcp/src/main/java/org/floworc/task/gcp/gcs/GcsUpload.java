@@ -1,8 +1,8 @@
 package org.floworc.task.gcp.gcs;
 
-import com.google.cloud.storage.Blob;
+import com.google.cloud.WriteChannel;
 import com.google.cloud.storage.BlobId;
-import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.BlobInfo;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -12,19 +12,18 @@ import org.floworc.core.runners.RunContext;
 import org.floworc.core.runners.RunOutput;
 import org.slf4j.Logger;
 
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.ByteBuffer;
 
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class GcsCopy extends Task implements RunnableTask {
+public class GcsUpload extends Task implements RunnableTask {
     private String from;
     private String to;
-
-    @Builder.Default
-    private boolean delete = false;
 
     @Builder.Default
     private transient GcsConnection gcsConnection = new GcsConnection();
@@ -35,25 +34,26 @@ public class GcsCopy extends Task implements RunnableTask {
         URI from = new URI(runContext.render(this.from));
         URI to = new URI(runContext.render(this.to));
 
-        BlobId source = BlobId.of(from.getScheme().equals("gs") ? from.getAuthority() : from.getScheme(), from.getPath().substring(1));
+        BlobInfo destination = BlobInfo
+            .newBuilder(BlobId.of(to.getScheme().equals("gs") ? to.getAuthority() : to.getScheme(), to.getPath().substring(1)))
+            .build();
 
-        logger.debug("Moving from '{}' to '{}'", from, to);
+        logger.debug("Upload from '{}' to '{}'", from, to);
 
-        Blob result = gcsConnection.of()
-            .copy(Storage.CopyRequest.newBuilder()
-                .setSource(source)
-                .setTarget(BlobId.of(to.getAuthority(), to.getPath().substring(1)))
-                .build()
-            )
-            .getResult();
+        InputStream data = runContext.uriToInputStream(from);
 
-        if (this.delete) {
-            gcsConnection.of().delete(source);
+        try (WriteChannel writer = gcsConnection.of().writer(destination)) {
+            byte[] buffer = new byte[10_240];
+
+            int limit;
+            while ((limit = data.read(buffer)) >= 0) {
+                writer.write(ByteBuffer.wrap(buffer, 0, limit));
+            }
         }
 
         return RunOutput
             .builder()
-            .outputs(ImmutableMap.of("uri", new URI("gs://" + result.getBucket() + "/" + result.getName())))
+            .outputs(ImmutableMap.of("uri", new URI("gs://" + destination.getBucket() + "/" + destination.getName())))
             .build();
     }
 }

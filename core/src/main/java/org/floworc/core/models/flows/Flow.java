@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,14 @@ import java.util.Optional;
 public class Flow {
     @NotNull
     private String id;
+
+    public String uid() {
+        return String.join("_", Arrays.asList(
+            this.getNamespace(),
+            this.getId(),
+            this.getRevision() != null ? String.valueOf(this.getRevision()) : "-1"
+        ));
+    }
 
     @NotNull
     private String namespace;

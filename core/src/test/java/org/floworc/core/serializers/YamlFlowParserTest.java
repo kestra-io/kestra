@@ -1,5 +1,6 @@
 package org.floworc.core.serializers;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.floworc.core.exceptions.InvalidFlowException;
 import org.junit.jupiter.api.Test;
 import org.floworc.core.Utils;
@@ -14,6 +15,8 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class YamlFlowParserTest {
+    private static ObjectMapper mapper = JacksonMapper.ofJson();
+
     @Test
     void parse() throws IOException {
         Flow flow = Utils.parse("flows/valids/full.yaml");
@@ -40,5 +43,13 @@ class YamlFlowParserTest {
         } catch (InvalidFlowException e) {
             assertThat(e.getViolations().size(), is(3));
         }
+    }
+
+    @Test
+    void serialization() throws IOException {
+        Flow flow = Utils.parse("flows/valids/minimal.yaml");
+
+        String s = mapper.writeValueAsString(flow);
+        assertThat(s, is("{\"id\":\"return\",\"namespace\":\"org.floworc.tests\",\"tasks\":[{\"id\":\"date\",\"type\":\"org.floworc.core.tasks.debugs.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"));
     }
 }

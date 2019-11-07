@@ -69,9 +69,12 @@ allprojects {
 
     // dependencies
     dependencies {
+        // logs
+        runtime "ch.qos.logback:logback-classic:1.2.3"
+        compile group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.12.1'
+
         // utils
         annotationProcessor "org.projectlombok:lombok:" + lombokVersion
-        runtime "ch.qos.logback:logback-classic:1.2.3"
         compile group: 'com.google.guava', name: 'guava', version: '27.1-jre'
         compileOnly 'org.projectlombok:lombok:' + lombokVersion
         compile 'com.github.jknack:handlebars:4.1.2'

@@ -3,8 +3,34 @@ version: "3.6"
 volumes:
   minio-data:
     driver: local
+  elasticsearch-data:
+    driver: local
+
 
 services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - 127.8.9.13:9200:9200
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.4.2
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - 127.8.9.13:5601:5601
+    links:
+      - elasticsearch
+
   minio:
     image: minio/minio
     volumes:

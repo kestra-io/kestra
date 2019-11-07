@@ -1,0 +1,9 @@
+sourceCompatibility = 11
+
+dependencies {
+    compile project(":core")
+
+    compile "io.micronaut.configuration:micronaut-elasticsearch"
+
+    testCompile project(':core').sourceSets.test.output
+}

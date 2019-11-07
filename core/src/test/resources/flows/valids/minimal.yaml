@@ -1,0 +1,7 @@
+id: return
+namespace: org.floworc.tests
+
+tasks:
+- id: date
+  type: org.floworc.core.tasks.debugs.Return
+  format: "{{taskrun.startDate}}"

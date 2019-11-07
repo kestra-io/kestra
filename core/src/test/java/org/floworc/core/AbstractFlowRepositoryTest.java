@@ -38,14 +38,16 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     void findById() {
-        Flow flow = builder().build();
+        Flow flow = builder()
+            .revision(3)
+            .build();
         flowRepository.save(flow);
 
         Optional<Flow> full = flowRepository.findById(flow.getNamespace(), flow.getId());
         assertThat(full.isPresent(), is(true));
 
         full.ifPresent(current -> {
-            assertThat(full.get().getRevision(), is(1));
+            assertThat(full.get().getRevision(), is(3));
         });
     }
 

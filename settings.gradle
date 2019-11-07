@@ -10,6 +10,7 @@ include 'storage-local'
 include 'storage-gcs'
 include 'storage-minio'
 
+include 'repository-elasticsearch'
 include 'repository-memory'
 
 include 'task-avro'

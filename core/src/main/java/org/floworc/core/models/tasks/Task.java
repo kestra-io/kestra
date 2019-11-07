@@ -1,7 +1,8 @@
 package org.floworc.core.models.tasks;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.apache.avro.reflect.Nullable;
 import org.floworc.core.models.executions.Execution;
@@ -11,7 +12,7 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @SuperBuilder
 @Getter
 @NoArgsConstructor
@@ -19,13 +20,16 @@ abstract public class Task {
     @NotNull
     protected String id;
 
+    @NotNull
     protected String type;
 
     @Nullable
     protected Retry retry;
 
-    protected int timeout;
+    @Nullable
+    protected Integer timeout;
 
+    @Nullable
     protected List<Task> errors;
 
     public TaskRun toTaskRun(Execution execution) {

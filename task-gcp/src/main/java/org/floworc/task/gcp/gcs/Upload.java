@@ -21,12 +21,12 @@ import java.nio.ByteBuffer;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class GcsUpload extends Task implements RunnableTask {
+public class Upload extends Task implements RunnableTask {
     private String from;
     private String to;
 
     @Builder.Default
-    private transient GcsConnection gcsConnection = new GcsConnection();
+    private transient Connection connection = new Connection();
 
     @Override
     public RunOutput run(RunContext runContext) throws Exception {
@@ -42,7 +42,7 @@ public class GcsUpload extends Task implements RunnableTask {
 
         InputStream data = runContext.uriToInputStream(from);
 
-        try (WriteChannel writer = gcsConnection.of().writer(destination)) {
+        try (WriteChannel writer = connection.of().writer(destination)) {
             byte[] buffer = new byte[10_240];
 
             int limit;

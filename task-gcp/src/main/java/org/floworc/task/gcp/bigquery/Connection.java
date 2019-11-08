@@ -4,7 +4,7 @@ import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
 import org.floworc.task.gcp.AbstractConnection;
 
-public class BigQueryConnection extends AbstractConnection {
+public class Connection extends AbstractConnection {
     public BigQuery of() {
         return BigQueryOptions.getDefaultInstance().getService();
     }

@@ -22,6 +22,7 @@ import org.floworc.core.models.executions.MetricEntry;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.tasks.Task;
+import org.floworc.core.runners.handlebars.helpers.InstantHelper;
 import org.floworc.core.storages.StorageInterface;
 import org.floworc.core.storages.StorageObject;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,7 @@ public class RunContext {
         .registerHelpers(StringHelpers.class)
         .registerHelpers(UnlessHelper.class)
         .registerHelpers(WithHelper.class)
+        .registerHelpers(InstantHelper.class)
         .registerHelperMissing((context, options) -> {
             throw new IllegalStateException("Missing variable: " + options.helperName);
         });

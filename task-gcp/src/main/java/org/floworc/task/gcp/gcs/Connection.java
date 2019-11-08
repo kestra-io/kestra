@@ -4,7 +4,7 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.floworc.task.gcp.AbstractConnection;
 
-public class GcsConnection extends AbstractConnection {
+public class Connection extends AbstractConnection {
     public Storage of() {
         return StorageOptions.getDefaultInstance().getService();
     }

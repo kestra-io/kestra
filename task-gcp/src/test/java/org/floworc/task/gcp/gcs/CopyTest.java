@@ -12,14 +12,13 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import java.io.FileInputStream;
 import java.net.URI;
-import java.net.URL;
 import java.util.Objects;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
-class GcsCopyTest {
+class CopyTest {
     @Inject
     private StorageInterface storageInterface;
 
@@ -40,7 +39,7 @@ class GcsCopyTest {
             new FileInputStream(Objects.requireNonNull(AbstractLocalStorageTest.class.getClassLoader().getResource("application.yml")).getFile())
         );
 
-        GcsCopy task = GcsCopy.builder()
+        Copy task = Copy.builder()
             .from("gs://{{bucket}}/file/storage/get.yml")
             .to("gs://{{bucket}}/file/storage/get2.yml")
             .build();

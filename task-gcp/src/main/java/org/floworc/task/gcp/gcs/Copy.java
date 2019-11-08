@@ -19,7 +19,7 @@ import java.net.URI;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class GcsCopy extends Task implements RunnableTask {
+public class Copy extends Task implements RunnableTask {
     private String from;
     private String to;
 
@@ -27,7 +27,7 @@ public class GcsCopy extends Task implements RunnableTask {
     private boolean delete = false;
 
     @Builder.Default
-    private transient GcsConnection gcsConnection = new GcsConnection();
+    private transient Connection connection = new Connection();
 
     @Override
     public RunOutput run(RunContext runContext) throws Exception {
@@ -39,7 +39,7 @@ public class GcsCopy extends Task implements RunnableTask {
 
         logger.debug("Moving from '{}' to '{}'", from, to);
 
-        Blob result = gcsConnection.of()
+        Blob result = connection.of()
             .copy(Storage.CopyRequest.newBuilder()
                 .setSource(source)
                 .setTarget(BlobId.of(to.getAuthority(), to.getPath().substring(1)))
@@ -48,7 +48,7 @@ public class GcsCopy extends Task implements RunnableTask {
             .getResult();
 
         if (this.delete) {
-            gcsConnection.of().delete(source);
+            connection.of().delete(source);
         }
 
         return RunOutput

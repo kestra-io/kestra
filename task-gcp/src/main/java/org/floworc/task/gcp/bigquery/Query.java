@@ -26,15 +26,31 @@ import java.util.stream.StreamSupport;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class BigQueryFetch extends Task implements RunnableTask {
+public class Query extends Task implements RunnableTask {
     private String sql;
-    @Builder.Default
-    private boolean legacySql = false;
-    private List<String> positionalParameters;
-    private Map<String, String> namedParameters;
 
     @Builder.Default
-    private transient BigQuery connection = new BigQueryConnection().of();
+    private boolean legacySql = false;
+
+    @Builder.Default
+    private boolean fetch = false;
+
+    private List<String> positionalParameters;
+
+    private Map<String, String> namedParameters;
+
+    private List<String> clusteringFields;
+
+    private String destinationTable;
+
+    private List<JobInfo.SchemaUpdateOption> schemaUpdateOptions;
+
+    private String timePartitioningField;
+
+    private JobInfo.WriteDisposition writeDisposition;
+
+    @Builder.Default
+    private transient BigQuery connection = new Connection().of();
 
     @Override
     public RunOutput run(RunContext runContext) throws Exception {
@@ -43,27 +59,62 @@ public class BigQueryFetch extends Task implements RunnableTask {
 
         logger.debug("Starting query '{}'", sql);
 
-        QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(sql)
-            .setUseLegacySql(this.legacySql)
-            //.setPositionalParameters(this.positionalParameters)
-            //.setNamedParameters(this.namedParameters)
-            .build();
+        QueryJobConfiguration.Builder builder = QueryJobConfiguration.newBuilder(sql)
+            .setUseLegacySql(this.legacySql);
 
-        // @TODO: named based on execution
-        JobId jobId = JobId.of(UUID.randomUUID().toString());
-        Job queryJob = connection.create(JobInfo.newBuilder(queryConfig).setJobId(jobId).build());
+        if (this.clusteringFields != null) {
+            builder.setClustering(Clustering.newBuilder().setFields(this.clusteringFields).build());
+        }
+
+        if (this.destinationTable != null) {
+            builder.setDestinationTable(this.tableId(this.destinationTable));
+        }
+
+        if (this.schemaUpdateOptions != null) {
+            builder.setSchemaUpdateOptions(this.schemaUpdateOptions);
+        }
+
+        if (this.timePartitioningField != null) {
+            builder.setTimePartitioning(TimePartitioning.newBuilder(TimePartitioning.Type.DAY)
+                .setField(this.timePartitioningField)
+                .build()
+            );
+        }
+
+        if (this.writeDisposition != null) {
+            builder.setWriteDisposition(this.writeDisposition);
+        }
+
+        JobId jobId = JobId.of(runContext
+            .render("{{flow.namespace}}.{{flow.id}}_{{execution.id}}_{{taskrun.id}}")
+            .replace(".", "-")
+        );
+        Job queryJob = connection.create(JobInfo.newBuilder(builder.build()).setJobId(jobId).build());
         queryJob = queryJob.waitFor();
 
 //        JobStatistics.LoadStatistics stats = queryJob.getStatistics();
 
         this.handleErrors(queryJob, logger);
 
-        TableResult result = queryJob.getQueryResults();
+        RunOutput.RunOutputBuilder output = RunOutput.builder();
 
-        return RunOutput
-            .builder()
-            .outputs(ImmutableMap.of("rows", this.fetchResult(result)))
-            .build();
+        if (this.fetch) {
+            TableResult result = queryJob.getQueryResults();
+            output.outputs(ImmutableMap.of("rows", this.fetchResult(result)));
+        }
+
+        return output.build();
+    }
+
+    private TableId tableId(String table) {
+        String[] split = table.split("\\.");
+        if (split.length == 2) {
+            return TableId.of(split[0], split[1]);
+        } else if (split.length == 3) {
+            return TableId.of(split[0], split[1], split[2]);
+        } else {
+            throw new IllegalArgumentException("Invalid table name '" + table + "'");
+        }
     }
 
     private List<Map<String, Object>> fetchResult(TableResult result) {

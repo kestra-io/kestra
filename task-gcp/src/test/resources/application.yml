@@ -10,3 +10,6 @@ floworc:
   tasks:
     gcs:
       bucket: "floworc-unit-test"
+    bigquery:
+      project: "floworc"
+      dataset: "floworc_unit_test"

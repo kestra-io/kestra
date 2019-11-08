@@ -20,7 +20,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
-class GcsUploadTest {
+class UploadTest {
     @Inject
     private StorageInterface storageInterface;
 
@@ -31,12 +31,12 @@ class GcsUploadTest {
     void fromStorage() throws Exception {
         StorageObject source = storageInterface.put(
             new URI("/" + FriendlyId.createFriendlyId()),
-            new FileInputStream(new File(Objects.requireNonNull(GcsUploadTest.class.getClassLoader()
+            new FileInputStream(new File(Objects.requireNonNull(UploadTest.class.getClassLoader()
                 .getResource("application.yml"))
                 .toURI()))
         );
 
-        GcsUpload task = GcsUpload.builder()
+        Upload task = Upload.builder()
             .from(source.getUri().toString())
             .to("gs://{{bucket}}/tasks/gcp/upload/get2.yml")
             .build();
@@ -48,7 +48,7 @@ class GcsUploadTest {
 
     @Test
     void fromRemoteUrl() throws Exception {
-        GcsUpload task = GcsUpload.builder()
+        Upload task = Upload.builder()
             .from("http://www.google.com")
             .to("gs://{{bucket}}/tasks/gcp/upload/google.html")
             .build();

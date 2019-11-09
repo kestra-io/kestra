@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Range;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.test.annotation.MicronautTest;
+import org.floworc.core.Utils;
 import org.floworc.core.runners.RunContext;
 import org.floworc.core.runners.RunOutput;
 import org.floworc.core.storages.StorageInterface;
@@ -89,18 +90,10 @@ class QueryTest {
 
     @Test
     void destination() throws Exception {
-        RunContext runContext = new RunContext(
-            this.storageInterface,
-            ImmutableMap.of(
-                "flow", ImmutableMap.of("id", FriendlyId.createFriendlyId(), "namespace", "org.floworc.tests"),
-                "execution", ImmutableMap.of("id", FriendlyId.createFriendlyId(), "startDate", Instant.now()),
-                "taskrun", ImmutableMap.of("id", FriendlyId.createFriendlyId()),
-                "loop", ContiguousSet.create(Range.closed(1, 25), DiscreteDomain.integers())
-            )
-        );
-
         Query task = Query.builder()
-            .sql("{{#each loop}}" +
+            .id(QueryTest.class.getSimpleName())
+            .type(Query.class.getName())
+            .sql("{{#each inputs.loop}}" +
                 "SELECT" +
                 "  \"{{execution.id}}\" as execution_id," +
                 "  TIMESTAMP \"{{instantFormat execution.startDate \"yyyy-MM-dd HH:mm:ss.SSSSSS\"}}\" as execution_date," +
@@ -114,6 +107,10 @@ class QueryTest {
             .schemaUpdateOptions(Collections.singletonList(JobInfo.SchemaUpdateOption.ALLOW_FIELD_ADDITION))
             .writeDisposition(JobInfo.WriteDisposition.WRITE_APPEND)
             .build();
+
+        RunContext runContext = Utils.mockRunContext(storageInterface, task, ImmutableMap.of(
+            "loop", ContiguousSet.create(Range.closed(1, 25), DiscreteDomain.integers())
+        ));
 
         RunOutput run = task.run(runContext);
     }

@@ -67,7 +67,7 @@ public class Query extends Task implements RunnableTask {
         }
 
         if (this.destinationTable != null) {
-            builder.setDestinationTable(this.tableId(this.destinationTable));
+            builder.setDestinationTable(Connection.tableId(this.destinationTable));
         }
 
         if (this.schemaUpdateOptions != null) {
@@ -85,16 +85,16 @@ public class Query extends Task implements RunnableTask {
             builder.setWriteDisposition(this.writeDisposition);
         }
 
-        JobId jobId = JobId.of(runContext
-            .render("{{flow.namespace}}.{{flow.id}}_{{execution.id}}_{{taskrun.id}}")
-            .replace(".", "-")
-        );
-        Job queryJob = connection.create(JobInfo.newBuilder(builder.build()).setJobId(jobId).build());
+        Job queryJob = connection
+            .create(JobInfo.newBuilder(builder.build())
+                .setJobId(Connection.jobId(runContext))
+                .build()
+            );
         queryJob = queryJob.waitFor();
 
 //        JobStatistics.LoadStatistics stats = queryJob.getStatistics();
 
-        this.handleErrors(queryJob, logger);
+        Connection.handleErrors(queryJob, logger);
 
         RunOutput.RunOutputBuilder output = RunOutput.builder();
 
@@ -106,16 +106,6 @@ public class Query extends Task implements RunnableTask {
         return output.build();
     }
 
-    private TableId tableId(String table) {
-        String[] split = table.split("\\.");
-        if (split.length == 2) {
-            return TableId.of(split[0], split[1]);
-        } else if (split.length == 3) {
-            return TableId.of(split[0], split[1], split[2]);
-        } else {
-            throw new IllegalArgumentException("Invalid table name '" + table + "'");
-        }
-    }
 
     private List<Map<String, Object>> fetchResult(TableResult result) {
         return StreamSupport
@@ -220,22 +210,4 @@ public class Query extends Task implements RunnableTask {
         throw new IllegalArgumentException("Invalid type '" + field.getType() + "'");
     }
 
-    private void handleErrors(Job queryJob, Logger logger) throws IOException {
-        if (queryJob == null) {
-            throw new IllegalArgumentException("Job no longer exists");
-        } else if (queryJob.getStatus().getError() != null) {
-
-            queryJob
-                .getStatus()
-                .getExecutionErrors()
-                .forEach(bigQueryError -> {
-                    logger.error(
-                        "Error query with error [\n - {}\n]",
-                        bigQueryError.toString()
-                    );
-                });
-
-            throw new IOException(queryJob.getStatus().getError().toString());
-        }
-    }
 }

@@ -12,6 +12,7 @@ import org.floworc.core.runners.RunOutput;
 import org.slf4j.Logger;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @SuperBuilder
 @ToString
@@ -33,8 +34,10 @@ public class LoadFromGcs extends AbstractLoad implements RunnableTask {
     public RunOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger(this.getClass());
 
+        List<String> from = runContext.render(this.from);
+
         LoadJobConfiguration.Builder builder = LoadJobConfiguration
-            .newBuilder(Connection.tableId(this.destinationTable), this.from);
+            .newBuilder(Connection.tableId(this.destinationTable), from);
 
         this.setOptions(builder);
 

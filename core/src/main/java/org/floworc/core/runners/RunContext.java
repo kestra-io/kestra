@@ -31,6 +31,7 @@ import java.io.*;
 import java.net.URI;
 import java.time.Instant;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -136,7 +137,21 @@ public class RunContext {
         return template.apply(this.variables);
     }
 
+    public List<String> render(List<String> list) throws IOException {
+        List<String> result = new ArrayList<>();
+
+        for (String inline : list) {
+            result.add(this.render(inline));
+        }
+
+        return result;
+    }
+
     public List<LogEntry> logs() {
+        if (this.contextAppender == null) {
+            return new ArrayList<>();
+        }
+
         return this.contextAppender
             .events
             .stream()

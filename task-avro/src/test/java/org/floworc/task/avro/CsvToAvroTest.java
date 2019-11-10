@@ -1,9 +1,10 @@
 package org.floworc.task.avro;
 
 import com.devskiller.friendly_id.FriendlyId;
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Files;
 import io.micronaut.test.annotation.MicronautTest;
-import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
@@ -41,10 +42,12 @@ class CsvToAvroTest {
         );
 
         CsvToAvro task = CsvToAvro.builder()
-            .source(source.getUri())
-            .schema(new Schema
-                .Parser()
-                .parse(new File(Objects.requireNonNull(CsvToAvroTest.class.getClassLoader().getResource("csv/insurance_sample.avsc")).toURI()))
+            .from(source.getUri().toString())
+            .schema(
+                Files.asCharSource(
+                    new File(Objects.requireNonNull(CsvToAvroTest.class.getClassLoader().getResource("csv/insurance_sample.avsc")).toURI()),
+                    Charsets.UTF_8
+                ).read()
             )
             .fieldSeparator(";".charAt(0))
             .build();

@@ -64,7 +64,7 @@ public class LocalStorage implements StorageInterface {
         outStream.close();
         data.close();
 
-        URI result = URI.create("floworc://" + uri.getPath());
+        URI result = URI.create("floworc:///" + uri.getPath());
 
         return new StorageObject(this, result);
     }

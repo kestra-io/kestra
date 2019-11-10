@@ -37,10 +37,10 @@ import java.net.URI;
 @NoArgsConstructor
 public class CsvToAvro extends Task implements RunnableTask {
     @NotNull
-    private URI source;
+    private String from;
 
     @NotNull
-    private Schema schema;
+    private String schema;
 
     @Builder.Default
     private Boolean header = true;
@@ -57,14 +57,18 @@ public class CsvToAvro extends Task implements RunnableTask {
     @Override
     public RunOutput run(RunContext runContext) throws Exception {
         // reader
+        URI from = new URI(runContext.render(this.from));
         CsvReader csvReader = this.csvReader();
-        CsvParser csvParser = csvReader.parse(new InputStreamReader(runContext.uriToInputStream(source)));
+        CsvParser csvParser = csvReader.parse(new InputStreamReader(runContext.uriToInputStream(from)));
 
         // temp file
         File tempFile = File.createTempFile(this.getClass().getSimpleName().toLowerCase() + "_", ".avro");
         BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile));
 
         // avro writer
+        Schema.Parser parser = new Schema.Parser();
+        Schema schema = parser.parse(this.schema);
+
         DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(schema);
         DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<>(datumWriter);
         dataFileWriter.create(schema, output);
@@ -73,7 +77,7 @@ public class CsvToAvro extends Task implements RunnableTask {
         Flowable<GenericData.Record> flowable = Flowable
             .create(this.nextRow(csvParser), BackpressureStrategy.BUFFER)
             .observeOn(Schedulers.computation())
-            .map(this.convertToAvro())
+            .map(this.convertToAvro(schema))
             .observeOn(Schedulers.io())
             .doOnNext(dataFileWriter::append)
             .doOnComplete(() -> {
@@ -90,7 +94,7 @@ public class CsvToAvro extends Task implements RunnableTask {
             .build();
     }
 
-    private Function<CsvRow, GenericData.Record> convertToAvro() {
+    private Function<CsvRow, GenericData.Record> convertToAvro(Schema schema) {
         return row -> {
             GenericData.Record record = new GenericData.Record(schema);
 

@@ -27,9 +27,10 @@ public class Worker implements Runnable {
 
     public void run(WorkerTask workerTask) {
         workerTask.logger().info(
-            "[execution: {}] [taskrun: {}] Task {} started",
+            "[execution: {}] [taskrun: {}] Task {} (type: {}) started",
             workerTask.getTaskRun().getExecutionId(),
             workerTask.getTaskRun().getId(),
+            workerTask.getTaskRun().getTaskId(),
             workerTask.getTask().getClass().getSimpleName()
         );
 
@@ -73,9 +74,10 @@ public class Worker implements Runnable {
 
             // log
             workerTask.logger().info(
-                "[execution: {}] [taskrun: {}] Task {} with state {} completed in {}",
+                "[execution: {}] [taskrun: {}] Task {} (type: {}) with state {} completed in {}",
                 workerTask.getTaskRun().getExecutionId(),
                 workerTask.getTaskRun().getId(),
+                workerTask.getTaskRun().getTaskId(),
                 workerTask.getTask().getClass().getSimpleName(),
                 state,
                 workerTask.getTaskRun().getState().humanDuration()

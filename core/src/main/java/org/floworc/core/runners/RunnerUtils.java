@@ -178,7 +178,7 @@ public class RunnerUtils {
         return this.runOne(flow, inputs, null);
     }
 
-    private Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
+    public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
         if (duration == null) {
             duration = Duration.ofSeconds(5);
         }

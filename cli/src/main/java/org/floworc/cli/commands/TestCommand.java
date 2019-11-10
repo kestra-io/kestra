@@ -13,6 +13,7 @@ import picocli.CommandLine;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class TestCommand extends AbstractCommand {
     private RunnerUtils runnerUtils;
 
     public TestCommand() {
-        super(true);
+        super(false);
     }
 
     @Override
@@ -74,8 +75,10 @@ public class TestCommand extends AbstractCommand {
 
             runnerUtils.runOne(
                 all.get(0),
-                (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs)
+                (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs),
+                Duration.ofHours(1)
             );
+
             runner.close();
         } catch (MissingRequiredInput e) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());

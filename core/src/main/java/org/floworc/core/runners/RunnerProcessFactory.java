@@ -31,23 +31,13 @@ public class RunnerProcessFactory {
     @Prototype
     public Executor executor(
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
         @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue,
-        FlowRepositoryInterface flowRepository,
-        ExecutionService executionService
+        FlowRepositoryInterface flowRepository
     ) {
         return new Executor(
             executionQueue,
-            workerTaskQueue,
-            flowRepository,
-            executionService
+            workerTaskResultQueue,
+            flowRepository
         );
-    }
-
-    @Prototype
-    public ExecutionService executionService(
-        @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue
-    ) {
-        return new ExecutionService(workerTaskResultQueue);
     }
 }

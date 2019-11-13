@@ -59,4 +59,20 @@ public class TaskRun {
             .state(new State())
             .build();
     }
+
+
+    public String toString(boolean pretty) {
+        if (!pretty) {
+            return super.toString();
+        }
+
+        return "TaskRun(" +
+            "id=" + this.getId() +
+            ", taskId=" + this.getTaskId() +
+            ", state=" + this.getState().getCurrent().toString() +
+            ", outputs=" + this.getOutputs() +
+            ", logs=" + this.getLogs() +
+            ", metrics=" + this.getMetrics() +
+            ")";
+    }
 }

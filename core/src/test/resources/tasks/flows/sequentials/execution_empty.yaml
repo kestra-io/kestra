@@ -1,0 +1,8 @@
+id: execution_empty
+namespace: org.floworc.tests
+flowId: sequential
+flowRevision: 1
+taskRunList: []
+state:
+  current: CREATED
+  histories: []

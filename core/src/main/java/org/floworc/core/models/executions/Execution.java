@@ -60,7 +60,7 @@ public class Execution {
         return find.get();
     }
 
-    public TaskRun findTaskRunById(String id) {
+    public TaskRun findTaskRunByTaskRunId(String id) {
         Optional<TaskRun> find = this.taskRunList
             .stream()
             .filter(taskRun -> taskRun.getId().equals(id))
@@ -73,16 +73,90 @@ public class Execution {
         return find.get();
     }
 
-    public List<TaskRun> findTaskRunByTask(List<Task> tasks) {
-        List<String> taskIds = tasks
-            .stream()
-            .map(Task::getId)
-            .collect(Collectors.toList());
+    /**
+     * Determine if the current execution is on error & normal tasks
+     *
+     * if the current have errors, return tasks from errors
+     * if not, return the normal tasks
+     *
+     * @param tasks normal tasks
+     * @param errors errors tasks
+     * @return the flow we need to follow
+     */
+    public List<Task> findTaskDependingFlowState(List<Task> tasks, List<Task> errors) {
+        List<TaskRun> errorsFlow = this.findTaskRunByTasks(errors);
 
-        return this.taskRunList
+        if (errorsFlow.size() > 0 || this.hasFailed(tasks)) {
+            return errors == null ? new ArrayList<>() : errors;
+        }
+
+        return tasks;
+    }
+
+    public Task findTaskByTaskRun(List<Task> tasks, TaskRun taskRun) {
+        return tasks
             .stream()
-            .filter(taskRun -> taskIds.contains(taskRun.getTaskId()))
+            .filter(task -> task.getId().equals(taskRun.getTaskId()))
+            .findFirst()
+            .orElseThrow();
+    }
+
+    public List<TaskRun> findTaskRunByTasks(List<Task> tasks) {
+        if (tasks == null) {
+            return new ArrayList<>();
+        }
+
+        return this
+            .getTaskRunList()
+            .stream()
+            .filter(taskRun -> tasks
+                .stream()
+                .anyMatch(task -> task.getId().equals(taskRun.getTaskId()))
+            )
             .collect(Collectors.toList());
+    }
+
+    public List<TaskRun> findRunning(List<Task> tasks) {
+        return this.findTaskRunByTasks(tasks)
+            .stream()
+            .filter(taskRun -> taskRun.getState().isRunning())
+            .collect(Collectors.toList());
+    }
+
+    public Optional<TaskRun> findFirstRunning(List<Task> tasks) {
+        return this.findTaskRunByTasks(tasks)
+            .stream()
+            .filter(taskRun -> taskRun.getState().isRunning())
+            .findFirst();
+    }
+
+    public Optional<TaskRun> findLastByState(List<Task> tasks, State.Type state) {
+        return this.findTaskRunByTasks(tasks)
+            .stream()
+            .filter(taskRun -> taskRun.getState().getCurrent() == state)
+            .findFirst();
+    }
+
+    public Optional<TaskRun> findLastTerminated(List<Task> tasks) {
+        List<TaskRun> taskRuns = this.findTaskRunByTasks(tasks);
+
+        ArrayList<TaskRun> reverse = new ArrayList<>(taskRuns);
+        Collections.reverse(reverse);
+
+        return reverse
+            .stream()
+            .filter(taskRun -> taskRun.getState().isTerninated())
+            .findFirst();
+    }
+
+    public boolean isTerminated(List<Task> tasks) {
+        long terminatedCount = this
+            .findTaskRunByTasks(tasks)
+            .stream()
+            .filter(taskRun -> taskRun.getState().isTerninated())
+            .count();
+
+        return terminatedCount == tasks.size();
     }
 
     public boolean hasFailed() {
@@ -92,7 +166,7 @@ public class Execution {
     }
 
     public boolean hasFailed(List<Task> tasks) {
-        return this.findTaskRunByTask(tasks)
+        return this.findTaskRunByTasks(tasks)
             .stream()
             .anyMatch(taskRun -> taskRun.getState().isFailed());
     }
@@ -102,7 +176,7 @@ public class Execution {
 
         boolean b = Collections.replaceAll(
             newTaskRunList,
-            this.findTaskRunById(taskRun.getId()),
+            this.findTaskRunByTaskRunId(taskRun.getId()),
             taskRun
         );
 
@@ -119,5 +193,26 @@ public class Execution {
             this.inputs,
             this.state
         );
+    }
+
+    public String toString(boolean pretty) {
+        if (!pretty) {
+            return super.toString();
+        }
+
+        return "Execution(" +
+            "\n  id=" + this.getId() +
+            "\n  flowId=" + this.getFlowId() +
+            "\n  state=" + this.getState().getCurrent().toString() +
+            "\n  taskRunList=" +
+            "\n  [" +
+            "\n    " +
+            this.getTaskRunList()
+                .stream()
+                .map(t -> t.toString(true))
+                .collect(Collectors.joining(",\n    ")) +
+            "\n  ], " +
+            "\n  inputs=" + this.getInputs() +
+            "\n)";
     }
 }

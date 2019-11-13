@@ -1,4 +1,6 @@
 floworc:
+  repository:
+    type: memory
   queue:
     type: kafka
   storage:

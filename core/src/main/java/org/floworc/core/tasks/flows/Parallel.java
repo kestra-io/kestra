@@ -1,11 +1,15 @@
 package org.floworc.core.tasks.flows;
 
 import lombok.*;
-import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.floworc.core.models.executions.Execution;
+import org.floworc.core.models.executions.TaskRun;
+import org.floworc.core.models.flows.State;
+import org.floworc.core.models.tasks.FlowableResult;
 import org.floworc.core.models.tasks.FlowableTask;
 import org.floworc.core.models.tasks.Task;
+import org.floworc.core.runners.FlowableUtils;
+import org.floworc.core.runners.RunContext;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -27,40 +31,56 @@ public class Parallel extends Task implements FlowableTask {
     private List<Task> errors;
 
     @Override
-    public Optional<Task> findById(String id) {
-        Optional<Task> superFind = super.findById(id);
-        if (superFind.isPresent()) {
-            return superFind;
+    public List<Task> childTasks() {
+        return this.tasks;
+    }
+
+    @Override
+    public FlowableResult nexts(RunContext runContext, Execution execution) {
+        return FlowableUtils.getNexts(runContext, execution, this.tasks, this.errors);
+        /*
+        List<Task> currentTasks = execution.findTaskDependingFlowState(tasks, errors);
+
+        // all done, leave
+        if (execution.isTerminated(currentTasks)) {
+            return FlowableResult.builder()
+                .result(FlowableResult.Result.ENDED)
+                .childState(execution.hasFailed(this.tasks) ? State.Type.FAILED : State.Type.SUCCESS)
+                .build();
         }
 
-        return this.tasks
-            .stream()
-            .map(task -> task.findById(id))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .findFirst();
-    }
-
-    @Override
-    public boolean hasChildTasks() {
-        return true;
-    }
-
-    @Override
-    public Optional<List<Task>> getChildTasks(Execution execution) {
-        List<Task> notFind = this.tasks
+        // find all not created tasks
+        List<Task> notFind = currentTasks
             .stream()
             .filter(task -> execution
                 .getTaskRunList()
                 .stream()
-                .anyMatch(taskRun -> !taskRun.getTaskId().equals(task.getId()))
+                .noneMatch(taskRun -> taskRun.getTaskId().equals(task.getId()))
             )
             .collect(Collectors.toList());
 
-        if (notFind.size() == 0) {
-            return Optional.empty();
+        // create all tasks not created yet
+        if (notFind.size() > 0) {
+            return FlowableResult.builder()
+                .nexts(notFind
+                    .stream()
+                    .map(task -> task.toTaskRun(execution))
+                    .collect(Collectors.toList())
+                )
+                .result(FlowableResult.Result.NEXTS)
+                .build();
         }
 
-        return Optional.of(notFind);
+        // find first running and maybe handle child tasks
+        Optional<TaskRun> firstRunning = execution.findFirstRunning(currentTasks);
+        if (firstRunning.isPresent()) {
+            return FlowableUtils.handleChilds(runContext, execution, firstRunning.get(), currentTasks);
+        }
+
+        // no special case, wait
+        return FlowableResult.builder()
+            .result(FlowableResult.Result.WAIT)
+            .build();
+        */
     }
 }

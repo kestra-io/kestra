@@ -5,6 +5,7 @@ import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
+import org.floworc.core.models.tasks.FlowableResult;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 
@@ -14,20 +15,17 @@ import java.util.List;
 @Slf4j
 public class Executor implements Runnable {
     private QueueInterface<Execution> executionQueue;
-    private QueueInterface<WorkerTask> workerTaskQueue;
+    private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private FlowRepositoryInterface flowRepository;
-    private ExecutionService executionService;
 
     public Executor(
         QueueInterface<Execution> executionQueue,
-        QueueInterface<WorkerTask> workerTaskQueue,
-        FlowRepositoryInterface flowRepositoryInterface,
-        ExecutionService executionService
+        QueueInterface<WorkerTaskResult> workerTaskResultQueue,
+        FlowRepositoryInterface flowRepositoryInterface
     ) {
         this.executionQueue = executionQueue;
-        this.workerTaskQueue = workerTaskQueue;
+        this.workerTaskResultQueue = workerTaskResultQueue;
         this.flowRepository = flowRepositoryInterface;
-        this.executionService = executionService;
     }
 
     @Override
@@ -41,11 +39,27 @@ public class Executor implements Runnable {
                 .findByExecution(execution)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
 
-            this.executionService.getNexts(execution, flow.getTasks())
-                .ifPresentOrElse(
-                    nexts -> this.onNexts(flow, execution, nexts),
-                    () -> this.onEnd(flow, execution)
-                );
+
+            FlowableResult result = FlowableUtils.getNexts(new RunContext(flow, execution), execution, flow.getTasks(), flow.getErrors());
+
+            // trigger next taskRuns
+            if (result.getResult() == FlowableResult.Result.NEXTS) {
+                this.onNexts(flow, execution, result.getNexts());
+            }
+
+            // something ended
+            if (result.getResult() == FlowableResult.Result.ENDED) {
+                if (result.getChildTaskRun() != null) {
+                    // childs tasks ended, trigger parent task result
+                    this.workerTaskResultQueue.emit(new WorkerTaskResult(
+                        result.getChildTaskRun().withState(result.getChildState()),
+                        result.getChildTask()
+                    ));
+                } else {
+                    // flow ended, terminate it
+                    this.onEnd(flow, execution);
+                }
+            }
         });
     }
 

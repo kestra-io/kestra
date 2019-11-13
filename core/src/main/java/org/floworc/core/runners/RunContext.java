@@ -67,27 +67,44 @@ public class RunContext {
 
     private Logger logger;
 
+
+    public RunContext(Flow flow, Execution execution) {
+        this.variables = this.variables(flow, null, execution, null);
+    }
+
     public RunContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
+        this.variables = this.variables(flow, task, execution, taskRun);
+    }
 
+    private Map<String, Object> variables(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> variblesBuilder = ImmutableMap.<String, Object>builder()
             .put("flow", ImmutableMap.of(
                 "id", flow.getId(),
                 "namespace", flow.getNamespace()
             ))
-            .put("task", ImmutableMap.of(
-                "id", task.getId(),
-                "type", task.getType()
-            ))
             .put("execution", ImmutableMap.of(
                 "id", execution.getId(),
                 "startDate", execution.getState().startDate()
             ))
-            .put("taskrun", ImmutableMap.of(
-                "id", taskRun.getId(),
-                "startDate", taskRun.getState().startDate()
-            ))
             .put("env", System.getenv());
+
+        if (task != null) {
+            variblesBuilder
+                .put("task", ImmutableMap.of(
+                    "id", task.getId(),
+                    "type", task.getType()
+                ));
+        }
+
+
+        if (taskRun != null) {
+            variblesBuilder
+                .put("taskrun", ImmutableMap.of(
+                    "id", taskRun.getId(),
+                    "startDate", taskRun.getState().startDate()
+                ));
+        }
 
         if (execution.getTaskRunList() != null) {
             variblesBuilder
@@ -104,7 +121,7 @@ public class RunContext {
             variblesBuilder.put("inputs", execution.getInputs());
         }
 
-        this.variables = variblesBuilder.build();
+        return variblesBuilder.build();
     }
 
     @VisibleForTesting

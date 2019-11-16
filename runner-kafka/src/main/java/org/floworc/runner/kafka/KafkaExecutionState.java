@@ -6,11 +6,9 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.Materialized;
-import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.ValueMapperWithKey;
+import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
@@ -49,14 +47,14 @@ public class KafkaExecutionState implements ExecutionStateInterface {
 
         private Topology topology() {
             kafkaAdminService.createIfNotExist(WorkerTaskResult.class);
-            kafkaAdminService.createIfNotExist(org.floworc.core.models.executions.Execution.class);
+            kafkaAdminService.createIfNotExist(Execution.class);
 
             StreamsBuilder builder = new StreamsBuilder();
 
             builder
                 .stream(
-                    kafkaAdminService.getTopicName(org.floworc.core.models.executions.Execution.class),
-                    Consumed.with(Serdes.String(), JsonSerde.of(org.floworc.core.models.executions.Execution.class))
+                    kafkaAdminService.getTopicName(Execution.class),
+                    Consumed.with(Serdes.String(), JsonSerde.of(Execution.class))
                 )
                 .flatMapValues(new WorkerTaskMapper(this.flowRepository))
                 .to(
@@ -74,7 +72,7 @@ public class KafkaExecutionState implements ExecutionStateInterface {
             resultStream.start();
         }
 
-        static class WorkerTaskMapper implements ValueMapperWithKey<String, org.floworc.core.models.executions.Execution, Iterable<WorkerTask>> {
+        static class WorkerTaskMapper implements ValueMapper<Execution, Iterable<WorkerTask>> {
             private FlowRepositoryInterface flowRepository;
 
             public WorkerTaskMapper(FlowRepositoryInterface flowRepository) {
@@ -82,7 +80,7 @@ public class KafkaExecutionState implements ExecutionStateInterface {
             }
 
             @Override
-            public Iterable<WorkerTask> apply(String readOnlyKey, org.floworc.core.models.executions.Execution execution) {
+            public Iterable<WorkerTask> apply(Execution execution) {
                 Flow flow = this.flowRepository
                     .findByExecution(execution)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
@@ -127,17 +125,17 @@ public class KafkaExecutionState implements ExecutionStateInterface {
                 )
                 .join(
                     builder.table(
-                        kafkaAdminService.getTopicName(org.floworc.core.models.executions.Execution.class),
-                        Consumed.with(Serdes.String(), JsonSerde.of(org.floworc.core.models.executions.Execution.class)),
-                        Materialized.<String, org.floworc.core.models.executions.Execution, KeyValueStore<Bytes, byte[]>>as("execution_join")
+                        kafkaAdminService.getTopicName(Execution.class),
+                        Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)),
+                        Materialized.<String, Execution, KeyValueStore<Bytes, byte[]>>as("execution_join")
                             .withKeySerde(Serdes.String())
-                            .withValueSerde(JsonSerde.of(org.floworc.core.models.executions.Execution.class))
+                            .withValueSerde(JsonSerde.of(Execution.class))
                     ),
                     (workerTaskResult, execution) -> execution.withTaskRun(workerTaskResult.getTaskRun())
                 )
                 .to(
-                    kafkaAdminService.getTopicName(org.floworc.core.models.executions.Execution.class),
-                    Produced.with(Serdes.String(), JsonSerde.of(org.floworc.core.models.executions.Execution.class))
+                    kafkaAdminService.getTopicName(Execution.class),
+                    Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
                 );
 
             return builder.build();
@@ -153,7 +151,7 @@ public class KafkaExecutionState implements ExecutionStateInterface {
     @Override
     public void run() {
         kafkaAdminService.createIfNotExist(WorkerTaskResult.class);
-        kafkaAdminService.createIfNotExist(org.floworc.core.models.executions.Execution.class);
+        kafkaAdminService.createIfNotExist(Execution.class);
 
         new WorkerResultState(
             this.kafkaStreamService,

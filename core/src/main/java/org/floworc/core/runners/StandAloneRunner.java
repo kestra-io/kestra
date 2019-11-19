@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.queues.QueueFactoryInterface;
 import org.floworc.core.queues.QueueInterface;
-import org.floworc.core.repositories.FlowRepositoryInterface;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -41,9 +40,6 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Inject
-    private FlowRepositoryInterface flowRepository;
-
     private boolean running = false;
 
     @Override
@@ -51,9 +47,7 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
         this.running = true;
 
         for (int i = 0; i < this.threads; i++) {
-            poolExecutor.execute(applicationContext.getBean(Executor.class));
-
-            poolExecutor.execute(applicationContext.getBean(ExecutionStateInterface.class));
+            poolExecutor.execute(applicationContext.getBean(AbstractExecutor.class));
 
             poolExecutor.execute(applicationContext.getBean(Worker.class));
         }

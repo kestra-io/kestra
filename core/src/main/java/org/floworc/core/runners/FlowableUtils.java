@@ -3,47 +3,38 @@ package org.floworc.core.runners;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.State;
-import org.floworc.core.models.tasks.FlowableTask;
-import org.floworc.core.models.tasks.FlowableResult;
 import org.floworc.core.models.tasks.Task;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 public class FlowableUtils {
-    public static FlowableResult getNexts(RunContext runContext, Execution execution, List<Task> tasks, List<Task> errors) {
+    public static List<TaskRun> resolveSequentialNexts(RunContext runContext, Execution execution, List<Task> tasks, List<Task> errors) {
         List<Task> currentTasks = execution.findTaskDependingFlowState(tasks, errors);
 
-        // all done, leave
-        if (execution.isTerminated(currentTasks)) {
-            return FlowableResult.builder()
-                .result(FlowableResult.Result.ENDED)
-                .childState(execution.hasFailed(tasks) ? State.Type.FAILED : State.Type.SUCCESS)
-                .build();
+        // nothing
+        if (currentTasks.size() == 0) {
+            return new ArrayList<>();
         }
 
         // first one
         List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks);
         if (taskRuns.size() == 0) {
-            return FlowableResult.builder()
-                .nexts(Collections.singletonList(currentTasks.get(0).toTaskRun(execution)))
-                .result(FlowableResult.Result.NEXTS)
-                .build();
+            return Collections.singletonList(currentTasks.get(0).toTaskRun(execution));
         }
 
-        // find last created
+        // first created, leave
         Optional<TaskRun> lastCreated = execution.findLastByState(currentTasks, State.Type.CREATED);
         if (lastCreated.isPresent()) {
-            return FlowableResult.builder()
-                .result(FlowableResult.Result.WAIT)
-                .build();
+            return new ArrayList<>();
         }
 
-        // find first running and maybe handle child tasks
-        Optional<TaskRun> firstRunning = execution.findFirstRunning(currentTasks);
-        if (firstRunning.isPresent()) {
-            return handleChilds(runContext, execution, firstRunning.get(), currentTasks);
+        // have running, leave
+        Optional<TaskRun> lastRunning = execution.findLastByState(currentTasks, State.Type.RUNNING);
+        if (lastRunning.isPresent()) {
+            return new ArrayList<>();
         }
 
         // last success, find next
@@ -51,41 +42,29 @@ public class FlowableUtils {
         if (lastTerminated.isPresent()) {
             int lastIndex = taskRuns.indexOf(lastTerminated.get());
 
-            if (currentTasks.size() > lastIndex - 1) {
-                return FlowableResult.builder()
-                    .nexts(Collections.singletonList(currentTasks.get(lastIndex + 1).toTaskRun(execution)))
-                    .result(FlowableResult.Result.NEXTS)
-                    .build();
+            if (currentTasks.size() > lastIndex + 1) {
+                return Collections.singletonList(currentTasks.get(lastIndex + 1).toTaskRun(execution));
             }
         }
 
-        // no special case, wait
-        return FlowableResult.builder()
-            .result(FlowableResult.Result.WAIT)
-            .build();
+        return new ArrayList<>();
     }
 
-    public static FlowableResult handleChilds(RunContext runContext, Execution execution, TaskRun running, List<Task> currentTasks) {
-        Task parent = execution.findTaskByTaskRun(currentTasks, running);
+    public static Optional<State.Type> resolveState(RunContext runContext, Execution execution, List<Task> tasks, List<Task> errors) {
+        List<Task> currentTasks = execution.findTaskDependingFlowState(tasks, errors);
 
-        if (!(parent instanceof FlowableTask)) {
-            return FlowableResult.builder()
-                .result(FlowableResult.Result.WAIT)
-                .build();
-        }
-
-        FlowableTask flowableParent = (FlowableTask) parent;
-        FlowableResult childs = flowableParent.nexts(runContext, execution);
-
-        if (childs.getResult() == FlowableResult.Result.ENDED) {
-            return FlowableResult.builder()
-                .result(FlowableResult.Result.ENDED)
-                .childTask(parent)
-                .childTaskRun(running)
-                .childState(childs.getChildState())
-                .build();
+        if (currentTasks.size() > 0) {
+            // handle nominal case, tasks or errors flow are ready to be analysed
+            if (execution.isTerminated(currentTasks)) {
+                return Optional.of(execution.hasFailed(currentTasks) ? State.Type.FAILED : State.Type.SUCCESS);
+            }
         } else {
-            return childs;
+            // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
+            if (execution.hasFailed(tasks)) {
+                return Optional.of(execution.hasFailed(tasks) ? State.Type.FAILED : State.Type.SUCCESS);
+            }
         }
+
+        return Optional.empty();
     }
 }

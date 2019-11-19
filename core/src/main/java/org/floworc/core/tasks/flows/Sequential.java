@@ -6,8 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.floworc.core.models.executions.Execution;
+import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.tasks.FlowableTask;
-import org.floworc.core.models.tasks.FlowableResult;
 import org.floworc.core.runners.FlowableUtils;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.runners.RunContext;
@@ -33,7 +33,7 @@ public class Sequential extends Task implements FlowableTask {
     }
 
     @Override
-    public FlowableResult nexts(RunContext runContext, Execution execution) {
-        return FlowableUtils.getNexts(runContext, execution, this.tasks, this.errors);
+    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution) {
+        return FlowableUtils.resolveSequentialNexts(runContext, execution, this.tasks, this.errors);
     }
 }

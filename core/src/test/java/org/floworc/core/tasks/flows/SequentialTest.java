@@ -14,7 +14,7 @@ class SequentialTest extends AbstractMemoryRunnerTest {
     void sequential() throws TimeoutException {
         Execution execution = runnerUtils.runOne("org.floworc.tests", "sequential");
 
-        assertThat(execution.getTaskRunList(), hasSize(7));
+        assertThat(execution.getTaskRunList(), hasSize(11));
     }
 
     @Test

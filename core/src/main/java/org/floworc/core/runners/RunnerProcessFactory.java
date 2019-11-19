@@ -27,17 +27,4 @@ public class RunnerProcessFactory {
             workerTaskResultQueue
         );
     }
-
-    @Prototype
-    public Executor executor(
-        @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue,
-        FlowRepositoryInterface flowRepository
-    ) {
-        return new Executor(
-            executionQueue,
-            workerTaskResultQueue,
-            flowRepository
-        );
-    }
 }

@@ -10,10 +10,7 @@ import org.floworc.core.models.tasks.Task;
 import org.floworc.core.queues.QueueFactoryInterface;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.repositories.FlowRepositoryInterface;
-import org.floworc.core.runners.ExecutionStateInterface;
-import org.floworc.core.runners.RunContext;
-import org.floworc.core.runners.WorkerTask;
-import org.floworc.core.runners.WorkerTaskResult;
+import org.floworc.core.runners.*;
 
 import javax.inject.Named;
 import java.util.List;
@@ -23,7 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Prototype
 @MemoryQueueEnabled
-public class MemoryExecutionState implements ExecutionStateInterface {
+public class MemoryExecutor extends AbstractExecutor {
     private FlowRepositoryInterface flowRepository;
     private final QueueInterface<Execution> executionQueue;
     private final QueueInterface<WorkerTask> workerTaskQueue;
@@ -31,7 +28,7 @@ public class MemoryExecutionState implements ExecutionStateInterface {
     private static ConcurrentHashMap<String, Execution> executions = new ConcurrentHashMap<>();
     private static final Object lock = new Object();
 
-    public MemoryExecutionState(
+    public MemoryExecutor(
         FlowRepositoryInterface flowRepository,
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
@@ -45,7 +42,7 @@ public class MemoryExecutionState implements ExecutionStateInterface {
 
     @Override
     public void run() {
-        this.executionQueue.receive(MemoryExecutionState.class, execution -> {
+        this.executionQueue.receive(MemoryExecutor.class, execution -> {
             synchronized (lock) {
                 if (execution.getState().isTerninated()) {
                     executions.remove(execution.getId());
@@ -54,31 +51,17 @@ public class MemoryExecutionState implements ExecutionStateInterface {
                 }
             }
 
-            // submit TaskRun when receiving created, must be done after the state execution store
-            List<TaskRun> nexts = execution
-                .getTaskRunList()
-                .stream()
-                .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.CREATED)
-                .collect(Collectors.toList());
-
             Flow flow = this.flowRepository
                 .findByExecution(execution)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
 
-            for (TaskRun taskRun: nexts) {
-                Task task = flow.findTaskById(taskRun.getTaskId());
-
-                this.workerTaskQueue.emit(
-                    WorkerTask.builder()
-                        .runContext(new RunContext(flow, task, execution, taskRun))
-                        .taskRun(taskRun)
-                        .task(task)
-                        .build()
-                );
-            }
+            this.handlChild(execution, flow);
+            this.handleWorkerTask(execution, flow);
+            this.handleEnd(execution, flow);
+            this.handleNext(execution, flow);
         });
 
-        this.workerTaskResultQueue.receive(MemoryExecutionState.class, message -> {
+        this.workerTaskResultQueue.receive(MemoryExecutor.class, message -> {
             TaskRun taskRun = message.getTaskRun();
 
             synchronized (lock) {
@@ -92,5 +75,68 @@ public class MemoryExecutionState implements ExecutionStateInterface {
                 this.executionQueue.emit(newExecution);
             }
         });
+    }
+
+    private void handleWorkerTask(Execution execution, Flow flow) {
+        // submit TaskRun when receiving created, must be done after the state execution store
+        List<TaskRun> nexts = execution
+            .getTaskRunList()
+            .stream()
+            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.CREATED)
+            .collect(Collectors.toList());
+
+        for (TaskRun taskRun: nexts) {
+            Task task = flow.findTaskById(taskRun.getTaskId());
+
+            this.workerTaskQueue.emit(
+                WorkerTask.builder()
+                    .runContext(new RunContext(flow, task, execution, taskRun))
+                    .taskRun(taskRun)
+                    .task(task)
+                    .build()
+            );
+        }
+    }
+
+    private void handleNext(Execution execution, Flow flow) {
+        List<TaskRun> next = FlowableUtils.resolveSequentialNexts(
+            new RunContext(flow, execution),
+            execution,
+            flow.getTasks(),
+            flow.getErrors()
+        );
+
+        if (next.size() > 0) {
+            Execution newExecution = this.onNexts(flow, execution, next);
+            this.executionQueue.emit(newExecution);
+        }
+    }
+
+    private void handlChild(Execution execution, Flow flow) {
+        execution
+            .getTaskRunList()
+            .stream()
+            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING)
+            .peek(taskRun -> {
+                this.childWorkerTaskResult(flow, execution, taskRun)
+                    .ifPresent(this.workerTaskResultQueue::emit);
+            })
+            .forEach(taskRun -> {
+                this.childNexts(flow, execution, taskRun)
+                    .ifPresent(this.executionQueue::emit);
+            });
+    }
+
+    private void handleEnd(Execution execution, Flow flow) {
+        if (execution.getState().isTerninated()) {
+            return;
+        }
+
+        List<Task> currentTasks = execution.findTaskDependingFlowState(flow.getTasks(), flow.getErrors());
+
+        if (execution.isTerminated(currentTasks)) {
+            Execution newExecution = this.onEnd(flow, execution);
+            this.executionQueue.emit(newExecution);
+        }
     }
 }

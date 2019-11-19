@@ -49,4 +49,11 @@ class KafkaRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(7));
     }
+
+    @Test
+    void sequential() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("org.floworc.tests", "sequential");
+
+        assertThat(execution.getTaskRunList(), hasSize(11));
+    }
 }

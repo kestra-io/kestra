@@ -7,7 +7,7 @@ floworc:
 
   elasticsearch:
     indices:
-      org-floworc-repository-elasticsearch-elasticsearchflowrepository:
+      org-floworc-core-models-flows-flow:
         name: "floworc_flows"
         settings: |
           {
@@ -55,3 +55,93 @@ floworc:
 
       org-floworc-core-models-executions-execution:
         name: "floworc_executions"
+        mapping: |
+          {
+            "properties": {
+              "flowId": {
+                "type": "keyword"
+              },
+              "flowRevision": {
+                "type": "integer"
+              },
+              "id": {
+                "type": "keyword"
+              },
+              "inputs": {
+                "type": "object"
+              },
+              "namespace": {
+                "type": "keyword"
+              },
+              "state": {
+                "properties": {
+                  "current": {
+                    "type": "keyword"
+                  },
+                  "histories": {
+                    "properties": {
+                      "date": {
+                        "type": "date"
+                      },
+                      "state": {
+                        "type": "keyword"
+                      }
+                    }
+                  }
+                }
+              },
+              "taskRunList": {
+                "properties": {
+                  "id": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword"
+                      }
+                    }
+                  },
+                  "taskId": {
+                    "type": "text",
+                    "fields": {
+                      "keyword": {
+                        "type": "keyword"
+                      }
+                    }
+                  },
+                  "state": {
+                    "properties": {
+                      "current": {
+                        "type": "keyword"
+                      },
+                      "histories": {
+                        "properties": {
+                          "date": {
+                            "type": "date"
+                          },
+                          "state": {
+                            "type": "keyword"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "logs": {
+                    "properties": {
+                      "level": {
+                        "type": "keyword"
+                      },
+                      "message": {
+                        "type": "text"
+                      },
+                      "thread": {
+                        "type": "text"
+                      },
+                      "timestamp": {
+                        "type": "date"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }

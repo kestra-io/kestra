@@ -88,6 +88,7 @@ allprojects {
         implementation "io.micronaut:micronaut-validation"
         implementation "io.micronaut:micronaut-runtime"
         compile 'io.micronaut:micronaut-views'
+        compile group: 'io.micronaut.data', name: 'micronaut-data-model', version: '1.0.0.M5'
 
 
         // test

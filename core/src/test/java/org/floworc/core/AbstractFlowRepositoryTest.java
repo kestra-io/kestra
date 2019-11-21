@@ -86,7 +86,7 @@ public abstract class AbstractFlowRepositoryTest {
     void findAll() {
         List<Flow> save = flowRepository.findAll();
 
-        assertThat(save.size(), is(11));
+        assertThat(save.size(), is(12));
     }
 
     @Test

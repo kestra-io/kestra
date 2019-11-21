@@ -1,12 +1,6 @@
 package org.floworc.repository.elasticsearch;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.support.WriteRequest;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -18,7 +12,6 @@ import org.floworc.repository.elasticsearch.configs.IndicesConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,9 +20,7 @@ import java.util.Optional;
 public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository<Flow> implements FlowRepositoryInterface {
     @Inject
     public ElasticSearchFlowRepository(RestHighLevelClient client, List<IndicesConfig> indicesConfigs) {
-        super(client, indicesConfigs);
-
-        this.cls = Flow.class;
+        super(client, indicesConfigs, Flow.class);
     }
 
     @Override
@@ -82,35 +73,13 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             flow = flow.withRevision(1);
         }
 
-        IndexRequest request = new IndexRequest(this.indicesConfig.getName());
-        request.id(flow.uid());
-        request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
-
-        try {
-            String json = mapper.writeValueAsString(flow);
-            request.source(json, XContentType.JSON);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            client.index(request, RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        this.putRequest(flow.uid(), flow);
 
         return flow;
     }
 
     @Override
     public void delete(Flow flow) {
-        DeleteRequest request = new DeleteRequest(this.indicesConfig.getName(), flow.uid());
-        request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
-
-        try {
-            client.delete(request, RequestOptions.DEFAULT);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        this.deleteRequest(flow.uid());
     }
 }

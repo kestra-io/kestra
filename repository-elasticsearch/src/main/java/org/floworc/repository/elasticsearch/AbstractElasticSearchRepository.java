@@ -1,9 +1,17 @@
 package org.floworc.repository.elasticsearch;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.action.delete.DeleteRequest;
+import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
+import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
@@ -13,7 +21,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.floworc.core.repositories.FlowRepositoryInterface;
+import org.floworc.core.repositories.ArrayListTotal;
 import org.floworc.core.serializers.JacksonMapper;
 import org.floworc.repository.elasticsearch.configs.IndicesConfig;
 
@@ -23,9 +31,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-abstract public class AbstractElasticSearchRepository <T> implements FlowRepositoryInterface {
+abstract public class AbstractElasticSearchRepository <T> {
     protected static final ObjectMapper mapper = JacksonMapper.ofJson();
     protected Class<T> cls;
 
@@ -36,15 +45,61 @@ abstract public class AbstractElasticSearchRepository <T> implements FlowReposit
     @Inject
     public AbstractElasticSearchRepository(
         RestHighLevelClient client,
-        List<IndicesConfig> indicesConfigs
+        List<IndicesConfig> indicesConfigs,
+        Class<T> cls
     ) {
         this.client = client;
+        this.cls = cls;
 
         this.indicesConfig = indicesConfigs
             .stream()
-            .filter(r -> r.getCls().equals(this.getClass().getName().toLowerCase().replace(".", "-")))
+            .filter(r -> r.getCls().equals(this.cls.getName().toLowerCase().replace(".", "-")))
             .findFirst()
             .orElseThrow();
+    }
+
+    protected Optional<T> getRequest(String id) {
+        try {
+            GetResponse response = client.get(new GetRequest(this.indicesConfig.getName(), id), RequestOptions.DEFAULT);
+
+            if (!response.isExists()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(mapper.readValue(response.getSourceAsString(), this.cls));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected IndexResponse putRequest(String id, T source) {
+        IndexRequest request = new IndexRequest(this.indicesConfig.getName());
+        request.id(id);
+        request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+
+        try {
+            String json = mapper.writeValueAsString(source);
+            request.source(json, XContentType.JSON);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            return client.index(request, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected DeleteResponse deleteRequest(String id) {
+        DeleteRequest request = new DeleteRequest(this.indicesConfig.getName(), id);
+        request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+
+        try {
+            return client.delete(request, RequestOptions.DEFAULT);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private SearchRequest searchRequest(SearchSourceBuilder sourceBuilder, boolean scroll) {
@@ -71,12 +126,12 @@ abstract public class AbstractElasticSearchRepository <T> implements FlowReposit
             .collect(Collectors.toList());
     }
 
-    protected List<T> query(SearchSourceBuilder sourceBuilder) {
+    protected ArrayListTotal<T> query(SearchSourceBuilder sourceBuilder) {
         SearchRequest searchRequest = searchRequest(sourceBuilder, false);
 
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            return this.map(searchResponse.getHits().getHits());
+            return new ArrayListTotal<T>(this.map(searchResponse.getHits().getHits()), searchResponse.getHits().getTotalHits().value);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

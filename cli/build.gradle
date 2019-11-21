@@ -12,6 +12,7 @@ dependencies {
     compile project(":core")
 
     compile project(":repository-memory")
+    compile project(":repository-elasticsearch")
 
     compile project(":runner-memory")
     compile project(":runner-kafka")

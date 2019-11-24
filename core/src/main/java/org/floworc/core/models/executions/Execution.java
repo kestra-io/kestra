@@ -1,10 +1,11 @@
 package org.floworc.core.models.executions;
 
+import com.devskiller.friendly_id.FriendlyId;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 import org.floworc.core.models.flows.State;
-import org.floworc.core.models.tasks.Task;
+import org.floworc.core.models.tasks.ResolvedTask;
 
 import javax.validation.constraints.NotNull;
 import java.util.*;
@@ -47,6 +48,30 @@ public class Execution {
         );
     }
 
+    public Execution withTaskRun(TaskRun taskRun) {
+        ArrayList<TaskRun> newTaskRunList = new ArrayList<>(this.taskRunList);
+
+        boolean b = Collections.replaceAll(
+            newTaskRunList,
+            this.findTaskRunByTaskRunId(taskRun.getId()),
+            taskRun
+        );
+
+        if (!b) {
+            throw new IllegalStateException("Can't replace taskRun '" +  taskRun.getId() + "' on execution'" +  this.getId() + "'");
+        }
+
+        return new Execution(
+            this.id,
+            this.namespace,
+            this.flowId,
+            this.flowRevision,
+            newTaskRunList,
+            this.inputs,
+            this.state
+        );
+    }
+
     public TaskRun findTaskRunByTaskId(String id) {
         Optional<TaskRun> find = this.taskRunList
             .stream()
@@ -75,88 +100,85 @@ public class Execution {
 
     /**
      * Determine if the current execution is on error & normal tasks
+     * Used only from the flow
+     * @param resolvedTasks normal tasks
+     * @param resolvedErrors errors tasks
+     * @return the flow we need to follow
+     */
+    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks, List<ResolvedTask> resolvedErrors) {
+        return this.findTaskDependingFlowState(resolvedTasks, resolvedErrors, null);
+    }
+
+    /**
+     * Determine if the current execution is on error & normal tasks
      *
      * if the current have errors, return tasks from errors
      * if not, return the normal tasks
      *
-     * @param tasks normal tasks
-     * @param errors errors tasks
+     * @param resolvedTasks normal tasks
+     * @param resolvedErrors errors tasks
      * @return the flow we need to follow
      */
-    public List<Task> findTaskDependingFlowState(List<Task> tasks, List<Task> errors) {
-        List<TaskRun> errorsFlow = this.findTaskRunByTasks(errors);
+    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks, List<ResolvedTask> resolvedErrors, TaskRun parentTaskRun) {
+        List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
 
-        if (errorsFlow.size() > 0 || this.hasFailed(tasks)) {
-            return errors == null ? new ArrayList<>() : errors;
+        if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks)) {
+            return resolvedErrors == null ? new ArrayList<>() : resolvedErrors;
         }
 
-        return tasks;
+        return resolvedTasks;
     }
 
-    public Task findTaskByTaskRun(List<Task> tasks, TaskRun taskRun) {
-        return tasks
-            .stream()
-            .filter(task -> task.getId().equals(taskRun.getTaskId()))
-            .findFirst()
-            .orElseThrow();
-    }
-
-    public List<TaskRun> findTaskRunByTasks(List<Task> tasks) {
-        if (tasks == null) {
+    public List<TaskRun> findTaskRunByTasks(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
+        if (resolvedTasks == null) {
             return new ArrayList<>();
         }
 
         return this
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> tasks
+            .filter(t -> resolvedTasks
                 .stream()
-                .anyMatch(task -> task.getId().equals(taskRun.getTaskId()))
+                .anyMatch(resolvedTask -> resolvedTask.getTask().getId().equals(t.getTaskId()) &&
+                    (
+                        parentTaskRun == null || parentTaskRun.getId().equals(t.getParentTaskRunId())
+                    )
+                )
             )
             .collect(Collectors.toList());
     }
 
-    public List<TaskRun> findRunning(List<Task> tasks) {
-        return this.findTaskRunByTasks(tasks)
+    public Optional<TaskRun> findLastByState(List<ResolvedTask> resolvedTasks, State.Type state, TaskRun taskRun) {
+        return this.findTaskRunByTasks(resolvedTasks, taskRun)
             .stream()
-            .filter(taskRun -> taskRun.getState().isRunning())
-            .collect(Collectors.toList());
-    }
-
-    public Optional<TaskRun> findFirstRunning(List<Task> tasks) {
-        return this.findTaskRunByTasks(tasks)
-            .stream()
-            .filter(taskRun -> taskRun.getState().isRunning())
+            .filter(t -> t.getState().getCurrent() == state)
             .findFirst();
     }
 
-    public Optional<TaskRun> findLastByState(List<Task> tasks, State.Type state) {
-        return this.findTaskRunByTasks(tasks)
-            .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent() == state)
-            .findFirst();
-    }
-
-    public Optional<TaskRun> findLastTerminated(List<Task> tasks) {
-        List<TaskRun> taskRuns = this.findTaskRunByTasks(tasks);
+    public Optional<TaskRun> findLastTerminated(List<ResolvedTask> resolvedTasks, TaskRun taskRun) {
+        List<TaskRun> taskRuns = this.findTaskRunByTasks(resolvedTasks, taskRun);
 
         ArrayList<TaskRun> reverse = new ArrayList<>(taskRuns);
         Collections.reverse(reverse);
 
         return reverse
             .stream()
-            .filter(taskRun -> taskRun.getState().isTerninated())
+            .filter(t -> t.getState().isTerninated())
             .findFirst();
     }
 
-    public boolean isTerminated(List<Task> tasks) {
+    public boolean isTerminated(List<ResolvedTask> resolvedTasks) {
+        return this.isTerminated(resolvedTasks, null);
+    }
+
+    public boolean isTerminated(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
         long terminatedCount = this
-            .findTaskRunByTasks(tasks)
+            .findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             .filter(taskRun -> taskRun.getState().isTerninated())
             .count();
 
-        return terminatedCount == tasks.size();
+        return terminatedCount == resolvedTasks.size();
     }
 
     public boolean hasFailed() {
@@ -165,34 +187,29 @@ public class Execution {
             .anyMatch(taskRun -> taskRun.getState().isFailed());
     }
 
-    public boolean hasFailed(List<Task> tasks) {
-        return this.findTaskRunByTasks(tasks)
+    public boolean hasFailed(List<ResolvedTask> resolvedTasks) {
+        return this.hasFailed(resolvedTasks, null);
+    }
+
+    public boolean hasFailed(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
+        return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             .anyMatch(taskRun -> taskRun.getState().isFailed());
     }
 
-    public Execution withTaskRun(TaskRun taskRun) {
-        ArrayList<TaskRun> newTaskRunList = new ArrayList<>(this.taskRunList);
-
-        boolean b = Collections.replaceAll(
-            newTaskRunList,
-            this.findTaskRunByTaskRunId(taskRun.getId()),
-            taskRun
-        );
-
-        if (!b) {
-            throw new IllegalStateException("Can't replace taskRun '" +  taskRun.getId() + "' on execution'" +  this.getId() + "'");
-        }
-
-        return new Execution(
-            this.id,
-            this.namespace,
-            this.flowId,
-            this.flowRevision,
-            newTaskRunList,
-            this.inputs,
-            this.state
-        );
+    public Map<String, Object> outputs() {
+        return this
+            .getTaskRunList()
+            .stream()
+            .filter(current -> current.getOutputs() != null)
+            .map(current -> new AbstractMap.SimpleEntry<>(
+                String.join("", Arrays.asList(
+                    current.getTaskId(),
+                    (current.getParentTaskRunId() != null ? "[" + current.getId() + "]" : "")
+                )),
+                current.getOutputs())
+            )
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public String toString(boolean pretty) {

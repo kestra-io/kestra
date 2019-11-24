@@ -4,6 +4,7 @@ import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.Input;
+import org.floworc.core.models.tasks.ResolvedTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.utils.Slugify;
 
@@ -47,7 +48,7 @@ public interface StorageInterface {
         return this.from(flow, execution, input.getName(), file);
     }
 
-    static URI outputPrefix(Flow flow, Task task, Execution execution, TaskRun taskRun)  {
+    static URI outputPrefix(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun)  {
         try {
             return new URI(String.join(
                 "/",
@@ -57,7 +58,7 @@ public interface StorageInterface {
                     "executions",
                     execution.getId(),
                     "tasks",
-                    Slugify.of(task.getId()),
+                    Slugify.of(taskRun.getTaskId()),
                     taskRun.getId()
                 )
             ));

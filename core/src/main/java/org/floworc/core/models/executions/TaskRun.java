@@ -5,11 +5,13 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 import org.floworc.core.models.flows.State;
-import org.floworc.core.models.tasks.Task;
+import org.floworc.core.models.tasks.ResolvedTask;
 
 import javax.validation.constraints.NotNull;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Value
 @Builder
@@ -24,6 +26,10 @@ public class TaskRun {
 
     @NotNull
     private String taskId;
+
+    private String parentTaskRunId;
+
+    private String value;
 
     @With
     private List<LogEntry> logs;
@@ -43,6 +49,8 @@ public class TaskRun {
             this.executionId,
             this.flowId,
             this.taskId,
+            this.parentTaskRunId,
+            this.value,
             this.logs,
             this.outputs,
             this.metrics,
@@ -50,16 +58,17 @@ public class TaskRun {
         );
     }
 
-    public static TaskRun of(Execution execution, Task task) {
+    public static TaskRun of(Execution execution, ResolvedTask resolvedTask) {
         return TaskRun.builder()
             .id(FriendlyId.createFriendlyId())
             .executionId(execution.getId())
             .flowId(execution.getFlowId())
-            .taskId(task.getId())
+            .taskId(resolvedTask.getTask().getId())
+            .parentTaskRunId(resolvedTask.getParentId())
+            .value(resolvedTask.getValue())
             .state(new State())
             .build();
     }
-
 
     public String toString(boolean pretty) {
         if (!pretty) {
@@ -69,6 +78,8 @@ public class TaskRun {
         return "TaskRun(" +
             "id=" + this.getId() +
             ", taskId=" + this.getTaskId() +
+            ", value=" + this.getValue() +
+            ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
             ", outputs=" + this.getOutputs() +
             ", logs=" + this.getLogs() +

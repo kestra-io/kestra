@@ -8,6 +8,7 @@ import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
+import org.floworc.core.models.tasks.ResolvedTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.repositories.LocalFlowRepositoryLoader;
 import org.floworc.core.runners.RunContext;
@@ -104,7 +105,7 @@ abstract public class Utils {
         Execution execution = Utils.mockExecution(caller, flow, inputs);
         TaskRun taskRun = Utils.mockTaskRun(caller, execution, task);
 
-        return new RunContext(flow, task, execution, taskRun)
+        return new RunContext(flow, ResolvedTask.of(task), execution, taskRun)
             .withStorageInterface(storageInterface);
     }
 }

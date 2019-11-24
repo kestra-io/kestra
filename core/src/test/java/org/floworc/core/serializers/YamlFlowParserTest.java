@@ -50,6 +50,6 @@ class YamlFlowParserTest {
         Flow flow = Utils.parse("flows/valids/minimal.yaml");
 
         String s = mapper.writeValueAsString(flow);
-        assertThat(s, is("{\"id\":\"return\",\"namespace\":\"org.floworc.tests\",\"tasks\":[{\"id\":\"date\",\"type\":\"org.floworc.core.tasks.debugs.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"));
+        assertThat(s, is("{\"id\":\"minimal\",\"namespace\":\"org.floworc.tests\",\"tasks\":[{\"id\":\"date\",\"type\":\"org.floworc.core.tasks.debugs.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"));
     }
 }

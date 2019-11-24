@@ -12,11 +12,16 @@ import java.util.Optional;
 public interface FlowableTask {
     List<Task> getErrors();
 
-    List<Task> childTasks();
+    List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun);
 
-    List<TaskRun> resolveNexts(RunContext runContext, Execution execution);
+    List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun);
 
-    default Optional<State.Type> resolveState(RunContext runContext, Execution execution) {
-        return FlowableUtils.resolveState(runContext, execution, this.childTasks(), this.getErrors());
+    default Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+        return FlowableUtils.resolveState(
+            execution,
+            this.childTasks(runContext, parentTaskRun),
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            parentTaskRun
+        );
     }
 }

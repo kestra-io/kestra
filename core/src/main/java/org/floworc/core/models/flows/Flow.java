@@ -3,8 +3,11 @@ package org.floworc.core.models.flows;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
+import org.floworc.core.models.executions.TaskRun;
+import org.floworc.core.models.tasks.ResolvedTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.models.triggers.Trigger;
+import org.floworc.core.runners.RunContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +16,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Value
 @Builder
@@ -50,27 +54,30 @@ public class Flow {
         return LoggerFactory.getLogger("flow." + this.id);
     }
 
-    public Task findTaskById(String id) {
-        Optional<Task> find = this.tasks
+    public ResolvedTask findTaskByTaskRun(TaskRun taskRun, RunContext runContext) {
+        return Stream.of(
+            this.tasks,
+            this.errors
+        )
+            .flatMap(tasks -> this.findTaskByTaskId(tasks, taskRun.getTaskId(), runContext, taskRun).stream())
+            .map(task -> ResolvedTask.builder()
+                .task(task)
+                .parentId(taskRun.getParentTaskRunId())
+                .value(taskRun.getValue())
+                .build()
+            )
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
+    }
+
+    private Optional<Task> findTaskByTaskId(List<Task> tasks, String id, RunContext runContext, TaskRun taskRun) {
+        if (tasks == null) {
+            return Optional.empty();
+        }
+
+        return tasks
             .stream()
-            .flatMap(task -> task.findById(id).stream())
+            .flatMap(task -> task.findById(id, runContext, taskRun).stream())
             .findFirst();
-
-        if (find.isPresent()) {
-            return find.get();
-        }
-
-        if (this.errors != null) {
-            Optional<Task> errors = this.errors
-                .stream()
-                .flatMap(task -> task.findById(id).stream())
-                .findFirst();
-
-            if (errors.isPresent()) {
-                return errors.get();
-            }
-        }
-
-        throw new IllegalArgumentException("Can't find task with id '" + id + "' on flow '" + this.id + "'");
     }
 }

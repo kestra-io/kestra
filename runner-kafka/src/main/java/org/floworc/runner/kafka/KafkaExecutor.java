@@ -16,7 +16,7 @@ import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
-import org.floworc.core.models.tasks.Task;
+import org.floworc.core.models.tasks.ResolvedTask;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.runners.*;
 import org.floworc.runner.kafka.serializers.JsonSerde;
@@ -69,8 +69,11 @@ public class KafkaExecutor extends AbstractExecutor {
             stream
                 .filter((key, value) -> !value.getExecution().getState().isTerninated())
                 .mapValues((readOnlyKey, value) -> {
-                    List<Task> currentTasks = value.getExecution()
-                        .findTaskDependingFlowState(value.getFlow().getTasks(), value.getFlow().getErrors());
+                    List<ResolvedTask> currentTasks = value.getExecution()
+                        .findTaskDependingFlowState(
+                            ResolvedTask.of(value.getFlow().getTasks()),
+                            ResolvedTask.of(value.getFlow().getErrors())
+                        );
 
                     if (value.getExecution().isTerminated(currentTasks)) {
                         return this.onEnd(value.getFlow(), value.getExecution());
@@ -118,12 +121,20 @@ public class KafkaExecutor extends AbstractExecutor {
             streamTaskRuns
                 .filter((key, value) -> value.getTaskRun().getState().getCurrent() == State.Type.CREATED)
                 .mapValues((readOnlyKey, taskRunExecutionWithFlow) -> {
-                    Task task = taskRunExecutionWithFlow.getFlow().findTaskById(taskRunExecutionWithFlow.getTaskRun().getTaskId());
+                    ResolvedTask resolvedTask = taskRunExecutionWithFlow.getFlow().findTaskByTaskRun(
+                        taskRunExecutionWithFlow.getTaskRun(),
+                        new RunContext(taskRunExecutionWithFlow.getFlow(), taskRunExecutionWithFlow.getExecution())
+                    );
 
                     return WorkerTask.builder()
-                        .runContext(new RunContext(taskRunExecutionWithFlow.getFlow(), task, taskRunExecutionWithFlow.getExecution(), taskRunExecutionWithFlow.getTaskRun()))
+                        .runContext(new RunContext(
+                            taskRunExecutionWithFlow.getFlow(),
+                            resolvedTask,
+                            taskRunExecutionWithFlow.getExecution(),
+                            taskRunExecutionWithFlow.getTaskRun())
+                        )
                         .taskRun(taskRunExecutionWithFlow.getTaskRun())
-                        .task(task)
+                        .task(resolvedTask.getTask())
                         .build();
                 })
                 .to(
@@ -135,10 +146,9 @@ public class KafkaExecutor extends AbstractExecutor {
             stream
                 .mapValues((readOnlyKey, value) -> {
                     List<TaskRun> next = FlowableUtils.resolveSequentialNexts(
-                        new RunContext(value.getFlow(), value.getExecution()),
                         value.getExecution(),
-                        value.getFlow().getTasks(),
-                        value.getFlow().getErrors()
+                        ResolvedTask.of(value.getFlow().getTasks()),
+                        ResolvedTask.of(value.getFlow().getErrors())
                     );
 
                     if (next.size() > 0) {

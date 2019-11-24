@@ -21,7 +21,7 @@ import org.floworc.core.models.executions.LogEntry;
 import org.floworc.core.models.executions.MetricEntry;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
-import org.floworc.core.models.tasks.Task;
+import org.floworc.core.models.tasks.ResolvedTask;
 import org.floworc.core.runners.handlebars.helpers.InstantHelper;
 import org.floworc.core.storages.StorageInterface;
 import org.floworc.core.storages.StorageObject;
@@ -72,13 +72,13 @@ public class RunContext {
         this.variables = this.variables(flow, null, execution, null);
     }
 
-    public RunContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
+    public RunContext(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
         this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
         this.variables = this.variables(flow, task, execution, taskRun);
     }
 
-    private Map<String, Object> variables(Flow flow, Task task, Execution execution, TaskRun taskRun) {
-        ImmutableMap.Builder<String, Object> variblesBuilder = ImmutableMap.<String, Object>builder()
+    private Map<String, Object> variables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("flow", ImmutableMap.of(
                 "id", flow.getId(),
                 "namespace", flow.getNamespace()
@@ -89,39 +89,39 @@ public class RunContext {
             ))
             .put("env", System.getenv());
 
-        if (task != null) {
-            variblesBuilder
+        if (resolvedTask != null) {
+            builder
                 .put("task", ImmutableMap.of(
-                    "id", task.getId(),
-                    "type", task.getType()
+                    "id", resolvedTask.getTask().getId(),
+                    "type", resolvedTask.getTask().getType()
                 ));
         }
 
-
         if (taskRun != null) {
-            variblesBuilder
-                .put("taskrun", ImmutableMap.of(
-                    "id", taskRun.getId(),
-                    "startDate", taskRun.getState().startDate()
-                ));
+            ImmutableMap.Builder<String, Object> taskBuilder = ImmutableMap.<String, Object>builder()
+                .put("id", taskRun.getId())
+                .put("startDate", taskRun.getState().startDate());
+
+            if (taskRun.getParentTaskRunId() != null) {
+                taskBuilder.put("parentId", taskRun.getParentTaskRunId());
+            }
+
+            if (taskRun.getValue() != null) {
+                taskBuilder.put("value", taskRun.getValue());
+            }
+
+            builder.put("taskrun", taskBuilder.build());
         }
 
         if (execution.getTaskRunList() != null) {
-            variblesBuilder
-                .put("outputs", execution
-                    .getTaskRunList()
-                    .stream()
-                    .filter(current -> current.getOutputs() != null)
-                    .map(current -> new AbstractMap.SimpleEntry<>(current.getTaskId(), current.getOutputs()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-                );
+            builder.put("outputs", execution.outputs());
         }
 
         if (execution.getInputs() != null) {
-            variblesBuilder.put("inputs", execution.getInputs());
+            builder.put("inputs", execution.getInputs());
         }
 
-        return variblesBuilder.build();
+        return builder.build();
     }
 
     @VisibleForTesting

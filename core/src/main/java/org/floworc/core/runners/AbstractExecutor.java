@@ -5,7 +5,7 @@ import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.FlowableTask;
-import org.floworc.core.models.tasks.Task;
+import org.floworc.core.models.tasks.ResolvedTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,16 +48,16 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     protected Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) {
-        Task parent = flow.findTaskById(taskRun.getTaskId());
+        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(flow, execution));
 
-        if (parent instanceof FlowableTask) {
-            FlowableTask flowableParent = (FlowableTask) parent;
+        if (parent.getTask() instanceof FlowableTask) {
+            FlowableTask flowableParent = (FlowableTask) parent.getTask();
 
             return flowableParent
-                .resolveState(new RunContext(flow, execution), execution)
+                .resolveState(new RunContext(flow, execution), execution, taskRun)
                 .map(type -> new WorkerTaskResult(
                     taskRun.withState(type),
-                    parent
+                    parent.getTask()
                 ));
 
         }
@@ -66,12 +66,11 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     protected Optional<Execution> childNexts(Flow flow, Execution execution, TaskRun taskRun) {
-        Task parent = flow.findTaskById(taskRun.getTaskId());
+        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(flow, execution));
 
-        if (parent instanceof FlowableTask) {
-
-            FlowableTask flowableParent = (FlowableTask) parent;
-            List<TaskRun> nexts = flowableParent.resolveNexts(new RunContext(flow, execution), execution);
+        if (parent.getTask() instanceof FlowableTask) {
+            FlowableTask flowableParent = (FlowableTask) parent.getTask();
+            List<TaskRun> nexts = flowableParent.resolveNexts(new RunContext(flow, execution), execution, taskRun);
 
             if (nexts.size() > 0) {
                 return Optional.of(this.onNexts(flow, execution, nexts));

@@ -6,7 +6,7 @@ import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
-import org.floworc.core.models.tasks.Task;
+import org.floworc.core.models.tasks.ResolvedTask;
 import org.floworc.core.queues.QueueFactoryInterface;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.repositories.FlowRepositoryInterface;
@@ -86,13 +86,16 @@ public class MemoryExecutor extends AbstractExecutor {
             .collect(Collectors.toList());
 
         for (TaskRun taskRun: nexts) {
-            Task task = flow.findTaskById(taskRun.getTaskId());
+            ResolvedTask resolvedTask = flow.findTaskByTaskRun(
+                taskRun,
+                new RunContext(flow, execution)
+            );
 
             this.workerTaskQueue.emit(
                 WorkerTask.builder()
-                    .runContext(new RunContext(flow, task, execution, taskRun))
+                    .runContext(new RunContext(flow, resolvedTask, execution, taskRun))
                     .taskRun(taskRun)
-                    .task(task)
+                    .task(resolvedTask.getTask())
                     .build()
             );
         }
@@ -100,10 +103,9 @@ public class MemoryExecutor extends AbstractExecutor {
 
     private void handleNext(Execution execution, Flow flow) {
         List<TaskRun> next = FlowableUtils.resolveSequentialNexts(
-            new RunContext(flow, execution),
             execution,
-            flow.getTasks(),
-            flow.getErrors()
+            ResolvedTask.of(flow.getTasks()),
+            ResolvedTask.of(flow.getErrors())
         );
 
         if (next.size() > 0) {
@@ -132,7 +134,10 @@ public class MemoryExecutor extends AbstractExecutor {
             return;
         }
 
-        List<Task> currentTasks = execution.findTaskDependingFlowState(flow.getTasks(), flow.getErrors());
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
+            ResolvedTask.of(flow.getTasks()),
+            ResolvedTask.of(flow.getErrors())
+        );
 
         if (execution.isTerminated(currentTasks)) {
             Execution newExecution = this.onEnd(flow, execution);

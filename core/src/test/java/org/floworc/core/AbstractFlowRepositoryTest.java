@@ -80,13 +80,15 @@ public abstract class AbstractFlowRepositoryTest {
         Flow save = flowRepository.save(flow);
 
         assertThat(save.getRevision(), is(1));
+
+        flowRepository.delete(save);
     }
 
     @Test
     void findAll() {
         List<Flow> save = flowRepository.findAll();
 
-        assertThat(save.size(), is(12));
+        assertThat(save.size(), is(14));
     }
 
     @Test

@@ -5,9 +5,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.apache.avro.reflect.Nullable;
-import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
+import org.floworc.core.runners.RunContext;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
@@ -30,21 +31,18 @@ abstract public class Task {
     protected Integer timeout;
 
     @Nullable
+    @Valid
     protected List<Task> errors;
 
-    public TaskRun toTaskRun(Execution execution) {
-        return TaskRun.of(execution, this);
-    }
-
-    public Optional<Task> findById(String id) {
+    public Optional<Task> findById(String id, RunContext runContext, TaskRun taskRun) {
         if (this.getId().equals(id)) {
             return Optional.of(this);
         }
 
         if (this instanceof FlowableTask) {
-            Optional<Task> childs = ((FlowableTask) this).childTasks()
+            Optional<Task> childs = ((FlowableTask) this).childTasks(runContext, taskRun)
                 .stream()
-                .map(task -> task.findById(id))
+                .map(resolvedTask -> resolvedTask.getTask().findById(id, runContext, taskRun))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .findFirst();
@@ -57,14 +55,14 @@ abstract public class Task {
         if (this.errors != null) {
             return this.errors
                 .stream()
-                .flatMap(task -> task.findById(id).stream())
+                .flatMap(task -> task.findById(id, runContext, taskRun).stream())
                 .findFirst();
         }
 
         if (this instanceof FlowableTask && ((FlowableTask) this).getErrors() != null) {
             Optional<Task> errorChilds = ((FlowableTask) this).getErrors()
                 .stream()
-                .map(task -> task.findById(id))
+                .map(task -> task.findById(id, runContext, taskRun))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .findFirst();

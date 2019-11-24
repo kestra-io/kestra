@@ -6,7 +6,7 @@ tasks:
   type: org.floworc.core.tasks.scripts.Bash
   commands:
   - 'exit 1'
-  errors:
+errors:
   - id: 2nd
     type: org.floworc.core.tasks.debugs.Echo
     format: second {{task.id}}

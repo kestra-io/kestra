@@ -180,7 +180,7 @@ public class RunnerUtils {
 
     public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
         if (duration == null) {
-            duration = Duration.ofSeconds(5);
+            duration = Duration.ofMinutes(5);
         }
 
         Execution execution = this.newExecution(flow, inputs);

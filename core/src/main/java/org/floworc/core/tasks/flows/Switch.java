@@ -9,12 +9,13 @@ import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.FlowableTask;
+import org.floworc.core.models.tasks.ResolvedTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.runners.FlowableUtils;
 import org.floworc.core.runners.RunContext;
 
+import javax.validation.Valid;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,19 +28,14 @@ import java.util.Optional;
 public class Switch extends Task implements FlowableTask {
     private String value;
 
+    @Valid
     private Map<String, List<Task>> cases;
 
+    @Valid
     private List<Task> defaults;
 
     @Override
-    public List<Task> childTasks() {
-        List<Task> result = new ArrayList<>(defaults);
-        cases.forEach((s, tasks) -> result.addAll(tasks));
-
-        return result;
-    }
-
-    private List<Task> resolveTasks(RunContext runContext) {
+    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) {
         String renderValue;
         try {
             renderValue = runContext.render(this.value);
@@ -52,17 +48,28 @@ public class Switch extends Task implements FlowableTask {
             .stream()
             .filter(entry -> entry.getKey().equals(renderValue))
             .map(Map.Entry::getValue)
+            .map(tasks -> FlowableUtils.resolveTasks(tasks, parentTaskRun))
             .findFirst()
-            .orElse(this.defaults);
+            .orElse(FlowableUtils.resolveTasks(this.defaults, parentTaskRun));
     }
 
     @Override
-    public Optional<State.Type> resolveState(RunContext runContext, Execution execution) {
-        return FlowableUtils.resolveState(runContext, execution, this.resolveTasks(runContext), this.getErrors());
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+        return FlowableUtils.resolveState(
+            execution,
+            this.childTasks(runContext, parentTaskRun),
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            parentTaskRun
+        );
     }
 
     @Override
-    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution) {
-        return FlowableUtils.resolveSequentialNexts(runContext, execution, this.resolveTasks(runContext), this.errors);
+    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+        return FlowableUtils.resolveSequentialNexts(
+            execution,
+            this.childTasks(runContext, parentTaskRun),
+            FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+            parentTaskRun
+        );
     }
 }

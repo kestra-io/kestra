@@ -27,8 +27,8 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
-class InputsTest extends AbstractMemoryRunnerTest {
-    private Map<String, String> inputs = ImmutableMap.of(
+public class InputsTest extends AbstractMemoryRunnerTest {
+    public static Map<String, String> inputs = ImmutableMap.of(
         "string", "myString",
         "int", "42",
         "float", "42.42",
@@ -60,42 +60,42 @@ class InputsTest extends AbstractMemoryRunnerTest {
 
     @Test
     void inputString() {
-        Map<String, Object> typeds = typedInputs(this.inputs);
+        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("string"), is("myString"));
     }
 
     @Test
     void inputInt() {
-        Map<String, Object> typeds = typedInputs(this.inputs);
+        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("int"), is(42));
     }
 
     @Test
     void inputFloat() {
-        Map<String, Object> typeds = typedInputs(this.inputs);
+        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("float"), is(42.42F));
     }
 
     @Test
     void inputInstant() {
-        Map<String, Object> typeds = typedInputs(this.inputs);
+        Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("instant"), is(Instant.parse("2019-10-06T18:27:49Z")));
     }
 
     @Test
     void inputFile() throws URISyntaxException, IOException {
-        Map<String, Object> typeds = typedInputs(this.inputs);
+        Map<String, Object> typeds = typedInputs(inputs);
         StorageObject file = (StorageObject) typeds.get("file");
 
         assertThat(file.getUri(), is(new URI("floworc:////org/floworc/tests/inputs/executions/test/inputs/file/application.yml")));
         assertThat(file.getClass(), is(StorageObject.class));
         assertThat(
             file.getContent(),
-            is(CharStreams.toString(new InputStreamReader(new FileInputStream(this.inputs.get("file")))))
+            is(CharStreams.toString(new InputStreamReader(new FileInputStream(inputs.get("file")))))
         );
         assertThat(
             CharStreams.toString(new InputStreamReader(file.getInputStream())),
-            is(CharStreams.toString(new InputStreamReader(new FileInputStream(this.inputs.get("file")))))
+            is(CharStreams.toString(new InputStreamReader(new FileInputStream(inputs.get("file")))))
         );
     }
 
@@ -105,7 +105,7 @@ class InputsTest extends AbstractMemoryRunnerTest {
             "org.floworc.tests",
             "inputs",
             null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, this.inputs)
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
         );
 
         assertThat(execution.getTaskRunList(), hasSize(7));

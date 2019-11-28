@@ -1,5 +1,6 @@
 package org.floworc.core.runners;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import org.floworc.core.models.executions.Execution;
@@ -17,12 +18,14 @@ public class RunnerProcessFactory {
     @Inject
     public Worker worker(
         StorageInterface storageInterface,
+        ApplicationContext applicationContext,
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
         @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue
     ) {
         return new Worker(
             storageInterface,
+            applicationContext,
             workerTaskQueue,
             workerTaskResultQueue
         );

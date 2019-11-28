@@ -4,6 +4,7 @@ import com.devskiller.friendly_id.FriendlyId;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import io.micronaut.context.ApplicationContext;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
@@ -98,7 +99,7 @@ abstract public class Utils {
             .withState(State.Type.RUNNING);
     }
 
-    public static RunContext mockRunContext(StorageInterface storageInterface, Task task, Map<String, Object> inputs) {
+    public static RunContext mockRunContext(ApplicationContext applicationContext, Task task, Map<String, Object> inputs) {
         StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
 
         Flow flow = Utils.mockFlow(caller);
@@ -106,6 +107,7 @@ abstract public class Utils {
         TaskRun taskRun = Utils.mockTaskRun(caller, execution, task);
 
         return new RunContext(flow, ResolvedTask.of(task), execution, taskRun)
-            .withStorageInterface(storageInterface);
+            .withApplicationContext(applicationContext)
+            .withStorageInterface(applicationContext.getBean(StorageInterface.class));
     }
 }

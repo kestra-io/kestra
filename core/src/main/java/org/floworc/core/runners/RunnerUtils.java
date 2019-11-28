@@ -34,6 +34,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -185,17 +186,27 @@ public class RunnerUtils {
 
         Execution execution = this.newExecution(flow, inputs);
 
-        final String executionId = execution.getId();
+        return this.awaitExecution(
+            () -> {
+                this.executionQueue.emit(execution);
 
+                return execution.getId();
+            },
+            duration
+        );
+    }
+
+    public Execution awaitExecution(Supplier<String> emitExecution, Duration duration) throws TimeoutException {
+        AtomicReference<String> executionId = new AtomicReference<>();
         AtomicReference<Execution> receive = new AtomicReference<>();
 
         Runnable cancel = this.executionQueue.receive(current -> {
-            if (current.getId().equals(executionId) && current.getState().isTerninated()) {
+            if (current.getId().equals(executionId.get()) && current.getState().isTerninated()) {
                 receive.set(current);
             }
         });
 
-        this.executionQueue.emit(execution);
+        executionId.set(emitExecution.get());
 
         Await.until(() -> receive.get() != null, null, duration);
 

@@ -1,6 +1,7 @@
 package org.floworc.core.tasks;
 
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MicronautTest;
 import org.floworc.core.runners.RunContext;
 import org.floworc.core.storages.StorageInterface;
@@ -12,12 +13,12 @@ import javax.inject.Inject;
 @MicronautTest
 class BashTest {
     @Inject
-    StorageInterface storageInterface;
+    ApplicationContext applicationContext;
 
     @Test
     void run() throws Exception {
         RunContext runContext = new RunContext(
-            this.storageInterface,
+            this.applicationContext,
             ImmutableMap.of(
                 "input", ImmutableMap.of("url", "www.google.fr")
             )

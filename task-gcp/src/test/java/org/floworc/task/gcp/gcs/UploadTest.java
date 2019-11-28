@@ -2,6 +2,7 @@ package org.floworc.task.gcp.gcs;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.test.annotation.MicronautTest;
 import org.floworc.core.runners.RunContext;
@@ -23,6 +24,9 @@ import static org.hamcrest.Matchers.is;
 class UploadTest {
     @Inject
     private StorageInterface storageInterface;
+
+    @Inject
+    private ApplicationContext applicationContext;
 
     @Value("${floworc.tasks.gcs.bucket}")
     private String bucket;
@@ -60,7 +64,7 @@ class UploadTest {
 
     private RunContext runContext() {
         return new RunContext(
-            this.storageInterface,
+            this.applicationContext,
             ImmutableMap.of(
                 "bucket", this.bucket
             )

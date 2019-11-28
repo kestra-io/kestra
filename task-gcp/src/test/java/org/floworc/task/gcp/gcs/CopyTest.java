@@ -1,6 +1,7 @@
 package org.floworc.task.gcp.gcs;
 
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.test.annotation.MicronautTest;
 import org.floworc.core.runners.RunContext;
@@ -22,13 +23,17 @@ class CopyTest {
     @Inject
     private StorageInterface storageInterface;
 
+    @Inject
+    private ApplicationContext applicationContext;
+
+
     @Value("${floworc.tasks.gcs.bucket}")
     private String bucket;
 
     @Test
     void run() throws Exception {
         RunContext runContext = new RunContext(
-            this.storageInterface,
+            this.applicationContext,
             ImmutableMap.of(
                 "bucket", this.bucket
             )

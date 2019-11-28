@@ -1,5 +1,6 @@
 package org.floworc.core.runners;
 
+import io.micronaut.context.ApplicationContext;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.queues.QueueInterface;
@@ -7,15 +8,18 @@ import org.floworc.core.storages.StorageInterface;
 
 public class Worker implements Runnable {
     private StorageInterface storageInterface;
+    private ApplicationContext applicationContext;
     private QueueInterface<WorkerTask> workerTaskQueue;
     private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     public Worker(
         StorageInterface storageInterface,
+        ApplicationContext applicationContext,
         QueueInterface<WorkerTask> workerTaskQueue,
         QueueInterface<WorkerTaskResult> workerTaskResultQueue
     ) {
         this.storageInterface = storageInterface;
+        this.applicationContext = applicationContext;
         this.workerTaskQueue = workerTaskQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
     }
@@ -46,7 +50,8 @@ public class Worker implements Runnable {
 
             RunContext runContext = workerTask
                 .getRunContext()
-                .withStorageInterface(this.storageInterface);
+                .withStorageInterface(this.storageInterface)
+                .withApplicationContext(this.applicationContext);
 
             RunOutput output = null;
 

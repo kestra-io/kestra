@@ -4,6 +4,7 @@ import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MicronautTest;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericDatumReader;
@@ -32,6 +33,9 @@ class CsvToAvroTest {
     @Inject
     StorageInterface storageInterface;
 
+    @Inject
+    ApplicationContext applicationContext;
+
     @Test
     void run() throws Exception {
         StorageObject source = storageInterface.put(
@@ -52,7 +56,7 @@ class CsvToAvroTest {
             .fieldSeparator(";".charAt(0))
             .build();
 
-        RunOutput run = task.run(new RunContext(this.storageInterface, ImmutableMap.of()));
+        RunOutput run = task.run(new RunContext(this.applicationContext, ImmutableMap.of()));
 
         assertThat(
             this.avroSize(this.storageInterface.get((URI) run.getOutputs().get("uri"))),

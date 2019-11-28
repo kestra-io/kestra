@@ -5,6 +5,7 @@ import com.google.cloud.bigquery.Field;
 import com.google.cloud.bigquery.LegacySQLTypeName;
 import com.google.cloud.bigquery.Schema;
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.test.annotation.MicronautTest;
 import org.floworc.core.Utils;
@@ -22,7 +23,7 @@ import static org.hamcrest.Matchers.is;
 @MicronautTest
 class LoadFromGcsTest {
     @Inject
-    private StorageInterface storageInterface;
+    private ApplicationContext applicationContext;
 
     @Value("${floworc.tasks.bigquery.project}")
     private String project;
@@ -46,7 +47,7 @@ class LoadFromGcsTest {
             ))
             .build();
 
-        RunContext runContext = Utils.mockRunContext(storageInterface, task, ImmutableMap.of());
+        RunContext runContext = Utils.mockRunContext(applicationContext, task, ImmutableMap.of());
 
         RunOutput run = task.run(runContext);
         assertThat(run.getOutputs().get("rows"), is(50L));

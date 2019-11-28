@@ -7,6 +7,7 @@ import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Range;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.test.annotation.MicronautTest;
 import org.floworc.core.Utils;
@@ -32,7 +33,7 @@ import static org.hamcrest.Matchers.is;
 @MicronautTest
 class QueryTest {
     @Inject
-    private StorageInterface storageInterface;
+    private ApplicationContext applicationContext;
 
     @Value("${floworc.tasks.bigquery.project}")
     private String project;
@@ -44,7 +45,7 @@ class QueryTest {
     @SuppressWarnings("unchecked")
     void fetch() throws Exception {
         RunContext runContext = new RunContext(
-            this.storageInterface,
+            this.applicationContext,
             ImmutableMap.of(
                 "sql", "SELECT " +
                     "  \"hello\" as string," +
@@ -108,7 +109,7 @@ class QueryTest {
             .writeDisposition(JobInfo.WriteDisposition.WRITE_APPEND)
             .build();
 
-        RunContext runContext = Utils.mockRunContext(storageInterface, task, ImmutableMap.of(
+        RunContext runContext = Utils.mockRunContext(applicationContext, task, ImmutableMap.of(
             "loop", ContiguousSet.create(Range.closed(1, 25), DiscreteDomain.integers())
         ));
 

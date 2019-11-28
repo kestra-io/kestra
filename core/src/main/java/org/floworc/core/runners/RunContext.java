@@ -12,6 +12,7 @@ import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.context.ApplicationContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,7 @@ import org.floworc.core.models.executions.MetricEntry;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.tasks.ResolvedTask;
+import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.runners.handlebars.helpers.InstantHelper;
 import org.floworc.core.storages.StorageInterface;
 import org.floworc.core.storages.StorageObject;
@@ -56,6 +58,9 @@ public class RunContext {
 
     @With
     private StorageInterface storageInterface;
+
+    @With
+    private ApplicationContext applicationContext;
 
     private URI storageOutputPrefix;
 
@@ -125,8 +130,9 @@ public class RunContext {
     }
 
     @VisibleForTesting
-    public RunContext(StorageInterface storageInterface, Map<String, Object> variables) {
-        this.storageInterface = storageInterface;
+    public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
+        this.applicationContext = applicationContext;
+        this.storageInterface = applicationContext.getBean(StorageInterface.class);
         this.storageOutputPrefix = URI.create("");
         this.variables = variables;
     }

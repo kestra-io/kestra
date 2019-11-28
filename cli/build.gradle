@@ -24,6 +24,6 @@ dependencies {
     compile project(":webserver")
 
     // tasks
-    compile project(":task-avro")
     compile project(":task-gcp")
+    compile project(":task-serdes")
 }

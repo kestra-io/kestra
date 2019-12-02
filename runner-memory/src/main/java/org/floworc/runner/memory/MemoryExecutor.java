@@ -78,6 +78,10 @@ public class MemoryExecutor extends AbstractExecutor {
     }
 
     private void handleWorkerTask(Execution execution, Flow flow) {
+        if (execution.getTaskRunList() == null) {
+            return;
+        }
+
         // submit TaskRun when receiving created, must be done after the state execution store
         List<TaskRun> nexts = execution
             .getTaskRunList()
@@ -115,6 +119,10 @@ public class MemoryExecutor extends AbstractExecutor {
     }
 
     private void handlChild(Execution execution, Flow flow) {
+        if (execution.getTaskRunList() == null) {
+            return;
+        }
+
         execution
             .getTaskRunList()
             .stream()

@@ -28,7 +28,7 @@ public class Execution {
 
     @With
     @Builder.Default
-    private List<TaskRun> taskRunList = new ArrayList<>();
+    private List<TaskRun> taskRunList;
 
     @With
     private Map<String, Object> inputs;
@@ -130,7 +130,7 @@ public class Execution {
     }
 
     public List<TaskRun> findTaskRunByTasks(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
-        if (resolvedTasks == null) {
+        if (resolvedTasks == null || this.getTaskRunList() == null) {
             return new ArrayList<>();
         }
 

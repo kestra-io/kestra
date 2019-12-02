@@ -5,15 +5,10 @@ dependencies {
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 
     // serializers
-    compile group: "org.apache.avro", name: "avro", version: avroVersion
-
-    // yaml
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9.2'
-    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.9'
-    compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.9.9'
+    compile group: "org.apache.avro", name: "avro", version: '1.9.1'
 
     // validations
-    compile group: 'org.hibernate.validator', name: 'hibernate-validator', version: '6.0.17.Final'
+    compile group: 'org.hibernate.validator', name: 'hibernate-validator', version: '6.1.0.Final'
 
     // utils
     compile group: 'net.jodah', name: 'failsafe', version: '2.3.1'

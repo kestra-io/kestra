@@ -1,9 +1,8 @@
 buildscript {
     ext {
-        micronautVersion = "1.2.4"
+        micronautVersion = "1.2.6"
         confluentVersion = "5.3.1"
         kafkaVersion = "2.3.0"
-        avroVersion = "1.9.0"
         lombokVersion = "1.18.10"
     }
 }
@@ -13,11 +12,14 @@ plugins {
     id "java"
     id "net.ltgt.apt-eclipse" version "0.21"
     id "net.ltgt.apt-idea" version "0.21"
-    id "com.github.johnrengelman.shadow" version "4.0.2"
+    id "com.github.johnrengelman.shadow" version "5.2.0"
     id "application"
 
     // test
-    id 'com.adarshr.test-logger' version '1.7.0'
+    id 'com.adarshr.test-logger' version '2.0.0'
+
+    // help
+    id "com.github.ben-manes.versions" version "0.27.0"
 }
 
 idea {
@@ -75,7 +77,7 @@ allprojects {
 
         // utils
         annotationProcessor "org.projectlombok:lombok:" + lombokVersion
-        compile group: 'com.google.guava', name: 'guava', version: '27.1-jre'
+        compile group: 'com.google.guava', name: 'guava', version: '28.1-jre'
         compileOnly 'org.projectlombok:lombok:' + lombokVersion
         compile 'com.github.jknack:handlebars:4.1.2'
 
@@ -90,6 +92,10 @@ allprojects {
         compile 'io.micronaut:micronaut-views'
         compile group: 'io.micronaut.data', name: 'micronaut-data-model', version: '1.0.0.M5'
 
+        // jackson
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
+        compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.10.1'
+        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.10.1'
 
         // test
         testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
@@ -101,8 +107,8 @@ allprojects {
         testRuntime "org.junit.jupiter:junit-jupiter-params"
 
         // hamcrest
-        testImplementation 'org.hamcrest:hamcrest:2.1'
-        testImplementation 'org.hamcrest:hamcrest-library:2.1'
+        testImplementation 'org.hamcrest:hamcrest:2.2'
+        testImplementation 'org.hamcrest:hamcrest-library:2.2'
         testCompile group: 'org.exparity', name: 'hamcrest-date', version: '2.0.7'
 
         // floworc

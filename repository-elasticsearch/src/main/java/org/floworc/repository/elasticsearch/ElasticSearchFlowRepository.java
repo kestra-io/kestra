@@ -65,6 +65,11 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
     @Override
     public Flow save(Flow flow) {
+        Optional<Flow> exists = this.exists(flow);
+        if (exists.isPresent()) {
+            return exists.get();
+        }
+
         Optional<Flow> current = this.findById(flow.getNamespace(), flow.getId());
 
         if (current.isPresent()) {

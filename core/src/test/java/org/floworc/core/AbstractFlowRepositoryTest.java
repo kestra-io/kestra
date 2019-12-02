@@ -1,8 +1,10 @@
 package org.floworc.core;
 
 import com.devskiller.friendly_id.FriendlyId;
+import com.google.common.collect.ImmutableList;
 import io.micronaut.test.annotation.MicronautTest;
 import org.floworc.core.models.flows.Flow;
+import org.floworc.core.models.flows.Input;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.repositories.LocalFlowRepositoryLoader;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,17 +55,30 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     void revision() {
-        Flow flow = builder().build();
-        flowRepository.save(flow);
-        flowRepository.save(flow);
+        Flow flow = flowRepository.save(Flow.builder()
+            .id("AbstractFlowRepositoryTest")
+            .namespace("org.floworc.unittest")
+            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
+            .build());
 
-        flowRepository.findById(flow.getNamespace(), flow.getId()).ifPresent(current -> {
-            Flow save = flowRepository.save(current.withRevision(null));
-            assertThat(save.getRevision(), is(3));
-        });
+        Flow notSaved = flowRepository.save(flow);
+
+        assertThat(flow, is(notSaved));
+
+        Flow incremented = flowRepository.save(Flow.builder()
+            .id("AbstractFlowRepositoryTest")
+            .namespace("org.floworc.unittest")
+            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
+            .build()
+        );
+        assertThat(incremented.getRevision(), is(2));
+
 
         List<Flow> revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
-        assertThat(revisions.size(), is(3));
+        assertThat(revisions.size(), is(2));
+
+        flowRepository.delete(flow);
+        flowRepository.delete(incremented);
     }
 
     @Test

@@ -4,7 +4,6 @@ import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.flows.Flow;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface FlowRepositoryInterface {
@@ -16,6 +15,13 @@ public interface FlowRepositoryInterface {
 
     default Optional<Flow> findById(String namespace, String id) {
         return this.findById(namespace, id, Optional.empty());
+    }
+
+    default Optional<Flow> exists(Flow flow) {
+        return this.findRevisions(flow.getNamespace(), flow.getId())
+            .stream()
+            .filter(f -> f.equalsWithoutRevision(flow))
+            .findFirst();
     }
 
     List<Flow> findRevisions(String namespace, String id);

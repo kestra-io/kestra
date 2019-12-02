@@ -1,5 +1,6 @@
 package org.floworc.core.models.flows;
 
+import com.google.common.base.Objects;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
@@ -79,5 +80,16 @@ public class Flow {
             .stream()
             .flatMap(task -> task.findById(id, runContext, taskRun).stream())
             .findFirst();
+    }
+
+    public boolean equalsWithoutRevision(Flow o) {
+        if (this == o) return true;
+
+        return Objects.equal(getId(), o.getId()) &&
+            Objects.equal(getNamespace(), o.getNamespace()) &&
+            Objects.equal(getInputs(), o.getInputs()) &&
+            Objects.equal(getTasks(), o.getTasks()) &&
+            Objects.equal(getErrors(), o.getErrors()) &&
+            Objects.equal(getTriggers(), o.getTriggers());
     }
 }

@@ -76,6 +76,11 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     @SuppressWarnings("ComparatorMethodParameterNotUsed")
     @Override
     public Flow save(Flow flow) {
+        Optional<Flow> exists = this.exists(flow);
+        if (exists.isPresent()) {
+            return exists.get();
+        }
+
         if (!this.flows.containsKey(flow.getNamespace())) {
             this.flows.put(flow.getNamespace(), new HashMap<>());
         }

@@ -1,10 +1,12 @@
 package org.floworc.core.models.flows;
 
+import lombok.Builder;
 import lombok.Value;
 
 import javax.validation.constraints.NotNull;
 
 @Value
+@Builder
 public class Input {
     @NotNull
     private String name;

@@ -5,7 +5,7 @@ import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.floworc.core.AbstractFlowRepositoryTest;
+import org.floworc.core.repositories.AbstractFlowRepositoryTest;
 import org.floworc.repository.elasticsearch.configs.IndicesConfig;
 import org.junit.jupiter.api.AfterEach;
 

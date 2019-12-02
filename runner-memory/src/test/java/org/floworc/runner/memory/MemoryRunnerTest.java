@@ -1,6 +1,6 @@
 package org.floworc.runner.memory;
 
-import org.floworc.core.AbstractMemoryRunnerTest;
+import org.floworc.core.runners.AbstractMemoryRunnerTest;
 import org.floworc.core.models.executions.Execution;
 import org.junit.jupiter.api.Test;
 

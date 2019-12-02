@@ -6,7 +6,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.RxHttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import org.floworc.core.AbstractMemoryRunnerTest;
+import org.floworc.core.runners.AbstractMemoryRunnerTest;
 import org.floworc.core.models.flows.Flow;
 import org.junit.jupiter.api.Test;
 

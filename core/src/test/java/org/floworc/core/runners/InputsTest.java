@@ -2,7 +2,6 @@ package org.floworc.core.runners;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
-import org.floworc.core.AbstractMemoryRunnerTest;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.repositories.FlowRepositoryInterface;

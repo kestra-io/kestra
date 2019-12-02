@@ -2,7 +2,7 @@ package org.floworc.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
-import org.floworc.core.AbstractMemoryRunnerTest;
+import org.floworc.core.runners.AbstractMemoryRunnerTest;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.runners.InputsTest;
 import org.floworc.core.runners.RunContext;

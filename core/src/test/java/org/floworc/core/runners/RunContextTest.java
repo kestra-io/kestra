@@ -1,7 +1,6 @@
 package org.floworc.core.runners;
 
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
-import org.floworc.core.AbstractMemoryRunnerTest;
 import org.floworc.core.models.executions.Execution;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;

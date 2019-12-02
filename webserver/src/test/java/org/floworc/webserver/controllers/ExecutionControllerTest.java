@@ -8,7 +8,7 @@ import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.client.sse.RxSseClient;
 import io.micronaut.http.sse.Event;
 import io.micronaut.runtime.server.EmbeddedServer;
-import org.floworc.core.AbstractMemoryRunnerTest;
+import org.floworc.core.runners.AbstractMemoryRunnerTest;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.flows.State;
 import org.junit.jupiter.api.Disabled;

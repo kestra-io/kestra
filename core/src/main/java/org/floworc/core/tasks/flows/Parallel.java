@@ -11,7 +11,10 @@ import org.floworc.core.runners.FlowableUtils;
 import org.floworc.core.runners.RunContext;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @SuperBuilder
 @ToString
@@ -42,48 +45,32 @@ public class Parallel extends Task implements FlowableTask {
         );
 
         /*
-        List<Task> currentTasks = execution.findTaskDependingFlowState(tasks, errors);
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
+            this.childTasks(runContext, parentTaskRun),
+            FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+            parentTaskRun
+        );
 
-        // all done, leave
-        if (execution.isTerminated(currentTasks)) {
-            return FlowableResult.builder()
-                .result(FlowableResult.Result.ENDED)
-                .childState(execution.hasFailed(this.tasks) ? State.Type.FAILED : State.Type.SUCCESS)
-                .build();
-        }
+        // all tasks run
+        List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
 
         // find all not created tasks
-        List<Task> notFind = currentTasks
+        List<ResolvedTask> notFinds = currentTasks
             .stream()
-            .filter(task -> execution
-                .getTaskRunList()
+            .filter(resolvedTask -> taskRuns
                 .stream()
-                .noneMatch(taskRun -> taskRun.getTaskId().equals(task.getId()))
+                .noneMatch(taskRun -> FlowableUtils.equals(resolvedTask, taskRun, parentTaskRun))
             )
             .collect(Collectors.toList());
 
-        // create all tasks not created yet
-        if (notFind.size() > 0) {
-            return FlowableResult.builder()
-                .nexts(notFind
-                    .stream()
-                    .map(task -> task.toTaskRun(execution))
-                    .collect(Collectors.toList())
-                )
-                .result(FlowableResult.Result.NEXTS)
-                .build();
+        if (notFinds.size() > 0) {
+            return notFinds
+                .stream()
+                .map(resolvedTask -> resolvedTask.toTaskRun(execution))
+                .collect(Collectors.toList());
         }
 
-        // find first running and maybe handle child tasks
-        Optional<TaskRun> firstRunning = execution.findFirstRunning(currentTasks);
-        if (firstRunning.isPresent()) {
-            return FlowableUtils.handleChilds(runContext, execution, firstRunning.get(), currentTasks);
-        }
-
-        // no special case, wait
-        return FlowableResult.builder()
-            .result(FlowableResult.Result.WAIT)
-            .build();
+        return new ArrayList<>();
         */
     }
 }

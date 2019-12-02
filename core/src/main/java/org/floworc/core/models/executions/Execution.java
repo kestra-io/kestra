@@ -5,6 +5,7 @@ import lombok.Value;
 import lombok.With;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.ResolvedTask;
+import org.floworc.core.runners.FlowableUtils;
 
 import javax.validation.constraints.NotNull;
 import java.util.*;
@@ -138,11 +139,7 @@ public class Execution {
             .stream()
             .filter(t -> resolvedTasks
                 .stream()
-                .anyMatch(resolvedTask -> resolvedTask.getTask().getId().equals(t.getTaskId()) &&
-                    (
-                        parentTaskRun == null || parentTaskRun.getId().equals(t.getParentTaskRunId())
-                    )
-                )
+                .anyMatch(resolvedTask -> FlowableUtils.isTaskRunFor(resolvedTask, t, parentTaskRun))
             )
             .collect(Collectors.toList());
     }

@@ -102,4 +102,11 @@ public class FlowableUtils {
             )
             .collect(Collectors.toList());
     }
+
+    public static boolean isTaskRunFor(ResolvedTask resolvedTask, TaskRun taskRun, TaskRun parentTaskRun) {
+        return resolvedTask.getTask().getId().equals(taskRun.getTaskId()) &&
+            (
+                parentTaskRun == null || parentTaskRun.getId().equals(taskRun.getParentTaskRunId())
+            );
+    }
 }

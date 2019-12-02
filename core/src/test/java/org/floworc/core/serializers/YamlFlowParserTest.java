@@ -2,10 +2,10 @@ package org.floworc.core.serializers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.floworc.core.exceptions.InvalidFlowException;
+import org.floworc.core.models.tasks.retrys.Constant;
 import org.junit.jupiter.api.Test;
 import org.floworc.core.Utils;
 import org.floworc.core.models.flows.Flow;
-import org.floworc.core.models.tasks.RetryIntervalType;
 import org.floworc.core.models.tasks.Task;
 
 import java.io.IOException;
@@ -27,9 +27,9 @@ class YamlFlowParserTest {
         // third with all optionals
         Task optionals = flow.getTasks().get(2);
         assertThat(optionals.getTimeout(), is(1000));
-        assertThat(optionals.getRetry().getInterval().getSeconds(), is(900L));
-        assertThat(optionals.getRetry().getType(), is(RetryIntervalType.CONSTANT));
-        assertThat(optionals.getRetry().getLimit(), is(5));
+        assertThat(optionals.getRetry().getType(), is("constant"));
+        assertThat(optionals.getRetry().getMaxAttempt(), is(5));
+        assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds(), is(900L));
     }
 
     @Test

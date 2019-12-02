@@ -1,0 +1,18 @@
+id: retry-failed
+namespace: org.floworc.tests
+
+tasks:
+- id: failed
+  type: org.floworc.core.tasks.scripts.Bash
+  commands:
+  - 'exit 1'
+  retry:
+    type: constant
+    interval: PT0.250S
+    maxAttempt: 5
+    maxDuration: PT15S
+
+errors:
+  - id: 2nd
+    type: org.floworc.core.tasks.debugs.Echo
+    format: second {{task.id}}

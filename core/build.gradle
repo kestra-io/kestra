@@ -15,6 +15,9 @@ dependencies {
     // validations
     compile group: 'org.hibernate.validator', name: 'hibernate-validator', version: '6.0.17.Final'
 
+    // utils
+    compile group: 'net.jodah', name: 'failsafe', version: '2.3.1'
+
     // test
     testCompile project(':repository-memory').sourceSets.main.output
     testCompile project(':runner-memory').sourceSets.main.output

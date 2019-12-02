@@ -8,10 +8,8 @@ import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.ResolvedTask;
 
 import javax.validation.constraints.NotNull;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Value
 @Builder
@@ -32,13 +30,10 @@ public class TaskRun {
     private String value;
 
     @With
-    private List<LogEntry> logs;
+    private List<TaskRunAttempt> attempts;
 
     @With
     private Map<String, Object> outputs;
-
-    @With
-    private List<MetricEntry> metrics;
 
     @NotNull
     private State state;
@@ -51,9 +46,8 @@ public class TaskRun {
             this.taskId,
             this.parentTaskRunId,
             this.value,
-            this.logs,
+            this.attempts,
             this.outputs,
-            this.metrics,
             this.state.withState(state)
         );
     }
@@ -70,6 +64,18 @@ public class TaskRun {
             .build();
     }
 
+    public TaskRunAttempt lastAttempt() {
+        if (this.attempts == null) {
+            return null;
+        }
+
+        return this
+            .attempts
+            .stream()
+            .reduce((a, b) ->  b)
+            .orElse(null);
+    }
+
     public String toString(boolean pretty) {
         if (!pretty) {
             return super.toString();
@@ -82,8 +88,7 @@ public class TaskRun {
             ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
             ", outputs=" + this.getOutputs() +
-            ", logs=" + this.getLogs() +
-            ", metrics=" + this.getMetrics() +
+            ", attemps=" + this.getAttempts() +
             ")";
     }
 }

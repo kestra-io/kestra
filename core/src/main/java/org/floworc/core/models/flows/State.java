@@ -28,6 +28,10 @@ public class State {
     }
 
     public State withState(Type state) {
+        if (this.current == state) {
+            throw new IllegalStateException("Can't change state, already " + current);
+        }
+
         return new State(state, this);
     }
 

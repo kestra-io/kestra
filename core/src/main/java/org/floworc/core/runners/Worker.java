@@ -1,10 +1,20 @@
 package org.floworc.core.runners;
 
+import com.google.common.collect.ImmutableList;
 import io.micronaut.context.ApplicationContext;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
+import org.floworc.core.models.executions.TaskRunAttempt;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.RunnableTask;
+import org.floworc.core.models.tasks.Task;
 import org.floworc.core.queues.QueueInterface;
 import org.floworc.core.storages.StorageInterface;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Worker implements Runnable {
     private StorageInterface storageInterface;
@@ -38,55 +48,101 @@ public class Worker implements Runnable {
             workerTask.getTask().getClass().getSimpleName()
         );
 
-        this.workerTaskResultQueue.emit(
-            new WorkerTaskResult(workerTask, State.Type.RUNNING)
-        );
+        workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING));
+        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
 
         if (workerTask.getTask() instanceof RunnableTask) {
-            State.Type state;
+            AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
 
             // run
-            RunnableTask task = (RunnableTask) workerTask.getTask();
+            WorkerTask finalWorkerTask = Failsafe
+                .with(this.retryPolicy(workerTask.getTask())
+                    .handleResultIf(result -> result.getTaskRun().lastAttempt() != null &&
+                        Objects.requireNonNull(result.getTaskRun().lastAttempt()).getState().isFailed()
+                    )
+                    .onRetry(e -> {
+                        current.set(e.getLastResult());
 
-            RunContext runContext = workerTask
-                .getRunContext()
-                .withStorageInterface(this.storageInterface)
-                .withApplicationContext(this.applicationContext);
+                        this.workerTaskResultQueue.emit(
+                            new WorkerTaskResult(e.getLastResult())
+                        );
+                    })/*,
+                    Fallback.of(current::get)*/
+                )
+                .get(() -> this.runAttempt(current.get()));
 
-            RunOutput output = null;
-
-            try {
-                output = task.run(runContext);
-                state = State.Type.SUCCESS;
-            } catch (Exception e) {
-                workerTask.logger().error("Failed task", e);
-                state = State.Type.FAILED;
-            }
-
-            // save outputs
-            workerTask = workerTask
-                .withTaskRun(
-                    workerTask.getTaskRun()
-                        .withLogs(runContext.logs())
-                        .withMetrics(runContext.metrics())
-                        .withOutputs(output != null ? output.getOutputs() : null)
-                );
+            // get last state
+            List<TaskRunAttempt> attempts = finalWorkerTask.getTaskRun().getAttempts();
+            TaskRunAttempt lastAttempt = attempts.get(attempts.size() - 1);
+            State.Type state = lastAttempt.getState().getCurrent();
 
             // emit
-            this.workerTaskResultQueue.emit(
-                new WorkerTaskResult(workerTask, state)
-            );
+            finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
+            this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
 
             // log
-            workerTask.logger().info(
+            finalWorkerTask.logger().info(
                 "[execution: {}] [taskrun: {}] Task {} (type: {}) with state {} completed in {}",
-                workerTask.getTaskRun().getExecutionId(),
-                workerTask.getTaskRun().getId(),
-                workerTask.getTaskRun().getTaskId(),
-                workerTask.getTask().getClass().getSimpleName(),
+                finalWorkerTask.getTaskRun().getExecutionId(),
+                finalWorkerTask.getTaskRun().getId(),
+                finalWorkerTask.getTaskRun().getTaskId(),
+                finalWorkerTask.getTask().getClass().getSimpleName(),
                 state,
-                workerTask.getTaskRun().getState().humanDuration()
+                finalWorkerTask.getTaskRun().getState().humanDuration()
             );
         }
+    }
+
+    private RetryPolicy<WorkerTask> retryPolicy(Task task) {
+        if (task.getRetry() != null) {
+            return task.getRetry().toPolicy();
+        }
+
+        return new RetryPolicy<WorkerTask>()
+            .withMaxAttempts(1);
+    }
+
+    private WorkerTask runAttempt(WorkerTask workerTask) {
+        RunnableTask task = (RunnableTask) workerTask.getTask();
+        State.Type state;
+
+        RunContext runContext = workerTask
+            .getRunContext()
+            .withStorageInterface(this.storageInterface)
+            .withApplicationContext(this.applicationContext)
+            .updateTaskRunVariables(workerTask.getTaskRun());
+
+        TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
+            .state(new State());
+
+        RunOutput output = null;
+
+        try {
+            output = task.run(runContext);
+            state = State.Type.SUCCESS;
+        } catch (Exception e) {
+            workerTask.logger().error("Failed task", e);
+            state = State.Type.FAILED;
+        }
+
+        // attempt
+        TaskRunAttempt taskRunAttempt = builder
+            .logs(runContext.logs())
+            .metrics(runContext.metrics())
+            .build()
+            .withState(state);
+
+        ImmutableList<TaskRunAttempt> attempts = ImmutableList.<TaskRunAttempt>builder()
+            .addAll(workerTask.getTaskRun().getAttempts() == null ? new ArrayList<>() : workerTask.getTaskRun().getAttempts())
+            .add(taskRunAttempt)
+            .build();
+
+        // save outputs
+        return workerTask
+            .withTaskRun(
+                workerTask.getTaskRun()
+                    .withAttempts(attempts)
+                    .withOutputs(output != null ? output.getOutputs() : null)
+            );
     }
 }

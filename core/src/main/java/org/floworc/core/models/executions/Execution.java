@@ -1,6 +1,5 @@
 package org.floworc.core.models.executions;
 
-import com.devskiller.friendly_id.FriendlyId;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;

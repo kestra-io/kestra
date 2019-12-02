@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.apache.avro.reflect.Nullable;
 import org.floworc.core.models.executions.TaskRun;
+import org.floworc.core.models.tasks.retrys.AbstractRetry;
 import org.floworc.core.runners.RunContext;
 
 import javax.validation.Valid;
@@ -25,7 +26,7 @@ abstract public class Task {
     protected String type;
 
     @Nullable
-    protected Retry retry;
+    protected AbstractRetry retry;
 
     @Nullable
     protected Integer timeout;

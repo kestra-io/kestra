@@ -1,0 +1,18 @@
+id: retry-success
+namespace: org.floworc.tests
+
+tasks:
+- id: failed
+  type: org.floworc.core.tasks.scripts.Bash
+  commands:
+  - 'if [ "{{taskrun.attemptsCount}}" -eq 4 ]; then exit 0; else exit 1; fi'
+  retry:
+    type: constant
+    interval: PT0.250S
+    maxAttempt: 5
+    maxDuration: PT15S
+
+errors:
+  - id: never-happen
+    type: org.floworc.core.tasks.debugs.Echo
+    format: Never {{task.id}}

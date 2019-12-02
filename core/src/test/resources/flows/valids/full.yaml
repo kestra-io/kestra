@@ -24,8 +24,8 @@ tasks:
   format: third all optional args {{ outputs.2nd.return }}
   timeout: 1000
   retry:
-    limit: 5
-    type: CONSTANT
+    maxAttempt: 5
+    type: constant
     interval: PT15M
 #
 #- id: 4th

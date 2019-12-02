@@ -23,7 +23,6 @@ import org.floworc.core.models.executions.MetricEntry;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.tasks.ResolvedTask;
-import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.runners.handlebars.helpers.InstantHelper;
 import org.floworc.core.storages.StorageInterface;
 import org.floworc.core.storages.StorageObject;
@@ -32,8 +31,8 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URI;
 import java.time.Instant;
-import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -103,19 +102,7 @@ public class RunContext {
         }
 
         if (taskRun != null) {
-            ImmutableMap.Builder<String, Object> taskBuilder = ImmutableMap.<String, Object>builder()
-                .put("id", taskRun.getId())
-                .put("startDate", taskRun.getState().startDate());
-
-            if (taskRun.getParentTaskRunId() != null) {
-                taskBuilder.put("parentId", taskRun.getParentTaskRunId());
-            }
-
-            if (taskRun.getValue() != null) {
-                taskBuilder.put("value", taskRun.getValue());
-            }
-
-            builder.put("taskrun", taskBuilder.build());
+            builder.put("taskrun", this.variables(taskRun));
         }
 
         if (execution.getTaskRunList() != null) {
@@ -127,6 +114,34 @@ public class RunContext {
         }
 
         return builder.build();
+    }
+
+    private Map<String, Object> variables(TaskRun taskRun) {
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
+            .put("id", taskRun.getId())
+            .put("startDate", taskRun.getState().startDate())
+            .put("attemptsCount", taskRun.getAttempts() == null ? 0 : taskRun.getAttempts().size());
+
+        if (taskRun.getParentTaskRunId() != null) {
+            builder.put("parentId", taskRun.getParentTaskRunId());
+        }
+
+        if (taskRun.getValue() != null) {
+            builder.put("value", taskRun.getValue());
+        }
+
+        return builder.build();
+    }
+
+    public RunContext updateTaskRunVariables(TaskRun taskRun) {
+        HashMap<String, Object> clone = new HashMap<>(this.variables);
+        clone.remove("taskrun");
+
+        clone.put("taskrun", this.variables(taskRun));
+
+        this.variables = ImmutableMap.copyOf(clone);
+
+        return this;
     }
 
     @VisibleForTesting

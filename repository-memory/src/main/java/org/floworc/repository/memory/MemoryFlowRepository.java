@@ -65,7 +65,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     @Override
     public List<Flow> findAll() {
-        return this.flows
+        return flows
             .entrySet()
             .stream()
             .flatMap(e -> e.getValue()
@@ -74,6 +74,28 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 .flatMap(f -> this.getLastRevision(f.getValue()).stream())
             )
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public ArrayListTotal<Flow> find(String namespace, io.micronaut.data.model.Pageable pageable) {
+        if (pageable.getNumber() < 1) {
+            throw new ValueException("Page cannot be < 1");
+        }
+        //handles pagination
+        int from = (pageable.getNumber() - 1) * pageable.getSize();
+        int to = from + pageable.getSize();
+        to = to > this.flows.size() ? this.flows.size() : to;
+
+        List<Flow> flows = this.flows
+            .entrySet()
+            .stream()
+            .flatMap(e -> e.getValue()
+                .entrySet()
+                .stream()
+                .flatMap(f -> this.getLastRevision(f.getValue()).stream())
+            ).filter(f -> f.getNamespace().equals(namespace))
+            .collect(Collectors.toList());
+        return new ArrayListTotal<Flow>(flows.subList(from, to), flows.size());
     }
 
     @Override

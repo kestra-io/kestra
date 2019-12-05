@@ -74,6 +74,47 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         return this.scroll(sourceBuilder);
     }
 
+    @Override
+    public ArrayListTotal<Flow> find(String namespace, Pageable pageable) {
+        BoolQueryBuilder bool = QueryBuilders.boolQuery()
+            .must(QueryBuilders.termQuery("namespace", namespace));
+
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool)
+            .size(pageable.getSize())
+            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
+        for (Sort.Order order:  pageable.getSort().getOrderBy()) {
+            sourceBuilder = sourceBuilder.sort(
+                order.getProperty(),
+                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
+            );
+        }
+
+        return this.query(sourceBuilder);
+    }
+
+    @Override
+    public ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable) {
+        TermQueryBuilder termQuery = QueryBuilders
+            .termQuery("namespace", namespace);
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(termQuery)
+            .size(pageable.getSize())
+            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
+        for (Sort.Order order : pageable.getSort().getOrderBy()) {
+            sourceBuilder = sourceBuilder.sort(
+                order.getProperty(),
+                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
+            );
+        }
+
+        return this.query(sourceBuilder);
+    }
+
 
     @Override
     public ArrayListTotal<Flow> find(String query, Pageable pageable) {

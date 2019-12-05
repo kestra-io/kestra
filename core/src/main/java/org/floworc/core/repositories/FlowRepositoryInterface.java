@@ -31,7 +31,7 @@ public interface FlowRepositoryInterface {
 
     ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable);
 
-    ArrayListTotal<Flow> find(String query, Pageable pageable);
+    ArrayListTotal<Flow> find(String namespace, Pageable pageable);
 
     Flow save(Flow flow);
 

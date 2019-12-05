@@ -49,8 +49,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void find() {
-        ArrayListTotal<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.testsnotfound"), Argument
-            .of(ArrayListTotal.class, Flow.class));
+        ArrayListTotal<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.testsnotfound"), Argument.of(ArrayListTotal.class, Flow.class));
 //        PagedResult.of(flows);
 
         assertThat(flows.size(), is(0));

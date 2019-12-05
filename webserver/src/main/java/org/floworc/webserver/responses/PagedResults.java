@@ -1,6 +1,7 @@
 package org.floworc.webserver.responses;
 
 import lombok.Getter;
+import org.floworc.core.models.flows.Flow;
 import org.floworc.core.repositories.ArrayListTotal;
 
 import javax.validation.constraints.NotNull;
@@ -17,7 +18,7 @@ public class PagedResults<T> {
         this.total = results.getTotal();
     }
 
-    public static <T> PagedResults<T> of(ArrayListTotal<T> results) {
-        return new PagedResults<>(results);
+    public static PagedResults of(ArrayListTotal<Flow> results) {
+        return new PagedResults((results));
     }
 }

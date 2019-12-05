@@ -2,6 +2,7 @@ package org.floworc.webserver.controllers;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableList;
+import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -10,6 +11,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.Input;
+import org.floworc.core.repositories.ArrayListTotal;
 import org.floworc.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
@@ -44,6 +46,15 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
     }
+
+    @Test
+    void find() {
+        ArrayListTotal<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.testsnotfound"), Argument.of(ArrayListTotal.class, Flow.class));
+//        PagedResult.of(flows);
+
+        assertThat(flows.size(), is(0));
+    }
+
 
     @Test
     void createFlow() throws IOException {

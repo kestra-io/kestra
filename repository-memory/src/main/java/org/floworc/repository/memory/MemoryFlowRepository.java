@@ -81,10 +81,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }
-        //handles pagination
-        int from = (pageable.getNumber() - 1) * pageable.getSize();
-        int to = from + pageable.getSize();
-        to = to > this.flows.size() ? this.flows.size() : to;
 
         List<Flow> flows = this.flows
             .entrySet()
@@ -95,6 +91,13 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 .flatMap(f -> this.getLastRevision(f.getValue()).stream())
             ).filter(f -> f.getNamespace().equals(namespace))
             .collect(Collectors.toList());
+
+        //handles pagination
+        int from = (pageable.getNumber() - 1) * pageable.getSize();
+        int to = from + pageable.getSize();
+        int size = flows.size();
+        to = to >= size ? size : to;
+        from = from >= size ? size : from;
         return new ArrayListTotal<Flow>(flows.subList(from, to), flows.size());
     }
 

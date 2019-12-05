@@ -1,5 +1,7 @@
 package org.floworc.repository.elasticsearch;
 
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -7,6 +9,7 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.floworc.core.models.flows.Flow;
+import org.floworc.core.repositories.ArrayListTotal;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.repository.elasticsearch.configs.IndicesConfig;
 
@@ -61,6 +64,27 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             .query(QueryBuilders.matchAllQuery());
 
         return this.scroll(sourceBuilder);
+    }
+
+    @Override
+    public ArrayListTotal<Flow> find(String namespace, Pageable pageable) {
+        BoolQueryBuilder bool = QueryBuilders.boolQuery()
+            .must(QueryBuilders.termQuery("namespace", namespace));
+
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool)
+            .size(pageable.getSize())
+            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
+        for (Sort.Order order:  pageable.getSort().getOrderBy()) {
+            sourceBuilder = sourceBuilder.sort(
+                order.getProperty(),
+                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
+            );
+        }
+
+        return this.query(sourceBuilder);
     }
 
     @Override

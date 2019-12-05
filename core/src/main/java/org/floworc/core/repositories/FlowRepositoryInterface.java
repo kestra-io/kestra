@@ -3,6 +3,7 @@ package org.floworc.core.repositories;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.flows.Flow;
 
+import io.micronaut.data.model.Pageable;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,8 @@ public interface FlowRepositoryInterface {
     List<Flow> findRevisions(String namespace, String id);
 
     List<Flow> findAll();
+
+    ArrayListTotal<Flow> find(String namespace, Pageable pageable);
 
     Flow save(Flow flow);
 

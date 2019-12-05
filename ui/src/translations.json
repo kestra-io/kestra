@@ -1,0 +1,24 @@
+{
+    "en": {
+        "Id": "Id",
+        "Namespace": "Namespace",
+        "Revision": "Revision",
+        "Successfully set": "Successfully set",
+        "Language": "Language",
+        "Set default page": "Set default page",
+        "Settings": "Settings",
+        "Flows": "Flows",
+        "Default page": "Default page"
+    },
+    "fr": {
+        "Id": "Identifiant",
+        "Namespace": "Espace de nom",
+        "Revision": "Révision",
+        "Successfully set": "Définition ok",
+        "Language": "Langue",
+        "Set default page": "Définir la page par défaut",
+        "Settings": "Paramètres",
+        "Flows": "Flows",
+        "Default page": "Page par défaut"
+    }
+}

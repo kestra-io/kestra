@@ -13,8 +13,10 @@ out/
 .classpath
 .attach*
 docker-compose.override.yml
-.env
-
 cli/src/main/resources/application-override.yml
 */src/test/resources/application-test.yml
-local/
+
+#Js
+node_modules
+.env
+yarn-error.log

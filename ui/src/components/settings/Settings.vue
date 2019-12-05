@@ -1,0 +1,71 @@
+<template>
+    <div>
+        <h1>{{$t('Settings')}}</h1>
+        <hr/>
+        <div class="row">
+            <div class="col-sm-12 col-md-4">
+                <b-form-group :label="$t('Set default page')">
+                    <b-form-select v-model="defaultRoute" :options="routesOptions"></b-form-select>
+                </b-form-group>
+            </div>
+            <div class="col-sm-12 col-md-4">
+                <b-form-group :label="$t('Language')">
+                    <b-form-select v-model="lang" :options="langOptions"></b-form-select>
+                </b-form-group>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+            routesOptions: [
+                { value: "flows", text: "flows" },
+                { value: "settings", text: "settings" }
+            ],
+            langOptions: [
+                { value: "en", text: "English" },
+                { value: "fr", text: "Français" }
+            ]
+        };
+    },
+    components: {},
+    created() {},
+    computed: {
+        defaultRoute: {
+            set(route) {
+                localStorage.setItem("defaultPage", route);
+                this.$bvToast.toast(this.$t("Successfully set"), {
+                    title: this.$t("Default page"),
+                    autoHideDelay: 5000,
+                    toaster: "b-toaster-top-center",
+                    variant: "success"
+                });
+            },
+            get() {
+                return localStorage.getItem("defaultPage") || "flows";
+            }
+        },
+        lang: {
+            set(lang) {
+                localStorage.setItem("lang", lang);
+                this.$root.$i18n.locale = lang
+                this.$bvToast.toast(this.$t("Successfully set"), {
+                    title: this.$t("Language"),
+                    autoHideDelay: 5000,
+                    toaster: "b-toaster-top-center",
+                    variant: "success"
+                });
+            },
+            get() {
+                return localStorage.getItem("lang") || "en";
+            }
+        }
+    }
+};
+</script>
+
+<style scoped lang="scss">
+</style>

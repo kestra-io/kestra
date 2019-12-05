@@ -18,7 +18,7 @@ public class PagedResults<T> {
         this.total = results.getTotal();
     }
 
-    public static PagedResults of(ArrayListTotal<Flow> results) {
-        return new PagedResults((results));
+    public static <T> PagedResults<T> of(ArrayListTotal<T> results) {
+        return new PagedResults<>(results);
     }
 }

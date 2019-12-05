@@ -38,20 +38,13 @@ public class FlowController {
     }
 
 
-//    class PagedResults {
-//        public static PagedResults of () {}
-//
-//    }
-
     /**
      * @param namespace The flow namespace
      * @return flow list
      */
     @Get(uri = "{namespace}", produces = MediaType.TEXT_JSON)
-    public ArrayListTotal<Flow> find(String namespace, @QueryValue(value = "page", defaultValue = "1") int page, @QueryValue(value = "size", defaultValue = "10") int size) {
-//        return PagedResults.of(flowRepository.find(namespace, Pageable.from(page, size)));
-        return flowRepository.find(namespace, Pageable.from(page, size));
-
+    public PagedResults<Flow> find(String namespace, @QueryValue(value = "page", defaultValue = "1") int page, @QueryValue(value = "size", defaultValue = "10") int size) {
+        return PagedResults.of(flowRepository.find(namespace, Pageable.from(page, size)));
     }
 
     /**

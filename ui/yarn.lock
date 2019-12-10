@@ -8464,6 +8464,11 @@ vue-router@^3.1.3:
   resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-3.1.3.tgz#e6b14fabc0c0ee9fda0e2cbbda74b350e28e412b"
   integrity sha512-8iSa4mGNXBjyuSZFCCO4fiKfvzqk+mhL0lnKuGcQtO1eoj8nq3CmbEG8FwK5QqoqwDgsjsf1GDuisDX4cdb/aQ==
 
+vue-select@^3.4.0:
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/vue-select/-/vue-select-3.4.0.tgz#e56b0612845d13d10162cd8df81bfb46af2083ac"
+  integrity sha512-UHd0fiUjPgRmHIGhI6yUKtnJsHOdvzD00QUGUtD+FaxWWZRWF2AAb7KPZRj0j/egVfZQvey6M6woHn78GbTogA==
+
 vue-sidebar-menu@^4.4.3:
   version "4.4.3"
   resolved "https://registry.yarnpkg.com/vue-sidebar-menu/-/vue-sidebar-menu-4.4.3.tgz#2f3582995b2a8b4f097b55cc8f4a6c82076faa23"

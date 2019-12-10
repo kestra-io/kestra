@@ -9,7 +9,8 @@
         "Settings": "Settings",
         "Flows": "Flows",
         "Default page": "Default page",
-        "Save": "Save"
+        "Save": "Save",
+        "Select namespace": "Select namespace"
     },
     "fr": {
         "Id": "Identifiant",
@@ -21,6 +22,7 @@
         "Settings": "Paramètres",
         "Flows": "Flows",
         "Default page": "Page par défaut",
-        "Save": "Enregistrer"
+        "Save": "Enregistrer",
+        "Select namespace": "Sélectionner un espace de nom"
     }
 }

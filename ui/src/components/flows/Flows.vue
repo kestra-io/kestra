@@ -8,6 +8,12 @@
                 </b-button>
             </router-link>
         </h1>
+        <hr />
+        <b-row>
+            <b-col sm="12" md="4">
+                <namespace-selector @onNamespaceSelect="onNamespaceSelect"/>
+            </b-col>
+        </b-row>
         <b-tooltip target="add-flow" triggers="hover">Add flow</b-tooltip>
         <b-table striped hover :items="flows" :fields="fields">
             <template v-slot:cell(edit)="row">
@@ -59,22 +65,20 @@
 import { mapState } from "vuex";
 import Wrench from "vue-material-design-icons/Wrench";
 import Plus from "vue-material-design-icons/Plus";
+import NamespaceSelector from '../namespace/Selector'
 
 export default {
-    components: { Wrench, Plus },
+    components: { Wrench, Plus , NamespaceSelector },
     data() {
         return {
             page: 1,
             perPage: 5,
-            pageOptions: [5, 10, 25, 50, 100],
+            pageOptions: [5, 10, 25, 50, 100]
         };
-    },
-    created() {
-        this.loadFlows();
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
-        fields () {
+        fields() {
             return [
                 {
                     key: "id",
@@ -96,7 +100,7 @@ export default {
                     label: "Edit",
                     class: "text-center"
                 }
-            ]
+            ];
         }
     },
     methods: {
@@ -104,11 +108,15 @@ export default {
             //setTimeout is for pagination settings are properly updated
             setTimeout(() => {
                 this.$store.dispatch("flow/loadFlows", {
-                    namespace: "org.floworc.myns",
+                    namespace: this.selectedNamespace,
                     perPage: this.perPage,
                     page: this.page
                 });
             });
+        },
+        onNamespaceSelect(namespace) {
+            this.selectedNamespace = namespace
+            this.loadFlows()
         }
     }
 };

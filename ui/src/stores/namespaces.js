@@ -1,0 +1,21 @@
+import Vue from 'vue'
+export default {
+    namespaced: true,
+    state: {
+        namespaces: undefined,
+    },
+
+    actions: {
+        loadNamespaces({ commit }, options) {
+            return Vue.axios.get(`/api/v1/namespaces`, { params: options }).then(response => {
+                commit('setNamespaces', response.data.results)
+            })
+        },
+    },
+    mutations: {
+        setNamespaces(state, namespaces) {
+            state.namespaces = namespaces
+        },
+    },
+    getters: {}
+}

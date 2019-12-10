@@ -1,12 +1,14 @@
 package org.floworc.repository.memory;
 
 import io.micronaut.core.value.ValueException;
+import io.micronaut.data.model.Pageable;
 import org.floworc.core.models.flows.Flow;
+import org.floworc.core.models.namespaces.Namespace;
 import org.floworc.core.repositories.ArrayListTotal;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 
 import javax.inject.Singleton;
-import java.awt.print.Pageable;
+import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -77,7 +79,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<Flow> find(String namespace, io.micronaut.data.model.Pageable pageable) {
+    public ArrayListTotal<Flow> find(String namespace, Pageable pageable) {
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }
@@ -149,5 +151,18 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .ifPresent(e -> {
                 e.remove(flow.getRevision());
             });
+    }
+
+    @Override
+    public ArrayListTotal<String> findNamespaces(Optional<String> prefix) {
+        HashSet<String> namespaces = new HashSet<String>();
+        for (Flow f : this.findAll()) {
+            if (f.getNamespace().startsWith(prefix.orElse(""))) {
+                namespaces.add(f.getNamespace());
+            }
+        }
+        ArrayList<String> namespacesList = new ArrayList<String>(namespaces);
+        Collections.sort(namespacesList);
+        return new ArrayListTotal<String>(namespacesList, namespacesList.size());
     }
 }

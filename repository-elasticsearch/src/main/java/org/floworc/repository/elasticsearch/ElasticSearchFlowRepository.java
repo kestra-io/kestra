@@ -15,6 +15,7 @@ import org.floworc.repository.elasticsearch.configs.IndicesConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -110,5 +111,11 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     @Override
     public void delete(Flow flow) {
         this.deleteRequest(flow.uid());
+    }
+
+    @Override
+    public ArrayListTotal<String> findNamespaces(Optional<String> prefix) {
+        //TODO implement
+        return new ArrayListTotal<String>(new ArrayList<String>(), 0);
     }
 }

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h1>{{$t('Settings')}}</h1>
+        <h1 class="text-capitalize">{{$t('settings')}}</h1>
         <hr />
         <b-row>
             <b-col sm="12" md="4">
@@ -21,10 +21,6 @@
 export default {
     data() {
         return {
-            routesOptions: [
-                { value: "flows", text: "flows" },
-                { value: "settings", text: "settings" }
-            ],
             langOptions: [
                 { value: "en", text: "English" },
                 { value: "fr", text: "Français" }
@@ -34,6 +30,12 @@ export default {
     components: {},
     created() {},
     computed: {
+        routesOptions() {
+            return [
+                { value: "flows", text: "flows" },
+                { value: "settings", text: this.$t("settings") }
+            ];
+        },
         defaultRoute: {
             set(route) {
                 localStorage.setItem("defaultPage", route);

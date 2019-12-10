@@ -1,3 +1,7 @@
 @import 'node_modules/bootstrap/scss/bootstrap';
 @import 'node_modules/bootstrap-vue/src/index.scss';
 @import 'vue-select/src/scss/vue-select.scss';
+
+* {
+    font-family: 'Nunito', sans-serif;
+}

@@ -18,7 +18,7 @@
                 <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
             </b-col>
         </b-row>
-        <b-tooltip target="add-flow" triggers="hover">Add flow</b-tooltip>
+        <b-tooltip target="add-flow" triggers="hover">{{$t('Add flow')}}</b-tooltip>
         <b-table striped hover :items="flows" :fields="fields">
             <template v-slot:cell(edit)="row">
                 <router-link
@@ -32,7 +32,7 @@
         <b-row>
             <b-col offset-md="8" sm="5" md class="my-1">
                 <b-form-group
-                    label="Per page"
+                    :label="$t('Per page')"
                     label-cols-sm="6"
                     label-cols-md="4"
                     label-cols-lg="3"

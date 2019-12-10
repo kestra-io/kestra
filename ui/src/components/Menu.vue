@@ -42,7 +42,7 @@ export default {
                 },
                 {
                     href: "/flows",
-                    title: this.$t("Flows"),
+                    title: this.$t("flows"),
                     icon: {
                         element: "walk",
                         class: "menu-icon"
@@ -50,7 +50,7 @@ export default {
                 },
                 {
                     href: "/settings",
-                    title: this.$t("Settings"),
+                    title: this.$t("settings"),
                     icon: {
                         element: "settings",
                         class: "menu-icon"

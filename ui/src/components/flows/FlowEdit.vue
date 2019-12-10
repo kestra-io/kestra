@@ -54,7 +54,7 @@ export default {
     computed: {
         ...mapState("flow", ["flow"]),
         flowName() {
-            return (this.flow && this.flow.id) || "new";
+            return (this.flow && this.flow.id) || this.$t("new");
         }
     },
     methods: {

@@ -6,11 +6,14 @@
         "Successfully set": "Successfully set",
         "Language": "Language",
         "Set default page": "Set default page",
-        "Settings": "Settings",
+        "settings": "settings",
         "Flows": "Flows",
         "Default page": "Default page",
         "Save": "Save",
-        "Select namespace": "Select namespace"
+        "Select namespace": "Select namespace",
+        "Add flow": "Add flow",
+        "Per page": "Per page",
+        "new": "new"
     },
     "fr": {
         "Id": "Identifiant",
@@ -19,10 +22,14 @@
         "Successfully set": "Définition ok",
         "Language": "Langue",
         "Set default page": "Définir la page par défaut",
-        "Settings": "Paramètres",
+        "settings": "paramètres",
         "Flows": "Flows",
         "Default page": "Page par défaut",
         "Save": "Enregistrer",
-        "Select namespace": "Sélectionner un espace de nom"
+        "Select namespace": "Sélectionner un espace de nom",
+        "Add flow": "Ajouter un flow",
+        "Per page": "Par page",
+        "new": "nouveau"
+
     }
 }

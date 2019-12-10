@@ -33,8 +33,7 @@ html,
 }
 .content-wrapper {
     padding-top: 15px;
-}
-#app {
-    padding-left:60px;
+    padding-bottom: 60px !important;
+    padding-left:50px;
 }
 </style>

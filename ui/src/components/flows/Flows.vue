@@ -1,13 +1,6 @@
 <template>
     <div>
         <b-row>
-            <b-col md="1">
-                <router-link to="/flows/add">
-                    <b-button id="add-flow">
-                        <plus />
-                    </b-button>
-                </router-link>
-            </b-col>
             <b-col>
                 <h1 class="text-capitalize">{{$t('flows')}}</h1>
             </b-col>
@@ -18,8 +11,7 @@
                 <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
             </b-col>
         </b-row>
-        <b-tooltip target="add-flow" triggers="hover">{{$t('Add flow')}}</b-tooltip>
-        <b-table striped hover :items="flows" :fields="fields">
+        <b-table responsive="xl" striped hover :items="flows" :fields="fields">
             <template v-slot:cell(edit)="row">
                 <router-link
                     class="btn btn-default"
@@ -74,6 +66,19 @@
                 ></b-pagination>
             </b-col>
         </b-row>
+        <bottom-line>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <router-link class="float-right" to="/flows/add">
+                        <b-button id="add-flow">
+                            <b-tooltip target="add-flow" triggers="hover">{{$t('Add flow')}}</b-tooltip>
+                            <span class="text-capitalize">{{$t('add')}} </span>
+                            <plus />
+                        </b-button>
+                    </router-link>
+                </li>
+            </ul>
+        </bottom-line>
     </div>
 </template>
 
@@ -83,9 +88,10 @@ import Wrench from "vue-material-design-icons/Wrench";
 import Plus from "vue-material-design-icons/Plus";
 import Play from "vue-material-design-icons/Play";
 import NamespaceSelector from "../namespace/Selector";
+import BottomLine from "../layout/BottomLine";
 
 export default {
-    components: { Wrench, Plus, Play, NamespaceSelector },
+    components: { Wrench, Plus, Play, NamespaceSelector, BottomLine },
     data() {
         return {
             page: 1,
@@ -97,12 +103,12 @@ export default {
         ...mapState("flow", ["flows", "total"]),
         fields() {
             const title = title => {
-                return this.$t(title).capitalize()
-            }
+                return this.$t(title).capitalize();
+            };
             return [
                 {
                     key: "id",
-                    label: title('id'),
+                    label: title("id"),
                     class: "text-center"
                 },
                 {

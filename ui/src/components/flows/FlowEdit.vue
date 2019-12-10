@@ -1,13 +1,7 @@
 <template>
     <div>
         <b-row>
-            <b-col md="1">
-                <b-tooltip target="save-button">{{$t('Save')}}</b-tooltip>
-                <b-button id="save-button" @click="save">
-                    <content-save title />
-                </b-button>
-            </b-col>
-            <b-col md="10">
+            <b-col>
                 <h1>
                     <router-link to="/flows">Flow</router-link>
                     <chevron-right />
@@ -28,6 +22,16 @@
                 ></editor>
             </b-col>
         </b-row>
+        <bottom-line>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+
+                    <b-button @click="save">
+                        <span class="text-capitalize">{{$t('save')}} </span><content-save title />
+                    </b-button>
+                </li>
+            </ul>
+        </bottom-line>
     </div>
 </template>
 
@@ -36,12 +40,14 @@ import { mapState } from "vuex";
 import ChevronRight from "vue-material-design-icons/ChevronRight";
 import ContentSave from "vue-material-design-icons/ContentSave";
 import Yaml from "yaml";
+import BottomLine from "../layout/BottomLine";
 
 export default {
     components: {
         ChevronRight,
         editor: require("vue2-ace-editor"),
-        ContentSave
+        ContentSave,
+        BottomLine
     },
     data() {
         return {
@@ -85,7 +91,8 @@ export default {
                 this.$store
                     .dispatch("flow/createFlow", {
                         flow: flow
-                    }).then(() => {
+                    })
+                    .then(() => {
                         this.$router.push({ name: "flowsEdit", params: flow });
                         this.$bvToast.toast("Created.", {
                             title: "Flow editor",
@@ -93,7 +100,8 @@ export default {
                             toaster: "b-toaster-top-right",
                             variant: "success"
                         });
-                    }).catch(() => {
+                    })
+                    .catch(() => {
                         this.$bvToast.toast("Failed to save.", {
                             title: "Flow save error",
                             autoHideDelay: 5000,
@@ -112,6 +120,9 @@ export default {
 
 <style scoped lang="scss">
 .editor-wrapper {
-    height: 92vh;
+    height: calc(100vh - 130px);
+    >div {
+        padding: 0px;
+    }
 }
 </style>

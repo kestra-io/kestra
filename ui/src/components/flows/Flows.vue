@@ -1,17 +1,21 @@
 <template>
     <div>
-        <h1>
-            Flows
-            <router-link to="/flows/add">
-                <b-button id="add-flow">
-                    <plus />
-                </b-button>
-            </router-link>
-        </h1>
+        <b-row>
+            <b-col md="1">
+                <router-link to="/flows/add">
+                    <b-button id="add-flow">
+                        <plus />
+                    </b-button>
+                </router-link>
+            </b-col>
+            <b-col>
+                <h1>Flows</h1>
+            </b-col>
+        </b-row>
         <hr />
         <b-row>
             <b-col sm="12" md="4">
-                <namespace-selector @onNamespaceSelect="onNamespaceSelect"/>
+                <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
             </b-col>
         </b-row>
         <b-tooltip target="add-flow" triggers="hover">Add flow</b-tooltip>
@@ -65,10 +69,10 @@
 import { mapState } from "vuex";
 import Wrench from "vue-material-design-icons/Wrench";
 import Plus from "vue-material-design-icons/Plus";
-import NamespaceSelector from '../namespace/Selector'
+import NamespaceSelector from "../namespace/Selector";
 
 export default {
-    components: { Wrench, Plus , NamespaceSelector },
+    components: { Wrench, Plus, NamespaceSelector },
     data() {
         return {
             page: 1,
@@ -115,8 +119,8 @@ export default {
             });
         },
         onNamespaceSelect(namespace) {
-            this.selectedNamespace = namespace
-            this.loadFlows()
+            this.selectedNamespace = namespace;
+            this.loadFlows();
         }
     }
 };

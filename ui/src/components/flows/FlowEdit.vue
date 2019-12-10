@@ -1,18 +1,18 @@
 <template>
     <div>
         <b-row>
-            <b-col md="3">
-                <h1>
-                    Flow
-                    <chevron-right />
-                    {{flowName}}
-                </h1>
-            </b-col>
-            <b-col md="9">
+            <b-col md="1">
                 <b-tooltip target="save-button">{{$t('Save')}}</b-tooltip>
                 <b-button id="save-button" @click="save">
                     <content-save title />
                 </b-button>
+            </b-col>
+            <b-col md="10">
+                <h1>
+                    <router-link to="/flows">Flow</router-link>
+                    <chevron-right />
+                    {{flowName}}
+                </h1>
             </b-col>
         </b-row>
         <b-row class="row editor-wrapper">
@@ -85,15 +85,20 @@ export default {
                 this.$store
                     .dispatch("flow/createFlow", {
                         flow: flow
-                    })
-                    .finally(() => {
-                        //TODO change for then when route is ok
+                    }).then(() => {
                         this.$router.push({ name: "flowsEdit", params: flow });
                         this.$bvToast.toast("Created.", {
                             title: "Flow editor",
                             autoHideDelay: 5000,
                             toaster: "b-toaster-top-right",
                             variant: "success"
+                        });
+                    }).catch(() => {
+                        this.$bvToast.toast("Failed to save.", {
+                            title: "Flow save error",
+                            autoHideDelay: 5000,
+                            toaster: "b-toaster-top-right",
+                            variant: "danger"
                         });
                     });
             }

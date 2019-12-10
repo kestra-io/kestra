@@ -77,7 +77,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<Flow> find(String namespace, io.micronaut.data.model.Pageable pageable) {
+    public ArrayListTotal<Flow> find(String namespace, Pageable pageable) {
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }

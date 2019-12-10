@@ -1,22 +1,22 @@
 <template>
     <div>
-        <div class="row">
-            <div class="col-md-3">
+        <b-row>
+            <b-col md="3">
                 <h1>
                     Flow
                     <chevron-right />
                     {{flowName}}
                 </h1>
-            </div>
-            <div class="col-md-9">
-                <b-button @click="save">
+            </b-col>
+            <b-col md="9">
+                <b-tooltip target="save-button">{{$t('Save')}}</b-tooltip>
+                <b-button id="save-button" @click="save">
                     <content-save title />
                 </b-button>
-            </div>
-        </div>
-
-        <div class="row editor-wrapper">
-            <div class="col-md-12">
+            </b-col>
+        </b-row>
+        <b-row class="row editor-wrapper">
+            <b-col md="12">
                 <editor
                     ref="aceEditor"
                     v-model="content"
@@ -26,8 +26,8 @@
                     width="100%"
                     height="100%"
                 ></editor>
-            </div>
-        </div>
+            </b-col>
+        </b-row>
     </div>
 </template>
 
@@ -75,27 +75,32 @@ export default {
         },
         save() {
             if (this.flow) {
-                this.$store.dispatch("flow/saveFlow", {
-                    flow: Yaml.parse(this.content)
-                }).finally(this.loadFlow);
+                this.$store
+                    .dispatch("flow/saveFlow", {
+                        flow: Yaml.parse(this.content)
+                    })
+                    .finally(this.loadFlow);
             } else {
-                const flow = Yaml.parse(this.content)
-                this.$store.dispatch("flow/createFlow", {
-                    flow: flow
-                }).finally(() => {//TODO change for then when route is ok
-                    this.$router.push({name: 'flowsEdit', params: flow})
-                    this.$bvToast.toast("Created.", {
-                        title: "Flow editor",
-                        autoHideDelay: 5000,
-                        toaster: "b-toaster-top-right",
-                        variant: "success"
+                const flow = Yaml.parse(this.content);
+                this.$store
+                    .dispatch("flow/createFlow", {
+                        flow: flow
+                    })
+                    .finally(() => {
+                        //TODO change for then when route is ok
+                        this.$router.push({ name: "flowsEdit", params: flow });
+                        this.$bvToast.toast("Created.", {
+                            title: "Flow editor",
+                            autoHideDelay: 5000,
+                            toaster: "b-toaster-top-right",
+                            variant: "success"
+                        });
                     });
-            })
             }
-        },
+        }
     },
-    destroyed () {
-        this.$store.commit('flow/setFlow', undefined)
+    destroyed() {
+        this.$store.commit("flow/setFlow", undefined);
     }
 };
 </script>

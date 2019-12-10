@@ -8,7 +8,8 @@
         "Set default page": "Set default page",
         "Settings": "Settings",
         "Flows": "Flows",
-        "Default page": "Default page"
+        "Default page": "Default page",
+        "Save": "Save"
     },
     "fr": {
         "Id": "Identifiant",
@@ -19,6 +20,7 @@
         "Set default page": "Définir la page par défaut",
         "Settings": "Paramètres",
         "Flows": "Flows",
-        "Default page": "Page par défaut"
+        "Default page": "Page par défaut",
+        "Save": "Enregistrer"
     }
 }

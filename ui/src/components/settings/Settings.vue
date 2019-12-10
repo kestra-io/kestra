@@ -1,19 +1,19 @@
 <template>
     <div>
         <h1>{{$t('Settings')}}</h1>
-        <hr/>
-        <div class="row">
-            <div class="col-sm-12 col-md-4">
+        <hr />
+        <b-row>
+            <b-col sm="12" md="4">
                 <b-form-group :label="$t('Set default page')">
                     <b-form-select v-model="defaultRoute" :options="routesOptions"></b-form-select>
                 </b-form-group>
-            </div>
-            <div class="col-sm-12 col-md-4">
+            </b-col>
+            <b-col sm="12" md="4">
                 <b-form-group :label="$t('Language')">
                     <b-form-select v-model="lang" :options="langOptions"></b-form-select>
                 </b-form-group>
-            </div>
-        </div>
+            </b-col>
+        </b-row>
     </div>
 </template>
 
@@ -51,7 +51,7 @@ export default {
         lang: {
             set(lang) {
                 localStorage.setItem("lang", lang);
-                this.$root.$i18n.locale = lang
+                this.$root.$i18n.locale = lang;
                 this.$bvToast.toast(this.$t("Successfully set"), {
                     title: this.$t("Language"),
                     autoHideDelay: 5000,

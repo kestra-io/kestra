@@ -7,6 +7,7 @@ import configureHttp from './http'
 import VueSidebarMenu from 'vue-sidebar-menu'
 import i18n from './i18n'
 import vSelect from 'vue-select'
+import './utils'
 import './custom.scss'
 import 'vue-sidebar-menu/dist/vue-sidebar-menu.css'
 import 'vue-material-design-icons/styles.css';

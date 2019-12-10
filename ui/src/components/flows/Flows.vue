@@ -9,7 +9,7 @@
                 </router-link>
             </b-col>
             <b-col>
-                <h1>Flows</h1>
+                <h1 class="text-capitalize">{{$t('flows')}}</h1>
             </b-col>
         </b-row>
         <hr />
@@ -25,7 +25,19 @@
                     class="btn btn-default"
                     :to="`/flows/edit/${row.item.namespace}/${row.item.id}`"
                 >
-                    <wrench id="edit-action" />
+                    <b-button size="sm">
+                        <wrench id="edit-action" />
+                    </b-button>
+                </router-link>
+            </template>
+            <template v-slot:cell(executions)="row">
+                <router-link
+                    class="btn btn-default"
+                    :to="`/executions/${row.item.namespace}/${row.item.id}`"
+                >
+                    <b-button variant="primary" size="sm">
+                        <play id="edit-action" />
+                    </b-button>
                 </router-link>
             </template>
         </b-table>
@@ -69,10 +81,11 @@
 import { mapState } from "vuex";
 import Wrench from "vue-material-design-icons/Wrench";
 import Plus from "vue-material-design-icons/Plus";
+import Play from "vue-material-design-icons/Play";
 import NamespaceSelector from "../namespace/Selector";
 
 export default {
-    components: { Wrench, Plus, NamespaceSelector },
+    components: { Wrench, Plus, Play, NamespaceSelector },
     data() {
         return {
             page: 1,
@@ -83,25 +96,33 @@ export default {
     computed: {
         ...mapState("flow", ["flows", "total"]),
         fields() {
+            const title = title => {
+                return this.$t(title).capitalize()
+            }
             return [
                 {
                     key: "id",
-                    label: this.$t("Id"),
+                    label: title('id'),
                     class: "text-center"
                 },
                 {
                     key: "namespace",
-                    label: this.$t("Namespace"),
+                    label: title("namespace"),
                     class: "text-center"
                 },
                 {
                     key: "revision",
-                    label: this.$t("Revision"),
+                    label: title("revision"),
                     class: "text-center"
                 },
                 {
                     key: "edit",
-                    label: "Edit",
+                    label: title("edit"),
+                    class: "text-center"
+                },
+                {
+                    key: "executions",
+                    label: title("executions"),
                     class: "text-center"
                 }
             ];
@@ -125,6 +146,3 @@ export default {
     }
 };
 </script>
-
-<style scoped lang="scss">
-</style>

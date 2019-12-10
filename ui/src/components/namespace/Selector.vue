@@ -12,16 +12,16 @@
 import { mapState } from "vuex";
 
 export default {
-    data () {
+    data() {
         return {
-            selectedNamespace: ''
-        }
+            selectedNamespace: ""
+        };
     },
     created() {
-        this.$store.dispatch('namespace/loadNamespaces', {prefix: ''})
+        this.$store.dispatch("namespace/loadNamespaces", { prefix: "" });
     },
     computed: {
-        ...mapState("namespace", ["namespaces"]),
+        ...mapState("namespace", ["namespaces"])
     },
     methods: {
         onNamespaceSearch(prefix) {
@@ -30,7 +30,7 @@ export default {
             }
         },
         onNamespaceSelect() {
-            this.$emit('onNamespaceSelect', this.selectedNamespace)
+            this.$emit("onNamespaceSelect", this.selectedNamespace);
         }
     }
 };

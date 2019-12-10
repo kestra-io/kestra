@@ -1,35 +1,40 @@
 {
     "en": {
-        "Id": "Id",
-        "Namespace": "Namespace",
-        "Revision": "Revision",
+        "id": "id",
+        "namespace": "namespace",
+        "revision": "revision",
         "Successfully set": "Successfully set",
         "Language": "Language",
         "Set default page": "Set default page",
         "settings": "settings",
-        "Flows": "Flows",
+        "flows": "flows",
         "Default page": "Default page",
         "Save": "Save",
         "Select namespace": "Select namespace",
         "Add flow": "Add flow",
         "Per page": "Per page",
-        "new": "new"
+        "new": "new",
+        "edit": "edit",
+        "executions": "executions",
+        "details": "details"
     },
     "fr": {
-        "Id": "Identifiant",
-        "Namespace": "Espace de nom",
-        "Revision": "Révision",
+        "id": "identifiant",
+        "namespace": "espace de nom",
+        "revision": "révision",
         "Successfully set": "Définition ok",
         "Language": "Langue",
         "Set default page": "Définir la page par défaut",
         "settings": "paramètres",
-        "Flows": "Flows",
+        "flows": "flows",
         "Default page": "Page par défaut",
         "Save": "Enregistrer",
         "Select namespace": "Sélectionner un espace de nom",
         "Add flow": "Ajouter un flow",
         "Per page": "Par page",
-        "new": "nouveau"
-
+        "new": "nouveau",
+        "edit": "modifier",
+        "executions": "executions",
+        "details": "détails"
     }
 }

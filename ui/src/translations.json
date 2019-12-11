@@ -8,6 +8,7 @@
         "Set default page": "Set default page",
         "settings": "settings",
         "flows": "flows",
+        "flow": "flow",
         "Default page": "Default page",
         "save": "save",
         "Select namespace": "Select namespace",
@@ -19,7 +20,8 @@
         "details": "details",
         "overview": "overview",
         "gantt": "gantt",
-        "logs": "logs"
+        "logs": "logs",
+        "duration": "duration"
     },
     "fr": {
         "id": "identifiant",
@@ -30,6 +32,7 @@
         "Set default page": "Définir la page par défaut",
         "settings": "paramètres",
         "flows": "flows",
+        "flow": "flow",
         "Default page": "Page par défaut",
         "save": "enregistrer",
         "Select namespace": "Sélectionner un espace de nom",
@@ -41,6 +44,8 @@
         "details": "détails",
         "overview": "vue générale",
         "gantt": "gantt",
-        "logs": "fichiers journaux"
+        "logs": "fichiers journaux",
+        "duration": "durée"
+
     }
 }

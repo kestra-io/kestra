@@ -27,8 +27,6 @@ export default {
             ]
         };
     },
-    components: {},
-    created() {},
     computed: {
         routesOptions() {
             return [
@@ -53,6 +51,7 @@ export default {
         lang: {
             set(lang) {
                 localStorage.setItem("lang", lang);
+                this.$moment.locale(lang);
                 this.$root.$i18n.locale = lang;
                 this.$bvToast.toast(this.$t("Successfully set"), {
                     title: this.$t("Language"),

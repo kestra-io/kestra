@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import Execution from '../../execution-sample.json'
 export default {
     namespaced: true,
     state: {
@@ -18,6 +19,9 @@ export default {
             // return Vue.axios.get(`/api/v1/executions/${options.namespace}/${options.id}`).then(response => {
             //     commit('setExecution', response.data)
             // })
+            console.log(Execution)
+            commit('setExecution', Execution)
+
         },
         createFlow({ commit }, options) {
             return Vue.axios.post('/api/v1/executions', options.execution).then(response => {
@@ -29,7 +33,7 @@ export default {
         setExecutions(state, executions) {
             state.executions = executions
         },
-        setFlow(state, execution) {
+        setExecution(state, execution) {
             state.execution = execution
         },
         setTotal(state, total) {

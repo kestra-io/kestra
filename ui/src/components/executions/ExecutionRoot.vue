@@ -28,6 +28,9 @@ export default {
         Gantt,
         Logs
     },
+    created () {
+        this.$store.dispatch('execution/loadExecution')
+    },
     methods: {
         setTab(tab) {
             this.$router.push({

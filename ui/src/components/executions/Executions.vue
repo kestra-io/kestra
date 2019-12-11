@@ -44,6 +44,18 @@
                 ></b-pagination>
             </b-col>
         </b-row>
+        <b-row>
+            <b-col>
+                <b-form-file
+                    v-model="file"
+                    @input="onFileUpload"
+                    :state="Boolean(file)"
+                    placeholder="Choose a file or drop it here..."
+                    drop-placeholder="Drop file here..."
+                ></b-form-file>
+                {{file}}
+            </b-col>
+        </b-row>
     </div>
 </template>
 
@@ -53,21 +65,22 @@ import { mapState } from "vuex";
 export default {
     data() {
         return {
+            file: undefined,
             page: 1,
             perPage: 5,
             pageOptions: [5, 10, 25, 50, 100]
         };
     },
     created() {
-        console.log('executions route params', this.$route.params)
+        console.log("executions route params", this.$route.params);
         this.loadExecutions();
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
         fields() {
             const title = title => {
-                return this.$t(title).capitalize()
-            }
+                return this.$t(title).capitalize();
+            };
             return [
                 {
                     key: "id",
@@ -83,6 +96,9 @@ export default {
         }
     },
     methods: {
+        onFileUpload () {
+            console.log('on file upload')
+        },
         loadExecutions() {
             //setTimeout is for pagination settings are properly updated
             setTimeout(() => {

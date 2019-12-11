@@ -46,6 +46,18 @@ public class ExecutionController {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
 
+    @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
+    public PagedResults<Execution> find(
+            @QueryValue(value = "q") String query,
+            @QueryValue(value = "page", defaultValue = "1") int page,
+            @QueryValue(value = "size", defaultValue = "10") int size) {
+
+        return PagedResults.of(
+                executionRepository
+                        .find(query, Pageable.from(page, size))
+        );
+    }
+
     /**
      * Get a execution
      *

@@ -17,6 +17,11 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     private Map<String, Execution> executions = new HashMap();
 
     @Override
+    public ArrayListTotal<Execution> find(String query, Pageable pageable) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Optional<Execution> findById(String executionId) {
         return executions.containsKey(executionId) ? Optional.of(executions.get(executionId)) : Optional.empty();
     }

@@ -11,4 +11,6 @@ public interface ExecutionRepositoryInterface {
     ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable);
 
     Execution save(Execution flow);
+
+    ArrayListTotal<Execution> find(String query, Pageable pageable);
 }

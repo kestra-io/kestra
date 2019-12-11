@@ -16,7 +16,10 @@
         "new": "new",
         "edit": "edit",
         "executions": "executions",
-        "details": "details"
+        "details": "details",
+        "overview": "overview",
+        "gantt": "gantt",
+        "logs": "logs"
     },
     "fr": {
         "id": "identifiant",
@@ -35,6 +38,9 @@
         "new": "nouveau",
         "edit": "modifier",
         "executions": "executions",
-        "details": "détails"
+        "details": "détails",
+        "overview": "vue générale",
+        "gantt": "gantt",
+        "logs": "fichiers journaux"
     }
 }

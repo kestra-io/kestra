@@ -4,6 +4,7 @@ import Settings from '../components/settings/Settings.vue'
 import Flows from '../components/flows/Flows.vue'
 import FlowEdit from '../components/flows/FlowEdit.vue'
 import Executions from '../components/executions/Executions.vue'
+import ExecutionRoot from '../components/executions/ExecutionRoot.vue'
 
 Vue.use(VueRouter)
 
@@ -17,6 +18,7 @@ export default new VueRouter({
         { name: 'flowsEdit', path: '/flows/edit/:namespace/:id', component: FlowEdit },
         //Executions
         { name: 'executions', path: '/executions/:namespace/:flowId', component: Executions },
+        { name: 'execution', path: '/execution/:executionId', component: ExecutionRoot },
         //Settings
         { name: 'settings', path: '/settings', component: Settings },
     ]

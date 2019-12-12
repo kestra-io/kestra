@@ -105,7 +105,7 @@ export default {
     },
     methods: {
         onTaskSelect(task) {
-            console.log("task", task);
+            console.log("task", task); //TODO
         }
     }
 };

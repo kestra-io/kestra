@@ -18,6 +18,7 @@
         "new": "new",
         "edit": "edit",
         "executions": "executions",
+        "execution": "execution",
         "details": "details",
         "overview": "overview",
         "gantt": "gantt",
@@ -26,7 +27,14 @@
         "choose file": "Choose a file or drop it here...",
         "trigger execution": "Trigger an execution",
         "trigger": "Trigger",
-        "create": "Create"
+        "triggered": "Triggered",
+        "create": "Create",
+        "from": "from",
+        "to": "to",
+        "steps": "steps",
+        "search term in message": "search term in message",
+        "search": "search",
+        "filter by log level": "filter by log level"
     },
     "fr": {
         "id": "identifiant",
@@ -47,6 +55,7 @@
         "new": "nouveau",
         "edit": "modifier",
         "executions": "executions",
+        "execution": "execution",
         "details": "détails",
         "overview": "vue générale",
         "gantt": "gantt",
@@ -54,8 +63,13 @@
         "duration": "durée",
         "choose file": "Choisissez un fichier ou glissez le ici...",
         "trigger execution": "Déclencher une execution",
-        "trigger": "Déclencher",
-        "create": "Créer"
-
+        "triggered": "Déclenchée",
+        "create": "Créer",
+        "from": "de",
+        "to": "à",
+        "steps": "étapes",
+        "search term in message": "chercher dans le message",
+        "search": "chercher",
+        "filter by log level": "filtrer par niveau de log"
     }
 }

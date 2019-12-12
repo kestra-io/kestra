@@ -101,6 +101,7 @@ export default {
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
+        ...mapState("namespace", ["namespace", "namespace"]),
         fields() {
             const title = title => {
                 return this.$t(title).capitalize();
@@ -139,14 +140,13 @@ export default {
             //setTimeout is for pagination settings are properly updated
             setTimeout(() => {
                 this.$store.dispatch("flow/loadFlows", {
-                    namespace: this.selectedNamespace,
+                    namespace: this.namespace,
                     perPage: this.perPage,
                     page: this.page
                 });
             });
         },
         onNamespaceSelect(namespace) {
-            this.selectedNamespace = namespace;
             this.loadFlows();
         }
     }

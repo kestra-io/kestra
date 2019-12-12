@@ -121,8 +121,8 @@ export default {
             this.$store
                 .dispatch("execution/triggerExecution", this.$route.params)
                 .then(response => {
-                    this.$bvToast.toast(this.$t("Triggered"), {
-                        title: this.$t("Execution"),
+                    this.$bvToast.toast(this.$t("triggered").capitalize(), {
+                        title: this.$t("execution").capitalize(),
                         autoHideDelay: 5000,
                         toaster: "b-toaster-top-right",
                         variant: "success"
@@ -131,7 +131,7 @@ export default {
                 });
         },
         onFileUpload() {
-            console.log("on file upload");
+            console.log("on file upload"); //TODO
         },
         loadExecutions() {
             //setTimeout is for pagination settings are properly updated

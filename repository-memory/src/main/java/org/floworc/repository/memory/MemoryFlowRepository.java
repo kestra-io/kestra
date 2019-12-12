@@ -3,12 +3,10 @@ package org.floworc.repository.memory;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
 import org.floworc.core.models.flows.Flow;
-import org.floworc.core.models.namespaces.Namespace;
 import org.floworc.core.repositories.ArrayListTotal;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 
 import javax.inject.Singleton;
-import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,11 +18,11 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     @Override
     public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
         return this.getNamespace(namespace)
-            .flatMap(e -> this.getFlows(e, id))
-            .flatMap(e -> revision
-                .map(current -> this.getRevision(e, current))
-                .orElse(this.getLastRevision(e))
-            );
+                .flatMap(e -> this.getFlows(e, id))
+                .flatMap(e -> revision
+                        .map(current -> this.getRevision(e, current))
+                        .orElse(this.getLastRevision(e))
+                );
     }
 
     @Override
@@ -59,23 +57,23 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     @SuppressWarnings({"ComparatorMethodParameterNotUsed"})
     private Optional<Flow> getLastRevision(Map<Integer, Flow> map) {
         return map
-            .entrySet()
-            .stream()
-            .max((a, entry2) -> a.getKey() > entry2.getKey() ? 1 : -1)
-            .map(Map.Entry::getValue);
+                .entrySet()
+                .stream()
+                .max((a, entry2) -> a.getKey() > entry2.getKey() ? 1 : -1)
+                .map(Map.Entry::getValue);
     }
 
     @Override
     public List<Flow> findAll() {
         return flows
-            .entrySet()
-            .stream()
-            .flatMap(e -> e.getValue()
                 .entrySet()
                 .stream()
-                .flatMap(f -> this.getLastRevision(f.getValue()).stream())
-            )
-            .collect(Collectors.toList());
+                .flatMap(e -> e.getValue()
+                        .entrySet()
+                        .stream()
+                        .flatMap(f -> this.getLastRevision(f.getValue()).stream())
+                )
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -85,14 +83,14 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         }
 
         List<Flow> flows = this.flows
-            .entrySet()
-            .stream()
-            .flatMap(e -> e.getValue()
                 .entrySet()
                 .stream()
-                .flatMap(f -> this.getLastRevision(f.getValue()).stream())
-            ).filter(f -> f.getNamespace().equals(namespace))
-            .collect(Collectors.toList());
+                .flatMap(e -> e.getValue()
+                        .entrySet()
+                        .stream()
+                        .flatMap(f -> this.getLastRevision(f.getValue()).stream())
+                ).filter(f -> f.getNamespace().equals(namespace))
+                .collect(Collectors.toList());
 
         //handles pagination
         int from = (pageable.getNumber() - 1) * pageable.getSize();
@@ -128,10 +126,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         }
 
         Optional<Integer> max = revisions
-            .entrySet()
-            .stream()
-            .max((a, b) -> a.getKey() > b.getKey() ? 1 : -1)
-            .map(Map.Entry::getKey);
+                .entrySet()
+                .stream()
+                .max((a, b) -> a.getKey() > b.getKey() ? 1 : -1)
+                .map(Map.Entry::getKey);
 
         Flow saved = flow.withRevision(max.map(integer -> integer + 1).orElse(1));
 
@@ -147,10 +145,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         }
 
         this.getNamespace(flow.getNamespace())
-            .flatMap(e -> this.getFlows(e, flow.getId()))
-            .ifPresent(e -> {
-                e.remove(flow.getRevision());
-            });
+                .flatMap(e -> this.getFlows(e, flow.getId()))
+                .ifPresent(e -> {
+                    e.remove(flow.getRevision());
+                });
     }
 
     @Override

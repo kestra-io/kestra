@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-abstract public class AbstractElasticSearchRepository <T> {
+abstract public class AbstractElasticSearchRepository<T> {
     protected static final ObjectMapper mapper = JacksonMapper.ofJson();
     protected Class<T> cls;
 
@@ -44,18 +44,18 @@ abstract public class AbstractElasticSearchRepository <T> {
 
     @Inject
     public AbstractElasticSearchRepository(
-        RestHighLevelClient client,
-        List<IndicesConfig> indicesConfigs,
-        Class<T> cls
+            RestHighLevelClient client,
+            List<IndicesConfig> indicesConfigs,
+            Class<T> cls
     ) {
         this.client = client;
         this.cls = cls;
 
         this.indicesConfig = indicesConfigs
-            .stream()
-            .filter(r -> r.getCls().equals(this.cls.getName().toLowerCase().replace(".", "-")))
-            .findFirst()
-            .orElseThrow();
+                .stream()
+                .filter(r -> r.getCls().equals(this.cls.getName().toLowerCase().replace(".", "-")))
+                .findFirst()
+                .orElseThrow();
     }
 
     protected Optional<T> getRequest(String id) {
@@ -102,10 +102,10 @@ abstract public class AbstractElasticSearchRepository <T> {
         }
     }
 
-    private SearchRequest searchRequest(SearchSourceBuilder sourceBuilder, boolean scroll) {
+    protected SearchRequest searchRequest(SearchSourceBuilder sourceBuilder, boolean scroll) {
         SearchRequest searchRequest = new SearchRequest()
-            .indices(this.indicesConfig.getName())
-            .source(sourceBuilder);
+                .indices(this.indicesConfig.getName())
+                .source(sourceBuilder);
 
         if (scroll) {
             searchRequest.scroll(new TimeValue(60000));
@@ -116,14 +116,14 @@ abstract public class AbstractElasticSearchRepository <T> {
 
     private List<T> map(SearchHit[] searchHits) {
         return Arrays.stream(searchHits)
-            .map(documentFields -> {
-                try {
-                    return mapper.readValue(documentFields.getSourceAsString(), this.cls);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            })
-            .collect(Collectors.toList());
+                .map(documentFields -> {
+                    try {
+                        return mapper.readValue(documentFields.getSourceAsString(), this.cls);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     protected ArrayListTotal<T> query(SearchSourceBuilder sourceBuilder) {
@@ -149,8 +149,8 @@ abstract public class AbstractElasticSearchRepository <T> {
                 result.addAll(this.map(searchResponse.getHits().getHits()));
 
                 SearchScrollRequest searchScrollRequest = new SearchScrollRequest()
-                    .scrollId(searchResponse.getScrollId())
-                    .scroll(new TimeValue(60000));
+                        .scrollId(searchResponse.getScrollId())
+                        .scroll(new TimeValue(60000));
 
                 searchResponse = client.scroll(searchScrollRequest, RequestOptions.DEFAULT);
             } while (searchResponse.getHits().getHits().length != 0);

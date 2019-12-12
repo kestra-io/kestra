@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h1>Execution &gt; {{$route.params.executionId}}</h1>
+        <h1><router-link :to="`/executions/${$route.params.namespace}/${$route.params.flowId}`">Execution</router-link> &gt; {{$route.params.id}}</h1>
         <b-card no-body>
             <b-tabs card>
                 <b-tab
@@ -29,12 +29,12 @@ export default {
         Logs
     },
     created () {
-        this.$store.dispatch('execution/loadExecution')
+        this.$store.dispatch('execution/loadExecution', this.$route.params)
     },
     methods: {
         setTab(tab) {
             this.$router.push({
-                path: "execution",
+                name: "execution",
                 params: this.$route.params,
                 query: { tab }
             });

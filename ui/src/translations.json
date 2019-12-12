@@ -13,6 +13,7 @@
         "save": "save",
         "Select namespace": "Select namespace",
         "Add flow": "Add flow",
+        "add": "add",
         "Per page": "Per page",
         "new": "new",
         "edit": "edit",
@@ -21,7 +22,11 @@
         "overview": "overview",
         "gantt": "gantt",
         "logs": "logs",
-        "duration": "duration"
+        "duration": "duration",
+        "choose file": "Choose a file or drop it here...",
+        "trigger execution": "Trigger an execution",
+        "trigger": "Trigger",
+        "create": "Create"
     },
     "fr": {
         "id": "identifiant",
@@ -37,6 +42,7 @@
         "save": "enregistrer",
         "Select namespace": "Sélectionner un espace de nom",
         "Add flow": "Ajouter un flow",
+        "add": "Ajouter",
         "Per page": "Par page",
         "new": "nouveau",
         "edit": "modifier",
@@ -45,7 +51,11 @@
         "overview": "vue générale",
         "gantt": "gantt",
         "logs": "fichiers journaux",
-        "duration": "durée"
+        "duration": "durée",
+        "choose file": "Choisissez un fichier ou glissez le ici...",
+        "trigger execution": "Déclencher une execution",
+        "trigger": "Déclencher",
+        "create": "Créer"
 
     }
 }

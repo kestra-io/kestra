@@ -18,7 +18,7 @@ export default new VueRouter({
         { name: 'flowsEdit', path: '/flows/edit/:namespace/:id', component: FlowEdit },
         //Executions
         { name: 'executions', path: '/executions/:namespace/:flowId', component: Executions },
-        { name: 'execution', path: '/execution/:executionId', component: ExecutionRoot },
+        { name: 'execution', path: '/execution/:namespace/:flowId/:id', component: ExecutionRoot },
         //Settings
         { name: 'settings', path: '/settings', component: Settings },
     ]

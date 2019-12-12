@@ -1,5 +1,4 @@
 import Vue from 'vue'
-import Execution from '../../execution-sample.json'
 export default {
     namespaced: true,
     state: {
@@ -10,18 +9,18 @@ export default {
 
     actions: {
         loadExecutions({ commit }, options) {
-            // return Vue.axios.get(`/api/v1/executions/${options.namespace}`, { params: { size: options.perPage, page: options.page } }).then(response => {
-            //     commit('setExecutions', response.data.results)
-            //     commit('setTotal', response.data.total)
-            // })
+            return Vue.axios.get(`/api/v1/executions`, { params: options }).then(response => {
+                commit('setExecutions', response.data.results)
+                commit('setTotal', response.data.total)
+            })
         },
         loadExecution({ commit }, options) {
-            // return Vue.axios.get(`/api/v1/executions/${options.namespace}/${options.id}`).then(response => {
-            //     commit('setExecution', response.data)
-            // })
-            console.log(Execution)
-            commit('setExecution', Execution)
-
+            return Vue.axios.get(`/api/v1/executions/${options.id}`).then(response => {
+                commit('setExecution', response.data)
+            })
+        },
+        triggerExecution({ commit }, options) {
+            return Vue.axios.post(`/api/v1/flows/${options.namespace}/${options.flowId}/trigger`)
         },
         createFlow({ commit }, options) {
             return Vue.axios.post('/api/v1/executions', options.execution).then(response => {

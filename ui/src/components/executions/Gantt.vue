@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="execution">
         <h2>{{$t('namespace').capitalize()}} : {{execution.namespace}} &gt; {{$t('flow').capitalize()}} : {{execution.flowId}}</h2>
         <b-row v-for="task in series" :key="task.id">
             <b-col :id="`task-title-wrapper-${task.id}`" class="task-id text-md-right" md="2" sm="12">
@@ -22,11 +22,11 @@
         </b-row>
 
         <b-row>
+            <b-col offset-md="8"/>
             <b-col
                 :class="color"
                 class="text-center"
                 md="1"
-                offset-md="9"
                 sm="4"
                 v-for="(color, key) in colors"
                 :key="key"

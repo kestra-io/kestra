@@ -1,26 +1,26 @@
 <template>
     <div v-if="execution">
         <h2>{{$t('namespace').capitalize()}} : {{execution.namespace}} &gt; {{$t('flow').capitalize()}} : {{execution.flowId}}</h2>
-        <b-row v-for="task in series" :key="task.id">
+        <b-row v-for="taskItem in series" :key="taskItem.id">
             <b-col
-                :id="`task-title-wrapper-${task.id}`"
+                :id="`task-title-wrapper-${taskItem.id}`"
                 class="task-id text-md-right"
                 md="2"
                 sm="12"
             >
-                {{task.name}}
-                <b-tooltip placement="right" :target="`task-title-wrapper-${task.id}`">{{task.id}}</b-tooltip>
+                {{taskItem.name}}
+                <b-tooltip placement="right" :target="`task-title-wrapper-${taskItem.id}`">{{taskItem.id}}</b-tooltip>
             </b-col>
             <b-col md="10" sm="12">
-                <b-tooltip :target="`task-body-wrapper-${task.id}`">{{task.tooltip}}</b-tooltip>
+                <b-tooltip :target="`task-body-wrapper-${taskItem.id}`">{{taskItem.tooltip}}</b-tooltip>
                 <div
-                    :id="`task-body-wrapper-${task.id}`"
-                    :style="{left: task.start + '%', position: 'relative', width: task.width + '%', height: '20px', cursor:'pointer'}"
-                    :class="task.color"
+                    :id="`task-body-wrapper-${taskItem.id}`"
+                    :style="{left: taskItem.start + '%', position: 'relative', width: taskItem.width + '%', height: '20px', cursor:'pointer'}"
+                    :class="taskItem.color"
                     class="task-progress"
-                    @click="onTaskSelect(task)"
+                    @click="onTaskSelect(taskItem.task)"
                 >
-                    <span class="task-content">{{task.text}}</span>
+                    <span class="task-content">{{taskItem.text}}</span>
                 </div>
                 <hr />
             </b-col>
@@ -37,8 +37,7 @@
                 :key="key"
             >{{key}}</b-col>
         </b-row>
-
-        <template v-if="task">
+        <template v-if="hasTaskLog">
             <hr />
             <log-list />
         </template>
@@ -71,6 +70,9 @@ export default {
     },
     computed: {
         ...mapState("execution", ["execution", "task"]),
+        hasTaskLog () {
+            return this.task && this.task.attempts && this.task.attempts.length && this.task.attempts[0].logs && this.task.attempts[0].logs.length
+        },
         start() {
             return ts(this.execution.state.histories[0].date);
         },
@@ -103,7 +105,8 @@ export default {
                     tooltip: `${this.$t(
                         "duration"
                     ).capitalize()} : ${humanDuration}`,
-                    color: this.colors[task.state.current]
+                    color: this.colors[task.state.current],
+                    task
                 });
             }
             return series;

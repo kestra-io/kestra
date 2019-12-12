@@ -1,5 +1,5 @@
 <template>
-    <div v-if="execution">
+    <div>
         <b-row>
             <b-col md="6">
                 <b-form-group
@@ -21,28 +21,14 @@
                 </b-form-group>
             </b-col>
         </b-row>
-        <b-row>
-            <b-col>
-                <template v-for="task in execution.taskRunList">
-                    <template v-if="task.attempts">
-                        <template v-for="attempt in task.attempts">
-                            <template v-if="attempt.logs">
-                                <template v-for="log in attempt.logs">
-                                    <log-line :level="level" :filter="filterTerm" :log="log" :key="log.timestamp" />
-                                </template>
-                            </template>
-                        </template>
-                    </template>
-                </template>
-            </b-col>
-        </b-row>
+        <log-list :filter="filterTerm" :level="level" />
     </div>
 </template>
 <script>
 import { mapState } from "vuex";
-import LogLine from "./LogLine";
+import LogList from "./LogList";
 export default {
-    components: { LogLine },
+    components: { LogList },
     data() {
         return {
             filter: "",
@@ -58,7 +44,6 @@ export default {
         };
     },
     computed: {
-        ...mapState("execution", ["execution"]),
         filterTerm() {
             return this.filter.toLowerCase();
         }

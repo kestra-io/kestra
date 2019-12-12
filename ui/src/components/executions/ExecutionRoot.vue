@@ -1,6 +1,11 @@
 <template>
     <div>
-        <h1><router-link :to="`/executions/${$route.params.namespace}/${$route.params.flowId}`">Execution</router-link> &gt; {{$route.params.id}}</h1>
+        <h1 class="wrap">
+            <router-link
+                :to="`/executions/${$route.params.namespace}/${$route.params.flowId}`"
+            >Execution</router-link>
+            &gt; {{$route.params.id}}
+        </h1>
         <b-card no-body>
             <b-tabs card>
                 <b-tab
@@ -28,11 +33,12 @@ export default {
         Gantt,
         Logs
     },
-    created () {
-        this.$store.dispatch('execution/loadExecution', this.$route.params)
+    created() {
+        this.$store.dispatch("execution/loadExecution", this.$route.params);
     },
     methods: {
         setTab(tab) {
+            this.$store.commit('execution/setTask', undefined)
             this.$router.push({
                 name: "execution",
                 params: this.$route.params,

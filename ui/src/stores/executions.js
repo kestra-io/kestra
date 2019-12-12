@@ -4,6 +4,7 @@ export default {
     state: {
         executions: undefined,
         execution: undefined,
+        task: undefined,
         total: 0
     },
 
@@ -34,6 +35,9 @@ export default {
         },
         setExecution(state, execution) {
             state.execution = execution
+        },
+        setTask(state, task) {
+            state.task = task
         },
         setTotal(state, total) {
             state.total = total

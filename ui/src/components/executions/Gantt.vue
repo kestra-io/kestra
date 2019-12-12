@@ -2,7 +2,12 @@
     <div v-if="execution">
         <h2>{{$t('namespace').capitalize()}} : {{execution.namespace}} &gt; {{$t('flow').capitalize()}} : {{execution.flowId}}</h2>
         <b-row v-for="task in series" :key="task.id">
-            <b-col :id="`task-title-wrapper-${task.id}`" class="task-id text-md-right" md="2" sm="12">
+            <b-col
+                :id="`task-title-wrapper-${task.id}`"
+                class="task-id text-md-right"
+                md="2"
+                sm="12"
+            >
                 {{task.name}}
                 <b-tooltip placement="right" :target="`task-title-wrapper-${task.id}`">{{task.id}}</b-tooltip>
             </b-col>
@@ -22,7 +27,7 @@
         </b-row>
 
         <b-row>
-            <b-col offset-md="8"/>
+            <b-col offset-md="8" />
             <b-col
                 :class="color"
                 class="text-center"
@@ -32,16 +37,14 @@
                 :key="key"
             >{{key}}</b-col>
         </b-row>
+
+        <template v-if="task">
+            <hr />
+            <log-list />
+        </template>
         <bottom-line>
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <router-link class="float-right" to="/flows/add">
-                        <b-button id="add-flow">
-                            <b-tooltip target="add-flow" triggers="hover">{{$t('Add flow')}}</b-tooltip>
-                            <span class="text-capitalize">{{$t('details')}}</span>
-                            <search-web />
-                        </b-button>
-                    </router-link>
                 </li>
             </ul>
         </bottom-line>
@@ -49,13 +52,14 @@
 </template>
 <script>
 import BottomLine from "../layout/BottomLine";
-import SearchWeb from "vue-material-design-icons/SearchWeb";
+import LogList from "./LogList";
+import FileDocument from "vue-material-design-icons/FileDocument";
 import { mapState } from "vuex";
 
 const ts = date => new Date(date).getTime();
 
 export default {
-    components: { BottomLine, SearchWeb },
+    components: { BottomLine, FileDocument, LogList },
     data() {
         return {
             colors: {
@@ -66,7 +70,7 @@ export default {
         };
     },
     computed: {
-        ...mapState("execution", ["execution"]),
+        ...mapState("execution", ["execution", "task"]),
         start() {
             return ts(this.execution.state.histories[0].date);
         },
@@ -96,7 +100,9 @@ export default {
                     name: task.taskId,
                     start: (start / this.delta) * 100,
                     width: (stop / this.delta) * 100,
-                    tooltip: `${this.$t("duration").capitalize()} : ${humanDuration}`,
+                    tooltip: `${this.$t(
+                        "duration"
+                    ).capitalize()} : ${humanDuration}`,
                     color: this.colors[task.state.current]
                 });
             }
@@ -105,9 +111,9 @@ export default {
     },
     methods: {
         onTaskSelect(task) {
-            console.log("task", task); //TODO
+            this.$store.commit("execution/setTask", task);
         }
-    }
+    },
 };
 </script>
 <style lang="scss" scoped>

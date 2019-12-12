@@ -34,7 +34,10 @@
         "steps": "steps",
         "search term in message": "search term in message",
         "search": "search",
-        "filter by log level": "filter by log level"
+        "filter by log level": "filter by log level",
+        "selected": "selected",
+        "task": "task",
+        "task logs": "task logs"
     },
     "fr": {
         "id": "identifiant",
@@ -70,6 +73,9 @@
         "steps": "étapes",
         "search term in message": "chercher dans le message",
         "search": "chercher",
-        "filter by log level": "filtrer par niveau de log"
+        "filter by log level": "filtrer par niveau de log",
+        "selected": "sélectionné",
+        "task": "tâche",
+        "task logs": "Journaux de la tâche"
     }
 }

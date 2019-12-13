@@ -29,7 +29,9 @@ public interface FlowRepositoryInterface {
 
     List<Flow> findAll();
 
-    ArrayListTotal<Flow> find(String namespace, Pageable pageable);
+    ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable);
+
+    ArrayListTotal<Flow> find(String query, Pageable pageable);
 
     Flow save(Flow flow);
 

@@ -6,10 +6,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.PrefixQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -77,8 +74,28 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         return this.scroll(sourceBuilder);
     }
 
+
     @Override
-    public ArrayListTotal<Flow> find(String namespace, Pageable pageable) {
+    public ArrayListTotal<Flow> find(String query, Pageable pageable) {
+        QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+                .query(queryString)
+                .size(pageable.getSize())
+                .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
+        for (Sort.Order order : pageable.getSort().getOrderBy()) {
+            sourceBuilder = sourceBuilder.sort(
+                    order.getProperty(),
+                    order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
+            );
+        }
+
+        return this.query(sourceBuilder);
+    }
+
+    @Override
+    public ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable) {
         TermQueryBuilder termQuery = QueryBuilders
                 .termQuery("namespace", namespace);
 

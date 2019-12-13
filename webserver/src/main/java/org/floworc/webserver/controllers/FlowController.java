@@ -39,14 +39,29 @@ public class FlowController {
             .orElse(Maybe.empty());
     }
 
-  /**
+     /**
+     * @param query The flow query that is a lucen string
+     * @param page Page in flow pagination
+     * @param size Element count in pagination selection
+     * @return flow list
+     */
+    @Get(uri = "/search",produces = MediaType.TEXT_JSON)
+    public PagedResults<Flow> find(@QueryValue(value = "q") String query, @QueryValue(value = "page", defaultValue = "1") int page, @QueryValue(value = "size", defaultValue = "10") int size) {
+        return PagedResults.of(flowRepository.find(query, Pageable.from(page, size)));
+    }
+
+
+     /**
      * @param namespace The flow namespace
+     * @param page Page in flow pagination
+     * @param size Element count in pagination selection
      * @return flow list
      */
     @Get(uri = "{namespace}", produces = MediaType.TEXT_JSON)
-    public PagedResults<Flow> find(String namespace, @QueryValue(value = "page", defaultValue = "1") int page, @QueryValue(value = "size", defaultValue = "10") int size) {
-        return PagedResults.of(flowRepository.find(namespace, Pageable.from(page, size)));
+    public PagedResults<Flow> findByNamespace(String namespace, @QueryValue(value = "page", defaultValue = "1") int page, @QueryValue(value = "size", defaultValue = "10") int size) {
+        return PagedResults.of(flowRepository.findByNamespace(namespace, Pageable.from(page, size)));
     }
+
 
     /**
      * @param flow The flow content

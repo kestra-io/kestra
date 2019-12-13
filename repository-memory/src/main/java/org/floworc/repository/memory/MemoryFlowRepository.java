@@ -77,7 +77,25 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<Flow> find(String namespace, Pageable pageable) {
+    public ArrayListTotal<Flow> find(String query, Pageable pageable) {
+        //TODO Non used query, returns just all at the moment
+        if (pageable.getNumber() < 1) {
+            throw new ValueException("Page cannot be < 1");
+        }
+
+        List<Flow> flows = this.findAll();
+
+        //handles pagination
+        int from = (pageable.getNumber() - 1) * pageable.getSize();
+        int to = from + pageable.getSize();
+        int size = flows.size();
+        to = to >= size ? size : to;
+        from = from >= size ? size : from;
+        return new ArrayListTotal<Flow>(flows.subList(from, to), flows.size());
+    }
+
+    @Override
+    public ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable) {
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }

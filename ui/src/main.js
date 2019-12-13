@@ -15,8 +15,9 @@ import 'moment/locale/fr'
 import './utils'
 import './custom.scss'
 import 'vue-sidebar-menu/dist/vue-sidebar-menu.css'
+//https://materialdesignicons.com/
 import 'vue-material-design-icons/styles.css';
-
+import 'vue2-datepicker/index.css';
 Vue.use(VueSSE);
 Vue.use(VueMoment, {
   moment

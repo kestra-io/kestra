@@ -5,6 +5,7 @@ import Flows from '../components/flows/Flows.vue'
 import FlowEdit from '../components/flows/FlowEdit.vue'
 import Executions from '../components/executions/Executions.vue'
 import ExecutionRoot from '../components/executions/ExecutionRoot.vue'
+import ExecutionConfiguration from '../components/executions/ExecutionConfiguration.vue'
 
 Vue.use(VueRouter)
 
@@ -20,6 +21,7 @@ export default new VueRouter({
         { name: 'executions', path: '/executions/:namespace/:flowId', component: Executions },
         { name: 'executions-raw', path: '/executions', component: Executions },
         { name: 'execution', path: '/execution/:namespace/:flowId/:id', component: ExecutionRoot },
+        { name: 'executionConfiguration', path: '/execution/configuration/:namespace/:id', component: ExecutionConfiguration },
         //Settings
         { name: 'settings', path: '/settings', component: Settings },
     ]

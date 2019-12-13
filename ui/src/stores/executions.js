@@ -29,7 +29,11 @@ export default {
             })
         },
         triggerExecution({ commit }, options) {
-            return Vue.axios.post(`/api/v1/flows/${options.namespace}/${options.flowId}/trigger`)
+            return Vue.axios.post(`/api/v1/flows/${options.namespace}/${options.id}/trigger`, options.formData, {
+                headers: {
+                    'content-type': 'multipart/form-data'
+                }
+            })
         },
         createFlow({ commit }, options) {
             return Vue.axios.post('/api/v1/executions', options.execution).then(response => {

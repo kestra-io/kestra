@@ -12,23 +12,39 @@
             </b-col>
         </b-row>
         <b-table responsive="xl" striped hover :items="flows" :fields="fields">
-            <template v-slot:cell(edit)="row">
+            <template v-slot:cell(actions)="row">
+                <b-tooltip
+                    :target="`edit-action-${row.item.id}`"
+                >{{$t('edit flow') | cap}} {{row.item.id}}</b-tooltip>
+                <b-tooltip
+                    :target="`find-action-${row.item.id}`"
+                >{{$tc('find flow {id} executions', null, row.item) | cap}}</b-tooltip>
+                <b-tooltip
+                    :target="`trigger-action-${row.item.id}`"
+                >{{$t('trigger execution for flow') | cap }} {{row.item.id}}</b-tooltip>
                 <router-link
                     class="btn btn-default"
                     :to="`/flows/edit/${row.item.namespace}/${row.item.id}`"
                 >
-                    <b-button size="sm">
-                        <wrench id="edit-action" />
+                    <b-button :id="`edit-action-${row.item.id}`" variant="secondary" size="sm">
+                        <edit :id="`edit-action-${row.item.id}`" />
                     </b-button>
                 </router-link>
-            </template>
-            <template v-slot:cell(executions)="row">
                 <router-link
+                    :id="`find-action-${row.item.id}`"
                     class="btn btn-default"
                     :to="`/executions/${row.item.namespace}/${row.item.id}`"
                 >
                     <b-button variant="primary" size="sm">
-                        <play id="edit-action" />
+                        <search />
+                    </b-button>
+                </router-link>
+                <router-link
+                    :id="`trigger-action-${row.item.id}`"
+                    :to="{name: 'executionConfiguration', params: row.item}"
+                >
+                    <b-button variant="info" size="sm">
+                        <trigger />
                     </b-button>
                 </router-link>
             </template>
@@ -72,32 +88,25 @@
                 ></b-pagination>
             </b-col>
         </b-row>
-        <bottom-line>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <router-link class="float-right" to="/flows/add">
-                        <b-button id="add-flow">
-                            <b-tooltip target="add-flow" triggers="hover">{{$t('Add flow')}}</b-tooltip>
-                            <span class="text-capitalize">{{$t('add')}}</span>
-                            <plus />
-                        </b-button>
-                    </router-link>
-                </li>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 
 <script>
 import { mapState } from "vuex";
-import Wrench from "vue-material-design-icons/Wrench";
-import Plus from "vue-material-design-icons/Plus";
-import Play from "vue-material-design-icons/Play";
+import Trigger from "vue-material-design-icons/Cogs";
+import Search from "vue-material-design-icons/Magnify";
+import Edit from "vue-material-design-icons/Pencil";
 import NamespaceSelector from "../namespace/Selector";
 import BottomLine from "../layout/BottomLine";
 
 export default {
-    components: { Wrench, Plus, Play, NamespaceSelector, BottomLine },
+    components: {
+        Trigger,
+        Search,
+        Edit,
+        NamespaceSelector,
+        BottomLine
+    },
     data() {
         return {
             page: 1, //TODO put in store
@@ -132,13 +141,8 @@ export default {
                     class: "text-center"
                 },
                 {
-                    key: "edit",
-                    label: title("edit"),
-                    class: "text-center"
-                },
-                {
-                    key: "executions",
-                    label: title("executions"),
+                    key: "actions",
+                    label: title("actions"),
                     class: "text-center"
                 }
             ];

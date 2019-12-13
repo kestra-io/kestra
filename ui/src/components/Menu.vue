@@ -12,10 +12,12 @@ import Vue from "vue";
 import { SidebarMenu } from "vue-sidebar-menu";
 import ChevronLeft from "vue-material-design-icons/ChevronLeft";
 import ChevronRight from "vue-material-design-icons/ChevronRight";
-import Walk from "vue-material-design-icons/Walk";
+import Tree from "vue-material-design-icons/Tree";
 import Settings from "vue-material-design-icons/Settings";
-Vue.component("walk", Walk);
+import TimelineClock from "vue-material-design-icons/TimelineClock";
+Vue.component("tree", Tree);
 Vue.component("settings", Settings);
+Vue.component("timelineclock", TimelineClock);
 export default {
     components: {
         ChevronLeft,
@@ -42,15 +44,23 @@ export default {
                 },
                 {
                     href: "/flows",
-                    title: this.$t("flows"),
+                    title: this.$t("flows").capitalize(),
                     icon: {
-                        element: "walk",
+                        element: "tree",
+                        class: "menu-icon"
+                    }
+                },
+                {
+                    href: "/executions",
+                    title: this.$t("executions").capitalize(),
+                    icon: {
+                        element: "timelineclock",
                         class: "menu-icon"
                     }
                 },
                 {
                     href: "/settings",
-                    title: this.$t("settings"),
+                    title: this.$t("settings").capitalize(),
                     icon: {
                         element: "settings",
                         class: "menu-icon"

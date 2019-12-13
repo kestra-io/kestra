@@ -14,6 +14,14 @@ export default {
                 commit('setTotal', response.data.total)
             })
         },
+        findFlows({ commit }, options) {
+            return Vue.axios.get('/api/v1/flows/search', {
+                params: options
+            }).then(response => {
+                commit('setFlows', response.data.results)
+                commit('setTotal', response.data.total)
+            })
+        },
         loadFlow({ commit }, options) {
             return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}`).then(response => {
                 commit('setFlow', response.data)

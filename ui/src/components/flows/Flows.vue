@@ -72,7 +72,7 @@
                     <router-link class="float-right" to="/flows/add">
                         <b-button id="add-flow">
                             <b-tooltip target="add-flow" triggers="hover">{{$t('Add flow')}}</b-tooltip>
-                            <span class="text-capitalize">{{$t('add')}} </span>
+                            <span class="text-capitalize">{{$t('add')}}</span>
                             <plus />
                         </b-button>
                     </router-link>
@@ -94,10 +94,13 @@ export default {
     components: { Wrench, Plus, Play, NamespaceSelector, BottomLine },
     data() {
         return {
-            page: 1,
-            perPage: 5,
+            page: 1, //TODO put in store
+            perPage: 10,
             pageOptions: [5, 10, 25, 50, 100]
         };
+    },
+    created() {
+        this.loadFlows();
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
@@ -139,13 +142,22 @@ export default {
         loadFlows() {
             //setTimeout is for pagination settings are properly updated
             setTimeout(() => {
-                this.$store.dispatch("flow/loadFlows", {
-                    namespace: this.namespace,
-                    perPage: this.perPage,
-                    page: this.page
-                });
+                if (this.namespace) {
+                    this.$store.dispatch("flow/loadFlows", {
+                        namespace: this.namespace,
+                        perPage: this.perPage,
+                        page: this.page
+                    });
+                } else {
+                    this.$store.dispatch("flow/findFlows", {
+                        q: "*",
+                        perPage: this.perPage,
+                        page: this.page
+                    });
+                }
             });
         },
+        findFlows() {},
         onNamespaceSelect(namespace) {
             this.loadFlows();
         }

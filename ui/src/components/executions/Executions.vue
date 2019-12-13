@@ -30,13 +30,13 @@
                     label-cols-lg="3"
                     label-align-sm="right"
                     label-size="sm"
-                    label-for="perPageSelect"
+                    label-for="sizeSelect"
                     class="mb-0"
                 >
                     <b-form-select
-                        v-model="perPage"
+                        v-model="size"
                         @change="loadExecutions"
-                        id="perPageSelect"
+                        id="sizeSelect"
                         size="sm"
                         :options="pageOptions"
                     ></b-form-select>
@@ -47,7 +47,7 @@
                     @change="loadExecutions"
                     v-model="page"
                     :total-rows="total"
-                    :per-page="perPage"
+                    :per-page="size"
                     align="fill"
                     size="sm"
                     class="my-0"
@@ -89,7 +89,7 @@ export default {
         return {
             file: undefined,
             page: 1,
-            perPage: 5,
+            size: 5,
             pageOptions: [5, 10, 25, 50, 100]
         };
     },
@@ -138,14 +138,18 @@ export default {
         },
         loadExecutions() {
             //setTimeout is for pagination settings are properly updated
-            setTimeout(() => {
-                this.$store.dispatch("execution/loadExecutions", {
-                    namespace: this.$route.params.namespace,
-                    flowId: this.$route.params.flowId,
-                    size: this.perPage,
-                    page: this.page
+            if (this.$route.params.flowId) {
+                setTimeout(() => {
+                        this.$store.dispatch("execution/loadExecutions", this.$route.params);
                 });
-            });
+            } else {
+                setTimeout(() => {
+                        this.$store.dispatch("execution/findExecutions", {
+                            size: this.size,
+                            page: this.page
+                        });
+                });
+            }
         }
     }
 };

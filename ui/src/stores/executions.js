@@ -20,6 +20,14 @@ export default {
                 commit('setExecution', response.data)
             })
         },
+        findExecutions({ commit }, options) {
+            return Vue.axios.get(`/api/v1/executions/search`, {
+                params: { q: '*' }
+            }).then(response => {
+                commit('setExecutions', response.data.results)
+                commit('setTotal', response.data.total)
+            })
+        },
         triggerExecution({ commit }, options) {
             return Vue.axios.post(`/api/v1/flows/${options.namespace}/${options.flowId}/trigger`)
         },

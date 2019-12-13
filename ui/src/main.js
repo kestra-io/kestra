@@ -8,6 +8,7 @@ import VueSidebarMenu from 'vue-sidebar-menu'
 import i18n from './i18n'
 import vSelect from 'vue-select'
 import VueMoment from 'vue-moment'
+import VueSSE from 'vue-sse';
 import moment from 'moment'
 import './filters'
 import 'moment/locale/fr'
@@ -16,6 +17,7 @@ import './custom.scss'
 import 'vue-sidebar-menu/dist/vue-sidebar-menu.css'
 import 'vue-material-design-icons/styles.css';
 
+Vue.use(VueSSE);
 Vue.use(VueMoment, {
   moment
 })

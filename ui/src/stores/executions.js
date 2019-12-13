@@ -27,6 +27,9 @@ export default {
             return Vue.axios.post('/api/v1/executions', options.execution).then(response => {
                 commit('setFlow', response.data.flow)
             })
+        },
+        followExecution(_, options) {
+            return Vue.SSE(`${process.env.VUE_APP_API_URL}/api/v1/flows/${options.namespace}/${options.flowId}/executions/${options.id}/follow`, { format: 'json' })
         }
     },
     mutations: {

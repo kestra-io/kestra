@@ -33,12 +33,25 @@ export default {
         Gantt,
         Logs
     },
+    data() {
+        return {
+            sse: undefined
+        };
+    },
     created() {
         this.$store.dispatch("execution/loadExecution", this.$route.params);
+        this.$store
+            .dispatch("execution/followExecution", this.$route.params)
+            .then(sse => {
+                this.sse = sse;
+                sse.subscribe("", data => {
+                    this.$store.commit("execution/setExecution", data);
+                });
+            });
     },
     methods: {
         setTab(tab) {
-            this.$store.commit('execution/setTask', undefined)
+            this.$store.commit("execution/setTask", undefined);
             this.$router.push({
                 name: "execution",
                 params: this.$route.params,
@@ -64,6 +77,9 @@ export default {
                 }
             ];
         }
+    },
+    beforeDestroy() {
+        this.sse.close();
     }
 };
 </script>

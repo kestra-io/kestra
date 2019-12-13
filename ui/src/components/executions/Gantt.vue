@@ -9,7 +9,10 @@
                 sm="12"
             >
                 {{taskItem.name}}
-                <b-tooltip placement="right" :target="`task-title-wrapper-${taskItem.id}`">{{taskItem.id}}</b-tooltip>
+                <b-tooltip
+                    placement="right"
+                    :target="`task-title-wrapper-${taskItem.id}`"
+                >{{taskItem.id}}</b-tooltip>
             </b-col>
             <b-col md="10" sm="12">
                 <b-tooltip :target="`task-body-wrapper-${taskItem.id}`">{{taskItem.tooltip}}</b-tooltip>
@@ -43,8 +46,7 @@
         </template>
         <bottom-line>
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                </li>
+                <li class="nav-item"></li>
             </ul>
         </bottom-line>
     </div>
@@ -77,6 +79,9 @@ export default {
             return ts(this.execution.state.histories[0].date);
         },
         stop() {
+            if (this.execution.state.current === "RUNNING") {
+                return +new Date()
+            }
             const lastIndex = this.execution.state.histories.length - 1;
             return ts(this.execution.state.histories[lastIndex].date);
         },

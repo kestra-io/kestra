@@ -120,7 +120,7 @@ export default {
 
 <style scoped lang="scss">
 .editor-wrapper {
-    height: calc(100vh - 130px);
+    height: calc(100vh - 133px);
     >div {
         padding: 0px;
     }

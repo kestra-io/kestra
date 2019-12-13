@@ -121,13 +121,16 @@ export default {
             this.$store
                 .dispatch("execution/triggerExecution", this.$route.params)
                 .then(response => {
+                    this.$router.push({
+                        name: "execution",
+                        params: response.data
+                    });
                     this.$bvToast.toast(this.$t("triggered").capitalize(), {
                         title: this.$t("execution").capitalize(),
                         autoHideDelay: 5000,
                         toaster: "b-toaster-top-right",
                         variant: "success"
                     });
-                    this.loadExecutions();
                 });
         },
         onFileUpload() {

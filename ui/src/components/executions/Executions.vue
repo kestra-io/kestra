@@ -9,7 +9,7 @@
             </b-col>
         </b-row>
         <hr />
-        <b-table striped hover :items="executions" :fields="fields">
+        <b-table responsive="xl" striped hover :items="executions" :fields="fields">
             <template v-slot:cell(details)="row">
                 <router-link
                     class="btn btn-default"
@@ -19,6 +19,24 @@
                         <eye id="edit-action" />
                     </b-button>
                 </router-link>
+            </template>
+            <template v-slot:cell(state.current)="row">
+                <div class="status-wrapper">
+                    <status class="status" :status="row.item.state.current" />
+                </div>
+            </template>
+            <template v-slot:cell(flowId)="row">
+                <router-link
+                    :to="{name: 'flowsEdit', params: {namespace: row.item.namespace, id: row.item.flowId}}"
+                >{{row.item.flowId}}</router-link>
+            </template>
+            <template v-slot:cell(namespace)="row">
+                <router-link
+                    :to="{name: 'flows', query: {namespace: row.item.namespace}}"
+                >{{row.item.namespace}}</router-link>
+            </template>
+            <template v-slot:cell(id)="row">
+                <router-link :to="{name: 'execution', params: row.item}">{{row.item.id}}</router-link>
             </template>
         </b-table>
         <b-row>
@@ -56,16 +74,7 @@
         </b-row>
         <bottom-line>
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item upload-file-wrapper">
-                    <b-form-file
-                        v-model="file"
-                        @input="onFileUpload"
-                        :state="Boolean(file)"
-                        :placeholder="$t('choose file')"
-                        drop-placeholder="Drop file here..."
-                    ></b-form-file>
-                </li>
-                <li class="nav-item">
+                <li v-if="$route.name === 'executions'" class="nav-item">
                     <b-button id="add-flow" @click="triggerExecution">
                         <b-tooltip target="add-flow" triggers="hover">{{$t('trigger execution')}}</b-tooltip>
                         <span class="text-capitalize">{{$t('create')}}</span>
@@ -82,9 +91,9 @@ import { mapState } from "vuex";
 import BottomLine from "../layout/BottomLine";
 import Eye from "vue-material-design-icons/Eye";
 import Plus from "vue-material-design-icons/Plus";
-
+import Status from "../Status";
 export default {
-    components: { BottomLine, Eye, Plus },
+    components: { BottomLine, Status, Eye, Plus },
     data() {
         return {
             file: undefined,
@@ -106,6 +115,21 @@ export default {
                 {
                     key: "id",
                     label: title("id"),
+                    class: "text-center"
+                },
+                {
+                    key: "namespace",
+                    label: title("namespace"),
+                    class: "text-center"
+                },
+                {
+                    key: "flowId",
+                    label: title("flow"),
+                    class: "text-center"
+                },
+                {
+                    key: "state.current",
+                    label: title("state"),
                     class: "text-center"
                 },
                 {
@@ -140,14 +164,17 @@ export default {
             //setTimeout is for pagination settings are properly updated
             if (this.$route.params.flowId) {
                 setTimeout(() => {
-                        this.$store.dispatch("execution/loadExecutions", this.$route.params);
+                    this.$store.dispatch(
+                        "execution/loadExecutions",
+                        this.$route.params
+                    );
                 });
             } else {
                 setTimeout(() => {
-                        this.$store.dispatch("execution/findExecutions", {
-                            size: this.size,
-                            page: this.page
-                        });
+                    this.$store.dispatch("execution/findExecutions", {
+                        size: this.size,
+                        page: this.page
+                    });
                 });
             }
         }
@@ -157,5 +184,8 @@ export default {
 <style scoped>
 .upload-file-wrapper {
     margin-right: 15px;
+}
+.status-wrapper {
+    padding-top: 10px;
 }
 </style>

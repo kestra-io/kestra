@@ -2,7 +2,7 @@
     <div>
         <b-row>
             <b-col>
-                <h1 class="text-capitalize">{{$t('flows')}}</h1>
+                <h1 class="text-capitalize wrap">{{$t('flows')}}</h1>
             </b-col>
         </b-row>
         <hr />
@@ -31,6 +31,12 @@
                         <play id="edit-action" />
                     </b-button>
                 </router-link>
+            </template>
+            <template v-slot:cell(namespace)="row">
+                <a
+                    href
+                    @click.prevent="onNamespaceSelect(row.item.namespace)"
+                >{{row.item.namespace}}</a>
             </template>
         </b-table>
         <b-row>
@@ -100,7 +106,7 @@ export default {
         };
     },
     created() {
-        this.loadFlows();
+        this.onNamespaceSelect(this.$route.query.namespace);
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
@@ -157,8 +163,14 @@ export default {
                 }
             });
         },
-        findFlows() {},
         onNamespaceSelect(namespace) {
+            if (namespace) {
+                this.$store.commit("namespace/setNamespace", namespace);
+            }
+            if (this.$route.query.namespace !== namespace) {
+                this.$router.push({ query: { namespace } });
+                this.page = 1;
+            }
             this.loadFlows();
         }
     }

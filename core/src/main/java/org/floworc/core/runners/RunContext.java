@@ -69,16 +69,19 @@ public class RunContext {
 
     private ContextAppender contextAppender;
 
-    private Logger logger;
+    private String loggerName;
 
+    private Logger logger;
 
     public RunContext(Flow flow, Execution execution) {
         this.variables = this.variables(flow, null, execution, null);
+        this.loggerName = "flow." + flow.getId();
     }
 
     public RunContext(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
         this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
         this.variables = this.variables(flow, task, execution, taskRun);
+        this.loggerName = "flow." + flow.getId() + "." + taskRun.getTaskId();
     }
 
     private Map<String, Object> variables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
@@ -111,6 +114,10 @@ public class RunContext {
 
         if (execution.getInputs() != null) {
             builder.put("inputs", execution.getInputs());
+        }
+
+        if (flow.getVariables() != null) {
+            builder.put("vars", flow.getVariables());
         }
 
         return builder.build();
@@ -150,12 +157,13 @@ public class RunContext {
         this.storageInterface = applicationContext.getBean(StorageInterface.class);
         this.storageOutputPrefix = URI.create("");
         this.variables = variables;
+        this.loggerName = "flow.unitest";
     }
 
     public org.slf4j.Logger logger(Class cls) {
         if (this.logger == null) {
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-            this.logger = loggerContext.getLogger(cls);
+            this.logger = loggerContext.getLogger(this.loggerName != null ? loggerName : cls.getName());
 
             this.contextAppender = new ContextAppender();
             this.contextAppender.setContext(loggerContext);

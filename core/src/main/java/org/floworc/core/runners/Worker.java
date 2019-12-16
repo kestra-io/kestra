@@ -9,7 +9,9 @@ import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.queues.QueueInterface;
+import org.floworc.core.serializers.JacksonMapper;
 import org.floworc.core.storages.StorageInterface;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,6 +105,7 @@ public class Worker implements Runnable {
     }
 
     private WorkerTask runAttempt(WorkerTask workerTask) {
+        Logger logger = workerTask.logger();
         RunnableTask task = (RunnableTask) workerTask.getTask();
         State.Type state;
 
@@ -121,7 +124,7 @@ public class Worker implements Runnable {
             output = task.run(runContext);
             state = State.Type.SUCCESS;
         } catch (Exception e) {
-            workerTask.logger().error("Failed task", e);
+            logger.error("Failed task", e);
             state = State.Type.FAILED;
         }
 
@@ -131,6 +134,14 @@ public class Worker implements Runnable {
             .metrics(runContext.metrics())
             .build()
             .withState(state);
+
+        if (output != null && output.getOutputs() != null) {
+            logger.debug("Outputs\n{}", JacksonMapper.log(output.getOutputs()));
+        }
+
+        if (runContext.getMetrics() != null) {
+            logger.trace("Metrics\n{}", JacksonMapper.log(runContext.getMetrics()));
+        }
 
         ImmutableList<TaskRunAttempt> attempts = ImmutableList.<TaskRunAttempt>builder()
             .addAll(workerTask.getTaskRun().getAttempts() == null ? new ArrayList<>() : workerTask.getTaskRun().getAttempts())

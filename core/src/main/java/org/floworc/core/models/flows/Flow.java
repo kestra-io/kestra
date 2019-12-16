@@ -16,6 +16,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -41,6 +42,8 @@ public class Flow {
 
     @Valid
     private List<Input> inputs;
+
+    private Map<String, Object> variables;
 
     @Valid
     private List<Task> tasks;

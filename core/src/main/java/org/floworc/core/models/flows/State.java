@@ -61,7 +61,7 @@ public class State {
             .replaceAll("(\\d[HMS])(?!$)", " $1 ")
             .toLowerCase();
 
-        return duration.substring(0, duration.length() - 4) + "s";
+        return (duration.substring(0, duration.length() - 4) + "s").trim();
     }
 
     @JsonIgnore

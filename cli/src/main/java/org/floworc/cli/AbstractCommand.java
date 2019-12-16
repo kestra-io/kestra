@@ -24,6 +24,9 @@ abstract public class AbstractCommand implements Runnable {
     @CommandLine.Option(names = {"-l", "--log-level"}, description = "Change log level (values: ${COMPLETION-CANDIDATES}; default: ${DEFAULT-VALUE})")
     private LogLevel logLevel = LogLevel.INFO;
 
+    @CommandLine.Option(names = {"--internal-log"}, description = "Change also log level for internal log, default: ${DEFAULT-VALUE})")
+    private boolean internalLog = false;
+
     public enum LogLevel {
         TRACE,
         DEBUG,
@@ -53,7 +56,7 @@ abstract public class AbstractCommand implements Runnable {
         ((LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory())
             .getLoggerList()
             .stream()
-            .filter(logger -> logger.getName().indexOf("org.floworc") == 0 || logger.getName().indexOf("flow") == 0)
+            .filter(logger -> (this.internalLog && logger.getName().indexOf("org.floworc") == 0) || logger.getName().indexOf("flow.") == 0)
             .forEach(
                 logger -> logger.setLevel(ch.qos.logback.classic.Level.valueOf(this.logLevel.name()))
             );

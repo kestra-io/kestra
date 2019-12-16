@@ -1,20 +1,23 @@
 package org.floworc.core.runners;
 
+import lombok.extern.slf4j.Slf4j;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
 import org.floworc.core.models.tasks.FlowableTask;
 import org.floworc.core.models.tasks.ResolvedTask;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 public abstract class AbstractExecutor implements Runnable {
     protected Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
-        if (flow.logger().isTraceEnabled()) {
-            flow.logger().trace(
+        if (log.isTraceEnabled()) {
+            log.trace(
                 "[execution: {}] Found {} next(s) {}",
                 execution.getId(),
                 nexts.size(),
@@ -85,12 +88,18 @@ public abstract class AbstractExecutor implements Runnable {
             execution.hasFailed() ? State.Type.FAILED : State.Type.SUCCESS
         );
 
-        flow.logger().info(
+        Logger logger = flow.logger();
+
+        logger.info(
             "[execution: {}] Flow completed with state {} in {}",
             newExecution.getId(),
             newExecution.getState().getCurrent(),
             newExecution.getState().humanDuration()
         );
+
+        if (logger.isTraceEnabled()) {
+            logger.debug(execution.toString(true));
+        }
 
         return newExecution;
     }

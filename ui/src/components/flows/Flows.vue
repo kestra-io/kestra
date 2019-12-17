@@ -97,7 +97,6 @@ import Trigger from "vue-material-design-icons/Cogs";
 import Search from "vue-material-design-icons/Magnify";
 import Edit from "vue-material-design-icons/Pencil";
 import NamespaceSelector from "../namespace/Selector";
-import BottomLine from "../layout/BottomLine";
 
 export default {
     components: {
@@ -105,7 +104,6 @@ export default {
         Search,
         Edit,
         NamespaceSelector,
-        BottomLine
     },
     data() {
         return {

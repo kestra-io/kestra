@@ -157,9 +157,6 @@ export default {
                     });
                 });
         },
-        onFileUpload() {
-            console.log("on file upload"); //TODO
-        },
         loadExecutions() {
             //setTimeout is for pagination settings are properly updated
             if (this.$route.params.flowId) {

@@ -46,7 +46,6 @@
                                     :placeholder="$t('select datetime')"
                                 ></date-picker>
                                 <b-form-file
-                                    @change="onFileChange(input.name, $event)"
                                     v-if="input.type === 'FILE'"
                                     v-model="input.value"
                                     :required="input.required"
@@ -85,16 +84,10 @@ export default {
         loadFlow() {
             this.$store.dispatch("flow/loadFlow", this.$route.params);
         },
-        onFileChange(name, file) {
-            console.log(name, file);
-            window.$a = file;
-            window.$i = this.flow.inputs;
-        },
         onSubmit() {
             const formData = new FormData();
             for (let input of this.flow.inputs) {
                 if (input.value !== undefined) {
-                    let value;
                     if (input.type === "DATETIME") {
                         formData.append(input.name, input.value.toISOString());
                     } else if (input.type === "FILE") {
@@ -123,7 +116,6 @@ export default {
                     formData
                 })
                 .then(response => {
-                    console.log('response post', response)
                     this.$bvToast.toast(this.$t("triggered").capitalize(), {
                         title: this.$t("execution").capitalize(),
                         autoHideDelay: 5000,

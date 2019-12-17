@@ -22,13 +22,13 @@ export default {
         },
         findExecutions({ commit }, options) {
             return Vue.axios.get(`/api/v1/executions/search`, {
-                params: { q: '*' }
+                params: { q: options.query || '*' }
             }).then(response => {
                 commit('setExecutions', response.data.results)
                 commit('setTotal', response.data.total)
             })
         },
-        triggerExecution({ commit }, options) {
+        triggerExecution(_, options) {
             return Vue.axios.post(`/api/v1/flows/${options.namespace}/${options.id}/trigger`, options.formData, {
                 headers: {
                     'content-type': 'multipart/form-data'

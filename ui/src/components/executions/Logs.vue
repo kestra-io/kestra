@@ -25,7 +25,6 @@
     </div>
 </template>
 <script>
-import { mapState } from "vuex";
 import LogList from "./LogList";
 export default {
     components: { LogList },

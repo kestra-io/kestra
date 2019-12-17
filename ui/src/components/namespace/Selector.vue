@@ -21,7 +21,7 @@ export default {
             set(namespace) {
                 this.$store.commit("namespace/setNamespace", namespace);
             },
-            get(namespace) {
+            get() {
                 return this.namespace;
             }
         }

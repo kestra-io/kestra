@@ -54,13 +54,12 @@
 <script>
 import BottomLine from "../layout/BottomLine";
 import LogList from "./LogList";
-import FileDocument from "vue-material-design-icons/FileDocument";
 import { mapState } from "vuex";
 
 const ts = date => new Date(date).getTime();
 
 export default {
-    components: { BottomLine, FileDocument, LogList },
+    components: { BottomLine, LogList },
     data() {
         return {
             colors: {

@@ -89,7 +89,8 @@ export default {
         },
         series() {
             const series = [];
-            for (let task of this.execution.taskRunList) {
+
+            for (let task of this.execution.taskRunList || []) {
                 const lastIndex = task.state.histories.length - 1;
                 const startTs = ts(task.state.histories[0].date);
                 const stopTs = ts(task.state.histories[lastIndex].date);

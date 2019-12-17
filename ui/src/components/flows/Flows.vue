@@ -18,7 +18,7 @@
                 >{{$t('edit flow') | cap}} {{row.item.id}}</b-tooltip>
                 <b-tooltip
                     :target="`find-action-${row.item.id}`"
-                >{{$tc('find flow {id} executions', null, row.item) | cap}}</b-tooltip>
+                >{{$tc('display flow {id} executions', null, row.item) | cap}}</b-tooltip>
                 <b-tooltip
                     :target="`trigger-action-${row.item.id}`"
                 >{{$t('trigger execution for flow') | cap }} {{row.item.id}}</b-tooltip>
@@ -103,7 +103,7 @@ export default {
         Trigger,
         Search,
         Edit,
-        NamespaceSelector,
+        NamespaceSelector
     },
     data() {
         return {
@@ -114,6 +114,11 @@ export default {
     },
     created() {
         this.onNamespaceSelect(this.$route.query.namespace);
+    },
+    watch: {
+        $route() {
+            this.onNamespaceSelect(this.$route.query.namespace);
+        }
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
@@ -166,13 +171,11 @@ export default {
             });
         },
         onNamespaceSelect(namespace) {
-            if (namespace) {
-                this.$store.commit("namespace/setNamespace", namespace);
-            }
             if (this.$route.query.namespace !== namespace) {
                 this.$router.push({ query: { namespace } });
                 this.page = 1;
             }
+            this.$store.commit("namespace/setNamespace", namespace);
             this.loadFlows();
         }
     }

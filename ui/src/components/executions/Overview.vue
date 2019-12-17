@@ -5,7 +5,7 @@
             <h3>{{$t('flow') | cap }} : {{execution.flowId}}</h3>
             <h3>{{$t('from') | cap}} {{execution.state.histories[0].date | date('LLLL')}} {{$t('to')}} {{execution.state.histories[execution.state.histories.length - 1].date | date('LLLL')}}</h3>
             <hr/>
-            <h3>
+            <h3 v-if="execution.taskRunList">
                 {{execution.taskRunList.length}} {{$t('steps')}} :
                 <status :status="execution.state.current" />
             </h3>

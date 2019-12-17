@@ -3,7 +3,12 @@
         <b-row>
             <b-col>
                 <h1 class="text-capitalize">
-                    <router-link to="/flows">{{$t('flows')}}</router-link>
+                    <router-link
+                        v-if="$route.name === 'executions'" :to="{name: 'flows', query: {namespace: $route.params.namespace}}"
+                    >{{$t('flows')}}</router-link>
+                    <router-link
+                        v-else :to="{name: 'flows'}"
+                    >{{$t('flows')}}</router-link>
                     &gt; {{$t('executions')}}
                 </h1>
             </b-col>
@@ -138,6 +143,11 @@ export default {
                     class: "text-center"
                 }
             ];
+        }
+    },
+    watch: {
+        $route() {
+            this.loadExecutions();
         }
     },
     methods: {

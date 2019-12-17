@@ -86,7 +86,7 @@ export default {
         },
         onSubmit() {
             const formData = new FormData();
-            for (let input of this.flow.inputs) {
+            for (let input of this.flow.inputs || []) {
                 if (input.value !== undefined) {
                     if (input.type === "DATETIME") {
                         formData.append(input.name, input.value.toISOString());

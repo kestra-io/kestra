@@ -42,7 +42,6 @@ public class Connection extends AbstractConnection {
         if (queryJob == null) {
             throw new IllegalArgumentException("Job no longer exists");
         } else if (queryJob.getStatus().getError() != null) {
-
             queryJob
                 .getStatus()
                 .getExecutionErrors()

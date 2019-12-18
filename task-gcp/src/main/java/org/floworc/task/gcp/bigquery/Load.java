@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.runners.RunContext;
 import org.floworc.core.runners.RunOutput;
+import org.floworc.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 
 import java.io.InputStream;
@@ -37,7 +38,7 @@ public class Load extends AbstractLoad implements RunnableTask {
         this.setOptions(builder);
 
         WriteChannelConfiguration configuration = builder.build();
-        logger.debug("Starting load '{}'", configuration);
+        logger.debug("Starting load\n{}", JacksonMapper.log(configuration));
 
         URI from = new URI(runContext.render(this.from));
         InputStream data = runContext.uriToInputStream(from);

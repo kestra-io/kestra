@@ -1,14 +1,12 @@
 package org.floworc.task.gcp.bigquery;
 
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.Job;
-import com.google.cloud.bigquery.JobInfo;
-import com.google.cloud.bigquery.LoadJobConfiguration;
+import com.google.cloud.bigquery.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.runners.RunContext;
 import org.floworc.core.runners.RunOutput;
+import org.floworc.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -37,13 +35,14 @@ public class LoadFromGcs extends AbstractLoad implements RunnableTask {
         List<String> from = runContext.render(this.from);
 
         LoadJobConfiguration.Builder builder = LoadJobConfiguration
-            .newBuilder(Connection.tableId(this.destinationTable), from);
+            .newBuilder(Connection.tableId(runContext.render(this.destinationTable)), from);
 
         this.setOptions(builder);
 
         LoadJobConfiguration configuration = builder.build();
         Job loadJob = connection.create(JobInfo.of(configuration));
-        logger.debug("Starting load '{}'", configuration);
+
+        logger.debug("Starting query\n{}", JacksonMapper.log(configuration));
 
         return this.execute(logger, configuration, loadJob);
     }

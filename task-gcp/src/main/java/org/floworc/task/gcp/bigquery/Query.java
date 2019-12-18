@@ -8,9 +8,9 @@ import org.floworc.core.models.tasks.RunnableTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.runners.RunContext;
 import org.floworc.core.runners.RunOutput;
+import org.floworc.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -35,6 +35,9 @@ public class Query extends Task implements RunnableTask {
     @Builder.Default
     private boolean fetch = false;
 
+    @Builder.Default
+    private boolean fetchOne = false;
+
     private List<String> positionalParameters;
 
     private Map<String, String> namedParameters;
@@ -49,6 +52,8 @@ public class Query extends Task implements RunnableTask {
 
     private JobInfo.WriteDisposition writeDisposition;
 
+    private JobInfo.CreateDisposition createDisposition;
+
     @Builder.Default
     private transient BigQuery connection = new Connection().of();
 
@@ -56,8 +61,6 @@ public class Query extends Task implements RunnableTask {
     public RunOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger(this.getClass());
         String sql = runContext.render(this.sql);
-
-        logger.debug("Starting query '{}'", sql);
 
         QueryJobConfiguration.Builder builder = QueryJobConfiguration.newBuilder(sql)
             .setUseLegacySql(this.legacySql);
@@ -67,7 +70,7 @@ public class Query extends Task implements RunnableTask {
         }
 
         if (this.destinationTable != null) {
-            builder.setDestinationTable(Connection.tableId(this.destinationTable));
+            builder.setDestinationTable(Connection.tableId(runContext.render(this.destinationTable)));
         }
 
         if (this.schemaUpdateOptions != null) {
@@ -85,22 +88,35 @@ public class Query extends Task implements RunnableTask {
             builder.setWriteDisposition(this.writeDisposition);
         }
 
+        if (this.createDisposition != null) {
+            builder.setCreateDisposition(this.createDisposition);
+        }
+
+        QueryJobConfiguration jobConfiguration = builder.build();
+        logger.debug("Starting query\n{}", JacksonMapper.log(jobConfiguration));
+
         Job queryJob = connection
-            .create(JobInfo.newBuilder(builder.build())
+            .create(JobInfo.newBuilder(jobConfiguration)
                 .setJobId(Connection.jobId(runContext))
                 .build()
             );
-        queryJob = queryJob.waitFor();
-
-//        JobStatistics.LoadStatistics stats = queryJob.getStatistics();
 
         Connection.handleErrors(queryJob, logger);
+        queryJob = queryJob.waitFor();
+        Connection.handleErrors(queryJob, logger);
+
+        JobStatistics.QueryStatistics stats = queryJob.getStatistics();
 
         RunOutput.RunOutputBuilder output = RunOutput.builder();
 
-        if (this.fetch) {
+        if (this.fetch || this.fetchOne) {
             TableResult result = queryJob.getQueryResults();
-            output.outputs(ImmutableMap.of("rows", this.fetchResult(result)));
+
+            if (fetch) {
+                output.outputs(ImmutableMap.of("rows", this.fetchResult(result)));
+            } else {
+                output.outputs(ImmutableMap.of("row", this.fetchResult(result).get(0)));
+            }
         }
 
         return output.build();

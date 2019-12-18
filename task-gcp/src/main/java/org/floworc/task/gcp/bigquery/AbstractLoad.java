@@ -110,8 +110,8 @@ abstract public class AbstractLoad extends Task implements RunnableTask {
     }
 
     protected RunOutput execute(Logger logger, LoadConfiguration configuration, Job job) throws InterruptedException, IOException {
+        Connection.handleErrors(job, logger);
         job = job.waitFor();
-
         Connection.handleErrors(job, logger);
 
         JobStatistics.LoadStatistics stats = job.getStatistics();

@@ -12,10 +12,10 @@ import Vue from "vue";
 import { SidebarMenu } from "vue-sidebar-menu";
 import ChevronLeft from "vue-material-design-icons/ChevronLeft";
 import ChevronRight from "vue-material-design-icons/ChevronRight";
-import Tree from "vue-material-design-icons/Tree";
+import Graph from "vue-material-design-icons/Graph";
 import Settings from "vue-material-design-icons/Settings";
 import TimelineClock from "vue-material-design-icons/TimelineClock";
-Vue.component("tree", Tree);
+Vue.component("graph", Graph);
 Vue.component("settings", Settings);
 Vue.component("timelineclock", TimelineClock);
 export default {
@@ -46,7 +46,7 @@ export default {
                     href: "/flows",
                     title: this.$t("flows").capitalize(),
                     icon: {
-                        element: "tree",
+                        element: "graph",
                         class: "menu-icon"
                     }
                 },

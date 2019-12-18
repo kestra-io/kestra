@@ -4,11 +4,10 @@
             <b-col>
                 <h1 class="text-capitalize">
                     <router-link
-                        v-if="$route.name === 'executions'" :to="{name: 'flows', query: {namespace: $route.params.namespace}}"
+                        v-if="$route.name === 'executions'"
+                        :to="{name: 'flows', query: {namespace: $route.params.namespace}}"
                     >{{$t('flows')}}</router-link>
-                    <router-link
-                        v-else :to="{name: 'flows'}"
-                    >{{$t('flows')}}</router-link>
+                    <router-link v-else :to="{name: 'flows'}">{{$t('flows')}}</router-link>
                     &gt; {{$t('executions')}}
                 </h1>
             </b-col>
@@ -79,12 +78,8 @@
         </b-row>
         <bottom-line>
             <ul class="navbar-nav ml-auto">
-                <li v-if="$route.name === 'executions'" class="nav-item">
-                    <b-button id="add-flow" @click="triggerExecution">
-                        <b-tooltip target="add-flow" triggers="hover">{{$t('trigger execution')}}</b-tooltip>
-                        <span class="text-capitalize">{{$t('create')}}</span>
-                        <plus />
-                    </b-button>
+                <li class="nav-item">
+                    <flow-actions />
                 </li>
             </ul>
         </bottom-line>
@@ -94,11 +89,11 @@
 <script>
 import { mapState } from "vuex";
 import BottomLine from "../layout/BottomLine";
+import FlowActions from "../flows/FlowActions";
 import Eye from "vue-material-design-icons/Eye";
-import Plus from "vue-material-design-icons/Plus";
 import Status from "../Status";
 export default {
-    components: { BottomLine, Status, Eye, Plus },
+    components: { BottomLine, Status, Eye, FlowActions },
     data() {
         return {
             file: undefined,
@@ -109,6 +104,7 @@ export default {
     },
     created() {
         this.loadExecutions();
+        this.loadFlow();
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
@@ -166,6 +162,12 @@ export default {
                         variant: "success"
                     });
                 });
+        },
+        loadFlow() {
+            this.$store.dispatch("flow/loadFlow", {
+                id: this.$route.params.flowId,
+                namespace: this.$route.params.namespace
+            });
         },
         loadExecutions() {
             //setTimeout is for pagination settings are properly updated

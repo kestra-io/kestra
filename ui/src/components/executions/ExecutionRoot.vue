@@ -21,17 +21,36 @@
                 </b-tab>
             </b-tabs>
         </b-card>
+        <bottom-line>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <router-link :to="{name: 'executionConfiguration', params: $route.params}">
+                        <trigger />
+                        {{$t('trigger execution for flow') | cap }} {{$route.params.id}}
+                    </router-link>
+                </li>
+            </ul>
+        </bottom-line>
     </div>
 </template>
 <script>
 import Gantt from "./Gantt";
 import Overview from "./Overview";
 import Logs from "./Logs";
+import Topology from "../topology/Topology";
+import Trigger from "vue-material-design-icons/Cogs";
+import BottomLine from "../layout/BottomLine";
+import FlowActions from "../flows/FlowActions";
+
 export default {
     components: {
         Overview,
+        BottomLine,
+        Trigger,
         Gantt,
-        Logs
+        Logs,
+        Topology,
+        FlowActions
     },
     data() {
         return {
@@ -74,6 +93,10 @@ export default {
                 {
                     tab: "logs",
                     title: title("logs")
+                },
+                {
+                    tab: "topology",
+                    title: title("topology")
                 }
             ];
         }

@@ -46,7 +46,8 @@
         "select datetime": "select datetime",
         "set a value for": "set a value for",
         "invalid field": "invalid field",
-        "form error": "form error"
+        "form error": "form error",
+        "display topology for flow": "display topology for flow"
     },
     "fr": {
         "id": "identifiant",
@@ -94,6 +95,7 @@
         "select datetime": "sélectionner une date",
         "set a value for": "définir une valeur pour",
         "invalid field": "invalid field",
-        "form error": "form error"
+        "form error": "form error",
+        "display topology for flow": "Afficher la topologie du flow"
     }
 }

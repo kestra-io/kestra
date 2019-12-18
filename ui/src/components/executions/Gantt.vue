@@ -1,6 +1,17 @@
 <template>
     <div v-if="execution">
         <h2>{{$t('namespace').capitalize()}} : {{execution.namespace}} &gt; {{$t('flow').capitalize()}} : {{execution.flowId}}</h2>
+         <b-row>
+            <b-col offset-md="8" />
+            <b-col
+                :class="color"
+                class="text-center"
+                md="1"
+                sm="4"
+                v-for="(color, key) in colors"
+                :key="key"
+            >{{key}}</b-col>
+        </b-row>
         <b-row v-for="taskItem in series" :key="taskItem.id">
             <b-col
                 :id="`task-title-wrapper-${taskItem.id}`"
@@ -29,24 +40,16 @@
             </b-col>
         </b-row>
 
-        <b-row>
-            <b-col offset-md="8" />
-            <b-col
-                :class="color"
-                class="text-center"
-                md="1"
-                sm="4"
-                v-for="(color, key) in colors"
-                :key="key"
-            >{{key}}</b-col>
-        </b-row>
+
         <template v-if="hasTaskLog">
             <hr />
             <log-list />
         </template>
-        <bottom-line>
+         <bottom-line>
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item"></li>
+                <li class="nav-item">
+                    <flow-actions />
+                </li>
             </ul>
         </bottom-line>
     </div>
@@ -90,7 +93,7 @@ export default {
         series() {
             const series = [];
 
-            for (let task of this.execution.taskRunList || []) {
+            for (let task of this.execution.taskRunList || []) {
                 const lastIndex = task.state.histories.length - 1;
                 const startTs = ts(task.state.histories[0].date);
                 const stopTs = ts(task.state.histories[lastIndex].date);
@@ -102,6 +105,8 @@ export default {
                     duration.seconds() > 1
                         ? duration.humanize()
                         : delta + " ms";
+                console.log('start', startTs, 'stop', stopTs)
+                console.log('stop', task.state.histories[lastIndex].date, 'width', (stop / this.delta) * 100)
                 series.push({
                     id: task.id,
                     name: task.taskId,

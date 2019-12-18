@@ -13,40 +13,7 @@
         </b-row>
         <b-table responsive="xl" striped hover :items="flows" :fields="fields">
             <template v-slot:cell(actions)="row">
-                <b-tooltip
-                    :target="`edit-action-${row.item.id}`"
-                >{{$t('edit flow') | cap}} {{row.item.id}}</b-tooltip>
-                <b-tooltip
-                    :target="`find-action-${row.item.id}`"
-                >{{$tc('display flow {id} executions', null, row.item) | cap}}</b-tooltip>
-                <b-tooltip
-                    :target="`trigger-action-${row.item.id}`"
-                >{{$t('trigger execution for flow') | cap }} {{row.item.id}}</b-tooltip>
-                <router-link
-                    class="btn btn-default"
-                    :to="`/flows/edit/${row.item.namespace}/${row.item.id}`"
-                >
-                    <b-button :id="`edit-action-${row.item.id}`" variant="secondary" size="sm">
-                        <edit :id="`edit-action-${row.item.id}`" />
-                    </b-button>
-                </router-link>
-                <router-link
-                    :id="`find-action-${row.item.id}`"
-                    class="btn btn-default"
-                    :to="`/executions/${row.item.namespace}/${row.item.id}`"
-                >
-                    <b-button variant="primary" size="sm">
-                        <search />
-                    </b-button>
-                </router-link>
-                <router-link
-                    :id="`trigger-action-${row.item.id}`"
-                    :to="{name: 'executionConfiguration', params: row.item}"
-                >
-                    <b-button variant="info" size="sm">
-                        <trigger />
-                    </b-button>
-                </router-link>
+                <flow-actions :flow-item="row.item" />
             </template>
             <template v-slot:cell(namespace)="row">
                 <a
@@ -88,22 +55,34 @@
                 ></b-pagination>
             </b-col>
         </b-row>
+        <bottom-line>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <router-link :to="{name: 'flowsAdd'}">
+                        <b-button>
+                            <plus />
+                            {{$t('trigger execution for flow') | cap }}
+                        </b-button>
+                    </router-link>
+                </li>
+            </ul>
+        </bottom-line>
     </div>
 </template>
 
 <script>
 import { mapState } from "vuex";
-import Trigger from "vue-material-design-icons/Cogs";
-import Search from "vue-material-design-icons/Magnify";
-import Edit from "vue-material-design-icons/Pencil";
 import NamespaceSelector from "../namespace/Selector";
+import Plus from "vue-material-design-icons/Plus";
+import FlowActions from "./FlowActions";
+import BottomLine from "../layout/BottomLine";
 
 export default {
     components: {
-        Trigger,
-        Search,
-        Edit,
-        NamespaceSelector
+        NamespaceSelector,
+        FlowActions,
+        BottomLine,
+        Plus
     },
     data() {
         return {

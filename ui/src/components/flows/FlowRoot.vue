@@ -1,9 +1,7 @@
 <template>
     <div>
         <h1 class="wrap">
-            <router-link
-                :to="`/flow/${$route.params.namespace}/${$route.params.flowId}`"
-            >Flow</router-link>
+            <router-link :to="`/flow/${$route.params.namespace}/${$route.params.flowId}`">Flow</router-link>
             &gt; {{$route.params.id}}
         </h1>
         <b-card no-body>
@@ -30,7 +28,7 @@
                     </router-link>
                 </li>
             </ul>
-        </bottom-line> -->
+        </bottom-line>-->
     </div>
 </template>
 <script>
@@ -39,7 +37,7 @@ import Topology from "./Topology";
 import ExecutionConfiguration from "./ExecutionConfiguration";
 import BottomLine from "../layout/BottomLine";
 import FlowActions from "./FlowActions";
-import Executions from '../executions/Executions'
+import Executions from "../executions/Executions";
 
 export default {
     components: {
@@ -81,7 +79,7 @@ export default {
                 {
                     tab: "execution-configuration",
                     title: title("trigger")
-                }
+                },
             ];
         }
     }

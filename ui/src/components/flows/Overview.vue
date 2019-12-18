@@ -1,16 +1,15 @@
 <template>
     <b-row>
         <b-col>
-            <flow-tree/>
+            <pre>{{flow}}</pre>
         </b-col>
     </b-row>
 </template>
 <script>
 import { mapState } from "vuex";
-import FlowTree from "./FlowTree";
+
 export default {
     components: {
-        FlowTree
     },
     computed: {
         ...mapState("flow", ["flow"])

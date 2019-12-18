@@ -13,7 +13,11 @@
         </b-row>
         <b-table responsive="xl" striped hover :items="flows" :fields="fields">
             <template v-slot:cell(actions)="row">
-                <flow-actions :flow-item="row.item" />
+                <router-link :to="{name: 'flow', params : row.item}">
+                    <b-button size="sm">
+                        <eye id="edit-action" />
+                    </b-button>
+                </router-link>
             </template>
             <template v-slot:cell(namespace)="row">
                 <a
@@ -74,15 +78,15 @@
 import { mapState } from "vuex";
 import NamespaceSelector from "../namespace/Selector";
 import Plus from "vue-material-design-icons/Plus";
-import FlowActions from "./FlowActions";
+import Eye from "vue-material-design-icons/Eye";
 import BottomLine from "../layout/BottomLine";
 
 export default {
     components: {
         NamespaceSelector,
-        FlowActions,
         BottomLine,
-        Plus
+        Plus,
+        Eye
     },
     data() {
         return {

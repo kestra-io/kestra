@@ -1,18 +1,5 @@
 <template>
     <div>
-        <b-row>
-            <b-col>
-                <h1 class="text-capitalize">
-                    <router-link
-                        v-if="$route.name === 'executions'"
-                        :to="{name: 'flows', query: {namespace: $route.params.namespace}}"
-                    >{{$t('flows')}}</router-link>
-                    <router-link v-else :to="{name: 'flows'}">{{$t('flows')}}</router-link>
-                    &gt; {{$t('executions')}}
-                </h1>
-            </b-col>
-        </b-row>
-        <hr />
         <b-table responsive="xl" striped hover :items="executions" :fields="fields">
             <template v-slot:cell(details)="row">
                 <router-link
@@ -104,7 +91,6 @@ export default {
     },
     created() {
         this.loadExecutions();
-        this.loadFlow();
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
@@ -163,20 +149,14 @@ export default {
                     });
                 });
         },
-        loadFlow() {
-            this.$store.dispatch("flow/loadFlow", {
-                id: this.$route.params.flowId,
-                namespace: this.$route.params.namespace
-            });
-        },
         loadExecutions() {
             //setTimeout is for pagination settings are properly updated
-            if (this.$route.params.flowId) {
+            if (this.$route.params.namespace) {
                 setTimeout(() => {
-                    this.$store.dispatch(
-                        "execution/loadExecutions",
-                        this.$route.params
-                    );
+                    this.$store.dispatch("execution/loadExecutions", {
+                        namespace: this.$route.params.namespace,
+                        flowId: this.$route.params.id
+                    });
                 });
             } else {
                 setTimeout(() => {

@@ -1,7 +1,7 @@
 <template>
     <div v-if="execution">
         <h2>{{$t('namespace').capitalize()}} : {{execution.namespace}} &gt; {{$t('flow').capitalize()}} : {{execution.flowId}}</h2>
-         <b-row>
+        <b-row>
             <b-col offset-md="8" />
             <b-col
                 :class="color"
@@ -40,29 +40,20 @@
             </b-col>
         </b-row>
 
-
         <template v-if="hasTaskLog">
             <hr />
             <log-list />
         </template>
-         <bottom-line>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <flow-actions />
-                </li>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 <script>
-import BottomLine from "../layout/BottomLine";
 import LogList from "./LogList";
 import { mapState } from "vuex";
 
 const ts = date => new Date(date).getTime();
 
 export default {
-    components: { BottomLine, LogList },
+    components: { LogList },
     data() {
         return {
             colors: {
@@ -74,15 +65,21 @@ export default {
     },
     computed: {
         ...mapState("execution", ["execution", "task"]),
-        hasTaskLog () {
-            return this.task && this.task.attempts && this.task.attempts.length && this.task.attempts[0].logs && this.task.attempts[0].logs.length
+        hasTaskLog() {
+            return (
+                this.task &&
+                this.task.attempts &&
+                this.task.attempts.length &&
+                this.task.attempts[0].logs &&
+                this.task.attempts[0].logs.length
+            );
         },
         start() {
             return ts(this.execution.state.histories[0].date);
         },
         stop() {
             if (this.execution.state.current === "RUNNING") {
-                return +new Date()
+                return +new Date();
             }
             const lastIndex = this.execution.state.histories.length - 1;
             return ts(this.execution.state.histories[lastIndex].date);
@@ -105,8 +102,13 @@ export default {
                     duration.seconds() > 1
                         ? duration.humanize()
                         : delta + " ms";
-                console.log('start', startTs, 'stop', stopTs)
-                console.log('stop', task.state.histories[lastIndex].date, 'width', (stop / this.delta) * 100)
+                console.log("start", startTs, "stop", stopTs);
+                console.log(
+                    "stop",
+                    task.state.histories[lastIndex].date,
+                    "width",
+                    (stop / this.delta) * 100
+                );
                 series.push({
                     id: task.id,
                     name: task.taskId,
@@ -126,7 +128,7 @@ export default {
         onTaskSelect(task) {
             this.$store.commit("execution/setTask", task);
         }
-    },
+    }
 };
 </script>
 <style lang="scss" scoped>

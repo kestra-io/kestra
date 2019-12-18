@@ -21,7 +21,7 @@
                 </b-tab>
             </b-tabs>
         </b-card>
-        <bottom-line>
+        <!-- <bottom-line>
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
                     <router-link :to="{name: 'executionConfiguration', params: $route.params}">
@@ -30,49 +30,33 @@
                     </router-link>
                 </li>
             </ul>
-        </bottom-line>
+        </bottom-line> -->
     </div>
 </template>
 <script>
-import Gantt from "./Gantt";
 import Overview from "./Overview";
-import Logs from "./Logs";
-import Topology from "../topology/Topology";
-import Trigger from "vue-material-design-icons/Cogs";
+import Topology from "./Topology";
+import ExecutionConfiguration from "./ExecutionConfiguration";
 import BottomLine from "../layout/BottomLine";
-import FlowActions from "../flows/FlowActions";
+import FlowActions from "./FlowActions";
+import Executions from '../executions/Executions'
 
 export default {
     components: {
         Overview,
         BottomLine,
-        Trigger,
-        Gantt,
-        Logs,
         Topology,
-        FlowActions
-    },
-    data() {
-        return {
-            sse: undefined
-        };
+        FlowActions,
+        Executions,
+        ExecutionConfiguration
     },
     created() {
-        this.$store.dispatch("execution/loadExecution", this.$route.params);
-        this.$store
-            .dispatch("execution/followExecution", this.$route.params)
-            .then(sse => {
-                this.sse = sse;
-                sse.subscribe("", data => {
-                    this.$store.commit("execution/setExecution", data);
-                });
-            });
+        this.$store.dispatch("flow/loadFlow", this.$route.params);
     },
     methods: {
         setTab(tab) {
-            this.$store.commit("execution/setTask", undefined);
             this.$router.push({
-                name: "execution",
+                name: "flow",
                 params: this.$route.params,
                 query: { tab }
             });
@@ -87,22 +71,19 @@ export default {
                     title: title("overview")
                 },
                 {
-                    tab: "gantt",
-                    title: title("gantt")
-                },
-                {
-                    tab: "logs",
-                    title: title("logs")
-                },
-                {
                     tab: "topology",
                     title: title("topology")
+                },
+                {
+                    tab: "executions",
+                    title: title("executions")
+                },
+                {
+                    tab: "execution-configuration",
+                    title: title("trigger")
                 }
             ];
         }
-    },
-    beforeDestroy() {
-        this.sse.close();
     }
 };
 </script>

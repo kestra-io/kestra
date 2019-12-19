@@ -26,11 +26,9 @@ public class Copy extends Task implements RunnableTask {
     @Builder.Default
     private boolean delete = false;
 
-    @Builder.Default
-    private transient Connection connection = new Connection();
-
     @Override
     public RunOutput run(RunContext runContext) throws Exception {
+        Connection connection = new Connection();
         Logger logger = runContext.logger(this.getClass());
         URI from = new URI(runContext.render(this.from));
         URI to = new URI(runContext.render(this.to));

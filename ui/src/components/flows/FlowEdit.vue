@@ -25,9 +25,9 @@
         <bottom-line>
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-
                     <b-button @click="save">
-                        <span class="text-capitalize">{{$t('save')}} </span><content-save title />
+                        <span class="text-capitalize">{{$t('save')}}</span>
+                        <content-save title />
                     </b-button>
                 </li>
             </ul>
@@ -65,13 +65,7 @@ export default {
     },
     methods: {
         loadFlow() {
-            if (this.$route.name === "flowsEdit") {
-                this.$store
-                    .dispatch("flow/loadFlow", this.$route.params)
-                    .then(() => {
-                        this.content = Yaml.stringify(this.flow);
-                    });
-            }
+            this.content = Yaml.stringify(this.flow);
         },
         editorInit: function() {
             require("brace/mode/yaml");
@@ -93,7 +87,7 @@ export default {
                         flow: flow
                     })
                     .then(() => {
-                        this.$router.push({ name: "flowsEdit", params: flow });
+                        this.$router.push({ name: "flow", params: flow, query: {tab: 'data-source'} });
                         this.$bvToast.toast("Created.", {
                             title: "Flow editor",
                             autoHideDelay: 5000,
@@ -121,7 +115,7 @@ export default {
 <style scoped lang="scss">
 .editor-wrapper {
     height: calc(100vh - 133px);
-    >div {
+    > div {
         padding: 0px;
     }
 }

@@ -1,22 +1,6 @@
 <template>
     <div>
         <div id="topology"></div>
-        <b-card v-if="node" :title="`Task : ${node.id}`" style="max-width: 40rem;" class="mb-2">
-            <b-card-text>
-                <p><b>Type</b> : {{node.type}}</p>
-                <p><b>Format</b> : {{node.format}}</p>
-                <p><b>Timeout</b> : {{node.timeout}}</p>
-                <p><b>Level</b> : {{node.level}}</p>
-                <p><b>Retry</b> : {{node.retry}}</p>
-                <p><b>Commands</b> : {{node.commands}}</p>
-                <p v-if="node.tasks"><b>Task count</b> : {{node.tasks.length}}</p>
-            </b-card-text>
-        </b-card>
-        <div v-if="open">
-            <b-button @click="open = false">X</b-button>
-            <pre>{{tree}}</pre>
-        </div>
-        <b-button v-else @click="open = true">V</b-button>
     </div>
 </template>
 <script>
@@ -30,13 +14,12 @@ export default {
     },
     data() {
         return {
-            open: true,
-            node: undefined
+            node: []
         };
     },
     methods: {
-        setCurrentNode(node) {
-            this.node = node.data;
+        onNodeClick(node) {
+            this.$emit("onNodeClick", node.data);
         }
     },
     mounted() {
@@ -50,8 +33,8 @@ export default {
         var svg = d3
             .select("#topology")
             .append("svg")
-            .attr("width", "100vw")
-            .attr("height", "50vh")
+            .attr("width", "100%")
+            .attr("height", "60vh")
             .append("g")
             .attr("transform", "translate(40,0)"); // bit of margin on the left = 40
 
@@ -113,7 +96,7 @@ export default {
             // .attr("stroke", "#888")
             .style("stroke-width", 1)
             .attr("title", node => node.data.id);
-        g.on("click", this.setCurrentNode);
+        g.on("click", this.onNodeClick);
         g.append("text")
             .text(
                 node =>

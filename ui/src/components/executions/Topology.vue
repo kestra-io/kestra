@@ -1,7 +1,7 @@
 <template>
     <b-row>
         <b-col>
-            <topology-tree/>
+            <topology-tree />
         </b-col>
     </b-row>
 </template>
@@ -11,7 +11,5 @@ export default {
     components: {
         TopologyTree
     },
-    computed: {
-    }
 };
 </script>

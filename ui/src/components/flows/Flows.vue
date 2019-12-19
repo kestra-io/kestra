@@ -27,12 +27,12 @@
             </template>
         </b-table>
         <b-row>
-            <b-col offset-md="8" sm="5" md class="my-1">
+            <b-col offset-md="4" sm="5" md="4">
                 <b-form-group
                     :label="$t('Per page')"
                     label-cols-sm="6"
-                    label-cols-md="4"
-                    label-cols-lg="3"
+                    label-cols-md="8"
+                    label-cols-lg="6"
                     label-align-sm="right"
                     label-size="sm"
                     label-for="perPageSelect"
@@ -47,7 +47,7 @@
                     ></b-form-select>
                 </b-form-group>
             </b-col>
-            <b-col sm="6" xs="12" md="2">
+            <b-col sm="6" xs="12" md="4">
                 <b-pagination
                     @change="loadFlows"
                     v-model="page"

@@ -4,7 +4,7 @@
         <div class="date text-nowrap text-light text-center">{{log.timestamp}}</div>
         <div
             class="flex-grow-1 message"
-        >{{log.message}}</div>
+        ><pre>{{log.message}}</pre></div>
     </div>
 </template>
 <script>

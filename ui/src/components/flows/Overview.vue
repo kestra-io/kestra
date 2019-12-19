@@ -2,7 +2,7 @@
     <div>
         <b-row class="topology-wrapper">
             <b-col>
-                <topology-tree v-if="flow" :tree="flow" @onNodeClick="onNodeClick" />
+                <topology-tree v-if="flow" :tree="flow" @onNodeClick="onNodeClick" :label="getLabel" :fill="fill"/>
             </b-col>
         </b-row>
         <b-row>
@@ -33,6 +33,13 @@ export default {
     methods: {
         onNodeClick(node) {
             this.node = node;
+        },
+        getLabel (node) {
+            const id = node.data.id;
+            return `${id.substr(0, 25)}${id.length > 25 ? "..." : ""}`;
+        },
+        fill () {
+            return "#c9fc8d"
         }
     }
 };

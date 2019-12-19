@@ -21,16 +21,6 @@
                 </b-tab>
             </b-tabs>
         </b-card>
-        <bottom-line>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <router-link :to="{name: 'executionConfiguration', params: $route.params}">
-                        <trigger />
-                        {{$t('trigger execution for flow') | cap }} {{$route.params.id}}
-                    </router-link>
-                </li>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 <script>

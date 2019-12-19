@@ -8,6 +8,14 @@ export default {
         tree: {
             type: Object,
             required: true
+        },
+        label: {
+            type: Function,
+            required: true
+        },
+        fill: {
+            type: Function,
+            required: true
         }
     },
     data() {
@@ -18,10 +26,78 @@ export default {
     methods: {
         onNodeClick(node) {
             this.$emit("onNodeClick", node.data);
+        },
+        update() {
+            const data = this.virtualTree;
+            const svg = d3.select("#topology");
+            const rectangles = svg.selectAll("rect");
+            let count = 0
+            const root = d3.hierarchy(data, d => {
+                count++
+                return d.tasks
+            });
+            svg.selectAll("path").data(root.descendants().slice(1));
+            rectangles.style("fill", this.fill);
+            const yFactor = parseInt(count / 2);
+
+            svg.selectAll("path")
+                .data(root.descendants().slice(1))
+                .enter()
+                .append("path")
+                .attr("d", function(d) {
+                    return (
+                        "M" +
+                        d.y * yFactor +
+                        "," +
+                        d.x +
+                        "C" +
+                        (d.parent.y + 150) +
+                        "," +
+                        d.x +
+                        " " +
+                        d.parent.y * yFactor +
+                        "," +
+                        d.parent.x + // 50 and 150 are coordinates of inflexion, play with it to change links shape
+                        " " +
+                        d.parent.y * yFactor +
+                        "," +
+                        d.parent.x
+                    );
+                })
+                .style("fill", "none")
+                .attr("stroke", "#bbb")
+                .attr("stroke-width", "2");
+
+            const g = svg
+                .selectAll("g")
+                .data(root.descendants())
+                .enter()
+                .append("g")
+                .attr("transform", function(d) {
+                    return "translate(" + d.y * yFactor + "," + d.x + ")";
+                });
+            g.append("rect")
+                .attr("width", 130)
+                .attr("y", -15)
+                .attr("x", node => (node.depth === 0 ? -30 : -10))
+                .attr("height", 30)
+                .style("rx", 15)
+                .style("ry", 15)
+                .style("fill", this.fill)
+                // .attr("stroke", "#888")
+                .style("stroke-width", 1)
+                .attr("title", node => node.data.id);
+            g.on("click", this.onNodeClick);
+            g.append("text")
+                .text(this.label)
+                .attr("fill", "black")
+                .attr("font-family", "monospace")
+                .attr("y", 5)
+                .attr("x", node => (node.depth === 0 ? -27 : 0));
         }
     },
     computed: {
-        virtualList () {
+        virtualList() {
             const recursiveAppend = (node, doc) => {
                 const data = JSON.parse(JSON.stringify(node));
                 delete data.tasks;
@@ -33,10 +109,9 @@ export default {
             const doc = [];
             recursiveAppend(JSON.parse(JSON.stringify(this.tree)), doc);
             doc.reverse();
-            return doc
+            return doc;
         },
         virtualTree() {
-
             const treeFromList = doc => {
                 const task = doc.pop();
                 if (task) {
@@ -79,9 +154,9 @@ export default {
         // Create the cluster layout:
         var cluster = d3.cluster().size([height, width - 100]); // 100 is the margin I will have on the right side
         // Give the data to this cluster layout:
-        let count = 0
+        let count = 0;
         var root = d3.hierarchy(data, function(d) {
-            count++
+            count++;
             return d.tasks;
         });
         cluster(root);
@@ -131,17 +206,13 @@ export default {
             .attr("height", 30)
             .style("rx", 15)
             .style("ry", 15)
-            .style("fill", "#c9fc8d")
+            .style("fill", this.fill)
             // .attr("stroke", "#888")
             .style("stroke-width", 1)
             .attr("title", node => node.data.id);
         g.on("click", this.onNodeClick);
         g.append("text")
-            .text(node => {
-                // console.log("node", node.data.id);
-                const id = node.data.id;
-                return `${id.substr(0, 25)}${id.length > 25 ? "..." : ""}`;
-            })
+            .text(this.label)
             .attr("fill", "black")
             .attr("font-family", "monospace")
             .attr("y", 5)

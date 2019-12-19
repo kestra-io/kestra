@@ -5,6 +5,7 @@ build/
 target/
 out/
 .idea
+.vscode
 *.iml
 *.ipr
 *.iws

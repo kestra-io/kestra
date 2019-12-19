@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-row>
+        <b-row class="topology-wrapper">
             <b-col>
                 <topology-tree v-if="flow" :tree="flow" @onNodeClick="onNodeClick" />
             </b-col>
@@ -37,3 +37,14 @@ export default {
     }
 };
 </script>
+<style lang="scss" scoped>
+.topology-wrapper {
+    border: 1px solid #bbb;
+    padding: 0;
+    margin: 0;
+    .col {
+        padding: 0;
+        margin: 0;
+    }
+}
+</style>

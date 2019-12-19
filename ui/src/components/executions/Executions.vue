@@ -13,7 +13,7 @@
             </template>
             <template v-slot:cell(date)="row">
                 <div class="status-wrapper">
-                    {{row.item.state.histories[0].date | date}}
+                    {{row.item.state.histories[0].date | date('YYYY/MM/DD HH:mm:ss')}}
                 </div>
             </template>
             <template v-slot:cell(state.current)="row">

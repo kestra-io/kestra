@@ -65,7 +65,7 @@
                     <router-link :to="{name: 'flowsAdd'}">
                         <b-button>
                             <plus />
-                            {{$t('trigger execution for flow') | cap }}
+                            {{$t('add flow') | cap }}
                         </b-button>
                     </router-link>
                 </li>

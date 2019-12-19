@@ -1,7 +1,5 @@
 <template>
-    <div>
-        <div id="topology"></div>
-    </div>
+    <div id="topology"></div>
 </template>
 <script>
 import * as d3 from "d3";
@@ -22,8 +20,38 @@ export default {
             this.$emit("onNodeClick", node.data);
         }
     },
+    computed: {
+        virtualList () {
+            const recursiveAppend = (node, doc) => {
+                const data = JSON.parse(JSON.stringify(node));
+                delete data.tasks;
+                doc.push(data);
+                for (const task of node.tasks || []) {
+                    recursiveAppend(task, doc);
+                }
+            };
+            const doc = [];
+            recursiveAppend(JSON.parse(JSON.stringify(this.tree)), doc);
+            doc.reverse();
+            return doc
+        },
+        virtualTree() {
+
+            const treeFromList = doc => {
+                const task = doc.pop();
+                if (task) {
+                    const node = treeFromList(doc);
+                    if (node) {
+                        task.tasks = node;
+                    }
+                    return [task];
+                }
+            };
+            return treeFromList(this.virtualList)[0];
+        }
+    },
     mounted() {
-        const data = this.tree;
+        const data = this.virtualTree;
 
         // set the dimensions and margins of the graph
         var width = 460;
@@ -35,6 +63,15 @@ export default {
             .append("svg")
             .attr("width", "100%")
             .attr("height", "60vh")
+            .call(
+                d3.zoom().on("zoom", () => {
+                    const t = d3.event.transform;
+                    svg.attr(
+                        "transform",
+                        `translate(${t.x},${t.y}) scale(${t.k})`
+                    );
+                })
+            )
             .append("g")
             .attr("transform", "translate(40,0)"); // bit of margin on the left = 40
 
@@ -42,12 +79,14 @@ export default {
         // Create the cluster layout:
         var cluster = d3.cluster().size([height, width - 100]); // 100 is the margin I will have on the right side
         // Give the data to this cluster layout:
+        let count = 0
         var root = d3.hierarchy(data, function(d) {
+            count++
             return d.tasks;
         });
         cluster(root);
 
-        const yFactor = 2.5;
+        const yFactor = parseInt(count / 2);
         // Add the links between nodes:
         svg.selectAll("path")
             .data(root.descendants().slice(1))
@@ -98,16 +137,15 @@ export default {
             .attr("title", node => node.data.id);
         g.on("click", this.onNodeClick);
         g.append("text")
-            .text(
-                node =>
-                    `${node.data.id.substr(0, 13)}${
-                        node.data.id.length > 13 ? "..." : ""
-                    }`
-            )
+            .text(node => {
+                // console.log("node", node.data.id);
+                const id = node.data.id;
+                return `${id.substr(0, 25)}${id.length > 25 ? "..." : ""}`;
+            })
             .attr("fill", "black")
             .attr("font-family", "monospace")
             .attr("y", 5)
-            .attr("x", node => (node.depth === 0 ? -27 : -7));
+            .attr("x", node => (node.depth === 0 ? -27 : 0));
     }
 };
 </script>

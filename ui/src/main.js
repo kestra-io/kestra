@@ -14,19 +14,19 @@ import './filters'
 import 'moment/locale/fr'
 import './utils'
 import './custom.scss'
-import 'vue-sidebar-menu/dist/vue-sidebar-menu.css'
-//https://materialdesignicons.com/
+
+// @TODO: move to scss
 import 'vue-material-design-icons/styles.css';
-import 'vue2-datepicker/index.css';
+
 Vue.use(VueSSE);
 Vue.use(VueMoment, {
   moment
-})
-Vue.use(VueSidebarMenu)
-Vue.use(BootstrapVue)
-Vue.component('v-select', vSelect)
+});
+Vue.use(VueSidebarMenu);
+Vue.use(BootstrapVue);
+Vue.component('v-select', vSelect);
 
-Vue.config.productionTip = false
+Vue.config.productionTip = false;
 
 configureHttp(() => {
   new Vue({
@@ -35,4 +35,4 @@ configureHttp(() => {
     store,
     i18n
   }).$mount('#app')
-})
+});

@@ -9,10 +9,12 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
+@import "../../styles/variable";
+
 .bottom-line {
-    left:50px;
-    box-shadow: 0 5px 5px 5px #333;
-    border-radius: 0px;
+    left: 50px;
+    border-radius: 0;
+    border-top: 4px solid $navbar-dark-color;
     z-index: 90;
 }
 </style>

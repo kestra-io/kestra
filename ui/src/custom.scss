@@ -1,10 +1,18 @@
-@import 'node_modules/bootstrap/scss/bootstrap';
-@import 'node_modules/bootstrap-vue/src/index.scss';
-@import 'vue-select/src/scss/vue-select.scss';
+@import "styles/variable";
 
-h1, h2,h3,h4,h5,p,span {
-    font-family: 'Nunito', sans-serif;
-}
+@import 'node_modules/bootstrap/scss/bootstrap';
+@import 'styles/yeti';
+@import 'styles/bootstrap';
+@import 'node_modules/bootstrap-vue/src/index.scss';
+
+@import 'node_modules/vue-select/src/scss/vue-select.scss';
+
+@import "./styles/_vue-sidebar-menu.scss";
+@import "node_modules/vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
+
+@import 'node_modules/vue2-datepicker/scss/index';
+
+
 .wrap {
   word-wrap: break-word;
 }

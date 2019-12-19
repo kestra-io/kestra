@@ -1,0 +1,114 @@
+// Yeti 4.3.1
+// Bootswatch
+
+//
+// Color system
+//
+
+$white:    #fff !default;
+$gray-100: #f8f9fa !default;
+$gray-200: #eee !default;
+$gray-300: #dee2e6 !default;
+$gray-400: #ccc !default;
+$gray-500: #adb5bd !default;
+$gray-600: #888 !default;
+$gray-700: #495057 !default;
+$gray-800: #333 !default;
+$gray-900: #222 !default;
+$black:    #000 !default;
+
+$blue:    #008cba !default;
+$indigo:  #6610f2 !default;
+$purple:  #6f42c1 !default;
+$pink:    #e83e8c !default;
+$red:     #F04124 !default;
+$orange:  #fd7e14 !default;
+$yellow:  #E99002 !default;
+$green:   #43ac6a !default;
+$teal:    #20c997 !default;
+$cyan:    #5bc0de !default;
+
+$primary:       $blue !default;
+$secondary:     $gray-200 !default;
+$success:       $green !default;
+$info:          $cyan !default;
+$warning:       $yellow !default;
+$danger:        $red !default;
+$light:         $gray-200 !default;
+$dark:          $gray-900 !default;
+
+$yiq-contrasted-threshold: 200 !default;
+
+// Components
+
+$border-radius:               0px !default;
+$border-radius-lg:            0px !default;
+$border-radius-sm:            0px !default;
+
+// Fonts
+
+$font-family-sans-serif:      "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !default;
+
+$font-size-base:              0.9375rem !default;
+
+$headings-font-weight:        300 !default;
+
+// Buttons
+
+$input-btn-padding-x:         0.5rem !default;
+
+$btn-font-weight:             300 !default;
+
+// Dropdowns
+
+$dropdown-border-color:             rgba($black,.1) !default;
+$dropdown-divider-bg:               rgba($black,.1) !default;
+
+// Navs
+
+$nav-link-disabled-color:           $gray-400 !default;
+
+$nav-tabs-border-color:             $dropdown-border-color !default;
+$nav-tabs-link-hover-border-color:  $nav-tabs-border-color !default;
+$nav-tabs-link-active-border-color: $nav-tabs-border-color !default;
+
+// Navbar
+
+$navbar-dark-color:                 rgba($white,.7) !default;
+$navbar-dark-hover-color:           $white !default;
+
+// Pagination
+
+$pagination-color:                  $gray-600 !default;
+$pagination-border-color:           $nav-tabs-border-color !default;
+
+$pagination-active-border-color:    darken($primary, 5%) !default;
+
+$pagination-disabled-color:         $gray-200 !default;
+
+// Jumbotron
+
+$jumbotron-padding:                 4rem !default;
+
+// Cards
+
+$card-inner-border-radius:          0px !default;
+
+// Badges
+
+$badge-font-weight:                 300 !default;
+$badge-padding-x:                   1rem !default;
+
+// Progress bars
+
+$progress-bg:                       $gray-400 !default;
+$progress-bar-color:                $white !default;
+
+// List group
+
+$list-group-disabled-bg:            $gray-200 !default;
+
+// Close
+
+$close-color:                       $gray-600 !default;
+$close-text-shadow:                 none !default;

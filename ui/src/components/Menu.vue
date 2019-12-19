@@ -73,9 +73,11 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "../styles/variable";
+
 /deep/ .menu-icon {
     font-size: 1.5em;
-    background-color: #2a2a2e !important;
+    background-color: $dark !important;
     padding-bottom: 15px;
     svg {
         top: 3px;

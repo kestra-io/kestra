@@ -57,7 +57,7 @@
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
                     <router-link :to="{name: 'flowsAdd'}">
-                        <b-button>
+                        <b-button variant="primary">
                             <plus />
                             {{$t('add flow') | cap }}
                         </b-button>

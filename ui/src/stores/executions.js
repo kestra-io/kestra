@@ -21,15 +21,13 @@ export default {
             })
         },
         findExecutions({ commit }, options) {
-            return Vue.axios.get(`/api/v1/executions/search`, {
-                params: { q: options.query || '*' }
-            }).then(response => {
+            return Vue.axios.get(`/api/v1/executions/search`, {params: options}).then(response => {
                 commit('setExecutions', response.data.results)
                 commit('setTotal', response.data.total)
             })
         },
         triggerExecution(_, options) {
-            return Vue.axios.post(`/api/v1/flows/${options.namespace}/${options.id}/trigger`, options.formData, {
+            return Vue.axios.post(`/api/v1/executions/trigger/${options.namespace}/${options.id}`, options.formData, {
                 headers: {
                     'content-type': 'multipart/form-data'
                 }
@@ -41,7 +39,7 @@ export default {
             })
         },
         followExecution(_, options) {
-            return Vue.SSE(`${process.env.VUE_APP_API_URL}/api/v1/flows/${options.namespace}/${options.flowId}/executions/${options.id}/follow`, { format: 'json' })
+            return Vue.SSE(`${process.env.VUE_APP_API_URL}/api/v1/executions/${options.id}/follow`, { format: 'json' })
         }
     },
     mutations: {

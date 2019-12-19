@@ -11,6 +11,11 @@
                     </b-button>
                 </router-link>
             </template>
+            <template v-slot:cell(date)="row">
+                <div class="status-wrapper">
+                    {{row.item.state.histories[0].date | date}}
+                </div>
+            </template>
             <template v-slot:cell(state.current)="row">
                 <div class="status-wrapper">
                     <status class="status" :status="row.item.state.current" />
@@ -18,7 +23,7 @@
             </template>
             <template v-slot:cell(flowId)="row">
                 <router-link
-                    :to="{name: 'flowsEdit', params: {namespace: row.item.namespace, id: row.item.flowId}}"
+                    :to="{name: 'flow', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                 >{{row.item.flowId}}</router-link>
             </template>
             <template v-slot:cell(namespace)="row">
@@ -100,8 +105,8 @@ export default {
             };
             return [
                 {
-                    key: "id",
-                    label: title("id"),
+                    key: "date",
+                    label: title("create date"),
                     class: "text-center"
                 },
                 {
@@ -112,6 +117,11 @@ export default {
                 {
                     key: "flowId",
                     label: title("flow"),
+                    class: "text-center"
+                },
+                {
+                    key: "id",
+                    label: title("id"),
                     class: "text-center"
                 },
                 {
@@ -155,14 +165,17 @@ export default {
                 setTimeout(() => {
                     this.$store.dispatch("execution/loadExecutions", {
                         namespace: this.$route.params.namespace,
-                        flowId: this.$route.params.id
+                        flowId: this.$route.params.id,
+                        size: this.size,
+                        page: this.page
                     });
                 });
             } else {
                 setTimeout(() => {
                     this.$store.dispatch("execution/findExecutions", {
                         size: this.size,
-                        page: this.page
+                        page: this.page,
+                        q: "*"
                     });
                 });
             }

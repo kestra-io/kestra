@@ -75,7 +75,10 @@ public class RunnerUtils {
             .toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
             .blockingGet();
 
-        HashMap<String, String> merged = new HashMap<>(in);
+        HashMap<String, String> merged = new HashMap<>();
+        if (in != null) {
+            merged.putAll(in);
+        }
         merged.putAll(uploads);
 
         return this.typedInputs(flow, execution, merged);

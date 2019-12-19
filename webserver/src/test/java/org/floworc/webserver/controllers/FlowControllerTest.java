@@ -48,12 +48,22 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void find() {
-        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.testsnotfound"), Argument.of(PagedResults.class, Flow.class));
-
-        assertThat(flows.getTotal(), is(0L));
+    void findAll() {
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal(), is(17L));
     }
 
+    @Test
+    void findByNamespace() {
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.tests"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal(), is(17L));
+    }
+
+    @Test
+    void findNoResult() {
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.testsnotfound"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal(), is(0L));
+    }
 
     @Test
     void createFlow() {

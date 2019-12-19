@@ -15,6 +15,7 @@ out/
 docker-compose.override.yml
 cli/src/main/resources/application-override.yml
 */src/test/resources/application-test.yml
+local
 
 #Js
 node_modules

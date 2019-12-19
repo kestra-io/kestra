@@ -6,6 +6,9 @@ micronaut:
       swagger:
         paths: classpath:META-INF/swagger
         mapping: /swagger/**
+  server:
+    multipart:
+      max-file-size: '1000MB'
 
 jackson:
   serialization:

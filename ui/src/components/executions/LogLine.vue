@@ -2,9 +2,9 @@
     <div v-if="filtered" class="message-wrapper d-flex">
         <div class="level text-center h-100" :class="levelClass">{{log.level}}</div>
         <div class="date text-nowrap text-light text-center">{{log.timestamp}}</div>
-        <div
-            class="flex-grow-1 message"
-        ><pre>{{log.message}}</pre></div>
+        <div class="flex-grow-1 message">
+            <pre class="text-white">{{log.message}}</pre>
+        </div>
     </div>
 </template>
 <script>

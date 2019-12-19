@@ -5,6 +5,7 @@ import io.micronaut.data.model.Sort;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.floworc.core.models.executions.Execution;
@@ -28,6 +29,25 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     @Override
     public Optional<Execution> findById(String id) {
         return this.getRequest(id);
+    }
+
+    @Override
+    public ArrayListTotal<Execution> find(String query, Pageable pageable) {
+        QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+                .query(queryString)
+                .size(pageable.getSize())
+                .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
+        for (Sort.Order order : pageable.getSort().getOrderBy()) {
+            sourceBuilder = sourceBuilder.sort(
+                    order.getProperty(),
+                    order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
+            );
+        }
+
+        return this.query(sourceBuilder);
     }
 
     @Override

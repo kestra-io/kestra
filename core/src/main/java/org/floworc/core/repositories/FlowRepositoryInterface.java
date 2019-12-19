@@ -1,5 +1,6 @@
 package org.floworc.core.repositories;
 
+import io.micronaut.data.model.Pageable;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.flows.Flow;
 
@@ -28,7 +29,13 @@ public interface FlowRepositoryInterface {
 
     List<Flow> findAll();
 
+    ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable);
+
+    ArrayListTotal<Flow> find(String query, Pageable pageable);
+
     Flow save(Flow flow);
 
     void delete(Flow flow);
+
+    ArrayListTotal<String> findNamespaces(Optional<String> prefix);
 }

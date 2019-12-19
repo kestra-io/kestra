@@ -102,7 +102,7 @@ abstract public class AbstractElasticSearchRepository <T> {
         }
     }
 
-    private SearchRequest searchRequest(SearchSourceBuilder sourceBuilder, boolean scroll) {
+    protected SearchRequest searchRequest(SearchSourceBuilder sourceBuilder, boolean scroll) {
         SearchRequest searchRequest = new SearchRequest()
             .indices(this.indicesConfig.getName())
             .source(sourceBuilder);

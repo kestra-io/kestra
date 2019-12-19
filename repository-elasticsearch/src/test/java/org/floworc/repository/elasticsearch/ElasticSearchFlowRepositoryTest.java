@@ -1,19 +1,27 @@
 package org.floworc.repository.elasticsearch;
 
+import com.devskiller.friendly_id.FriendlyId;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.test.annotation.MicronautTest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.floworc.core.models.flows.Flow;
 import org.floworc.core.repositories.AbstractFlowRepositoryTest;
+import org.floworc.core.repositories.ArrayListTotal;
 import org.floworc.repository.elasticsearch.configs.IndicesConfig;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 @MicronautTest
+
 class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
     @Inject
     RestHighLevelClient client;
@@ -34,4 +42,26 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
 
         elasticSearchFlowRepository.initMapping();
     }
+
+    @Test
+    void find() {
+        Flow flow1 = Flow.builder()
+            .id(FriendlyId.createFriendlyId())
+            .namespace("org.floworc.unittest.flow.find")
+            .build();
+        elasticSearchFlowRepository.save(flow1);
+        Flow flow2 = Flow.builder()
+            .id(FriendlyId.createFriendlyId())
+            .namespace("org.floworc.unittest.flow.find")
+            .build();
+        elasticSearchFlowRepository.save(flow2);
+
+        ArrayListTotal<Flow> result = elasticSearchFlowRepository.find("org.floworc.unittest.flow.find", Pageable.from(1, 5));
+        assertThat(result.size(), is(2));
+        result = elasticSearchFlowRepository.find("org.floworc.unittest.flow.find", Pageable.from(1, 1));
+        assertThat(result.size(), is(1));
+        result = elasticSearchFlowRepository.find("org.floworc.unittest.flow.find", Pageable.from(2, 1));
+        assertThat(result.size(), is(1));
+    }
+
 }

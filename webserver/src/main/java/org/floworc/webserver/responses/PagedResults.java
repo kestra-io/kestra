@@ -1,7 +1,6 @@
 package org.floworc.webserver.responses;
 
 import lombok.Getter;
-import org.floworc.core.models.flows.Flow;
 import org.floworc.core.repositories.ArrayListTotal;
 
 import javax.validation.constraints.NotNull;

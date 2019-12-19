@@ -1,7 +1,6 @@
 package org.floworc.repository.elasticsearch;
 
 import com.devskiller.friendly_id.FriendlyId;
-import com.google.common.collect.ImmutableList;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.annotation.MicronautTest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -9,7 +8,6 @@ import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.floworc.core.models.flows.Flow;
-import org.floworc.core.models.flows.Input;
 import org.floworc.core.repositories.AbstractFlowRepositoryTest;
 import org.floworc.core.repositories.ArrayListTotal;
 import org.floworc.repository.elasticsearch.configs.IndicesConfig;

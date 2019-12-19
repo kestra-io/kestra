@@ -10,7 +10,6 @@ import java.util.Set;
 
 @Getter
 public class FlowResponse {
-
     @NotNull
     private Flow flow;
 

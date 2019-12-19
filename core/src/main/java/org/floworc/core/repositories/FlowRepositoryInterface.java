@@ -20,9 +20,9 @@ public interface FlowRepositoryInterface {
 
     default Optional<Flow> exists(Flow flow) {
         return this.findRevisions(flow.getNamespace(), flow.getId())
-                .stream()
-                .filter(f -> f.equalsWithoutRevision(flow))
-                .findFirst();
+            .stream()
+            .filter(f -> f.equalsWithoutRevision(flow))
+            .findFirst();
     }
 
     List<Flow> findRevisions(String namespace, String id);

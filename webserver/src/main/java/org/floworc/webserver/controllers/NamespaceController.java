@@ -17,7 +17,6 @@ public class NamespaceController {
     @Inject
     private FlowRepositoryInterface flowRepository;
 
-
     /**
      * @param prefix The searched namespace prefix
      * @return The flow's namespaces set

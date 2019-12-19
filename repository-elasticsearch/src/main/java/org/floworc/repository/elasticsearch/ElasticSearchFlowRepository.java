@@ -37,16 +37,16 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     @Override
     public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
         BoolQueryBuilder bool = QueryBuilders.boolQuery()
-                .must(QueryBuilders.termQuery("namespace", namespace))
-                .must(QueryBuilders.termQuery("id", id));
+            .must(QueryBuilders.termQuery("namespace", namespace))
+            .must(QueryBuilders.termQuery("id", id));
 
         revision
-                .ifPresent(v -> bool.must(QueryBuilders.termQuery("revision", v)));
+            .ifPresent(v -> bool.must(QueryBuilders.termQuery("revision", v)));
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-                .query(bool)
-                .sort(new FieldSortBuilder("revision").order(SortOrder.DESC))
-                .size(1);
+            .query(bool)
+            .sort(new FieldSortBuilder("revision").order(SortOrder.DESC))
+            .size(1);
 
         List<Flow> query = this.query(sourceBuilder);
 
@@ -56,12 +56,12 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     @Override
     public List<Flow> findRevisions(String namespace, String id) {
         BoolQueryBuilder bool = QueryBuilders.boolQuery()
-                .must(QueryBuilders.termQuery("namespace", namespace))
-                .must(QueryBuilders.termQuery("id", id));
+            .must(QueryBuilders.termQuery("namespace", namespace))
+            .must(QueryBuilders.termQuery("id", id));
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-                .query(bool)
-                .sort(new FieldSortBuilder("revision").order(SortOrder.ASC));
+            .query(bool)
+            .sort(new FieldSortBuilder("revision").order(SortOrder.ASC));
 
         return this.scroll(sourceBuilder);
     }
@@ -69,7 +69,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     @Override
     public List<Flow> findAll() {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-                .query(QueryBuilders.matchAllQuery());
+            .query(QueryBuilders.matchAllQuery());
 
         return this.scroll(sourceBuilder);
     }
@@ -163,20 +163,16 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             Terms namespaces = searchResponse.getAggregations().get("distinct_namespace");
 
             return new ArrayListTotal<String>(
-                    mapBucketNamespace(namespaces),
+                    namespaces.getBuckets()
+                        .stream()
+                        .map(o -> {
+                            return o.getKey().toString();
+                        })
+                        .collect(Collectors.toList()),
                     namespaces.getBuckets().size());
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private List<String> mapBucketNamespace(Terms terms) {
-        return terms.getBuckets()
-                .stream()
-                .map(o -> {
-                    return o.getKey().toString();
-                })
-                .collect(Collectors.toList());
     }
 }

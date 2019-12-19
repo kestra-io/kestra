@@ -48,13 +48,13 @@ public class ExecutionController {
 
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
     public PagedResults<Execution> find(
-            @QueryValue(value = "q") String query,
-            @QueryValue(value = "page", defaultValue = "1") int page,
-            @QueryValue(value = "size", defaultValue = "10") int size) {
-
+        @QueryValue(value = "q") String query,
+        @QueryValue(value = "page", defaultValue = "1") int page,
+        @QueryValue(value = "size", defaultValue = "10") int size
+    ) {
         return PagedResults.of(
-                executionRepository
-                        .find(query, Pageable.from(page, size))
+            executionRepository
+                .find(query, Pageable.from(page, size))
         );
     }
 
@@ -67,9 +67,9 @@ public class ExecutionController {
     @Get(uri = "executions/{executionId}", produces = MediaType.TEXT_JSON)
     public Maybe<Execution> get(String executionId) {
         return executionRepository
-                .findById(executionId)
-                .map(Maybe::just)
-                .orElse(Maybe.empty());
+            .findById(executionId)
+            .map(Maybe::just)
+            .orElse(Maybe.empty());
     }
 
     /**
@@ -122,25 +122,24 @@ public class ExecutionController {
                                                 @QueryValue(value = "page", defaultValue = "1") int page,
                                                 @QueryValue(value = "size", defaultValue = "10") int size) {
         return PagedResults.of(
-                executionRepository
-                        .findByFlowId(namespace, flowId, Pageable.from(page, size))
+            executionRepository
+                .findByFlowId(namespace, flowId, Pageable.from(page, size))
         );
     }
-
 
     /**
      * Trigger an new execution for current flow
      *
      * @param namespace The flow namespace
-     * @param id        The flow id
+     * @param id The flow id
      * @return execution created
      */
-    @Post(uri = "flows/{namespace}/{id}/trigger", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
     public Maybe<Execution> trigger(
-            String namespace,
-            String id,
-            @Nullable Map<String, String> inputs,
-            @Nullable Publisher<StreamingFileUpload> files
+        String namespace,
+        String id,
+        @Nullable Map<String, String> inputs,
+        @Nullable Publisher<StreamingFileUpload> files
     ) {
         Optional<Flow> find = flowRepository.findById(namespace, id);
         if (find.isEmpty()) {
@@ -148,8 +147,8 @@ public class ExecutionController {
         }
 
         Execution current = runnerUtils.newExecution(
-                find.get(),
-                (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs, files)
+            find.get(),
+            (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs, files)
         );
 
         executionQueue.emit(current);
@@ -160,37 +159,40 @@ public class ExecutionController {
     /**
      * Trigger an new execution for current flow and follow execution
      *
-     * @param namespace   The flow namespace
-     * @param id          The flow id
      * @param executionId The execution id to follow
      * @return execution sse event
      */
-    @Get(uri = "flows/{namespace}/{id}/executions/{executionId}/follow", produces = MediaType.TEXT_JSON)
-    public Flowable<Event<Execution>> triggerAndFollow(String namespace, String id, String executionId) {
+    @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_JSON)
+    public Flowable<Event<Execution>> triggerAndFollow(String executionId) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
-        Optional<Flow> find = flowRepository.findById(namespace, id);
-        if (find.isEmpty()) {
+        Optional<Execution> execution = executionRepository.findById(executionId);
+        if (execution.isEmpty()) {
+            return Flowable.empty();
+        }
+
+        Optional<Flow> flow = flowRepository.findById(execution.get().getNamespace(), execution.get().getFlowId());
+        if (flow.isEmpty()) {
             return Flowable.empty();
         }
 
         return Flowable
-                .<Event<Execution>>create(emitter -> {
-                    Runnable receive = this.executionQueue.receive(current -> {
-                        if (current.getId().equals(executionId)) {
-                            emitter.onNext(Event.of(current).id(Execution.class.getSimpleName()));
+            .<Event<Execution>>create(emitter -> {
+                Runnable receive = this.executionQueue.receive(current -> {
+                    if (current.getId().equals(executionId)) {
+                        emitter.onNext(Event.of(current).id(Execution.class.getSimpleName()));
 
-                            if (current.isTerminatedWithListeners(find.get())) {
-                                emitter.onComplete();
-                            }
+                        if (current.isTerminatedWithListeners(flow.get())) {
+                            emitter.onComplete();
                         }
-                    });
-                    cancel.set(receive);
-                }, BackpressureStrategy.BUFFER)
-                .doOnComplete(() -> {
-                    if (cancel.get() != null) {
-                        cancel.get().run();
                     }
                 });
+                cancel.set(receive);
+            }, BackpressureStrategy.BUFFER)
+            .doOnComplete(() -> {
+                if (cancel.get() != null) {
+                    cancel.get().run();
+                }
+            });
     }
 }

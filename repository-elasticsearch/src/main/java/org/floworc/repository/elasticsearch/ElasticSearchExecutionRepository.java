@@ -53,19 +53,19 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     @Override
     public ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable) {
         BoolQueryBuilder bool = QueryBuilders.boolQuery()
-                .must(QueryBuilders.termQuery("namespace", namespace))
-                .must(QueryBuilders.termQuery("flowId", id));
+            .must(QueryBuilders.termQuery("namespace", namespace))
+            .must(QueryBuilders.termQuery("flowId", id));
 
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-                .query(bool)
-                .size(pageable.getSize())
-                .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+            .query(bool)
+            .size(pageable.getSize())
+            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
 
-        for (Sort.Order order : pageable.getSort().getOrderBy()) {
+        for (Sort.Order order:  pageable.getSort().getOrderBy()) {
             sourceBuilder = sourceBuilder.sort(
-                    order.getProperty(),
-                    order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
+                order.getProperty(),
+                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
             );
         }
 

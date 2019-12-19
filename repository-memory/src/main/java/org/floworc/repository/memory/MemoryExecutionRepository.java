@@ -50,7 +50,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
         int size = filteredExecutions.size();
         to = to >= size ? size : to;
         from = from >= size ? size : from;
-        return new ArrayListTotal<Execution>(filteredExecutions.subList(from, to), filteredExecutions.size());
+        return new ArrayListTotal<>(filteredExecutions.subList(from, to), filteredExecutions.size());
     }
 
     @Override

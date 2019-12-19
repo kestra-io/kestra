@@ -9,15 +9,12 @@ import io.micronaut.validation.Validated;
 import io.reactivex.Maybe;
 import org.floworc.core.exceptions.InvalidFlowException;
 import org.floworc.core.models.flows.Flow;
-import org.floworc.core.models.namespaces.Namespace;
-import org.floworc.core.repositories.ArrayListTotal;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.serializers.Validator;
 import org.floworc.webserver.responses.FlowResponse;
 import org.floworc.webserver.responses.PagedResults;
 
 import javax.inject.Inject;
-import javax.print.attribute.standard.PageRanges;
 import java.util.Optional;
 
 @Validated
@@ -28,7 +25,7 @@ public class FlowController {
 
     /**
      * @param namespace The flow namespace
-     * @param id        The flow id
+     * @param id The flow id
      * @return flow found
      */
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
@@ -39,7 +36,7 @@ public class FlowController {
             .orElse(Maybe.empty());
     }
 
-     /**
+    /**
      * @param query The flow query that is a lucen string
      * @param page Page in flow pagination
      * @param size Element count in pagination selection
@@ -50,8 +47,7 @@ public class FlowController {
         return PagedResults.of(flowRepository.find(query, Pageable.from(page, size)));
     }
 
-
-     /**
+    /**
      * @param namespace The flow namespace
      * @param page Page in flow pagination
      * @param size Element count in pagination selection
@@ -82,9 +78,8 @@ public class FlowController {
 
     /**
      * @param namespace flow namespace
-     * @param id        flow id to delete
-     * @return Http 204 on delete
-     * @return Http 404 when not found
+     * @param id flow id to delete
+     * @return Http 404 when not found Http 204 on delete
      */
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     public HttpResponse<Void> delete(String namespace, String id) {
@@ -97,10 +92,9 @@ public class FlowController {
         }
     }
 
-
     /**
      * @param namespace flow namespace
-     * @param id        flow id to update
+     * @param id flow id to update
      * @return flow updated
      */
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)

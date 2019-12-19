@@ -24,6 +24,7 @@ import org.floworc.core.models.executions.TaskRun;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.tasks.ResolvedTask;
 import org.floworc.core.runners.handlebars.helpers.InstantHelper;
+import org.floworc.core.runners.handlebars.helpers.JsonHelper;
 import org.floworc.core.storages.StorageInterface;
 import org.floworc.core.storages.StorageObject;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -51,6 +53,7 @@ public class RunContext {
         .registerHelpers(UnlessHelper.class)
         .registerHelpers(WithHelper.class)
         .registerHelpers(InstantHelper.class)
+        .registerHelpers(JsonHelper.class)
         .registerHelperMissing((context, options) -> {
             throw new IllegalStateException("Missing variable: " + options.helperName);
         });
@@ -86,15 +89,24 @@ public class RunContext {
 
     private Map<String, Object> variables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
-            .put("flow", ImmutableMap.of(
-                "id", flow.getId(),
-                "namespace", flow.getNamespace()
-            ))
-            .put("execution", ImmutableMap.of(
-                "id", execution.getId(),
-                "startDate", execution.getState().startDate()
-            ))
             .put("env", System.getenv());
+
+        if (resolvedTask != null && flow.isListenerTask(resolvedTask.getTask().getId())) {
+            builder
+                .put("flow", flow)
+                .put("execution", execution);
+
+        } else {
+            builder
+                .put("flow", ImmutableMap.of(
+                    "id", flow.getId(),
+                    "namespace", flow.getNamespace()
+                ))
+                .put("execution", ImmutableMap.of(
+                    "id", execution.getId(),
+                    "startDate", execution.getState().startDate()
+                ));
+        }
 
         if (resolvedTask != null) {
             builder
@@ -154,7 +166,7 @@ public class RunContext {
     @VisibleForTesting
     public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
         this.applicationContext = applicationContext;
-        this.storageInterface = applicationContext.getBean(StorageInterface.class);
+        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
         this.storageOutputPrefix = URI.create("");
         this.variables = variables;
         this.loggerName = "flow.unitest";
@@ -178,9 +190,25 @@ public class RunContext {
     }
 
     public String render(String inline) throws IOException {
+        return this.renderInline(inline, this.variables);
+    }
+
+    public String render(String inline, Map<String, Object> variables) throws IOException {
+        return this.renderInline(
+            inline,
+            Stream.concat(this.variables.entrySet().stream(), variables.entrySet().stream())
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue
+                    )
+                )
+        );
+    }
+
+    private String renderInline(String inline, Map<String, Object> variables) throws IOException {
         Template template = handlebars.compileInline(inline);
 
-        return template.apply(this.variables);
+        return template.apply(variables);
     }
 
     public List<String> render(List<String> list) throws IOException {

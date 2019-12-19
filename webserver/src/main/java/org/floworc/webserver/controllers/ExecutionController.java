@@ -79,13 +79,18 @@ public class ExecutionController {
     public Flowable<Event<Execution>> triggerAndFollow(String namespace, String id, String executionId) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
+        Optional<Flow> find = flowRepository.findById(namespace, id);
+        if (find.isEmpty()) {
+            return Flowable.empty();
+        }
+
         return Flowable
             .<Event<Execution>>create(emitter -> {
                 Runnable receive = this.executionQueue.receive(current -> {
                     if (current.getId().equals(executionId)) {
                         emitter.onNext(Event.of(current).id(Execution.class.getSimpleName()));
 
-                        if (current.getState().isTerninated()) {
+                        if (current.isTerminatedWithListeners(find.get())) {
                             emitter.onComplete();
                         }
                     }

@@ -13,6 +13,7 @@ import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.runners.*;
 
 import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -43,19 +44,20 @@ public class MemoryExecutor extends AbstractExecutor {
     @Override
     public void run() {
         this.executionQueue.receive(MemoryExecutor.class, execution -> {
+            Flow flow = this.flowRepository
+                .findByExecution(execution)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
+
             synchronized (lock) {
-                if (execution.getState().isTerninated()) {
+                if (execution.isTerminatedWithListeners(flow)) {
                     executions.remove(execution.getId());
                 } else {
                     executions.put(execution.getId(), execution);
                 }
             }
 
-            Flow flow = this.flowRepository
-                .findByExecution(execution)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
-
             this.handlChild(execution, flow);
+            this.handleListeners(execution, flow);
             this.handleWorkerTask(execution, flow);
             this.handleEnd(execution, flow);
             this.handleNext(execution, flow);
@@ -135,6 +137,25 @@ public class MemoryExecutor extends AbstractExecutor {
                 this.childNexts(flow, execution, taskRun)
                     .ifPresent(this.executionQueue::emit);
             });
+    }
+
+    private void handleListeners(Execution execution, Flow flow) {
+        if (!execution.getState().isTerninated()) {
+            return;
+        }
+
+        List<ResolvedTask> currentTasks = execution.findValidListeners(flow);
+
+        List<TaskRun> next = FlowableUtils.resolveSequentialNexts(
+            execution,
+            currentTasks,
+            new ArrayList<>()
+        );
+
+        if (next.size() > 0) {
+            Execution newExecution = this.onNexts(flow, execution, next);
+            this.executionQueue.emit(newExecution);
+        }
     }
 
     private void handleEnd(Execution execution, Flow flow) {

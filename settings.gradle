@@ -13,7 +13,8 @@ include 'storage-minio'
 include 'repository-elasticsearch'
 include 'repository-memory'
 
-include 'task-serdes'
 include 'task-gcp'
+include 'task-notifications'
+include 'task-serdes'
 
 include 'webserver'

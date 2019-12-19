@@ -78,6 +78,16 @@ public enum InstantHelper implements Helper<Object> {
 
             return formatter.format(date);
         }
+    },
+
+    instantTimestamp {
+        @Override
+        public CharSequence apply(final Object value, final Options options) {
+            assert value instanceof Instant;
+            Instant date = (Instant) value;
+
+            return String.valueOf(date.getEpochSecond());
+        }
     }
 }
 

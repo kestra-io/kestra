@@ -187,6 +187,7 @@ public class RunnerUtils {
         Execution execution = this.newExecution(flow, inputs);
 
         return this.awaitExecution(
+            flow,
             () -> {
                 this.executionQueue.emit(execution);
 
@@ -196,12 +197,12 @@ public class RunnerUtils {
         );
     }
 
-    public Execution awaitExecution(Supplier<String> emitExecution, Duration duration) throws TimeoutException {
+    public Execution awaitExecution(Flow flow, Supplier<String> emitExecution, Duration duration) throws TimeoutException {
         AtomicReference<String> executionId = new AtomicReference<>();
         AtomicReference<Execution> receive = new AtomicReference<>();
 
         Runnable cancel = this.executionQueue.receive(current -> {
-            if (current.getId().equals(executionId.get()) && current.getState().isTerninated()) {
+            if (current.getId().equals(executionId.get()) && current.isTerminatedWithListeners(flow)) {
                 receive.set(current);
             }
         });

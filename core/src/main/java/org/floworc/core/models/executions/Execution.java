@@ -1,9 +1,13 @@
 package org.floworc.core.models.executions;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Streams;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
+import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.State;
+import org.floworc.core.models.listeners.Condition;
 import org.floworc.core.models.tasks.ResolvedTask;
 import org.floworc.core.runners.FlowableUtils;
 
@@ -27,7 +31,6 @@ public class Execution {
     private Integer flowRevision;
 
     @With
-    @Builder.Default
     private List<TaskRun> taskRunList;
 
     @With
@@ -144,11 +147,18 @@ public class Execution {
             .collect(Collectors.toList());
     }
 
-    public Optional<TaskRun> findLastByState(List<ResolvedTask> resolvedTasks, State.Type state, TaskRun taskRun) {
-        return this.findTaskRunByTasks(resolvedTasks, taskRun)
+    public Optional<TaskRun> findFirstByState(State.Type state) {
+        return this.getTaskRunList()
             .stream()
             .filter(t -> t.getState().getCurrent() == state)
             .findFirst();
+    }
+
+    public Optional<TaskRun> findLastByState(List<ResolvedTask> resolvedTasks, State.Type state, TaskRun taskRun) {
+        return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
+            .stream()
+            .filter(t -> t.getState().getCurrent() == state)
+        );
     }
 
     public Optional<TaskRun> findLastTerminated(List<ResolvedTask> resolvedTasks, TaskRun taskRun) {
@@ -157,11 +167,20 @@ public class Execution {
         ArrayList<TaskRun> reverse = new ArrayList<>(taskRuns);
         Collections.reverse(reverse);
 
-        return reverse
+        return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
             .stream()
             .filter(t -> t.getState().isTerninated())
-            .findFirst();
+        );
     }
+
+    public boolean isTerminatedWithListeners(Flow flow) {
+        if (!this.getState().isTerninated()) {
+            return false;
+        }
+
+        return this.isTerminated(this.findValidListeners(flow));
+    }
+
 
     public boolean isTerminated(List<ResolvedTask> resolvedTasks) {
         return this.isTerminated(resolvedTasks, null);
@@ -178,7 +197,7 @@ public class Execution {
     }
 
     public boolean hasFailed() {
-        return this.taskRunList
+        return this.taskRunList != null && this.taskRunList
             .stream()
             .anyMatch(taskRun -> taskRun.getState().isFailed());
     }
@@ -193,7 +212,28 @@ public class Execution {
             .anyMatch(taskRun -> taskRun.getState().isFailed());
     }
 
+    public List<ResolvedTask> findValidListeners(Flow flow) {
+        if (flow.getListeners() == null) {
+            return new ArrayList<>();
+        }
+
+        return flow
+            .getListeners()
+            .stream()
+            .filter(listener -> listener.getConditions() == null || listener.getConditions()
+                .stream()
+                .allMatch(condition -> condition.test(flow, this))
+            )
+            .flatMap(listener -> listener.getTasks().stream())
+            .map(ResolvedTask::of)
+            .collect(Collectors.toList());
+    }
+
     public Map<String, Object> outputs() {
+        if (this.getTaskRunList() == null) {
+            return ImmutableMap.of();
+        }
+
         return this
             .getTaskRunList()
             .stream()
@@ -220,10 +260,11 @@ public class Execution {
             "\n  taskRunList=" +
             "\n  [" +
             "\n    " +
-            this.getTaskRunList()
+            (this.getTaskRunList() == null ? "" : this.getTaskRunList()
                 .stream()
                 .map(t -> t.toString(true))
-                .collect(Collectors.joining(",\n    ")) +
+                .collect(Collectors.joining(",\n    "))
+            ) +
             "\n  ], " +
             "\n  inputs=" + this.getInputs() +
             "\n)";

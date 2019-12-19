@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 import org.floworc.core.models.executions.TaskRun;
+import org.floworc.core.models.listeners.Listener;
 import org.floworc.core.models.tasks.ResolvedTask;
 import org.floworc.core.models.tasks.Task;
 import org.floworc.core.models.triggers.Trigger;
@@ -14,10 +15,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Value
@@ -52,6 +51,9 @@ public class Flow {
     private List<Task> errors;
 
     @Valid
+    private List<Listener> listeners;
+
+    @Valid
     private List<Trigger> triggers;
 
     public Logger logger() {
@@ -61,7 +63,8 @@ public class Flow {
     public ResolvedTask findTaskByTaskRun(TaskRun taskRun, RunContext runContext) {
         return Stream.of(
             this.tasks,
-            this.errors
+            this.errors,
+            this.getListenersTasks()
         )
             .flatMap(tasks -> this.findTaskByTaskId(tasks, taskRun.getTaskId(), runContext, taskRun).stream())
             .map(task -> ResolvedTask.builder()
@@ -72,6 +75,21 @@ public class Flow {
             )
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
+    }
+
+    public List<Task> getListenersTasks() {
+        return this.getListeners() != null ?
+            this.getListeners()
+                .stream()
+                .flatMap(listener -> listener.getTasks().stream())
+                .collect(Collectors.toList()) :
+            new ArrayList<>();
+    }
+
+    public boolean isListenerTask(String id) {
+        return this.getListenersTasks()
+            .stream()
+            .anyMatch(task -> task.getId().equals(id));
     }
 
     private Optional<Task> findTaskByTaskId(List<Task> tasks, String id, RunContext runContext, TaskRun taskRun) {

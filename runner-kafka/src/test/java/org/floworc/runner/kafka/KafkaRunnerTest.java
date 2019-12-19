@@ -1,5 +1,6 @@
 package org.floworc.runner.kafka;
 
+import com.google.common.collect.ImmutableMap;
 import io.micronaut.test.annotation.MicronautTest;
 import org.floworc.core.Utils;
 import org.floworc.core.models.executions.Execution;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 
 @MicronautTest
 class KafkaRunnerTest {
@@ -55,5 +57,19 @@ class KafkaRunnerTest {
         Execution execution = runnerUtils.runOne("org.floworc.tests", "sequential");
 
         assertThat(execution.getTaskRunList(), hasSize(11));
+    }
+
+    @Test
+    void listeners() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(
+            "org.floworc.tests",
+            "listeners",
+            null,
+            (f, e) -> ImmutableMap.of("string", "OK")
+        );
+
+        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("ok"));
+        assertThat(execution.getTaskRunList().size(), is(3));
+        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("execution-success-listener"));
     }
 }

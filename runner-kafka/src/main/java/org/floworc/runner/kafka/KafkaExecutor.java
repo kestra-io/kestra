@@ -24,6 +24,7 @@ import org.floworc.runner.kafka.services.KafkaAdminService;
 import org.floworc.runner.kafka.services.KafkaStreamService;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -87,15 +88,44 @@ public class KafkaExecutor extends AbstractExecutor {
                     Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
                 );
 
+            // Listeners
+            stream
+                .filter((key, value) -> value.getExecution().getState().isTerninated())
+                .mapValues((readOnlyKey, value) -> {
+                    List<ResolvedTask> currentTasks = value.getExecution().findValidListeners(value.getFlow());
+
+                    List<TaskRun> next = FlowableUtils.resolveSequentialNexts(
+                        value.getExecution(),
+                        currentTasks,
+                        new ArrayList<>()
+                    );
+
+                    if (next.size() > 0) {
+                        return this.onNexts(value.getFlow(), value.getExecution(), next);
+                    }
+
+                    return null;
+                })
+                .filter((key, value) -> value != null)
+                .to(
+                    kafkaAdminService.getTopicName(Execution.class),
+                    Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
+                );
+
             // with taskrun
             KStream<String, TaskRunExecutionWithFlow> streamTaskRuns = stream
-                .flatMapValues((readOnlyKey, value) -> value
-                    .getExecution()
-                    .getTaskRunList()
-                    .stream()
-                    .map(taskRun -> new TaskRunExecutionWithFlow(value.getFlow(), value.getExecution(), taskRun))
-                    .collect(Collectors.toList())
-                );
+                .flatMapValues((readOnlyKey, value) -> {
+                    if (value.getExecution().getTaskRunList() == null) {
+                        return new ArrayList<>();
+                    }
+
+                    return value
+                        .getExecution()
+                        .getTaskRunList()
+                        .stream()
+                        .map(taskRun -> new TaskRunExecutionWithFlow(value.getFlow(), value.getExecution(), taskRun))
+                        .collect(Collectors.toList());
+                });
 
             // handlChild WorkerTaskResult
             streamTaskRuns

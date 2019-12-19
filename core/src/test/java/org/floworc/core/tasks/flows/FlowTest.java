@@ -2,6 +2,7 @@ package org.floworc.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
+import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.runners.AbstractMemoryRunnerTest;
 import org.floworc.core.models.executions.Execution;
 import org.floworc.core.runners.InputsTest;
@@ -24,6 +25,9 @@ class FlowTest extends AbstractMemoryRunnerTest {
     @Inject
     RunnerUtils runnerUtils;
 
+    @Inject
+    FlowRepositoryInterface flowRepositoryInterface;
+
     @Test
     void run() throws Exception {
         RunContext runContext = new RunContext(
@@ -34,25 +38,28 @@ class FlowTest extends AbstractMemoryRunnerTest {
             )
         );
 
-        Execution execution = runnerUtils.awaitExecution(() -> {
-            Flow flow = Flow.builder()
-                .namespace("{{namespace}}")
-                .flowId("{{flow}}")
-                .inputs(InputsTest.inputs)
-                .build();
+        Execution execution = runnerUtils.awaitExecution(
+            flowRepositoryInterface.findById("org.floworc.tests", "inputs").get(),
+            () -> {
+                Flow flow = Flow.builder()
+                    .namespace("{{namespace}}")
+                    .flowId("{{flow}}")
+                    .inputs(InputsTest.inputs)
+                    .build();
 
-            RunOutput run = null;
-            try {
-                run = flow.run(runContext);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+                RunOutput run = null;
+                try {
+                    run = flow.run(runContext);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
 
-            String executionId = (String) run.getOutputs().get("executionId");
-            assertThat(executionId == null, is(false));
+                String executionId = (String) run.getOutputs().get("executionId");
+                assertThat(executionId == null, is(false));
 
-            return executionId;
-        }, Duration.ofSeconds(5));
+                return executionId;
+            }, Duration.ofSeconds(5)
+        );
 
         assertThat(execution.getTaskRunList(), hasSize(7));
     }

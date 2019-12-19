@@ -49,11 +49,10 @@ abstract public class Utils {
     }
 
     public static void loads(LocalFlowRepositoryLoader repositoryLoader) throws IOException, URISyntaxException {
-        Utils.loads(repositoryLoader, "flows/valids");
+        Utils.loads(repositoryLoader, Objects.requireNonNull(Utils.class.getClassLoader().getResource("flows/valids")));
     }
 
-    public static void loads(LocalFlowRepositoryLoader repositoryLoader, String path) throws IOException, URISyntaxException {
-        URL url = Objects.requireNonNull(Utils.class.getClassLoader().getResource(path));
+    public static void loads(LocalFlowRepositoryLoader repositoryLoader, URL url) throws IOException, URISyntaxException {
         repositoryLoader.load(url);
     }
 

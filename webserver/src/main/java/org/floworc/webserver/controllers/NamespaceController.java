@@ -17,14 +17,13 @@ public class NamespaceController {
     @Inject
     private FlowRepositoryInterface flowRepository;
 
-
     /**
      * @param prefix The searched namespace prefix
      * @return The flow's namespaces set
      */
     @Get(produces = MediaType.TEXT_JSON)
     public PagedResults<String> list(Optional<String> prefix) {
-        ArrayListTotal<String> namespaces = flowRepository.findNamespaces(prefix);
+        ArrayListTotal<String> namespaces = flowRepository.findDistinctNamespace(prefix);
         return PagedResults.of(namespaces);
     }
 }

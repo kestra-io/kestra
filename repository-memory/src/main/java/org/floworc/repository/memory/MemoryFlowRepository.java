@@ -101,50 +101,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return new ArrayListTotal<Flow>(flows.subList(from, to), flows.size());
     }
 
-    @Override
-    public ArrayListTotal<Flow> find(String query, Pageable pageable) {
-        //TODO Non used query, returns just all at the moment
-        if (pageable.getNumber() < 1) {
-            throw new ValueException("Page cannot be < 1");
-        }
-
-        List<Flow> flows = this.findAll();
-
-        //handles pagination
-        int from = (pageable.getNumber() - 1) * pageable.getSize();
-        int to = from + pageable.getSize();
-        int size = flows.size();
-        to = to >= size ? size : to;
-        from = from >= size ? size : from;
-        return new ArrayListTotal<Flow>(flows.subList(from, to), flows.size());
-    }
-
-    @Override
-    public ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable) {
-        if (pageable.getNumber() < 1) {
-            throw new ValueException("Page cannot be < 1");
-        }
-
-        List<Flow> flows = this.flows
-            .entrySet()
-            .stream()
-            .flatMap(e -> e.getValue()
-                .entrySet()
-                .stream()
-                .flatMap(f -> this.getLastRevision(f.getValue()).stream())
-            )
-            .filter(f -> f.getNamespace().equals(namespace))
-            .collect(Collectors.toList());
-
-        //handles pagination
-        int from = (pageable.getNumber() - 1) * pageable.getSize();
-        int to = from + pageable.getSize();
-        int size = flows.size();
-        to = to >= size ? size : to;
-        from = from >= size ? size : from;
-        return new ArrayListTotal<Flow>(flows.subList(from, to), flows.size());
-    }
-
     @SuppressWarnings("ComparatorMethodParameterNotUsed")
     @Override
     public Flow save(Flow flow) {
@@ -196,7 +152,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<String> findNamespaces(Optional<String> prefix) {
+    public ArrayListTotal<String> findDistinctNamespace(Optional<String> prefix) {
         HashSet<String> namespaces = new HashSet<String>();
         for (Flow f : this.findAll()) {
             if (f.getNamespace().startsWith(prefix.orElse(""))) {

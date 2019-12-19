@@ -82,45 +82,11 @@ public class ExecutionController {
      * @return a list of found executions
      */
     @Get(uri = "executions", produces = MediaType.TEXT_JSON)
-    public PagedResults<Execution> findByFlowId(@QueryValue(value = "namespace") String namespace,
-                                                @QueryValue(value = "flowId") String flowId,
-                                                @QueryValue(value = "page", defaultValue = "1") int page,
-                                                @QueryValue(value = "size", defaultValue = "10") int size) {
-        return PagedResults.of(
-                executionRepository
-                        .findByFlowId(namespace, flowId, Pageable.from(page, size))
-        );
-    }
-
-
-    /**
-     * Get a execution
-     *
-     * @param executionId The execution identifier
-     * @return the execution with the provided identifier
-     */
-    @Get(uri = "executions/{executionId}", produces = MediaType.TEXT_JSON)
-    public Maybe<Execution> get(String executionId) {
-        return executionRepository
-                .findById(executionId)
-                .map(Maybe::just)
-                .orElse(Maybe.empty());
-    }
-
-    /**
-     * Find and returns all executions for a specific namespace and flow identifier
-     *
-     * @param namespace The flow namespace
-     * @param flowId    The flow identifier
-     * @param page      The number of result pages to return
-     * @param size      The number of result by page
-     * @return a list of found executions
-     */
-    @Get(uri = "executions", produces = MediaType.TEXT_JSON)
-    public PagedResults<Execution> findByFlowId(@QueryValue(value = "namespace") String namespace,
-                                                @QueryValue(value = "flowId") String flowId,
-                                                @QueryValue(value = "page", defaultValue = "1") int page,
-                                                @QueryValue(value = "size", defaultValue = "10") int size) {
+    public PagedResults<Execution> findByFlowId(
+        @QueryValue(value = "namespace") String namespace,
+        @QueryValue(value = "flowId") String flowId,
+        @QueryValue(value = "page", defaultValue = "1") int page,
+        @QueryValue(value = "size", defaultValue = "10") int size) {
         return PagedResults.of(
             executionRepository
                 .findByFlowId(namespace, flowId, Pageable.from(page, size))
@@ -131,7 +97,7 @@ public class ExecutionController {
      * Trigger an new execution for current flow
      *
      * @param namespace The flow namespace
-     * @param id The flow id
+     * @param id        The flow id
      * @return execution created
      */
     @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)

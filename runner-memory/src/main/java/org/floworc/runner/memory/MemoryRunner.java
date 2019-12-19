@@ -19,7 +19,7 @@ public class MemoryRunner extends StandAloneRunner {
         int processors = Math.max(3, Runtime.getRuntime().availableProcessors());
 
         // @FIXME: Ugly hack to wait that all threads is created and ready to listen
-        Await.until(() -> ((MemoryQueue<Execution>) this.executionQueue).getSubscribersCount() == processors &&
+        Await.until(() -> ((MemoryQueue<Execution>) this.executionQueue).getSubscribersCount() == processors * 2 &&
             ((MemoryQueue<WorkerTask>) this.workerTaskQueue).getSubscribersCount() == processors &&
             ((MemoryQueue<WorkerTaskResult>) this.workerTaskResultQueue).getSubscribersCount() == processors
         );

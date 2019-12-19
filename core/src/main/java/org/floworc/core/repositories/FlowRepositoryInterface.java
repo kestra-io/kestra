@@ -29,13 +29,11 @@ public interface FlowRepositoryInterface {
 
     List<Flow> findAll();
 
-    ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable);
-
     ArrayListTotal<Flow> find(String namespace, Pageable pageable);
 
     Flow save(Flow flow);
 
     void delete(Flow flow);
 
-    ArrayListTotal<String> findNamespaces(Optional<String> prefix);
+    ArrayListTotal<String> findDistinctNamespace(Optional<String> prefix);
 }

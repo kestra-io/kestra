@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Singleton
 @MemoryRepositoryEnabled
 public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
-    private Map<String, Execution> executions = new HashMap();
+    private Map<String, Execution> executions = new HashMap<>();
 
     @Override
     public ArrayListTotal<Execution> find(String query, Pageable pageable) {

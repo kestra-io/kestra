@@ -64,7 +64,7 @@ public class Flow {
         return Stream.of(
             this.tasks,
             this.errors,
-            this.getListenersTasks()
+            this.listenersTasks()
         )
             .flatMap(tasks -> this.findTaskByTaskId(tasks, taskRun.getTaskId(), runContext, taskRun).stream())
             .map(task -> ResolvedTask.builder()
@@ -77,7 +77,7 @@ public class Flow {
             .orElseThrow(() -> new IllegalArgumentException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
     }
 
-    public List<Task> getListenersTasks() {
+    public List<Task> listenersTasks() {
         return this.getListeners() != null ?
             this.getListeners()
                 .stream()
@@ -87,7 +87,7 @@ public class Flow {
     }
 
     public boolean isListenerTask(String id) {
-        return this.getListenersTasks()
+        return this.listenersTasks()
             .stream()
             .anyMatch(task -> task.getId().equals(id));
     }

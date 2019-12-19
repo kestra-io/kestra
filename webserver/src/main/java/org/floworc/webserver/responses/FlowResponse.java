@@ -1,6 +1,7 @@
 package org.floworc.webserver.responses;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.floworc.core.models.flows.Flow;
 
 import javax.validation.ConstraintViolation;
@@ -9,6 +10,7 @@ import org.apache.avro.reflect.Nullable;
 import java.util.Set;
 
 @Getter
+@NoArgsConstructor
 public class FlowResponse {
     @NotNull
     private Flow flow;

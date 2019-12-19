@@ -68,13 +68,6 @@
                 ></b-pagination>
             </b-col>
         </b-row>
-        <bottom-line>
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <flow-actions />
-                </li>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 

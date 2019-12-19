@@ -1,14 +1,5 @@
 <template>
     <div>
-        <b-row>
-            <b-col>
-                <h1>
-                    <router-link to="/flows">Flow</router-link>
-                    <chevron-right />
-                    {{flowName}}
-                </h1>
-            </b-col>
-        </b-row>
         <b-row class="row editor-wrapper">
             <b-col md="12">
                 <editor
@@ -87,7 +78,11 @@ export default {
                         flow: flow
                     })
                     .then(() => {
-                        this.$router.push({ name: "flow", params: flow, query: {tab: 'data-source'} });
+                        this.$router.push({
+                            name: "flow",
+                            params: flow,
+                            query: { tab: "data-source" }
+                        });
                         this.$bvToast.toast("Created.", {
                             title: "Flow editor",
                             autoHideDelay: 5000,

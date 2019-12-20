@@ -74,10 +74,10 @@ import NamespaceSelector from "../namespace/Selector";
 import Plus from "vue-material-design-icons/Plus";
 import Eye from "vue-material-design-icons/Eye";
 import BottomLine from "../layout/BottomLine";
-import RouteContext from '../../mixins/routeContext'
+import RouteContext from "../../mixins/routeContext";
 
 export default {
-    mixins : [RouteContext],
+    mixins: [RouteContext],
     components: {
         NamespaceSelector,
         BottomLine,
@@ -102,6 +102,22 @@ export default {
     computed: {
         ...mapState("flow", ["flows", "total"]),
         ...mapState("namespace", ["namespace", "namespace"]),
+        routeInfo() {
+            return {
+                title: this.$t("search"),
+                breadcrumb: [
+                    {
+                        label: this.$t("flows"),
+                        link: {
+                            name: "flows",
+                            params: {
+                                namespace: this.$route.params.namespace
+                            }
+                        }
+                    }
+                ]
+            };
+        },
         fields() {
             const title = title => {
                 return this.$t(title).capitalize();

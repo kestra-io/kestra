@@ -93,6 +93,14 @@ export default {
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
+        routeInfo() {
+            return {
+                title: this.$t("search"),
+                breadcrumb: [
+                    { label: "executions", link: { name: "executionRaw" } }
+                ]
+            };
+        },
         fields() {
             const title = title => {
                 return this.$t(title).capitalize();

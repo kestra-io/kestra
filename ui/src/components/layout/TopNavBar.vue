@@ -44,6 +44,7 @@ h1 {
 }
 .top-line {
     left: 50px;
+    width: calc(100% - 50px)
 }
 .bread-item {
     color: white;

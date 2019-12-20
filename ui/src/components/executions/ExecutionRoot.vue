@@ -69,6 +69,42 @@ export default {
         }
     },
     computed: {
+        routeInfo() {
+            return {
+                title: this.$t("details"),
+                breadcrumb: [
+                    {
+                        label: this.$t("flows"),
+                        link: {
+                            name: "flows",
+                            query: {
+                                namespace: this.$route.params.namespace
+                            }
+                        }
+                    },
+                    {
+                        label: this.$route.params.flowId,
+                        link: {
+                            name: "flow",
+                            params: {
+                                namespace: this.$route.params.namespace,
+                                id: this.$route.params.flowId
+                            }
+                        }
+                    },
+                    {
+                        label: this.$t("execution"),
+                        link: {}
+                    },
+                    {
+                        label: this.$route.params.id,
+                        link: {
+                            name: "execution"
+                        }
+                    }
+                ]
+            };
+        },
         tabs() {
             const title = title => this.$t(title).capitalize();
             return [

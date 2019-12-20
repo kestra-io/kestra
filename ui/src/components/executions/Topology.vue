@@ -13,14 +13,14 @@ export default {
     components: {
         TopologyTree
     },
-    watch: {
-        $route() {
-            this.update();
-        },
-        execution() {
-            this.update();
-        }
-    },
+    // watch: {
+    //     $route() {
+    //         this.update();
+    //     },
+    //     execution() {
+    //         this.update();
+    //     }
+    // },
     computed: {
         ...mapState("execution", ["execution"]),
         tree() {
@@ -49,7 +49,8 @@ export default {
             if (node.data.state) {
                 return {
                     SUCCESS: "#c9fc8d",
-                    FAILED: "red"
+                    FAILED: "red",
+                    RUNNING: "orange"
                 }[node.data.state.current];
             }
             return "#c9fc8d";

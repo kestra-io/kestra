@@ -63,7 +63,7 @@ export default {
                         }
                     },
                     {
-                        label: r.params.id
+                        label: this.$route.params.id
                     }
                 ]
             };

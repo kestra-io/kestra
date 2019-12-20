@@ -12,9 +12,9 @@
                 </router-link>
             </template>
             <template v-slot:cell(date)="row">
-                <div class="status-wrapper">
-                    {{row.item.state.histories[0].date | date('YYYY/MM/DD HH:mm:ss')}}
-                </div>
+                <div
+                    class="status-wrapper"
+                >{{row.item.state.histories[0].date | date('YYYY/MM/DD HH:mm:ss')}}</div>
             </template>
             <template v-slot:cell(state.current)="row">
                 <div class="status-wrapper">
@@ -73,12 +73,13 @@
 
 <script>
 import { mapState } from "vuex";
-import BottomLine from "../layout/BottomLine";
-import FlowActions from "../flows/FlowActions";
 import Eye from "vue-material-design-icons/Eye";
 import Status from "../Status";
+import RouteContext from "../../mixins/routeContext";
+
 export default {
-    components: { BottomLine, Status, Eye, FlowActions },
+    mixins: [RouteContext],
+    components: { Status, Eye },
     data() {
         return {
             file: undefined,

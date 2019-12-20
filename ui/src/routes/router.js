@@ -20,7 +20,7 @@ export default new VueRouter({
         { name: 'flowsAdd', path: '/flows/add', component: FlowEdit },
         //Executions
         { name: 'executions', path: '/executions/:namespace/:flowId', component: Executions },
-        { name: 'executions-raw', path: '/executions', component: Executions },
+        { name: 'executionsRaw', path: '/executions', component: Executions },
         { name: 'execution', path: '/execution/:namespace/:flowId/:id', component: ExecutionRoot },
         // { name: 'executionConfiguration', path: '/execution/configuration/:namespace/:id', component: ExecutionConfiguration },
         //Settings

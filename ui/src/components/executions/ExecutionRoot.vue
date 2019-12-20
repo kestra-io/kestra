@@ -1,9 +1,7 @@
 <template>
     <div>
         <h1 class="wrap">
-            <router-link
-                :to="`/flow/${$route.params.namespace}/${$route.params.flowId}`"
-            >Flow</router-link>
+            <router-link :to="`/flow/${$route.params.namespace}/${$route.params.flowId}`">Flow</router-link>
             &gt; {{$route.params.id}}
         </h1>
         <b-card no-body>
@@ -31,8 +29,10 @@ import Topology from "./Topology";
 import Trigger from "vue-material-design-icons/Cogs";
 import BottomLine from "../layout/BottomLine";
 import FlowActions from "../flows/FlowActions";
+import RouteContext from "../../mixins/routeContext";
 
 export default {
+    mixins: [RouteContext],
     components: {
         Overview,
         BottomLine,

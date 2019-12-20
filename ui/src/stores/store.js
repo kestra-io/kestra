@@ -6,6 +6,7 @@ import auth from './auth'
 import flow from './flow'
 import execution from './executions'
 import namespace from './namespaces'
+import layout from './layout'
 
 Vue.use(Vuex)
 
@@ -17,6 +18,7 @@ export default new Vuex.Store({
         settings,
         flow,
         execution,
-        namespace
+        namespace,
+        layout
     }
 })

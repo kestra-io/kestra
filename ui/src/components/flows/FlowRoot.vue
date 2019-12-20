@@ -1,9 +1,5 @@
 <template>
     <div>
-        <h1 class="wrap">
-            <router-link :to="{name: 'flows', query: {namespace: $route.params.namespace}}">Flows</router-link>
-            &gt; {{$route.params.id}}
-        </h1>
         <b-card no-body>
             <b-tabs card>
                 <b-tab
@@ -28,8 +24,10 @@ import ExecutionConfiguration from "./ExecutionConfiguration";
 import BottomLine from "../layout/BottomLine";
 import FlowActions from "./FlowActions";
 import Executions from "../executions/Executions";
+import RouteContext from "../../mixins/routeContext";
 
 export default {
+    mixins: [RouteContext],
     components: {
         Overview,
         BottomLine,

@@ -1,12 +1,6 @@
 <template>
     <div>
         <b-row>
-            <b-col>
-                <h1 class="text-capitalize wrap">{{$t('flows')}}</h1>
-            </b-col>
-        </b-row>
-        <hr />
-        <b-row>
             <b-col sm="12" md="4">
                 <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
             </b-col>
@@ -80,8 +74,10 @@ import NamespaceSelector from "../namespace/Selector";
 import Plus from "vue-material-design-icons/Plus";
 import Eye from "vue-material-design-icons/Eye";
 import BottomLine from "../layout/BottomLine";
+import RouteContext from '../../mixins/routeContext'
 
 export default {
+    mixins : [RouteContext],
     components: {
         NamespaceSelector,
         BottomLine,

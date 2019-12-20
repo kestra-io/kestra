@@ -18,7 +18,9 @@
 </template>
 
 <script>
+import RouteContext from "../../mixins/routeContext";
 export default {
+    mixins: [RouteContext],
     data() {
         return {
             langOptions: [

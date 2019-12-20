@@ -70,7 +70,7 @@ export default {
         }
     },
     mounted() {
-        this.intervalHandler = setInterval(() => this.computeSeries(), 40);
+        this.intervalHandler = setInterval(this.computeSeries, 40);
     },
     computed: {
         ...mapState("execution", ["execution", "task"]),

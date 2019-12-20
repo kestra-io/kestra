@@ -39,8 +39,8 @@
                 <hr />
             </b-col>
             <b-col v-if="hasTaskLog && task.id === taskItem.id" md="12">
-                <log-list/>
-                <br/>
+                <log-list />
+                <br />
             </b-col>
         </b-row>
     </div>
@@ -59,8 +59,18 @@ export default {
                 SUCCESS: "bg-success text-white",
                 RUNNING: "bg-primary text-white",
                 FAILED: "bg-danger text-white"
-            }
+            },
+            series: [],
+            intervalHandler: undefined
         };
+    },
+    watch: {
+        execution() {
+            this.computeSeries();
+        }
+    },
+    mounted() {
+        this.intervalHandler = setInterval(() => this.computeSeries(), 40);
     },
     computed: {
         ...mapState("execution", ["execution", "task"]),
@@ -75,44 +85,50 @@ export default {
         },
         start() {
             return ts(this.execution.state.histories[0].date);
+        }
+    },
+    methods: {
+        delta() {
+            return this.stop() - this.start;
         },
         stop() {
-            if (this.execution.state.current === "RUNNING") {
+            if (this.execution.state.current == "RUNNING") {
                 return +new Date();
             }
             const lastIndex = this.execution.state.histories.length - 1;
             return ts(this.execution.state.histories[lastIndex].date);
         },
-        delta() {
-            return this.stop - this.start;
-        },
-        series() {
-            const series = [];
+        computeSeries() {
+            if (!this.execution) {
+                return;
+            }
+            if (this.execution.state.current !== "RUNNING") {
+                this.stopRealTime();
+            }
 
+            const series = [];
+            const executionDelta = this.delta(); //caching this value matters
             for (let task of this.execution.taskRunList || []) {
                 const lastIndex = task.state.histories.length - 1;
                 const startTs = ts(task.state.histories[0].date);
-                const stopTs = ts(task.state.histories[lastIndex].date);
+                let stopTs = ts(task.state.histories[lastIndex].date);
                 const start = startTs - this.start;
-                const stop = stopTs - this.start - start;
+                let stop = stopTs - this.start - start;
+                if ((stop / executionDelta) * 100 < 1) {
+                    stopTs = +new Date();
+                    stop = stopTs - this.start - start;
+                }
                 const delta = stopTs - startTs;
                 const duration = this.$moment.duration(delta);
                 const humanDuration =
                     duration.seconds() > 1
                         ? duration.humanize()
                         : delta + " ms";
-                console.log("start", startTs, "stop", stopTs);
-                console.log(
-                    "stop",
-                    task.state.histories[lastIndex].date,
-                    "width",
-                    (stop / this.delta) * 100
-                );
                 series.push({
                     id: task.id,
                     name: task.taskId,
-                    start: (start / this.delta) * 100,
-                    width: (stop / this.delta) * 100,
+                    start: (start / this.delta()) * 100,
+                    width: (stop / this.delta()) * 100,
                     tooltip: `${this.$t(
                         "duration"
                     ).capitalize()} : ${humanDuration}`,
@@ -120,14 +136,20 @@ export default {
                     task
                 });
             }
-            return series;
+            this.series = series;
+        },
+        onTaskSelect(task) {
+            task = this.task && this.task.id === task.id ? undefined : task;
+            this.$store.commit("execution/setTask", task);
+        },
+        stopRealTime() {
+            if (this.intervalHandler) {
+                clearInterval(this.intervalHandler);
+            }
         }
     },
-    methods: {
-        onTaskSelect(task) {
-            task = this.task && this.task.id === task.id ? undefined : task
-            this.$store.commit("execution/setTask", task);
-        }
+    destroyed() {
+        this.stopRealTime();
     }
 };
 </script>

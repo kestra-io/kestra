@@ -38,12 +38,11 @@
                 </div>
                 <hr />
             </b-col>
+            <b-col v-if="hasTaskLog && task.id === taskItem.id" md="12">
+                <log-list/>
+                <br/>
+            </b-col>
         </b-row>
-
-        <template v-if="hasTaskLog">
-            <hr />
-            <log-list />
-        </template>
     </div>
 </template>
 <script>
@@ -126,6 +125,7 @@ export default {
     },
     methods: {
         onTaskSelect(task) {
+            task = this.task && this.task.id === task.id ? undefined : task
             this.$store.commit("execution/setTask", task);
         }
     }

@@ -1,25 +1,19 @@
 <template>
-    <div>
-        <h1 class="wrap">
-            <router-link :to="`/flow/${$route.params.namespace}/${$route.params.flowId}`">Flow</router-link>
-            &gt; {{$route.params.id}}
-        </h1>
-        <b-card no-body>
-            <b-tabs card>
-                <b-tab
-                    v-for="tab in tabs"
-                    :key="tab.tab"
-                    @click="setTab(tab.tab)"
-                    :active="$route.query.tab === tab.tab"
-                    :title="tab.title"
-                >
-                    <b-card-text>
-                        <div :is="tab.tab" />
-                    </b-card-text>
-                </b-tab>
-            </b-tabs>
-        </b-card>
-    </div>
+    <b-card no-body>
+        <b-tabs card>
+            <b-tab
+                v-for="tab in tabs"
+                :key="tab.tab"
+                @click="setTab(tab.tab)"
+                :active="$route.query.tab === tab.tab"
+                :title="tab.title"
+            >
+                <b-card-text>
+                    <div :is="tab.tab" />
+                </b-card-text>
+            </b-tab>
+        </b-tabs>
+    </b-card>
 </template>
 <script>
 import Gantt from "./Gantt";

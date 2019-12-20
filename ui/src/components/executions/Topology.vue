@@ -13,18 +13,9 @@ export default {
     components: {
         TopologyTree
     },
-    // watch: {
-    //     $route() {
-    //         this.update();
-    //     },
-    //     execution() {
-    //         this.update();
-    //     }
-    // },
     computed: {
         ...mapState("execution", ["execution"]),
         tree() {
-            console.log("recompute tree");
             if (this.execution) {
                 return {
                     id: "root",

@@ -1,9 +1,5 @@
 <template>
-    <div>
-        <div ref="wrapper">
-        </div>
-        <button @click="reset()">click</button>
-    </div>
+    <div ref="wrapper"></div>
 </template>
 <script>
 import * as d3 from "d3";
@@ -27,15 +23,15 @@ export default {
             node: []
         };
     },
-    watch : {
-        tree () {
-            this.reset()
+    watch: {
+        tree() {
+            this.reset();
         }
     },
     methods: {
         reset() {
             d3.select("#topology").remove();
-            this.$refs.wrapper.innerHTML = '<div id="topology"></div>'
+            this.$refs.wrapper.innerHTML = '<div id="topology"></div>';
             this.buildTree();
         },
         onNodeClick(node) {

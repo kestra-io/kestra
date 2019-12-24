@@ -22,15 +22,19 @@ export default {
         TopNavBar
     },
     created () {
-        const defaultPage = localStorage.getItem('defaultPage') || 'flows'
         if (this.$route.path === '/') {
-            this.$router.push({name: defaultPage})
+            this.$router.push({name: 'flowsList'})
         }
     }
 };
 </script>
 
+
 <style lang="scss">
+body {
+    min-width: 320px;
+}
+
 body,
 html,
 .container {

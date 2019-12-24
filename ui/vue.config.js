@@ -13,5 +13,8 @@ module.exports = {
             ]
         },
         plugins: []
+    },
+    css: {
+        sourceMap: true
     }
 };

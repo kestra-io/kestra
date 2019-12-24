@@ -74,7 +74,6 @@ export default {
 
 <style lang="scss" scoped>
 @import "../styles/variable";
-
 /deep/ .menu-icon {
     font-size: 1.5em;
     background-color: $dark !important;

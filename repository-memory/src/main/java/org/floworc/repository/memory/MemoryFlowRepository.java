@@ -154,7 +154,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<String> findDistinctNamespace(Optional<String> prefix) {
+    public List<String> findDistinctNamespace(Optional<String> prefix) {
         HashSet<String> namespaces = new HashSet<String>();
         for (Flow f : this.findAll()) {
             if (f.getNamespace().startsWith(prefix.orElse(""))) {
@@ -163,6 +163,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         }
         ArrayList<String> namespacesList = new ArrayList<String>(namespaces);
         Collections.sort(namespacesList);
-        return new ArrayListTotal<String>(namespacesList, namespacesList.size());
+        return new ArrayList<>(namespacesList);
     }
 }

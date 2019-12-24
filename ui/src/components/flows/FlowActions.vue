@@ -13,12 +13,6 @@
             </router-link>
         </b-dropdown-item>
         <b-dropdown-item>
-            <router-link :to="{name: 'executionConfiguration', params: actionFlow}">
-                <trigger />
-                {{$t('trigger execution for flow') | cap }} {{actionFlow.id}}
-            </router-link>
-        </b-dropdown-item>
-        <b-dropdown-item>
             <router-link :to="{name: 'flowTopology', params: actionFlow}">
                 <graph />
                 {{$t('display topology for flow') | cap }} {{actionFlow.id}}
@@ -27,14 +21,12 @@
     </b-dropdown>
 </template>
 <script>
-import Trigger from "vue-material-design-icons/Cogs";
 import Search from "vue-material-design-icons/Magnify";
 import Edit from "vue-material-design-icons/Pencil";
 import Graph from "vue-material-design-icons/Graph";
 import { mapState } from "vuex";
 export default {
     components: {
-        Trigger,
         Search,
         Edit,
         Graph

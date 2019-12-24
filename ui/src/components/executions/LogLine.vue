@@ -1,10 +1,8 @@
 <template>
-    <div v-if="filtered" class="message-wrapper d-flex">
-        <div class="level text-center h-100" :class="levelClass">{{log.level}}</div>
-        <div class="date text-nowrap text-light text-center">{{log.timestamp}}</div>
-        <div class="flex-grow-1 message">
-            <pre class="text-white">{{log.message}}</pre>
-        </div>
+    <div class="line" v-if="filtered">
+        <span :class="levelClass" class="badge">{{log.level.padEnd(9)}}</span> <span
+            class="badge bg-light text-dark">{{log
+        .timestamp}}</span> <span class="message">{{log.message}}</span>
     </div>
 </template>
 <script>
@@ -26,11 +24,11 @@ export default {
     computed: {
         levelClass() {
             return {
-                DEBUG: "bg-secondary",
-                INFO: "bg-primary",
-                WARNING: "bg-warning",
-                ERROR: "bg-danger",
-                CRITICAL: "bg-danger font-weight-bold"
+                DEBUG: "badge-secondary",
+                INFO: "badge-primary",
+                WARNING: "badge-warning",
+                ERROR: "badge-danger",
+                CRITICAL: "badge-danger font-weight-bold"
             }[this.log.level];
         },
         filtered() {
@@ -43,21 +41,21 @@ export default {
 };
 </script>
 <style scoped lang="scss">
-.message-wrapper {
-    margin-bottom: 3px;
-    > div {
-        padding-right: 10px;
-        padding-left: 10px;
+@import "../../styles/_variable.scss";
+
+div {
+    white-space: pre-wrap;
+    word-break: break-all;
+    border-top: 1px solid $dark;
+
+    .badge {
+        font-size: 100%;
+        white-space: pre-wrap;
+        font-weight: $font-weight-base;
     }
-}
-.level {
-    width: 150px;
-    padding-right: 5px;
-    padding-left: 5px;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    border-radius: 3px;
-    flex-shrink: 0;
-    flex-basis: 8em;
+
+    .message {
+        padding: 0 $badge-padding-x ;
+    }
 }
 </style>

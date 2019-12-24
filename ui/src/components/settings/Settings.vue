@@ -1,19 +1,8 @@
 <template>
     <div>
-        <h1 class="text-capitalize">{{$t('settings')}}</h1>
-        <hr />
-        <b-row>
-            <b-col sm="12" md="4">
-                <b-form-group :label="$t('Set default page')">
-                    <b-form-select v-model="defaultRoute" :options="routesOptions"></b-form-select>
-                </b-form-group>
-            </b-col>
-            <b-col sm="12" md="4">
-                <b-form-group :label="$t('Language')">
-                    <b-form-select v-model="lang" :options="langOptions"></b-form-select>
-                </b-form-group>
-            </b-col>
-        </b-row>
+        <b-form-group :label="$t('Language')">
+            <b-form-select v-model="lang" :options="langOptions"></b-form-select>
+        </b-form-group>
     </div>
 </template>
 
@@ -30,25 +19,10 @@ export default {
         };
     },
     computed: {
-        routesOptions() {
-            return [
-                { value: "flows", text: "flows" },
-                { value: "settings", text: this.$t("settings") }
-            ];
-        },
-        defaultRoute: {
-            set(route) {
-                localStorage.setItem("defaultPage", route);
-                this.$bvToast.toast(this.$t("Successfully set"), {
-                    title: this.$t("Default page"),
-                    autoHideDelay: 5000,
-                    toaster: "b-toaster-top-center",
-                    variant: "success"
-                });
-            },
-            get() {
-                return localStorage.getItem("defaultPage") || "flows";
-            }
+        routeInfo() {
+            return {
+                title: this.$t("settings")
+            };
         },
         lang: {
             set(lang) {
@@ -69,6 +43,3 @@ export default {
     }
 };
 </script>
-
-<style scoped lang="scss">
-</style>

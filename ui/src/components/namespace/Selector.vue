@@ -1,5 +1,5 @@
 <template>
-    <b-form-group :label="$t('Select namespace')">
+    <b-form-group :label="$t('Select namespace')" label-cols-sm="auto">
         <v-select
             v-model="selectedNamespace"
             @search="onNamespaceSearch"

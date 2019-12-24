@@ -1,58 +1,24 @@
 <template>
     <div>
-        <b-row>
-            <b-col sm="12" md="4">
-                <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
-            </b-col>
-        </b-row>
-        <b-table responsive="xl" striped hover :items="flows" :fields="fields">
-            <template v-slot:cell(actions)="row">
-                <router-link :to="{name: 'flow', params : row.item}">
-                    <b-button size="sm">
-                        <eye id="edit-action" />
-                    </b-button>
-                </router-link>
-            </template>
-            <template v-slot:cell(namespace)="row">
-                <a
-                    href
-                    @click.prevent="onNamespaceSelect(row.item.namespace)"
-                >{{row.item.namespace}}</a>
-            </template>
-        </b-table>
-        <b-row>
-            <b-col offset-md="4" sm="5" md="4">
-                <b-form-group
-                    :label="$t('Per page')"
-                    label-cols-sm="6"
-                    label-cols-md="8"
-                    label-cols-lg="6"
-                    label-align-sm="right"
-                    label-size="sm"
-                    label-for="perPageSelect"
-                    class="mb-0"
-                >
-                    <b-form-select
-                        v-model="perPage"
-                        @change="loadFlows"
-                        id="perPageSelect"
-                        size="sm"
-                        :options="pageOptions"
-                    ></b-form-select>
-                </b-form-group>
-            </b-col>
-            <b-col sm="6" xs="12" md="4">
-                <b-pagination
-                    @change="loadFlows"
-                    v-model="page"
-                    :total-rows="total"
-                    :per-page="perPage"
-                    align="fill"
-                    size="sm"
-                    class="my-0"
-                ></b-pagination>
-            </b-col>
-        </b-row>
+        <div>
+            <data-table @onPageChanged="loadFlows" striped hover bordered ref="dataTable" :total="total">
+                <template v-slot:navbar>
+                    <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
+                </template>
+                <template v-slot:table>
+                    <b-table responsive="xl" striped bordered hover :items="flows" :fields="fields">
+                        <template v-slot:cell(actions)="row">
+                            <router-link :to="{name: 'flow', params : row.item}">
+                                <eye id="edit-action" />
+                            </router-link>
+                        </template>
+                        <template v-slot:cell(namespace)="row">
+                            <a href @click.prevent="onNamespaceSelect(row.item.namespace)">{{row.item.namespace}}</a>
+                        </template>
+                    </b-table>
+                </template>
+            </data-table>
+        </div>
         <bottom-line>
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
@@ -75,6 +41,7 @@ import Plus from "vue-material-design-icons/Plus";
 import Eye from "vue-material-design-icons/Eye";
 import BottomLine from "../layout/BottomLine";
 import RouteContext from "../../mixins/routeContext";
+import DataTable from "../layout/DataTable";
 
 export default {
     mixins: [RouteContext],
@@ -82,16 +49,11 @@ export default {
         NamespaceSelector,
         BottomLine,
         Plus,
-        Eye
+        Eye,
+        DataTable
     },
-    data() {
-        return {
-            page: 1, //TODO put in store
-            perPage: 10,
-            pageOptions: [5, 10, 25, 50, 100]
-        };
-    },
-    created() {
+
+    mounted() {
         this.onNamespaceSelect(this.$route.query.namespace);
     },
     watch: {
@@ -104,18 +66,7 @@ export default {
         ...mapState("namespace", ["namespace", "namespace"]),
         routeInfo() {
             return {
-                title: this.$t("search"),
-                breadcrumb: [
-                    {
-                        label: this.$t("flows"),
-                        link: {
-                            name: "flows",
-                            params: {
-                                namespace: this.$route.params.namespace
-                            }
-                        }
-                    }
-                ]
+                title: this.$t("flows")
             };
         },
         fields() {
@@ -126,44 +77,38 @@ export default {
                 {
                     key: "id",
                     label: title("id"),
-                    class: "text-center"
                 },
                 {
                     key: "namespace",
                     label: title("namespace"),
-                    class: "text-center"
                 },
                 {
                     key: "revision",
                     label: title("revision"),
-                    class: "text-center"
                 },
                 {
                     key: "actions",
-                    label: title("actions"),
-                    class: "text-center"
+                    label: "",
+                    class: "row-action"
                 }
             ];
         }
     },
     methods: {
-        loadFlows() {
-            //setTimeout is for pagination settings are properly updated
-            setTimeout(() => {
-                if (this.namespace) {
-                    this.$store.dispatch("flow/loadFlows", {
-                        namespace: this.namespace,
-                        perPage: this.perPage,
-                        page: this.page
-                    });
-                } else {
-                    this.$store.dispatch("flow/findFlows", {
-                        q: "*",
-                        perPage: this.perPage,
-                        page: this.page
-                    });
-                }
-            });
+        loadFlows(pagination) {
+            if (this.namespace) {
+                this.$store.dispatch("flow/loadFlows", {
+                    namespace: this.namespace,
+                    size: pagination.size,
+                    page: pagination.page
+                });
+            } else {
+                this.$store.dispatch("flow/findFlows", {
+                    q: "*",
+                    size: pagination.size,
+                    page: pagination.page
+                });
+            }
         },
         onNamespaceSelect(namespace) {
             if (this.$route.query.namespace !== namespace) {
@@ -171,7 +116,7 @@ export default {
                 this.page = 1;
             }
             this.$store.commit("namespace/setNamespace", namespace);
-            this.loadFlows();
+            this.loadFlows(this.$refs.dataTable.pagination);
         }
     }
 };

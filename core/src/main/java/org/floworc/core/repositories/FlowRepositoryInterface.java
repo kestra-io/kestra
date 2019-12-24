@@ -26,7 +26,7 @@ public interface FlowRepositoryInterface {
 
     ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable);
 
-    ArrayListTotal<String> findDistinctNamespace(Optional<String> prefix);
+    List<String> findDistinctNamespace(Optional<String> prefix);
 
     default Optional<Flow> exists(Flow flow) {
         return this.findRevisions(flow.getNamespace(), flow.getId())

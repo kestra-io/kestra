@@ -9,7 +9,7 @@ export default {
 
     actions: {
         loadFlows({ commit }, options) {
-            return Vue.axios.get(`/api/v1/flows/${options.namespace}`, { params: { size: options.perPage, page: options.page } }).then(response => {
+            return Vue.axios.get(`/api/v1/flows/${options.namespace}`, { params: { size: options.size, page: options.page } }).then(response => {
                 commit('setFlows', response.data.results)
                 commit('setTotal', response.data.total)
             })

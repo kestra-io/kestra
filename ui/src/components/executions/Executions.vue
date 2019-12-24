@@ -1,104 +1,62 @@
 <template>
     <div>
-        <b-table responsive="xl" striped hover :items="executions" :fields="fields">
-            <template v-slot:cell(details)="row">
-                <router-link
-                    class="btn btn-default"
-                    :to="`/execution/${row.item.namespace}/${row.item.flowId}/${row.item.id}`"
-                >
-                    <b-button size="sm">
-                        <eye id="edit-action" />
-                    </b-button>
-                </router-link>
+        <data-table
+            @onPageChanged="loadExecutions"
+            ref="dataTable"
+            :total="total"
+        >
+            <template v-slot:table>
+                <b-table responsive="xl" striped hover bordered :items="executions"
+                         :fields="fields">
+                    <template v-slot:cell(details)="row">
+                        <router-link :to="`/executions/${row.item.namespace}/${row.item.flowId}/${row.item.id}`">
+                            <eye id="edit-action" />
+                        </router-link>
+                    </template>
+                    <template v-slot:cell(date)="row">
+                        {{row.item.state.histories[0].date | date('YYYY/MM/DD HH:mm:ss')}}
+                    </template>
+                    <template v-slot:cell(state.current)="row">
+                        <status class="status" :status="row.item.state.current" />
+                    </template>
+                    <template v-slot:cell(flowId)="row">
+                        <router-link
+                                :to="{name: 'flow', params: {namespace: row.item.namespace, id: row.item.flowId}}"
+                        >{{row.item.flowId}}</router-link>
+                    </template>
+                    <template v-slot:cell(namespace)="row">
+                        <router-link
+                                :to="{name: 'flowsList', query: {namespace: row.item.namespace}}"
+                        >{{row.item.namespace}}</router-link>
+                    </template>
+                    <template v-slot:cell(id)="row">
+                        <code>{{row.item.id | id}}</code>
+                    </template>
+                </b-table>
             </template>
-            <template v-slot:cell(date)="row">
-                <div
-                    class="status-wrapper"
-                >{{row.item.state.histories[0].date | date('YYYY/MM/DD HH:mm:ss')}}</div>
-            </template>
-            <template v-slot:cell(state.current)="row">
-                <div class="status-wrapper">
-                    <status class="status" :status="row.item.state.current" />
-                </div>
-            </template>
-            <template v-slot:cell(flowId)="row">
-                <router-link
-                    :to="{name: 'flow', params: {namespace: row.item.namespace, id: row.item.flowId}}"
-                >{{row.item.flowId}}</router-link>
-            </template>
-            <template v-slot:cell(namespace)="row">
-                <router-link
-                    :to="{name: 'flows', query: {namespace: row.item.namespace}}"
-                >{{row.item.namespace}}</router-link>
-            </template>
-            <template v-slot:cell(id)="row">
-                <router-link :to="{name: 'execution', params: row.item}">{{row.item.id}}</router-link>
-            </template>
-        </b-table>
-        <b-row>
-            <b-col offset-md="4" sm="5" md="4">
-                <b-form-group
-                    :label="$t('Per page')"
-                    label-cols-sm="6"
-                    label-cols-md="8"
-                    label-cols-lg="6"
-                    label-align-sm="right"
-                    label-size="sm"
-                    label-for="sizeSelect"
-                    class="mb-0"
-                >
-                    <b-form-select
-                        v-model="size"
-                        @change="loadExecutions"
-                        id="sizeSelect"
-                        size="sm"
-                        :options="pageOptions"
-                    ></b-form-select>
-                </b-form-group>
-            </b-col>
-            <b-col sm="6" xs="12" md="4">
-                <b-pagination
-                    @change="loadExecutions"
-                    v-model="page"
-                    :total-rows="total"
-                    :per-page="size"
-                    align="fill"
-                    size="sm"
-                    class="my-0"
-                ></b-pagination>
-            </b-col>
-        </b-row>
+        </data-table>
     </div>
 </template>
 
 <script>
 import { mapState } from "vuex";
+import DataTable from "../layout/DataTable";
 import Eye from "vue-material-design-icons/Eye";
 import Status from "../Status";
 import RouteContext from "../../mixins/routeContext";
 
+
 export default {
     mixins: [RouteContext],
-    components: { Status, Eye },
-    data() {
-        return {
-            file: undefined,
-            page: 1,
-            size: 5,
-            pageOptions: [5, 10, 25, 50, 100]
-        };
-    },
-    created() {
-        this.loadExecutions();
+    components: { Status, Eye,  DataTable },
+    mounted() {
+        this.loadExecutions(this.$refs.dataTable.pagination);
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
         routeInfo() {
             return {
-                title: this.$t("search"),
-                breadcrumb: [
-                    { label: "executions", link: { name: "executionRaw" } }
-                ]
+                title: this.$t("executions"),
             };
         },
         fields() {
@@ -107,41 +65,37 @@ export default {
             };
             return [
                 {
+                    key: "id",
+                    label: title("id")
+                },
+                {
                     key: "date",
-                    label: title("create date"),
-                    class: "text-center"
+                    label: title("created date"),
                 },
                 {
                     key: "namespace",
                     label: title("namespace"),
-                    class: "text-center"
                 },
                 {
                     key: "flowId",
                     label: title("flow"),
-                    class: "text-center"
-                },
-                {
-                    key: "id",
-                    label: title("id"),
-                    class: "text-center"
                 },
                 {
                     key: "state.current",
                     label: title("state"),
-                    class: "text-center"
+                    class: "text-center",
                 },
                 {
                     key: "details",
-                    label: title("details"),
-                    class: "text-center"
+                    label: "",
+                    class: "row-action"
                 }
             ];
         }
     },
     watch: {
         $route() {
-            this.loadExecutions();
+            this.loadExecutions(this.$refs.dataTable.pagination);
         }
     },
     methods: {
@@ -161,35 +115,24 @@ export default {
                     });
                 });
         },
-        loadExecutions() {
-            //setTimeout is for pagination settings are properly updated
+        loadExecutions(pagination) {
             if (this.$route.params.namespace) {
-                setTimeout(() => {
-                    this.$store.dispatch("execution/loadExecutions", {
-                        namespace: this.$route.params.namespace,
-                        flowId: this.$route.params.id,
-                        size: this.size,
-                        page: this.page
-                    });
-                });
+                this.$store.dispatch("execution/loadExecutions", {
+                    namespace: this.$route.params.namespace,
+                    flowId: this.$route.params.id,
+                    size: pagination.size,
+                    page: pagination.page
+                })
+
             } else {
-                setTimeout(() => {
-                    this.$store.dispatch("execution/findExecutions", {
-                        size: this.size,
-                        page: this.page,
-                        q: "*"
-                    });
+                this.$store.dispatch("execution/findExecutions", {
+                    size: pagination.size,
+                    page: pagination.page,
+                    q: "*"
                 });
             }
         }
     }
 };
 </script>
-<style scoped>
-.upload-file-wrapper {
-    margin-right: 15px;
-}
-.status-wrapper {
-    padding-top: 10px;
-}
-</style>
+

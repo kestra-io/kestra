@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,7 @@ public class TestCommand extends AbstractCommand {
     private Path file;
 
     @CommandLine.Parameters(index = "1..*", description = "the inputs to pass as key pair value")
-    private List<String> inputs;
+    private List<String> inputs = new ArrayList<>();
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;

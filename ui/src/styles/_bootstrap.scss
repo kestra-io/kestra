@@ -1,3 +1,11 @@
+:focus {
+    outline-width: 0;
+}
+
+.text-monospace {
+    font-size: $font-size-base * 0.8;
+}
+
 // Tabs
 ul.nav-tabs {
     .nav-link {
@@ -18,6 +26,7 @@ ul.nav-tabs {
         &:hover {
             transition-duration: 0ms;
             border-bottom-color: $gray-400;
+            background: transparent;
             border-bottom-width: 4px;
         }
     }
@@ -32,34 +41,19 @@ ul.nav-tabs {
     }
 }
 
-// Navbar
-nav.navbar {
-    a.dropdown-toggle {
-        white-space: nowrap;
+
+// table
+.table-responsive-xl {
+    th.row-action {
+        width: 16px;
     }
 
-    .dropdown-menu {
-        .input-group {
-            margin: $dropdown-item-padding-y $dropdown-item-padding-x;
-            width: calc(100% - 3rem);
-            min-width: 200px;
-
-            input {
-                border: 0;
-            }
-        }
+    td.row-action a {
+        color: $body-color;
     }
 }
 
-// Pagination
-.page-item.info {
-    .page-link {
-        color: color-yiq($secondary);
-        @include gradient-bg($secondary);
-        white-space: nowrap;
-    }
-}
-
-form >legend {
-    border-bottom: 2px solid $gray-700;
+// pagination
+.pagination .page-link {
+    border-radius: 1px;
 }

@@ -1,31 +1,24 @@
 <template>
     <b-navbar v-if="topNavbar" class="top-line" type="dark" variant="dark">
         <b-navbar-nav>
-            <b-nav-item class="title" href="#">
-                {{title | cap}} •
-                <span v-for="(item, x) in topNavbar.breadcrumb" :key="x">
-                    <router-link class="bread-item" :to="item.link || {}">
-                        {{item.label | cap}}
-                        <span v-if="x < topNavbar.breadcrumb.length - 1">
-                            <chevron-right />
-                        </span>
-                    </router-link>
-                </span>
-            </b-nav-item>
-            <!-- <b-nav-item-dropdown text="User" right>
-                <b-dropdown-item href="#">Account</b-dropdown-item>
-                <b-dropdown-item href="#">Settings</b-dropdown-item>
-            </b-nav-item-dropdown>-->
+            <b-nav-text >
+                <h1>{{title | cap}}</h1>
+
+                <b-breadcrumb>
+                    <b-breadcrumb-item><router-link :to="{ name: 'home'}"><home /> {{$t('home') | cap}}</router-link></b-breadcrumb-item>
+                    <b-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :text="item.label" />
+                </b-breadcrumb>
+            </b-nav-text>
         </b-navbar-nav>
     </b-navbar>
 </template>
 <script>
 import { mapState } from "vuex";
-import ChevronRight from "vue-material-design-icons/ChevronRight";
+import Home from "vue-material-design-icons/Home";
 
 export default {
     components: {
-        ChevronRight
+        Home
     },
     computed: {
         ...mapState("layout", ["topNavbar"]),
@@ -39,14 +32,34 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-h1 {
-    font-size: 1.5em;
-}
+@import "../../styles/variable";
+
 .top-line {
     left: 50px;
-    width: calc(100% - 50px)
+    width: calc(100% - 50px);
+    border-bottom: 4px solid $secondary;
 }
-.bread-item {
-    color: white;
+
+h1 {
+    color: $secondary;
+    font-size: $h3-font-size;
+    margin-bottom: $headings-margin-bottom / 2;
+    font-weight: bold;
+}
+
+.navbar-expand .navbar-nav .navbar-text {
+    padding: 0
+}
+
+ol.breadcrumb {
+    border: 0;
+    padding: 0;
+    margin-bottom: 0;
+    background: transparent;
+    font-size: $font-size-xs;
+    text-transform: none;
+    a {
+        color: $gray-500;
+    }
 }
 </style>

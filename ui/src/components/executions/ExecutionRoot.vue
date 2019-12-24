@@ -65,19 +65,19 @@ export default {
     computed: {
         routeInfo() {
             return {
-                title: this.$t("details"),
+                title: this.$t("execution"),
                 breadcrumb: [
                     {
                         label: this.$t("flows"),
                         link: {
-                            name: "flows",
+                            name: "flowsList",
                             query: {
                                 namespace: this.$route.params.namespace
                             }
                         }
                     },
                     {
-                        label: this.$route.params.flowId,
+                        label: this.$route.params.namespace + "." + this.$route.params.flowId,
                         link: {
                             name: "flow",
                             params: {
@@ -87,7 +87,7 @@ export default {
                         }
                     },
                     {
-                        label: this.$t("execution"),
+                        label: this.$t("executions"),
                         link: {}
                     },
                     {

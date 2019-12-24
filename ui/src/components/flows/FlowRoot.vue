@@ -18,6 +18,7 @@
     </div>
 </template>
 <script>
+
 import Overview from "./Overview";
 import DataSource from "./DataSource";
 import ExecutionConfiguration from "./ExecutionConfiguration";
@@ -51,19 +52,32 @@ export default {
     computed: {
         routeInfo() {
             return {
-                title: this.$t("details"),
+                title: this.$route.params.id,
                 breadcrumb: [
                     {
                         label: this.$t("flows"),
                         link: {
-                            name: "flows",
+                            name: "flowsList",
+                        }
+                    },
+                    {
+                        label: this.$route.params.namespace,
+                        link: {
+                            name: "flowsList",
                             query: {
                                 namespace: this.$route.params.namespace
                             }
                         }
                     },
                     {
-                        label: this.$route.params.id
+                        label: this.$route.params.id,
+                        link: {
+                            name: "flow",
+                            params: {
+                                namespace: this.$route.params.namespace,
+                                id: this.$route.params.id
+                            }
+                        }
                     }
                 ]
             };

@@ -8,7 +8,6 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.validation.Validated;
 import io.reactivex.Maybe;
 import org.floworc.core.exceptions.InvalidFlowException;
-import org.floworc.core.models.executions.Execution;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.core.serializers.Validator;

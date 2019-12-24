@@ -6,23 +6,23 @@ import FlowRoot from '../components/flows/FlowRoot.vue'
 import FlowEdit from '../components/flows/FlowEdit.vue'
 import Executions from '../components/executions/Executions.vue'
 import ExecutionRoot from '../components/executions/ExecutionRoot.vue'
-// import ExecutionConfiguration from '../components/executions/ExecutionConfiguration.vue'
 
-Vue.use(VueRouter)
+Vue.use(VueRouter);
 
 
 export default new VueRouter({
     mode: 'history',
     routes: [
         //Flows
-        { name: 'flows', path: '/flows', component: Flows },
-        { name: 'flow', path: '/flow/:namespace/:id', component: FlowRoot },
+        { name: 'home', path: '/', component: Flows },
+        { name: 'flowsList', path: '/flows', component: Flows },
         { name: 'flowsAdd', path: '/flows/add', component: FlowEdit },
+        { name: 'flow', path: '/flows/:namespace/:id', component: FlowRoot },
         //Executions
-        { name: 'executions', path: '/executions/:namespace/:flowId', component: Executions },
-        { name: 'executionsRaw', path: '/executions', component: Executions },
-        { name: 'execution', path: '/execution/:namespace/:flowId/:id', component: ExecutionRoot },
-        // { name: 'executionConfiguration', path: '/execution/configuration/:namespace/:id', component: ExecutionConfiguration },
+        { name: 'executionsByFlow', path: '/executions/:namespace/:flowId', component: Executions },
+        { name: 'executionsList', path: '/executions', component: Executions },
+        { name: 'execution', path: '/executions/:namespace/:flowId/:id', component: ExecutionRoot },
+
         //Settings
         { name: 'settings', path: '/settings', component: Settings },
     ]

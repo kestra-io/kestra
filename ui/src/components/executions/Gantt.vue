@@ -1,17 +1,6 @@
 <template>
     <div v-if="execution">
-        <h2>{{$t('namespace').capitalize()}} : {{execution.namespace}} &gt; {{$t('flow').capitalize()}} : {{execution.flowId}}</h2>
-        <b-row>
-            <b-col offset-md="8" />
-            <b-col
-                :class="color"
-                class="text-center"
-                md="1"
-                sm="4"
-                v-for="(color, key) in colors"
-                :key="key"
-            >{{key}}</b-col>
-        </b-row>
+
         <b-row v-for="taskItem in series" :key="taskItem.id">
             <b-col
                 :id="`task-title-wrapper-${taskItem.id}`"
@@ -48,6 +37,7 @@
 <script>
 import LogList from "./LogList";
 import { mapState } from "vuex";
+import humanizeDuration from "humanize-duration";
 
 const ts = date => new Date(date).getTime();
 
@@ -92,7 +82,7 @@ export default {
             return this.stop() - this.start;
         },
         stop() {
-            if (this.execution.state.current == "RUNNING") {
+            if (this.execution.state.current === "RUNNING") {
                 return +new Date();
             }
             const lastIndex = this.execution.state.histories.length - 1;
@@ -114,21 +104,20 @@ export default {
                 let stopTs = ts(task.state.histories[lastIndex].date);
                 const start = startTs - this.start;
                 let stop = stopTs - this.start - start;
-                if ((stop / executionDelta) * 100 < 1) {
-                    stopTs = +new Date();
-                    stop = stopTs - this.start - start;
-                }
+                // if ((stop / executionDelta) * 100 < 1) {
+                //     stopTs = +new Date();
+                //     stop = stopTs - this.start - start;
+                // }
+
                 const delta = stopTs - startTs;
                 const duration = this.$moment.duration(delta);
-                const humanDuration =
-                    duration.seconds() > 1
-                        ? duration.humanize()
-                        : delta + " ms";
+                const humanDuration = humanizeDuration(duration);
+
                 series.push({
                     id: task.id,
                     name: task.taskId,
-                    start: (start / this.delta()) * 100,
-                    width: (stop / this.delta()) * 100,
+                    start: (start / executionDelta) * 100,
+                    width: (stop / executionDelta) * 100,
                     tooltip: `${this.$t(
                         "duration"
                     ).capitalize()} : ${humanDuration}`,

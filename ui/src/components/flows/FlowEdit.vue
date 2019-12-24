@@ -28,14 +28,12 @@
 
 <script>
 import { mapState } from "vuex";
-import ChevronRight from "vue-material-design-icons/ChevronRight";
 import ContentSave from "vue-material-design-icons/ContentSave";
 import Yaml from "yaml";
 import BottomLine from "../layout/BottomLine";
 
 export default {
     components: {
-        ChevronRight,
         editor: require("vue2-ace-editor"),
         ContentSave,
         BottomLine
@@ -61,8 +59,6 @@ export default {
         editorInit: function() {
             require("brace/mode/yaml");
             require("brace/theme/chrome");
-            const editor = this.$refs.aceEditor.editor;
-            editor.setFontSize("18px");
         },
         save() {
             if (this.flow) {

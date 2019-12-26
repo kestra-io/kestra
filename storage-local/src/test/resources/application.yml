@@ -1,4 +1,4 @@
-floworc:
+kestra:
   storage:
     type: local
     local:

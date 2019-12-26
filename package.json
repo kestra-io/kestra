@@ -1,5 +1,5 @@
 {
-    "name": "flow-orc-webapp",
+    "name": "kestra",
     "version": "0.1.0",
     "private": true,
     "scripts": {

@@ -1,6 +1,6 @@
-floworc:
+kestra:
   storage:
     type: gcs
     gcs:
-      bucket: "floworc-unit-test"
+      bucket: "kestra-unit-test"
 

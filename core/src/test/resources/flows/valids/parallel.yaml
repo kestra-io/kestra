@@ -1,28 +1,28 @@
 id: parallel
-namespace: org.floworc.tests
+namespace: org.kestra.tests
 
 tasks:
   - id: parent-par
-    type: org.floworc.core.tasks.flows.Parallel
+    type: org.kestra.core.tasks.flows.Parallel
     tasks:
       - id: 1st
-        type: org.floworc.core.tasks.debugs.Return
+        type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
       - id: 2nd
-        type: org.floworc.core.tasks.debugs.Return
+        type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.id}}"
       - id: 3th - child par
-        type: org.floworc.core.tasks.flows.Parallel
+        type: org.kestra.core.tasks.flows.Parallel
         tasks:
           - id: 3th - 1st
-            type: org.floworc.core.tasks.debugs.Return
+            type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
           - id: 3th - 2nd
-            type: org.floworc.core.tasks.debugs.Return
+            type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
           - id: 3th - 3rd
-            type: org.floworc.core.tasks.debugs.Return
+            type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
   - id: last
-    type: org.floworc.core.tasks.debugs.Return
+    type: org.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

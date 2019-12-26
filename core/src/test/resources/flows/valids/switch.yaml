@@ -1,5 +1,5 @@
 id: switch
-namespace: org.floworc.tests
+namespace: org.kestra.tests
 
 inputs:
   - name: string
@@ -7,30 +7,30 @@ inputs:
 
 tasks:
   - id: parent-seq
-    type: org.floworc.core.tasks.flows.Switch
+    type: org.kestra.core.tasks.flows.Switch
     value: "{{inputs.string}}"
     cases:
       FIRST:
         - id: 1st
-          type: org.floworc.core.tasks.debugs.Return
+          type: org.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
       SECOND:
         - id: 2nd
-          type: org.floworc.core.tasks.debugs.Return
+          type: org.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
       THIRD:
         - id: 3th
-          type: org.floworc.core.tasks.flows.Sequential
+          type: org.kestra.core.tasks.flows.Sequential
           tasks:
             - id: failed
-              type: org.floworc.core.tasks.scripts.Bash
+              type: org.kestra.core.tasks.scripts.Bash
               commands:
               - 'exit 1'
           errors:
             - id: error-1st
-              type: org.floworc.core.tasks.debugs.Return
+              type: org.kestra.core.tasks.debugs.Return
               format: "Error Trigger ! {{task.id}}"
     defaults:
       - id: default
-        type: org.floworc.core.tasks.debugs.Return
+        type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.startDate}}"

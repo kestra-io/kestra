@@ -1,16 +1,16 @@
 id: sequential
-namespace: org.floworc.tests
+namespace: org.kestra.tests
 
 tasks:
   - id: seq
-    type: org.floworc.core.tasks.flows.Sequential
+    type: org.kestra.core.tasks.flows.Sequential
     tasks:
       - id: 1
-        type: org.floworc.core.tasks.debugs.Return
+        type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}}"
       - id: 2
-        type: org.floworc.core.tasks.debugs.Return
+        type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}}"
       - id: 3
-        type: org.floworc.core.tasks.debugs.Return
+        type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}}"

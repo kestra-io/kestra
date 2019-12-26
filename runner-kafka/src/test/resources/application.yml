@@ -1,4 +1,4 @@
-floworc:
+kestra:
   repository:
     type: memory
   queue:
@@ -36,14 +36,14 @@ floworc:
           state.dir: "/tmp/"
 
     topics:
-      org-floworc-core-models-executions-execution:
-        name: "floworc_execution"
+      org-kestra-core-models-executions-execution:
+        name: "kestra_execution"
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
-      org-floworc-core-runners-workertask:
-        name: "floworc_workertask"
+      org-kestra-core-runners-workertask:
+        name: "kestra_workertask"
 
-      org-floworc-core-runners-workertaskresult:
-        name: "floworc_workertaskresult"
+      org-kestra-core-runners-workertaskresult:
+        name: "kestra_workertaskresult"

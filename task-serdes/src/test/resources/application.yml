@@ -1,4 +1,4 @@
-floworc:
+kestra:
   repository:
     type: memory
   queue:

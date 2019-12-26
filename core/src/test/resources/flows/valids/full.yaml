@@ -1,5 +1,5 @@
 id: full
-namespace: org.floworc.tests
+namespace: org.kestra.tests
 
 #triggers:
 #- type: schedule
@@ -11,16 +11,16 @@ namespace: org.floworc.tests
 
 tasks:
 - id: 1st
-  type: org.floworc.core.tasks.scripts.Bash
+  type: org.kestra.core.tasks.scripts.Bash
   commands:
   - 'echo "{{ task.id }}"'
 
 - id: 2nd
-  type: org.floworc.core.tasks.debugs.Return
+  type: org.kestra.core.tasks.debugs.Return
   format: second {{ execution.id }}
 
 - id: 3rd
-  type: org.floworc.core.tasks.debugs.Echo
+  type: org.kestra.core.tasks.debugs.Echo
   format: third all optional args {{ outputs.2nd.return }}
   timeout: 1000
   retry:
@@ -29,7 +29,7 @@ tasks:
     interval: PT15M
 #
 #- id: 4th
-#  type: org.floworc.core.tasks.flows.Each
+#  type: org.kestra.core.tasks.flows.Each
 #  values: [
 #    1,
 #    2,
@@ -37,45 +37,45 @@ tasks:
 #  ]
 #  tasks:
 #  - id: 4th - Each
-#    type: org.floworc.core.tasks.debugs.Echo
+#    type: org.kestra.core.tasks.debugs.Echo
 #    format: each {{item}}
 
 - id: 5th
-  type: org.floworc.core.tasks.flows.Parallel
+  type: org.kestra.core.tasks.flows.Parallel
   concurrent: 3
   tasks:
   - id: 5th - 1st
-    type: org.floworc.core.tasks.scripts.Bash
+    type: org.kestra.core.tasks.scripts.Bash
     commands:
     - echo "4th - 1st {{execution.id}}"
   - id: 5th - 2nd
-    type: org.floworc.core.tasks.scripts.Bash
+    type: org.kestra.core.tasks.scripts.Bash
     commands:
     - echo "4th - 2nd {{execution.id}}"
   - id: 5th - 3rd
-    type: org.floworc.core.tasks.scripts.Bash
+    type: org.kestra.core.tasks.scripts.Bash
     commands:
     - echo "4th- 3rd {{execution.id}}"
   - id: 5th - 4th
-    type: org.floworc.core.tasks.flows.Parallel
+    type: org.kestra.core.tasks.flows.Parallel
     tasks:
       - id: 5th - 4th - 1st
-        type: org.floworc.core.tasks.flows.Parallel
+        type: org.kestra.core.tasks.flows.Parallel
         tasks:
         - id: 5th - 4th - 1st - 1st
-          type: org.floworc.core.tasks.flows.Parallel
+          type: org.kestra.core.tasks.flows.Parallel
           tasks:
           - id: 5th - 4th - 1st - 1st - 1st
-            type: org.floworc.core.tasks.flows.Parallel
+            type: org.kestra.core.tasks.flows.Parallel
             tasks:
             - id: 5th - 4th - 1st - 1st - 1st - last
-              type: org.floworc.core.tasks.scripts.Bash
+              type: org.kestra.core.tasks.scripts.Bash
               commands:
                 - 'echo "4th - 4th - 1st - 1st - 1st - last : {{execution.id}}"'
 
 
 - id: lastte
-  type: org.floworc.core.tasks.scripts.Bash
+  type: org.kestra.core.tasks.scripts.Bash
   commands:
     - 'echo "last"'
     - 'sleep 1'
@@ -86,7 +86,7 @@ tasks:
 #- type: each
 #  values: {{selector}}
 #  tasks:
-#  - type: org.floworc.core.tasks.scripts.Bash
+#  - type: org.kestra.core.tasks.scripts.Bash
 #    commands:
 #    - echo {{item}}
 #
@@ -95,41 +95,41 @@ tasks:
 #  cases:
 #     - value: hello
 #       tasks:
-#         - type: org.floworc.core.tasks.debugs.Echo
+#         - type: org.kestra.core.tasks.debugs.Echo
 #           text: hello world
 #     - value: bye
 #       tasks:
-#         - type: org.floworc.core.tasks.debugs.Echo
+#         - type: org.kestra.core.tasks.debugs.Echo
 #           text: goodbye world
 #  default:
 #    - tasks:
-#        -type: org.floworc.core.tasks.debugs.Echo
+#        -type: org.kestra.core.tasks.debugs.Echo
 #         text: something else
 #
 #- type: branch
 #  branches:
 #    first:
-#    - type: org.floworc.core.tasks.scripts.Bash
+#    - type: org.kestra.core.tasks.scripts.Bash
 #      commands:
 #      - echo "first branch - step 1"
-#    - type: org.floworc.core.tasks.scripts.Bash
+#    - type: org.kestra.core.tasks.scripts.Bash
 #      commands:
 #      - echo "first branch - step 2"
 #    second:
-#    - type: org.floworc.core.tasks.scripts.Bash
+#    - type: org.kestra.core.tasks.scripts.Bash
 #      commands:
 #      - echo "second branch - step 1"
-#    - type: org.floworc.core.tasks.scripts.Bash
+#    - type: org.kestra.core.tasks.scripts.Bash
 #      commands:
 #      - echo "second branch - step 2"
 #
-#- type: org.floworc.core.tasks.scripts.Bash
+#- type: org.kestra.core.tasks.scripts.Bash
 #  commands: sleep 5
 #  timeout: 1
 #  errors:
-#    - type: org.floworc.core.tasks.scripts.Bash
+#    - type: org.kestra.core.tasks.scripts.Bash
 #      commands:
 #      - echo "first branch - step 1"
-#    - type: org.floworc.core.tasks.scripts.Bash
+#    - type: org.kestra.core.tasks.scripts.Bash
 #      commands:
 #      - echo "first branch - step 2"

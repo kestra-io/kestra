@@ -17,19 +17,20 @@ $gray-800: #333 !default;
 $gray-900: #222 !default;
 $black: #000 !default;
 
-$blue: #008cba !default;
+$blue: #1AA5DE !default;
 $indigo: #6610f2 !default;
 $purple: #6f42c1 !default;
 $pink: #e83e8c !default;
 $red: #F04124 !default;
 $orange: #fd7e14 !default;
-$yellow: #E99002 !default;
+$yellow: #FBD10B !default;
 $green: #43ac6a !default;
-$teal: #20c997 !default;
+$teal: #1DBAAF !default;
 $cyan: #5bc0de !default;
 
 $primary: $blue !default;
 $secondary: $teal !default;
+$tertiary: $yellow;
 $success: $green !default;
 $info: $cyan !default;
 $warning: $yellow !default;

@@ -1,6 +1,6 @@
 micronaut:
   application:
-    name: floworc
+    name: kestra
   router:
     static-resources:
       swagger:
@@ -26,7 +26,7 @@ endpoints:
     path: /
     details-visible: ANONYMOUS
 
-floworc:
+kestra:
   kafka:
     defaults:
       topic:
@@ -48,26 +48,26 @@ floworc:
       stream:
         properties:
           processing.guarantee: "exactly_once"
-          replication.factor: "${floworc.kafka.defaults.topic.replication-factor}"
+          replication.factor: "${kestra.kafka.defaults.topic.replication-factor}"
           acks: "all"
 
     topics:
-      org-floworc-core-models-executions-execution:
-        name: "floworc_execution"
+      org-kestra-core-models-executions-execution:
+        name: "kestra_execution"
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
-      org-floworc-core-runners-workertask:
-        name: "floworc_workertask"
+      org-kestra-core-runners-workertask:
+        name: "kestra_workertask"
 
-      org-floworc-core-runners-workertaskresult:
-        name: "floworc_workertaskresult"
+      org-kestra-core-runners-workertaskresult:
+        name: "kestra_workertaskresult"
 
   elasticsearch:
     indices:
-      org-floworc-core-models-flows-flow:
-        name: "floworc_flows"
+      org-kestra-core-models-flows-flow:
+        name: "kestra_flows"
         mapping: |
           {
             "properties": {
@@ -108,8 +108,8 @@ floworc:
             }
           }
 
-      org-floworc-core-models-executions-execution:
-        name: "floworc_executions"
+      org-kestra-core-models-executions-execution:
+        name: "kestra_executions"
         mapping: |
           {
             "properties": {

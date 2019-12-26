@@ -1,4 +1,4 @@
-rootProject.name="floworc"
+rootProject.name="kestra"
 
 include 'cli'
 include 'core'

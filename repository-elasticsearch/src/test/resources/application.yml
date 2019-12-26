@@ -1,14 +1,14 @@
 elasticsearch:
-  httpHosts: http://floworc:9200
+  httpHosts: http://kestra:9200
 
-floworc:
+kestra:
   repository:
     type: elasticsearch
 
   elasticsearch:
     indices:
-      org-floworc-core-models-flows-flow:
-        name: "floworc_flows"
+      org-kestra-core-models-flows-flow:
+        name: "kestra_flows"
         settings: |
           {
             "index.number_of_shards": 10
@@ -53,8 +53,8 @@ floworc:
             }
           }
 
-      org-floworc-core-models-executions-execution:
-        name: "floworc_executions"
+      org-kestra-core-models-executions-execution:
+        name: "kestra_executions"
         mapping: |
           {
             "properties": {

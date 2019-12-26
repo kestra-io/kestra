@@ -35,7 +35,7 @@ idea {
 /**********************************************************************************************************************\
  * Main
  **********************************************************************************************************************/
-mainClassName = "org.floworc.cli.App"
+mainClassName = "org.kestra.cli.App"
 sourceCompatibility = 11
 
 dependencies {
@@ -48,14 +48,12 @@ dependencies {
  * All projects
  **********************************************************************************************************************/
 allprojects {
-    group "org.floworc"
+    group "org.kestra"
     version "0.1"
 
     repositories {
         mavenCentral()
         maven { url "https://jcenter.bintray.com" }
-        maven { url "http://packages.confluent.io/maven/" }
-        maven { url 'https://jitpack.io' }
     }
 
     // micronaut
@@ -114,7 +112,7 @@ allprojects {
         testImplementation 'org.hamcrest:hamcrest-library:2.2'
         testCompile group: 'org.exparity', name: 'hamcrest-date', version: '2.0.7'
 
-        // floworc
+        // kestra
         compile group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
     }
 

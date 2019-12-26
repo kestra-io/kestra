@@ -1,29 +1,29 @@
 id: errors
-namespace: org.floworc.tests
+namespace: org.kestra.tests
 
 tasks:
 - id: failed
-  type: org.floworc.core.tasks.scripts.Bash
+  type: org.kestra.core.tasks.scripts.Bash
   commands:
   - 'exit 1'
 errors:
   - id: 2nd
-    type: org.floworc.core.tasks.debugs.Echo
+    type: org.kestra.core.tasks.debugs.Echo
     format: second {{task.id}}
 
   - id: 3rd
-    type: org.floworc.core.tasks.flows.Parallel
+    type: org.kestra.core.tasks.flows.Parallel
     tasks:
       - id: 3rd - 1st
-        type: org.floworc.core.tasks.flows.Parallel
+        type: org.kestra.core.tasks.flows.Parallel
         tasks:
           - id: 3rd - 1st - 1st
-            type: org.floworc.core.tasks.flows.Parallel
+            type: org.kestra.core.tasks.flows.Parallel
             tasks:
               - id: 3rd - 1st - 1st - 1st
-                type: org.floworc.core.tasks.flows.Parallel
+                type: org.kestra.core.tasks.flows.Parallel
                 tasks:
                   - id: 3rd - 1st - 1st - 1st - last
-                    type: org.floworc.core.tasks.scripts.Bash
+                    type: org.kestra.core.tasks.scripts.Bash
                     commands:
                       - 'echo "3rd - 1st - 1st - 1st - last : {{task.id}}"'

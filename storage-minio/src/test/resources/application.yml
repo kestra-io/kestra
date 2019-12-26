@@ -1,8 +1,8 @@
-floworc:
+kestra:
   storage:
     type: minio
     minio:
-      endpoint: 127.8.9.13
+      endpoint: localhost
       port: 9000
       accessKey: AKIAIOSFODNN7EXAMPLE
       secretKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY

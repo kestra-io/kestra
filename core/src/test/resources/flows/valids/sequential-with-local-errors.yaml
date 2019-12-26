@@ -1,31 +1,31 @@
 id: sequential-with-local-errors
-namespace: org.floworc.tests
+namespace: org.kestra.tests
 
 tasks:
   - id: parent-seq
-    type: org.floworc.core.tasks.flows.Sequential
+    type: org.kestra.core.tasks.flows.Sequential
     tasks:
       - id: 1st
-        type: org.floworc.core.tasks.debugs.Return
+        type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
       - id: 2nd - child seq
-        type: org.floworc.core.tasks.flows.Sequential
+        type: org.kestra.core.tasks.flows.Sequential
         tasks:
           - id: 2nd - 1st
-            type: org.floworc.core.tasks.scripts.Bash
+            type: org.kestra.core.tasks.scripts.Bash
             commands:
               - 'exit 1'
           - id: 2nd - 2nd
-            type: org.floworc.core.tasks.debugs.Return
+            type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
           - id: 2nd - 3rd
-            type: org.floworc.core.tasks.debugs.Return
+            type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
 
         errors:
           - id: error-1st
-            type: org.floworc.core.tasks.debugs.Return
+            type: org.kestra.core.tasks.debugs.Return
             format: "Error Trigger ! {{task.id}}"
           - id: error-2nd
-            type: org.floworc.core.tasks.debugs.Return
+            type: org.kestra.core.tasks.debugs.Return
             format: "Error Trigger ! {{task.id}}"

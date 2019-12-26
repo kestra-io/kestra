@@ -1,5 +1,5 @@
 id: listeners
-namespace: org.floworc.tests
+namespace: org.kestra.tests
 
 inputs:
   - name: string
@@ -7,35 +7,35 @@ inputs:
 
 listeners:
   - conditions:
-      - type: org.floworc.core.models.listeners.types.ExecutionStatusCondition
+      - type: org.kestra.core.models.listeners.types.ExecutionStatusCondition
         in:
           - FAILED
     tasks:
       - id: execution-failed-listener
-        type: org.floworc.core.tasks.scripts.Bash
+        type: org.kestra.core.tasks.scripts.Bash
         commands:
           - 'sleep 1'
 
   - conditions:
-      - type: org.floworc.core.models.listeners.types.ExecutionStatusCondition
+      - type: org.kestra.core.models.listeners.types.ExecutionStatusCondition
         in:
           - SUCCESS
     tasks:
       - id: execution-success-listener
-        type: org.floworc.core.tasks.debugs.Return
+        type: org.kestra.core.tasks.debugs.Return
         format: success listeners {{ execution.id }}
 
 tasks:
   - id: parent-seq
-    type: org.floworc.core.tasks.flows.Switch
+    type: org.kestra.core.tasks.flows.Switch
     value: "{{inputs.string}}"
     cases:
       OK:
         - id: ok
-          type: org.floworc.core.tasks.debugs.Return
+          type: org.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
       KO:
         - id: ko
-          type: org.floworc.core.tasks.scripts.Bash
+          type: org.kestra.core.tasks.scripts.Bash
           commands:
             - 'exit 1'

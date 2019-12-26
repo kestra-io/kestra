@@ -1,5 +1,10 @@
 <template>
     <sidebar-menu :menu="menu" @toggle-collapse="onToggleCollapse" :collapsed="collapsed">
+        <a class="logo" slot="header" href="/">
+            <span>
+                <img src="../assets/logo-white.svg" alt="Kestra" />
+            </span>
+        </a>
         <span slot="toggle-icon">
             <chevron-right v-if="collapsed"/>
             <chevron-left v-else />
@@ -38,11 +43,6 @@ export default {
         menu () {
         return [
                 {
-                    header: true,
-                    title: "Menu",
-                    hiddenOnCollapse: true
-                },
-                {
                     href: "/flows",
                     title: this.$t("flows").capitalize(),
                     icon: {
@@ -74,6 +74,26 @@ export default {
 
 <style lang="scss" scoped>
 @import "../styles/variable";
+
+.logo {
+    height: 60px;
+    border-bottom: 2px solid $secondary;
+    overflow-x: hidden;
+    span {
+        display: block;
+        height: 52px;
+        overflow: hidden;
+        border-bottom: 2px solid $tertiary;
+        img {
+            height: 100%;
+        }
+    }
+}
+
+/deep/ .vsm--item {
+    transition: opacity .2s;
+}
+
 /deep/ .menu-icon {
     font-size: 1.5em;
     background-color: $dark !important;

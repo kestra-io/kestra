@@ -1,14 +1,14 @@
 id: slack
-namespace: org.floworc.tests
+namespace: org.kestra.tests
 
 listeners:
   - tasks:
       - id: slack
-        type: org.floworc.task.notifications.slack.SlackExecution
+        type: org.kestra.task.notifications.slack.SlackExecution
         url: "http://www.mocky.io/v2/5dfa3bfd3600007dafbd6b91"
         channel: "#random"
 
 tasks:
   - id: ok
-    type: org.floworc.core.tasks.debugs.Return
+    type: org.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

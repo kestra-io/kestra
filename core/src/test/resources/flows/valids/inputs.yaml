@@ -1,5 +1,5 @@
 id: inputs
-namespace: org.floworc.tests
+namespace: org.kestra.tests
 
 inputs:
 - name: string
@@ -21,23 +21,23 @@ inputs:
 
 tasks:
 - id: string
-  type: org.floworc.core.tasks.debugs.Return
+  type: org.kestra.core.tasks.debugs.Return
   format: "{{inputs.string}}"
 - id: int
-  type: org.floworc.core.tasks.debugs.Return
+  type: org.kestra.core.tasks.debugs.Return
   format: "{{inputs.int}}"
 - id: float
-  type: org.floworc.core.tasks.debugs.Return
+  type: org.kestra.core.tasks.debugs.Return
   format: "{{inputs.float}}"
 - id: instant
-  type: org.floworc.core.tasks.debugs.Return
+  type: org.kestra.core.tasks.debugs.Return
   format: "{{inputs.instant}}"
 - id: file-content
-  type: org.floworc.core.tasks.debugs.Return
+  type: org.kestra.core.tasks.debugs.Return
   format: "{{inputs.file.content}}"
 - id: file
-  type: org.floworc.core.tasks.debugs.Return
+  type: org.kestra.core.tasks.debugs.Return
   format: "{{inputs.file}}"
 - id: file-uri
-  type: org.floworc.core.tasks.debugs.Return
+  type: org.kestra.core.tasks.debugs.Return
   format: "{{inputs.file.uri}}"

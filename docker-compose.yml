@@ -35,7 +35,7 @@ services:
     links:
       - zookeeper
     ports:
-      - 127.8.9.13:9092:9092
+      - 9092:9092
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
@@ -49,14 +49,14 @@ services:
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     ports:
-      - 127.8.9.13:9200:9200
+      - 9200:9200
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.4.2
     environment:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
-      - 127.8.9.13:5601:5601
+      - 5601:5601
     links:
       - elasticsearch
 
@@ -69,5 +69,5 @@ services:
       MINIO_ACCESS_KEY: AKIAIOSFODNN7EXAMPLE
       MINIO_SECRET_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
     ports:
-      - 127.8.9.13:9000:9000
+      - 9000:9000
 

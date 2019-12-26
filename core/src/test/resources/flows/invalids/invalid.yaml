@@ -1,4 +1,4 @@
 tasks:
-- type: org.floworc.core.tasks.scripts.Bash
+- type: org.kestra.core.tasks.scripts.Bash
   commands:
   - echo "bla"

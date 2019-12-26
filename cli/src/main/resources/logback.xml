@@ -37,10 +37,10 @@
         <appender-ref ref="STDERR" />
     </root>
 
-    <logger name="org.floworc" level="INFO" />
+    <logger name="org.kestra" level="INFO" />
     <logger name="flow" level="INFO" />
 
-    <logger name="org.floworc.runner.kafka.services" level="WARN" />
+    <logger name="org.kestra.runner.kafka.services" level="WARN" />
 
     <!-- Micronaut  -->
     <logger name="io.micronaut.context.env.DefaultEnvironment" level="INFO" />

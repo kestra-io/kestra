@@ -18,10 +18,10 @@
         <appender-ref ref="STDOUT" />
     </root>
 
-    <logger name="org.floworc" level="INFO" />
+    <logger name="org.kestra" level="INFO" />
     <logger name="flow" level="INFO" />
 
-    <logger name="org.floworc.runner.kafka.services" level="WARN" />
+    <logger name="org.kestra.runner.kafka.services" level="WARN" />
 
     <!-- The configuration '%s' was supplied but isn't a known config. > https://github.com/apache/kafka/pull/5876 -->
     <logger name="org.apache.kafka.clients.producer.ProducerConfig" level="ERROR" />

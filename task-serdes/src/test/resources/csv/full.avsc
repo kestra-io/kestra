@@ -1,7 +1,7 @@
 {
   "type": "record",
   "name": "Full",
-  "namespace": "org.floworc",
+  "namespace": "org.kestra",
   "fields": [
     {
       "name": "id",

@@ -1,4 +1,4 @@
-floworc:
+kestra:
   repository:
     type: memory
   queue:
@@ -9,7 +9,7 @@ floworc:
       base-path: /tmp/unittest
   tasks:
     gcs:
-      bucket: "floworc-unit-test"
+      bucket: "kestra-unit-test"
     bigquery:
-      project: "floworc"
-      dataset: "floworc_unit_test"
+      project: "kestra"
+      dataset: "kestra_unit_test"

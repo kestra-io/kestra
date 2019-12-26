@@ -1,7 +1,7 @@
 id: minimal
-namespace: org.floworc.tests
+namespace: org.kestra.tests
 
 tasks:
 - id: date
-  type: org.floworc.core.tasks.debugs.Return
+  type: org.kestra.core.tasks.debugs.Return
   format: "{{taskrun.startDate}}"

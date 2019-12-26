@@ -12,6 +12,7 @@ export default callback => {
             }
         })
     );
-    Vue.axios.defaults.baseURL = `${process.env.VUE_APP_API_URL}/`
+
+    Vue.axios.defaults.baseURL = (process.env.VUE_APP_API_URL || "") + "/";
     callback();
 };

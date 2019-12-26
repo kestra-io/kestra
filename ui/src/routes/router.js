@@ -12,6 +12,7 @@ Vue.use(VueRouter);
 
 export default new VueRouter({
     mode: 'history',
+    base: '/ui/',
     routes: [
         //Flows
         { name: 'home', path: '/', component: Flows },

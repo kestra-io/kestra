@@ -18,3 +18,4 @@ include 'task-notifications'
 include 'task-serdes'
 
 include 'webserver'
+include 'ui'

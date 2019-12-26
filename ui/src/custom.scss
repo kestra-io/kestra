@@ -1,16 +1,16 @@
 @import "styles/variable";
 
-@import 'node_modules/bootstrap/scss/bootstrap';
+@import '~bootstrap/scss/bootstrap';
 @import 'styles/yeti';
 @import 'styles/bootstrap';
-@import 'node_modules/bootstrap-vue/src/index.scss';
+@import '~bootstrap-vue/src/index.scss';
 
-@import 'node_modules/vue-select/src/scss/vue-select.scss';
+@import '~vue-select/src/scss/vue-select.scss';
 
 @import "./styles/_vue-sidebar-menu.scss";
-@import "node_modules/vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
+@import "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
 
-@import 'node_modules/vue2-datepicker/scss/index';
+@import '~vue2-datepicker/scss/index';
 
 
 .wrap {

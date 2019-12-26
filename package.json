@@ -3,18 +3,18 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "serve": "vue-cli-service serve --port 8090",
-        "build": "vue-cli-service build",
-        "lint": "vue-cli-service lint"
+        "serve": "cd ui && vue-cli-service serve --port 8090",
+        "build": "cd ui && vue-cli-service build",
+        "lint": "cd ui && vue-cli-service lint"
     },
     "dependencies": {
         "axios": "^0.19.0",
         "bootstrap": "^4.4.1",
         "bootstrap-vue": "^2.1.0",
-        "core-js": "^2.6.10",
+        "core-js": "^2.6.11",
         "d3": "^5.14.2",
         "humanize-duration": "^3.21.0",
-        "vue": "^2.6.10",
+        "vue": "^2.6.11",
         "vue-axios": "^2.1.5",
         "vue-i18n": "^8.15.1",
         "vue-material-design-icons": "^4.3.0",
@@ -37,7 +37,7 @@
         "eslint-plugin-vue": "^5.0.0",
         "node-sass": "^4.13.0",
         "sass-loader": "^8.0.0",
-        "vue-template-compiler": "^2.6.10"
+        "vue-template-compiler": "^2.6.11"
     },
     "eslintConfig": {
         "root": true,

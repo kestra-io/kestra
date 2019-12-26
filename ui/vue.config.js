@@ -1,4 +1,6 @@
 module.exports = {
+    publicPath: "/ui/",
+    outputDir: "../webserver/src/main/resources/ui",
     configureWebpack: {
         module: {
             rules: [

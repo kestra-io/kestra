@@ -1,3 +1,4 @@
+### Java
 Thumbs.db
 .DS_Store
 .gradle
@@ -5,6 +6,7 @@ build/
 target/
 out/
 .idea
+.vscode
 *.iml
 *.ipr
 *.iws
@@ -12,9 +14,22 @@ out/
 .settings
 .classpath
 .attach*
-docker-compose.override.yml
-.env
 
+### Configurations
+docker-compose.override.yml
 cli/src/main/resources/application-override.yml
 */src/test/resources/application-test.yml
-local/
+local
+
+### Javascript
+node
+node_modules
+yarn-error.log
+ui/node_modules
+ui/.env.local
+ui/.env.*.local
+webserver/src/main/resources/ui
+
+
+### Docker
+/.env

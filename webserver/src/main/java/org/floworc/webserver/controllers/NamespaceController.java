@@ -9,6 +9,7 @@ import org.floworc.core.repositories.FlowRepositoryInterface;
 import org.floworc.webserver.responses.PagedResults;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Optional;
 
 @Validated
@@ -22,8 +23,7 @@ public class NamespaceController {
      * @return The flow's namespaces set
      */
     @Get(produces = MediaType.TEXT_JSON)
-    public PagedResults<String> list(Optional<String> prefix) {
-        ArrayListTotal<String> namespaces = flowRepository.findNamespaces(prefix);
-        return PagedResults.of(namespaces);
+    public List<String> listDistinctNamespace(Optional<String> prefix) {
+        return flowRepository.findDistinctNamespace(prefix);
     }
 }

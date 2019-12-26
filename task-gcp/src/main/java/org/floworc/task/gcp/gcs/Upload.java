@@ -25,11 +25,10 @@ public class Upload extends Task implements RunnableTask {
     private String from;
     private String to;
 
-    @Builder.Default
-    private transient Connection connection = new Connection();
-
     @Override
     public RunOutput run(RunContext runContext) throws Exception {
+        Connection connection = new Connection();
+
         Logger logger = runContext.logger(this.getClass());
         URI from = new URI(runContext.render(this.from));
         URI to = new URI(runContext.render(this.to));

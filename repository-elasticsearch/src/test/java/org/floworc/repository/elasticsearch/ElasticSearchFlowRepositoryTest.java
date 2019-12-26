@@ -56,11 +56,11 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
             .build();
         elasticSearchFlowRepository.save(flow2);
 
-        ArrayListTotal<Flow> result = elasticSearchFlowRepository.find("org.floworc.unittest.flow.find", Pageable.from(1, 5));
+        ArrayListTotal<Flow> result = elasticSearchFlowRepository.findByNamespace("org.floworc.unittest.flow.find", Pageable.from(1, 5));
         assertThat(result.size(), is(2));
-        result = elasticSearchFlowRepository.find("org.floworc.unittest.flow.find", Pageable.from(1, 1));
+        result = elasticSearchFlowRepository.findByNamespace("org.floworc.unittest.flow.find", Pageable.from(1, 1));
         assertThat(result.size(), is(1));
-        result = elasticSearchFlowRepository.find("org.floworc.unittest.flow.find", Pageable.from(2, 1));
+        result = elasticSearchFlowRepository.findByNamespace("org.floworc.unittest.flow.find", Pageable.from(2, 1));
         assertThat(result.size(), is(1));
     }
 

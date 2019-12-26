@@ -1,0 +1,59 @@
+:focus {
+    outline-width: 0;
+}
+
+.text-monospace {
+    font-size: $font-size-base * 0.8;
+}
+
+// Tabs
+ul.nav-tabs {
+    .nav-link {
+        background-color: transparent;
+        border: 0 solid;
+        border-bottom-width: 4px;
+        border-bottom-color: transparent;
+        color: $body-color;
+
+        &.active, &:hover.active {
+            font-weight: bold;
+            color: $primary;
+            border-bottom-color: $primary;
+            border-bottom-width: 4px;
+            background-color: transparent;
+        }
+
+        &:hover {
+            transition-duration: 0ms;
+            border-bottom-color: $gray-400;
+            background: transparent;
+            border-bottom-width: 4px;
+        }
+    }
+}
+
+.tabs-container {
+    .tab-content {
+        padding: 20px;
+        border: 1px solid $nav-tabs-border-color;
+        background: $gray-900;
+        border-top: 0;
+    }
+}
+
+
+// table
+.table-responsive-xl {
+    th.row-action {
+        width: 16px;
+    }
+
+    td.row-action a {
+        color: $body-color;
+    }
+}
+
+// pagination
+.pagination .page-link {
+    border-radius: 1px;
+}

@@ -54,11 +54,9 @@ public class Query extends Task implements RunnableTask {
 
     private JobInfo.CreateDisposition createDisposition;
 
-    @Builder.Default
-    private transient BigQuery connection = new Connection().of();
-
     @Override
     public RunOutput run(RunContext runContext) throws Exception {
+        BigQuery connection = new Connection().of();
         Logger logger = runContext.logger(this.getClass());
         String sql = runContext.render(this.sql);
 

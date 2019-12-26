@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Singleton
 @MemoryRepositoryEnabled
 public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
-    private Map<String, Execution> executions = new HashMap();
+    private Map<String, Execution> executions = new HashMap<>();
 
     @Override
     public ArrayListTotal<Execution> find(String query, Pageable pageable) {
@@ -28,7 +28,6 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
 
     @Override
     public ArrayListTotal<Execution> findByFlowId(String namespace, String flowId, Pageable pageable) {
-
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }
@@ -42,15 +41,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
                 .filter(e -> e.getFlowId().equals(flowId))
                 .collect(Collectors.toList());
 
-
-        // handles pagination
-        // FIXME : This code should be shared/moved to util package ?
-        int from = (pageable.getNumber() - 1) * pageable.getSize();
-        int to = from + pageable.getSize();
-        int size = filteredExecutions.size();
-        to = to >= size ? size : to;
-        from = from >= size ? size : from;
-        return new ArrayListTotal<>(filteredExecutions.subList(from, to), filteredExecutions.size());
+        return ArrayListTotal.of(pageable, filteredExecutions);
     }
 
     @Override

@@ -1,0 +1,51 @@
+<template>
+    <div>
+        <b-row>
+            <b-col md="6">
+                <b-form-group
+                    :label="$t('search term in message').capitalize()"
+                    label-for="input-1"
+                >
+                    <b-form-input
+                        id="input-1"
+                        v-model="filter"
+                        type="email"
+                        required
+                        :placeholder="$t('search') + '...'"
+                    ></b-form-input>
+                </b-form-group>
+            </b-col>
+            <b-col md="6">
+                <b-form-group :label="$t('filter by log level').capitalize()" label-for="input-2">
+                    <b-form-select id="input-2" v-model="level" :options="levelOptions"></b-form-select>
+                </b-form-group>
+            </b-col>
+        </b-row>
+        <log-list :filter="filterTerm" :level="level" />
+    </div>
+</template>
+<script>
+import LogList from "./LogList";
+export default {
+    components: { LogList },
+    data() {
+        return {
+            filter: "",
+            level: "ALL",
+            levelOptions: [
+                "ALL",
+                "DEBUG",
+                "INFO",
+                "WARNING",
+                "ERROR",
+                "CRITICAL"
+            ]
+        };
+    },
+    computed: {
+        filterTerm() {
+            return this.filter.toLowerCase();
+        }
+    }
+};
+</script>

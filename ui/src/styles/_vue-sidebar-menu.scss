@@ -1,0 +1,39 @@
+@import "variable";
+
+
+
+$primary-color: $primary !default;
+$base-bg: $black !default;
+
+$item-color: #fff !default;
+
+$item-active-color: $item-color !default;
+
+$item-open-color: $item-color !default;
+$item-open-bg: $primary-color !default;
+
+$item-hover-color: $item-color !default;
+$item-hover-bg: rgba(darken( $base-bg, 5% ), 0.5) !default;
+
+$icon-color: $item-color !default;
+$icon-bg: $dark !default;
+
+$icon-active-color: $item-color !default;
+$icon-active-bg: $icon-bg !default;
+
+$icon-open-color: $item-color !default;
+$icon-open-bg: $primary-color !default;
+
+$mobile-item-color: $item-color !default;
+$mobile-item-bg: $primary-color !default;
+$mobile-icon-color: $mobile-item-color !default;
+$mobile-icon-bg: $mobile-item-bg !default;
+
+$dropdown-bg: lighten( $base-bg, 5% ) !default;
+$dropdown-color: $item-color !default;
+
+$item-font-size: 16px !default;
+$item-line-height: 30px !default;
+$item-padding: 10px !default;
+$icon-height: 30px !default;
+$icon-width: 30px !default;

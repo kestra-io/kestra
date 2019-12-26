@@ -65,7 +65,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     @Override
     public List<Flow> findAll() {
-        return this.flows
+        return flows
             .entrySet()
             .stream()
             .flatMap(e -> e.getValue()
@@ -76,22 +76,13 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .collect(Collectors.toList());
     }
 
-    @Override
     public ArrayListTotal<Flow> find(String query, Pageable pageable) {
         //TODO Non used query, returns just all at the moment
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }
 
-        List<Flow> flows = this.findAll();
-
-        //handles pagination
-        int from = (pageable.getNumber() - 1) * pageable.getSize();
-        int to = from + pageable.getSize();
-        int size = flows.size();
-        to = to >= size ? size : to;
-        from = from >= size ? size : from;
-        return new ArrayListTotal<Flow>(flows.subList(from, to), flows.size());
+        return ArrayListTotal.of(pageable, this.findAll());
     }
 
     @Override
@@ -99,7 +90,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }
-
         List<Flow> flows = this.flows
             .entrySet()
             .stream()
@@ -107,17 +97,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 .entrySet()
                 .stream()
                 .flatMap(f -> this.getLastRevision(f.getValue()).stream())
-            )
-            .filter(f -> f.getNamespace().equals(namespace))
+            ).filter(f -> f.getNamespace().equals(namespace))
             .collect(Collectors.toList());
 
-        //handles pagination
-        int from = (pageable.getNumber() - 1) * pageable.getSize();
-        int to = from + pageable.getSize();
-        int size = flows.size();
-        to = to >= size ? size : to;
-        from = from >= size ? size : from;
-        return new ArrayListTotal<Flow>(flows.subList(from, to), flows.size());
+        return ArrayListTotal.of(pageable, flows);
     }
 
     @SuppressWarnings("ComparatorMethodParameterNotUsed")
@@ -171,7 +154,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<String> findNamespaces(Optional<String> prefix) {
+    public List<String> findDistinctNamespace(Optional<String> prefix) {
         HashSet<String> namespaces = new HashSet<String>();
         for (Flow f : this.findAll()) {
             if (f.getNamespace().startsWith(prefix.orElse(""))) {
@@ -180,6 +163,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         }
         ArrayList<String> namespacesList = new ArrayList<String>(namespaces);
         Collections.sort(namespacesList);
-        return new ArrayListTotal<String>(namespacesList, namespacesList.size());
+        return new ArrayList<>(namespacesList);
     }
 }

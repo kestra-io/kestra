@@ -1,0 +1,18 @@
+@import "styles/variable";
+
+@import '~bootstrap/scss/bootstrap';
+@import 'styles/yeti';
+@import 'styles/bootstrap';
+@import '~bootstrap-vue/src/index.scss';
+
+@import '~vue-select/src/scss/vue-select.scss';
+
+@import "./styles/_vue-sidebar-menu.scss";
+@import "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
+
+@import '~vue2-datepicker/scss/index';
+
+
+.wrap {
+  word-wrap: break-word;
+}

@@ -54,7 +54,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         Execution result = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/flows/org.floworc.tests/inputs/trigger", requestBody)
+                .POST("/api/v1/executions/trigger/org.floworc.tests/inputs", requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
@@ -62,8 +62,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(result.getState().getCurrent(), is(State.Type.CREATED));
         assertThat(result.getFlowId(), is("inputs"));
         assertThat(result.getInputs().get("float"), is(42.42));
-        assertThat(((Map<String, String>) result.getInputs().get("file")).get("uri"), startsWith("floworc:///org/floworc/tests/inputs/executions/"));
-        assertThat(((Map<String, String>) result.getInputs().get("optionalFile")).get("uri"), startsWith("floworc:///org/floworc/tests/inputs/executions/"));
+        assertThat(((Map<String, String>) result.getInputs().get("file")).get("uri"), startsWith("floworc:////org/floworc/tests/inputs/executions/"));
+        assertThat(((Map<String, String>) result.getInputs().get("optionalFile")).get("uri"), startsWith("floworc:////org/floworc/tests/inputs/executions/"));
     }
 
     @Test
@@ -73,12 +73,12 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/flows/org.floworc.tests/full/trigger", MultipartBody.builder().addPart("string", "myString").build())
+                .POST("/api/v1/executions/trigger/org.floworc.tests/full", MultipartBody.builder().addPart("string", "myString").build())
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
 
-        List<Event<Execution>> results = sseClient.eventStream("/api/v1/flows/org.floworc.tests/full/executions/" + execution.getId() + "/follow", Execution.class).toList().blockingGet();
+        List<Event<Execution>> results = sseClient.eventStream("executions/" + execution.getId() + "/follow", Execution.class).toList().blockingGet();
 
         assertThat(results.size(), is(13));
     }

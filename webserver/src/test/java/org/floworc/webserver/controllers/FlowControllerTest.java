@@ -11,12 +11,12 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import org.floworc.core.models.flows.Flow;
 import org.floworc.core.models.flows.Input;
-import org.floworc.core.repositories.ArrayListTotal;
 import org.floworc.core.runners.AbstractMemoryRunnerTest;
+import org.floworc.webserver.responses.FlowResponse;
+import org.floworc.webserver.responses.PagedResults;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.NOT_FOUND;
@@ -48,33 +48,41 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void find() {
-        ArrayListTotal<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.testsnotfound"), Argument.of(ArrayListTotal.class, Flow.class));
-//        PagedResult.of(flows);
-
-        assertThat(flows.size(), is(0));
+    void findAll() {
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal(), is(17L));
     }
 
+    @Test
+    void findByNamespace() {
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.tests"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal(), is(17L));
+    }
 
     @Test
-    void createFlow() throws IOException {
+    void findNoResult() {
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.floworc.testsnotfound"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal(), is(0L));
+    }
 
+    @Test
+    void createFlow() {
         Flow flow = Flow.builder()
             .id(FriendlyId.createFriendlyId())
             .namespace("org.floworc.unittest")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
             .build();
 
-        Flow result = client.toBlocking().retrieve(
+        FlowResponse result = client.toBlocking().retrieve(
             POST("/api/v1/flows", flow),
-            Flow.class
+            FlowResponse.class
         );
-        assertThat(result.getId(), is(flow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getFlow().getId(), is(flow.getId()));
+        assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
 
-        result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), Flow.class);
-        assertThat(result.getId(), is(flow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        Flow get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), Flow.class);
+        assertThat(get.getId(), is(flow.getId()));
+        assertThat(get.getInputs().get(0).getName(), is("a"));
 
     }
 
@@ -85,12 +93,12 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .namespace("org.floworc.unittest")
             .build();
 
-        Flow result = client.toBlocking().retrieve(
+        FlowResponse result = client.toBlocking().retrieve(
             POST("/api/v1/flows", flow),
-            Flow.class
+            FlowResponse.class
         );
-        assertThat(result.getId(), is(flow.getId()));
-        assertThat(result.getRevision(), is(1));
+        assertThat(result.getFlow().getId(), is(flow.getId()));
+        assertThat(result.getFlow().getRevision(), is(1));
 
         HttpResponse<Void> deleteResult = client.toBlocking().exchange(
             DELETE("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId())
@@ -116,13 +124,13 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
             .build();
 
-        Flow result = client.toBlocking().retrieve(
+        FlowResponse result = client.toBlocking().retrieve(
             POST("/api/v1/flows", flow),
-            Flow.class
+            FlowResponse.class
         );
 
-        assertThat(result.getId(), is(flow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getFlow().getId(), is(flow.getId()));
+        assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
 
         flow = Flow.builder()
             .id(flowId)
@@ -130,13 +138,13 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
             .build();
 
-        result = client.toBlocking().retrieve(
+        Flow get = client.toBlocking().retrieve(
             PUT("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId(), flow),
             Flow.class
         );
 
-        assertThat(result.getId(), is(flow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("b"));
+        assertThat(get.getId(), is(flow.getId()));
+        assertThat(get.getInputs().get(0).getName(), is("b"));
 
         Flow finalFlow = flow;
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {

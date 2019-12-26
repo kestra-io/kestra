@@ -74,20 +74,19 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         return this.scroll(sourceBuilder);
     }
 
-
     @Override
     public ArrayListTotal<Flow> find(String query, Pageable pageable) {
         QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-                .query(queryString)
-                .size(pageable.getSize())
-                .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+            .query(queryString)
+            .size(pageable.getSize())
+            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
 
         for (Sort.Order order : pageable.getSort().getOrderBy()) {
             sourceBuilder = sourceBuilder.sort(
-                    order.getProperty(),
-                    order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
+                order.getProperty(),
+                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
             );
         }
 
@@ -97,17 +96,17 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     @Override
     public ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable) {
         TermQueryBuilder termQuery = QueryBuilders
-                .termQuery("namespace", namespace);
+            .termQuery("namespace", namespace);
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-                .query(termQuery)
-                .size(pageable.getSize())
-                .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+            .query(termQuery)
+            .size(pageable.getSize())
+            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
 
         for (Sort.Order order : pageable.getSort().getOrderBy()) {
             sourceBuilder = sourceBuilder.sort(
-                    order.getProperty(),
-                    order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
+                order.getProperty(),
+                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
             );
         }
 
@@ -140,20 +139,20 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public ArrayListTotal<String> findNamespaces(Optional<String> prefix) {
-
+    public List<String> findDistinctNamespace(Optional<String> prefix) {
         PrefixQueryBuilder prefixQuery = QueryBuilders.prefixQuery("namespace", prefix.orElse(""));
 
         // We want to keep only "distinct" values of field "namespace"
-        TermsAggregationBuilder termsAggregationBuilder =
-                AggregationBuilders
-                        .terms("distinct_namespace")
-                        .field("namespace")
-                        .order(BucketOrder.key(true));
+        // @TODO: use includeExclude(new IncludeExclude(0, 10)) to partition results
+        TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders
+            .terms("distinct_namespace")
+            .field("namespace")
+            .size(10000)
+            .order(BucketOrder.key(true));
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-                .query(prefixQuery)
-                .aggregation(termsAggregationBuilder);
+            .query(prefixQuery)
+            .aggregation(termsAggregationBuilder);
 
         SearchRequest searchRequest = searchRequest(sourceBuilder, false);
 
@@ -162,15 +161,15 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
             Terms namespaces = searchResponse.getAggregations().get("distinct_namespace");
 
-            return new ArrayListTotal<String>(
-                    namespaces.getBuckets()
-                        .stream()
-                        .map(o -> {
-                            return o.getKey().toString();
-                        })
-                        .collect(Collectors.toList()),
-                    namespaces.getBuckets().size());
-
+            return new ArrayListTotal<>(
+                namespaces.getBuckets()
+                    .stream()
+                    .map(o -> {
+                        return o.getKey().toString();
+                    })
+                    .collect(Collectors.toList()),
+                namespaces.getBuckets().size()
+            );
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

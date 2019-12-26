@@ -24,8 +24,6 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 public class EachSequential extends Sequential implements FlowableTask {
-    private static transient final ObjectMapper mapper = new ObjectMapper();
-
     private String value;
 
     @Override
@@ -34,6 +32,8 @@ public class EachSequential extends Sequential implements FlowableTask {
     }
 
     private List<ResolvedTask> resolveTasks(RunContext runContext, TaskRun parentTaskRun) {
+        ObjectMapper mapper = new ObjectMapper();
+
         String[] values;
         try {
             String renderValue = runContext.render(this.value);

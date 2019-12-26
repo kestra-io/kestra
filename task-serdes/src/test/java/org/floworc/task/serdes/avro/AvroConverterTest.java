@@ -3,7 +3,6 @@ package org.floworc.task.serdes.avro;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MicronautTest;
-import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericData;
@@ -24,10 +23,7 @@ import org.floworc.task.serdes.json.JsonReader;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.*;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Objects;
@@ -147,18 +143,22 @@ public class AvroConverterTest {
             return b.endRecord();
         }
 
-        @SneakyThrows
         public static GenericRecord test(Schema schema, GenericData.Record record) {
-            GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema, AvroConverter.genericData());
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-            writer.write(record, encoder);
-            encoder.flush();
+            try {
+                GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(schema, AvroConverter.genericData());
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
 
-            GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema, schema, AvroConverter.genericData());
-            ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
-            BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(in, null);
-            return reader.read(null, decoder);
+                writer.write(record, encoder);
+                encoder.flush();
+
+                GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema, schema, AvroConverter.genericData());
+                ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+                BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(in, null);
+                return reader.read(null, decoder);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

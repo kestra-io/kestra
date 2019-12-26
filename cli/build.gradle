@@ -25,5 +25,6 @@ dependencies {
 
     // tasks
     compile project(":task-gcp")
+    compile project(":task-notifications")
     compile project(":task-serdes")
 }

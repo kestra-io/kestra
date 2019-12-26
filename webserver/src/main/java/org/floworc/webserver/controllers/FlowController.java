@@ -37,6 +37,15 @@ public class FlowController {
     }
 
     /**
+     * @param namespace The flow namespace
+     * @return flow list
+     */
+    @Get(uri = "{namespace}", produces = MediaType.TEXT_JSON)
+    public PagedResults<Flow> findByNamespace(String namespace, @QueryValue(value = "page", defaultValue = "1") int page, @QueryValue(value = "size", defaultValue = "10") int size) {
+        return PagedResults.of(flowRepository.findByNamespace(namespace, Pageable.from(page, size)));
+    }
+
+    /**
      * @param query The flow query that is a lucen string
      * @param page Page in flow pagination
      * @param size Element count in pagination selection
@@ -47,22 +56,12 @@ public class FlowController {
         return PagedResults.of(flowRepository.find(query, Pageable.from(page, size)));
     }
 
-    /**
-     * @param namespace The flow namespace
-     * @param page Page in flow pagination
-     * @param size Element count in pagination selection
-     * @return flow list
-     */
-    @Get(uri = "{namespace}", produces = MediaType.TEXT_JSON)
-    public PagedResults<Flow> findByNamespace(String namespace, @QueryValue(value = "page", defaultValue = "1") int page, @QueryValue(value = "size", defaultValue = "10") int size) {
-        return PagedResults.of(flowRepository.findByNamespace(namespace, Pageable.from(page, size)));
-    }
-
 
     /**
      * @param flow The flow content
      * @return flow created
      */
+
     @Post(produces = MediaType.TEXT_JSON)
     public HttpResponse<FlowResponse> create(@Body Flow flow) {
         if (flowRepository.exists(flow).isPresent()) {
@@ -79,7 +78,7 @@ public class FlowController {
     /**
      * @param namespace flow namespace
      * @param id flow id to delete
-     * @return Http 404 when not found Http 204 on delete
+     * @return Http 204 on delete or Http 404 when not found
      */
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     public HttpResponse<Void> delete(String namespace, String id) {
@@ -91,6 +90,7 @@ public class FlowController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
     }
+
 
     /**
      * @param namespace flow namespace

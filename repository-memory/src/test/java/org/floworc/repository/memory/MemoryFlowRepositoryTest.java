@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -40,23 +38,23 @@ public class MemoryFlowRepositoryTest extends AbstractFlowRepositoryTest {
             .build();
         memoryFlowRepository.save(flow2);
 
-        ArrayListTotal<Flow> result = memoryFlowRepository.find("org.floworc.unittest.flow.find", Pageable.from(1, 5));
+        ArrayListTotal<Flow> result = memoryFlowRepository.findByNamespace("org.floworc.unittest.flow.find", Pageable.from(1, 5));
         assertThat(result.size(), is(2));
         assertThat(result, hasItem(flow1));
         assertThat(result, hasItem(flow2));
 
         var testFetch = new ArrayList<Flow>();
-        result = memoryFlowRepository.find("org.floworc.unittest.flow.find", Pageable.from(1, 1));
+        result = memoryFlowRepository.findByNamespace("org.floworc.unittest.flow.find", Pageable.from(1, 1));
         assertThat(result.size(), is(1));
         testFetch.addAll(result);
-        result = memoryFlowRepository.find("org.floworc.unittest.flow.find", Pageable.from(2, 1));
+        result = memoryFlowRepository.findByNamespace("org.floworc.unittest.flow.find", Pageable.from(2, 1));
         assertThat(result.size(), is(1));
         testFetch.addAll(result);
         assertThat(testFetch, hasItem(flow1));
         assertThat(testFetch, hasItem(flow2));
 
         ValueException e = assertThrows(ValueException.class, () -> {
-            ArrayListTotal<Flow> exceptionResult = memoryFlowRepository.find("org.floworc.unittest.flow.find", Pageable.from(0, 1));
+            ArrayListTotal<Flow> exceptionResult = memoryFlowRepository.findByNamespace("org.floworc.unittest.flow.find", Pageable.from(0, 1));
         });
         assertThat(e.getMessage(), is("Page cannot be < 1"));
     }

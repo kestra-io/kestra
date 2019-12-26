@@ -18,6 +18,16 @@ public interface FlowRepositoryInterface {
         return this.findById(namespace, id, Optional.empty());
     }
 
+    List<Flow> findRevisions(String namespace, String id);
+
+    List<Flow> findAll();
+
+    ArrayListTotal<Flow> find(String query, Pageable pageable);
+
+    ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable);
+
+    List<String> findDistinctNamespace(Optional<String> prefix);
+
     default Optional<Flow> exists(Flow flow) {
         return this.findRevisions(flow.getNamespace(), flow.getId())
             .stream()
@@ -25,17 +35,7 @@ public interface FlowRepositoryInterface {
             .findFirst();
     }
 
-    List<Flow> findRevisions(String namespace, String id);
-
-    List<Flow> findAll();
-
-    ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable);
-
-    ArrayListTotal<Flow> find(String query, Pageable pageable);
-
     Flow save(Flow flow);
 
     void delete(Flow flow);
-
-    ArrayListTotal<String> findNamespaces(Optional<String> prefix);
 }

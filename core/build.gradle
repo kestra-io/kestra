@@ -1,4 +1,6 @@
-sourceCompatibility = 11
+configurations {
+    tests
+}
 
 dependencies {
     // log
@@ -14,7 +16,7 @@ dependencies {
     compile group: 'net.jodah', name: 'failsafe', version: '2.3.1'
 
     // test
-    testCompile project(':repository-memory').sourceSets.main.output
-    testCompile project(':runner-memory').sourceSets.main.output
-    testCompile project(':storage-local').sourceSets.main.output
+    testCompile project(':repository-memory')
+    testCompile project(':runner-memory')
+    testCompile project(':storage-local')
 }

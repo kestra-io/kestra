@@ -1,4 +1,4 @@
-sourceCompatibility = 11
+bintrayUpload.enabled = false
 
 dependencies {
     compile project(":core")
@@ -7,6 +7,6 @@ dependencies {
     compile group: "org.apache.kafka", name: 'kafka-streams', version: kafkaVersion
 
     testCompile project(':core').sourceSets.test.output
-    testCompile project(':repository-memory').sourceSets.main.output
-    testCompile project(':storage-local').sourceSets.main.output
+    testCompile project(':repository-memory')
+    testCompile project(':storage-local')
 }

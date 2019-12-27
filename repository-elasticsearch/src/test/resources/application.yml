@@ -1,5 +1,5 @@
 elasticsearch:
-  httpHosts: http://kestra:9200
+  httpHosts: http://localhost:9200
 
 kestra:
   repository:

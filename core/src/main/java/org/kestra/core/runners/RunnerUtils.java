@@ -184,33 +184,28 @@ public class RunnerUtils {
 
     public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
         if (duration == null) {
-            duration = Duration.ofMinutes(5);
+            duration = Duration.ofMinutes(1);
         }
 
         Execution execution = this.newExecution(flow, inputs);
 
         return this.awaitExecution(
             flow,
-            () -> {
-                this.executionQueue.emit(execution);
-
-                return execution.getId();
-            },
+            execution,
             duration
         );
     }
 
-    public Execution awaitExecution(Flow flow, Supplier<String> emitExecution, Duration duration) throws TimeoutException {
-        AtomicReference<String> executionId = new AtomicReference<>();
+    public Execution awaitExecution(Flow flow, Execution execution,  Duration duration) throws TimeoutException {
         AtomicReference<Execution> receive = new AtomicReference<>();
 
         Runnable cancel = this.executionQueue.receive(current -> {
-            if (current.getId().equals(executionId.get()) && current.isTerminatedWithListeners(flow)) {
+            if (current.getId().equals(execution.getId()) && current.isTerminatedWithListeners(flow)) {
                 receive.set(current);
             }
         });
 
-        executionId.set(emitExecution.get());
+        this.executionQueue.emit(execution);
 
         Await.until(() -> receive.get() != null, null, duration);
 

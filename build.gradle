@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        micronautVersion = "1.2.6"
+        micronautVersion = "1.2.8"
         confluentVersion = "5.3.1"
         kafkaVersion = "2.3.0"
         lombokVersion = "1.18.10"
@@ -10,19 +10,22 @@ buildscript {
 plugins {
     // micronaut
     id "java"
-    id "net.ltgt.apt-eclipse" version "0.21"
-    id "net.ltgt.apt-idea" version "0.21"
+    id 'java-library'
+    id "idea"
     id "com.github.johnrengelman.shadow" version "5.2.0"
     id "application"
 
     // test
     id 'com.adarshr.test-logger' version '2.0.0'
 
-    // help
+    // helper
     id "com.github.ben-manes.versions" version "0.27.0"
 
     // front
     id 'org.siouan.frontend' version '1.3.0'
+
+    // release
+    id "com.jfrog.bintray" version "1.8.4" apply false
 }
 
 idea {
@@ -43,13 +46,13 @@ dependencies {
     testCompile project(":cli")
 }
 
-
 /**********************************************************************************************************************\
- * All projects
+ * Dependencies
  **********************************************************************************************************************/
 allprojects {
     group "org.kestra"
-    version "0.1"
+
+    sourceCompatibility = 11
 
     repositories {
         mavenCentral()
@@ -57,30 +60,25 @@ allprojects {
     }
 
     // micronaut
-    apply plugin:"java"
-    apply plugin:"net.ltgt.apt-eclipse"
-    apply plugin:"net.ltgt.apt-idea"
-    apply plugin: "jacoco"
-
-    // test
-    apply plugin:"com.adarshr.test-logger"
+    apply plugin: "java"
+    apply plugin: "java-library"
+    apply plugin: "idea"
 
     configurations {
-        // for dependencies that are needed for development only
-        developmentOnly
+        developmentOnly // for dependencies that are needed for development only
     }
 
     // dependencies
     dependencies {
         // logs
         runtime "ch.qos.logback:logback-classic:1.2.3"
-        compile group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.12.1'
+        runtime group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.12.1'
 
         // utils
         annotationProcessor "org.projectlombok:lombok:" + lombokVersion
-        compile group: 'com.google.guava', name: 'guava', version: '28.1-jre'
+        api group: 'com.google.guava', name: 'guava', version: '28.1-jre'
         compileOnly 'org.projectlombok:lombok:' + lombokVersion
-        compile 'com.github.jknack:handlebars:4.1.2'
+        implementation 'com.github.jknack:handlebars:4.1.2'
 
         // micronaut
         annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
@@ -90,18 +88,30 @@ allprojects {
         implementation "io.micronaut:micronaut-inject"
         implementation "io.micronaut:micronaut-validation"
         implementation "io.micronaut:micronaut-runtime"
-        compile 'io.micronaut:micronaut-views'
-        compile group: 'io.micronaut.data', name: 'micronaut-data-model', version: '1.0.0.M5'
+        implementation 'io.micronaut:micronaut-views'
+        implementation "io.micronaut.data:micronaut-data-model:1.0.0.M5"
 
         // jackson
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
-        compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.10.1'
-        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.10.1'
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
+        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.10.1'
+        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.10.1'
 
-        // test
+        // kestra
+        implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
+    }
+}
+
+/**********************************************************************************************************************\
+ * Test
+ **********************************************************************************************************************/
+subprojects {
+    apply plugin: "com.adarshr.test-logger"
+
+    dependencies {
         testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
         testAnnotationProcessor "io.micronaut:micronaut-inject-java"
         testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+        testImplementation "io.micronaut:micronaut-inject"
         testImplementation "org.junit.jupiter:junit-jupiter-api"
         testImplementation "io.micronaut.test:micronaut-test-junit5"
         testImplementation "org.junit.jupiter:junit-jupiter-engine"
@@ -110,24 +120,19 @@ allprojects {
         // hamcrest
         testImplementation 'org.hamcrest:hamcrest:2.2'
         testImplementation 'org.hamcrest:hamcrest-library:2.2'
-        testCompile group: 'org.exparity', name: 'hamcrest-date', version: '2.0.7'
+        testImplementation group: 'org.exparity', name: 'hamcrest-date', version: '2.0.7'
 
-        // kestra
-        compile group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
     }
 
-    // test
     test {
         useJUnitPlatform()
-
-        testLogging {
-            exceptionFormat = "full"
-        }
     }
 
     testlogger {
         theme 'mocha-parallel'
         showExceptions true
+        showFullStackTraces true
+        showCauses true
         slowThreshold 2000
         showStandardStreams true
         showPassedStandardStreams false
@@ -138,7 +143,7 @@ allprojects {
 /**********************************************************************************************************************\
  * Micronaut
  **********************************************************************************************************************/
-tasks.withType(JavaCompile){
+tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")
 }
@@ -164,6 +169,7 @@ jar {
 
 shadowJar {
     mergeServiceFiles()
+    archiveClassifier.set(null)
 }
 
 shadowJar.dependsOn "assembleFrontend"
@@ -173,6 +179,8 @@ shadowJar.dependsOn "assembleFrontend"
  * Jacoco
  **********************************************************************************************************************/
 subprojects {
+    apply plugin: "jacoco"
+
     test {
         finalizedBy jacocoTestReport
     }
@@ -188,7 +196,7 @@ subprojects {
     }
 }
 
-task jacoco(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
+task jacoco(type: JacocoReport) {
     dependsOn = subprojects.test
 
     getAdditionalSourceDirs().setFrom(files(subprojects.sourceSets.main.allSource.srcDirs))
@@ -200,5 +208,107 @@ task jacoco(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
         html.enabled = true
         xml.enabled = true
         csv.enabled = true
+    }
+}
+
+/**********************************************************************************************************************\
+ * Standalone
+ **********************************************************************************************************************/
+task runStandalone(type: JavaExec) {
+    group = "application"
+    classpath = project(":cli").sourceSets.main.runtimeClasspath
+    main = mainClassName
+    args 'standalone'
+}
+
+/**********************************************************************************************************************\
+ * Publish
+ **********************************************************************************************************************/
+
+subprojects {
+    javadoc {
+        options {
+            locale = 'en_US'
+            encoding = 'UTF-8'
+        }
+    }
+
+    task sourcesJar(type: Jar) {
+        archiveClassifier.set('sources')
+        from sourceSets.main.allSource
+    }
+
+    task javadocJar(type: Jar) {
+        archiveClassifier.set('javadoc')
+        from javadoc
+    }
+
+    def getSnapshotVersion = { ->
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'log', '-n', '1', '--pretty=format:%ad-%h', '--date=format:%Y%m%d-%H%M%S'
+            standardOutput = stdout
+        }
+        return stdout.toString().trim()
+    }
+
+    ext {
+        isBuildSnapshot = version.toString().endsWith("-SNAPSHOT")
+        if (isBuildSnapshot) {
+            project.version = project.version.replaceAll(/-SNAPSHOT$/, "-" + getSnapshotVersion())
+        }
+    }
+
+    apply plugin: "maven-publish"
+    apply plugin: "com.jfrog.bintray"
+
+    publishing {
+        publications {
+            BintrayMavenPublication(MavenPublication) {
+                version project.version
+
+                if (project.name.contains('cli')) {
+                    groupId "org.kestra"
+                    artifactId "kestra"
+
+                    artifact shadowJar
+                } else {
+                    from components.java
+
+                    groupId project.group
+                    artifactId project.name
+
+                    artifact sourcesJar
+                    artifact javadocJar
+                }
+
+            }
+
+        }
+    }
+
+    bintray {
+        user = System.getenv('BINTRAY_USER')
+        key = System.getenv('BINTRAY_KEY')
+        publications = ['BintrayMavenPublication']
+        publish = true
+        dryRun = false
+        pkg {
+            userOrg = 'kestra'
+            name = project.name.contains('cli') ? "kestra" : project.name
+            repo = project.ext.isBuildSnapshot ? 'maven-snapshot' : 'maven'
+            websiteUrl = 'https://kestra.io'
+            issueTrackerUrl = 'https://github.com/kestra-io/kestra/issues'
+            vcsUrl = 'https://github.com/kestra-io/kestra'
+            licenses = ['Apache-2.0']
+            publicDownloadNumbers = true
+            githubRepo = 'kestra-io/kestra'
+            githubReleaseNotesFile = 'README.md'
+            version {
+                name = project.version
+                released = new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+                vcsTag = "v" + project.version
+            }
+        }
     }
 }

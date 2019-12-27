@@ -11,5 +11,5 @@ kestra:
     gcs:
       bucket: "kestra-unit-test"
     bigquery:
-      project: "kestra"
+      project: "kestra-unit-test"
       dataset: "kestra_unit_test"

@@ -1,4 +1,4 @@
-sourceCompatibility = 11
+bintrayUpload.enabled = false
 
 dependencies {
     compile project(":core")

@@ -4,6 +4,8 @@
 ![Docker Pull](https://img.shields.io/docker/pulls/kestra/kestra.svg)
 ![Github Downloads](https://img.shields.io/github/downloads/kestra-io/kestra/total)
 ![Github Star](https://img.shields.io/github/stars/kestra-io/kestra.svg)
+![Github Actions](https://github.com/kestra-io/kestra/workflows/Main/badge.svg?branch=master)
+
 
 <p align="center">
   <img width="460" src="ui/src/assets/logo.svg"  alt="Kestra workflow orchestrator" />

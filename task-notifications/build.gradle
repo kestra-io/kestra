@@ -1,4 +1,4 @@
-sourceCompatibility = 11
+bintrayUpload.enabled = false
 
 dependencies {
     compile project(":core")
@@ -6,7 +6,7 @@ dependencies {
     compile "io.micronaut:micronaut-http-client"
 
     testCompile project(':core').sourceSets.test.output
-    testCompile project(':runner-memory').sourceSets.main.output
-    testCompile project(':repository-memory').sourceSets.main.output
-    testCompile project(':storage-local').sourceSets.main.output
+    testCompile project(':runner-memory')
+    testCompile project(':repository-memory')
+    testCompile project(':storage-local')
 }

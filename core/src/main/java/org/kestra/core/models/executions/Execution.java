@@ -102,7 +102,7 @@ public class Execution {
     }
 
     /**
-     * Determine if the current execution is on error & normal tasks
+     * Determine if the current execution is on error &amp; normal tasks
      * Used only from the flow
      * @param resolvedTasks normal tasks
      * @param resolvedErrors errors tasks
@@ -113,13 +113,14 @@ public class Execution {
     }
 
     /**
-     * Determine if the current execution is on error & normal tasks
+     * Determine if the current execution is on error &amp; normal tasks
      *
      * if the current have errors, return tasks from errors
      * if not, return the normal tasks
      *
      * @param resolvedTasks normal tasks
      * @param resolvedErrors errors tasks
+     * @param parentTaskRun the parent task
      * @return the flow we need to follow
      */
     public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks, List<ResolvedTask> resolvedErrors, TaskRun parentTaskRun) {

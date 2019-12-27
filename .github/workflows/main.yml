@@ -1,0 +1,186 @@
+name: Main
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - feat/cicd
+    tags:
+      - v*
+
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java: ['11']
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Services
+      - name: Build the docker-compose stack
+        run: docker-compose -f docker-compose.yml up -d
+
+      # Caches
+      - name: Gradle cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Gradle wrapper cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/wrapper
+          key: ${{ runner.os }}-wrapper-${{ hashFiles('**/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-wrapper-
+      - name: Npm cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Node cache
+        uses: actions/cache@v1
+        with:
+          path: node
+          key: ${{ runner.os }}-node-${{ hashFiles('ui/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # JDK
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+
+      # Gradle check
+      - name: Build with Gradle
+        env:
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+        run: |
+          echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
+          ./gradlew classes --parallel --no-daemon
+          ./gradlew check --no-daemon
+        # --parallel
+
+      # Shadow Jar
+      - name: Shadow jar
+        if: success() && matrix.java == '11'
+        run: ./gradlew shadowJar --no-daemon
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v1
+        if: success() && matrix.java == '11'
+        with:
+          name: jar
+          path: build/libs/
+
+      # Slack
+      - name: Slack notification
+        uses: 8398a7/action-slack@v2
+        if: always()
+        with:
+          status: ${{ job.status }}
+          username: Github Actions
+          icon_emoji: ':octocat:'
+          channel: '#kestra'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  publish:
+    name: Publish package
+    runs-on: ubuntu-latest
+    needs: check
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v2
+
+      # Caches
+      - name: Gradle cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Gradle wrapper cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.gradle/wrapper
+          key: ${{ runner.os }}-wrapper-${{ hashFiles('**/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-wrapper-
+
+      # Java
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+
+      - name: Publish package to GitHub
+        env:
+          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+          BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
+        run: ./gradlew bintrayUpload --parallel --no-daemon
+
+      # Slack
+      - name: Slack notification
+        uses: 8398a7/action-slack@v2
+        if: failure()
+        with:
+          status: ${{ job.status }}
+          username: Github Actions
+          icon_emoji: ':octocat:'
+          channel: '#kestra'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  docker:
+    name: Publish docker
+    runs-on: ubuntu-latest
+    needs: check
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download jar
+        uses: actions/download-artifact@v1
+        with:
+          name: jar
+      - name: Copy jar to image
+        run: cp jar/*.jar docker/app/libs/kestra.jar
+      - name: Publish to Docker Hub
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kestra/kestra
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # Slack
+      - name: Slack notification
+        uses: 8398a7/action-slack@v2
+        if: failure()
+        with:
+          status: ${{ job.status }}
+          username: Github Actions
+          icon_emoji: ':octocat:'
+          channel: '#kestra'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

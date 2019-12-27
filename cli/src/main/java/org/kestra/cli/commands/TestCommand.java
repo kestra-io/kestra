@@ -1,5 +1,6 @@
 package org.kestra.cli.commands;
 
+import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.exceptions.MissingRequiredInput;
@@ -36,16 +37,7 @@ public class TestCommand extends AbstractCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    private MemoryRunner runner;
-
-    @Inject
-    private LocalFlowRepositoryLoader repositoryLoader;
-
-    @Inject
-    private FlowRepositoryInterface flowRepository;
-
-    @Inject
-    private RunnerUtils runnerUtils;
+    private ApplicationContext applicationContext;
 
     public TestCommand() {
         super(false);
@@ -54,6 +46,11 @@ public class TestCommand extends AbstractCommand {
     @Override
     public void run() {
         super.run();
+
+        MemoryRunner runner = applicationContext.getBean(MemoryRunner.class);
+        LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
+        FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
+        RunnerUtils runnerUtils = applicationContext.getBean(RunnerUtils.class);
 
         Map<String, String> inputs = new HashMap<>();
 

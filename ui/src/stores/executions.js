@@ -39,7 +39,7 @@ export default {
             })
         },
         followExecution(_, options) {
-            return Vue.SSE(`${Vue.axios.defaults.baseURL}/api/v1/executions/${options.id}/follow`, { format: 'json' })
+            return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/executions/${options.id}/follow`, { format: 'json' })
         }
     },
     mutations: {

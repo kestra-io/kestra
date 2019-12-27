@@ -13,9 +13,6 @@ import javax.inject.Inject;
 )
 @Slf4j
 public class WebServerCommand extends AbstractServerCommand {
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
-
     @Inject
     private ApplicationContext applicationContext;
 

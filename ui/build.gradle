@@ -1,3 +1,5 @@
+bintrayUpload.enabled = false
+
 frontend {
     nodeVersion = '12.14.0'
     assembleScript = 'run build'

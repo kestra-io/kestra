@@ -1,4 +1,4 @@
-sourceCompatibility = 11
+bintrayUpload.enabled = false
 
 dependencies {
     compile project(":core")
@@ -7,5 +7,5 @@ dependencies {
     compile 'com.google.cloud:google-cloud-storage:1.101.0'
 
     testCompile project(':core').sourceSets.test.output
-    testCompile project(':storage-local').sourceSets.main.output
+    testCompile project(':storage-local')
 }

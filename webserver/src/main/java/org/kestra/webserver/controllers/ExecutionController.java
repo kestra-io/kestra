@@ -48,13 +48,13 @@ public class ExecutionController {
 
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
     public PagedResults<Execution> find(
-        @QueryValue(value = "q") String query,
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size
+            @QueryValue(value = "q") String query,
+            @QueryValue(value = "page", defaultValue = "1") int page,
+            @QueryValue(value = "size", defaultValue = "10") int size
     ) {
         return PagedResults.of(
-            executionRepository
-                .find(query, Pageable.from(page, size))
+                executionRepository
+                        .find(query, Pageable.from(page, size))
         );
     }
 
@@ -67,9 +67,9 @@ public class ExecutionController {
     @Get(uri = "executions/{executionId}", produces = MediaType.TEXT_JSON)
     public Maybe<Execution> get(String executionId) {
         return executionRepository
-            .findById(executionId)
-            .map(Maybe::just)
-            .orElse(Maybe.empty());
+                .findById(executionId)
+                .map(Maybe::just)
+                .orElse(Maybe.empty());
     }
 
     /**
@@ -83,13 +83,13 @@ public class ExecutionController {
      */
     @Get(uri = "executions", produces = MediaType.TEXT_JSON)
     public PagedResults<Execution> findByFlowId(
-        @QueryValue(value = "namespace") String namespace,
-        @QueryValue(value = "flowId") String flowId,
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size) {
+            @QueryValue(value = "namespace") String namespace,
+            @QueryValue(value = "flowId") String flowId,
+            @QueryValue(value = "page", defaultValue = "1") int page,
+            @QueryValue(value = "size", defaultValue = "10") int size) {
         return PagedResults.of(
-            executionRepository
-                .findByFlowId(namespace, flowId, Pageable.from(page, size))
+                executionRepository
+                        .findByFlowId(namespace, flowId, Pageable.from(page, size))
         );
     }
 
@@ -102,10 +102,10 @@ public class ExecutionController {
      */
     @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
     public Maybe<Execution> trigger(
-        String namespace,
-        String id,
-        @Nullable Map<String, String> inputs,
-        @Nullable Publisher<StreamingFileUpload> files
+            String namespace,
+            String id,
+            @Nullable Map<String, String> inputs,
+            @Nullable Publisher<StreamingFileUpload> files
     ) {
         Optional<Flow> find = flowRepository.findById(namespace, id);
         if (find.isEmpty()) {
@@ -113,8 +113,8 @@ public class ExecutionController {
         }
 
         Execution current = runnerUtils.newExecution(
-            find.get(),
-            (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs, files)
+                find.get(),
+                (flow, execution) -> runnerUtils.typedInputs(flow, execution, inputs, files)
         );
 
         executionQueue.emit(current);
@@ -143,22 +143,22 @@ public class ExecutionController {
         }
 
         return Flowable
-            .<Event<Execution>>create(emitter -> {
-                Runnable receive = this.executionQueue.receive(current -> {
-                    if (current.getId().equals(executionId)) {
-                        emitter.onNext(Event.of(current).id(Execution.class.getSimpleName()));
+                .<Event<Execution>>create(emitter -> {
+                    Runnable receive = this.executionQueue.receive(current -> {
+                        if (current.getId().equals(executionId)) {
+                            emitter.onNext(Event.of(current).id(Execution.class.getSimpleName()));
 
-                        if (current.isTerminatedWithListeners(flow.get())) {
-                            emitter.onComplete();
+                            if (current.isTerminatedWithListeners(flow.get())) {
+                                emitter.onComplete();
+                            }
                         }
+                    });
+                    cancel.set(receive);
+                }, BackpressureStrategy.BUFFER)
+                .doOnComplete(() -> {
+                    if (cancel.get() != null) {
+                        cancel.get().run();
                     }
                 });
-                cancel.set(receive);
-            }, BackpressureStrategy.BUFFER)
-            .doOnComplete(() -> {
-                if (cancel.get() != null) {
-                    cancel.get().run();
-                }
-            });
     }
 }

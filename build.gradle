@@ -26,6 +26,7 @@ plugins {
 
     // release
     id "com.jfrog.bintray" version "1.8.4" apply false
+    id 'net.researchgate.release' version '2.8.1'
 }
 
 idea {
@@ -310,5 +311,22 @@ subprojects {
                 vcsTag = "v" + project.version
             }
         }
+    }
+}
+
+
+/**********************************************************************************************************************\
+ * Version
+ **********************************************************************************************************************/
+release {
+    preCommitText = 'chore(version):'
+    preTagCommitMessage = 'update to version'
+    tagCommitMessage = 'tag version'
+    newVersionCommitMessage = 'update snapshot version'
+    tagTemplate = 'v${version}'
+    pushReleaseVersionBranch = 'master'
+
+    git {
+        requireBranch = 'develop'
     }
 }

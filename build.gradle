@@ -75,11 +75,9 @@ allprojects {
         runtime "ch.qos.logback:logback-classic:1.2.3"
         runtime group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.12.1'
 
-        // utils
+        // lombok
         annotationProcessor "org.projectlombok:lombok:" + lombokVersion
-        api group: 'com.google.guava', name: 'guava', version: '28.1-jre'
         compileOnly 'org.projectlombok:lombok:' + lombokVersion
-        implementation 'com.github.jknack:handlebars:4.1.2'
 
         // micronaut
         annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
@@ -99,6 +97,12 @@ allprojects {
 
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
+        implementation 'com.github.jknack:handlebars:4.1.2'
+
+        // exposed utils
+        api group: 'com.google.guava', name: 'guava', version: '28.1-jre'
+        api group: 'commons-io', name: 'commons-io', version: '2.6'
+        api group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
     }
 }
 
@@ -169,12 +173,50 @@ jar {
 }
 
 shadowJar {
-    mergeServiceFiles()
+    dependsOn = [assembleFrontend]
+
     archiveClassifier.set(null)
+    mergeServiceFiles()
 }
 
-shadowJar.dependsOn "assembleFrontend"
+/**********************************************************************************************************************\
+ * Executable Jar
+ **********************************************************************************************************************/
+def executableDir = file("${buildDir}/executable")
+def executable = file("${buildDir}/executable/${project.name}-${project.version}")
 
+task writeExecutableJar()  {
+    group "build"
+    description "Write an executable jar from shadow jar"
+    dependsOn = [shadowJar]
+
+    doFirst {
+        executableDir.mkdirs()
+    }
+
+    doLast {
+        executable.write("")
+        executable.append("\n: <<END_OF_KESTRA_SELFRUN\r\n")
+        executable.append(file("gradle/jar/selfrun.bat").readBytes())
+        executable.append("\r\nEND_OF_KESTRA_SELFRUN\r\n\n")
+        executable.append(file("gradle/jar/selfrun.sh").readBytes())
+        executable.append(file("${buildDir}/libs/${project.name}-${project.version}.jar").readBytes())
+        executable.setExecutable(true)
+    }
+
+}
+
+task executableJar(type: Zip) {
+    group "build"
+    description "Zip the executable jar"
+    dependsOn = [writeExecutableJar]
+
+    archiveFileName = "${project.name}-${project.version}.zip"
+    destinationDirectory = file("${buildDir}/archives")
+
+    from executableDir
+    archiveClassifier.set(null)
+}
 
 /**********************************************************************************************************************\
  * Jacoco
@@ -273,6 +315,7 @@ subprojects {
                     artifactId "kestra"
 
                     artifact shadowJar
+                    artifact executableJar
                 } else {
                     from components.java
 
@@ -293,7 +336,7 @@ subprojects {
         key = System.getenv('BINTRAY_KEY')
         publications = ['BintrayMavenPublication']
         publish = true
-        dryRun = false
+        dryRun = true
         pkg {
             userOrg = 'kestra'
             name = project.name.contains('cli') ? "kestra" : project.name

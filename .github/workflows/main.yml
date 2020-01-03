@@ -78,10 +78,18 @@ jobs:
         # --parallel
 
       # Shadow Jar
-      - name: Shadow jar
+      - name: Build jars
         if: success() && matrix.java == '11'
-        run: ./gradlew shadowJar --no-daemon
+        run: ./gradlew executableJar --no-daemon
 
+      # Publish
+      - name: Publish package to Bintray
+        env:
+          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+          BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
+        run: ./gradlew bintrayUpload --parallel --no-daemon
+
+      # Upload artifacts
       - name: Upload jar
         uses: actions/upload-artifact@v1
         if: success() && matrix.java == '11'
@@ -89,59 +97,17 @@ jobs:
           name: jar
           path: build/libs/
 
+      - name: Upload Executable
+        uses: actions/upload-artifact@v1
+        if: success() && matrix.java == '11'
+        with:
+          name: exe
+          path: build/executable/
+
       # Slack
       - name: Slack notification
         uses: 8398a7/action-slack@v2
         if: always()
-        with:
-          status: ${{ job.status }}
-          username: Github Actions
-          icon_emoji: ':octocat:'
-          channel: '#kestra'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  publish:
-    name: Publish package
-    runs-on: ubuntu-latest
-    needs: check
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
-    steps:
-      - uses: actions/checkout@v2
-
-      # Caches
-      - name: Gradle cache
-        uses: actions/cache@v1
-        with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      - name: Gradle wrapper cache
-        uses: actions/cache@v1
-        with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-wrapper-${{ hashFiles('**/*.gradle') }}
-          restore-keys: |
-            ${{ runner.os }}-wrapper-
-
-      # Java
-      - name: Set up JDK
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
-
-      - name: Publish package to GitHub
-        env:
-          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
-          BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
-        run: ./gradlew bintrayUpload --parallel --no-daemon
-
-      # Slack
-      - name: Slack notification
-        uses: 8398a7/action-slack@v2
-        if: failure()
         with:
           status: ${{ job.status }}
           username: Github Actions
@@ -159,18 +125,20 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Download jar
+      - name: Download executable
         uses: actions/download-artifact@v1
         with:
-          name: jar
-      - name: Copy jar to image
-        run: cp jar/*.jar docker/app/libs/kestra.jar
+          name: exe
+      - name: Copy exe to image
+        run: cp exe/* docker/app/kestra && chmod +x docker/app/kestra
+
       - name: Publish to Docker Hub
         uses: elgohr/Publish-Docker-Github-Action@master
         with:
           name: kestra/kestra
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          tag_names: true
 
       # Slack
       - name: Slack notification

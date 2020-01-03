@@ -1,6 +1,7 @@
 package org.kestra.cli;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
+import org.kestra.cli.commands.plugins.PluginCommand;
 import org.kestra.cli.commands.servers.StandAloneCommand;
 import org.kestra.cli.commands.TestCommand;
 import org.kestra.cli.commands.servers.WebServerCommand;
@@ -23,6 +24,7 @@ import java.util.concurrent.Callable;
         TestCommand.class,
         WebServerCommand.class,
         WorkerCommand.class,
+        PluginCommand.class
     }
 )
 public class App implements Callable<Object> {

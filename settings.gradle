@@ -7,15 +7,9 @@ include 'runner-memory'
 include 'runner-kafka'
 
 include 'storage-local'
-include 'storage-gcs'
-include 'storage-minio'
 
 include 'repository-elasticsearch'
 include 'repository-memory'
-
-include 'task-gcp'
-include 'task-notifications'
-include 'task-serdes'
 
 include 'webserver'
 include 'ui'

@@ -2,7 +2,7 @@ package org.kestra.runner.kafka;
 
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.test.annotation.MicronautTest;
-import org.kestra.core.Utils;
+import org.kestra.core.utils.TestsUtils;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.RunnerUtils;
@@ -35,7 +35,7 @@ class KafkaRunnerTest {
     private void init() throws IOException, URISyntaxException {
         runner.setThreads(1);
         runner.run();
-        Utils.loads(repositoryLoader);
+        TestsUtils.loads(repositoryLoader);
     }
 
     @Test

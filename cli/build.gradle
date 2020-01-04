@@ -30,13 +30,6 @@ dependencies {
     compile project(":runner-kafka")
 
     compile project(":storage-local")
-    compile project(":storage-gcs")
-    compile project(":storage-minio")
 
     compile project(":webserver")
-
-    // tasks
-    compile project(":task-gcp")
-    compile project(":task-notifications")
-    compile project(":task-serdes")
 }

@@ -336,7 +336,7 @@ subprojects {
         key = System.getenv('BINTRAY_KEY')
         publications = ['BintrayMavenPublication']
         publish = true
-        dryRun = true
+        dryRun = false
         pkg {
             userOrg = 'kestra'
             name = project.name.contains('cli') ? "kestra" : project.name

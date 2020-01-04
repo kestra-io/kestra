@@ -1,8 +1,0 @@
-bintrayUpload.enabled = false
-
-dependencies {
-    compile project(":core")
-    compile 'io.minio:minio:6.0.11'
-
-    testCompile project(':core').sourceSets.test.output
-}

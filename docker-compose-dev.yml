@@ -30,15 +30,3 @@ services:
       - 127.8.9.13:5601:5601
     links:
       - elasticsearch
-
-  minio:
-    image: minio/minio
-    volumes:
-      - minio-data:/data
-    command: server /data
-    environment:
-      MINIO_ACCESS_KEY: AKIAIOSFODNN7EXAMPLE
-      MINIO_SECRET_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-    ports:
-      - 127.8.9.13:9000:9000
-

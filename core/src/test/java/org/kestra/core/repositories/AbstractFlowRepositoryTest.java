@@ -3,11 +3,9 @@ package org.kestra.core.repositories;
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableList;
 import io.micronaut.test.annotation.MicronautTest;
-import org.kestra.core.Utils;
+import org.kestra.core.utils.TestsUtils;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
-import org.kestra.core.repositories.FlowRepositoryInterface;
-import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +28,7 @@ public abstract class AbstractFlowRepositoryTest {
 
     @BeforeEach
     private void init() throws IOException, URISyntaxException {
-        Utils.loads(repositoryLoader);
+        TestsUtils.loads(repositoryLoader);
     }
 
     private static Flow.FlowBuilder builder() {

@@ -1,4 +1,4 @@
-package org.kestra.core;
+package org.kestra.core.utils;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,15 +24,13 @@ import java.net.URL;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-abstract public class Utils {
+abstract public class TestsUtils {
     private static final YamlFlowParser yamlFlowParser = new YamlFlowParser();
     private static ObjectMapper mapper = JacksonMapper.ofYaml();
 
     public static <T> T map(String path, Class<T> cls) throws IOException {
-        URL resource = Utils.class.getClassLoader().getResource(path);
-        assertNotNull(resource);
+        URL resource = TestsUtils.class.getClassLoader().getResource(path);
+        assert resource != null;
 
         String read = Files.asCharSource(new File(resource.getFile()), Charsets.UTF_8).read();
 
@@ -40,8 +38,8 @@ abstract public class Utils {
     }
 
     public static Flow parse(String path) throws IOException {
-        URL resource = Utils.class.getClassLoader().getResource(path);
-        assertNotNull(resource);
+        URL resource = TestsUtils.class.getClassLoader().getResource(path);
+        assert resource != null;
 
         File file = new File(resource.getFile());
 
@@ -49,7 +47,7 @@ abstract public class Utils {
     }
 
     public static void loads(LocalFlowRepositoryLoader repositoryLoader) throws IOException, URISyntaxException {
-        Utils.loads(repositoryLoader, Objects.requireNonNull(Utils.class.getClassLoader().getResource("flows/valids")));
+        TestsUtils.loads(repositoryLoader, Objects.requireNonNull(TestsUtils.class.getClassLoader().getResource("flows/valids")));
     }
 
     public static void loads(LocalFlowRepositoryLoader repositoryLoader, URL url) throws IOException, URISyntaxException {
@@ -57,7 +55,7 @@ abstract public class Utils {
     }
 
     public static Flow mockFlow() {
-        return Utils.mockFlow(Thread.currentThread().getStackTrace()[2]);
+        return TestsUtils.mockFlow(Thread.currentThread().getStackTrace()[2]);
     }
 
     private static Flow mockFlow(StackTraceElement caller) {
@@ -69,7 +67,7 @@ abstract public class Utils {
     }
 
     public static Execution mockExecution(Flow flow, Map<String, Object> inputs) {
-        return Utils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs);
+        return TestsUtils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs);
     }
 
     private static Execution mockExecution(StackTraceElement caller, Flow flow, Map<String, Object> inputs) {
@@ -84,7 +82,7 @@ abstract public class Utils {
     }
 
     public static TaskRun mockTaskRun(Flow flow, Execution execution, Task task) {
-        return Utils.mockTaskRun(Thread.currentThread().getStackTrace()[2], execution, task);
+        return TestsUtils.mockTaskRun(Thread.currentThread().getStackTrace()[2], execution, task);
     }
 
     private static TaskRun mockTaskRun(StackTraceElement caller, Execution execution, Task task) {
@@ -101,9 +99,9 @@ abstract public class Utils {
     public static RunContext mockRunContext(ApplicationContext applicationContext, Task task, Map<String, Object> inputs) {
         StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
 
-        Flow flow = Utils.mockFlow(caller);
-        Execution execution = Utils.mockExecution(caller, flow, inputs);
-        TaskRun taskRun = Utils.mockTaskRun(caller, execution, task);
+        Flow flow = TestsUtils.mockFlow(caller);
+        Execution execution = TestsUtils.mockExecution(caller, flow, inputs);
+        TaskRun taskRun = TestsUtils.mockTaskRun(caller, execution, task);
 
         return new RunContext(flow, ResolvedTask.of(task), execution, taskRun)
             .withApplicationContext(applicationContext)

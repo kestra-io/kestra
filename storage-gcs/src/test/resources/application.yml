@@ -1,6 +1,0 @@
-kestra:
-  storage:
-    type: gcs
-    gcs:
-      bucket: "kestra-unit-test"
-

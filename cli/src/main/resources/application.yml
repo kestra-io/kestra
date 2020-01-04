@@ -200,3 +200,12 @@ kestra:
               }
             }
           }
+
+  plugins:
+    repositories:
+      central:
+        url: https://repo.maven.apache.org/maven2/
+      jcenter:
+        url: https://jcenter.bintray.com/
+      kestra:
+        url: https://dl.bintray.com/kestra/maven

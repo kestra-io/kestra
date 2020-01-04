@@ -1,0 +1,8 @@
+kestra:
+  plugins:
+    path: /tmp/plugins
+    repositories:
+      central:
+        url: https://repo.maven.apache.org/maven2/
+      kestra:
+        url: https://dl.bintray.com/kestra/maven

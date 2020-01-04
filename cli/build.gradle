@@ -6,6 +6,20 @@ dependencies {
     compile "io.micronaut:micronaut-http-client"
     compile "io.micronaut:micronaut-http-server-netty"
 
+    // plugins
+    compile 'org.eclipse.aether:aether-api:1.1.0'
+    compile 'org.eclipse.aether:aether-spi:1.1.0'
+    compile 'org.eclipse.aether:aether-util:1.1.0'
+    compile 'org.eclipse.aether:aether-impl:1.1.0'
+    compile 'org.eclipse.aether:aether-connector-basic:1.1.0'
+    compile 'org.eclipse.aether:aether-transport-file:1.1.0'
+    compile 'org.eclipse.aether:aether-transport-http:1.1.0'
+    compile('org.apache.maven:maven-aether-provider:3.1.0') {
+        // sisu dependency injector is not used
+        exclude group: 'org.eclipse.sisu'
+    }
+
+
     // modules
     compile project(":core")
 
@@ -16,13 +30,6 @@ dependencies {
     compile project(":runner-kafka")
 
     compile project(":storage-local")
-    compile project(":storage-gcs")
-    compile project(":storage-minio")
 
     compile project(":webserver")
-
-    // tasks
-    compile project(":task-gcp")
-    compile project(":task-notifications")
-    compile project(":task-serdes")
 }

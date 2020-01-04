@@ -7,8 +7,6 @@ volumes:
     driver: local
   kafka-data:
     driver: local
-  minio-data:
-    driver: local
   elasticsearch-data:
     driver: local
 
@@ -59,15 +57,3 @@ services:
       - 5601:5601
     links:
       - elasticsearch
-
-  minio:
-    image: minio/minio
-    volumes:
-      - minio-data:/data
-    command: server /data
-    environment:
-      MINIO_ACCESS_KEY: AKIAIOSFODNN7EXAMPLE
-      MINIO_SECRET_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-    ports:
-      - 9000:9000
-

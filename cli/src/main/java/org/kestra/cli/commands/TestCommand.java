@@ -1,7 +1,11 @@
 package org.kestra.cli.commands;
 
+import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Prototype;
+import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.exceptions.MissingRequiredInput;
 import org.kestra.core.models.flows.Flow;
@@ -13,6 +17,7 @@ import picocli.CommandLine;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -26,6 +31,7 @@ import java.util.concurrent.TimeoutException;
     description = "test a flow"
 )
 @Slf4j
+@Prototype
 public class TestCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0", description = "the flow file to test")
     private Path file;
@@ -39,8 +45,28 @@ public class TestCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
+
+    @Value("${kestra.storage.local.kestra.base-path}")
+    Path tempDirectory;
+
     public TestCommand() {
         super(false);
+    }
+
+    @SuppressWarnings("unused")
+    public static Map<String, Object> propertiesOverrides() {
+        try {
+            Path tempDirectory = Files.createTempDirectory(TestCommand.class.getSimpleName());
+
+            return ImmutableMap.of(
+                "kestra.repository.type", "memory",
+                "kestra.queue.type", "memory",
+                "kestra.storage.type", "local",
+                "kestra.storage.local.kestra.base-path", tempDirectory.toAbsolutePath().toString()
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -82,6 +108,11 @@ public class TestCommand extends AbstractCommand {
             throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());
         } catch (IOException | TimeoutException e) {
             throw new IllegalStateException(e);
+        } finally {
+            try {
+                FileUtils.deleteDirectory(this.tempDirectory.toFile());
+            } catch (IOException ignored) {
+            }
         }
     }
 }

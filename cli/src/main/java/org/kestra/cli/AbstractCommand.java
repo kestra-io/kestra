@@ -1,12 +1,19 @@
 package org.kestra.cli;
 
 import ch.qos.logback.classic.LoggerContext;
+import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.runtime.server.EmbeddedServer;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import javax.inject.Inject;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
 
 @CommandLine.Command(
     mixinStandardHelpOptions = true
@@ -26,6 +33,9 @@ abstract public class AbstractCommand implements Runnable {
 
     @CommandLine.Option(names = {"--internal-log"}, description = "Change also log level for internal log, default: ${DEFAULT-VALUE})")
     private boolean internalLog = false;
+
+    @CommandLine.Option(names = {"-c", "--config"}, description = "Used configuration file, default: ${DEFAULT-VALUE})")
+    private Path config = Paths.get(System.getProperty("user.home"), ".kestra/config.yml");
 
     public enum LogLevel {
         TRACE,
@@ -77,5 +87,20 @@ abstract public class AbstractCommand implements Runnable {
                     server.getURL()
                 );
             });
+    }
+
+    @SuppressWarnings({"unused"})
+    public Map<String, Object> propertiesFromConfig() {
+        if (this.config.toFile().exists()) {
+            YamlPropertySourceLoader yamlPropertySourceLoader = new YamlPropertySourceLoader();
+
+            try {
+                return yamlPropertySourceLoader.read("cli", new FileInputStream(this.config.toFile()));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return ImmutableMap.of();
     }
 }

@@ -7,9 +7,7 @@ import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.context.env.Environment;
 import org.kestra.cli.commands.TestCommand;
 import org.kestra.cli.commands.plugins.PluginCommand;
-import org.kestra.cli.commands.servers.StandAloneCommand;
-import org.kestra.cli.commands.servers.WebServerCommand;
-import org.kestra.cli.commands.servers.WorkerCommand;
+import org.kestra.cli.commands.servers.*;
 import picocli.CommandLine;
 
 import java.lang.reflect.InvocationTargetException;
@@ -28,11 +26,9 @@ import java.util.concurrent.Callable;
 
     mixinStandardHelpOptions = true,
     subcommands = {
-        StandAloneCommand.class,
+        PluginCommand.class,
+        ServerCommand.class,
         TestCommand.class,
-        WebServerCommand.class,
-        WorkerCommand.class,
-        PluginCommand.class
     }
 )
 public class App implements Callable<Object> {

@@ -5,6 +5,7 @@ import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.runners.Worker;
+import org.kestra.core.utils.Await;
 import picocli.CommandLine;
 
 import javax.inject.Inject;
@@ -40,5 +41,7 @@ public class WorkerCommand extends AbstractCommand {
         }
 
         log.info("Workers started with {} thread(s)", this.thread);
+
+        Await.until(() -> !this.applicationContext.isRunning());
     }
 }

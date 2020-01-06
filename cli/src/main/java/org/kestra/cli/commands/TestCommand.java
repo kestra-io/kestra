@@ -15,6 +15,7 @@ import org.kestra.core.runners.RunnerUtils;
 import org.kestra.runner.memory.MemoryRunner;
 import picocli.CommandLine;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,7 +46,7 @@ public class TestCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-
+    @Nullable
     @Value("${kestra.storage.local.kestra.base-path}")
     Path tempDirectory;
 

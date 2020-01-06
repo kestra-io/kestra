@@ -20,10 +20,10 @@ jackson:
 
 endpoints:
   all:
+    port: 8081
     enabled: true
     sensitive: false
   health:
-    path: /
     details-visible: ANONYMOUS
 
 kestra:

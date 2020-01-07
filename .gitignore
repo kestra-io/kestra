@@ -25,6 +25,7 @@ cli/src/main/resources/application-override.yml
 node
 node_modules
 yarn-error.log
+yarn.lock
 ui/node_modules
 ui/.env.local
 ui/.env.*.local

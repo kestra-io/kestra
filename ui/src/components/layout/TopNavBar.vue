@@ -6,7 +6,7 @@
 
                 <b-breadcrumb>
                     <b-breadcrumb-item><router-link :to="{ name: 'home'}"><home /> {{$t('home') | cap}}</router-link></b-breadcrumb-item>
-                    <b-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :text="item.label" />
+                    <b-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :text="item.label" :key="x" />
                 </b-breadcrumb>
             </b-nav-text>
         </b-navbar-nav>

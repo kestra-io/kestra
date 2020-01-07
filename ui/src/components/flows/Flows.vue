@@ -1,19 +1,37 @@
 <template>
     <div>
         <div>
-            <data-table @onPageChanged="loadFlows" striped hover bordered ref="dataTable" :total="total">
+            <data-table
+                @onPageChanged="loadFlows"
+                striped
+                hover
+                bordered
+                ref="dataTable"
+                :total="total"
+            >
                 <template v-slot:navbar>
                     <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
                 </template>
                 <template v-slot:table>
-                    <b-table responsive="xl" striped bordered hover :items="flows" :fields="fields">
+                    <b-table
+                        @row-dblclicked="onRowDoubleClick"
+                        responsive="xl"
+                        striped
+                        bordered
+                        hover
+                        :items="flows"
+                        :fields="fields"
+                    >
                         <template v-slot:cell(actions)="row">
                             <router-link :to="{name: 'flow', params : row.item}">
                                 <eye id="edit-action" />
                             </router-link>
                         </template>
                         <template v-slot:cell(namespace)="row">
-                            <a href @click.prevent="onNamespaceSelect(row.item.namespace)">{{row.item.namespace}}</a>
+                            <a
+                                href
+                                @click.prevent="onNamespaceSelect(row.item.namespace)"
+                            >{{row.item.namespace}}</a>
                         </template>
                     </b-table>
                 </template>
@@ -76,15 +94,15 @@ export default {
             return [
                 {
                     key: "id",
-                    label: title("id"),
+                    label: title("id")
                 },
                 {
                     key: "namespace",
-                    label: title("namespace"),
+                    label: title("namespace")
                 },
                 {
                     key: "revision",
-                    label: title("revision"),
+                    label: title("revision")
                 },
                 {
                     key: "actions",
@@ -95,6 +113,9 @@ export default {
         }
     },
     methods: {
+        onRowDoubleClick(item) {
+            this.$router.push({name: 'flow', params: item})
+        },
         loadFlows(pagination) {
             if (this.namespace) {
                 this.$store.dispatch("flow/loadFlows", {

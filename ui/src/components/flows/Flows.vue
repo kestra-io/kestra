@@ -11,14 +11,10 @@
             >
                 <template v-slot:navbar>
                     <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
-                    <v-s />
-                    <search-field @onSearch="onSearch" :fields="searchableFields" />
                 </template>
                 <template v-slot:table>
                     <b-table
-                        :no-local-sorting="true"
                         @row-dblclicked="onRowDoubleClick"
-                        @sort-changed="onSort"
                         responsive="xl"
                         striped
                         bordered
@@ -64,7 +60,7 @@ import Eye from "vue-material-design-icons/Eye";
 import BottomLine from "../layout/BottomLine";
 import RouteContext from "../../mixins/routeContext";
 import DataTable from "../layout/DataTable";
-import SearchField from "../layout/SearchField";
+
 export default {
     mixins: [RouteContext],
     components: {
@@ -72,18 +68,11 @@ export default {
         BottomLine,
         Plus,
         Eye,
-        DataTable,
-        SearchField
+        DataTable
     },
 
     mounted() {
         this.onNamespaceSelect(this.$route.query.namespace);
-    },
-    data() {
-        return {
-            query: "*",
-            sort: ""
-        };
     },
     watch: {
         $route() {
@@ -93,9 +82,6 @@ export default {
     computed: {
         ...mapState("flow", ["flows", "total"]),
         ...mapState("namespace", ["namespace", "namespace"]),
-        searchableFields() {
-            return this.fields.filter(f => f.sortable);
-        },
         routeInfo() {
             return {
                 title: this.$t("flows")
@@ -108,18 +94,15 @@ export default {
             return [
                 {
                     key: "id",
-                    label: title("id"),
-                    sortable: true
+                    label: title("id")
                 },
                 {
                     key: "namespace",
-                    label: title("namespace"),
-                    sortable: true
+                    label: title("namespace")
                 },
                 {
                     key: "revision",
-                    label: title("revision"),
-                    sortable: true
+                    label: title("revision")
                 },
                 {
                     key: "actions",
@@ -130,33 +113,21 @@ export default {
         }
     },
     methods: {
-        onSearch(query) {
-            this.query = query;
-            this.loadFlows();
-        },
-        onSort(sort) {
-            this.sort = [`${sort.sortBy}:${sort.sortDesc ? "desc" : "asc"}`];
-            this.loadFlows();
-        },
         onRowDoubleClick(item) {
             this.$router.push({name: 'flow', params: item})
         },
-        loadFlows() {
-            const pagination = this.$refs.dataTable.nextPagination;
+        loadFlows(pagination) {
             if (this.namespace) {
                 this.$store.dispatch("flow/loadFlows", {
                     namespace: this.namespace,
                     size: pagination.size,
-                    page: pagination.page,
-                    sort: this.sort,
-                    q: this.query
+                    page: pagination.page
                 });
             } else {
                 this.$store.dispatch("flow/findFlows", {
-                    q: this.query,
+                    q: "*",
                     size: pagination.size,
-                    page: pagination.page,
-                    sort: this.sort
+                    page: pagination.page
                 });
             }
         },
@@ -166,7 +137,7 @@ export default {
                 this.page = 1;
             }
             this.$store.commit("namespace/setNamespace", namespace);
-            this.loadFlows();
+            this.loadFlows(this.$refs.dataTable.pagination);
         }
     }
 };

@@ -1,32 +1,35 @@
 <template>
     <div>
-        <data-table
-            @onPageChanged="loadExecutions"
-            ref="dataTable"
-            :total="total"
-        >
+        <data-table @onPageChanged="loadExecutions" ref="dataTable" :total="total">
             <template v-slot:table>
-                <b-table responsive="xl" striped hover bordered :items="executions"
-                         :fields="fields">
+                <b-table
+                    responsive="xl"
+                    striped
+                    hover
+                    bordered
+                    :items="executions"
+                    :fields="fields"
+                    @row-dblclicked="onRowDoubleClick"
+                >
                     <template v-slot:cell(details)="row">
-                        <router-link :to="`/executions/${row.item.namespace}/${row.item.flowId}/${row.item.id}`">
+                        <router-link :to="{name: 'execution', params: row.item}">
                             <eye id="edit-action" />
                         </router-link>
                     </template>
-                    <template v-slot:cell(date)="row">
-                        {{row.item.state.histories[0].date | date('YYYY/MM/DD HH:mm:ss')}}
-                    </template>
+                    <template
+                        v-slot:cell(date)="row"
+                    >{{row.item.state.histories[0].date | date('YYYY/MM/DD HH:mm:ss')}}</template>
                     <template v-slot:cell(state.current)="row">
                         <status class="status" :status="row.item.state.current" />
                     </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link
-                                :to="{name: 'flow', params: {namespace: row.item.namespace, id: row.item.flowId}}"
+                            :to="{name: 'flow', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >{{row.item.flowId}}</router-link>
                     </template>
                     <template v-slot:cell(namespace)="row">
                         <router-link
-                                :to="{name: 'flowsList', query: {namespace: row.item.namespace}}"
+                            :to="{name: 'flowsList', query: {namespace: row.item.namespace}}"
                         >{{row.item.namespace}}</router-link>
                     </template>
                     <template v-slot:cell(id)="row">
@@ -45,10 +48,9 @@ import Eye from "vue-material-design-icons/Eye";
 import Status from "../Status";
 import RouteContext from "../../mixins/routeContext";
 
-
 export default {
     mixins: [RouteContext],
-    components: { Status, Eye,  DataTable },
+    components: { Status, Eye, DataTable },
     mounted() {
         this.loadExecutions(this.$refs.dataTable.pagination);
     },
@@ -56,7 +58,7 @@ export default {
         ...mapState("execution", ["executions", "total"]),
         routeInfo() {
             return {
-                title: this.$t("executions"),
+                title: this.$t("executions")
             };
         },
         fields() {
@@ -70,20 +72,20 @@ export default {
                 },
                 {
                     key: "date",
-                    label: title("created date"),
+                    label: title("created date")
                 },
                 {
                     key: "namespace",
-                    label: title("namespace"),
+                    label: title("namespace")
                 },
                 {
                     key: "flowId",
-                    label: title("flow"),
+                    label: title("flow")
                 },
                 {
                     key: "state.current",
                     label: title("state"),
-                    class: "text-center",
+                    class: "text-center"
                 },
                 {
                     key: "details",
@@ -99,6 +101,9 @@ export default {
         }
     },
     methods: {
+        onRowDoubleClick(item) {
+            this.$router.push({ name: "execution", params: item });
+        },
         triggerExecution() {
             this.$store
                 .dispatch("execution/triggerExecution", this.$route.params)
@@ -122,8 +127,7 @@ export default {
                     flowId: this.$route.params.id,
                     size: pagination.size,
                     page: pagination.page
-                })
-
+                });
             } else {
                 this.$store.dispatch("execution/findExecutions", {
                     size: pagination.size,
@@ -135,4 +139,3 @@ export default {
     }
 };
 </script>
-

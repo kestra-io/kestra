@@ -1,5 +1,5 @@
 <template>
-    <b-navbar v-if="topNavbar" class="top-line" type="dark" variant="dark">
+    <b-navbar v-if="topNavbar" :class="menuCollapsed" class="top-line" type="dark" variant="dark">
         <b-navbar-nav>
             <b-nav-text >
                 <h1>{{title | cap}}</h1>
@@ -20,6 +20,12 @@ export default {
     components: {
         Home
     },
+    props: {
+        menuCollapsed : {
+            type: String,
+            required: true
+        }
+    },
     computed: {
         ...mapState("layout", ["topNavbar"]),
         title() {
@@ -34,9 +40,24 @@ export default {
 <style lang="scss" scoped>
 @import "../../styles/variable";
 
-.top-line {
+.menu-collapsed {
+    transition: all 0.3s ease;
     left: 50px;
     width: calc(100% - 50px);
+
+}
+.menu-not-collapsed {
+    transition: all 0.3s;
+    left: 350px;
+    width: calc(100% - 350px);
+
+}
+
+.top-line {
+    border-bottom: 4px solid $secondary;
+}
+
+.top-line {
     border-bottom: 4px solid $secondary;
 }
 

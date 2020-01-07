@@ -32,11 +32,13 @@ export default {
     methods: {
         onToggleCollapse(folded) {
             this.collapsed = folded;
+            localStorage.setItem('menuCollapsed', folded ? 'true' : 'false')
+            this.$emit('onMenuCollapse', folded)
         }
     },
     data() {
         return {
-            collapsed: true,
+            collapsed: localStorage.getItem('menuCollapsed') === 'true',
         };
     },
     computed: {

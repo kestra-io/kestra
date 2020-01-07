@@ -1,10 +1,10 @@
 <template>
     <div>
-        <Menu />
-        <top-nav-bar />
+        <Menu @onMenuCollapse="onMenuCollapse" />
+        <top-nav-bar :menuCollapsed="menuCollapsed" />
 
         <div id="app" class="container-fluid">
-            <div class="content-wrapper">
+            <div class="content-wrapper" :class="menuCollapsed">
                 <router-view></router-view>
             </div>
         </div>
@@ -21,9 +21,20 @@ export default {
         Menu,
         TopNavBar
     },
-    created () {
-        if (this.$route.path === '/') {
-            this.$router.push({name: 'flowsList'})
+    data() {
+        return {
+            menuCollapsed: "",
+        };
+    },
+    created() {
+        if (this.$route.path === "/") {
+            this.$router.push({ name: "flowsList" });
+        }
+        this.onMenuCollapse(localStorage.getItem('menuCollapsed') === 'true')
+    },
+    methods: {
+        onMenuCollapse(collapse) {
+            this.menuCollapsed = collapse ? "menu-collapsed" : "menu-not-collapsed";
         }
     }
 };
@@ -31,6 +42,14 @@ export default {
 
 
 <style lang="scss">
+.menu-collapsed {
+    transition: all 0.3s ease;
+    padding-left: 50px;
+}
+.menu-not-collapsed {
+    transition: all 0.3s;
+    padding-left: 350px;
+}
 body {
     min-width: 320px;
 }
@@ -43,6 +62,5 @@ html,
 .content-wrapper {
     padding-top: 15px;
     padding-bottom: 60px !important;
-    padding-left: 50px;
 }
 </style>

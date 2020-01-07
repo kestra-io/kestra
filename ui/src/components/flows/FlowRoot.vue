@@ -10,7 +10,7 @@
                     :title="tab.title"
                 >
                     <b-card-text>
-                        <div :is="tab.tab" />
+                        <div :is="tab.tab" :prevent-route-info="true" />
                     </b-card-text>
                 </b-tab>
             </b-tabs>

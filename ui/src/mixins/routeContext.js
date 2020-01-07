@@ -1,4 +1,10 @@
 export default {
+    props: {
+        preventRouteInfo : {
+            type: Boolean,
+            default: false
+        }
+    },
     mounted() {
         this.onLoad()
     },
@@ -9,7 +15,9 @@ export default {
     },
     methods: {
         onLoad() {
-            this.$store.commit('layout/setTopNavbar', this.routeInfo)
+            if (!this.preventRouteInfo) {
+                this.$store.commit('layout/setTopNavbar', this.routeInfo)
+            }
         }
     }
 }

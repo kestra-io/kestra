@@ -2,19 +2,19 @@
     <div>
         <b-row class="topology-wrapper">
             <b-col>
-                <topology-tree v-if="flow" :tree="flow" @onNodeClick="onNodeClick" :label="getLabel" :fill="fill"/>
+                <topology-tree :isFlow="true" v-if="flow && dataTree" :dataTree="dataTree" :label="getLabel"/>
             </b-col>
         </b-row>
         <b-row>
             <b-col>
-                <task-details :task="node" />
+                <task-details/>
             </b-col>
         </b-row>
     </div>
 </template>
 <script>
 import { mapState } from "vuex";
-import TopologyTree from "../TopologyTree";
+import TopologyTree from "../graph/TopologyTree";
 import TaskDetails from "./TaskDetails";
 
 export default {
@@ -22,24 +22,13 @@ export default {
         TopologyTree,
         TaskDetails
     },
-    data() {
-        return {
-            node: undefined
-        };
-    },
     computed: {
-        ...mapState("flow", ["flow"])
+        ...mapState("flow", ["flow", "dataTree"]),
     },
     methods: {
-        onNodeClick(node) {
-            this.node = node;
-        },
         getLabel (node) {
             const id = node.data.id;
             return `${id.substr(0, 25)}${id.length > 25 ? "..." : ""}`;
-        },
-        fill () {
-            return "#c9fc8d"
         }
     }
 };

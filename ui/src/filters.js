@@ -23,5 +23,5 @@ Vue.filter('date', (dateString, format) => {
         f = format
     }
     return Vue.moment(dateString).format(f)
-});
+})
 Vue.filter('ellipsis', (text, len) => text.length > len ? text.substr(0, len) + '...' : text.substr(0, len))

@@ -2,6 +2,22 @@
     <div v-if="execution && outputs">
         <hr />
         <h2>{{$t('outputs') | cap}}</h2>
+        <b-row>
+            <b-col md="6">
+                <b-form-group
+                    :label="$t('display output for specific task').capitalize()"
+                    label-for="input-for-output"
+                >
+                    <v-select
+                        v-model="filter"
+                        :reduce="option => option.label"
+                        @input="onSearch"
+                        :options="selectOptions"
+                        :placeholder="$t('search') + '...'"
+                    ></v-select>
+                </b-form-group>
+            </b-col>
+        </b-row>
         <b-table
             responsive="xl"
             striped
@@ -28,13 +44,49 @@ import { mapState } from "vuex";
 import { apiRoot } from "../../http";
 
 export default {
+    data() {
+        return {
+            filter: ""
+        };
+    },
+    created() {
+        if (this.$route.query.search) {
+            this.filter = this.$route.query.search || ""
+        }
+    },
+    watch: {
+        $route() {
+            if (this.$route.query.search !== this.filter) {
+                this.filter = this.$route.query.search || "";
+            }
+        }
+    },
     methods: {
         itemUrl(value) {
             return `${apiRoot}executions/${this.execution.id}/file?filePath=${value.uri}&type=${value.type}`;
+        },
+        onSearch() {
+            if (this.filter && this.$route.query.search !== this.filter) {
+                const newRoute = { query: { ...this.$route.query } };
+                newRoute.query.search = this.filter;
+                this.$router.push(newRoute);
+            }
         }
     },
     computed: {
         ...mapState("execution", ["execution"]),
+        selectOptions() {
+            const options = [];
+            for (const task of this.execution.taskRunList || []) {
+                for (const key in task.outputs) {
+                    options.push({
+                        label: task.taskId,
+                        value: task.outputs[key]
+                    });
+                }
+            }
+            return options;
+        },
         fields() {
             return [
                 {
@@ -54,13 +106,21 @@ export default {
         outputs() {
             const outputs = [];
             for (const task of this.execution.taskRunList || []) {
-                for (const key in task.outputs) {
-                    const item = { key: task.taskId, value: task.outputs[key], task: task.id };
-                    if (typeof task.outputs[key] === "string" && task.outputs[key].startsWith &&
-                        task.outputs[key].startsWith("kestra:///")) {
-                        item.download = true;
+                if (!this.filter || task.taskId === this.filter) {
+                    for (const key in task.outputs) {
+                        const item = {
+                            key: task.taskId,
+                            value: task.outputs[key],
+                            task: task.id
+                        };
+                        if (
+                            typeof task.outputs[key] === "string" &&
+                            task.outputs[key].startsWith("kestra:///")
+                        ) {
+                            item.download = true;
+                        }
+                        outputs.push(item);
                     }
-                    outputs.push(item);
                 }
             }
             return outputs;

@@ -4,7 +4,8 @@ export default {
     state: {
         flows: undefined,
         flow: undefined,
-        total: 0
+        total: 0,
+        dataTree: undefined
     },
 
     actions: {
@@ -32,7 +33,12 @@ export default {
             return Vue.axios.post('/api/v1/flows', options.flow).then(response => {
                 commit('setFlow', response.data.flow)
             })
-        }
+        },
+        loadTree({ commit }, flow) {
+            return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/tree`).then(response => {
+                commit('setDataTree', response.data.tasks)
+            })
+        },
     },
     mutations: {
         setFlows(state, flows) {
@@ -43,6 +49,9 @@ export default {
         },
         setTotal(state, total) {
             state.total = total
+        },
+        setDataTree (state, dataTree) {
+            state.dataTree = dataTree
         }
     },
     getters: {}

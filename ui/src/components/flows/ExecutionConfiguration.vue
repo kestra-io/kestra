@@ -65,9 +65,6 @@
 
     export default {
         components: {DatePicker, Trigger},
-        created() {
-            this.loadFlow();
-        },
         computed: {
             ...mapState("flow", ["flow"]),
             placeholder() {
@@ -75,9 +72,6 @@
             }
         },
         methods: {
-            loadFlow() {
-                this.$store.dispatch("flow/loadFlow", this.$route.params);
-            },
             onSubmit() {
                 const formData = new FormData();
                 for (let input of this.flow.inputs || []) {

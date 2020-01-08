@@ -7,6 +7,7 @@ import flow from './flow'
 import execution from './executions'
 import namespace from './namespaces'
 import layout from './layout'
+import graph from './graph'
 
 Vue.use(Vuex)
 
@@ -19,6 +20,7 @@ export default new Vuex.Store({
         flow,
         execution,
         namespace,
-        layout
+        layout,
+        graph
     }
 })

@@ -14,6 +14,8 @@
                 </template>
                 <template v-slot:table>
                     <b-table
+                        :no-local-sorting="true"
+                        @sort-changed="onSort"
                         @row-dblclicked="onRowDoubleClick"
                         responsive="xl"
                         striped
@@ -79,6 +81,11 @@ export default {
             this.onNamespaceSelect(this.$route.query.namespace);
         }
     },
+    data() {
+        return {
+            sort: ""
+        };
+    },
     computed: {
         ...mapState("flow", ["flows", "total"]),
         ...mapState("namespace", ["namespace", "namespace"]),
@@ -94,7 +101,8 @@ export default {
             return [
                 {
                     key: "id",
-                    label: title("id")
+                    label: title("id"),
+                    sortable: true
                 },
                 {
                     key: "namespace",
@@ -102,7 +110,8 @@ export default {
                 },
                 {
                     key: "revision",
-                    label: title("revision")
+                    label: title("revision"),
+                    sortable: true
                 },
                 {
                     key: "actions",
@@ -113,21 +122,29 @@ export default {
         }
     },
     methods: {
+        onSort(sort) {
+            this.sort = [`${sort.sortBy}:${sort.sortDesc ? "desc" : "asc"}`];
+            this.loadFlows(this.$refs.dataTable.pagination)
+        },
         onRowDoubleClick(item) {
             this.$router.push({name: 'flow', params: item})
         },
         loadFlows(pagination) {
+            const q = '*'
             if (this.namespace) {
                 this.$store.dispatch("flow/loadFlows", {
                     namespace: this.namespace,
                     size: pagination.size,
-                    page: pagination.page
+                    page: pagination.page,
+                    sort: this.sort,
+                    q
                 });
             } else {
                 this.$store.dispatch("flow/findFlows", {
-                    q: "*",
                     size: pagination.size,
-                    page: pagination.page
+                    page: pagination.page,
+                    sort: this.sort,
+                    q
                 });
             }
         },

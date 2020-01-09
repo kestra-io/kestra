@@ -1,10 +1,12 @@
 package org.kestra.webserver.controllers;
 
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.validation.Validated;
 import io.reactivex.Maybe;
 import org.kestra.core.exceptions.InvalidFlowException;
@@ -13,9 +15,14 @@ import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.serializers.Validator;
 import org.kestra.webserver.responses.FlowResponse;
 import org.kestra.webserver.responses.PagedResults;
+import org.kestra.webserver.utils.PageableUtils;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Validated
 @Controller("/api/v1/flows")
@@ -25,7 +32,7 @@ public class FlowController {
 
     /**
      * @param namespace The flow namespace
-     * @param id The flow id
+     * @param id        The flow id
      * @return flow found
      */
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
@@ -47,13 +54,18 @@ public class FlowController {
 
     /**
      * @param query The flow query that is a lucen string
-     * @param page Page in flow pagination
-     * @param size Element count in pagination selection
+     * @param page  Page in flow pagination
+     * @param size  Element count in pagination selection
      * @return flow list
      */
-    @Get(uri = "/search",produces = MediaType.TEXT_JSON)
-    public PagedResults<Flow> find(@QueryValue(value = "q") String query, @QueryValue(value = "page", defaultValue = "1") int page, @QueryValue(value = "size", defaultValue = "10") int size) {
-        return PagedResults.of(flowRepository.find(query, Pageable.from(page, size)));
+    @Get(uri = "/search", produces = MediaType.TEXT_JSON)
+    public PagedResults<Flow> find(
+        @QueryValue(value = "q") String query,
+        @QueryValue(value = "page", defaultValue = "1") int page,
+        @QueryValue(value = "size", defaultValue = "10") int size,
+        @Nullable @QueryValue(value = "sort") List<String> sort
+    ) throws HttpStatusException {
+        return PagedResults.of(flowRepository.find(query, PageableUtils.from(page, size, sort)));
     }
 
 
@@ -77,7 +89,7 @@ public class FlowController {
 
     /**
      * @param namespace flow namespace
-     * @param id flow id to delete
+     * @param id        flow id to delete
      * @return Http 204 on delete or Http 404 when not found
      */
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
@@ -94,7 +106,7 @@ public class FlowController {
 
     /**
      * @param namespace flow namespace
-     * @param id flow id to update
+     * @param id        flow id to update
      * @return flow updated
      */
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)

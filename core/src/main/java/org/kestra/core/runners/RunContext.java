@@ -105,7 +105,7 @@ public class RunContext {
                 ))
                 .put("execution", ImmutableMap.of(
                     "id", execution.getId(),
-                    "startDate", execution.getState().startDate()
+                    "startDate", execution.getState().getStartDate()
                 ));
         }
 
@@ -139,7 +139,7 @@ public class RunContext {
     private Map<String, Object> variables(TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("id", taskRun.getId())
-            .put("startDate", taskRun.getState().startDate())
+            .put("startDate", taskRun.getState().getStartDate())
             .put("attemptsCount", taskRun.getAttempts() == null ? 0 : taskRun.getAttempts().size());
 
         if (taskRun.getParentTaskRunId() != null) {

@@ -113,6 +113,15 @@ kestra:
                       "current": {
                         "type": "keyword"
                       },
+                      "startDate": {
+                        "type": "date"
+                      },
+                      "endDate": {
+                        "type": "date"
+                      },
+                      "duration": {
+                        "type": "long"
+                      },
                       "histories": {
                         "properties": {
                           "date": {

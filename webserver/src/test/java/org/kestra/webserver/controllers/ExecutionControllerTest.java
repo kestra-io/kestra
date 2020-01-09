@@ -51,10 +51,10 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody) {
 
         Execution execution = client.toBlocking().retrieve(
-                HttpRequest
-                        .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId, requestBody)
-                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-                Execution.class
+            HttpRequest
+                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId, requestBody)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
         );
         return execution;
     }
@@ -62,21 +62,21 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     private Execution triggerInputsExecution() {
         // Trigger execution
         File applicationFile = new File(Objects.requireNonNull(
-                ExecutionControllerTest.class.getClassLoader().getResource("application.yml")
+            ExecutionControllerTest.class.getClassLoader().getResource("application.yml")
         ).getPath());
 
         File logbackFile = new File(Objects.requireNonNull(
-                ExecutionControllerTest.class.getClassLoader().getResource("logback.xml")
+            ExecutionControllerTest.class.getClassLoader().getResource("logback.xml")
         ).getPath());
 
         MultipartBody requestBody = MultipartBody.builder()
-                .addPart("string", "myString")
-                .addPart("int", "42")
-                .addPart("float", "42.42")
-                .addPart("instant", "2019-10-06T18:27:49Z")
-                .addPart("files", "file", MediaType.TEXT_PLAIN_TYPE, applicationFile)
-                .addPart("files", "optionalFile", MediaType.TEXT_XML_TYPE, logbackFile)
-                .build();
+            .addPart("string", "myString")
+            .addPart("int", "42")
+            .addPart("float", "42.42")
+            .addPart("instant", "2019-10-06T18:27:49Z")
+            .addPart("files", "file", MediaType.TEXT_PLAIN_TYPE, applicationFile)
+            .addPart("files", "optionalFile", MediaType.TEXT_XML_TYPE, logbackFile)
+            .build();
 
         return triggerExecution("org.kestra.tests", "inputs", requestBody);
     }
@@ -99,8 +99,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         // Get the triggered execution by execution id
         Maybe<Execution> foundExecution = client.retrieve(
-                HttpRequest.GET("/api/v1/executions/" + result.getId()),
-                Execution.class
+            HttpRequest.GET("/api/v1/executions/" + result.getId()),
+            Execution.class
         ).firstElement();
 
         assertThat(foundExecution.isEmpty().blockingGet(), is(Boolean.FALSE));
@@ -114,8 +114,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         String flowId = "minimal-bis";
 
         PagedResults<Execution> executionsBefore = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
-                Argument.of(PagedResults.class, Execution.class)
+            HttpRequest.GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
+            Argument.of(PagedResults.class, Execution.class)
         );
 
         assertThat(executionsBefore.getTotal(), is(0L));
@@ -123,8 +123,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         triggerExecution(namespace, flowId, MultipartBody.builder().addPart("string", "myString").build());
 
         PagedResults<Execution> executionsAfter = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
-                Argument.of(PagedResults.class, Execution.class)
+            HttpRequest.GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
+            Argument.of(PagedResults.class, Execution.class)
         );
 
         assertThat(executionsAfter.getTotal(), is(1L));
@@ -136,16 +136,16 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         RxSseClient sseClient = embeddedServer.getApplicationContext().createBean(RxSseClient.class, embeddedServer.getURL());
 
         Execution execution = client.toBlocking().retrieve(
-                HttpRequest
-                        .POST("/api/v1/executions/trigger/org.kestra.tests/full", MultipartBody.builder().addPart("string", "myString").build())
-                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-                Execution.class
+            HttpRequest
+                .POST("/api/v1/executions/trigger/org.kestra.tests/full", MultipartBody.builder().addPart("string", "myString").build())
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
         );
 
         List<Event<Execution>> results = sseClient
-                .eventStream("executions/" + execution.getId() + "/follow", Execution.class)
-                .toList()
-                .blockingGet();
+            .eventStream("executions/" + execution.getId() + "/follow", Execution.class)
+            .toList()
+            .blockingGet();
 
         assertThat(results.size(), is(13));
     }

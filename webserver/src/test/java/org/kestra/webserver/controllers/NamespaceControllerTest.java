@@ -21,7 +21,7 @@ public class NamespaceControllerTest extends AbstractMemoryRunnerTest {
     @Test
     void listDistinctNamespace() {
         List<String> namespaces = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/namespaces"), Argument.listOf(String.class));
+            HttpRequest.GET("/api/v1/namespaces"), Argument.listOf(String.class));
 
         assertThat(namespaces.size(), is(2));
     }
@@ -30,7 +30,7 @@ public class NamespaceControllerTest extends AbstractMemoryRunnerTest {
     void listDistinctNamespaceWithPrefix() {
         String prefix = "org.kestra.tests.minimal";
         List<String> namespaces = client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/namespaces?prefix=" + prefix), Argument.listOf(String.class));
+            HttpRequest.GET("/api/v1/namespaces?prefix=" + prefix), Argument.listOf(String.class));
 
         assertThat(namespaces.size(), is(1));
     }

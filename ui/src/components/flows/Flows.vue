@@ -15,8 +15,8 @@
                 <template v-slot:table>
                     <b-table
                         :no-local-sorting="true"
-                        @sort-changed="onSort"
                         @row-dblclicked="onRowDoubleClick"
+                        @sort-changed="onSort"
                         responsive="xl"
                         striped
                         bordered

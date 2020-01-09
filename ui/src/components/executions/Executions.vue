@@ -134,6 +134,10 @@ export default {
         onRowDoubleClick(item) {
             this.$router.push({ name: "execution", params: item });
         },
+        onSort(sort) {
+            this.sort = [`${sort.sortBy}:${sort.sortDesc ? "desc" : "asc"}`];
+            this.loadExecutions(this.$refs.dataTable.pagination);
+        },
         triggerExecution() {
             this.$store
                 .dispatch("execution/triggerExecution", this.$route.params)

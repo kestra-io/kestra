@@ -33,7 +33,7 @@
         "created date": "created date",
         "updated date": "updated date",
         "source": "source",
-        "home": "accueil",
+        "home": "home",
         "create": "Create",
         "add flow": "add flow",
         "from": "from",
@@ -52,7 +52,9 @@
         "set a value for": "set a value for",
         "invalid field": "invalid field",
         "form error": "form error",
-        "display topology for flow": "display topology for flow"
+        "display topology for flow": "display topology for flow",
+        "creation": "creation",
+        "flow creation": "flow creation"
     },
     "fr": {
         "id": "identifiant",
@@ -106,6 +108,8 @@
         "set a value for": "définir une valeur pour",
         "invalid field": "invalid field",
         "form error": "form error",
-        "display topology for flow": "Afficher la topologie du flow"
+        "display topology for flow": "Afficher la topologie du flow",
+        "creation": "création",
+        "flow creation": "création de flow"
     }
 }

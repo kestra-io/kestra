@@ -99,22 +99,6 @@ export default {
         }
     },
     methods: {
-        triggerExecution() {
-            this.$store
-                .dispatch("execution/triggerExecution", this.$route.params)
-                .then(response => {
-                    this.$router.push({
-                        name: "execution",
-                        params: response.data
-                    });
-                    this.$bvToast.toast(this.$t("triggered").capitalize(), {
-                        title: this.$t("execution").capitalize(),
-                        autoHideDelay: 5000,
-                        toaster: "b-toaster-top-right",
-                        variant: "success"
-                    });
-                });
-        },
         loadExecutions(pagination) {
             if (this.$route.params.namespace) {
                 this.$store.dispatch("execution/loadExecutions", {
@@ -135,4 +119,3 @@ export default {
     }
 };
 </script>
-

@@ -31,8 +31,10 @@ import { mapState } from "vuex";
 import ContentSave from "vue-material-design-icons/ContentSave";
 import Yaml from "yaml";
 import BottomLine from "../layout/BottomLine";
+import RouteContext from "../../mixins/routeContext";
 
 export default {
+    mixins: [RouteContext],
     components: {
         editor: require("vue2-ace-editor"),
         ContentSave,
@@ -50,6 +52,19 @@ export default {
         ...mapState("flow", ["flow"]),
         flowName() {
             return (this.flow && this.flow.id) || this.$t("new");
+        },
+        routeInfo() {
+            return {
+                title: this.$t("flow creation"),
+                breadcrumb: [
+                    {
+                        label: this.$t("flow")
+                    },
+                    {
+                        label: this.$t("creation")
+                    }
+                ]
+            };
         }
     },
     methods: {

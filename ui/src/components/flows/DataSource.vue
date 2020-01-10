@@ -1,7 +1,7 @@
 <template>
     <b-row>
         <b-col>
-            <flow-edit v-if="flow"/>
+            <flow-edit v-if="flow" :prevent-route-info="true"/>
         </b-col>
     </b-row>
 </template>

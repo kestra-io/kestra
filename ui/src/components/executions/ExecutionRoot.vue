@@ -24,6 +24,7 @@ import Trigger from "vue-material-design-icons/Cogs";
 import BottomLine from "../layout/BottomLine";
 import FlowActions from "../flows/FlowActions";
 import RouteContext from "../../mixins/routeContext";
+import { mapState } from "vuex";
 
 export default {
     mixins: [RouteContext],
@@ -42,7 +43,9 @@ export default {
         };
     },
     created() {
-        this.$store.dispatch("execution/loadExecution", this.$route.params);
+        if (!this.execution) {
+            this.$store.dispatch("execution/loadExecution", this.$route.params);
+        }
         this.$store
             .dispatch("execution/followExecution", this.$route.params)
             .then(sse => {
@@ -63,6 +66,7 @@ export default {
         }
     },
     computed: {
+        ...mapState("execution", ["execution"]),
         routeInfo() {
             return {
                 title: this.$t("execution"),
@@ -72,7 +76,7 @@ export default {
                         link: {
                             name: "flowsList",
                             query: {
-                                namespace: this.$route.params.namespace
+                                namespace: this.$route.params.flowId
                             }
                         }
                     },
@@ -81,7 +85,7 @@ export default {
                         link: {
                             name: "flow",
                             params: {
-                                namespace: this.$route.params.namespace,
+                                namespace: this.$route.params.flowId,
                                 id: this.$route.params.flowId
                             }
                         }
@@ -123,6 +127,7 @@ export default {
     },
     beforeDestroy() {
         this.sse.close();
+        this.$store.commit("execution/setExecution", undefined);
     }
 };
 </script>

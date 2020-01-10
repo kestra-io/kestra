@@ -116,6 +116,7 @@
                             toaster: "b-toaster-top-right",
                             variant: "success"
                         });
+                        this.$store.commit('execution/setExecution', response.data)
                         this.$router.push({name: 'execution', params: response.data})
                     });
             }

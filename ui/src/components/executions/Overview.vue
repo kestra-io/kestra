@@ -27,14 +27,14 @@ export default {
             const delta = ts(stopTs) - ts(startTs);
             const duration = this.$moment.duration(delta);
             const humanDuration = humanizeDuration(duration);
-            console.log(duration);
+            const stepCount = this.execution.taskRunList ? this.execution.taskRunList.length : 0
             return [
                 {key: this.$t('namespace'), value: this.execution.namespace},
                 {key: this.$t('flow'), value: this.execution.flowId},
                 {key: this.$t('created date'), value: startTs},
                 {key: this.$t('updated date'), value: stopTs},
                 {key: this.$t('duration'), value: humanDuration},
-                {key: this.$t('steps'), value: this.execution.taskRunList.length},
+                {key: this.$t('steps'), value: stepCount},
             ]
         }
     }
@@ -43,6 +43,5 @@ export default {
 <style scoped lang="scss">
     /deep/ thead {
         display: none;
-
     }
 </style>

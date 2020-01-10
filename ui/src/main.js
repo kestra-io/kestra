@@ -14,7 +14,7 @@ import './filters'
 import 'moment/locale/fr'
 import './utils'
 import './custom.scss'
-
+import VerticalSeparator from './components/layout/VerticalSeparator'
 // @TODO: move to scss
 import 'vue-material-design-icons/styles.css';
 
@@ -25,6 +25,7 @@ Vue.use(VueMoment, {
 Vue.use(VueSidebarMenu);
 Vue.use(BootstrapVue);
 Vue.component('v-select', vSelect);
+Vue.component('v-s', VerticalSeparator);
 
 Vue.config.productionTip = false;
 

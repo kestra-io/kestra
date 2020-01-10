@@ -30,7 +30,7 @@ ui/node_modules
 ui/.env.local
 ui/.env.*.local
 webserver/src/main/resources/ui
-
+yarn.lock
 
 ### Docker
 /.env

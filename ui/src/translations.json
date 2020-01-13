@@ -111,9 +111,9 @@
         "invalid field": "invalid field",
         "form error": "form error",
         "display topology for flow": "Afficher la topologie du flow",
+        "start date": "date de début",
+        "end date": "date de fin",
         "creation": "création",
         "flow creation": "création de flow"
-        "start date": "date de début",
-        "end date": "date de fin"
     }
 }

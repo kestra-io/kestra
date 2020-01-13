@@ -1,6 +1,9 @@
 <template>
     <div>
         <data-table @onPageChanged="loadExecutions" ref="dataTable" :total="total">
+            <template v-slot:navbar>
+                <search-field @onSearch="onSearch" :fields="searchableFields" />
+            </template>
             <template v-slot:table>
                 <b-table
                     :no-local-sorting="true"
@@ -54,20 +57,25 @@ import DataTable from "../layout/DataTable";
 import Eye from "vue-material-design-icons/Eye";
 import Status from "../Status";
 import RouteContext from "../../mixins/routeContext";
+import SearchField from "../layout/SearchField";
 
 export default {
     mixins: [RouteContext],
-    components: { Status, Eye, DataTable },
+    components: { Status, Eye, DataTable, SearchField },
     mounted() {
-        this.loadExecutions(this.$refs.dataTable.pagination);
+        this.loadExecutions();
     },
     data() {
         return {
-            sort: ""
+            sort: "",
+            query: "*"
         };
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
+        searchableFields() {
+            return this.fields.filter(f => !["actions"].includes(f.key));
+        },
         routeInfo() {
             return {
                 title: this.$t("executions")
@@ -123,16 +131,20 @@ export default {
     },
     watch: {
         $route() {
-            this.loadExecutions(this.$refs.dataTable.pagination);
+            this.loadExecutions();
         }
     },
     methods: {
-        onSort(sort) {
-            this.sort = [`${sort.sortBy}:${sort.sortDesc ? "desc" : "asc"}`];
-            this.loadExecutions(this.$refs.dataTable.pagination);
+        onSearch(query) {
+            this.query = query;
+            this.loadExecutions();
         },
         onRowDoubleClick(item) {
             this.$router.push({ name: "execution", params: item });
+        },
+        onSort(sort) {
+            this.sort = [`${sort.sortBy}:${sort.sortDesc ? "desc" : "asc"}`];
+            this.loadExecutions();
         },
         triggerExecution() {
             this.$store
@@ -150,7 +162,8 @@ export default {
                     });
                 });
         },
-        loadExecutions(pagination) {
+        loadExecutions() {
+            const pagination = this.$refs.dataTable.nextPagination;
             if (this.$route.params.namespace) {
                 this.$store.dispatch("execution/loadExecutions", {
                     namespace: this.$route.params.namespace,
@@ -162,7 +175,7 @@ export default {
                 this.$store.dispatch("execution/findExecutions", {
                     size: pagination.size,
                     page: pagination.page,
-                    q: "*",
+                    q: this.query,
                     sort: this.sort
                 });
             }

@@ -11,7 +11,7 @@
             <div class="flex-grow-1">
                 <b-form-select
                     v-model="pagination.size"
-                    @change="changed"
+                    @change="perPageChange"
                     size="sm"
                     :options="pageOptions"
                 ></b-form-select>
@@ -41,27 +41,35 @@ export default {
                 page: 1,
                 size: 25
             },
+            nextPage: undefined,
             pageOptions: [
-                { value: 25, text: 25 + " " + this.$i18n.t("Per page") },
-                { value: 50, text: 50 + " " + this.$i18n.t("Per page") },
-                { value: 100, text: 100 + " " + this.$i18n.t("Per page") }
+                { value: 25, text: `25 ${this.$t("Per page")}` },
+                { value: 50, text: `50 ${this.$t("Per page")}` },
+                { value: 100, text: `100 ${this.$t("Per page")}` }
             ]
         };
     },
     computed: {
         hasNavBar() {
             return !!this.$slots["navbar"];
+        },
+        nextPagination() {
+            return {
+                page: this.nextPage || this.pagination.page,
+                size: this.pagination.size
+            };
         }
     },
     props: {
         total: { type: Number, required: true }
     },
     methods: {
+        perPageChange() {
+            this.changed(this.pagination.page)
+        },
         changed(page) {
-            this.$emit("onPageChanged", {
-                size: this.pagination.size,
-                page
-            });
+            this.nextPage = page;
+            this.$emit("onPageChanged", this.nextPage);
         }
     }
 };

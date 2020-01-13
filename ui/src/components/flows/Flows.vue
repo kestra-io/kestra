@@ -11,12 +11,14 @@
             >
                 <template v-slot:navbar>
                     <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
+                    <v-s />
+                    <search-field @onSearch="onSearch" :fields="searchableFields" />
                 </template>
                 <template v-slot:table>
                     <b-table
                         :no-local-sorting="true"
-                        @sort-changed="onSort"
                         @row-dblclicked="onRowDoubleClick"
+                        @sort-changed="onSort"
                         responsive="xl"
                         striped
                         bordered
@@ -62,7 +64,7 @@ import Eye from "vue-material-design-icons/Eye";
 import BottomLine from "../layout/BottomLine";
 import RouteContext from "../../mixins/routeContext";
 import DataTable from "../layout/DataTable";
-
+import SearchField from "../layout/SearchField";
 export default {
     mixins: [RouteContext],
     components: {
@@ -70,25 +72,30 @@ export default {
         BottomLine,
         Plus,
         Eye,
-        DataTable
+        DataTable,
+        SearchField
     },
 
     mounted() {
         this.onNamespaceSelect(this.$route.query.namespace);
+    },
+    data() {
+        return {
+            query: "*",
+            sort: ""
+        };
     },
     watch: {
         $route() {
             this.onNamespaceSelect(this.$route.query.namespace);
         }
     },
-    data() {
-        return {
-            sort: ""
-        };
-    },
     computed: {
         ...mapState("flow", ["flows", "total"]),
         ...mapState("namespace", ["namespace", "namespace"]),
+        searchableFields() {
+            return this.fields.filter(f => !["actions"].includes(f.key));
+        },
         routeInfo() {
             return {
                 title: this.$t("flows")
@@ -122,29 +129,33 @@ export default {
         }
     },
     methods: {
+        onSearch(query) {
+            this.query = query;
+            this.loadFlows();
+        },
         onSort(sort) {
             this.sort = [`${sort.sortBy}:${sort.sortDesc ? "desc" : "asc"}`];
-            this.loadFlows(this.$refs.dataTable.pagination)
+            this.loadFlows();
         },
         onRowDoubleClick(item) {
             this.$router.push({name: 'flow', params: item})
         },
-        loadFlows(pagination) {
-            const q = '*'
+        loadFlows() {
+            const pagination = this.$refs.dataTable.nextPagination;
             if (this.namespace) {
                 this.$store.dispatch("flow/loadFlows", {
                     namespace: this.namespace,
                     size: pagination.size,
                     page: pagination.page,
                     sort: this.sort,
-                    q
+                    q: this.query
                 });
             } else {
                 this.$store.dispatch("flow/findFlows", {
+                    q: this.query,
                     size: pagination.size,
                     page: pagination.page,
-                    sort: this.sort,
-                    q
+                    sort: this.sort
                 });
             }
         },
@@ -154,7 +165,7 @@ export default {
                 this.page = 1;
             }
             this.$store.commit("namespace/setNamespace", namespace);
-            this.loadFlows(this.$refs.dataTable.pagination);
+            this.loadFlows();
         }
     }
 };

@@ -9,12 +9,12 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.RxHttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import org.junit.jupiter.api.Test;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.webserver.responses.FlowResponse;
 import org.kestra.webserver.responses.PagedResults;
-import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
@@ -50,7 +50,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @Test
     void findAll() {
         PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
-        assertThat(flows.getTotal(), is(17L));
+        assertThat(flows.getTotal(), is(18L));
     }
 
     @Test

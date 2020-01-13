@@ -1,34 +1,32 @@
 package org.kestra.cli.commands.plugins;
 
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.env.Environment;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest
 class PluginInstallCommandTest {
-    @Inject
-    PluginInstallCommand pluginInstallCommand;
-
     @Test
     void run() throws IOException {
-        pluginInstallCommand.pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
-        pluginInstallCommand.dependencies = Collections.singletonList("org.kestra.task.notifications:task-notifications:0.1.0");
+        Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
 
-        pluginInstallCommand.run();
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "org.kestra.task.notifications:task-notifications:0.1.0"};
+            PicocliRunner.run(PluginInstallCommand.class, ctx, args);
 
-        List<Path> files = Files.list(pluginInstallCommand.pluginsPath).collect(Collectors.toList());
+            List<Path> files = Files.list(pluginsPath).collect(Collectors.toList());
 
-        assertThat(files.size(), is(1));
-        assertThat(files.get(0).getFileName().toString(), is("task-notifications-0.1.0.jar"));
-   }
+            assertThat(files.size(), is(1));
+            assertThat(files.get(0).getFileName().toString(), is("task-notifications-0.1.0.jar"));
+        }
+    }
 }

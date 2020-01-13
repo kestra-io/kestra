@@ -1,19 +1,18 @@
 package org.kestra.cli;
 
-import com.google.common.collect.ImmutableMap;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.context.env.Environment;
 import org.kestra.cli.commands.TestCommand;
 import org.kestra.cli.commands.plugins.PluginCommand;
-import org.kestra.cli.commands.servers.*;
+import org.kestra.cli.commands.servers.ServerCommand;
+import org.kestra.cli.contexts.KestraApplicationContextBuilder;
+import org.kestra.cli.contexts.KestraClassLoader;
 import picocli.CommandLine;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(
@@ -35,6 +34,10 @@ public class App implements Callable<Object> {
     public static void main(String[] args) {
         ApplicationContext applicationContext = App.applicationContext(args);
 
+        // Register a ClassLoader with isolation for plugins
+        Thread.currentThread().setContextClassLoader(KestraClassLoader.instance());
+
+        // Call Picocli command
         PicocliRunner.call(App.class, applicationContext, args);
 
         applicationContext.close();
@@ -45,8 +48,18 @@ public class App implements Callable<Object> {
         return PicocliRunner.call(App.class, "--help");
     }
 
+    /**
+     * Create an {@link ApplicationContext} with additionals properties based on configuration files (--config) and
+     * forced Properties from current command.
+     *
+     * @param args args passed to java app
+     * @return the application context created
+     */
     private static ApplicationContext applicationContext(String[] args) {
-        ApplicationContextBuilder builder = ApplicationContext.build(App.class, Environment.CLI);
+        KestraApplicationContextBuilder builder = new KestraApplicationContextBuilder()
+            .mainClass(App.class)
+            .environments(Environment.CLI)
+            .classLoader(KestraClassLoader.instance());
 
         CommandLine cmd = new CommandLine(App.class, CommandLine.defaultFactory());
 
@@ -62,17 +75,20 @@ public class App implements Callable<Object> {
 
             // if class have propertiesOverrides, add force properties for this class
             builder.properties(getPropertiesFromMethod(cls, "propertiesOverrides", null));
+
+            // add plugins registry if plugin path defined
+            builder.pluginRegistry(getPropertiesFromMethod(cls, "initPluginRegistry", commandLine.getCommandSpec().userObject()));
         }
 
         return builder.build();
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, Object> getPropertiesFromMethod(Class<?> cls, String methodName, Object instance) {
+    private static <T> T getPropertiesFromMethod(Class<?> cls, String methodName, Object instance) {
         try {
             Method method = cls.getMethod(methodName);
             try {
-                return (Map<String, Object>) method.invoke(instance);
+                return (T) method.invoke(instance);
 
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
@@ -81,6 +97,6 @@ public class App implements Callable<Object> {
 
         }
 
-        return ImmutableMap.of();
+        return null;
     }
 }

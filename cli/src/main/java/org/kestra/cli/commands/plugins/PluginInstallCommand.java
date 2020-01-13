@@ -29,11 +29,11 @@ public class PluginInstallCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0..*", description = "the plugins to install")
     List<String> dependencies = new ArrayList<>();
 
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
+
     @Inject
     PluginDownloader pluginDownloader;
-
-    @Value("${kestra.plugins.path}")
-    Path pluginsPath;
 
     public PluginInstallCommand() {
         super(false);
@@ -43,6 +43,12 @@ public class PluginInstallCommand extends AbstractCommand {
     @Override
     public void run() {
         super.run();
+
+        if (this.pluginsPath == null) {
+            throw new CommandLine.ParameterException(this.spec.commandLine(), "Missing required options '--plugins' " +
+                "or environnement variable 'KESTRA_PLUGINS_PATH"
+            );
+        }
 
         if (!pluginsPath.toFile().exists()) {
             pluginsPath.toFile().mkdir();

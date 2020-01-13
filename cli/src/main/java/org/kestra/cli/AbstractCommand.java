@@ -8,6 +8,10 @@ import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
+import org.kestra.cli.contexts.KestraClassLoader;
+import org.kestra.core.plugins.PluginRegistry;
+import org.kestra.core.plugins.PluginScanner;
+import org.kestra.core.plugins.RegisteredPlugin;
 import picocli.CommandLine;
 
 import javax.inject.Inject;
@@ -17,6 +21,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 
 @CommandLine.Command(
@@ -41,8 +46,11 @@ abstract public class AbstractCommand implements Runnable {
     @CommandLine.Option(names = {"--internal-log"}, description = "Change also log level for internal log, default: ${DEFAULT-VALUE})")
     private boolean internalLog = false;
 
-    @CommandLine.Option(names = {"-c", "--config"}, description = "Used configuration file, default: ${DEFAULT-VALUE})")
+    @CommandLine.Option(names = {"-c", "--config"}, description = "Path to a configuration file, default: ${DEFAULT-VALUE})")
     private Path config = Paths.get(System.getProperty("user.home"), ".kestra/config.yml");
+
+    @CommandLine.Option(names = {"-p", "--plugins"}, description = "Path to plugins directory , default: ${DEFAULT-VALUE})")
+    protected Path pluginsPath = System.getenv("KESTRA_PLUGINS_PATH") != null ? Paths.get(System.getenv("KESTRA_PLUGINS_PATH")) : null;
 
     public enum LogLevel {
         TRACE,
@@ -119,5 +127,21 @@ abstract public class AbstractCommand implements Runnable {
         }
 
         return ImmutableMap.of();
+    }
+
+
+    @SuppressWarnings("unused")
+    public PluginRegistry initPluginRegistry() {
+        if (this.pluginsPath == null || !this.pluginsPath.toFile().exists()) {
+            return null;
+        }
+
+        PluginScanner pluginScanner = new PluginScanner();
+        List<RegisteredPlugin> scan = pluginScanner.scan(this.pluginsPath);
+
+        PluginRegistry pluginRegistry = new PluginRegistry(scan);
+        KestraClassLoader.instance().setPluginRegistry(pluginRegistry);
+
+        return pluginRegistry;
     }
 }

@@ -1,6 +1,7 @@
 package org.kestra.core.models.tasks;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -18,6 +19,7 @@ import java.util.Optional;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
+@Introspected
 abstract public class Task {
     @NotNull
     protected String id;

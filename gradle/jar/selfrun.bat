@@ -33,9 +33,7 @@ IF %java_version% NEQ 0 (
     EXIT 1
 )
 
-echo java %JAVA_OPTS% -cp "%this%:%kestra_plugins_path%*" org.kestra.cli.App %*
-
-java %JAVA_OPTS% -cp "%this%;%kestra_plugins_path%*" org.kestra.cli.App %*
+java %JAVA_OPTS% -jar "%this%" %*
 
 ENDLOCAL
 

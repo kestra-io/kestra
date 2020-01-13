@@ -1,5 +1,6 @@
 package org.kestra.core.storages;
 
+import io.micronaut.core.annotation.Introspected;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
@@ -13,6 +14,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 
+@Introspected
 public interface StorageInterface {
     InputStream get(URI uri) throws FileNotFoundException;
 

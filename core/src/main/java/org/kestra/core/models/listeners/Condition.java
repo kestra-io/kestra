@@ -1,6 +1,7 @@
 package org.kestra.core.models.listeners;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.micronaut.core.annotation.Introspected;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.function.BiPredicate;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@Introspected
 public abstract class Condition implements BiPredicate<Flow, Execution> {
     @NotNull
     protected String type;

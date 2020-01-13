@@ -12,5 +12,5 @@ case "$JAVA_FULLVERSION" in
 esac
 
 # Exec
-exec java ${JAVA_OPTS} -cp "$0:${KESTRA_PLUGINS_PATH}/*" org.kestra.cli.App "$@"
+exec java ${JAVA_OPTS} -jar "$0" "$@"
 exit 127

@@ -62,8 +62,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(result.getState().getCurrent(), is(State.Type.CREATED));
         assertThat(result.getFlowId(), is("inputs"));
         assertThat(result.getInputs().get("float"), is(42.42));
-        assertThat(((Map<String, String>) result.getInputs().get("file")).get("uri"), startsWith("kestra:////org/kestra/tests/inputs/executions/"));
-        assertThat(((Map<String, String>) result.getInputs().get("optionalFile")).get("uri"), startsWith("kestra:////org/kestra/tests/inputs/executions/"));
+        assertThat(((Map<String, String>) result.getInputs().get("file")).get("uri"), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
+        assertThat(((Map<String, String>) result.getInputs().get("optionalFile")).get("uri"), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
     }
 
     @Test

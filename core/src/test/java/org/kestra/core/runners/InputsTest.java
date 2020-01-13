@@ -86,7 +86,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         Map<String, Object> typeds = typedInputs(inputs);
         StorageObject file = (StorageObject) typeds.get("file");
 
-        assertThat(file.getUri(), is(new URI("kestra:////org/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
+        assertThat(file.getUri(), is(new URI("kestra:///org/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
         assertThat(file.getClass(), is(StorageObject.class));
         assertThat(
             file.getContent(),
@@ -112,7 +112,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         Arrays.asList("file-uri", "file").forEach(o ->
             assertThat(
                 (String) execution.findTaskRunByTaskId(o).getOutputs().get("return"),
-                matchesRegex("kestra:////org/kestra/tests/inputs/executions/.*/inputs/file/application.yml")
+                matchesRegex("kestra:///org/kestra/tests/inputs/executions/.*/inputs/file/application.yml")
             )
         );
     }

@@ -3,7 +3,6 @@ dependencies {
     compile "info.picocli:picocli"
     compile "io.micronaut.configuration:micronaut-picocli"
     compile "io.micronaut:micronaut-management"
-    compile "io.micronaut:micronaut-http-client"
     compile "io.micronaut:micronaut-http-server-netty"
 
     // plugins

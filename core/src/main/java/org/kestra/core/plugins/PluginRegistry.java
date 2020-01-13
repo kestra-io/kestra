@@ -1,6 +1,5 @@
 package org.kestra.core.plugins;
 
-import io.micronaut.context.ApplicationContext;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -22,7 +21,6 @@ import java.util.stream.Stream;
 public class PluginRegistry  {
     private List<RegisteredPlugin> plugins;
     private Map<String, RegisteredPlugin> pluginsByClass;
-    private ApplicationContext applicationContext;
 
     public PluginRegistry(List<RegisteredPlugin> registeredPlugin) {
         this.plugins = registeredPlugin;

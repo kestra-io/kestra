@@ -89,6 +89,7 @@ allprojects {
         implementation "io.micronaut:micronaut-runtime"
         implementation 'io.micronaut:micronaut-views'
         implementation "io.micronaut.data:micronaut-data-model:1.0.0.M5"
+        api "io.micronaut:micronaut-http-client"
 
         // jackson
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'

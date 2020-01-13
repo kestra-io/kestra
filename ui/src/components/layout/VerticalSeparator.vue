@@ -16,11 +16,10 @@ export default {
 
 .v-s {
     height: 30px;
-    border-left: 1px solid $gray-300;
+    border-left: 3px solid $gray-600;
     margin-left: 8px;
     margin-right: 8px;
 }
-
 .xl {
     height:60px;
 }

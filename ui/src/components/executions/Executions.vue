@@ -1,24 +1,34 @@
 <template>
     <div>
         <data-table @onPageChanged="loadExecutions" ref="dataTable" :total="total">
+            <template v-slot:navbar>
+                <search-field @onSearch="onSearch" :fields="searchableFields" />
+            </template>
             <template v-slot:table>
                 <b-table
+                    :no-local-sorting="true"
+                    @sort-changed="onSort"
                     responsive="xl"
                     striped
                     hover
                     bordered
                     :items="executions"
                     :fields="fields"
-                    @row-dblclicked="onRowDoubleClick"
+                @row-dblclicked="onRowDoubleClick"
                 >
                     <template v-slot:cell(details)="row">
-                        <router-link :to="{name: 'execution', params: row.item}">
+                        <router-link
+                            :to="{name: 'execution', params: row.item}"
+                        >
                             <eye id="edit-action" />
                         </router-link>
                     </template>
                     <template
-                        v-slot:cell(date)="row"
-                    >{{row.item.state.histories[0].date | date('YYYY/MM/DD HH:mm:ss')}}</template>
+                        v-slot:cell(state.startDate)="row"
+                    >{{row.item.state.startDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
+                    <template
+                        v-slot:cell(state.endDate)="row"
+                    >{{row.item.state.endDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
                     <template v-slot:cell(state.current)="row">
                         <status class="status" :status="row.item.state.current" />
                     </template>
@@ -47,15 +57,25 @@ import DataTable from "../layout/DataTable";
 import Eye from "vue-material-design-icons/Eye";
 import Status from "../Status";
 import RouteContext from "../../mixins/routeContext";
+import SearchField from "../layout/SearchField";
 
 export default {
     mixins: [RouteContext],
-    components: { Status, Eye, DataTable },
+    components: { Status, Eye, DataTable, SearchField },
     mounted() {
-        this.loadExecutions(this.$refs.dataTable.pagination);
+        this.loadExecutions();
+    },
+    data() {
+        return {
+            sort: "",
+            query: "*"
+        };
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
+        searchableFields() {
+            return this.fields.filter(f => !["actions"].includes(f.key));
+        },
         routeInfo() {
             return {
                 title: this.$t("executions")
@@ -71,21 +91,35 @@ export default {
                     label: title("id")
                 },
                 {
-                    key: "date",
-                    label: title("created date")
+                    key: "state.startDate",
+                    label: title("start date"),
+                    sortable: true
+                },
+                {
+                    key: "state.endDate",
+                    label: title("end date"),
+                    sortable: true
+                },
+                {
+                    key: "state.duration",
+                    label: title("duration"),
+                    sortable: true
                 },
                 {
                     key: "namespace",
-                    label: title("namespace")
+                    label: title("namespace"),
+                    sortable: true
                 },
                 {
                     key: "flowId",
-                    label: title("flow")
+                    label: title("flow"),
+                    sortable: true
                 },
                 {
                     key: "state.current",
                     label: title("state"),
-                    class: "text-center"
+                    class: "text-center",
+                    sortable: true
                 },
                 {
                     key: "details",
@@ -97,10 +131,14 @@ export default {
     },
     watch: {
         $route() {
-            this.loadExecutions(this.$refs.dataTable.pagination);
+            this.loadExecutions();
         }
     },
     methods: {
+        onSearch(query) {
+            this.query = query;
+            this.loadExecutions();
+        },
         onRowDoubleClick(item) {
             this.$router.push({ name: "execution", params: item });
         },
@@ -116,7 +154,8 @@ export default {
                 this.$store.dispatch("execution/findExecutions", {
                     size: pagination.size,
                     page: pagination.page,
-                    q: "*"
+                    q: this.query,
+                    sort: this.sort
                 });
             }
         }

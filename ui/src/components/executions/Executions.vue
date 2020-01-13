@@ -3,22 +3,29 @@
         <data-table @onPageChanged="loadExecutions" ref="dataTable" :total="total">
             <template v-slot:table>
                 <b-table
+                    :no-local-sorting="true"
+                    @sort-changed="onSort"
                     responsive="xl"
                     striped
                     hover
                     bordered
                     :items="executions"
                     :fields="fields"
-                    @row-dblclicked="onRowDoubleClick"
+                @row-dblclicked="onRowDoubleClick"
                 >
                     <template v-slot:cell(details)="row">
-                        <router-link :to="{name: 'execution', params: row.item}">
+                        <router-link
+                            :to="{name: 'execution', params: row.item}"
+                        >
                             <eye id="edit-action" />
                         </router-link>
                     </template>
                     <template
-                        v-slot:cell(date)="row"
-                    >{{row.item.state.histories[0].date | date('YYYY/MM/DD HH:mm:ss')}}</template>
+                        v-slot:cell(state.startDate)="row"
+                    >{{row.item.state.startDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
+                    <template
+                        v-slot:cell(state.endDate)="row"
+                    >{{row.item.state.endDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
                     <template v-slot:cell(state.current)="row">
                         <status class="status" :status="row.item.state.current" />
                     </template>
@@ -54,6 +61,11 @@ export default {
     mounted() {
         this.loadExecutions(this.$refs.dataTable.pagination);
     },
+    data() {
+        return {
+            sort: ""
+        };
+    },
     computed: {
         ...mapState("execution", ["executions", "total"]),
         routeInfo() {
@@ -71,21 +83,35 @@ export default {
                     label: title("id")
                 },
                 {
-                    key: "date",
-                    label: title("created date")
+                    key: "state.startDate",
+                    label: title("start date"),
+                    sortable: true
+                },
+                {
+                    key: "state.endDate",
+                    label: title("end date"),
+                    sortable: true
+                },
+                {
+                    key: "state.duration",
+                    label: title("duration"),
+                    sortable: true
                 },
                 {
                     key: "namespace",
-                    label: title("namespace")
+                    label: title("namespace"),
+                    sortable: true
                 },
                 {
                     key: "flowId",
-                    label: title("flow")
+                    label: title("flow"),
+                    sortable: true
                 },
                 {
                     key: "state.current",
                     label: title("state"),
-                    class: "text-center"
+                    class: "text-center",
+                    sortable: true
                 },
                 {
                     key: "details",
@@ -101,6 +127,10 @@ export default {
         }
     },
     methods: {
+        onSort(sort) {
+            this.sort = [`${sort.sortBy}:${sort.sortDesc ? "desc" : "asc"}`];
+            this.loadExecutions(this.$refs.dataTable.pagination);
+        },
         onRowDoubleClick(item) {
             this.$router.push({ name: "execution", params: item });
         },
@@ -132,7 +162,8 @@ export default {
                 this.$store.dispatch("execution/findExecutions", {
                     size: pagination.size,
                     page: pagination.page,
-                    q: "*"
+                    q: "*",
+                    sort: this.sort
                 });
             }
         }

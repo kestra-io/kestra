@@ -1,6 +1,7 @@
 package org.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Value;
 
 import java.time.Duration;
@@ -35,18 +36,21 @@ public class State {
         return new State(state, this);
     }
 
-    public Duration duration() {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public Duration getDuration() {
         return Duration.between(
             this.histories.get(0).getDate(),
             this.histories.size() > 1 ? this.histories.get(this.histories.size() - 1).getDate() : Instant.now()
         );
     }
 
-    public Instant startDate() {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public Instant getStartDate() {
         return this.histories.get(0).getDate();
     }
 
-    public Optional<Instant> endDate() {
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public Optional<Instant> getEndDate() {
         if (!this.isTerninated()) {
             return Optional.empty();
         }
@@ -55,7 +59,7 @@ public class State {
     }
 
     public String humanDuration() {
-        String duration = duration()
+        String duration = getDuration()
             .toString()
             .substring(2)
             .replaceAll("(\\d[HMS])(?!$)", " $1 ")

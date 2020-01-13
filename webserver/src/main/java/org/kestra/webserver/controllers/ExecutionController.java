@@ -6,6 +6,7 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.sse.Event;
 import io.micronaut.validation.Validated;
@@ -20,11 +21,13 @@ import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.RunnerUtils;
 import org.kestra.webserver.responses.PagedResults;
+import org.kestra.webserver.utils.PageableUtils;
 import org.reactivestreams.Publisher;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,11 +53,12 @@ public class ExecutionController {
     public PagedResults<Execution> find(
         @QueryValue(value = "q") String query,
         @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size
-    ) {
+        @QueryValue(value = "size", defaultValue = "10") int size,
+        @Nullable @QueryValue(value = "sort") List<String> sort
+    )  throws HttpStatusException {
         return PagedResults.of(
             executionRepository
-                .find(query, Pageable.from(page, size))
+                .find(query, PageableUtils.from(page, size, sort))
         );
     }
 

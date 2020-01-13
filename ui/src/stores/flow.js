@@ -15,7 +15,13 @@ export default {
             })
         },
         findFlows({ commit }, options) {
-            return Vue.axios.get('/api/v1/flows/search', {
+            const sort = options.sort
+            delete options.sort
+            let sortQueryString = ''
+            if (sort) {
+                sortQueryString = `?sort=${sort.join('&sort=')}`
+            }
+            return Vue.axios.get(`/api/v1/flows/search${sortQueryString}`, {
                 params: options
             }).then(response => {
                 commit('setFlows', response.data.results)

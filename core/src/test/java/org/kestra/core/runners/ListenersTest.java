@@ -1,12 +1,13 @@
 package org.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
-import org.kestra.core.models.executions.Execution;
 import org.junit.jupiter.api.Test;
+import org.kestra.core.models.executions.Execution;
 
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 public class ListenersTest extends AbstractMemoryRunnerTest {
@@ -21,7 +22,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("ok"));
         assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("execution-success-listener"));
+        assertThat((String) execution.getTaskRunList().get(2).getOutputs().get("return"), containsString("flowId=listeners"));
     }
 
     @Test

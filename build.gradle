@@ -122,6 +122,10 @@ subprojects {
         testImplementation "org.junit.jupiter:junit-jupiter-engine"
         testImplementation "org.junit.jupiter:junit-jupiter-params"
 
+        // lombok
+        testAnnotationProcessor "org.projectlombok:lombok:" + lombokVersion
+        testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
+
         // hamcrest
         testImplementation 'org.hamcrest:hamcrest:2.2'
         testImplementation 'org.hamcrest:hamcrest-library:2.2'

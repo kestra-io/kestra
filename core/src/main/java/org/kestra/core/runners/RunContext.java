@@ -25,6 +25,7 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.runners.handlebars.helpers.InstantHelper;
 import org.kestra.core.runners.handlebars.helpers.JsonHelper;
+import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.storages.StorageObject;
 import org.slf4j.LoggerFactory;
@@ -93,8 +94,8 @@ public class RunContext {
 
         if (resolvedTask != null && flow.isListenerTask(resolvedTask.getTask().getId())) {
             builder
-                .put("flow", flow)
-                .put("execution", execution);
+                .put("flow", JacksonMapper.toMap(flow))
+                .put("execution", JacksonMapper.toMap(execution));
 
         } else {
             builder

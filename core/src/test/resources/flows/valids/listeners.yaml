@@ -22,8 +22,7 @@ listeners:
           - SUCCESS
     tasks:
       - id: execution-success-listener
-        type: org.kestra.core.tasks.debugs.Return
-        format: success listeners {{ execution.id }}
+        type: org.kestra.core.runners.ListenersTestTask
 
 tasks:
   - id: parent-seq

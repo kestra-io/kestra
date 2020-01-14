@@ -1,0 +1,12 @@
+id: variables
+namespace: org.kestra.tests
+
+variables:
+  first: "1"
+  second: "{{vars.first}} > 2"
+  third: "{{vars.second}} > 3"
+
+tasks:
+  - id: variable
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{vars.third}}"

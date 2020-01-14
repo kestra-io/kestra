@@ -207,9 +207,21 @@ public class RunContext {
     }
 
     private String renderInline(String inline, Map<String, Object> variables) throws IOException {
-        Template template = handlebars.compileInline(inline);
+        boolean isSame = false;
+        String handlebarTemplate = inline;
+        String current = "";
+        Template template;
 
-        return template.apply(variables);
+
+        while(!isSame) {
+            template = handlebars.compileInline(handlebarTemplate);
+            current = template.apply(variables);
+
+            isSame = handlebarTemplate.equals(current);
+            handlebarTemplate = current;
+        }
+
+        return current;
     }
 
     public List<String> render(List<String> list) throws IOException {

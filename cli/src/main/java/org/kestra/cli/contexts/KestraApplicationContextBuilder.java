@@ -85,6 +85,7 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
         return this;
     }
 
+
     @SuppressWarnings("MagicNumber")
     public @Nonnull
     ApplicationContext build() {
@@ -102,7 +103,6 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
             environment.addPropertySource(contextProperties);
         }
 
-
         return applicationContext;
     }
 
@@ -119,7 +119,7 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
 
     @Override
     public boolean isEnvironmentPropertySource() {
-        return false;
+        return true;
     }
 
     @Nullable

@@ -94,7 +94,7 @@ export default {
         ...mapState("flow", ["flows", "total"]),
         ...mapState("namespace", ["namespace", "namespace"]),
         searchableFields() {
-            return this.fields.filter(f => !["actions"].includes(f.key));
+            return this.fields.filter(f => f.sortable);
         },
         routeInfo() {
             return {
@@ -113,7 +113,8 @@ export default {
                 },
                 {
                     key: "namespace",
-                    label: title("namespace")
+                    label: title("namespace"),
+                    sortable: true
                 },
                 {
                     key: "revision",

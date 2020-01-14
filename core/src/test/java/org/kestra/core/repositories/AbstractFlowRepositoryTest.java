@@ -3,6 +3,7 @@ package org.kestra.core.repositories;
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableList;
 import io.micronaut.test.annotation.MicronautTest;
+import org.kestra.core.Helpers;
 import org.kestra.core.utils.TestsUtils;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
@@ -102,7 +103,7 @@ public abstract class AbstractFlowRepositoryTest {
     void findAll() {
         List<Flow> save = flowRepository.findAll();
 
-        assertThat(save.size(), is(18));
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
     }
 
     @Test

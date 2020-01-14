@@ -49,14 +49,12 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody) {
-
-        Execution execution = client.toBlocking().retrieve(
+        return client.toBlocking().retrieve(
             HttpRequest
                 .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId, requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
-        return execution;
     }
 
     private Execution triggerInputsExecution() {
@@ -108,6 +106,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(foundExecution.blockingGet().getNamespace(), is(result.getNamespace()));
     }
 
+    @SuppressWarnings("unchecked")
+    @Disabled("TODO: this test is flakky since the execution can be terminated before the second call")
     @Test
     void findByFlowId() throws TimeoutException {
         String namespace = "org.kestra.tests.minimal.bis";

@@ -2,6 +2,7 @@ package org.kestra.runner.kafka;
 
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.test.annotation.MicronautTest;
+import org.kestra.core.runners.ListenersTest;
 import org.kestra.core.utils.TestsUtils;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -14,6 +15,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -60,7 +62,9 @@ class KafkaRunnerTest {
     }
 
     @Test
-    void listeners() throws TimeoutException {
+    void listeners() throws TimeoutException, IOException, URISyntaxException {
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests")));
+
         Execution execution = runnerUtils.runOne(
             "org.kestra.tests",
             "listeners",

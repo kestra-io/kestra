@@ -130,7 +130,7 @@ public class RunnerUtils {
 
                     case FILE:
                         try {
-                            URI uri = URI.create(current);
+                            URI uri = URI.create(current.replace(File.separator, "/"));
 
                             if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
                                 return Optional.of(new AbstractMap.SimpleEntry<String, Object>(

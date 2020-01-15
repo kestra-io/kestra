@@ -1,6 +1,5 @@
 package org.kestra.storage.local;
 
-import com.google.common.io.Files;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.storages.StorageObject;
 
@@ -8,7 +7,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.*;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -23,8 +21,8 @@ public class LocalStorage implements StorageInterface {
         this.createDirectory(null);
     }
 
-    private URI getUri(URI uri) {
-        return URI.create(this.config.getBasePath() + File.separator + uri.getPath());
+    private Path getPath(URI uri) {
+        return Paths.get(config.getBasePath().toAbsolutePath().toString(), uri.toString());
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -32,11 +30,10 @@ public class LocalStorage implements StorageInterface {
         File file;
 
         if (append != null) {
-            URI uri = URI.create(config.getBasePath().toString() + File.separator + append.toString());
-            Path path = Paths.get(uri);
+            Path path = Paths.get(config.getBasePath().toAbsolutePath().toString(), append.getPath());
             file = path.getParent().toFile();
         } else {
-            file = new File(config.getBasePath());
+            file = new File(config.getBasePath().toUri());
         }
 
         if (!file.exists()) {
@@ -46,14 +43,17 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public InputStream get(URI uri) throws FileNotFoundException {
-        return new FileInputStream(new File(getUri(uri)));
+        return new FileInputStream(new File(getPath(URI.create(uri.getPath()))
+            .toAbsolutePath()
+            .toString()
+        ));
     }
 
     @Override
     public StorageObject put(URI uri, InputStream data) throws IOException {
         this.createDirectory(uri);
 
-        OutputStream outStream = new FileOutputStream(getUri(uri).getPath());
+        OutputStream outStream = new FileOutputStream(getPath(uri).toFile());
 
         byte[] buffer = new byte[8 * 1024];
         int bytesRead;

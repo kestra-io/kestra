@@ -80,7 +80,7 @@ export default {
 .logo {
     height: 60px;
     border-bottom: 2px solid $secondary;
-    overflow-x: hidden;
+    overflow: hidden;
     span {
         display: block;
         height: 52px;

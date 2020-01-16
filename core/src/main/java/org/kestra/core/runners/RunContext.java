@@ -13,10 +13,7 @@ import com.github.jknack.handlebars.helper.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.With;
+import lombok.*;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.MetricEntry;
@@ -153,11 +150,49 @@ public class RunContext {
         return builder.build();
     }
 
-    public RunContext updateTaskRunVariables(TaskRun taskRun) {
-        HashMap<String, Object> clone = new HashMap<>(this.variables);
-        clone.remove("taskrun");
+    @SneakyThrows
+    private Map<String, Object> resolveObjectStorage(Map<String, Object> variables) {
+        return variables
+            .entrySet()
+            .stream()
+            .map(r -> {
+                if (r.getValue() instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> map = (Map<String, Object>) r.getValue();
 
+                    if (map.containsKey("type") && map.get("type").equals(StorageObject.class.getName())) {
+                        r.setValue(new StorageObject(
+                            this.storageInterface,
+                            URI.create((String) map.get("uri"))
+                        ));
+                    } else {
+                        r.setValue(resolveObjectStorage(map));
+                    }
+                }
+
+                return r;
+            })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    @SuppressWarnings("unchecked")
+    public RunContext updateVariablesForWorker(TaskRun taskRun) {
+        HashMap<String, Object> clone = new HashMap<>(this.variables);
+
+        clone.remove("taskrun");
         clone.put("taskrun", this.variables(taskRun));
+
+        if (variables.containsKey("inputs")) {
+            Map<String, Object> inputs = resolveObjectStorage((Map<String, Object>) variables.get("inputs"));
+            clone.remove("inputs");
+            clone.put("inputs", inputs);
+        }
+
+        if (variables.containsKey("outputs")) {
+            Map<String, Object> outputs = resolveObjectStorage((Map<String, Object>) variables.get("outputs"));
+            clone.remove("outputs");
+            clone.put("outputs", outputs);
+        }
 
         this.variables = ImmutableMap.copyOf(clone);
 

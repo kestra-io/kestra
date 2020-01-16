@@ -6,10 +6,10 @@
                     <template v-if="attempt.logs">
                         <template v-for="log in attempt.logs">
                             <log-line
-                                    :level="level"
-                                    :filter="filter"
-                                    :log="log"
-                                    :key="log.timestamp"
+                                :level="level"
+                                :filter="filter"
+                                :log="log"
+                                :key="log.timestamp"
                             />
                         </template>
                     </template>
@@ -19,34 +19,34 @@
     </div>
 </template>
 <script>
-    import {mapState} from "vuex";
-    import LogLine from "./LogLine";
+import { mapState } from "vuex";
+import LogLine from "./LogLine";
 
-    export default {
-        components: {LogLine},
-        props: {
-            level: {
-                type: String,
-                default: "ALL"
-            },
-            filter: {
-                type: String,
-                default: ""
-            }
+export default {
+    components: { LogLine },
+    props: {
+        level: {
+            type: String,
+            default: "ALL"
         },
-        computed: {
-            ...mapState("execution", ["execution", "task"])
+        filter: {
+            type: String,
+            default: ""
         }
-    };
+    },
+    computed: {
+        ...mapState("execution", ["execution", "task"])
+    }
+};
 </script>
 <style lang="scss" scoped>
-    @import "../../styles/_variable.scss";
+@import "../../styles/_variable.scss";
 
-    .log-wrapper {
-        padding: 10px;
-        border-radius: 5px;
-        .line:nth-child(odd) {
-            background-color: lighten($dark, 5%) ;
-        }
+.log-wrapper {
+    padding: 10px;
+    border-radius: 5px;
+    .line:nth-child(odd) {
+        background-color: lighten($dark, 5%);
     }
+}
 </style>

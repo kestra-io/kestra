@@ -1,5 +1,6 @@
 package org.kestra.core.runners;
 
+import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
@@ -15,6 +16,12 @@ import java.util.Optional;
 
 @Slf4j
 public abstract class AbstractExecutor implements Runnable {
+    protected ApplicationContext applicationContext;
+
+    public AbstractExecutor(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
     protected Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
         if (log.isTraceEnabled()) {
             log.trace(
@@ -51,13 +58,13 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     protected Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) {
-        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(flow, execution));
+        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(this.applicationContext, flow, execution));
 
         if (parent.getTask() instanceof FlowableTask) {
             FlowableTask flowableParent = (FlowableTask) parent.getTask();
 
             return flowableParent
-                .resolveState(new RunContext(flow, execution), execution, taskRun)
+                .resolveState(new RunContext(this.applicationContext, flow, execution), execution, taskRun)
                 .map(type -> new WorkerTaskResult(
                     taskRun.withState(type),
                     parent.getTask()
@@ -69,11 +76,11 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     protected Optional<Execution> childNexts(Flow flow, Execution execution, TaskRun taskRun) {
-        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(flow, execution));
+        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(this.applicationContext, flow, execution));
 
         if (parent.getTask() instanceof FlowableTask) {
             FlowableTask flowableParent = (FlowableTask) parent.getTask();
-            List<TaskRun> nexts = flowableParent.resolveNexts(new RunContext(flow, execution), execution, taskRun);
+            List<TaskRun> nexts = flowableParent.resolveNexts(new RunContext(this.applicationContext, flow, execution), execution, taskRun);
 
             if (nexts.size() > 0) {
                 return Optional.of(this.onNexts(flow, execution, nexts));

@@ -103,8 +103,6 @@ abstract public class TestsUtils {
         Execution execution = TestsUtils.mockExecution(caller, flow, inputs);
         TaskRun taskRun = TestsUtils.mockTaskRun(caller, execution, task);
 
-        return new RunContext(flow, ResolvedTask.of(task), execution, taskRun)
-            .withApplicationContext(applicationContext)
-            .withStorageInterface(applicationContext.getBean(StorageInterface.class));
+        return new RunContext(applicationContext, flow, ResolvedTask.of(task), execution, taskRun);
     }
 }

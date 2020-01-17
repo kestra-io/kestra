@@ -10,3 +10,9 @@ tasks:
   - id: variable
     type: org.kestra.core.tasks.debugs.Return
     format: "{{vars.third}}"
+  - id: env
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{envs.test1}} {{envs.test2}}"
+  - id: global
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{globals.string}} {{globals.int}} {{globals.bool}}"

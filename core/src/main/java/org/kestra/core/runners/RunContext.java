@@ -6,22 +6,19 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.github.jknack.handlebars.EscapingStrategy;
-import com.github.jknack.handlebars.Handlebars;
-import com.github.jknack.handlebars.Template;
-import com.github.jknack.handlebars.helper.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.MetricEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.ResolvedTask;
-import org.kestra.core.runners.handlebars.helpers.InstantHelper;
-import org.kestra.core.runners.handlebars.helpers.JsonHelper;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.storages.StorageObject;
@@ -30,64 +27,63 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URI;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@AllArgsConstructor
 @NoArgsConstructor
-@Getter
 public class RunContext {
-    private static Handlebars handlebars = new Handlebars()
-        .with(EscapingStrategy.NOOP)
-        .registerHelpers(ConditionalHelpers.class)
-        .registerHelpers(EachHelper.class)
-        .registerHelpers(LogHelper.class)
-        .registerHelpers(StringHelpers.class)
-        .registerHelpers(UnlessHelper.class)
-        .registerHelpers(WithHelper.class)
-        .registerHelpers(InstantHelper.class)
-        .registerHelpers(JsonHelper.class)
-        .registerHelperMissing((context, options) -> {
-            throw new IllegalStateException("Missing variable: " + options.helperName);
-        });
-
-    @With
-    private StorageInterface storageInterface;
-
-    @With
+    private static VariableRenderer variableRenderer = new VariableRenderer();
     private ApplicationContext applicationContext;
-
+    private StorageInterface storageInterface;
     private URI storageOutputPrefix;
-
+    private String envPrefix;
     private Map<String, Object> variables;
-
     private List<MetricEntry> metrics;
-
     private ContextAppender contextAppender;
-
     private String loggerName;
-
     private Logger logger;
 
-    public RunContext(Flow flow, Execution execution) {
-        this.variables = this.variables(flow, null, execution, null);
+    public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
+        this.applicationContext = applicationContext;
+        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElseThrow();
+        this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
+
+        this.variables = this.taskRunVariables(flow, null, execution, null);
         this.loggerName = "flow." + flow.getId();
     }
 
-    public RunContext(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
+    public RunContext(ApplicationContext applicationContext, Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
+        this.applicationContext = applicationContext;
+        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElseThrow();
+        this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
+
         this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
-        this.variables = this.variables(flow, task, execution, taskRun);
+        this.variables = this.taskRunVariables(flow, task, execution, taskRun);
         this.loggerName = "flow." + flow.getId() + "." + taskRun.getTaskId();
     }
 
-    private Map<String, Object> variables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
+    public List<MetricEntry> getMetrics() {
+        return metrics;
+    }
+
+    public Map<String, Object> getVariables() {
+        return variables;
+    }
+
+    @JsonIgnore
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
+    private Map<String, Object> taskRunVariables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
-            .put("env", System.getenv());
+            .put("envs", envVariables());
+
+        if (applicationContext.getProperties("kestra.variables.globals").size() > 0) {
+            builder.put("globals", applicationContext.getProperties("kestra.variables.globals"));
+        }
 
         if (resolvedTask != null && flow.isListenerTask(resolvedTask.getTask().getId())) {
             builder
@@ -133,6 +129,22 @@ public class RunContext {
         return builder.build();
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private Map<String, String> envVariables() {
+        Map<String, String> result = new HashMap<>(System.getenv());
+        result.putAll((Map) System.getProperties());
+
+        return result
+            .entrySet()
+            .stream()
+            .filter(e -> e.getKey().startsWith(this.envPrefix))
+            .map(e -> new AbstractMap.SimpleEntry<>(
+                e.getKey().substring(this.envPrefix.length()).toLowerCase(),
+                e.getValue()
+            ))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
     private Map<String, Object> variables(TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("id", taskRun.getId())
@@ -176,7 +188,10 @@ public class RunContext {
     }
 
     @SuppressWarnings("unchecked")
-    public RunContext updateVariablesForWorker(TaskRun taskRun) {
+    public RunContext forWorker(ApplicationContext applicationContext, TaskRun taskRun) {
+        this.applicationContext = applicationContext;
+        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElseThrow();
+
         HashMap<String, Object> clone = new HashMap<>(this.variables);
 
         clone.remove("taskrun");
@@ -203,12 +218,14 @@ public class RunContext {
     public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
         this.applicationContext = applicationContext;
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
+        this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
+
         this.storageOutputPrefix = URI.create("");
         this.variables = variables;
         this.loggerName = "flow.unitest";
     }
 
-    public org.slf4j.Logger logger(Class cls) {
+    public org.slf4j.Logger logger(Class<?> cls) {
         if (this.logger == null) {
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
             this.logger = loggerContext.getLogger(this.loggerName != null ? loggerName : cls.getName());
@@ -226,47 +243,23 @@ public class RunContext {
     }
 
     public String render(String inline) throws IOException {
-        return this.renderInline(inline, this.variables);
+        return variableRenderer.render(inline, this.variables);
+    }
+
+    public List<String> render(List<String> inline) throws IOException {
+        return variableRenderer.render(inline, this.variables);
     }
 
     public String render(String inline, Map<String, Object> variables) throws IOException {
-        return this.renderInline(
+        return variableRenderer.render(
             inline,
-            Stream.concat(this.variables.entrySet().stream(), variables.entrySet().stream())
+            Stream
+                .concat(this.variables.entrySet().stream(), variables.entrySet().stream())
                 .collect(Collectors.toMap(
                     Map.Entry::getKey,
                     Map.Entry::getValue
-                    )
-                )
+                ))
         );
-    }
-
-    private String renderInline(String inline, Map<String, Object> variables) throws IOException {
-        boolean isSame = false;
-        String handlebarTemplate = inline;
-        String current = "";
-        Template template;
-
-
-        while(!isSame) {
-            template = handlebars.compileInline(handlebarTemplate);
-            current = template.apply(variables);
-
-            isSame = handlebarTemplate.equals(current);
-            handlebarTemplate = current;
-        }
-
-        return current;
-    }
-
-    public List<String> render(List<String> list) throws IOException {
-        List<String> result = new ArrayList<>();
-
-        for (String inline : list) {
-            result.add(this.render(inline));
-        }
-
-        return result;
     }
 
     public List<LogEntry> logs() {

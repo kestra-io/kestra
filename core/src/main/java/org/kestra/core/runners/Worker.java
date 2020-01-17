@@ -111,9 +111,7 @@ public class Worker implements Runnable {
 
         RunContext runContext = workerTask
             .getRunContext()
-            .withStorageInterface(this.storageInterface)
-            .withApplicationContext(this.applicationContext)
-            .updateVariablesForWorker(workerTask.getTaskRun());
+            .forWorker(this.applicationContext, workerTask.getTaskRun());
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new State());
@@ -124,7 +122,7 @@ public class Worker implements Runnable {
             output = task.run(runContext);
             state = State.Type.SUCCESS;
         } catch (Exception e) {
-            logger.error("Failed tasks:" + e.getMessage(), e);
+            logger.error("Failed tasks: " + e.getMessage(), e);
             state = State.Type.FAILED;
         }
 

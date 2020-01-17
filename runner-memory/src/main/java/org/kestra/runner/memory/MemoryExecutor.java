@@ -1,5 +1,6 @@
 package org.kestra.runner.memory;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.Execution;
@@ -30,11 +31,13 @@ public class MemoryExecutor extends AbstractExecutor {
     private static final Object lock = new Object();
 
     public MemoryExecutor(
+        ApplicationContext applicationContext,
         FlowRepositoryInterface flowRepository,
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
         @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue
     ) {
+        super(applicationContext);
         this.flowRepository = flowRepository;
         this.executionQueue = executionQueue;
         this.workerTaskQueue = workerTaskQueue;
@@ -94,12 +97,12 @@ public class MemoryExecutor extends AbstractExecutor {
         for (TaskRun taskRun: nexts) {
             ResolvedTask resolvedTask = flow.findTaskByTaskRun(
                 taskRun,
-                new RunContext(flow, execution)
+                new RunContext(this.applicationContext, flow, execution)
             );
 
             this.workerTaskQueue.emit(
                 WorkerTask.builder()
-                    .runContext(new RunContext(flow, resolvedTask, execution, taskRun))
+                    .runContext(new RunContext(this.applicationContext, flow, resolvedTask, execution, taskRun))
                     .taskRun(taskRun)
                     .task(resolvedTask.getTask())
                     .build()

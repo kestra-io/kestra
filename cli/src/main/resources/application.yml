@@ -218,3 +218,7 @@ kestra:
         url: https://jcenter.bintray.com/
       kestra:
         url: https://dl.bintray.com/kestra/maven
+
+  variables:
+    env-vars-prefix: KESTRA_
+    globals: {}

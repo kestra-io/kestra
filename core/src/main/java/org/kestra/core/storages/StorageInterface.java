@@ -52,7 +52,7 @@ public interface StorageInterface {
 
     static URI outputPrefix(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun)  {
         try {
-            return new URI(String.join(
+            return new URI("/" + String.join(
                 "/",
                 Arrays.asList(
                     flow.getNamespace().replace(".", "/"),

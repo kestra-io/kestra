@@ -7,3 +7,9 @@ kestra:
     type: local
     local:
       base-path: /tmp/unittest
+
+  variables:
+    globals:
+      string: "string"
+      int: 1
+      bool: true

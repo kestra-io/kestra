@@ -11,11 +11,18 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 class VariablesTest extends AbstractMemoryRunnerTest {
+    static {
+        System.setProperty("KESTRA_TEST1", "true");
+        System.setProperty("KESTRA_TEST2", "Pass by env");
+    }
+
     @Test
     void recursiveVars() throws TimeoutException {
         Execution execution = runnerUtils.runOne("org.kestra.tests", "variables");
 
-        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.findTaskRunByTaskId("variable").getOutputs().get("return"), is("1 > 2 > 3"));
+        assertThat(execution.findTaskRunByTaskId("env").getOutputs().get("return"), is("true Pass by env"));
+        assertThat(execution.findTaskRunByTaskId("global").getOutputs().get("return"), is("string 1 true"));
     }
 }

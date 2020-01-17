@@ -94,26 +94,6 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable) {
-        TermQueryBuilder termQuery = QueryBuilders
-            .termQuery("namespace", namespace);
-
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(termQuery)
-            .size(pageable.getSize())
-            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
-
-        for (Sort.Order order : pageable.getSort().getOrderBy()) {
-            sourceBuilder = sourceBuilder.sort(
-                order.getProperty(),
-                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
-            );
-        }
-
-        return this.query(sourceBuilder);
-    }
-
-    @Override
     public Flow save(Flow flow) {
         Optional<Flow> exists = this.exists(flow);
         if (exists.isPresent()) {

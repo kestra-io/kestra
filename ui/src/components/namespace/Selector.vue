@@ -14,17 +14,15 @@ import { mapState } from "vuex";
 export default {
     created() {
         this.$store.dispatch("namespace/loadNamespaces", { prefix: "" });
+        this.selectedNamespace = this.$route.query.namespace || "";
     },
     computed: {
-        ...mapState("namespace", ["namespaces", "namespace"]),
-        selectedNamespace: {
-            set(namespace) {
-                this.$store.commit("namespace/setNamespace", namespace);
-            },
-            get() {
-                return this.namespace;
-            }
-        }
+        ...mapState("namespace", ["namespaces"])
+    },
+    data() {
+        return {
+            selectedNamespace: ""
+        };
     },
     methods: {
         onNamespaceSearch(prefix) {
@@ -33,6 +31,14 @@ export default {
             }
         },
         onNamespaceSelect() {
+            const query = {
+                ...this.$route.query,
+                namespace: this.selectedNamespace
+            };
+            if (!this.selectedNamespace) {
+                delete query.namespace;
+            }
+            this.$router.push({ query });
             this.$emit("onNamespaceSelect", this.selectedNamespace);
         }
     }

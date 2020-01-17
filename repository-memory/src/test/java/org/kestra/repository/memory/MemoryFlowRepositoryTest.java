@@ -22,42 +22,4 @@ public class MemoryFlowRepositoryTest extends AbstractFlowRepositoryTest {
 
     @Inject
     MemoryFlowRepository memoryFlowRepository;
-
-    @Test
-    void find() {
-        Flow flow1 = Flow.builder()
-            .id(FriendlyId.createFriendlyId())
-            .revision(1)
-            .namespace("org.kestra.unittest.flow.find")
-            .build();
-        memoryFlowRepository.save(flow1);
-        Flow flow2 = Flow.builder()
-            .id(FriendlyId.createFriendlyId())
-            .revision(1)
-            .namespace("org.kestra.unittest.flow.find")
-            .build();
-        memoryFlowRepository.save(flow2);
-
-        ArrayListTotal<Flow> result = memoryFlowRepository.findByNamespace("org.kestra.unittest.flow.find", Pageable.from(1, 5));
-        assertThat(result.size(), is(2));
-        assertThat(result, hasItem(flow1));
-        assertThat(result, hasItem(flow2));
-
-        var testFetch = new ArrayList<Flow>();
-        result = memoryFlowRepository.findByNamespace("org.kestra.unittest.flow.find", Pageable.from(1, 1));
-        assertThat(result.size(), is(1));
-        testFetch.addAll(result);
-        result = memoryFlowRepository.findByNamespace("org.kestra.unittest.flow.find", Pageable.from(2, 1));
-        assertThat(result.size(), is(1));
-        testFetch.addAll(result);
-        assertThat(testFetch, hasItem(flow1));
-        assertThat(testFetch, hasItem(flow2));
-
-        ValueException e = assertThrows(ValueException.class, () -> {
-            ArrayListTotal<Flow> exceptionResult = memoryFlowRepository.findByNamespace("org.kestra.unittest.flow.find", Pageable.from(0, 1));
-        });
-        assertThat(e.getMessage(), is("Page cannot be < 1"));
-    }
-
-
 }

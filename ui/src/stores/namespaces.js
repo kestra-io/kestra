@@ -3,7 +3,6 @@ export default {
     namespaced: true,
     state: {
         namespaces: undefined,
-        namespace: undefined
     },
 
     actions: {
@@ -16,9 +15,6 @@ export default {
     mutations: {
         setNamespaces(state, namespaces) {
             state.namespaces = namespaces
-        },
-        setNamespace(state, namespace) {
-            state.namespace = namespace
         }
     },
     getters: {}

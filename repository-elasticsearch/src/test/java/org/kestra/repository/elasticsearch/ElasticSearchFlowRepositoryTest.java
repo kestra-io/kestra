@@ -42,26 +42,4 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
 
         elasticSearchFlowRepository.initMapping();
     }
-
-    @Test
-    void find() {
-        Flow flow1 = Flow.builder()
-            .id(FriendlyId.createFriendlyId())
-            .namespace("org.kestra.unittest.flow.find")
-            .build();
-        elasticSearchFlowRepository.save(flow1);
-        Flow flow2 = Flow.builder()
-            .id(FriendlyId.createFriendlyId())
-            .namespace("org.kestra.unittest.flow.find")
-            .build();
-        elasticSearchFlowRepository.save(flow2);
-
-        ArrayListTotal<Flow> result = elasticSearchFlowRepository.findByNamespace("org.kestra.unittest.flow.find", Pageable.from(1, 5));
-        assertThat(result.size(), is(2));
-        result = elasticSearchFlowRepository.findByNamespace("org.kestra.unittest.flow.find", Pageable.from(1, 1));
-        assertThat(result.size(), is(1));
-        result = elasticSearchFlowRepository.findByNamespace("org.kestra.unittest.flow.find", Pageable.from(2, 1));
-        assertThat(result.size(), is(1));
-    }
-
 }

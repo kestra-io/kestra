@@ -10,7 +10,7 @@
         <div class="d-flex">
             <div class="flex-grow-1">
                 <b-form-select
-                    v-model="pagination.size"
+                    v-model="size"
                     @change="perPageChange"
                     size="sm"
                     :options="pageOptions"
@@ -19,10 +19,10 @@
             <div>
                 <b-pagination
                     @change="changed"
-                    v-model="pagination.page"
+                    v-model="page"
                     :total-rows="total"
                     hide-ellipsis
-                    :per-page="pagination.size"
+                    :per-page="size"
                     size="sm"
                     class="my-0"
                     align="right"
@@ -37,11 +37,8 @@
 export default {
     data() {
         return {
-            pagination: {
-                page: 1,
-                size: 25
-            },
-            nextPage: undefined,
+            size: parseInt(this.$route.query.size || 25),
+            page: parseInt(this.$route.query.size || 1),
             pageOptions: [
                 { value: 25, text: `25 ${this.$t("Per page")}` },
                 { value: 50, text: `50 ${this.$t("Per page")}` },
@@ -52,12 +49,6 @@ export default {
     computed: {
         hasNavBar() {
             return !!this.$slots["navbar"];
-        },
-        nextPagination() {
-            return {
-                page: this.nextPage || this.pagination.page,
-                size: this.pagination.size
-            };
         }
     },
     props: {
@@ -65,11 +56,22 @@ export default {
     },
     methods: {
         perPageChange() {
-            this.changed(this.pagination.page)
+            this.$router.push({
+                query: {
+                    ...this.$route.query,
+                    size: this.size
+                }
+            });
+            this.$emit("onPageChanged");
         },
         changed(page) {
-            this.nextPage = page;
-            this.$emit("onPageChanged", this.nextPage);
+            this.$router.push({
+                query: {
+                    ...this.$route.query,
+                    page: page
+                }
+            });
+            this.$emit("onPageChanged");
         }
     }
 };
@@ -80,6 +82,8 @@ export default {
 
 select {
     width: auto;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .navbar {

@@ -85,24 +85,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return ArrayListTotal.of(pageable, this.findAll());
     }
 
-    @Override
-    public ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable) {
-        if (pageable.getNumber() < 1) {
-            throw new ValueException("Page cannot be < 1");
-        }
-        List<Flow> flows = this.flows
-            .entrySet()
-            .stream()
-            .flatMap(e -> e.getValue()
-                .entrySet()
-                .stream()
-                .flatMap(f -> this.getLastRevision(f.getValue()).stream())
-            ).filter(f -> f.getNamespace().equals(namespace))
-            .collect(Collectors.toList());
-
-        return ArrayListTotal.of(pageable, flows);
-    }
-
     @SuppressWarnings("ComparatorMethodParameterNotUsed")
     @Override
     public Flow save(Flow flow) {

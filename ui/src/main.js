@@ -12,7 +12,7 @@ import VueSSE from 'vue-sse';
 import moment from 'moment'
 import './filters'
 import 'moment/locale/fr'
-import './utils'
+import './utils/global'
 import './custom.scss'
 import VerticalSeparator from './components/layout/VerticalSeparator'
 // @TODO: move to scss

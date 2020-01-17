@@ -65,6 +65,7 @@ import BottomLine from "../layout/BottomLine";
 import RouteContext from "../../mixins/routeContext";
 import DataTable from "../layout/DataTable";
 import SearchField from "../layout/SearchField";
+import queryBuilder from "../../utils/queryBuilder";
 export default {
     mixins: [RouteContext],
     components: {
@@ -75,7 +76,14 @@ export default {
         DataTable,
         SearchField
     },
-
+    created() {
+        if (localStorage.getItem("flowQueries")) {
+            this.$router.push({
+                query: JSON.parse(localStorage.getItem("flowQueries"))
+            });
+        }
+        this.query = queryBuilder(this.$route, this.fields);
+    },
     mounted() {
         this.onNamespaceSelect(this.$route.query.namespace);
     },
@@ -87,7 +95,10 @@ export default {
     },
     watch: {
         $route() {
-            this.onNamespaceSelect(this.$route.query.namespace);
+            localStorage.setItem(
+                "flowQueries",
+                JSON.stringify(this.$route.query)
+            );
         }
     },
     computed: {
@@ -129,42 +140,35 @@ export default {
         }
     },
     methods: {
-        onSearch(query) {
-            this.query = query;
+        onSearch() {
+            this.query = queryBuilder(this.$route, this.fields);
             this.loadFlows();
         },
-        onSort(sort) {
-            this.sort = [`${sort.sortBy}:${sort.sortDesc ? "desc" : "asc"}`];
+        onSort(sortItem) {
+            const sort = [
+                `${sortItem.sortBy}:${sortItem.sortDesc ? "desc" : "asc"}`
+            ];
+            this.$router.push({
+                query: { ...this.$route.query, sort }
+            });
             this.loadFlows();
         },
         onRowDoubleClick(item) {
-            this.$router.push({name: 'flow', params: item})
+            this.$router.push({ name: "flow", params: item });
         },
         loadFlows() {
-            const pagination = this.$refs.dataTable.nextPagination;
-            if (this.namespace) {
-                this.$store.dispatch("flow/loadFlows", {
-                    namespace: this.namespace,
-                    size: pagination.size,
-                    page: pagination.page,
-                    sort: this.sort,
-                    q: this.query
-                });
-            } else {
-                this.$store.dispatch("flow/findFlows", {
-                    q: this.query,
-                    size: pagination.size,
-                    page: pagination.page,
-                    sort: this.sort
-                });
-            }
+            this.$store.dispatch("flow/findFlows", {
+                q: this.query,
+                size: parseInt(this.$route.query.size || 25),
+                page: parseInt(this.$route.query.page || 1),
+                sort: this.$route.query.sort
+            });
         },
-        onNamespaceSelect(namespace) {
-            if (this.$route.query.namespace !== namespace) {
-                this.$router.push({ query: { namespace } });
-                this.page = 1;
+        onNamespaceSelect() {
+            if (this.$route.query.page !== "1") {
+                this.$router.push({ query: { ...this.$route.query, page: 1 } });
             }
-            this.$store.commit("namespace/setNamespace", namespace);
+            this.query = queryBuilder(this.$route, this.fields);
             this.loadFlows();
         }
     }

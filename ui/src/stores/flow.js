@@ -8,20 +8,10 @@ export default {
     },
 
     actions: {
-        loadFlows({ commit }, options) {
-            return Vue.axios.get(`/api/v1/flows/${options.namespace}`, { params: { size: options.size, page: options.page } }).then(response => {
-                commit('setFlows', response.data.results)
-                commit('setTotal', response.data.total)
-            })
-        },
         findFlows({ commit }, options) {
-            const sort = options.sort
+            const sortString = options.sort ? `?sort=${options.sort}` : ''
             delete options.sort
-            let sortQueryString = ''
-            if (sort) {
-                sortQueryString = `?sort=${sort.join('&sort=')}`
-            }
-            return Vue.axios.get(`/api/v1/flows/search${sortQueryString}`, {
+            return Vue.axios.get(`/api/v1/flows/search${sortString}`, {
                 params: options
             }).then(response => {
                 commit('setFlows', response.data.results)

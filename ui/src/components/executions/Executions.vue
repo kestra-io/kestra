@@ -2,6 +2,8 @@
     <div>
         <data-table @onPageChanged="loadExecutions" ref="dataTable" :total="total">
             <template v-slot:navbar>
+                <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
+                    <v-s />
                 <search-field @onSearch="onSearch" :fields="searchableFields" />
             </template>
             <template v-slot:table>
@@ -14,12 +16,10 @@
                     bordered
                     :items="executions"
                     :fields="fields"
-                @row-dblclicked="onRowDoubleClick"
+                    @row-dblclicked="onRowDoubleClick"
                 >
                     <template v-slot:cell(details)="row">
-                        <router-link
-                            :to="{name: 'execution', params: row.item}"
-                        >
+                        <router-link :to="{name: 'execution', params: row.item}">
                             <eye id="edit-action" />
                         </router-link>
                     </template>
@@ -58,18 +58,33 @@ import Eye from "vue-material-design-icons/Eye";
 import Status from "../Status";
 import RouteContext from "../../mixins/routeContext";
 import SearchField from "../layout/SearchField";
+import queryBuilder from "../../utils/queryBuilder";
+import NamespaceSelector from "../namespace/Selector";
 
 export default {
     mixins: [RouteContext],
-    components: { Status, Eye, DataTable, SearchField },
-    mounted() {
+    components: { Status, Eye, DataTable, SearchField, NamespaceSelector },
+    created() {
+        if (localStorage.getItem("executionQueries")) {
+            this.$router.push({
+                query: JSON.parse(localStorage.getItem("executionQueries"))
+            });
+        }
+        this.query = queryBuilder(this.$route, this.fields);
         this.loadExecutions();
     },
     data() {
         return {
-            sort: "",
             query: "*"
         };
+    },
+    watch: {
+        $route() {
+            localStorage.setItem(
+                "executionQueries",
+                JSON.stringify(this.$route.query)
+            );
+        }
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
@@ -129,35 +144,46 @@ export default {
             ];
         }
     },
-    watch: {
-        $route() {
-            this.loadExecutions();
-        }
-    },
     methods: {
-        onSearch(query) {
-            this.query = query;
+        onSearch() {
+            this.query = queryBuilder(this.$route, this.fields);
             this.loadExecutions();
         },
         onRowDoubleClick(item) {
             this.$router.push({ name: "execution", params: item });
         },
-        loadExecutions(pagination) {
-            if (this.$route.params.namespace) {
-                this.$store.dispatch("execution/loadExecutions", {
-                    namespace: this.$route.params.namespace,
-                    flowId: this.$route.params.id,
-                    size: pagination.size,
-                    page: pagination.page
+        onSort(sortItem) {
+            const sort = [
+                `${sortItem.sortBy}:${sortItem.sortDesc ? "desc" : "asc"}`
+            ];
+            this.$router.push({
+                query: { ...this.$route.query, sort }
+            });
+            this.loadExecutions();
+        },
+        triggerExecution() {
+            this.$store
+                .dispatch("execution/triggerExecution", this.$route.params)
+                .then(response => {
+                    this.$router.push({
+                        name: "execution",
+                        params: response.data
+                    });
+                    this.$bvToast.toast(this.$t("triggered").capitalize(), {
+                        title: this.$t("execution").capitalize(),
+                        autoHideDelay: 5000,
+                        toaster: "b-toaster-top-right",
+                        variant: "success"
+                    });
                 });
-            } else {
-                this.$store.dispatch("execution/findExecutions", {
-                    size: pagination.size,
-                    page: pagination.page,
-                    q: this.query,
-                    sort: this.sort
-                });
-            }
+        },
+        loadExecutions() {
+            this.$store.dispatch("execution/findExecutions", {
+                size: parseInt(this.$route.query.size || 25),
+                page: parseInt(this.$route.query.page || 1),
+                q: this.query,
+                sort: this.$route.query.sort
+            });
         }
     }
 };

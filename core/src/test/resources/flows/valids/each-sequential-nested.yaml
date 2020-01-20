@@ -4,24 +4,24 @@ namespace: org.kestra.tests
 tasks:
   - id: 1-each
     type: org.kestra.core.tasks.flows.EachSequential
-    value: "[1, 2, 3]"
+    value: '["s1", "s2", "s3"]'
     tasks:
-      - id: 1.1-return
+      - id: 1_1-return
         type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
-      - id: 1.2-each
+      - id: 1_2-each
         type: org.kestra.core.tasks.flows.EachSequential
         value: '["a", "b"]'
         tasks:
-          - id: 1.2.1-return
+          - id: 1_2_1-return
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
-          - id: 1.2.2-return
+          - id: 1_2_2-return
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
-      - id: 1.3-return
+      - id: 1_3-return
         type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
-  - id: 2.return
+  - id: 2_return
     type: org.kestra.core.tasks.debugs.Return
-    format: "{{task.id}} > {{taskrun.startDate}}"
+    format: "{{task.id}} > {{outputs.1_2_1-return.s1.a.return}}"

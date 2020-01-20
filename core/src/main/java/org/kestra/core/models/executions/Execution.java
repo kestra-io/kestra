@@ -7,13 +7,14 @@ import lombok.Value;
 import lombok.With;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.listeners.Condition;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.runners.FlowableUtils;
+import org.kestra.core.utils.MapUtils;
 
 import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Value
 @Builder
@@ -101,6 +102,19 @@ public class Execution {
         return find.get();
     }
 
+    public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values) {
+        Optional<TaskRun> find = this.getTaskRunList()
+            .stream()
+            .filter(taskRun -> taskRun.getTaskId().equals(id) && findChildsValues(taskRun, true).equals(values))
+            .findFirst();
+
+        if (find.isEmpty()) {
+            throw new IllegalArgumentException("Can't find taskrun with taskrun id '" + id + "' with values '" + values + "' on execution '" + this.id + "'");
+        }
+
+        return find.get();
+    }
+
     /**
      * Determine if the current execution is on error &amp; normal tasks
      * Used only from the flow
@@ -182,7 +196,6 @@ public class Execution {
         return this.isTerminated(this.findValidListeners(flow));
     }
 
-
     public boolean isTerminated(List<ResolvedTask> resolvedTasks) {
         return this.isTerminated(resolvedTasks, null);
     }
@@ -235,18 +248,86 @@ public class Execution {
             return ImmutableMap.of();
         }
 
-        return this
-            .getTaskRunList()
+        Map<String, Object> result = new HashMap<>();
+
+        for (TaskRun current : this.taskRunList) {
+            if (current.getOutputs() != null) {
+                result = MapUtils.merge(result, outputs(current));
+            }
+        }
+
+        return result;
+    }
+
+    private Map<String, Object> outputs(TaskRun taskRun) {
+        List<TaskRun> childs = findChilds(taskRun)
             .stream()
-            .filter(current -> current.getOutputs() != null)
-            .map(current -> new AbstractMap.SimpleEntry<>(
-                String.join("", Arrays.asList(
-                    current.getTaskId(),
-                    (current.getParentTaskRunId() != null ? "[" + current.getId() + "]" : "")
-                )),
-                current.getOutputs())
-            )
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            .filter(r -> r.getValue() != null)
+            .collect(Collectors.toList());
+
+        if (childs.size() == 0) {
+            return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> current = result;
+
+        for (TaskRun t : childs) {
+            HashMap<String, Object> item = new HashMap<>();
+            current.put(t.getValue(), item);
+            current = item;
+        }
+
+        current.put(taskRun.getValue(), taskRun.getOutputs());
+
+        return Map.of(taskRun.getTaskId(), result);
+    }
+
+    /**
+     * Find all childs from this {@link TaskRun}. The list is starting from deeper child and end on closest child, so
+     * first element is the task that start first.
+     * This method don't return the current tasks
+     *
+     * @param taskRun current child
+     * @return List of parent {@link TaskRun}
+     */
+    public List<TaskRun> findChilds(TaskRun taskRun) {
+        if (taskRun.getParentTaskRunId() == null) {
+            return new ArrayList<>();
+        }
+
+        ArrayList<TaskRun> result = new ArrayList<>();
+
+        boolean ended = false;
+
+        while (!ended) {
+            final TaskRun finalTaskRun = taskRun;
+            Optional<TaskRun> find = this.taskRunList
+                .stream()
+                .filter(t -> t.getId().equals(finalTaskRun.getParentTaskRunId()))
+                .findFirst();
+
+            if (find.isPresent()) {
+                result.add(find.get());
+                taskRun = find.get();
+            } else {
+                ended = true;
+            }
+        }
+
+        Collections.reverse(result);
+
+        return result;
+    }
+
+    public List<String> findChildsValues(TaskRun taskRun, boolean withCurrent) {
+        return (withCurrent ?
+            Stream.concat(findChilds(taskRun).stream(), Stream.of(taskRun)) :
+            findChilds(taskRun).stream()
+        )
+            .filter(t -> t.getValue() != null)
+            .map(TaskRun::getValue)
+            .collect(Collectors.toList());
     }
 
     public String toString(boolean pretty) {

@@ -1,6 +1,7 @@
 package org.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
+import org.kestra.core.models.flows.State;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.models.executions.Execution;
 import org.junit.jupiter.api.Test;
@@ -59,5 +60,17 @@ class SwitchTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("default"));
+    }
+
+    @Test
+    void switchImpossible() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(
+            "org.kestra.tests",
+            "switch-impossible",
+            null,
+            (f, e) -> ImmutableMap.of("string", "impossible")
+        );
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 }

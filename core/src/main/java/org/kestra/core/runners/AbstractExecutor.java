@@ -58,15 +58,18 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     protected Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) {
-        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(this.applicationContext, flow, execution));
+        RunContext runContext = new RunContext(this.applicationContext, flow, execution);
+        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, runContext);
 
         if (parent.getTask() instanceof FlowableTask) {
             FlowableTask flowableParent = (FlowableTask) parent.getTask();
 
             return flowableParent
-                .resolveState(new RunContext(this.applicationContext, flow, execution), execution, taskRun)
+                .resolveState(runContext, execution, taskRun)
                 .map(type -> new WorkerTaskResult(
-                    taskRun.withState(type),
+                    taskRun
+                        .withState(type)
+                        .withOutputs(flowableParent.outputs(runContext, execution, taskRun)),
                     parent.getTask()
                 ));
 

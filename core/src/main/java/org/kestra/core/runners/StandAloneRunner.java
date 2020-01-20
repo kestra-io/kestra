@@ -67,6 +67,5 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
         this.executionQueue.close();
         this.workerTaskQueue.close();
         this.workerTaskResultQueue.close();
-
     }
 }

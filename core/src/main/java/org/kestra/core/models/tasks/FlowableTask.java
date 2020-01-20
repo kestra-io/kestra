@@ -7,6 +7,7 @@ import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface FlowableTask {
@@ -23,5 +24,9 @@ public interface FlowableTask {
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
             parentTaskRun
         );
+    }
+
+    default Map<String, Object> outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+        return null;
     }
 }

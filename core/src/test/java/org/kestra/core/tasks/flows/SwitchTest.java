@@ -22,6 +22,8 @@ class SwitchTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("1st"));
+        assertThat(execution.findTaskRunByTaskId("parent-seq").getOutputs().get("value"), is("FIRST"));
+        assertThat(execution.findTaskRunByTaskId("parent-seq").getOutputs().get("isDefault"), is(false));
     }
 
     @Test
@@ -34,6 +36,8 @@ class SwitchTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("2nd"));
+        assertThat(execution.findTaskRunByTaskId("parent-seq").getOutputs().get("value"), is("SECOND"));
+        assertThat(execution.findTaskRunByTaskId("parent-seq").getOutputs().get("isDefault"), is(false));
     }
 
     @Test
@@ -46,6 +50,8 @@ class SwitchTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("3th"));
+        assertThat(execution.findTaskRunByTaskId("parent-seq").getOutputs().get("value"), is("THIRD"));
+        assertThat(execution.findTaskRunByTaskId("parent-seq").getOutputs().get("isDefault"), is(false));
         assertThat(execution.getTaskRunList().get(2).getTaskId(), is("failed"));
         assertThat(execution.getTaskRunList().get(3).getTaskId(), is("error-1st"));
     }
@@ -60,6 +66,8 @@ class SwitchTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("default"));
+        assertThat(execution.findTaskRunByTaskId("parent-seq").getOutputs().get("value"), is("DEFAULT"));
+        assertThat(execution.findTaskRunByTaskId("parent-seq").getOutputs().get("isDefault"), is(true));
     }
 
     @Test

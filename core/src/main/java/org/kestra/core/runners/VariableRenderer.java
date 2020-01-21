@@ -28,6 +28,10 @@ public class VariableRenderer {
         });
 
     public String render(String inline, Map<String, Object> variables) throws IOException {
+        if (inline == null) {
+            return null;
+        }
+
         boolean isSame = false;
         String handlebarTemplate = inline;
         String current = "";

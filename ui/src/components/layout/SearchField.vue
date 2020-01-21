@@ -1,7 +1,12 @@
 <template>
-    <b-form-group :label="$t('search').capitalize()" label-cols-sm="auto">
-        <b-form-input @input="onSearch" v-model="search" :placeholder="$t('type anything')"></b-form-input>
-    </b-form-group>
+    <b-nav-form>
+        <b-form-input
+            :label="$t('search').capitalize()"
+            size="sm"
+            class="mr-sm-2"
+            placeholder="Search"
+        ></b-form-input>
+    </b-nav-form>
 </template>
 <script>
 import { debounce } from "throttle-debounce";
@@ -21,9 +26,7 @@ export default {
                     this.fields
                         .map(
                             f =>
-                                `${f.key}:*${this.search}* OR ${f.key}:${
-                                    this.search
-                                }`
+                                `${f.key}:*${this.search}* OR ${f.key}:${this.search}`
                         )
                         .join(" OR ") || "*";
             }

@@ -65,7 +65,7 @@ export default {
     },
     methods: {
         perPageChange() {
-            this.changed(this.pagination.page)
+            this.changed(this.pagination.page);
         },
         changed(page) {
             this.nextPage = page;
@@ -80,6 +80,8 @@ export default {
 
 select {
     width: auto;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .navbar {

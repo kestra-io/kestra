@@ -38,3 +38,8 @@ export default {
     }
 };
 </script>
+<style lang="scss" scoped>
+/deep/ .v-select {
+    min-width: 200px ;
+}
+</style>

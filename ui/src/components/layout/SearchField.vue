@@ -3,14 +3,15 @@
         <b-form-input
             :label="$t('search').capitalize()"
             size="sm"
+            @input="onSearch"
+            v-model="search"
             class="mr-sm-2"
-            placeholder="Search"
+            :placeholder="$t('search').capitalize()"
         ></b-form-input>
     </b-nav-form>
 </template>
 <script>
 import { debounce } from "throttle-debounce";
-
 export default {
     created() {
         if (this.$route.query.q) {
@@ -27,7 +28,7 @@ export default {
     },
     methods: {
         onSearch() {
-            const query = { ...this.$route.query, q: this.search };
+            const query = { ...this.$route.query, q: this.search, page: 1 };
             if (!this.search) {
                 delete query.q;
             }

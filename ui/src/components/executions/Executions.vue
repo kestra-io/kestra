@@ -1,9 +1,9 @@
 <template>
     <div>
-        <data-table @onPageChanged="loadExecutions" ref="dataTable" :total="total">
+        <data-table @onPageChanged="loadData" ref="dataTable" :total="total">
             <template v-slot:navbar>
                 <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
-                    <v-s />
+                <v-s />
                 <search-field @onSearch="onSearch" :fields="searchableFields" />
             </template>
             <template v-slot:table>
@@ -57,45 +57,20 @@ import DataTable from "../layout/DataTable";
 import Eye from "vue-material-design-icons/Eye";
 import Status from "../Status";
 import RouteContext from "../../mixins/routeContext";
+import DataTableActions from "../../mixins/dataTableActions";
 import SearchField from "../layout/SearchField";
-import queryBuilder from "../../utils/queryBuilder";
 import NamespaceSelector from "../namespace/Selector";
 
 export default {
-    mixins: [RouteContext],
+    mixins: [RouteContext, DataTableActions],
     components: { Status, Eye, DataTable, SearchField, NamespaceSelector },
-    created() {
-        if (localStorage.getItem("executionQueries")) {
-            this.$router.push({
-                query: JSON.parse(localStorage.getItem("executionQueries"))
-            });
-        }
-        this.query = queryBuilder(this.$route, this.fields);
-        this.loadExecutions();
-    },
     data() {
         return {
-            query: "*"
+            dataType: "execution"
         };
-    },
-    watch: {
-        $route() {
-            localStorage.setItem(
-                "executionQueries",
-                JSON.stringify(this.$route.query)
-            );
-        }
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
-        searchableFields() {
-            return this.fields.filter(f => !["actions"].includes(f.key));
-        },
-        routeInfo() {
-            return {
-                title: this.$t("executions")
-          };
-        },
         fields() {
             const title = title => {
                 return this.$t(title).capitalize();
@@ -145,22 +120,6 @@ export default {
         }
     },
     methods: {
-        onSearch() {
-            this.query = queryBuilder(this.$route, this.fields);
-            this.loadExecutions();
-        },
-        onRowDoubleClick(item) {
-            this.$router.push({ name: "execution", params: item });
-        },
-        onSort(sortItem) {
-            const sort = [
-                `${sortItem.sortBy}:${sortItem.sortDesc ? "desc" : "asc"}`
-            ];
-            this.$router.push({
-                query: { ...this.$route.query, sort }
-            });
-            this.loadExecutions();
-        },
         triggerExecution() {
             this.$store
                 .dispatch("execution/triggerExecution", this.$route.params)
@@ -177,7 +136,7 @@ export default {
                     });
                 });
         },
-        loadExecutions() {
+        loadData() {
             this.$store.dispatch("execution/findExecutions", {
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),

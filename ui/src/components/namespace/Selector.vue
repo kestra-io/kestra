@@ -10,7 +10,6 @@
 </template>
 <script>
 import { mapState } from "vuex";
-
 export default {
     created() {
         this.$store.dispatch("namespace/loadNamespaces", { prefix: "" });
@@ -31,21 +30,19 @@ export default {
             }
         },
         onNamespaceSelect() {
-            const query = {
-                ...this.$route.query,
-                namespace: this.selectedNamespace
-            };
+            const query = { ...this.$route.query };
+            query.namespace = this.selectedNamespace;
             if (!this.selectedNamespace) {
                 delete query.namespace;
             }
             this.$router.push({ query });
-            this.$emit("onNamespaceSelect", this.selectedNamespace);
+            this.$emit("onNamespaceSelect");
         }
     }
 };
 </script>
 <style lang="scss" scoped>
 /deep/ .v-select {
-    min-width: 200px ;
+    min-width: 200px;
 }
 </style>

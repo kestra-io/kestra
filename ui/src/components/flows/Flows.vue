@@ -2,7 +2,7 @@
     <div>
         <div>
             <data-table
-                @onPageChanged="loadFlows"
+                @onPageChanged="loadData"
                 striped
                 hover
                 bordered
@@ -63,11 +63,12 @@ import Plus from "vue-material-design-icons/Plus";
 import Eye from "vue-material-design-icons/Eye";
 import BottomLine from "../layout/BottomLine";
 import RouteContext from "../../mixins/routeContext";
+import DataTableActions from "../../mixins/dataTableActions";
 import DataTable from "../layout/DataTable";
 import SearchField from "../layout/SearchField";
-import queryBuilder from "../../utils/queryBuilder";
+
 export default {
-    mixins: [RouteContext],
+    mixins: [RouteContext, DataTableActions],
     components: {
         NamespaceSelector,
         BottomLine,
@@ -76,42 +77,13 @@ export default {
         DataTable,
         SearchField
     },
-    created() {
-        if (localStorage.getItem("flowQueries")) {
-            this.$router.push({
-                query: JSON.parse(localStorage.getItem("flowQueries"))
-            });
-        }
-        this.query = queryBuilder(this.$route, this.fields);
-    },
-    mounted() {
-        this.onNamespaceSelect(this.$route.query.namespace);
-    },
     data() {
         return {
-            query: "*",
-            sort: ""
+            dataType: "flow"
         };
-    },
-    watch: {
-        $route() {
-            localStorage.setItem(
-                "flowQueries",
-                JSON.stringify(this.$route.query)
-            );
-        }
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
-        ...mapState("namespace", ["namespace", "namespace"]),
-        searchableFields() {
-            return this.fields.filter(f => !["actions"].includes(f.key));
-        },
-        routeInfo() {
-            return {
-                title: this.$t("flows")
-            };
-        },
         fields() {
             const title = title => {
                 return this.$t(title).capitalize();
@@ -124,7 +96,8 @@ export default {
                 },
                 {
                     key: "namespace",
-                    label: title("namespace")
+                    label: title("namespace"),
+                    sortable: true
                 },
                 {
                     key: "revision",
@@ -140,36 +113,13 @@ export default {
         }
     },
     methods: {
-        onSearch() {
-            this.query = queryBuilder(this.$route, this.fields);
-            this.loadFlows();
-        },
-        onSort(sortItem) {
-            const sort = [
-                `${sortItem.sortBy}:${sortItem.sortDesc ? "desc" : "asc"}`
-            ];
-            this.$router.push({
-                query: { ...this.$route.query, sort }
-            });
-            this.loadFlows();
-        },
-        onRowDoubleClick(item) {
-            this.$router.push({ name: "flow", params: item });
-        },
-        loadFlows() {
+        loadData() {
             this.$store.dispatch("flow/findFlows", {
                 q: this.query,
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
                 sort: this.$route.query.sort
             });
-        },
-        onNamespaceSelect() {
-            if (this.$route.query.page !== "1") {
-                this.$router.push({ query: { ...this.$route.query, page: 1 } });
-            }
-            this.query = queryBuilder(this.$route, this.fields);
-            this.loadFlows();
         }
     }
 };

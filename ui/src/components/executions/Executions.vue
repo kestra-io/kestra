@@ -74,7 +74,7 @@ export default {
     computed: {
         ...mapState("execution", ["executions", "total"]),
         searchableFields() {
-            return this.fields.filter(f => !["actions"].includes(f.key));
+            return this.fields.filter(f => f.sortable);
         },
         routeInfo() {
             return {

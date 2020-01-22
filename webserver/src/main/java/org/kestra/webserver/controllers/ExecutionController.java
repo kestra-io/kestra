@@ -1,18 +1,22 @@
 package org.kestra.webserver.controllers;
 
 import io.micronaut.data.model.Pageable;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
+import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
+import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
@@ -20,6 +24,8 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.RunnerUtils;
+import org.kestra.core.storages.StorageInterface;
+import org.kestra.core.storages.StorageObject;
 import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 import org.reactivestreams.Publisher;
@@ -27,6 +33,11 @@ import org.reactivestreams.Publisher;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,6 +55,9 @@ public class ExecutionController {
 
     @Inject
     private RunnerUtils runnerUtils;
+
+    @Inject
+    private StorageInterface storageInterface;
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
@@ -124,6 +138,30 @@ public class ExecutionController {
         executionQueue.emit(current);
 
         return Maybe.just(current);
+    }
+
+    /**
+     * Download file binary from uri parameter
+     *
+     * @param filePath The file URI to return
+     * @param type     The file storage type
+     * @return data binary content
+     */
+    @Get(uri = "executions/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
+    public Maybe<StreamedFile> file(
+        String executionId,
+        @QueryValue(value = "filePath") URI filePath,
+        @QueryValue(value = "type") String type
+    ) throws URISyntaxException, IOException {
+        Optional<Execution> execution = executionRepository.findById(executionId);
+        if (execution.isEmpty()) {
+            return Maybe.empty();
+        }
+
+        InputStream fileHandler = storageInterface.get(filePath);
+        return Maybe.just(new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
+            .attach(FilenameUtils.getName(filePath.toString()))
+        );
     }
 
     /**

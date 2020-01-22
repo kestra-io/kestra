@@ -20,6 +20,7 @@ import Gantt from "./Gantt";
 import Overview from "./Overview";
 import Logs from "./Logs";
 import Topology from "./Topology";
+import ExecutionOutput from "./ExecutionOutput";
 import Trigger from "vue-material-design-icons/Cogs";
 import BottomLine from "../layout/BottomLine";
 import FlowActions from "../flows/FlowActions";
@@ -35,7 +36,8 @@ export default {
         Gantt,
         Logs,
         Topology,
-        FlowActions
+        FlowActions,
+        ExecutionOutput
     },
     data() {
         return {
@@ -122,6 +124,10 @@ export default {
                 {
                     tab: "topology",
                     title: title("topology")
+                },
+                {
+                    tab: "execution-output",
+                    title: title("output")
                 }
             ];
         }

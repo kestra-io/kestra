@@ -1,0 +1,25 @@
+properties:
+  id:
+    type: keyword
+  namespace:
+    type: keyword
+  revision:
+    type: integer
+  template:
+    type: boolean
+  inputs:
+    type: nested
+    properties:
+      name:
+        type: text
+      type:
+        type: keyword
+      required:
+        type: boolean
+  tasks:
+    type: nested
+    properties:
+      id:
+        type: keyword
+      type:
+        type: keyword

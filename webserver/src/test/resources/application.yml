@@ -1,3 +1,10 @@
+micronaut:
+  router:
+    static-resources:
+      ui:
+        paths: classpath:ui
+        mapping: /ui/**
+
 kestra:
   repository:
     type: memory

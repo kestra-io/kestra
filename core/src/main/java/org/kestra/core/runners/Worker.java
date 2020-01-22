@@ -133,7 +133,7 @@ public class Worker implements Runnable {
             logger.debug("Outputs\n{}", JacksonMapper.log(output.getOutputs()));
         }
 
-        if (runContext.metrics() != null) {
+        if (runContext.metrics().size() > 0) {
             logger.trace("Metrics\n{}", JacksonMapper.log(runContext.metrics()));
         }
 

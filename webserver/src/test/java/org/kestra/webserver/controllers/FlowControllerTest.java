@@ -55,12 +55,6 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void findNoResult() {
-        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.kestra.testsnotfound"), Argument.of(PagedResults.class, Flow.class));
-        assertThat(flows.getTotal(), is(0L));
-    }
-
-    @Test
     void createFlow() {
         Flow flow = Flow.builder()
             .id(FriendlyId.createFriendlyId())

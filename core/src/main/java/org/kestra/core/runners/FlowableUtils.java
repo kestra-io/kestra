@@ -1,5 +1,6 @@
 package org.kestra.core.runners;
 
+import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class FlowableUtils {
     public static List<TaskRun> resolveSequentialNexts(
         Execution execution,
@@ -30,7 +32,7 @@ public class FlowableUtils {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, parentTaskRun);
 
         // nothing
-        if (currentTasks.size() == 0) {
+        if (currentTasks == null || currentTasks.size() == 0) {
             return new ArrayList<>();
         }
 
@@ -73,7 +75,16 @@ public class FlowableUtils {
     ) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors);
 
-        if (currentTasks.size() > 0) {
+        if (currentTasks == null) {
+            log.warn(
+                "No task found on flow '{}', task '{}', execution '{}'",
+                execution.getNamespace() + "." + execution.getFlowId(),
+                parentTaskRun.getTaskId(),
+                execution.getId()
+            );
+
+            return Optional.of(State.Type.FAILED);
+        } else if (currentTasks.size() > 0) {
             // handle nominal case, tasks or errors flow are ready to be analysed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {
                 return Optional.of(execution.hasFailed(currentTasks) ? State.Type.FAILED : State.Type.SUCCESS);

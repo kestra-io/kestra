@@ -2,7 +2,6 @@ package org.kestra.core.storages;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.io.CharStreams;
-import lombok.AllArgsConstructor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -10,10 +9,19 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 
-@AllArgsConstructor
 public class StorageObject {
-    private StorageInterface storageInterface;
+    private String type = StorageObject.class.getName();
     private URI uri;
+    private StorageInterface storageInterface;
+
+    public StorageObject(StorageInterface storageInterface, URI uri) {
+        this.storageInterface = storageInterface;
+        this.uri = uri;
+    }
+
+    public String getType() {
+        return type;
+    }
 
     public URI getUri() {
         return uri;

@@ -43,14 +43,6 @@ public class FlowController {
             .orElse(Maybe.empty());
     }
 
-    /**
-     * @param namespace The flow namespace
-     * @return flow list
-     */
-    @Get(uri = "{namespace}", produces = MediaType.TEXT_JSON)
-    public PagedResults<Flow> findByNamespace(String namespace, @QueryValue(value = "page", defaultValue = "1") int page, @QueryValue(value = "size", defaultValue = "10") int size) {
-        return PagedResults.of(flowRepository.findByNamespace(namespace, Pageable.from(page, size)));
-    }
 
     /**
      * @param query The flow query that is a lucen string
@@ -60,7 +52,7 @@ public class FlowController {
      */
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
     public PagedResults<Flow> find(
-        @QueryValue(value = "q") String query,
+        @QueryValue(value = "q") String query, //Search by namespace using lucene
         @QueryValue(value = "page", defaultValue = "1") int page,
         @QueryValue(value = "size", defaultValue = "10") int size,
         @Nullable @QueryValue(value = "sort") List<String> sort

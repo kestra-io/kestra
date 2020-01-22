@@ -24,8 +24,6 @@ public interface FlowRepositoryInterface {
 
     ArrayListTotal<Flow> find(String query, Pageable pageable);
 
-    ArrayListTotal<Flow> findByNamespace(String namespace, Pageable pageable);
-
     List<String> findDistinctNamespace(Optional<String> prefix);
 
     default Optional<Flow> exists(Flow flow) {

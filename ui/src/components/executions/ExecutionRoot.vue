@@ -20,6 +20,7 @@ import Gantt from "./Gantt";
 import Overview from "./Overview";
 import Logs from "./Logs";
 import Topology from "./Topology";
+import ExecutionOutput from "./ExecutionOutput";
 import Trigger from "vue-material-design-icons/Cogs";
 import BottomLine from "../layout/BottomLine";
 import FlowActions from "../flows/FlowActions";
@@ -35,7 +36,8 @@ export default {
         Gantt,
         Logs,
         Topology,
-        FlowActions
+        FlowActions,
+        ExecutionOutput
     },
     data() {
         return {
@@ -68,6 +70,7 @@ export default {
     computed: {
         ...mapState("execution", ["execution"]),
         routeInfo() {
+            const ns = this.$route.params.namespace;
             return {
                 title: this.$t("execution"),
                 breadcrumb: [
@@ -76,16 +79,16 @@ export default {
                         link: {
                             name: "flowsList",
                             query: {
-                                namespace: this.$route.params.flowId
+                                namespace: ns
                             }
                         }
                     },
                     {
-                        label: this.$route.params.namespace + "." + this.$route.params.flowId,
+                        label: `${ns}.${this.$route.params.flowId}`,
                         link: {
                             name: "flow",
                             params: {
-                                namespace: this.$route.params.flowId,
+                                namespace: ns,
                                 id: this.$route.params.flowId
                             }
                         }
@@ -121,6 +124,10 @@ export default {
                 {
                     tab: "topology",
                     title: title("topology")
+                },
+                {
+                    tab: "execution-output",
+                    title: title("output")
                 }
             ];
         }

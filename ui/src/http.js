@@ -16,3 +16,6 @@ export default callback => {
     Vue.axios.defaults.baseURL = (process.env.VUE_APP_API_URL || "") + "/";
     callback();
 };
+
+
+export const apiRoot = `${process.env.VUE_APP_API_URL}/api/v1/`

@@ -6,25 +6,20 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.github.jknack.handlebars.EscapingStrategy;
-import com.github.jknack.handlebars.Handlebars;
-import com.github.jknack.handlebars.Template;
-import com.github.jknack.handlebars.helper.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.With;
+import lombok.SneakyThrows;
+import org.kestra.core.metrics.MetricRegistry;
+import org.kestra.core.models.executions.AbstractMetricEntry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.LogEntry;
-import org.kestra.core.models.executions.MetricEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.ResolvedTask;
-import org.kestra.core.runners.handlebars.helpers.InstantHelper;
-import org.kestra.core.runners.handlebars.helpers.JsonHelper;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.storages.StorageObject;
@@ -33,64 +28,75 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URI;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@AllArgsConstructor
 @NoArgsConstructor
-@Getter
 public class RunContext {
-    private static Handlebars handlebars = new Handlebars()
-        .with(EscapingStrategy.NOOP)
-        .registerHelpers(ConditionalHelpers.class)
-        .registerHelpers(EachHelper.class)
-        .registerHelpers(LogHelper.class)
-        .registerHelpers(StringHelpers.class)
-        .registerHelpers(UnlessHelper.class)
-        .registerHelpers(WithHelper.class)
-        .registerHelpers(InstantHelper.class)
-        .registerHelpers(JsonHelper.class)
-        .registerHelperMissing((context, options) -> {
-            throw new IllegalStateException("Missing variable: " + options.helperName);
-        });
-
-    @With
-    private StorageInterface storageInterface;
-
-    @With
+    private static VariableRenderer variableRenderer = new VariableRenderer();
     private ApplicationContext applicationContext;
-
+    private StorageInterface storageInterface;
     private URI storageOutputPrefix;
-
+    private String envPrefix;
     private Map<String, Object> variables;
-
-    private List<MetricEntry> metrics;
-
+    private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
+    private MetricRegistry meterRegistry;
     private ContextAppender contextAppender;
-
     private String loggerName;
-
     private Logger logger;
 
-    public RunContext(Flow flow, Execution execution) {
-        this.variables = this.variables(flow, null, execution, null);
-        this.loggerName = "flow." + flow.getId();
+    public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
+        this.init(applicationContext);
+        this.init(flow, null, execution, null);
     }
 
-    public RunContext(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
-        this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
+    public RunContext(ApplicationContext applicationContext, Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
+        this.init(applicationContext);
+        this.init(flow, task, execution, taskRun);
+    }
+
+    @VisibleForTesting
+    public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
+        this.init(applicationContext);
+
+        this.storageOutputPrefix = URI.create("");
+        this.variables = variables;
+        this.loggerName = "flow.unitest";
+    }
+
+    private void init(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
+        this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
+        this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
+    }
+
+    private void init(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
         this.variables = this.variables(flow, task, execution, taskRun);
-        this.loggerName = "flow." + flow.getId() + "." + taskRun.getTaskId();
+        this.loggerName = "flow." + flow.getId() + (taskRun != null ? "." + taskRun.getTaskId() : "");
+        if (taskRun != null) {
+            this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
+        }
+    }
+
+    public Map<String, Object> getVariables() {
+        return variables;
+    }
+
+    @JsonIgnore
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
     }
 
     private Map<String, Object> variables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
-            .put("env", System.getenv());
+            .put("envs", envVariables());
+
+        if (applicationContext.getProperties("kestra.variables.globals").size() > 0) {
+            builder.put("globals", applicationContext.getProperties("kestra.variables.globals"));
+        }
 
         if (resolvedTask != null && flow.isListenerTask(resolvedTask.getTask().getId())) {
             builder
@@ -136,6 +142,22 @@ public class RunContext {
         return builder.build();
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private Map<String, String> envVariables() {
+        Map<String, String> result = new HashMap<>(System.getenv());
+        result.putAll((Map) System.getProperties());
+
+        return result
+            .entrySet()
+            .stream()
+            .filter(e -> e.getKey().startsWith(this.envPrefix))
+            .map(e -> new AbstractMap.SimpleEntry<>(
+                e.getKey().substring(this.envPrefix.length()).toLowerCase(),
+                e.getValue()
+            ))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
     private Map<String, Object> variables(TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("id", taskRun.getId())
@@ -153,27 +175,58 @@ public class RunContext {
         return builder.build();
     }
 
-    public RunContext updateTaskRunVariables(TaskRun taskRun) {
-        HashMap<String, Object> clone = new HashMap<>(this.variables);
-        clone.remove("taskrun");
+    @SneakyThrows
+    private Map<String, Object> resolveObjectStorage(Map<String, Object> variables) {
+        return variables
+            .entrySet()
+            .stream()
+            .map(r -> {
+                if (r.getValue() instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> map = (Map<String, Object>) r.getValue();
 
+                    if (map.containsKey("type") && map.get("type").equals(StorageObject.class.getName())) {
+                        r.setValue(new StorageObject(
+                            this.storageInterface,
+                            URI.create((String) map.get("uri"))
+                        ));
+                    } else {
+                        r.setValue(resolveObjectStorage(map));
+                    }
+                }
+
+                return r;
+            })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    @SuppressWarnings("unchecked")
+    public RunContext forWorker(ApplicationContext applicationContext, TaskRun taskRun) {
+        this.init(applicationContext);
+
+        HashMap<String, Object> clone = new HashMap<>(this.variables);
+
+        clone.remove("taskrun");
         clone.put("taskrun", this.variables(taskRun));
+
+        if (variables.containsKey("inputs")) {
+            Map<String, Object> inputs = resolveObjectStorage((Map<String, Object>) variables.get("inputs"));
+            clone.remove("inputs");
+            clone.put("inputs", inputs);
+        }
+
+        if (variables.containsKey("outputs")) {
+            Map<String, Object> outputs = resolveObjectStorage((Map<String, Object>) variables.get("outputs"));
+            clone.remove("outputs");
+            clone.put("outputs", outputs);
+        }
 
         this.variables = ImmutableMap.copyOf(clone);
 
         return this;
     }
 
-    @VisibleForTesting
-    public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
-        this.applicationContext = applicationContext;
-        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
-        this.storageOutputPrefix = URI.create("");
-        this.variables = variables;
-        this.loggerName = "flow.unitest";
-    }
-
-    public org.slf4j.Logger logger(Class cls) {
+    public org.slf4j.Logger logger(Class<?> cls) {
         if (this.logger == null) {
             LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
             this.logger = loggerContext.getLogger(this.loggerName != null ? loggerName : cls.getName());
@@ -191,35 +244,23 @@ public class RunContext {
     }
 
     public String render(String inline) throws IOException {
-        return this.renderInline(inline, this.variables);
+        return variableRenderer.render(inline, this.variables);
+    }
+
+    public List<String> render(List<String> inline) throws IOException {
+        return variableRenderer.render(inline, this.variables);
     }
 
     public String render(String inline, Map<String, Object> variables) throws IOException {
-        return this.renderInline(
+        return variableRenderer.render(
             inline,
-            Stream.concat(this.variables.entrySet().stream(), variables.entrySet().stream())
+            Stream
+                .concat(this.variables.entrySet().stream(), variables.entrySet().stream())
                 .collect(Collectors.toMap(
                     Map.Entry::getKey,
                     Map.Entry::getValue
-                    )
-                )
+                ))
         );
-    }
-
-    private String renderInline(String inline, Map<String, Object> variables) throws IOException {
-        Template template = handlebars.compileInline(inline);
-
-        return template.apply(variables);
-    }
-
-    public List<String> render(List<String> list) throws IOException {
-        List<String> result = new ArrayList<>();
-
-        for (String inline : list) {
-            result.add(this.render(inline));
-        }
-
-        return result;
     }
 
     public List<LogEntry> logs() {
@@ -267,8 +308,53 @@ public class RunContext {
         return this.storageInterface.put(resolve, new FileInputStream(file));
     }
 
-    public List<MetricEntry> metrics() {
+    public List<AbstractMetricEntry<?>> metrics() {
         return this.metrics;
+    }
+
+    public RunContext metric(AbstractMetricEntry<?> metricEntry) {
+        metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());
+        this.metrics.add(metricEntry);
+
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, String> metricsTags() {
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()
+            .put("flowId", ((Map<String, String>) this.variables.get("flow")).get("id"))
+            .put("namespace", ((Map<String, String>) this.variables.get("flow")).get("namespace"))
+            .put("revision", String.valueOf(((Map<String, String>) this.variables.get("flow")).get("revision")));
+
+        if (this.variables.containsKey("task")) {
+            builder
+                .put("task_id", ((Map<String, String>) this.variables.get("task")).get("id"))
+                .put("task_type", ((Map<String, String>) this.variables.get("task")).get("type"));
+        }
+
+        if (this.variables.containsKey("taskrun")) {
+            Map<String, String> taskrun = (Map<String, String>) this.variables.get("taskrun");
+
+            if (taskrun.containsValue("value")) {
+                builder
+                    .put("value", taskrun.get("value"));
+            }
+        }
+
+        return builder.build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private String metricPrefix() {
+        if (!this.variables.containsKey("task")) {
+            return null;
+        }
+
+        List<String> values = new ArrayList<>(Arrays.asList(((Map<String, String>) this.variables.get("task")).get("type").split("\\.")));
+        String clsName = values.remove(values.size() - 1);
+        values.add(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, clsName));
+
+        return String.join(".", values);
     }
 
     public static class ContextAppender extends AppenderBase<ILoggingEvent> {

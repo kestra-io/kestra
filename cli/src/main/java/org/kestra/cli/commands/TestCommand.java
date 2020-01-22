@@ -21,10 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 @CommandLine.Command(
@@ -46,10 +43,6 @@ public class TestCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @Nullable
-    @Value("${kestra.storage.local.kestra.base-path}")
-    Path tempDirectory;
-
     public TestCommand() {
         super(false);
     }
@@ -63,7 +56,7 @@ public class TestCommand extends AbstractCommand {
                 "kestra.repository.type", "memory",
                 "kestra.queue.type", "memory",
                 "kestra.storage.type", "local",
-                "kestra.storage.local.kestra.base-path", tempDirectory.toAbsolutePath().toString()
+                "kestra.storage.local.base-path", tempDirectory.toAbsolutePath().toString()
             );
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -110,10 +103,13 @@ public class TestCommand extends AbstractCommand {
         } catch (IOException | TimeoutException e) {
             throw new IllegalStateException(e);
         } finally {
-            try {
-                FileUtils.deleteDirectory(this.tempDirectory.toFile());
-            } catch (IOException ignored) {
-            }
+            applicationContext.getProperty("kestra.storage.local.base-path", Path.class)
+                .ifPresent(path -> {
+                    try {
+                        FileUtils.deleteDirectory(path.toFile());
+                    } catch (IOException ignored) {
+                    }
+                });
         }
     }
 }

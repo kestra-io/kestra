@@ -130,7 +130,7 @@ public class RunnerUtils {
 
                     case FILE:
                         try {
-                            URI uri = URI.create(current);
+                            URI uri = URI.create(current.replace(File.separator, "/"));
 
                             if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
                                 return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
@@ -184,7 +184,7 @@ public class RunnerUtils {
 
     public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs, Duration duration) throws TimeoutException {
         if (duration == null) {
-            duration = Duration.ofMinutes(1);
+            duration = Duration.ofMinutes(5);
         }
 
         Execution execution = this.newExecution(flow, inputs);

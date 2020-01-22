@@ -1,5 +1,6 @@
 package org.kestra.runner.kafka;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,20 +32,34 @@ import java.util.stream.Collectors;
 @KafkaQueueEnabled
 @Prototype
 public class KafkaExecutor extends AbstractExecutor {
-    @Inject
     KafkaStreamService kafkaStreamService;
-
-    @Inject
     KafkaAdminService kafkaAdminService;
-
-    @Inject
     FlowRepositoryInterface flowRepository;
 
-    @AllArgsConstructor
+    @Inject
+    public KafkaExecutor(
+        ApplicationContext applicationContext,
+        FlowRepositoryInterface flowRepository,
+        KafkaStreamService kafkaStreamService,
+        KafkaAdminService kafkaAdminService
+    ) {
+        super(applicationContext);
+        this.flowRepository = flowRepository;
+        this.kafkaStreamService = kafkaStreamService;
+        this.kafkaAdminService = kafkaAdminService;
+    }
+
     public static class ExecutionState extends AbstractExecutor {
         KafkaStreamService kafkaStreamService;
         KafkaAdminService kafkaAdminService;
         FlowRepositoryInterface flowRepository;
+
+        public ExecutionState(ApplicationContext applicationContext, KafkaStreamService kafkaStreamService, KafkaAdminService kafkaAdminService, FlowRepositoryInterface flowRepository) {
+            super(applicationContext);
+            this.kafkaStreamService = kafkaStreamService;
+            this.kafkaAdminService = kafkaAdminService;
+            this.flowRepository = flowRepository;
+        }
 
         private Topology topology() {
             kafkaAdminService.createIfNotExist(WorkerTaskResult.class);
@@ -153,11 +168,12 @@ public class KafkaExecutor extends AbstractExecutor {
                 .mapValues((readOnlyKey, taskRunExecutionWithFlow) -> {
                     ResolvedTask resolvedTask = taskRunExecutionWithFlow.getFlow().findTaskByTaskRun(
                         taskRunExecutionWithFlow.getTaskRun(),
-                        new RunContext(taskRunExecutionWithFlow.getFlow(), taskRunExecutionWithFlow.getExecution())
+                        new RunContext(this.applicationContext, taskRunExecutionWithFlow.getFlow(), taskRunExecutionWithFlow.getExecution())
                     );
 
                     return WorkerTask.builder()
                         .runContext(new RunContext(
+                            this.applicationContext,
                             taskRunExecutionWithFlow.getFlow(),
                             resolvedTask,
                             taskRunExecutionWithFlow.getExecution(),
@@ -269,6 +285,7 @@ public class KafkaExecutor extends AbstractExecutor {
         ).run();
 
         new ExecutionState(
+            this.applicationContext,
             this.kafkaStreamService,
             this.kafkaAdminService,
             this.flowRepository

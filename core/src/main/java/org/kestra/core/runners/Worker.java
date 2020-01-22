@@ -10,7 +10,6 @@ import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
-import org.kestra.core.storages.StorageInterface;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -19,18 +18,15 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Worker implements Runnable {
-    private StorageInterface storageInterface;
     private ApplicationContext applicationContext;
     private QueueInterface<WorkerTask> workerTaskQueue;
     private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     public Worker(
-        StorageInterface storageInterface,
         ApplicationContext applicationContext,
         QueueInterface<WorkerTask> workerTaskQueue,
         QueueInterface<WorkerTaskResult> workerTaskResultQueue
     ) {
-        this.storageInterface = storageInterface;
         this.applicationContext = applicationContext;
         this.workerTaskQueue = workerTaskQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
@@ -111,9 +107,7 @@ public class Worker implements Runnable {
 
         RunContext runContext = workerTask
             .getRunContext()
-            .withStorageInterface(this.storageInterface)
-            .withApplicationContext(this.applicationContext)
-            .updateTaskRunVariables(workerTask.getTaskRun());
+            .forWorker(this.applicationContext, workerTask.getTaskRun());
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new State());
@@ -124,7 +118,7 @@ public class Worker implements Runnable {
             output = task.run(runContext);
             state = State.Type.SUCCESS;
         } catch (Exception e) {
-            logger.error("Failed task", e);
+            logger.error("Failed tasks: " + e.getMessage(), e);
             state = State.Type.FAILED;
         }
 
@@ -139,8 +133,8 @@ public class Worker implements Runnable {
             logger.debug("Outputs\n{}", JacksonMapper.log(output.getOutputs()));
         }
 
-        if (runContext.getMetrics() != null) {
-            logger.trace("Metrics\n{}", JacksonMapper.log(runContext.getMetrics()));
+        if (runContext.metrics().size() > 0) {
+            logger.trace("Metrics\n{}", JacksonMapper.log(runContext.metrics()));
         }
 
         ImmutableList<TaskRunAttempt> attempts = ImmutableList.<TaskRunAttempt>builder()

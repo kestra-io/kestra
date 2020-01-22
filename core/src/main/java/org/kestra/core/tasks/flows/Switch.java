@@ -1,5 +1,6 @@
 package org.kestra.core.tasks.flows;
 
+import com.google.common.collect.ImmutableMap;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,19 +35,20 @@ public class Switch extends Task implements FlowableTask {
     @Valid
     private List<Task> defaults;
 
-    @Override
-    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) {
-        String renderValue;
+    private String rendererValue(RunContext runContext) {
         try {
-            renderValue = runContext.render(this.value);
+            return runContext.render(this.value);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
 
+    @Override
+    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) {
         return cases
             .entrySet()
             .stream()
-            .filter(entry -> entry.getKey().equals(renderValue))
+            .filter(entry -> entry.getKey().equals(rendererValue(runContext)))
             .map(Map.Entry::getValue)
             .map(tasks -> FlowableUtils.resolveTasks(tasks, parentTaskRun))
             .findFirst()
@@ -70,6 +72,16 @@ public class Switch extends Task implements FlowableTask {
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             parentTaskRun
+        );
+    }
+
+    @Override
+    public Map<String, Object> outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+        return ImmutableMap.of(
+            "value", rendererValue(runContext),
+            "isDefault", cases
+                .entrySet()
+                .stream().noneMatch(entry -> entry.getKey().equals(rendererValue(runContext)))
         );
     }
 }

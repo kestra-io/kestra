@@ -1,0 +1,33 @@
+id: with-template
+namespace: org.kestra.tests
+
+inputs:
+  - name: with-string
+    type: STRING
+  - name: with-optional
+    type: STRING
+    required: false
+  - name: with-file
+    type: FILE
+
+
+variables:
+  var-1: var-1
+  var-2: '{{ var-1 }}'
+
+
+tasks:
+  - id: 1-seq
+    type: org.kestra.core.tasks.flows.Sequential
+    tasks:
+      - id: 1-1
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}} > {{taskrun.startDate}}"
+      - id: 1-2
+        type: org.kestra.core.tasks.flows.Template
+        namespace: org.kestra.tests
+        flowId: template
+
+  - id: 2.end
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

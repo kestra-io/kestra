@@ -2,7 +2,7 @@
     <div>
         <div>
             <data-table
-                @onPageChanged="loadFlows"
+                @onPageChanged="loadData"
                 striped
                 hover
                 bordered
@@ -63,10 +63,12 @@ import Plus from "vue-material-design-icons/Plus";
 import Eye from "vue-material-design-icons/Eye";
 import BottomLine from "../layout/BottomLine";
 import RouteContext from "../../mixins/routeContext";
+import DataTableActions from "../../mixins/dataTableActions";
 import DataTable from "../layout/DataTable";
 import SearchField from "../layout/SearchField";
+
 export default {
-    mixins: [RouteContext],
+    mixins: [RouteContext, DataTableActions],
     components: {
         NamespaceSelector,
         BottomLine,
@@ -75,32 +77,13 @@ export default {
         DataTable,
         SearchField
     },
-
-    mounted() {
-        this.onNamespaceSelect(this.$route.query.namespace);
-    },
     data() {
         return {
-            query: "*",
-            sort: ""
+            dataType: "flow"
         };
-    },
-    watch: {
-        $route() {
-            this.onNamespaceSelect(this.$route.query.namespace);
-        }
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
-        ...mapState("namespace", ["namespace", "namespace"]),
-        searchableFields() {
-            return this.fields.filter(f => f.sortable);
-        },
-        routeInfo() {
-            return {
-                title: this.$t("flows")
-            };
-        },
         fields() {
             const title = title => {
                 return this.$t(title).capitalize();
@@ -130,43 +113,13 @@ export default {
         }
     },
     methods: {
-        onSearch(query) {
-            this.query = query;
-            this.loadFlows();
-        },
-        onSort(sort) {
-            this.sort = [`${sort.sortBy}:${sort.sortDesc ? "desc" : "asc"}`];
-            this.loadFlows();
-        },
-        onRowDoubleClick(item) {
-            this.$router.push({name: 'flow', params: item})
-        },
-        loadFlows() {
-            const pagination = this.$refs.dataTable.nextPagination;
-            if (this.namespace) {
-                this.$store.dispatch("flow/loadFlows", {
-                    namespace: this.namespace,
-                    size: pagination.size,
-                    page: pagination.page,
-                    sort: this.sort,
-                    q: this.query
-                });
-            } else {
-                this.$store.dispatch("flow/findFlows", {
-                    q: this.query,
-                    size: pagination.size,
-                    page: pagination.page,
-                    sort: this.sort
-                });
-            }
-        },
-        onNamespaceSelect(namespace) {
-            if (this.$route.query.namespace !== namespace) {
-                this.$router.push({ query: { namespace } });
-                this.page = 1;
-            }
-            this.$store.commit("namespace/setNamespace", namespace);
-            this.loadFlows();
+        loadData() {
+            this.$store.dispatch("flow/findFlows", {
+                q: this.query,
+                size: parseInt(this.$route.query.size || 25),
+                page: parseInt(this.$route.query.page || 1),
+                sort: this.$route.query.sort
+            });
         }
     }
 };

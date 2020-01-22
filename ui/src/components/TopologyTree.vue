@@ -67,10 +67,7 @@ export default {
             var cluster = d3.cluster().size([height, width - 100]); // 100 is the margin I will have on the right side
             // Give the data to this cluster layout:
             let count = 0;
-            var root = d3.hierarchy(data, function(d) {
-                count++;
-                return d.tasks;
-            });
+            var root = d3.hierarchy(data, d => count++ && d.errors ? [...d.tasks, ...d.errors] : d.tasks);
             cluster(root);
 
             const yFactor = parseInt(count / 2);

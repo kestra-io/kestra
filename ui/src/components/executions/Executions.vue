@@ -1,7 +1,9 @@
 <template>
     <div>
-        <data-table @onPageChanged="loadExecutions" ref="dataTable" :total="total">
+        <data-table @onPageChanged="loadData" ref="dataTable" :total="total">
             <template v-slot:navbar>
+                <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
+                <v-s />
                 <search-field @onSearch="onSearch" :fields="searchableFields" />
             </template>
             <template v-slot:table>
@@ -14,12 +16,10 @@
                     bordered
                     :items="executions"
                     :fields="fields"
-                @row-dblclicked="onRowDoubleClick"
+                    @row-dblclicked="onRowDoubleClick"
                 >
                     <template v-slot:cell(details)="row">
-                        <router-link
-                            :to="{name: 'execution', params: row.item}"
-                        >
+                        <router-link :to="{name: 'execution', params: row.item}">
                             <eye id="edit-action" />
                         </router-link>
                     </template>
@@ -57,30 +57,20 @@ import DataTable from "../layout/DataTable";
 import Eye from "vue-material-design-icons/Eye";
 import Status from "../Status";
 import RouteContext from "../../mixins/routeContext";
+import DataTableActions from "../../mixins/dataTableActions";
 import SearchField from "../layout/SearchField";
+import NamespaceSelector from "../namespace/Selector";
 
 export default {
-    mixins: [RouteContext],
-    components: { Status, Eye, DataTable, SearchField },
-    mounted() {
-        this.loadExecutions();
-    },
+    mixins: [RouteContext, DataTableActions],
+    components: { Status, Eye, DataTable, SearchField, NamespaceSelector },
     data() {
         return {
-            sort: "",
-            query: "*"
+            dataType: "execution"
         };
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
-        searchableFields() {
-            return this.fields.filter(f => f.sortable);
-        },
-        routeInfo() {
-            return {
-                title: this.$t("executions")
-            };
-        },
         fields() {
             const title = title => {
                 return this.$t(title).capitalize();
@@ -129,23 +119,7 @@ export default {
             ];
         }
     },
-    watch: {
-        $route() {
-            this.loadExecutions();
-        }
-    },
     methods: {
-        onSearch(query) {
-            this.query = query;
-            this.loadExecutions();
-        },
-        onRowDoubleClick(item) {
-            this.$router.push({ name: "execution", params: item });
-        },
-        onSort(sort) {
-            this.sort = [`${sort.sortBy}:${sort.sortDesc ? "desc" : "asc"}`];
-            this.loadExecutions();
-        },
         triggerExecution() {
             this.$store
                 .dispatch("execution/triggerExecution", this.$route.params)
@@ -162,23 +136,13 @@ export default {
                     });
                 });
         },
-        loadExecutions() {
-            const pagination = this.$refs.dataTable.nextPagination;
-            if (this.$route.params.namespace) {
-                this.$store.dispatch("execution/loadExecutions", {
-                    namespace: this.$route.params.namespace,
-                    flowId: this.$route.params.id,
-                    size: pagination.size,
-                    page: pagination.page
-                });
-            } else {
-                this.$store.dispatch("execution/findExecutions", {
-                    size: pagination.size,
-                    page: pagination.page,
-                    q: this.query,
-                    sort: this.sort
-                });
-            }
+        loadData() {
+            this.$store.dispatch("execution/findExecutions", {
+                size: parseInt(this.$route.query.size || 25),
+                page: parseInt(this.$route.query.page || 1),
+                q: this.query,
+                sort: this.$route.query.sort
+            });
         }
     }
 };

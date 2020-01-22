@@ -68,6 +68,7 @@ export default {
     computed: {
         ...mapState("execution", ["execution"]),
         routeInfo() {
+            const ns = this.$route.params.namespace;
             return {
                 title: this.$t("execution"),
                 breadcrumb: [
@@ -76,16 +77,16 @@ export default {
                         link: {
                             name: "flowsList",
                             query: {
-                                namespace: this.$route.params.flowId
+                                namespace: ns
                             }
                         }
                     },
                     {
-                        label: this.$route.params.namespace + "." + this.$route.params.flowId,
+                        label: `${ns}.${this.$route.params.flowId}`,
                         link: {
                             name: "flow",
                             params: {
-                                namespace: this.$route.params.flowId,
+                                namespace: ns,
                                 id: this.$route.params.flowId
                             }
                         }

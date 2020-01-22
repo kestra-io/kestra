@@ -3,7 +3,7 @@
         <template v-for="taskItem in execution.taskRunList">
             <template v-if="(!task || task.id === taskItem.id) && taskItem.attempts">
                 <template v-for="(attempt, index) in taskItem.attempts">
-                    <p :key="index" class="attempt">
+                    <p :key="attempt.state.startDate" class="attempt">
                         <b-badge variant="primary">{{$t('attempt') | cap}} {{index + 1}}</b-badge>
                         {{attempt.state.startDate | date('LLL:ss') }} - {{attempt.state.endDate | date('LLL:ss') }} <clock/> {{$t('Duration')}} : {{attempt.state.duration | humanizeDuration}}
                     </p>

@@ -39,7 +39,7 @@ public class ExecutionService {
      * @throws IllegalArgumentException If no referenceTaskId is provided or if there is no failed task. Also thrown if
      *                                  a {@code referenceTaskId} is provided but there is a failed task before the reference task.
      */
-    public Execution getRestartExecution(Execution execution, String referenceTaskId) throws IllegalStateException, IllegalArgumentException {
+    public Execution getRestartExecution(final Execution execution, String referenceTaskId) throws IllegalStateException, IllegalArgumentException {
         if (!execution.getState().isTerninated()) {
             throw new IllegalStateException("Execution must be terminated to be restarted !");
         }
@@ -87,13 +87,11 @@ public class ExecutionService {
      * @return an execution that can be run
      * @throws IllegalArgumentException If the provided {@code taskRunIndex} is not valid
      */
-    private State getRestartState(Execution execution, int taskRunIndex, int referenceTaskRunIndex, Set<String> referenceTaskRunAncestors) throws IllegalArgumentException {
-
+    private State getRestartState(final Execution execution, int taskRunIndex, int referenceTaskRunIndex, Set<String> referenceTaskRunAncestors) throws IllegalArgumentException {
         if (taskRunIndex < 0 || taskRunIndex >= execution.getTaskRunList().size() || taskRunIndex > referenceTaskRunIndex)
             throw new IllegalArgumentException("Unable to determine restart state !");
 
-
-        TaskRun taskRun = execution.getTaskRunList().get(taskRunIndex);
+        final TaskRun taskRun = execution.getTaskRunList().get(taskRunIndex);
 
         State state = null;
 
@@ -117,7 +115,7 @@ public class ExecutionService {
      * @param referenceTaskRunIndex The task run index for which we want to find the ancestors
      * @return a set containing the reference task run ancestors
      */
-    private Set<String> getAncestors(Execution execution, int referenceTaskRunIndex) throws IllegalArgumentException {
+    private Set<String> getAncestors(final Execution execution, int referenceTaskRunIndex) throws IllegalArgumentException {
         final Set ancestors = new HashSet();
 
         String nextAncestorId = null;
@@ -151,7 +149,7 @@ public class ExecutionService {
      * @throws IllegalArgumentException If no referenceTaskId is provided or a task in failed state is found before the
      *                                  reference task.
      */
-    private Execution createRestartFromTaskId(Execution execution, String referenceTaskId) throws IllegalArgumentException {
+    private Execution createRestartFromTaskId(final Execution execution, String referenceTaskId) throws IllegalArgumentException {
         final Predicate<TaskRun> isNotReferenceTask = taskRun -> !(referenceTaskId.equals(taskRun.getTaskId()));
         final Predicate<TaskRun> isNotFailed = taskRun -> !taskRun.getState().getCurrent().equals(State.Type.FAILED);
 
@@ -172,8 +170,6 @@ public class ExecutionService {
             throw new IllegalArgumentException("All tasks before the provided must be successful");
         }
 
-
-        final String refTaskRunParentId = refTaskRun.getParentTaskRunId();
         final String newExecutionId = FriendlyId.createFriendlyId();
 
         // This map will be used to map old ids to new ids
@@ -184,9 +180,9 @@ public class ExecutionService {
         List<TaskRun> newTaskRuns = IntStream
             .range(0, refTaskRunIndex.intValue() + 1)
             .mapToObj(currentIndex -> {
-                TaskRun originalTaskRun = execution.getTaskRunList().get(currentIndex);
+                final TaskRun originalTaskRun = execution.getTaskRunList().get(currentIndex);
 
-                State state = getRestartState(execution, currentIndex, refTaskRunIndex.intValue(), refTaskRunAncestors);
+                final State state = getRestartState(execution, currentIndex, refTaskRunIndex.intValue(), refTaskRunAncestors);
 
                 final String newTaskRunId = FriendlyId.createFriendlyId();
 
@@ -216,7 +212,7 @@ public class ExecutionService {
      * @return The provided execution that can be run again from the last failed task.
      * @throws IllegalArgumentException If there is no failed task.
      */
-    private Execution createRestartFromLastFailed(Execution execution) throws IllegalArgumentException {
+    private Execution createRestartFromLastFailed(final Execution execution) throws IllegalArgumentException {
         final Predicate<TaskRun> isNotFailed = taskRun -> !taskRun.getState().getCurrent().equals(State.Type.FAILED);
 
         // Find first failed task run
@@ -230,10 +226,9 @@ public class ExecutionService {
             throw new IllegalArgumentException("No failed task found to restart execution from !");
         }
 
-        final String refTaskRunParentId = execution.getTaskRunList().get(refTaskRunIndex.intValue()).getParentTaskRunId();
         final Set<String> refTaskRunAncestors = getAncestors(execution, refTaskRunIndex.intValue());
 
-        Execution toRestart = execution.withState(State.Type.RUNNING);
+        final Execution toRestart = execution.withState(State.Type.RUNNING);
 
         IntStream
             .range(0, refTaskRunIndex.intValue() + 1)

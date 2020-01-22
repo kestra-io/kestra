@@ -13,7 +13,7 @@ import java.time.Duration;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
     @JsonSubTypes.Type(value = Constant.class, name = "constant"),
-    @JsonSubTypes.Type(value = Exponential.class, name = "Exponential"),
+    @JsonSubTypes.Type(value = Exponential.class, name = "exponential"),
     @JsonSubTypes.Type(value = Random.class, name = "random")
 })
 @Getter

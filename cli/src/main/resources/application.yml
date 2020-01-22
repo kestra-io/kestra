@@ -83,3 +83,6 @@ kestra:
   variables:
     env-vars-prefix: KESTRA_
     globals: {}
+
+  metrics:
+    prefix: kestra

@@ -7,6 +7,7 @@ import org.kestra.core.models.flows.State;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Optional;
 
 @Value
 @Builder
@@ -15,7 +16,7 @@ public class TaskRunAttempt {
     private List<LogEntry> logs;
 
     @With
-    private List<MetricEntry> metrics;
+    private List<AbstractMetricEntry<?>> metrics;
 
     @NotNull
     private State state;
@@ -26,5 +27,12 @@ public class TaskRunAttempt {
             this.metrics,
             this.state.withState(state)
         );
+    }
+
+    public Optional<AbstractMetricEntry<?>> findMetrics(String name) {
+        return this.metrics
+            .stream()
+            .filter(metricEntry -> metricEntry.getName().equals(name))
+            .findFirst();
     }
 }

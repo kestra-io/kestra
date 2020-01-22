@@ -39,6 +39,10 @@ public class Flow {
     @With
     private Integer revision;
 
+    @Builder.Default
+    @NotNull
+    protected boolean template = false;
+
     @Valid
     private List<Input> inputs;
 

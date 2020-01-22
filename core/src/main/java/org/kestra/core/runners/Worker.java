@@ -10,7 +10,6 @@ import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
-import org.kestra.core.storages.StorageInterface;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -19,18 +18,15 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Worker implements Runnable {
-    private StorageInterface storageInterface;
     private ApplicationContext applicationContext;
     private QueueInterface<WorkerTask> workerTaskQueue;
     private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     public Worker(
-        StorageInterface storageInterface,
         ApplicationContext applicationContext,
         QueueInterface<WorkerTask> workerTaskQueue,
         QueueInterface<WorkerTaskResult> workerTaskResultQueue
     ) {
-        this.storageInterface = storageInterface;
         this.applicationContext = applicationContext;
         this.workerTaskQueue = workerTaskQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
@@ -137,8 +133,8 @@ public class Worker implements Runnable {
             logger.debug("Outputs\n{}", JacksonMapper.log(output.getOutputs()));
         }
 
-        if (runContext.getMetrics() != null) {
-            logger.trace("Metrics\n{}", JacksonMapper.log(runContext.getMetrics()));
+        if (runContext.metrics() != null) {
+            logger.trace("Metrics\n{}", JacksonMapper.log(runContext.metrics()));
         }
 
         ImmutableList<TaskRunAttempt> attempts = ImmutableList.<TaskRunAttempt>builder()

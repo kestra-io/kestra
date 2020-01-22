@@ -89,6 +89,9 @@ allprojects {
         implementation "io.micronaut:micronaut-runtime"
         implementation 'io.micronaut:micronaut-views'
         implementation "io.micronaut.data:micronaut-data-model:1.0.0.M5"
+        implementation "io.micronaut:micronaut-management"
+        implementation "io.micronaut.configuration:micronaut-micrometer-core"
+        implementation "io.micronaut.configuration:micronaut-micrometer-registry-prometheus"
         api "io.micronaut:micronaut-http-client"
 
         // jackson

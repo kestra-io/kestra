@@ -8,14 +8,15 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import org.kestra.core.metrics.MetricRegistry;
+import org.kestra.core.models.executions.AbstractMetricEntry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.LogEntry;
-import org.kestra.core.models.executions.MetricEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.ResolvedTask;
@@ -40,32 +41,44 @@ public class RunContext {
     private URI storageOutputPrefix;
     private String envPrefix;
     private Map<String, Object> variables;
-    private List<MetricEntry> metrics;
+    private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
+    private MetricRegistry meterRegistry;
     private ContextAppender contextAppender;
     private String loggerName;
     private Logger logger;
 
     public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
-        this.applicationContext = applicationContext;
-        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElseThrow();
-        this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
-
-        this.variables = this.taskRunVariables(flow, null, execution, null);
-        this.loggerName = "flow." + flow.getId();
+        this.init(applicationContext);
+        this.init(flow, null, execution, null);
     }
 
     public RunContext(ApplicationContext applicationContext, Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
-        this.applicationContext = applicationContext;
-        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElseThrow();
-        this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
-
-        this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
-        this.variables = this.taskRunVariables(flow, task, execution, taskRun);
-        this.loggerName = "flow." + flow.getId() + "." + taskRun.getTaskId();
+        this.init(applicationContext);
+        this.init(flow, task, execution, taskRun);
     }
 
-    public List<MetricEntry> getMetrics() {
-        return metrics;
+    @VisibleForTesting
+    public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
+        this.init(applicationContext);
+
+        this.storageOutputPrefix = URI.create("");
+        this.variables = variables;
+        this.loggerName = "flow.unitest";
+    }
+
+    private void init(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
+        this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
+        this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
+    }
+
+    private void init(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
+        this.variables = this.variables(flow, task, execution, taskRun);
+        this.loggerName = "flow." + flow.getId() + (taskRun != null ? "." + taskRun.getTaskId() : "");
+        if (taskRun != null) {
+            this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
+        }
     }
 
     public Map<String, Object> getVariables() {
@@ -77,7 +90,7 @@ public class RunContext {
         return applicationContext;
     }
 
-    private Map<String, Object> taskRunVariables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
+    private Map<String, Object> variables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("envs", envVariables());
 
@@ -189,8 +202,7 @@ public class RunContext {
 
     @SuppressWarnings("unchecked")
     public RunContext forWorker(ApplicationContext applicationContext, TaskRun taskRun) {
-        this.applicationContext = applicationContext;
-        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElseThrow();
+        this.init(applicationContext);
 
         HashMap<String, Object> clone = new HashMap<>(this.variables);
 
@@ -212,17 +224,6 @@ public class RunContext {
         this.variables = ImmutableMap.copyOf(clone);
 
         return this;
-    }
-
-    @VisibleForTesting
-    public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
-        this.applicationContext = applicationContext;
-        this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
-        this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
-
-        this.storageOutputPrefix = URI.create("");
-        this.variables = variables;
-        this.loggerName = "flow.unitest";
     }
 
     public org.slf4j.Logger logger(Class<?> cls) {
@@ -307,8 +308,53 @@ public class RunContext {
         return this.storageInterface.put(resolve, new FileInputStream(file));
     }
 
-    public List<MetricEntry> metrics() {
+    public List<AbstractMetricEntry<?>> metrics() {
         return this.metrics;
+    }
+
+    public RunContext metric(AbstractMetricEntry<?> metricEntry) {
+        metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());
+        this.metrics.add(metricEntry);
+
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, String> metricsTags() {
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()
+            .put("flowId", ((Map<String, String>) this.variables.get("flow")).get("id"))
+            .put("namespace", ((Map<String, String>) this.variables.get("flow")).get("namespace"))
+            .put("revision", String.valueOf(((Map<String, String>) this.variables.get("flow")).get("revision")));
+
+        if (this.variables.containsKey("task")) {
+            builder
+                .put("task_id", ((Map<String, String>) this.variables.get("task")).get("id"))
+                .put("task_type", ((Map<String, String>) this.variables.get("task")).get("type"));
+        }
+
+        if (this.variables.containsKey("taskrun")) {
+            Map<String, String> taskrun = (Map<String, String>) this.variables.get("taskrun");
+
+            if (taskrun.containsValue("value")) {
+                builder
+                    .put("value", taskrun.get("value"));
+            }
+        }
+
+        return builder.build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private String metricPrefix() {
+        if (!this.variables.containsKey("task")) {
+            return null;
+        }
+
+        List<String> values = new ArrayList<>(Arrays.asList(((Map<String, String>) this.variables.get("task")).get("type").split("\\.")));
+        String clsName = values.remove(values.size() - 1);
+        values.add(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, clsName));
+
+        return String.join(".", values);
     }
 
     public static class ContextAppender extends AppenderBase<ILoggingEvent> {

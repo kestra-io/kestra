@@ -1,0 +1,20 @@
+id: restart_last_failed
+namespace: org.kestra.tests
+
+tasks:
+- id: a
+  type: org.kestra.core.tasks.scripts.Bash
+  commands:
+    - 'exit 0'
+- id: b
+  type: org.kestra.core.tasks.scripts.Bash
+  commands:
+    - 'exit 0'
+- id: c
+  type: org.kestra.core.tasks.scripts.Bash
+  commands:
+    - 'exit 1'
+- id: d
+  type: org.kestra.core.tasks.scripts.Bash
+  commands:
+    - 'exit 0'

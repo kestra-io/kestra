@@ -5,7 +5,7 @@ Vue.filter('id', value => value ? value.toString().substr(0, 8) : '');
 
 Vue.filter('humanizeDuration', (value, options) => {
     options = options || { maxDecimalPoints: 2 }
-    options.language = localStorage.getItem('lang')
+    options.language = localStorage.getItem('lang') || 'en'
     return humanizeDuration(value * 1000, options)
 });
 

@@ -164,12 +164,6 @@ public class ExecutionService {
             throw new IllegalArgumentException("Task [" + referenceTaskId + "] does not exist !");
         }
 
-        final TaskRun refTaskRun = execution.getTaskRunList().get(refTaskRunIndex.intValue());
-
-        if (refTaskRun.getState().getCurrent().equals(State.Type.FAILED)) {
-            throw new IllegalArgumentException("All tasks before the provided must be successful");
-        }
-
         final String newExecutionId = FriendlyId.createFriendlyId();
 
         // This map will be used to map old ids to new ids

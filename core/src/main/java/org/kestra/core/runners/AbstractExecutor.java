@@ -1,5 +1,6 @@
 package org.kestra.core.runners;
 
+import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.Execution;
@@ -62,14 +63,18 @@ public abstract class AbstractExecutor implements Runnable {
         ResolvedTask parent = flow.findTaskByTaskRun(taskRun, runContext);
 
         if (parent.getTask() instanceof FlowableTask) {
-            FlowableTask flowableParent = (FlowableTask) parent.getTask();
+            FlowableTask<?> flowableParent = (FlowableTask<?>) parent.getTask();
 
             return flowableParent
                 .resolveState(runContext, execution, taskRun)
                 .map(type -> new WorkerTaskResult(
                     taskRun
                         .withState(type)
-                        .withOutputs(flowableParent.outputs(runContext, execution, taskRun)),
+                        .withOutputs(
+                            flowableParent.outputs(runContext, execution, taskRun) != null ?
+                                flowableParent.outputs(runContext, execution, taskRun).toMap() :
+                                ImmutableMap.of()
+                        ),
                     parent.getTask()
                 ));
 

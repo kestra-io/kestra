@@ -31,7 +31,7 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("ok"));
         assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat((String) execution.getTaskRunList().get(2).getOutputs().get("return"), containsString("flowId=listeners"));
+        assertThat((String) execution.getTaskRunList().get(2).getOutputs().get("value"), containsString("flowId=listeners"));
     }
 
     @Test

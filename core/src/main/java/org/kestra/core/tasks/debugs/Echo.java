@@ -1,12 +1,11 @@
 package org.kestra.core.tasks.debugs;
 
 import lombok.*;
-import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
+import org.kestra.core.models.tasks.VoidOutput;
 import org.kestra.core.runners.RunContext;
-import org.kestra.core.runners.RunOutput;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
@@ -15,14 +14,14 @@ import org.slf4j.event.Level;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class Echo extends Task implements RunnableTask {
+public class Echo extends Task implements RunnableTask<VoidOutput> {
     private String format;
 
     @Builder.Default
     private Level level = Level.INFO;
 
     @Override
-    public RunOutput run(RunContext runContext) throws Exception {
+    public VoidOutput run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger(Echo.class);
 
         String render = runContext.render(this.format);

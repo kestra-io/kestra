@@ -1,11 +1,13 @@
 package org.kestra.core.runners;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.kestra.core.models.executions.TaskRunAttempt;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.models.tasks.Output;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.queues.QueueInterface;
@@ -112,7 +114,7 @@ public class Worker implements Runnable {
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new State());
 
-        RunOutput output = null;
+        Output output = null;
 
         try {
             output = task.run(runContext);
@@ -129,8 +131,8 @@ public class Worker implements Runnable {
             .build()
             .withState(state);
 
-        if (output != null && output.getOutputs() != null) {
-            logger.debug("Outputs\n{}", JacksonMapper.log(output.getOutputs()));
+        if (output != null) {
+            logger.debug("Outputs\n{}", JacksonMapper.log(output));
         }
 
         if (runContext.metrics().size() > 0) {
@@ -147,7 +149,7 @@ public class Worker implements Runnable {
             .withTaskRun(
                 workerTask.getTaskRun()
                     .withAttempts(attempts)
-                    .withOutputs(output != null ? output.getOutputs() : null)
+                    .withOutputs(output != null ? output.toMap() : ImmutableMap.of())
             );
     }
 }

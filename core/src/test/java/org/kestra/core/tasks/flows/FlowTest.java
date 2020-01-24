@@ -10,7 +10,6 @@ import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.runners.InputsTest;
 import org.kestra.core.runners.RunContext;
-import org.kestra.core.runners.RunOutput;
 import org.kestra.core.utils.Await;
 
 import javax.inject.Inject;
@@ -74,17 +73,16 @@ class FlowTest extends AbstractMemoryRunnerTest {
                     .inputs(InputsTest.inputs)
                     .build();
 
-                RunOutput run = null;
+                Flow.Output run = null;
                 try {
                     run = flow.run(runContext);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
 
-                String executionId = (String) run.getOutputs().get("executionId");
-                assertThat(executionId == null, is(false));
+                assertThat(run.getExecutionId() == null, is(false));
 
-                return executionId;
+                return run.getExecutionId();
             }, Duration.ofSeconds(5)
         );
 

@@ -21,7 +21,7 @@ tasks:
 
 - id: 3rd
   type: org.kestra.core.tasks.debugs.Echo
-  format: third all optional args {{ outputs.2nd.return }}
+  format: third all optional args {{ outputs.2nd.value }}
   timeout: 1000
   retry:
     maxAttempt: 5

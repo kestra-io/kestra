@@ -44,11 +44,11 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(3));
 
         assertThat(
-            ZonedDateTime.from(ZonedDateTime.parse((String) execution.getTaskRunList().get(0).getOutputs().get("return"))),
+            ZonedDateTime.from(ZonedDateTime.parse((String) execution.getTaskRunList().get(0).getOutputs().get("value"))),
             ZonedDateTimeMatchers.within(10, ChronoUnit.SECONDS, ZonedDateTime.now())
         );
-        assertThat(execution.getTaskRunList().get(1).getOutputs().get("return"), is("task-id"));
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("return"), is("return"));
+        assertThat(execution.getTaskRunList().get(1).getOutputs().get("value"), is("task-id"));
+        assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is("return"));
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")

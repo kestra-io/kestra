@@ -1,10 +1,6 @@
 package org.kestra.core.runners;
 
-import com.google.common.collect.ImmutableMap;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.tasks.RunnableTask;
@@ -18,14 +14,22 @@ import java.util.Map;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class ListenersTestTask extends Task implements RunnableTask {
+public class ListenersTestTask extends Task implements RunnableTask<ListenersTestTask.Output> {
     @SuppressWarnings("unchecked")
     @Override
-    public RunOutput run(RunContext runContext) throws Exception {
+    public ListenersTestTask.Output run(RunContext runContext) throws Exception {
         Execution execution = JacksonMapper.toMap((Map<String, Object>) runContext.getVariables().get("execution"), Execution.class);
 
-        return RunOutput.builder()
-            .outputs(ImmutableMap.of("return", execution.toString()))
+        return Output.builder()
+            .value(execution.toString())
             .build();
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @Getter
+    public static class Output implements org.kestra.core.models.tasks.Output {
+        private String value;
     }
 }

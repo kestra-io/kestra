@@ -1,11 +1,7 @@
 package org.kestra.core.tasks.flows;
 
-import com.google.common.collect.ImmutableMap;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.tasks.RunnableTask;
@@ -14,7 +10,6 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.RunContext;
-import org.kestra.core.runners.RunOutput;
 import org.kestra.core.runners.RunnerUtils;
 import org.slf4j.Logger;
 
@@ -28,7 +23,7 @@ import java.util.Optional;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class Flow extends Task implements RunnableTask {
+public class Flow extends Task implements RunnableTask<Flow.Output> {
 
     @NotNull
     private String namespace;
@@ -42,7 +37,7 @@ public class Flow extends Task implements RunnableTask {
 
     @SuppressWarnings("unchecked")
     @Override
-    public RunOutput run(RunContext runContext) throws Exception {
+    public Flow.Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger(this.getClass());
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
         FlowRepositoryInterface flowRepository = runContext.getApplicationContext().getBean(FlowRepositoryInterface.class);
@@ -80,8 +75,14 @@ public class Flow extends Task implements RunnableTask {
             execution.getId()
         );
 
-        return RunOutput.builder()
-            .outputs(ImmutableMap.of("executionId", execution.getId()))
+        return Output.builder()
+            .executionId(execution.getId())
             .build();
+    }
+
+    @Builder
+    @Getter
+    public static class Output implements org.kestra.core.models.tasks.Output {
+        private String executionId;
     }
 }

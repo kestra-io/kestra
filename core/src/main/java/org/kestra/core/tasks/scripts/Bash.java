@@ -1,12 +1,10 @@
 package org.kestra.core.tasks.scripts;
 
 import lombok.*;
-import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.runners.RunContext;
-import org.kestra.core.runners.RunOutput;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
@@ -22,11 +20,11 @@ import java.util.List;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class Bash extends Task implements RunnableTask {
+public class Bash extends Task implements RunnableTask<Bash.Output> {
     private String[] commands;
 
     @Override
-    public RunOutput run(RunContext runContext) throws Exception {
+    public Bash.Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger(this.getClass());
 
         // renderer templates
@@ -80,5 +78,13 @@ public class Bash extends Task implements RunnableTask {
 
         thread.setName("bash-log");
         thread.start();
+    }
+
+    @Builder
+    @Getter
+    public static class Output implements org.kestra.core.models.tasks.Output {
+        private String[] stdOut;
+        private String[] stdErr;
+        private int exitCode;
     }
 }

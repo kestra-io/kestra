@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public interface FlowableTask {
+public interface FlowableTask <T extends Output> {
     List<Task> getErrors();
 
     List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun);
@@ -26,7 +26,7 @@ public interface FlowableTask {
         );
     }
 
-    default Map<String, Object> outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+    default T outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
         return null;
     }
 }

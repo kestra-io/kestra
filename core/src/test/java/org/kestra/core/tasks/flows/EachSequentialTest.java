@@ -1,10 +1,9 @@
 package org.kestra.core.tasks.flows;
 
-import org.hamcrest.core.StringContains;
+import org.junit.jupiter.api.Test;
+import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
-import org.kestra.core.models.executions.Execution;
-import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
@@ -29,6 +28,6 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
         TaskRun last = execution.findTaskRunByTaskId("2_return");
         TaskRun vars = execution.findTaskRunByTaskIdAndValue("1_2_1-return", Arrays.asList("s1", "a"));
-        assertThat((String) last.getOutputs().get("return"), containsString((String) vars.getOutputs().get("return")));
+        assertThat((String) last.getOutputs().get("value"), containsString((String) vars.getOutputs().get("value")));
     }
 }

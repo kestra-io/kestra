@@ -2,11 +2,11 @@ package org.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.storages.StorageObject;
-import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 import java.io.FileInputStream;
@@ -111,7 +111,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Arrays.asList("file-uri", "file").forEach(o ->
             assertThat(
-                (String) execution.findTaskRunByTaskId(o).getOutputs().get("return"),
+                (String) execution.findTaskRunByTaskId(o).getOutputs().get("value"),
                 matchesRegex("kestra:///org/kestra/tests/inputs/executions/.*/inputs/file/application.yml")
             )
         );

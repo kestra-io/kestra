@@ -43,7 +43,7 @@ abstract public class Task {
         }
 
         if (this instanceof FlowableTask) {
-            Optional<Task> childs = ((FlowableTask) this).childTasks(runContext, taskRun)
+            Optional<Task> childs = ((FlowableTask<?>) this).childTasks(runContext, taskRun)
                 .stream()
                 .map(resolvedTask -> resolvedTask.getTask().findById(id, runContext, taskRun))
                 .filter(Optional::isPresent)
@@ -62,8 +62,8 @@ abstract public class Task {
                 .findFirst();
         }
 
-        if (this instanceof FlowableTask && ((FlowableTask) this).getErrors() != null) {
-            Optional<Task> errorChilds = ((FlowableTask) this).getErrors()
+        if (this instanceof FlowableTask && ((FlowableTask<?>) this).getErrors() != null) {
+            Optional<Task> errorChilds = ((FlowableTask<?>) this).getErrors()
                 .stream()
                 .map(task -> task.findById(id, runContext, taskRun))
                 .filter(Optional::isPresent)

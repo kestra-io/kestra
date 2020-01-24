@@ -24,4 +24,4 @@ tasks:
         format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
   - id: 2_return
     type: org.kestra.core.tasks.debugs.Return
-    format: "{{task.id}} > {{outputs.1_2_1-return.s1.a.return}}"
+    format: "{{task.id}} > {{outputs.1_2_1-return.s1.a.value}}"

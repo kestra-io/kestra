@@ -1,10 +1,6 @@
 package org.kestra.core.tasks.flows;
 
-import com.google.common.collect.ImmutableMap;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
@@ -26,7 +22,7 @@ import java.util.Optional;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class Switch extends Task implements FlowableTask {
+public class Switch extends Task implements FlowableTask<Switch.Output> {
     private String value;
 
     @Valid
@@ -76,12 +72,20 @@ public class Switch extends Task implements FlowableTask {
     }
 
     @Override
-    public Map<String, Object> outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
-        return ImmutableMap.of(
-            "value", rendererValue(runContext),
-            "isDefault", cases
+    public Switch.Output outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+        return Output.builder()
+            .value(rendererValue(runContext))
+            .defaults(cases
                 .entrySet()
                 .stream().noneMatch(entry -> entry.getKey().equals(rendererValue(runContext)))
-        );
+            )
+            .build();
+    }
+
+    @Builder
+    @Getter
+    public static class Output implements org.kestra.core.models.tasks.Output {
+        private String value;
+        private boolean defaults;
     }
 }

@@ -21,8 +21,8 @@ class VariablesTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne("org.kestra.tests", "variables");
 
         assertThat(execution.getTaskRunList(), hasSize(3));
-        assertThat(execution.findTaskRunByTaskId("variable").getOutputs().get("return"), is("1 > 2 > 3"));
-        assertThat(execution.findTaskRunByTaskId("env").getOutputs().get("return"), is("true Pass by env"));
-        assertThat(execution.findTaskRunByTaskId("global").getOutputs().get("return"), is("string 1 true"));
+        assertThat(execution.findTaskRunByTaskId("variable").getOutputs().get("value"), is("1 > 2 > 3"));
+        assertThat(execution.findTaskRunByTaskId("env").getOutputs().get("value"), is("true Pass by env"));
+        assertThat(execution.findTaskRunByTaskId("global").getOutputs().get("value"), is("string 1 true"));
     }
 }

@@ -98,6 +98,7 @@ allprojects {
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
         implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.10.1'
         implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.10.1'
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.10.1'
 
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'

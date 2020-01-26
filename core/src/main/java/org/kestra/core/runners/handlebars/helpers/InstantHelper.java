@@ -48,8 +48,13 @@ public enum InstantHelper implements Helper<Object> {
 
         @Override
         public CharSequence apply(final Object value, final Options options) {
-            assert value instanceof Instant;
-            Instant date = (Instant) value;
+            Instant date;
+
+            if (value instanceof Instant) {
+                date = (Instant) value;
+            } else {
+                date = Instant.parse((String) value);
+            }
 
             DateTimeFormatter formatter;
 

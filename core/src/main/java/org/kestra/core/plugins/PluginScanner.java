@@ -19,6 +19,12 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class PluginScanner {
+    ClassLoader parent;
+
+    public PluginScanner(ClassLoader parent) {
+        this.parent = parent;
+    }
+
     /**
      * Scans the specified top-level plugin directory for plugins.
      *
@@ -34,34 +40,39 @@ public class PluginScanner {
                 final PluginClassLoader classLoader = PluginClassLoader.of(
                     plugin.getLocation(),
                     plugin.getResources(),
-                    PluginScanner.class.getClassLoader()
+                    this.parent
                 );
 
-                log.debug("Initialized new ClassLoader: {}", classLoader);
+                log.debug(
+                    "Scanning plugins from paths '{}' with classLoader '{}'",
+                    Arrays.stream(plugin.getResources()).map(URL::getPath).collect(Collectors.joining("", "\n\t", "")),
+                    classLoader
+                );
 
-                return scanUrlsForPlugins(plugin, classLoader);
+                return scanClassLoader(classLoader, plugin);
             })
             .filter(RegisteredPlugin::isValid)
             .collect(Collectors.toList());
+    }
 
+    /**
+     * Scans the main ClassLoader
+     */
+    public RegisteredPlugin scan() {
+        return scanClassLoader(PluginScanner.class.getClassLoader(), null);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private RegisteredPlugin scanUrlsForPlugins(ExternalPlugin plugin, final ClassLoader classLoader) {
-        log.debug(
-            "Scanning plugins from paths: {}",
-            Arrays.stream(plugin.getResources()).map(URL::getPath).collect(Collectors.joining("", "\n\t", ""))
-        );
+    private RegisteredPlugin scanClassLoader(final ClassLoader classLoader, ExternalPlugin externalPlugin) {
+        List<Class<? extends Task>> tasks = new ArrayList<>();
+        List<Class<? extends Condition>> conditions = new ArrayList<>();
+        List<Class<? extends StorageInterface>> storages = new ArrayList<>();
+        List<Class<?>> controllers = new ArrayList<>();
 
         final SoftServiceLoader<BeanIntrospectionReference> definitions = SoftServiceLoader.load(
             BeanIntrospectionReference.class,
             classLoader
         );
-
-        List<Class<? extends Task>> tasks = new ArrayList<>();
-        List<Class<? extends Condition>> conditions = new ArrayList<>();
-        List<Class<? extends StorageInterface>> storages = new ArrayList<>();
-        List<Class<?>> controllers = new ArrayList<>();
 
         for (ServiceDefinition<BeanIntrospectionReference> definition : definitions) {
             if (definition.isPresent()) {
@@ -86,7 +97,7 @@ public class PluginScanner {
         }
 
         return RegisteredPlugin.builder()
-            .externalPlugin(plugin)
+            .externalPlugin(externalPlugin)
             .classLoader(classLoader)
             .tasks(tasks)
             .conditions(conditions)

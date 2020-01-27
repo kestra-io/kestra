@@ -35,11 +35,7 @@ public class PluginClassLoader extends URLClassLoader {
 
     private final ClassLoader systemClassLoader;
 
-    public static PluginClassLoader of(
-        final URL pluginLocation,
-        final URL[] urls,
-        final ClassLoader parent
-    ) {
+    public static PluginClassLoader of(final URL pluginLocation, final URL[] urls, final ClassLoader parent) {
         return AccessController.doPrivileged(
             (PrivilegedAction<PluginClassLoader>) () -> new PluginClassLoader(pluginLocation, urls, parent)
         );
@@ -52,8 +48,7 @@ public class PluginClassLoader extends URLClassLoader {
      * @param urls the URLs from which to load classes and resources.
      * @param parent the parent {@link ClassLoader}.
      */
-    private PluginClassLoader(final URL pluginLocation,
-                              final URL[] urls, final ClassLoader parent) {
+    private PluginClassLoader(final URL pluginLocation, final URL[] urls, final ClassLoader parent) {
         super(urls, parent);
         this.parent = parent;
         this.pluginLocation = pluginLocation;
@@ -83,10 +78,12 @@ public class PluginClassLoader extends URLClassLoader {
                     // find the class from given jar urls
                     loadedClass = findClass(name);
                 } catch (final ClassNotFoundException e) {
-                    log.trace(
-                        "Class '{}' not found in pluginLocation {}. Delegating to parent",
+                    log.debug(
+                        "Class '{}' not found on '{}' for plugin '{}', delegating to parent '{}'",
                         name,
-                        pluginLocation
+                        this.getName(),
+                        pluginLocation,
+                        this.parent.getName()
                     );
                 }
             }
@@ -144,21 +141,17 @@ public class PluginClassLoader extends URLClassLoader {
         Objects.requireNonNull(name);
         URL res = null;
 
-        /*
-        if (systemClassLoader != null) {
-            res = systemClassLoader.getResource(name);
-        }
-        */
+        // if (systemClassLoader != null) {
+        //     res = systemClassLoader.getResource(name);
+        // }
 
         if (res == null) {
             res = findResource(name);
         }
 
-        /*
-        if (res == null) {
-            res = getParent().getResource(name);
-        }
-        */
+        // if (res == null) {
+        //     res = getParent().getResource(name);
+        // }
 
         return res;
     }

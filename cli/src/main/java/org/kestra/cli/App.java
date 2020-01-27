@@ -32,10 +32,11 @@ import java.util.concurrent.Callable;
 )
 public class App implements Callable<Object> {
     public static void main(String[] args) {
-        ApplicationContext applicationContext = App.applicationContext(args);
-
         // Register a ClassLoader with isolation for plugins
-        Thread.currentThread().setContextClassLoader(KestraClassLoader.instance());
+        Thread.currentThread().setContextClassLoader(KestraClassLoader.create(Thread.currentThread().getContextClassLoader()));
+
+        // Init ApplicationContext
+        ApplicationContext applicationContext = App.applicationContext(args);
 
         // Call Picocli command
         PicocliRunner.call(App.class, applicationContext, args);

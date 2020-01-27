@@ -20,8 +20,8 @@ public class ExecutionService {
 
     /**
      * Returns an execution that can be run from a specific task.
-     *
-     * <p>Two main cases may be distinguished :
+     * <p>
+     * Two main cases may be distinguished :
      * <ul>
      *     <li>If a {@code referenceTaskId} is provided, a new execution (with a new execution id) is created. The
      *     returned execution will start from the the task whose id equals the {@code referenceTaskId}.
@@ -29,7 +29,6 @@ public class ExecutionService {
      *     <li>If no {@code referenceTaskId} is provided, the {@code execution} (with the same execution id) is updated
      *     and returned so that it can be run from the last failed task.</li>
      * </ul>
-     * </p>
      *
      * @param execution       The execution to get a restart execution from.
      * @param referenceTaskId The task identifier from which the restart should operate. If not provided, the restart
@@ -64,9 +63,6 @@ public class ExecutionService {
      *     <li> - C3</li>
      *     <li>D</li>
      * </ul>
-     * </p>
-     *
-     * <p>
      * For this we need to put the task runs in the following states :
      * <ul>
      *     <li>A (RUNNING)</li>
@@ -77,7 +73,6 @@ public class ExecutionService {
      *     <li> - C3 (no state)</li>
      *     <li>D (no state)</li>
      * </ul>
-     * </p>
      *
      * @param execution                 The execution.
      * @param taskRunIndex              The task run index in the execution task run's list.

@@ -388,4 +388,75 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent(), is(State.Type.SUCCESS)));
     }
+
+    @Test
+    void restartFromLastFailedWithErrorsTwoTimes() throws TimeoutException {
+        final String flowId = "sequential-with-global-errors";
+
+        // Run execution until it ends
+        Execution firstExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, null);
+        assertThat(firstExecution.getTaskRunList().size(), is(6));
+        // Execution status
+        assertThat(firstExecution.getState().getCurrent(), is(State.Type.FAILED));
+
+        // Main task fails
+        assertThat(firstExecution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(firstExecution.getTaskRunList().get(0).getAttempts(), nullValue());
+        assertThat(firstExecution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(firstExecution.getTaskRunList().get(1).getAttempts().size(), is(1));
+        assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(firstExecution.getTaskRunList().get(2).getAttempts(), nullValue());
+        assertThat(firstExecution.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(firstExecution.getTaskRunList().get(3).getAttempts().size(), is(1));
+
+        // Errors tasks are successful
+        assertThat(firstExecution.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(firstExecution.getTaskRunList().get(4).getAttempts().size(), is(1));
+        assertThat(firstExecution.getTaskRunList().get(5).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(firstExecution.getTaskRunList().get(5).getAttempts().size(), is(1));
+
+        // Update task's command to make second execution successful
+        Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
+
+        // Restart execution and wait until it finishes
+        Execution finishedRestartedExecution = runnerUtils.awaitExecution(
+            flow.get(),
+            firstExecution, () -> {
+                Execution restartedExec = client.toBlocking().retrieve(
+                    HttpRequest
+                        .POST("/api/v1/executions/" + firstExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
+                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                    Execution.class
+                );
+
+                assertThat(restartedExec, notNullValue());
+                assertThat(restartedExec.getId(), is(firstExecution.getId()));
+                assertThat(restartedExec.getParentId(), nullValue());
+                assertThat(restartedExec.getTaskRunList().size(), is(4));
+                assertThat(restartedExec.getState().getCurrent(), is(State.Type.RUNNING));
+
+                // Tasks
+                assertThat(restartedExec.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
+                assertThat(restartedExec.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
+                assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.RUNNING));
+                // Last failed task
+                assertThat(restartedExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.CREATED));
+            },
+            Duration.ofMinutes(30));
+
+        assertThat(finishedRestartedExecution, notNullValue());
+        assertThat(finishedRestartedExecution.getId(), is(firstExecution.getId()));
+        assertThat(finishedRestartedExecution.getParentId(), nullValue());
+        assertThat(finishedRestartedExecution.getTaskRunList().size(), is(6));
+
+        // Tasks
+        assertThat(finishedRestartedExecution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(finishedRestartedExecution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.FAILED));
+        // Last failed task
+        assertThat(finishedRestartedExecution.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.FAILED));
+        // Errors tasks
+        assertThat(finishedRestartedExecution.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(finishedRestartedExecution.getTaskRunList().get(5).getState().getCurrent(), is(State.Type.SUCCESS));
+    }
 }

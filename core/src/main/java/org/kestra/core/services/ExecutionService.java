@@ -4,8 +4,12 @@ import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.core.util.StringUtils;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
+import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.runners.RunContext;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.*;
 import java.util.function.Predicate;
@@ -17,6 +21,9 @@ import java.util.stream.IntStream;
  */
 @Singleton
 public class ExecutionService {
+
+    @Inject
+    FlowRepositoryInterface flowRepositoryInterface;
 
     /**
      * Returns an execution that can be run from a specific task.
@@ -202,13 +209,22 @@ public class ExecutionService {
      * @throws IllegalArgumentException If there is no failed task.
      */
     private Execution createRestartFromLastFailed(final Execution execution) throws IllegalArgumentException {
-        final Predicate<TaskRun> isNotFailed = taskRun -> !taskRun.getState().getCurrent().equals(State.Type.FAILED);
+        final Optional<Flow> flow = flowRepositoryInterface.findByExecution(execution);
+
+        final Predicate<TaskRun> notLastFailed = taskRun -> {
+            boolean isFailed = taskRun.getState().getCurrent().equals(State.Type.FAILED);
+            boolean isFlowable = flow
+                .map(f -> f.findTaskByTaskRun(taskRun, new RunContext()).getTask().isFlowable())
+                .orElse(false);
+
+            return !isFailed || (isFailed && isFlowable);
+        };
 
         // Find first failed task run
         final Long refTaskRunIndex = execution
             .getTaskRunList()
             .stream()
-            .takeWhile(isNotFailed)
+            .takeWhile(notLastFailed)
             .count();
 
         if (refTaskRunIndex == execution.getTaskRunList().size()) {
@@ -217,7 +233,9 @@ public class ExecutionService {
 
         final Set<String> refTaskRunAncestors = getAncestors(execution, refTaskRunIndex.intValue());
 
-        final Execution toRestart = execution.withState(State.Type.RUNNING);
+        final Execution toRestart = execution
+            .withState(State.Type.RUNNING)
+            .withTaskRunList(execution.getTaskRunList().subList(0, refTaskRunIndex.intValue() + 1));
 
         IntStream
             .range(0, refTaskRunIndex.intValue() + 1)

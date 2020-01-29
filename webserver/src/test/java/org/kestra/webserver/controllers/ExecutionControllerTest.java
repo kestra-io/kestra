@@ -442,7 +442,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                 // Last failed task
                 assertThat(restartedExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.CREATED));
             },
-            Duration.ofMinutes(30));
+            Duration.ofSeconds(15));
 
         assertThat(finishedRestartedExecution, notNullValue());
         assertThat(finishedRestartedExecution.getId(), is(firstExecution.getId()));

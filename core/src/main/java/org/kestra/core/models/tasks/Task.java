@@ -1,6 +1,6 @@
 package org.kestra.core.models.tasks;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
@@ -21,7 +21,6 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Introspected
-@JsonIgnoreProperties(ignoreUnknown = true)
 abstract public class Task {
     @NotNull
     protected String id;
@@ -80,6 +79,7 @@ abstract public class Task {
         return Optional.empty();
     }
 
+    @JsonIgnore
     public boolean isFlowable() {
         return this instanceof FlowableTask;
     }

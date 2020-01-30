@@ -5,6 +5,7 @@
                 <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
                 <v-s />
                 <search-field @onSearch="onSearch" :fields="searchableFields" />
+                <date-range @onDate="onSearch"/>
             </template>
             <template v-slot:table>
                 <b-table
@@ -60,10 +61,11 @@ import RouteContext from "../../mixins/routeContext";
 import DataTableActions from "../../mixins/dataTableActions";
 import SearchField from "../layout/SearchField";
 import NamespaceSelector from "../namespace/Selector";
+import DateRange from "../layout/DateRange";
 
 export default {
     mixins: [RouteContext, DataTableActions],
-    components: { Status, Eye, DataTable, SearchField, NamespaceSelector },
+    components: { Status, Eye, DataTable, SearchField, NamespaceSelector, DateRange },
     data() {
         return {
             dataType: "execution"

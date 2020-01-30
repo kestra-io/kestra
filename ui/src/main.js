@@ -19,9 +19,7 @@ import VerticalSeparator from './components/layout/VerticalSeparator'
 import 'vue-material-design-icons/styles.css';
 
 Vue.use(VueSSE);
-Vue.use(VueMoment, {
-  moment
-});
+Vue.use(VueMoment, { moment });
 Vue.use(VueSidebarMenu);
 Vue.use(BootstrapVue);
 Vue.component('v-select', vSelect);

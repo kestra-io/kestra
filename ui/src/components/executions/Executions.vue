@@ -119,6 +119,14 @@ export default {
                     class: "row-action"
                 }
             ];
+        },
+        executionQuery () {
+            if (this.$route.name === 'flow') {
+                const filter = `flowId:${this.$route.params.id}`
+                return this.query === '*' ? filter : `${this.query} AND ${filter}`
+            } else {
+                return this.query
+            }
         }
     },
     methods: {
@@ -142,7 +150,7 @@ export default {
             this.$store.dispatch("execution/findExecutions", {
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
-                q: this.query,
+                q: this.executionQuery,
                 sort: this.$route.query.sort
             });
         }

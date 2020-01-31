@@ -17,7 +17,13 @@ import './custom.scss'
 import VerticalSeparator from './components/layout/VerticalSeparator'
 // @TODO: move to scss
 import 'vue-material-design-icons/styles.css';
+import VueProgressBar from 'vue-progressbar'
 
+Vue.use(VueProgressBar, {
+  color: 'rgb(143, 255, 199)',
+  failedColor: 'red',
+  height: '2px'
+})
 Vue.use(VueSSE);
 Vue.use(VueMoment, { moment });
 Vue.use(VueSidebarMenu);
@@ -34,4 +40,4 @@ configureHttp(() => {
     store,
     i18n
   }).$mount('#app')
-});
+}, store);

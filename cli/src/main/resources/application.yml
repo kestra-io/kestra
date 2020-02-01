@@ -11,8 +11,15 @@ micronaut:
         mapping: /ui/**
 
   server:
+    max-request-size: 10GB
     multipart:
-      max-file-size: '1000MB'
+      max-file-size: 10GB
+      disk: true
+    read-idle-timeout: 5m
+    write-idle-timeout: 5m
+    idle-timeout: 5m
+    netty:
+      max-chunk-size: 10MB
 
 jackson:
   serialization:

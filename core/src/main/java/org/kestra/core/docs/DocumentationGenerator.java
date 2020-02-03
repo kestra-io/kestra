@@ -52,8 +52,6 @@ abstract public class DocumentationGenerator {
         .registerHelpers(JsonHelper.class);
 
     public static List<Document> generate(RegisteredPlugin registeredPlugin) throws IOException {
-
-        System.out.println(Collections.list(DocumentationGenerator.class.getClassLoader().getResources("docs")));
         String hbsTemplate = IOUtils.toString(
             Objects.requireNonNull(DocumentationGenerator.class.getClassLoader().getResourceAsStream("docs/task.hbs")),
             Charsets.UTF_8
@@ -73,11 +71,15 @@ abstract public class DocumentationGenerator {
                         "core"
                     );
 
+                    String renderer = template.apply(JacksonMapper.toMap(pluginDocumentation));
+                    final Pattern pattern = Pattern.compile("`\\{\\{(.*?)\\}\\}`", Pattern.MULTILINE);
+                    renderer = pattern.matcher(renderer).replaceAll("<code v-pre>{{ $1 }}</code>");
+
                     return new Document(
                         project + "/tasks/" +
                             (pluginDocumentation.getSubGroup() != null ? pluginDocumentation.getSubGroup() + "/" : "") +
                             pluginDocumentation.getCls().getName() + ".md",
-                        template.apply(JacksonMapper.toMap(pluginDocumentation))
+                        renderer
                     );
                 } catch (IOException e) {
                     throw new RuntimeException(e);

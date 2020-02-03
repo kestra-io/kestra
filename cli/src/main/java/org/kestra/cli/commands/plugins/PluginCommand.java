@@ -10,7 +10,8 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         PluginInstallCommand.class,
-        PluginListCommand.class
+        PluginListCommand.class,
+        PluginDocCommand.class
     }
 )
 @Slf4j

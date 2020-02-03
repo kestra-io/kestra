@@ -1,0 +1,73 @@
+---
+title: {{shortName}}
+---
+
+{{!-- {{                 function                 }} --}}
+{{~#*inline "body"~}}
+{{~#if values~}}
+    * **Possible Values:**
+    {{~#each values as | current |}}
+    * {{current}}
+    {{~/each~}}
+{{/if}}
+{{#if description}}
+> {{ description }}
+{{~/if}}
+
+{{#if body}}
+{{ body }}
+{{~/if}}
+
+{{~/inline~}}
+
+{{~#*inline "fieldType" ~}}
+    <Badge vertical="middle" text="{{capitalize type}}" />
+{{~/inline~}}
+
+{{!-- {{                 Main doc                 }} --}}
+# {{shortName}}
+
+```yaml
+type: "{{cls}}"
+```
+
+{{#if docDescription}}
+> {{docDescription}}
+{{/if}}
+
+{{docBody}}
+
+{{!-- {{                 Examples                 }} --}}
+{{#if docExamples}}
+## Examples
+{{#each docExamples as | example | }}
+{{#if title }}
+> {{ title }}
+{{/if}}
+```{{ defaultIfEmpty example.lang "yaml" }}
+{{ example.task }}
+```
+{{/each }}
+{{/if ~}}
+
+
+{{!-- {{                 Inputs                 }} --}}
+## Inputs
+{{#if inputs}}
+{{#each inputs as | outputs fullName | ~}}
+### `{{fullName}}`
+* **Type:** {{> fieldType }}
+* **Dynamic:** {{yesno dynamic yes="✔️" no="❌" maybe="❓"}}
+{{> body }}
+{{/each ~}}
+{{/if}}
+
+{{!-- {{                 Outputs                 }} --}}
+{{#if outputs}}
+## Outputs
+{{#each outputs  as | outputs fullName | ~}}
+### `{{fullName}}`
+* **Type:** {{> fieldType }}
+{{> body }}
+{{/each}}
+{{/if}}

@@ -177,7 +177,12 @@ run.jvmArgs(
  **********************************************************************************************************************/
 jar {
     manifest {
-        attributes "Main-Class": mainClassName
+        attributes (
+            "Main-Class": mainClassName,
+                "X-Kestra-Title": project.name,
+                "X-Kestra-Group": project.group,
+                "X-Kestra-Version": project.version
+        )
     }
 }
 

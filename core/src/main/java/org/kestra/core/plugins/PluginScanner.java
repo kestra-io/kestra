@@ -5,15 +5,20 @@ import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.kestra.core.models.listeners.Condition;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.storages.StorageInterface;
 
+import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 
@@ -49,7 +54,7 @@ public class PluginScanner {
                     classLoader
                 );
 
-                return scanClassLoader(classLoader, plugin);
+                return scanClassLoader(classLoader, plugin, null);
             })
             .filter(RegisteredPlugin::isValid)
             .collect(Collectors.toList());
@@ -59,11 +64,22 @@ public class PluginScanner {
      * Scans the main ClassLoader
      */
     public RegisteredPlugin scan() {
-        return scanClassLoader(PluginScanner.class.getClassLoader(), null);
+        try {
+            Manifest manifest = new Manifest(IOUtils.toInputStream("Manifest-Version: 1.0\n" +
+                "X-Kestra-Title: core\n" +
+                "X-Kestra-Group: org.kestra.core.tasks\n",
+                StandardCharsets.UTF_8
+            ));
+
+            return scanClassLoader(PluginScanner.class.getClassLoader(), null, manifest);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private RegisteredPlugin scanClassLoader(final ClassLoader classLoader, ExternalPlugin externalPlugin) {
+    private RegisteredPlugin scanClassLoader(final ClassLoader classLoader, ExternalPlugin externalPlugin, Manifest manifest) {
         List<Class<? extends Task>> tasks = new ArrayList<>();
         List<Class<? extends Condition>> conditions = new ArrayList<>();
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
@@ -74,35 +90,53 @@ public class PluginScanner {
             classLoader
         );
 
+        if (manifest == null) {
+            manifest = getManifest(classLoader);
+        }
+
         for (ServiceDefinition<BeanIntrospectionReference> definition : definitions) {
             if (definition.isPresent()) {
                 final BeanIntrospectionReference ref = definition.load();
+                Class beanType = ref.getBeanType();
 
-                if (Task.class.isAssignableFrom(ref.getBeanType())) {
-                    tasks.add(ref.getBeanType());
+                if (Task.class.isAssignableFrom(beanType)) {
+                    tasks.add(beanType);
                 }
 
-                if (Condition.class.isAssignableFrom(ref.getBeanType())) {
-                    conditions.add(ref.getBeanType());
+                if (Condition.class.isAssignableFrom(beanType)) {
+                    conditions.add(beanType);
                 }
 
-                if (StorageInterface.class.isAssignableFrom(ref.getBeanType())) {
-                    storages.add(ref.getBeanType());
+                if (StorageInterface.class.isAssignableFrom(beanType)) {
+                    storages.add(beanType);
                 }
 
-                if (ref.getBeanType().isAnnotationPresent(Controller.class)) {
-                    controllers.add(ref.getBeanType());
+                if (beanType.isAnnotationPresent(Controller.class)) {
+                    controllers.add(beanType);
                 }
             }
         }
 
         return RegisteredPlugin.builder()
             .externalPlugin(externalPlugin)
+            .manifest(manifest)
             .classLoader(classLoader)
             .tasks(tasks)
             .conditions(conditions)
             .controllers(controllers)
             .storages(storages)
             .build();
+    }
+
+    public static Manifest getManifest(ClassLoader classLoader) {
+        try {
+            URL url = classLoader.getResource(JarFile.MANIFEST_NAME);
+            if (url != null) {
+                return new Manifest(url.openStream());
+            }
+        } catch (IOException ignored) {
+        }
+
+        return null;
     }
 }

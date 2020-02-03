@@ -98,6 +98,7 @@ allprojects {
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
         implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.10.1'
         implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.10.1'
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.10.1'
 
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
@@ -176,7 +177,12 @@ run.jvmArgs(
  **********************************************************************************************************************/
 jar {
     manifest {
-        attributes "Main-Class": mainClassName
+        attributes (
+            "Main-Class": mainClassName,
+                "X-Kestra-Title": project.name,
+                "X-Kestra-Group": project.group,
+                "X-Kestra-Version": project.version
+        )
     }
 }
 
@@ -294,19 +300,10 @@ subprojects {
         from javadoc
     }
 
-    def getSnapshotVersion = { ->
-        def stdout = new ByteArrayOutputStream()
-        exec {
-            commandLine 'git', 'log', '-n', '1', '--pretty=format:%ad-%h', '--date=format:%Y%m%d-%H%M%S'
-            standardOutput = stdout
-        }
-        return stdout.toString().trim()
-    }
-
     ext {
         isBuildSnapshot = version.toString().endsWith("-SNAPSHOT")
         if (isBuildSnapshot) {
-            project.version = project.version.replaceAll(/-SNAPSHOT$/, "-" + getSnapshotVersion())
+            project.version = project.version.replaceAll(/-SNAPSHOT$/, "")
         }
     }
 
@@ -345,6 +342,7 @@ subprojects {
         publications = ['BintrayMavenPublication']
         publish = true
         dryRun = false
+        override = isBuildSnapshot ? true : false
         pkg {
             userOrg = 'kestra'
             name = project.name.contains('cli') ? "kestra" : project.name

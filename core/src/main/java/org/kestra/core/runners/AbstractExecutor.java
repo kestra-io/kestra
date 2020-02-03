@@ -87,7 +87,7 @@ public abstract class AbstractExecutor implements Runnable {
         ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(this.applicationContext, flow, execution));
 
         if (parent.getTask() instanceof FlowableTask) {
-            FlowableTask flowableParent = (FlowableTask) parent.getTask();
+            FlowableTask<?> flowableParent = (FlowableTask<?>) parent.getTask();
             List<TaskRun> nexts = flowableParent.resolveNexts(new RunContext(this.applicationContext, flow, execution), execution, taskRun);
 
             if (nexts.size() > 0) {

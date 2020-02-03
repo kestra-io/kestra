@@ -5,6 +5,7 @@
                 <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
                 <v-s />
                 <search-field @onSearch="onSearch" :fields="searchableFields" />
+                <date-range @onDate="onSearch"/>
             </template>
             <template v-slot:table>
                 <b-table
@@ -60,10 +61,11 @@ import RouteContext from "../../mixins/routeContext";
 import DataTableActions from "../../mixins/dataTableActions";
 import SearchField from "../layout/SearchField";
 import NamespaceSelector from "../namespace/Selector";
+import DateRange from "../layout/DateRange";
 
 export default {
     mixins: [RouteContext, DataTableActions],
-    components: { Status, Eye, DataTable, SearchField, NamespaceSelector },
+    components: { Status, Eye, DataTable, SearchField, NamespaceSelector, DateRange },
     data() {
         return {
             dataType: "execution"
@@ -117,6 +119,14 @@ export default {
                     class: "row-action"
                 }
             ];
+        },
+        executionQuery () {
+            if (this.$route.name === 'flow') {
+                const filter = `flowId:${this.$route.params.id}`
+                return this.query === '*' ? filter : `${this.query} AND ${filter}`
+            } else {
+                return this.query
+            }
         }
     },
     methods: {
@@ -140,7 +150,7 @@ export default {
             this.$store.dispatch("execution/findExecutions", {
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
-                q: this.query,
+                q: this.executionQuery,
                 sort: this.$route.query.sort
             });
         }

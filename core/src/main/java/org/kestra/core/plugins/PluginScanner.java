@@ -5,20 +5,31 @@ import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.kestra.core.models.listeners.Condition;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.storages.StorageInterface;
 
+import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 
 @Slf4j
 public class PluginScanner {
+    ClassLoader parent;
+
+    public PluginScanner(ClassLoader parent) {
+        this.parent = parent;
+    }
+
     /**
      * Scans the specified top-level plugin directory for plugins.
      *
@@ -34,64 +45,98 @@ public class PluginScanner {
                 final PluginClassLoader classLoader = PluginClassLoader.of(
                     plugin.getLocation(),
                     plugin.getResources(),
-                    PluginScanner.class.getClassLoader()
+                    this.parent
                 );
 
-                log.debug("Initialized new ClassLoader: {}", classLoader);
+                log.debug(
+                    "Scanning plugins from paths '{}' with classLoader '{}'",
+                    Arrays.stream(plugin.getResources()).map(URL::getPath).collect(Collectors.joining("", "\n\t", "")),
+                    classLoader
+                );
 
-                return scanUrlsForPlugins(plugin, classLoader);
+                return scanClassLoader(classLoader, plugin, null);
             })
             .filter(RegisteredPlugin::isValid)
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Scans the main ClassLoader
+     */
+    public RegisteredPlugin scan() {
+        try {
+            Manifest manifest = new Manifest(IOUtils.toInputStream("Manifest-Version: 1.0\n" +
+                "X-Kestra-Title: core\n" +
+                "X-Kestra-Group: org.kestra.core.tasks\n",
+                StandardCharsets.UTF_8
+            ));
+
+            return scanClassLoader(PluginScanner.class.getClassLoader(), null, manifest);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private RegisteredPlugin scanUrlsForPlugins(ExternalPlugin plugin, final ClassLoader classLoader) {
-        log.debug(
-            "Scanning plugins from paths: {}",
-            Arrays.stream(plugin.getResources()).map(URL::getPath).collect(Collectors.joining("", "\n\t", ""))
-        );
+    private RegisteredPlugin scanClassLoader(final ClassLoader classLoader, ExternalPlugin externalPlugin, Manifest manifest) {
+        List<Class<? extends Task>> tasks = new ArrayList<>();
+        List<Class<? extends Condition>> conditions = new ArrayList<>();
+        List<Class<? extends StorageInterface>> storages = new ArrayList<>();
+        List<Class<?>> controllers = new ArrayList<>();
 
         final SoftServiceLoader<BeanIntrospectionReference> definitions = SoftServiceLoader.load(
             BeanIntrospectionReference.class,
             classLoader
         );
 
-        List<Class<? extends Task>> tasks = new ArrayList<>();
-        List<Class<? extends Condition>> conditions = new ArrayList<>();
-        List<Class<? extends StorageInterface>> storages = new ArrayList<>();
-        List<Class<?>> controllers = new ArrayList<>();
+        if (manifest == null) {
+            manifest = getManifest(classLoader);
+        }
 
         for (ServiceDefinition<BeanIntrospectionReference> definition : definitions) {
             if (definition.isPresent()) {
                 final BeanIntrospectionReference ref = definition.load();
+                Class beanType = ref.getBeanType();
 
-                if (Task.class.isAssignableFrom(ref.getBeanType())) {
-                    tasks.add(ref.getBeanType());
+                if (Task.class.isAssignableFrom(beanType)) {
+                    tasks.add(beanType);
                 }
 
-                if (Condition.class.isAssignableFrom(ref.getBeanType())) {
-                    conditions.add(ref.getBeanType());
+                if (Condition.class.isAssignableFrom(beanType)) {
+                    conditions.add(beanType);
                 }
 
-                if (StorageInterface.class.isAssignableFrom(ref.getBeanType())) {
-                    storages.add(ref.getBeanType());
+                if (StorageInterface.class.isAssignableFrom(beanType)) {
+                    storages.add(beanType);
                 }
 
-                if (ref.getBeanType().isAnnotationPresent(Controller.class)) {
-                    controllers.add(ref.getBeanType());
+                if (beanType.isAnnotationPresent(Controller.class)) {
+                    controllers.add(beanType);
                 }
             }
         }
 
         return RegisteredPlugin.builder()
-            .externalPlugin(plugin)
+            .externalPlugin(externalPlugin)
+            .manifest(manifest)
             .classLoader(classLoader)
             .tasks(tasks)
             .conditions(conditions)
             .controllers(controllers)
             .storages(storages)
             .build();
+    }
+
+    public static Manifest getManifest(ClassLoader classLoader) {
+        try {
+            URL url = classLoader.getResource(JarFile.MANIFEST_NAME);
+            if (url != null) {
+                return new Manifest(url.openStream());
+            }
+        } catch (IOException ignored) {
+        }
+
+        return null;
     }
 }

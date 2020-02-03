@@ -8,5 +8,5 @@ public interface QueueInterface<T> extends Closeable {
 
     Runnable receive(Consumer<T> consumer);
 
-    Runnable receive(Class consumerGroup, Consumer<T> consumer);
+    Runnable receive(Class<?> consumerGroup, Consumer<T> consumer);
 }

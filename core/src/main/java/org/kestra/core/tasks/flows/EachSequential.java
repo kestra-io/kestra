@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.models.annotations.Documentation;
+import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.tasks.FlowableTask;
@@ -23,6 +25,23 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@Documentation(
+    description = "Execute a tasks for a list of value",
+    body = {
+        "For each `value`, `tasks` will be executed",
+        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"] and must be a string",
+        "The current value is available on vars `{{ taskrun.value }}`."
+    }
+)
+@Example(
+    code = {
+        "value: '[\"value 1\", \"value 2\", \"value 3\"]'",
+        "tasks:",
+        "  - id: each-value",
+        "    type: org.kestra.core.tasks.debugs.Return",
+        "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
+    }
+)
 public class EachSequential extends Sequential implements FlowableTask {
     private String value;
 

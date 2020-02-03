@@ -15,7 +15,6 @@ import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.serializers.YamlFlowParser;
-import org.kestra.core.storages.StorageInterface;
 
 import java.io.File;
 import java.io.IOException;

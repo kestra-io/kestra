@@ -104,7 +104,7 @@ public class Worker implements Runnable {
 
     private WorkerTask runAttempt(WorkerTask workerTask) {
         Logger logger = workerTask.logger();
-        RunnableTask task = (RunnableTask) workerTask.getTask();
+        RunnableTask<?> task = (RunnableTask<?>) workerTask.getTask();
         State.Type state;
 
         RunContext runContext = workerTask

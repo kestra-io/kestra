@@ -56,7 +56,9 @@
         "start date": "start date",
         "end date": "end date",
         "creation": "creation",
-        "flow creation": "flow creation"
+        "flow creation": "flow creation",
+        "start datetime": "start datetime",
+        "end datetime": "end datetime"
     },
     "fr": {
         "id": "identifiant",
@@ -114,6 +116,8 @@
         "start date": "date de début",
         "end date": "date de fin",
         "creation": "création",
-        "flow creation": "création de flow"
+        "flow creation": "création de flow",
+        "start datetime": "date de départ",
+        "end datetime": "date de fin"
     }
 }

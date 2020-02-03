@@ -92,7 +92,7 @@ public class KafkaQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public Runnable receive(Class consumerGroup, Consumer<T> consumer) {
+    public Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
         AtomicBoolean running = new AtomicBoolean(true);
 
         Future<?> submit = poolExecutor.submit(() -> {

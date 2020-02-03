@@ -136,7 +136,7 @@ abstract public class AbstractCommand implements Runnable {
             return null;
         }
 
-        PluginScanner pluginScanner = new PluginScanner();
+        PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
         List<RegisteredPlugin> scan = pluginScanner.scan(this.pluginsPath);
 
         PluginRegistry pluginRegistry = new PluginRegistry(scan);

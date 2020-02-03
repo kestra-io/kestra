@@ -6,6 +6,7 @@ import org.kestra.core.models.tasks.Task;
 import org.kestra.core.storages.StorageInterface;
 
 import java.util.List;
+import java.util.jar.Manifest;
 
 @AllArgsConstructor
 @Getter
@@ -14,6 +15,7 @@ import java.util.List;
 @Builder
 public class RegisteredPlugin {
     private ExternalPlugin externalPlugin;
+    private Manifest manifest;
     private ClassLoader classLoader;
     private List<Class<? extends Task>> tasks;
     private List<Class<? extends Condition>> conditions;

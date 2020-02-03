@@ -3,7 +3,7 @@
         <template v-for="taskItem in execution.taskRunList">
             <template v-if="(!task || task.id === taskItem.id) && taskItem.attempts">
                 <template v-for="(attempt, index) in taskItem.attempts">
-                    <p :key="index" class="attempt">
+                    <p :key="`attempt-${index}-${attempt.state.startDate}`" class="attempt">
                         <b-tooltip
                             placement="left"
                             :target="`output-toggle-${taskItem.id}`"

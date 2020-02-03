@@ -2,6 +2,9 @@ package org.kestra.core.tasks.debugs;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.models.annotations.Documentation;
+import org.kestra.core.models.annotations.InputProperty;
+import org.kestra.core.models.annotations.OutputProperty;
 import org.kestra.core.models.executions.metrics.Counter;
 import org.kestra.core.models.executions.metrics.Timer;
 import org.kestra.core.models.tasks.RunnableTask;
@@ -16,7 +19,18 @@ import java.time.Duration;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@Documentation(
+    description = "Simple debugging task that return a renderer ",
+    body = {"This task is mostly useful for debugging purpose.",
+        "",
+        "This one allow you to see inputs or outputs variables for example, or to debug some templated functions."
+    }
+)
 public class Return extends Task implements RunnableTask<Return.Output> {
+    @InputProperty(
+        description = "The templatized string to render",
+        dynamic = true
+    )
     private String format;
 
     @Override
@@ -42,6 +56,9 @@ public class Return extends Task implements RunnableTask<Return.Output> {
     @Builder
     @Getter
     public static class Output implements org.kestra.core.models.tasks.Output {
+        @OutputProperty(
+            description = "The generated string"
+        )
         private String value;
     }
 }

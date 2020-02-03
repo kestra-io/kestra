@@ -4,7 +4,9 @@ import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.kestra.cli.contexts.KestraClassLoader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -20,6 +22,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 
 class PluginListCommandTest {
+    @BeforeAll
+    static void init() {
+        if (!KestraClassLoader.isInit()) {
+            KestraClassLoader.create(PluginInstallCommandTest.class.getClassLoader());
+        }
+    }
+
     @Test
     void run() throws IOException, URISyntaxException {
         Path pluginsPath = Files.createTempDirectory(PluginListCommandTest.class.getSimpleName());

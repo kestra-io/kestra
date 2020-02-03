@@ -1,8 +1,11 @@
 package org.kestra.runner.memory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.serializers.JacksonMapper;
 
 import java.io.IOException;
 import java.util.*;
@@ -13,6 +16,7 @@ import java.util.function.Consumer;
 
 @Slf4j
 public class MemoryQueue<T> implements QueueInterface<T> {
+    private static final ObjectMapper mapper = JacksonMapper.ofJson();
     private Class<T> cls;
     private static ExecutorService poolExecutor = Executors.newFixedThreadPool(
         Runtime.getRuntime().availableProcessors(),
@@ -41,8 +45,15 @@ public class MemoryQueue<T> implements QueueInterface<T> {
                         return;
                     }
 
-                    int i = (new Random()).nextInt(consumers.size());
-                    consumers.get(i).accept(message);
+                    // we force serialization to be a the same case than an another queue with serialization
+                    // this enabled debugging classLoader
+                    try {
+                        T serialized = mapper.readValue(mapper.writeValueAsString(message), this.cls);
+                        int i = (new Random()).nextInt(consumers.size());
+                        consumers.get(i).accept(serialized);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
                 });
             });
     }
@@ -53,7 +64,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public Runnable receive(Class consumerGroup, Consumer<T> consumer) {
+    public Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
         String consumerGroupName;
         if (consumerGroup == null) {
             consumerGroupName = UUID.randomUUID().toString();

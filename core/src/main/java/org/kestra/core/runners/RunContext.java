@@ -85,6 +85,11 @@ public class RunContext {
         return variables;
     }
 
+    @SuppressWarnings("unused")
+    public URI getStorageOutputPrefix() {
+        return storageOutputPrefix;
+    }
+
     @JsonIgnore
     public ApplicationContext getApplicationContext() {
         return applicationContext;

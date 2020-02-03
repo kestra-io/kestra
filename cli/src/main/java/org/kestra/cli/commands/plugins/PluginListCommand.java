@@ -3,6 +3,7 @@ package org.kestra.cli.commands.plugins;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
+import org.kestra.cli.contexts.KestraClassLoader;
 import org.kestra.core.plugins.PluginScanner;
 import org.kestra.core.plugins.RegisteredPlugin;
 import picocli.CommandLine;
@@ -36,7 +37,7 @@ public class PluginListCommand extends AbstractCommand {
             );
         }
 
-        PluginScanner pluginScanner = new PluginScanner();
+        PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
         List<RegisteredPlugin> scan = pluginScanner.scan(this.pluginsPath);
 
         scan.forEach(registeredPlugin -> {

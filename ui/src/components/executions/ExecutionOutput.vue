@@ -53,9 +53,9 @@ export default {
         },
         outputs() {
             const outputs = [];
-            for (const task of this.execution.taskRunList) {
+            for (const task of this.execution.taskRunList || []) {
                 for (const key in task.outputs) {
-                    const item = { key, value: task.outputs[key], task: task.id };
+                    const item = { key: task.taskId, value: task.outputs[key], task: task.id };
                     if (task.outputs[key].startsWith("kestra:///")) {
                         item.download = true;
                     }

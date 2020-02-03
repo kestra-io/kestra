@@ -36,15 +36,14 @@ public class PluginRegistry  {
                 plugin.getControllers()
                     .stream()
                     .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin))
-
                 ).flatMap(i -> i)
             )
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
     }
 
-    public Optional<ClassLoader> find(String name) {
+    public Optional<RegisteredPlugin> find(String name) {
         if (pluginsByClass.containsKey(name)) {
-            return Optional.of(pluginsByClass.get(name).getClassLoader());
+            return Optional.of(pluginsByClass.get(name));
         }
 
         return Optional.empty();

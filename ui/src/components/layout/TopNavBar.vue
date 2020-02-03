@@ -10,6 +10,7 @@
                 </b-breadcrumb>
             </b-nav-text>
         </b-navbar-nav>
+        <vue-progress-bar></vue-progress-bar>
     </b-navbar>
 </template>
 <script>
@@ -26,8 +27,18 @@ export default {
             required: true
         }
     },
+    watch : {
+        loading() {
+            if (this.loading) {
+                this.$Progress.start()
+            } else {
+                this.$Progress.finish()
+            }
+        }
+    },
     computed: {
         ...mapState("layout", ["topNavbar"]),
+        ...mapState("core", ["loading"]),
         title() {
             return this.topNavbar.title;
         },

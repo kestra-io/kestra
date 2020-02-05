@@ -1,5 +1,5 @@
 <template>
-    <sidebar-menu :menu="menu" @toggle-collapse="onToggleCollapse" :collapsed="collapsed">
+    <sidebar-menu :menu="menu" @toggle-collapse="onToggleCollapse" width="180px" :collapsed="collapsed">
         <a class="logo" slot="header" href="/">
             <span>
                 <img src="../assets/logo-white.svg" alt="Kestra" />

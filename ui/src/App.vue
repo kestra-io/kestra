@@ -1,7 +1,7 @@
 <template>
     <div>
-        <Menu @onMenuCollapse="onMenuCollapse" />
         <top-nav-bar :menuCollapsed="menuCollapsed" />
+        <Menu @onMenuCollapse="onMenuCollapse" />
 
         <div id="app" class="container-fluid">
             <div class="content-wrapper" :class="menuCollapsed">
@@ -42,13 +42,15 @@ export default {
 
 
 <style lang="scss">
+@import "styles/variable";
+
 .menu-collapsed {
     transition: all 0.3s ease;
     padding-left: 50px;
 }
 .menu-not-collapsed {
     transition: all 0.3s;
-    padding-left: 350px;
+    padding-left: $menu-width;
 }
 body {
     min-width: 320px;

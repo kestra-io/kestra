@@ -2,11 +2,10 @@
   <div v-if="execution">
     <b-row class="mb-3 text-right">
       <b-col>
+        <status :status="execution.state.current" />
         <restart :execution="execution" />
       </b-col>
     </b-row>
-    <status :status="execution.state.current" />
-    <h2>{{$t('execution') | cap}}</h2>
     <b-table responsive="xl" striped hover bordered :items="items" class="mb-0"></b-table>
     <div v-if="execution.inputs">
       <hr />

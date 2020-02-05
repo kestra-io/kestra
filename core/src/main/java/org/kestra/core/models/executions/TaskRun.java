@@ -60,7 +60,7 @@ public class TaskRun {
             .taskId(this.getTaskId())
             .parentTaskRunId(parentTaskRunId)
             .value(this.getValue())
-            .attempts(null)
+            .attempts(this.getAttempts())
             .outputs(this.getOutputs())
             .state(state)
             .build();

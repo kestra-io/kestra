@@ -4,14 +4,11 @@
             <b-col md="2" sm="12">{{$moment(this.start).format('MM DD YYYY')}} {{$t('to')}} {{$moment(this.stop()).format('MM DD YYYY')}}</b-col>
             <b-col v-for="(date, i) in dates" :key="i" md="2" class="time-tick" >{{date}}</b-col>
         </b-row>    <b-row v-for="taskItem in series" :key="taskItem.id">
-      <b-col md="1" sm="12">
-        <restart :execution="execution" :taskId="taskItem.name" />
-      </b-col>
       <b-col :id="`task-title-wrapper-${taskItem.id}`" class="task-id text-md-right" md="2" sm="12">
         {{taskItem.name}}
         <b-tooltip placement="right" :target="`task-title-wrapper-${taskItem.id}`">{{taskItem.id}}</b-tooltip>
       </b-col>
-      <b-col md="9" sm="12">
+      <b-col md="10" sm="12">
         <b-tooltip :target="`task-body-wrapper-${taskItem.id}`">{{taskItem.tooltip}}</b-tooltip>
         <div
           :id="`task-body-wrapper-${taskItem.id}`"
@@ -32,14 +29,14 @@
   </div>
 </template>
 <script>
+import LogList from "./LogList";
 import { mapState } from "vuex";
 import humanizeDuration from "humanize-duration";
-import Restart from "./Restart";
 
 const ts = date => new Date(date).getTime();
 
 export default {
-  components: { Restart },
+  components: { LogList },
   data() {
     return {
       colors: {

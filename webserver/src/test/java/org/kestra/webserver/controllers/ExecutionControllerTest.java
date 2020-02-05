@@ -257,11 +257,10 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                         return createdChidExec.getTaskRunList().get(value);
                     }).forEach(taskRun -> {
                     assertThat(taskRun.getState().getCurrent(), is(State.Type.SUCCESS));
-                    assertThat(taskRun.getAttempts(), nullValue());
                 });
 
                 assertThat(createdChidExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.CREATED));
-                assertThat(createdChidExec.getTaskRunList().get(3).getAttempts(), nullValue());
+                assertThat(createdChidExec.getTaskRunList().get(3).getAttempts().size(), is(1));
             },
             Duration.ofSeconds(15));
 
@@ -311,7 +310,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                 assertThat(createdChidExec.getTaskRunList().get(5).getState().getCurrent(), is(State.Type.RUNNING));
                 assertThat(createdChidExec.getTaskRunList().get(6).getState().getCurrent(), is(State.Type.SUCCESS));
                 assertThat(createdChidExec.getTaskRunList().get(7).getState().getCurrent(), is(State.Type.CREATED));
-                assertThat(createdChidExec.getTaskRunList().get(7).getAttempts(), nullValue());
+                assertThat(createdChidExec.getTaskRunList().get(7).getAttempts().size(), is(1));
             },
             Duration.ofSeconds(30000));
     }

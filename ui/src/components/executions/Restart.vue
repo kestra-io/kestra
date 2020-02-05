@@ -1,20 +1,32 @@
 <template>
-  <b-button
-    @click="restart"
-    v-if="enabled"
-    class="restart"
-    variant="primary"
-  >{{$t("restart") | cap}}</b-button>
+  <div v-if="isButton" class="restart-wrapper">
+    <b-button @click="restart" v-if="enabled" class="restart">
+      <restart-icon />
+      {{$t("restart") | cap}}
+    </b-button>
+  </div>
+  <div v-else>
+    <div @click="restart" v-if="enabled">
+      <restart-icon />
+      {{$t("restart") | cap}}
+    </div>
+  </div>
 </template>
 <script>
+import RestartIcon from "vue-material-design-icons/Restart";
 export default {
+  components: { RestartIcon },
   props: {
+    isButton: {
+      type: Boolean,
+      default: true
+    },
     execution: {
       type: Object,
       required: true
     },
-    taskId: {
-      type: String,
+    task: {
+      type: Object,
       required: false
     }
   },
@@ -22,26 +34,32 @@ export default {
     restart() {
       this.$store.dispatch("execution/restartExecution", {
         id: this.execution.id,
-        taskId: this.taskId
+        taskId: this.task ? this.task.taskId : null
       });
     }
   },
   computed: {
-    enabled: function() {
-      if (this.taskId) {
-        let i = 0;
-        let taskRunListSize = this.execution.taskRunList.length;
-        while (i < taskRunListSize) {
-          let taskRun = this.execution.taskRunList[i];
-          if (taskRun.taskId == this.taskId) {
-            return true;
-          }
-          if (taskRun.state.current == "FAILED") {
-            return false;
-          }
-          i++;
-        }
-        return false;
+    enabled() {
+      // TODO : Add a "restartable" property on task run object (backend side)
+
+      // If a specific task has been passed, we see if it can be restarted
+      if (this.task && this.task.taskId) {
+        // We find the taskRun based on its taskId
+        let taskRunIndex = this.execution.taskRunList.findIndex(
+          t => t.taskId == this.task.taskId
+        );
+
+        if (taskRunIndex == -1) return false;
+
+        // There can be no taskRun with a failed state before
+        // our specific task for it to be restarted
+        let subList = this.execution.taskRunList.slice(0, taskRunIndex);
+
+        let indexOfFailedTaskRun = subList.findIndex(
+          t => t.state.current == "FAILED"
+        );
+
+        return indexOfFailedTaskRun == -1;
       }
       return this.execution.state.current == "FAILED";
     }
@@ -49,11 +67,14 @@ export default {
 };
 </script>
 <style scoped>
+.restart-wrapper {
+  display: inline;
+}
 .restart {
   margin-left: 10px;
   margin-right: 10px;
-  padding-top: 5px;
-  padding-bottom: 5px;
+  padding-left: 15px;
+  padding-right: 15px;
   border-radius: 5px;
 }
 </style>

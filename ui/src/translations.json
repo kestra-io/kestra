@@ -61,8 +61,10 @@
         "end datetime": "end datetime",
         "restart": "restart",
         "toggle output": "Toggle output",
-        "attempt": "attempt",
         "outputs": "outputs",
+        "output": "output",
+        "attempt": "attempt",
+        "toggle output display": "toggle output display",
         "name": "name",
         "value": "value"
     },
@@ -129,6 +131,8 @@
         "toggle output": "Voir la sortie",
         "attempt": "essai",
         "outputs": "sorties",
+        "output": "sortie",
+        "toggle output display": "permutter l'affichage de sortie",
         "name": "nom",
         "value": "valeur"
     }

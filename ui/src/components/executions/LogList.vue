@@ -21,7 +21,7 @@
                         <b-badge variant="primary">{{$t('attempt') | cap}} {{index + 1}}</b-badge>
                         {{attempt.state.startDate | date('LLL:ss') }} - {{attempt.state.endDate | date('LLL:ss') }}
                         <clock />
-                        {{$t('Duration')}} : {{attempt.state.duration | humanizeDuration}}
+                        {{$t('duration') | cap}} : {{attempt.state.duration | humanizeDuration}}
                     </p>
                     <template v-if="attempt.logs">
                         <template v-for="log in attempt.logs">

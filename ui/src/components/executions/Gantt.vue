@@ -92,7 +92,7 @@ export default {
             if (!this.execution) {
                 return;
             }
-            if (this.execution.state.current !== "RUNNING") {
+            if (!["RUNNING", "CREATED"].includes(this.execution.state.current)) {
                 this.stopRealTime();
             }
 
@@ -104,10 +104,10 @@ export default {
                 let stopTs = ts(task.state.histories[lastIndex].date);
                 const start = startTs - this.start;
                 let stop = stopTs - this.start - start;
-                // if ((stop / executionDelta) * 100 < 1) {
-                //     stopTs = +new Date();
-                //     stop = stopTs - this.start - start;
-                // }
+                if ((stop / executionDelta) * 100 < 1) {
+                    stopTs = +new Date();
+                    stop = stopTs - this.start - start;
+                }
 
                 const delta = stopTs - startTs;
                 const duration = this.$moment.duration(delta);

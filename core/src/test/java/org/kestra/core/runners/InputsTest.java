@@ -111,7 +111,7 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         Arrays.asList("file-uri", "file").forEach(o ->
             assertThat(
-                (String) execution.findTaskRunByTaskId(o).getOutputs().get("value"),
+                (String) execution.findTaskRunsByTaskId(o).get(0).getOutputs().get("value"),
                 matchesRegex("kestra:///org/kestra/tests/inputs/executions/.*/inputs/file/application.yml")
             )
         );

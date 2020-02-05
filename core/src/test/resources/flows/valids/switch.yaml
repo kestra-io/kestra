@@ -18,6 +18,9 @@ tasks:
         - id: 2nd
           type: org.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
+        - id: 2nd.sub
+          type: org.kestra.core.tasks.debugs.Return
+          format: "{{task.id}} > {{taskrun.startDate}}"
       THIRD:
         - id: 3th
           type: org.kestra.core.tasks.flows.Sequential

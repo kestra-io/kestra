@@ -76,17 +76,11 @@ public class Execution {
         );
     }
 
-    public TaskRun findTaskRunByTaskId(String id) {
-        Optional<TaskRun> find = this.taskRunList
+    public List<TaskRun> findTaskRunsByTaskId(String id) {
+        return this.taskRunList
             .stream()
             .filter(taskRun -> taskRun.getTaskId().equals(id))
-            .findFirst();
-
-        if (find.isEmpty()) {
-            throw new IllegalArgumentException("Can't find taskrun with task id '" + id + "' on execution '" + this.id + "'");
-        }
-
-        return find.get();
+            .collect(Collectors.toList());
     }
 
     public TaskRun findTaskRunByTaskRunId(String id) {

@@ -1,5 +1,5 @@
 <template>
-    <b-nav-form>
+    <b-nav-form @submit.prevent>
         <b-form-input
             :label="$t('search').capitalize()"
             size="sm"
@@ -34,7 +34,7 @@ export default {
             }
             this.$router.push({ query });
             this.searchDebounce();
-        }
+        },
     },
     destroyed() {
         this.searchDebounce.cancel();

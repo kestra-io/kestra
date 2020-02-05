@@ -1,6 +1,9 @@
 <template>
     <div v-if="execution">
-
+        <b-row>
+            <b-col md="2" sm="12">{{$moment(this.start).format('MM DD YYYY')}} {{$t('to')}} {{$moment(this.stop()).format('MM DD YYYY')}}</b-col>
+            <b-col v-for="(date, i) in dates" :key="i" md="2" class="time-tick" >{{date}}</b-col>
+        </b-row>
         <b-row v-for="taskItem in series" :key="taskItem.id">
             <b-col
                 :id="`task-title-wrapper-${taskItem.id}`"
@@ -64,6 +67,17 @@ export default {
     },
     computed: {
         ...mapState("execution", ["execution", "task"]),
+        dates () {
+            const ticks = 5
+            const date = ts => this.$moment(ts).format('h:mm:ss')
+            const start = this.start
+            const delta = this.delta() / ticks
+            const dates = []
+            for (let i=0; i<ticks; i++) {
+                dates.push(date(start + i * delta))
+            }
+            return dates
+        },
         hasTaskLog() {
             return (
                 this.task &&
@@ -92,7 +106,9 @@ export default {
             if (!this.execution) {
                 return;
             }
-            if (!["RUNNING", "CREATED"].includes(this.execution.state.current)) {
+            if (
+                !["RUNNING", "CREATED"].includes(this.execution.state.current)
+            ) {
                 this.stopRealTime();
             }
 
@@ -143,6 +159,8 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+@import "../../styles/_variable.scss";
+
 .task-content {
     margin-left: 45%;
     font-size: 0.8em;
@@ -154,5 +172,10 @@ export default {
 }
 .task-progress {
     border-radius: 4px;
+}
+
+.time-tick {
+    border-left: 2px solid $gray-500;
+    padding: 1px;
 }
 </style>

@@ -8,6 +8,7 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.validation.Validated;
 import io.reactivex.Maybe;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.hierarchies.FlowTree;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
@@ -23,6 +24,20 @@ import javax.validation.ConstraintViolationException;
 public class FlowController {
     @Inject
     private FlowRepositoryInterface flowRepository;
+
+    /**
+     * @param namespace The flow namespace
+     * @param id        The flow id
+     * @return flow tree found
+     */
+    @Get(uri = "{namespace}/{id}/tree", produces = MediaType.TEXT_JSON)
+    public Maybe<FlowTree> flowTree(String namespace, String id) {
+        return flowRepository
+            .findById(namespace, id)
+            .map(FlowTree::of)
+            .map(Maybe::just)
+            .orElse(Maybe.empty());
+    }
 
     /**
      * @param namespace The flow namespace

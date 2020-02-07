@@ -10,14 +10,20 @@ import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
+import org.kestra.core.models.hierarchies.ParentTaskTree;
+import org.kestra.core.models.hierarchies.RelationType;
+import org.kestra.core.models.hierarchies.TaskTree;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
+import org.kestra.core.models.tasks.VoidOutput;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
+import org.kestra.core.services.TreeService;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,8 +50,24 @@ import java.util.stream.Collectors;
         "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
     }
 )
-public class EachSequential extends Sequential implements FlowableTask {
+public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
     private String value;
+
+    @Override
+    public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) {
+        return TreeService.sequential(
+            this.getTasks(),
+            this.errors,
+            Collections.singletonList(ParentTaskTree.builder()
+                .id(this.getId())
+                .value(this.value)
+                .build()
+            ),
+            execution,
+            RelationType.DYNAMIC,
+            groups
+        );
+    }
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) {

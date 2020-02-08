@@ -1,9 +1,12 @@
 package org.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
 import io.micronaut.test.annotation.MicronautTest;
 import org.kestra.core.Helpers;
+import org.kestra.core.serializers.JacksonMapper;
+import org.kestra.core.tasks.scripts.Bash;
 import org.kestra.core.utils.TestsUtils;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
@@ -13,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,7 +59,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void revision() {
+    void revision() throws JsonProcessingException {
         Flow flow = flowRepository.save(Flow.builder()
             .id("AbstractFlowRepositoryTest")
             .namespace("org.kestra.unittest")
@@ -65,17 +70,27 @@ public abstract class AbstractFlowRepositoryTest {
 
         assertThat(flow, is(notSaved));
 
-        Flow incremented = flowRepository.save(Flow.builder()
+        Flow flowRev2 = Flow.builder()
             .id("AbstractFlowRepositoryTest")
             .namespace("org.kestra.unittest")
+            .tasks(Collections.singletonList(
+                Bash.builder()
+                    .type(Bash.class.getName())
+                    .commands(Collections.singletonList("echo 1").toArray(new String[0]))
+                    .build()
+            ))
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
-            .build()
-        );
+            .build();
+
+        Flow incremented = flowRepository.save(flowRev2);
         assertThat(incremented.getRevision(), is(2));
 
 
         List<Flow> revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
         assertThat(revisions.size(), is(2));
+
+        Flow incremented2 = flowRepository.save(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class));
+        assertThat(incremented2.getRevision(), is(2));
 
         flowRepository.delete(flow);
         flowRepository.delete(incremented);

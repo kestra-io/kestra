@@ -10,6 +10,7 @@ import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
+import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.runners.FlowableUtils;
@@ -18,6 +19,7 @@ import org.kestra.core.runners.RunContext;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @SuperBuilder
@@ -74,6 +76,23 @@ public class EachSequential extends Sequential implements FlowableTask {
             )
             .collect(Collectors.toList());
     }
+
+    @Override
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
+
+        if (childTasks.size() == 0) {
+            return Optional.of(State.Type.SUCCESS);
+        }
+
+        return FlowableUtils.resolveState(
+            execution,
+            childTasks,
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            parentTaskRun
+        );
+    }
+
 
     @Override
     public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) {

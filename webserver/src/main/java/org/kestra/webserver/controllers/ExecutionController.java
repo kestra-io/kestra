@@ -175,26 +175,32 @@ public class ExecutionController {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
         Optional<Execution> execution = executionRepository.findById(executionId);
-        if (execution.isEmpty()) {
-            return Flowable.empty();
+        if (execution.isPresent()) {
+            Flow flow = flowRepository.findByExecution(execution.get());
+            if (execution.get().isTerminatedWithListeners(flow)) {
+                return Flowable.just(Event.of(execution.get()).id(Execution.class.getSimpleName()));
+            }
         }
 
-        Optional<Flow> flow = flowRepository.findById(execution.get().getNamespace(), execution.get().getFlowId());
-        if (flow.isEmpty()) {
-            return Flowable.empty();
-        }
+        final Flow[] flow = {null};
 
         return Flowable
             .<Event<Execution>>create(emitter -> {
                 Runnable receive = this.executionQueue.receive(current -> {
                     if (current.getId().equals(executionId)) {
+
+                        if (flow[0] == null) {
+                            flow[0] = flowRepository.findByExecution(current);
+                        }
+
                         emitter.onNext(Event.of(current).id(Execution.class.getSimpleName()));
 
-                        if (current.isTerminatedWithListeners(flow.get())) {
+                        if (current.isTerminatedWithListeners(flow[0])) {
                             emitter.onComplete();
                         }
                     }
                 });
+
                 cancel.set(receive);
             }, BackpressureStrategy.BUFFER)
             .doOnComplete(() -> {

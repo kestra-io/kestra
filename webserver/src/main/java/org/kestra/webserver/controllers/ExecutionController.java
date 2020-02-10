@@ -194,14 +194,14 @@ public class ExecutionController {
      * @return execution sse event
      */
     @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_JSON)
-    public Flowable<Event<Execution>> triggerAndFollow(String executionId) {
+    public Flowable<Event<Execution>> follow(String executionId) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isPresent()) {
             Flow flow = flowRepository.findByExecution(execution.get());
             if (execution.get().isTerminatedWithListeners(flow)) {
-                return Flowable.just(Event.of(execution.get()).id(Execution.class.getSimpleName()));
+                return Flowable.just(Event.of(execution.get()).id("end"));
             }
         }
 
@@ -216,9 +216,10 @@ public class ExecutionController {
                             flow[0] = flowRepository.findByExecution(current);
                         }
 
-                        emitter.onNext(Event.of(current).id(Execution.class.getSimpleName()));
+                        emitter.onNext(Event.of(current).id("progress"));
 
                         if (current.isTerminatedWithListeners(flow[0])) {
+                            emitter.onNext(Event.of(current).id("end"));
                             emitter.onComplete();
                         }
                     }

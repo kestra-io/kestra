@@ -2,8 +2,9 @@
   <div v-if="execution">
     <b-row class="mb-3 text-right">
       <b-col>
-        <status :status="execution.state.current" />
         <restart :execution="execution" />
+
+        <status :status="execution.state.current" />
       </b-col>
     </b-row>
     <b-table responsive="xl" striped hover bordered :items="items" class="mb-0"></b-table>
@@ -61,23 +62,27 @@ export default {
     },
     items() {
       const startTs = this.execution.state.histories[0].date;
-      const stopTs = this.execution.state.histories[
-        this.execution.state.histories.length - 1
-      ].date;
+      const stopTs = this.execution.state.histories[this.execution.state.histories.length - 1].date;
       const delta = ts(stopTs) - ts(startTs);
       const duration = this.$moment.duration(delta);
       const humanDuration = humanizeDuration(duration);
-      const stepCount = this.execution.taskRunList
-        ? this.execution.taskRunList.length
-        : 0;
-      return [
+      const stepCount = this.execution.taskRunList ? this.execution.taskRunList.length : 0;
+
+      let ret = [
         { key: this.$t("namespace"), value: this.execution.namespace },
         { key: this.$t("flow"), value: this.execution.flowId },
+        { key: this.$t("revision"), value: this.execution.flowRevision },
         { key: this.$t("created date"), value: startTs },
         { key: this.$t("updated date"), value: stopTs },
         { key: this.$t("duration"), value: humanDuration },
         { key: this.$t("steps"), value: stepCount }
       ];
+
+      if (this.execution.parentId) {
+        ret.push({ key: this.$t("parent execution"), value: this.execution.parentId });
+      }
+
+      return ret;
     },
     inputs() {
       const inputs = [];

@@ -5,13 +5,12 @@
         <div class="bg-dark attempt-wrapper">
           <template v-for="(attempt, index) in taskItem.attempts">
             <div
-              class="row"
               :id="`attempt-${index}-${attempt.state.startDate}`"
               :key="`attempt-${index}-${attempt.state.startDate}`"
             >
               <!-- Tooltip -->
               <b-tooltip
-                placement="left"
+                placement="top"
                 :target="`attempt-${index}-${attempt.state.startDate}`"
                 triggers="hover"
               >
@@ -24,38 +23,40 @@
                 {{$t('duration') | cap}} : {{attempt.state.duration | humanizeDuration}}
               </b-tooltip>
 
-              <!-- Task id -->
-              <div class="attempt col-md-2">
-                <span>[{{taskItem.taskId}}] &nbsp;</span>
-              </div>
+              <div class="attempt">
+                <!-- Attempt Badge -->
+                <div>
+                  <b-badge
+                          :id="`attempt-badge-${taskItem.id}`"
+                          variant="primary mr-1"
+                  >{{$t('attempt') | cap}} {{index + 1}}</b-badge>
+                </div>
 
-              <!-- Attempt Badge -->
-              <div class="attempt col-md-9">
-                <b-badge
-                  :id="`attempt-badge-${taskItem.id}`"
-                  variant="primary"
-                >{{$t('attempt') | cap}} {{index + 1}}</b-badge>
-              </div>
+                <!-- Task id -->
+                <div class="task-id flex-grow-1">
+                  <span>{{taskItem.taskId}}</span>
+                </div>
 
-              <!-- Dropdown menu with actions -->
-              <div class="col-md-1" style="float:right;">
-                <b-dropdown right variant="primary" no-caret>
-                  <template v-slot:button-content>
-                    <Menu />
-                  </template>
-                  <b-dropdown-item v-if="taskItem.outputs" @click="toggleShowOutput(taskItem)">
-                    <eye />
-                    {{$t('toggle output') | cap}}
-                  </b-dropdown-item>
-                  <b-dropdown-item>
-                    <restart
-                      :key="`restart-${index}-${attempt.state.startDate}`"
-                      :isButton="false"
-                      :execution="execution"
-                      :task="taskItem"
-                    />
-                  </b-dropdown-item>
-                </b-dropdown>
+                <!-- Dropdown menu with actions -->
+                <div>
+                  <b-dropdown size="sm" right variant="primary" no-caret>
+                    <template v-slot:button-content>
+                      <Menu />
+                    </template>
+                    <b-dropdown-item v-if="taskItem.outputs" @click="toggleShowOutput(taskItem)">
+                      <eye />
+                      {{$t('toggle output') | cap}}
+                    </b-dropdown-item>
+                    <b-dropdown-item>
+                      <restart
+                              :key="`restart-${index}-${attempt.state.startDate}`"
+                              :isButton="false"
+                              :execution="execution"
+                              :task="taskItem"
+                      />
+                    </b-dropdown-item>
+                  </b-dropdown>
+                </div>
               </div>
             </div>
 
@@ -118,36 +119,47 @@ export default {
 @import "../../styles/_variable.scss";
 
 .log-wrapper {
-  padding: 10px;
   border-radius: 5px;
 
   .line:nth-child(odd) {
     background-color: lighten($dark, 5%);
   }
+
   div.attempt {
-    margin-bottom: $paragraph-margin-bottom/2;
+    display: flex;
     font-family: $font-family-sans-serif;
     font-size: $font-size-base;
-    padding-bottom: $paragraph-margin-bottom/2;
+    margin-top: $paragraph-margin-bottom*1.5;
+    margin-bottom: 2px;
+
+    .task-id {
+    }
 
     .badge {
       font-size: $font-size-base;
-      font-weight: bold;
-      margin-right: 5px;
-      margin-top: 5px;
+      height: 100%;
+      line-height: 100%;
+      padding-bottom: 0;
+    }
+
+
+  }
+
+  .attempt-wrapper {
+    padding: 0.75rem;
+
+    div:first-child > *  {
+      margin-top: 0;
+
     }
   }
-  .attempt-wrapper {
-    margin-bottom: 5px;
-    padding: 7px;
-    border-radius: 5px;
-  }
-  .attempt:first-child {
-    margin-top: 0;
-  }
+
+
+
   .output {
     margin-right: 5px;
   }
+
   pre {
     border: 1px solid $light;
     background-color: $gray-200;

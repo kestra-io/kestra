@@ -1,6 +1,6 @@
 <template>
   <div v-if="isButton" class="restart-wrapper">
-    <b-button @click="restart" v-if="enabled" class="restart">
+    <b-button @click="restart" v-if="enabled" class="rounded-lg btn-info restart mr-1">
       <restart-icon />
       {{$t("restart") | cap}}
     </b-button>
@@ -32,10 +32,21 @@ export default {
   },
   methods: {
     restart() {
-      this.$store.dispatch("execution/restartExecution", {
-        id: this.execution.id,
-        taskId: this.task ? this.task.taskId : null
-      });
+      this.$store
+        .dispatch("execution/restartExecution", {
+          id: this.execution.id,
+          taskId: this.task ? this.task.taskId : null
+        })
+        .then(response => {
+          this.$bvToast.toast(this.$t("restarted").capitalize(), {
+            title: this.$t("execution").capitalize(),
+            autoHideDelay: 5000,
+            toaster: "b-toaster-top-right",
+            variant: "success"
+          });
+          this.$store.commit('execution/setExecution', response.data);
+          this.$router.push({name: 'execution', params: response.data});
+        })
     }
   },
   computed: {

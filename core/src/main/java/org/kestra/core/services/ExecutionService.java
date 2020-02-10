@@ -209,15 +209,15 @@ public class ExecutionService {
      * @throws IllegalArgumentException If there is no failed task.
      */
     private Execution createRestartFromLastFailed(final Execution execution) throws IllegalArgumentException {
-        final Optional<Flow> flow = flowRepositoryInterface.findByExecution(execution);
+        final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
         final Predicate<TaskRun> notLastFailed = taskRun -> {
             boolean isFailed = taskRun.getState().getCurrent().equals(State.Type.FAILED);
-            boolean isFlowable = flow
+            boolean isFlowable = Optional.of(flow)
                 .map(f -> f.findTaskByTaskRun(taskRun, new RunContext()).getTask().isFlowable())
                 .orElse(false);
 
-            return !isFailed || (isFailed && isFlowable);
+            return !isFailed || isFlowable;
         };
 
         // Find first failed task run

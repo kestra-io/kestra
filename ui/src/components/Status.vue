@@ -1,34 +1,55 @@
 <template>
-    <span class="status" :class="cls">{{s}}</span>
+    <b-button class="status text-white rounded-lg" :class="cls">
+        <component :is="icon"></component>
+        {{status | lower | cap }}
+    </b-button>
 </template>
 <script>
+import PauseCircleOutline from "vue-material-design-icons/PauseCircleOutline";
+import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline";
+import PlayCircleOutline from "vue-material-design-icons/PlayCircleOutline";
+import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline";
+
 export default {
+    components: {
+        PauseCircleOutline,
+        CheckCircleOutline,
+        PlayCircleOutline,
+        CloseCircleOutline
+    },
     props: {
         status: {
             type: String,
             required: true
+        },
+        size: {
+            type: String,
+            default: ""
         }
     },
     computed: {
         cls() {
             return {
-                Success: "bg-success text-white",
-                Running: "bg-primary text-white",
-                Failed: "bg-danger text-white"
-            }[this.s];
+                CREATED: "btn-info",
+                SUCCESS: "btn-success",
+                RUNNING: "btn-warning",
+                FAILED: "btn-danger"
+            }[this.status] + (this.size ? " btn-" + this.size : "");
         },
-        s () {
-            return this.status.toLowerCase().capitalize()
+        icon () {
+            return {
+                CREATED: "pause-circle-outline",
+                SUCCESS: 'check-circle-outline',
+                RUNNING: 'play-circle-outline',
+                FAILED: 'close-circle-outline'
+            }[this.status];
         }
     }
 };
 </script>
 <style scoped>
-.status {
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    border-radius: 5px;
+button.status {
+    cursor: default;
+    white-space: nowrap;
 }
 </style>

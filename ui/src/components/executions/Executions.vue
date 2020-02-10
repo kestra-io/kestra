@@ -31,7 +31,7 @@
                         v-slot:cell(state.endDate)="row"
                     >{{row.item.state.endDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
                     <template v-slot:cell(state.current)="row">
-                        <status class="status" :status="row.item.state.current" />
+                        <status class="status" size="sm" :status="row.item.state.current" />
                     </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link

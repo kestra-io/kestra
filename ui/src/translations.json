@@ -58,7 +58,13 @@
         "creation": "creation",
         "flow creation": "flow creation",
         "start datetime": "start datetime",
-        "end datetime": "end datetime"
+        "end datetime": "end datetime",
+        "restart": "restart",
+        "toggle output": "Toggle output",
+        "attempt": "attempt",
+        "outputs": "outputs",
+        "name": "name",
+        "value": "value"
     },
     "fr": {
         "id": "identifiant",
@@ -118,6 +124,12 @@
         "creation": "création",
         "flow creation": "création de flow",
         "start datetime": "date de départ",
-        "end datetime": "date de fin"
+        "end datetime": "date de fin",
+        "restart": "relancer",
+        "toggle output": "Voir la sortie",
+        "attempt": "essai",
+        "outputs": "sorties",
+        "name": "nom",
+        "value": "valeur"
     }
 }

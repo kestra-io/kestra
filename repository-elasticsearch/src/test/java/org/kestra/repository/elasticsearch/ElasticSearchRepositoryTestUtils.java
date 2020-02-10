@@ -27,7 +27,7 @@ class ElasticSearchRepositoryTestUtils {
     @AfterEach
     public void tearDown() throws IOException {
         DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(indicesConfigs.stream()
-            .map(IndicesConfig::getName)
+            .map(IndicesConfig::getIndex)
             .toArray(String[]::new))
             .indicesOptions(IndicesOptions.LENIENT_EXPAND_OPEN);
         client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT);

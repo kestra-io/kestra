@@ -4,22 +4,21 @@ import com.devskiller.friendly_id.FriendlyId;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
 import io.micronaut.test.annotation.MicronautTest;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.kestra.core.Helpers;
+import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.flows.Input;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.tasks.scripts.Bash;
 import org.kestra.core.utils.TestsUtils;
-import org.kestra.core.models.flows.Flow;
-import org.kestra.core.models.flows.Input;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -27,7 +26,7 @@ import static org.hamcrest.Matchers.is;
 @MicronautTest
 public abstract class AbstractFlowRepositoryTest {
     @Inject
-    private FlowRepositoryInterface flowRepository;
+    protected FlowRepositoryInterface flowRepository;
 
     @Inject
     private LocalFlowRepositoryLoader repositoryLoader;

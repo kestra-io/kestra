@@ -5,8 +5,6 @@ properties:
     type: keyword
   revision:
     type: integer
-  template:
-    type: boolean
   inputs:
     type: nested
     properties:
@@ -17,6 +15,13 @@ properties:
       required:
         type: boolean
   tasks:
+    type: nested
+    properties:
+      id:
+        type: keyword
+      type:
+        type: keyword
+  errors:
     type: nested
     properties:
       id:

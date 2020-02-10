@@ -28,10 +28,7 @@ import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 abstract public class AbstractElasticSearchRepository <T> {
@@ -40,7 +37,7 @@ abstract public class AbstractElasticSearchRepository <T> {
 
     protected RestHighLevelClient client;
 
-    protected IndicesConfig indicesConfig;
+    protected Map<String, IndicesConfig> indicesConfigs;
 
     @Inject
     public AbstractElasticSearchRepository(
@@ -51,16 +48,16 @@ abstract public class AbstractElasticSearchRepository <T> {
         this.client = client;
         this.cls = cls;
 
-        this.indicesConfig = indicesConfigs
+        this.indicesConfigs = indicesConfigs
             .stream()
-            .filter(r -> r.getCls().equals(this.cls.getName().toLowerCase().replace(".", "-")))
-            .findFirst()
-            .orElseThrow();
+            .filter(r -> r.getCls() == this.cls)
+            .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), r))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    protected Optional<T> getRequest(String id) {
+    protected Optional<T> getRequest(String index, String id) {
         try {
-            GetResponse response = client.get(new GetRequest(this.indicesConfig.getName(), id), RequestOptions.DEFAULT);
+            GetResponse response = client.get(new GetRequest(this.indicesConfigs.get(index).getIndex(), id), RequestOptions.DEFAULT);
 
             if (!response.isExists()) {
                 return Optional.empty();
@@ -72,8 +69,8 @@ abstract public class AbstractElasticSearchRepository <T> {
         }
     }
 
-    protected IndexResponse putRequest(String id, T source) {
-        IndexRequest request = new IndexRequest(this.indicesConfig.getName());
+    protected IndexResponse putRequest(String index, String id, T source) {
+        IndexRequest request = new IndexRequest(this.indicesConfigs.get(index).getIndex());
         request.id(id);
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
@@ -91,8 +88,8 @@ abstract public class AbstractElasticSearchRepository <T> {
         }
     }
 
-    protected DeleteResponse deleteRequest(String id) {
-        DeleteRequest request = new DeleteRequest(this.indicesConfig.getName(), id);
+    protected DeleteResponse deleteRequest(String index, String id) {
+        DeleteRequest request = new DeleteRequest(this.indicesConfigs.get(index).getIndex(), id);
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
         try {
@@ -102,9 +99,9 @@ abstract public class AbstractElasticSearchRepository <T> {
         }
     }
 
-    protected SearchRequest searchRequest(SearchSourceBuilder sourceBuilder, boolean scroll) {
+    protected SearchRequest searchRequest(String index, SearchSourceBuilder sourceBuilder, boolean scroll) {
         SearchRequest searchRequest = new SearchRequest()
-            .indices(this.indicesConfig.getName())
+            .indices(this.indicesConfigs.get(index).getIndex())
             .source(sourceBuilder);
 
         if (scroll) {
@@ -126,8 +123,8 @@ abstract public class AbstractElasticSearchRepository <T> {
             .collect(Collectors.toList());
     }
 
-    protected ArrayListTotal<T> query(SearchSourceBuilder sourceBuilder) {
-        SearchRequest searchRequest = searchRequest(sourceBuilder, false);
+    protected ArrayListTotal<T> query(String index, SearchSourceBuilder sourceBuilder) {
+        SearchRequest searchRequest = searchRequest(index, sourceBuilder, false);
 
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
@@ -137,10 +134,10 @@ abstract public class AbstractElasticSearchRepository <T> {
         }
     }
 
-    protected List<T> scroll(SearchSourceBuilder sourceBuilder) {
+    protected List<T> scroll(String index, SearchSourceBuilder sourceBuilder) {
         List<T> result = new ArrayList<>();
 
-        SearchRequest searchRequest = searchRequest(sourceBuilder, true);
+        SearchRequest searchRequest = searchRequest(index, sourceBuilder, true);
         try {
             SearchResponse searchResponse;
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
@@ -158,7 +155,6 @@ abstract public class AbstractElasticSearchRepository <T> {
             throw new RuntimeException(e);
         }
 
-
         return result;
     }
 
@@ -171,14 +167,16 @@ abstract public class AbstractElasticSearchRepository <T> {
 
     private void createIndice() {
         try {
-            GetIndexRequest exists = new GetIndexRequest(this.indicesConfig.getName());
-            if (!client.indices().exists(exists, RequestOptions.DEFAULT)) {
-                CreateIndexRequest request = new CreateIndexRequest(this.indicesConfig.getName());
-                if (this.indicesConfig.getSettings() != null) {
-                    request.settings(this.indicesConfig.getSettings(), XContentType.JSON);
-                }
+            for (Map.Entry<String, IndicesConfig> index : this.indicesConfigs.entrySet()) {
+                GetIndexRequest exists = new GetIndexRequest(index.getValue().getIndex());
+                if (!client.indices().exists(exists, RequestOptions.DEFAULT)) {
+                    CreateIndexRequest request = new CreateIndexRequest(index.getValue().getIndex());
+                    if (index.getValue().getSettings() != null) {
+                        request.settings(index.getValue().getSettings(), XContentType.JSON);
+                    }
 
-                client.indices().create(request, RequestOptions.DEFAULT);
+                    client.indices().create(request, RequestOptions.DEFAULT);
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -186,14 +184,16 @@ abstract public class AbstractElasticSearchRepository <T> {
     }
 
     private void updateMapping() {
-        if (this.indicesConfig.getMapping() != null) {
-            try {
-                PutMappingRequest request = new PutMappingRequest(this.indicesConfig.getName());
-                request.source(this.indicesConfig.getMapping(), XContentType.JSON);
+        for (Map.Entry<String, IndicesConfig> index : this.indicesConfigs.entrySet()) {
+            if (index.getValue().getMappingContent() != null) {
+                try {
+                    PutMappingRequest request = new PutMappingRequest(index.getValue().getIndex());
+                    request.source(index.getValue().getMappingContent(), XContentType.JSON);
 
-                client.indices().putMapping(request, RequestOptions.DEFAULT);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                    client.indices().putMapping(request, RequestOptions.DEFAULT);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }

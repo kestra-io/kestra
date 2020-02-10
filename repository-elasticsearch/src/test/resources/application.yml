@@ -7,12 +7,19 @@ kestra:
 
   elasticsearch:
     indices:
-      org-kestra-core-models-flows-flow:
-        name: "kestra_flows"
+      flows:
+        index: "kestra_flows"
+        cls: org.kestra.core.models.flows.Flow
+        mapping-file: flow
         settings: |
           {
             "index.number_of_shards": 10
           }
-
-      org-kestra-core-models-executions-execution:
-        name: "kestra_executions"
+      flows-revisions:
+        index: "kestra_flows_revisions"
+        cls: org.kestra.core.models.flows.Flow
+        mapping-file: flow
+      executions:
+        index: "kestra_executions"
+        cls: org.kestra.core.models.executions.Execution
+        mapping-file: execution

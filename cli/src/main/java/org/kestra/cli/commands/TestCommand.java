@@ -15,14 +15,16 @@ import org.kestra.core.runners.RunnerUtils;
 import org.kestra.runner.memory.MemoryRunner;
 import picocli.CommandLine;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureRandom;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import javax.inject.Inject;
 
 @CommandLine.Command(
     name = "test",
@@ -34,7 +36,11 @@ public class TestCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0", description = "the flow file to test")
     private Path file;
 
-    @CommandLine.Parameters(index = "1..*", description = "the inputs to pass as key pair value")
+    @CommandLine.Parameters(
+        index = "1..*",
+        description = "the inputs to pass as key pair value separated by space, " +
+            "for input type file, you need to pass an absolute path."
+    )
     private List<String> inputs = new ArrayList<>();
 
     @CommandLine.Spec
@@ -43,24 +49,28 @@ public class TestCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
+    private static final SecureRandom random = new SecureRandom();
+
     public TestCommand() {
         super(false);
     }
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
-        try {
-            Path tempDirectory = Files.createTempDirectory(TestCommand.class.getSimpleName());
+        return ImmutableMap.of(
+            "kestra.repository.type", "memory",
+            "kestra.queue.type", "memory",
+            "kestra.storage.type", "local",
+            "kestra.storage.local.base-path", generateTempDir().toAbsolutePath().toString()
+        );
+    }
 
-            return ImmutableMap.of(
-                "kestra.repository.type", "memory",
-                "kestra.queue.type", "memory",
-                "kestra.storage.type", "local",
-                "kestra.storage.local.base-path", tempDirectory.toAbsolutePath().toString()
-            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private static Path generateTempDir() {
+        return Path.of(
+            System.getProperty("java.io.tmpdir"),
+            TestCommand.class.getSimpleName(),
+            String.valueOf(random.nextLong())
+        );
     }
 
     @Override

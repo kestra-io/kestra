@@ -125,8 +125,6 @@ public class Worker implements Runnable {
             state = State.Type.FAILED;
         }
 
-        System.out.println(runContext.logs());
-
         // attempt
         TaskRunAttempt taskRunAttempt = builder
             .logs(runContext.logs())

@@ -270,11 +270,25 @@ public class RunContext {
         throw new IllegalArgumentException("Invalid scheme for uri '" + uri + "'");
     }
 
-    public StorageObject putFile(File file) throws IOException {
+    /**
+     * Put the temporary file on storage and delete it after.
+     *
+     * @param file the temporary file to upload to storage
+     * @return the {@code StorageObject} created
+     * @throws IOException If the temporary file can't be read
+     */
+    public StorageObject putTempFile(File file) throws IOException {
         URI uri = URI.create(this.storageOutputPrefix.toString());
         URI resolve = uri.resolve(uri.getPath() + "/" + file.getName());
 
-        return this.storageInterface.put(resolve, new FileInputStream(file));
+        StorageObject put = this.storageInterface.put(resolve, new FileInputStream(file));
+
+        boolean delete = file.delete();
+        if (!delete) {
+            runContextLogger.logger(RunContext.class).warn("Failed to delete temporary file");
+        }
+
+        return put;
     }
 
     public List<AbstractMetricEntry<?>> metrics() {

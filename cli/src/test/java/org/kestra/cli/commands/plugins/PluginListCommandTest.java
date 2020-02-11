@@ -32,6 +32,7 @@ class PluginListCommandTest {
     @Test
     void run() throws IOException, URISyntaxException {
         Path pluginsPath = Files.createTempDirectory(PluginListCommandTest.class.getSimpleName());
+        pluginsPath.toFile().deleteOnExit();
 
         FileUtils.copyFile(
             new File(Objects.requireNonNull(PluginListCommandTest.class.getClassLoader()

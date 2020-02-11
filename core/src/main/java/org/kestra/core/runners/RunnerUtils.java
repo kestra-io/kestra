@@ -66,6 +66,8 @@ public class RunnerUtils {
                 }
 
                 StorageObject from = storageInterface.from(flow, execution, file.getFilename(), tempFile);
+                //noinspection ResultOfMethodCallIgnored
+                tempFile.delete();
 
                 return new AbstractMap.SimpleEntry<>(
                     file.getFilename(),

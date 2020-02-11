@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.kestra.cli.contexts.KestraClassLoader;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +26,7 @@ class PluginInstallCommandTest {
     @Test
     void run() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
+        pluginsPath.toFile().deleteOnExit();
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "org.kestra.task.notifications:task-notifications:0.1.0"};

@@ -103,13 +103,14 @@ public class Worker implements Runnable {
     }
 
     private WorkerTask runAttempt(WorkerTask workerTask) {
-        Logger logger = workerTask.logger();
         RunnableTask<?> task = (RunnableTask<?>) workerTask.getTask();
         State.Type state;
 
         RunContext runContext = workerTask
             .getRunContext()
             .forWorker(this.applicationContext, workerTask.getTaskRun());
+
+        Logger logger = runContext.logger(workerTask.getTask().getClass());
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new State());
@@ -120,9 +121,11 @@ public class Worker implements Runnable {
             output = task.run(runContext);
             state = State.Type.SUCCESS;
         } catch (Exception e) {
-            logger.error("Failed tasks: " + e.getMessage(), e);
+            logger.error(e.getMessage(), e);
             state = State.Type.FAILED;
         }
+
+        System.out.println(runContext.logs());
 
         // attempt
         TaskRunAttempt taskRunAttempt = builder

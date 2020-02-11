@@ -45,9 +45,6 @@ export default {
         };
     },
     created() {
-        if (!this.execution) {
-            this.$store.dispatch("execution/loadExecution", this.$route.params);
-        }
         this.$store
             .dispatch("execution/followExecution", this.$route.params)
             .then(sse => {

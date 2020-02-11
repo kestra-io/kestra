@@ -46,6 +46,7 @@ export default {
           });
           this.$store.commit('execution/setExecution', response.data);
           this.$router.push({name: 'execution', params: response.data});
+          this.$emit('restart')
         })
     }
   },

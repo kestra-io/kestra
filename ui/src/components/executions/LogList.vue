@@ -34,7 +34,7 @@
 
                 <!-- Task id -->
                 <div class="task-id flex-grow-1">
-                  <span>{{taskItem.taskId}}</span>
+                  <span>{{taskItem.taskId | ellipsis(30)}}</span>
                 </div>
 
                 <!-- Dropdown menu with actions -->

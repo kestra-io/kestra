@@ -60,8 +60,7 @@ export default {
 .menu-not-collapsed {
     transition: all 0.3s;
     left: $menu-width;
-    width: calc(100% - $menu-width);
-
+    width: calc(100% - #{$menu-width});
 }
 
 .top-line {

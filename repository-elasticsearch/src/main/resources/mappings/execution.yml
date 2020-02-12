@@ -42,6 +42,11 @@ properties:
         fields:
           keyword:
             type: keyword
+      namespace:
+        type: text
+        fields:
+          keyword:
+            type: keyword
       flowId:
         type: text
         fields:

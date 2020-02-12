@@ -88,6 +88,7 @@ abstract public class TestsUtils {
         return TaskRun.builder()
             .id(FriendlyId.createFriendlyId())
             .executionId(execution.getId())
+            .namespace(execution.getNamespace())
             .flowId(execution.getFlowId())
             .taskId(task.getId())
             .state(new State())

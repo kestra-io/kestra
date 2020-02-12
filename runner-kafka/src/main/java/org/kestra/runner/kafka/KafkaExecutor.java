@@ -13,6 +13,7 @@ import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
@@ -41,9 +42,10 @@ public class KafkaExecutor extends AbstractExecutor {
         ApplicationContext applicationContext,
         FlowRepositoryInterface flowRepository,
         KafkaStreamService kafkaStreamService,
-        KafkaAdminService kafkaAdminService
+        KafkaAdminService kafkaAdminService,
+        MetricRegistry metricRegistry
     ) {
-        super(applicationContext);
+        super(applicationContext, metricRegistry);
         this.flowRepository = flowRepository;
         this.kafkaStreamService = kafkaStreamService;
         this.kafkaAdminService = kafkaAdminService;
@@ -54,8 +56,14 @@ public class KafkaExecutor extends AbstractExecutor {
         KafkaAdminService kafkaAdminService;
         FlowRepositoryInterface flowRepository;
 
-        public ExecutionState(ApplicationContext applicationContext, KafkaStreamService kafkaStreamService, KafkaAdminService kafkaAdminService, FlowRepositoryInterface flowRepository) {
-            super(applicationContext);
+        public ExecutionState(
+            ApplicationContext applicationContext,
+            KafkaStreamService kafkaStreamService,
+            KafkaAdminService kafkaAdminService,
+            FlowRepositoryInterface flowRepository,
+            MetricRegistry metricRegistry
+        ) {
+            super(applicationContext, metricRegistry);
             this.kafkaStreamService = kafkaStreamService;
             this.kafkaAdminService = kafkaAdminService;
             this.flowRepository = flowRepository;
@@ -286,8 +294,8 @@ public class KafkaExecutor extends AbstractExecutor {
             this.applicationContext,
             this.kafkaStreamService,
             this.kafkaAdminService,
-            this.flowRepository
+            this.flowRepository,
+            this.metricRegistry
         ).run();
-
     }
 }

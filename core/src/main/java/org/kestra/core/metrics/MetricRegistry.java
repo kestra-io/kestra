@@ -7,18 +7,33 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.runners.WorkerTask;
+import org.kestra.core.runners.WorkerTaskResult;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class MetricRegistry {
-    public final static String TASK_ID = "task_id";
-    public final static String TASK_TYPE = "task_type";
-    public final static String FLOW_ID = "flow_id";
-    public final static String NAMESPACE_ID = "namespace_id";
-    public final static String TASKRUN_VALUE = "taskrun_id";
-    public final static String STATE = "state";
+    public final static String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
+    public final static String METRIC_WORKER_STARTED_COUNT = "worker.started.count";
+    public final static String METRIC_WORKER_RETRYED_COUNT = "worker.retryed.count";
+    public final static String METRIC_WORKER_ENDED_COUNT = "worker.ended.count";
+
+    public final static String KESTRA_EXECUTOR_TASKRUN_NEXT_COUNT = "executor.taskrun.next.count";
+    public final static String KESTRA_EXECUTOR_WORKERTASKRESULT_COUNT = "executor.workertaskresult.count";
+    public final static String KESTRA_EXECUTOR_EXECUTION_STARTED_COUNT = "executor.execution.started.count";
+    public final static String KESTRA_EXECUTOR_EXECUTION_END_COUNT = "executor.execution.end.count";
+    public final static String METRIC_EXECUTOR_EXECUTION_DURATION = "executor.execution.duration";
+
+    public final static String METRIC_INDEXER_COUNT = "indexer.count";
+    public final static String METRIC_INDEXER_DURATION = "indexer.duration";
+
+    public final static String TAG_TASK_ID = "task_id";
+    public final static String TAG_TASK_TYPE = "task_type";
+    public final static String TAG_FLOW_ID = "flow_id";
+    public final static String TAG_NAMESPACE_ID = "namespace_id";
+    public final static String TAG_STATE = "state";
+    public final static String TAG_ATTEMPT_COUNT = "attempt_count";
 
     @Inject
     private MeterRegistry meterRegistry;
@@ -49,7 +64,7 @@ public class MetricRegistry {
      */
     @Nullable
     public <T extends Number> T gauge(String name, T number, String... tags) {
-        return this.meterRegistry.<T>gauge(metricName(name), Tags.of(tags), number);
+        return this.meterRegistry.gauge(metricName(name), Tags.of(tags), number);
     }
 
     /**
@@ -85,7 +100,8 @@ public class MetricRegistry {
     }
 
     /**
-     * Return tags for current {@link WorkerTask}
+     * Return tags for current {@link WorkerTask}.
+     * We don't include current state since it will breakup the values per state and it's make no sense.
      *
      * @param workerTask the current WorkerTask
      * @return tags to applied to metrics
@@ -96,8 +112,26 @@ public class MetricRegistry {
                 this.tags(workerTask.getTask()),
                 tags
             ),
-            FLOW_ID, workerTask.getTaskRun().getFlowId(),
-            STATE, workerTask.getTaskRun().getState().getCurrent().name()
+            TAG_NAMESPACE_ID, workerTask.getTaskRun().getNamespace(),
+            TAG_FLOW_ID, workerTask.getTaskRun().getFlowId()
+        );
+    }
+
+    /**
+     * Return tags for current {@link WorkerTaskResult}
+     *
+     * @param workerTaskResult the current WorkerTaskResult
+     * @return tags to applied to metrics
+     */
+    public String[] tags(WorkerTaskResult workerTaskResult, String... tags) {
+        return ArrayUtils.addAll(
+            ArrayUtils.addAll(
+                this.tags(workerTaskResult.getTask()),
+                tags
+            ),
+            TAG_NAMESPACE_ID, workerTaskResult.getTaskRun().getNamespace(),
+            TAG_FLOW_ID, workerTaskResult.getTaskRun().getFlowId(),
+            TAG_STATE, workerTaskResult.getTaskRun().getState().getCurrent().name()
         );
     }
 
@@ -109,8 +143,8 @@ public class MetricRegistry {
      */
     public String[] tags(Task task) {
         return new String[]{
-            TASK_ID, task.getId(),
-            TASK_TYPE, task.getType(),
+            TAG_TASK_ID, task.getId(),
+            TAG_TASK_TYPE, task.getType(),
         };
     }
 
@@ -122,9 +156,9 @@ public class MetricRegistry {
      */
     public String[] tags(Execution execution) {
         return new String[]{
-            FLOW_ID, execution.getFlowId(),
-            NAMESPACE_ID, execution.getNamespace(),
-            STATE, execution.getState().getCurrent().name(),
+            TAG_FLOW_ID, execution.getFlowId(),
+            TAG_NAMESPACE_ID, execution.getNamespace(),
+            TAG_STATE, execution.getState().getCurrent().name(),
         };
     }
 }

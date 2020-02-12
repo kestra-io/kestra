@@ -9,7 +9,7 @@
                 :title="tab.title"
             >
                 <b-card-text>
-                    <div :is="tab.tab" />
+                    <div :is="tab.tab" @follow="follow" />
                 </b-card-text>
             </b-tab>
         </b-tabs>
@@ -45,16 +45,31 @@ export default {
         };
     },
     created() {
-        this.$store
-            .dispatch("execution/followExecution", this.$route.params)
-            .then(sse => {
-                this.sse = sse;
-                sse.subscribe("", data => {
-                    this.$store.commit("execution/setExecution", data);
-                });
-            });
+        if (!this.execution) {
+            this.$store.dispatch("execution/loadExecution", this.$route.params);
+        }
+        this.follow();
     },
     methods: {
+        follow() {
+            this.$store
+                .dispatch("execution/followExecution", this.$route.params)
+                .then(sse => {
+                    this.sse = sse;
+                    sse.subscribe("", (data, event) => {
+                        this.$store.commit("execution/setExecution", data);
+                        if (event.lastEventId === "end") {
+                            this.closeSSE();
+                        }
+                    });
+                });
+        },
+        closeSSE() {
+            if (this.sse) {
+                this.sse.close();
+                this.sse = undefined;
+            }
+        },
         setTab(tab) {
             this.$store.commit("execution/setTask", undefined);
             this.$router.push({
@@ -130,7 +145,7 @@ export default {
         }
     },
     beforeDestroy() {
-        this.sse.close();
+        this.closeSSE();
         this.$store.commit("execution/setExecution", undefined);
     }
 };

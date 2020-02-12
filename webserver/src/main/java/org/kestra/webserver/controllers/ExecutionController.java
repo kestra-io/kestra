@@ -1,9 +1,7 @@
 package org.kestra.webserver.controllers;
 
 import io.micronaut.data.model.Pageable;
-import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
@@ -24,8 +22,8 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.RunnerUtils;
+import org.kestra.core.services.ExecutionService;
 import org.kestra.core.storages.StorageInterface;
-import org.kestra.core.storages.StorageObject;
 import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 import org.reactivestreams.Publisher;
@@ -33,7 +31,6 @@ import org.reactivestreams.Publisher;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -60,6 +57,9 @@ public class ExecutionController {
     private StorageInterface storageInterface;
 
     @Inject
+    private ExecutionService executionService;
+
+    @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
 
@@ -69,7 +69,7 @@ public class ExecutionController {
         @QueryValue(value = "page", defaultValue = "1") int page,
         @QueryValue(value = "size", defaultValue = "10") int size,
         @Nullable @QueryValue(value = "sort") List<String> sort
-    )  throws HttpStatusException {
+    ) throws HttpStatusException {
         return PagedResults.of(
             executionRepository
                 .find(query, PageableUtils.from(page, size, sort))
@@ -89,6 +89,7 @@ public class ExecutionController {
             .map(Maybe::just)
             .orElse(Maybe.empty());
     }
+
 
     /**
      * Find and returns all executions for a specific namespace and flow identifier
@@ -110,6 +111,7 @@ public class ExecutionController {
                 .findByFlowId(namespace, flowId, Pageable.from(page, size))
         );
     }
+
 
     /**
      * Trigger an new execution for current flow
@@ -164,6 +166,27 @@ public class ExecutionController {
         );
     }
 
+
+    /**
+     * Create a new execution from an old one and start it from a specified ("reference") task id
+     *
+     * @param executionId the origin execution id to clone
+     * @param taskId      the reference task id
+     * @return
+     */
+    @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
+    public Maybe<Execution> restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) {
+        Optional<Execution> execution = executionRepository.findById(executionId);
+        if (execution.isEmpty()) {
+            return Maybe.empty();
+        }
+
+        final Execution newExecution = executionService.getRestartExecution(execution.get(), taskId);
+        executionQueue.emit(newExecution);
+
+        return Maybe.just(newExecution);
+    }
+
     /**
      * Trigger an new execution for current flow and follow execution
      *
@@ -171,14 +194,14 @@ public class ExecutionController {
      * @return execution sse event
      */
     @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_JSON)
-    public Flowable<Event<Execution>> triggerAndFollow(String executionId) {
+    public Flowable<Event<Execution>> follow(String executionId) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isPresent()) {
             Flow flow = flowRepository.findByExecution(execution.get());
             if (execution.get().isTerminatedWithListeners(flow)) {
-                return Flowable.just(Event.of(execution.get()).id(Execution.class.getSimpleName()));
+                return Flowable.just(Event.of(execution.get()).id("end"));
             }
         }
 
@@ -193,9 +216,10 @@ public class ExecutionController {
                             flow[0] = flowRepository.findByExecution(current);
                         }
 
-                        emitter.onNext(Event.of(current).id(Execution.class.getSimpleName()));
+                        emitter.onNext(Event.of(current).id("progress"));
 
                         if (current.isTerminatedWithListeners(flow[0])) {
+                            emitter.onNext(Event.of(current).id("end"));
                             emitter.onComplete();
                         }
                     }

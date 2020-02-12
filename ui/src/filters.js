@@ -5,7 +5,7 @@ Vue.filter('id', value => value ? value.toString().substr(0, 8) : '');
 
 Vue.filter('humanizeDuration', (value, options) => {
     options = options || { maxDecimalPoints: 2 }
-    options.language = localStorage.getItem('lang')
+    options.language = localStorage.getItem('lang') || 'en'
     return humanizeDuration(value * 1000, options)
 });
 
@@ -24,3 +24,4 @@ Vue.filter('date', (dateString, format) => {
     }
     return Vue.moment(dateString).format(f)
 });
+Vue.filter('ellipsis', (text, len) => text.length > len ? text.substr(0, len) + '...' : text.substr(0, len))

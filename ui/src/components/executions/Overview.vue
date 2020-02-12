@@ -2,11 +2,20 @@
     <div v-if="execution">
         <b-row class="mb-3 text-right">
             <b-col>
+                <restart :execution="execution" @restart="restart" />
+
                 <status :status="execution.state.current" />
             </b-col>
         </b-row>
-        <h2>{{$t('execution') | cap}}</h2>
-        <b-table responsive="xl" striped hover bordered :items="items" class="mb-0"></b-table>
+        <b-table responsive="xl" striped hover bordered :items="items" class="mb-0">
+            <template v-slot:cell(value)="row">
+                <router-link
+                    v-if="row.item.link"
+                    :to="{name: 'execution', params: row.item.link}"
+                >{{row.item.value}}</router-link>
+                <span v-else>{{row.item.value}}</span>
+            </template>
+        </b-table>
         <div v-if="execution.inputs">
             <hr />
             <h2>{{$t('inputs') | cap}}</h2>
@@ -39,16 +48,31 @@ import { mapState } from "vuex";
 import Status from "../Status";
 import humanizeDuration from "humanize-duration";
 import { apiRoot } from "../../http";
+import Restart from "./Restart";
 
 const ts = date => new Date(date).getTime();
 
 export default {
     components: {
-        Status
+        Status,
+        Restart
     },
     methods: {
         itemUrl(value) {
             return `${apiRoot}executions/${this.execution.id}/file?filePath=${value.uri}&type=${value.type}`;
+        },
+        restart() {
+            this.$emit("follow");
+        }
+    },
+    watch: {
+        $route() {
+            if (this.execution.id !== this.$route.params.id) {
+                this.$store.dispatch(
+                    "execution/loadExecution",
+                    this.$route.params
+                );
+            }
         }
     },
     computed: {
@@ -76,14 +100,33 @@ export default {
             const stepCount = this.execution.taskRunList
                 ? this.execution.taskRunList.length
                 : 0;
-            return [
+
+            let ret = [
                 { key: this.$t("namespace"), value: this.execution.namespace },
                 { key: this.$t("flow"), value: this.execution.flowId },
+                {
+                    key: this.$t("revision"),
+                    value: this.execution.flowRevision
+                },
                 { key: this.$t("created date"), value: startTs },
                 { key: this.$t("updated date"), value: stopTs },
                 { key: this.$t("duration"), value: humanDuration },
                 { key: this.$t("steps"), value: stepCount }
             ];
+
+            if (this.execution.parentId) {
+                ret.push({
+                    key: this.$t("parent execution"),
+                    value: this.execution.parentId,
+                    link: {
+                        flowId: this.execution.flowId,
+                        id: this.execution.parentId,
+                        namespace: this.execution.namespace
+                    }
+                });
+            }
+
+            return ret;
         },
         inputs() {
             const inputs = [];

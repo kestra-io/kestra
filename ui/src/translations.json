@@ -60,13 +60,15 @@
         "start datetime": "start datetime",
         "end datetime": "end datetime",
         "restart": "restart",
+        "restarted": "Execution is restarted",
         "toggle output": "Toggle output",
         "outputs": "outputs",
         "output": "output",
         "attempt": "attempt",
         "toggle output display": "toggle output display",
         "name": "name",
-        "value": "value"
+        "value": "value",
+        "parent execution": "parent execution"
     },
     "fr": {
         "id": "identifiant",
@@ -128,12 +130,14 @@
         "start datetime": "date de départ",
         "end datetime": "date de fin",
         "restart": "relancer",
+        "restarted": "L'execution est relancée",
         "toggle output": "Voir la sortie",
         "attempt": "essai",
         "outputs": "sorties",
         "output": "sortie",
         "toggle output display": "permutter l'affichage de sortie",
         "name": "nom",
-        "value": "valeur"
+        "value": "valeur",
+        "parent execution": "execution parente"
     }
 }

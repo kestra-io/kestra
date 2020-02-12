@@ -34,7 +34,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -191,29 +191,43 @@ public class RunnerUtils {
 
         Execution execution = this.newExecution(flow, inputs);
 
-        return this.awaitExecution(
-            flow,
-            execution,
-            duration
-        );
+        return this.awaitExecution(isTerminatedExecution(execution, flow), () -> {
+            this.executionQueue.emit(execution);
+        }, duration);
     }
 
-    public Execution awaitExecution(Flow flow, Execution execution,  Duration duration) throws TimeoutException {
+    private Execution awaitExecution(Predicate<Execution> predicate, Runnable executionEmitter, Duration duration) throws TimeoutException {
         AtomicReference<Execution> receive = new AtomicReference<>();
 
         Runnable cancel = this.executionQueue.receive(current -> {
-            if (current.getId().equals(execution.getId()) && current.isTerminatedWithListeners(flow)) {
+            if (predicate.test(current)) {
                 receive.set(current);
             }
         });
 
-        this.executionQueue.emit(execution);
+        executionEmitter.run();
 
         Await.until(() -> receive.get() != null, null, duration);
 
         cancel.run();
 
         return receive.get();
+    }
+
+    public Execution awaitChildExecution(Flow flow, Execution parentExecution, Runnable executionEmitter, Duration duration) throws TimeoutException {
+        return this.awaitExecution(isTerminatedChildExecution(parentExecution, flow), executionEmitter, duration);
+    }
+
+    public Execution awaitExecution(Flow flow, Execution execution, Runnable executionEmitter, Duration duration) throws TimeoutException {
+        return this.awaitExecution(isTerminatedExecution(execution, flow), executionEmitter, duration);
+    }
+
+    private Predicate<Execution> isTerminatedExecution(Execution execution, Flow flow) {
+        return e -> e.getId().equals(execution.getId()) && e.isTerminatedWithListeners(flow);
+    }
+
+    private Predicate<Execution> isTerminatedChildExecution(Execution parentExecution, Flow flow) {
+        return e -> e.getParentId().equals(parentExecution.getId()) && e.isTerminatedWithListeners(flow);
     }
 
     public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) {

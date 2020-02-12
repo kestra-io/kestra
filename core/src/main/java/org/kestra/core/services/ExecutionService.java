@@ -2,10 +2,14 @@ package org.kestra.core.services;
 
 import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
+import org.kestra.core.models.executions.metrics.ExecutionMetrics;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.repositories.ArrayListTotal;
+import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.RunContext;
 
@@ -24,6 +28,9 @@ public class ExecutionService {
 
     @Inject
     FlowRepositoryInterface flowRepositoryInterface;
+
+    @Inject
+    ExecutionRepositoryInterface executionRepositoryInterface;
 
     /**
      * Returns an execution that can be run from a specific task.
@@ -255,4 +262,13 @@ public class ExecutionService {
         return toRestart;
     }
 
+
+    /**
+     * @param query
+     * @param pageable
+     * @return
+     */
+    public ArrayListTotal<ExecutionMetrics> findAndAggregate(String query, Pageable pageable) {
+        return executionRepositoryInterface.findAndAggregate(query, pageable);
+    }
 }

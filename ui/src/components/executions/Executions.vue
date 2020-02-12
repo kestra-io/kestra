@@ -31,15 +31,11 @@
                         v-slot:cell(state.endDate)="row"
                     >{{row.item.state.endDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
                     <template v-slot:cell(state.current)="row">
-<<<<<<< HEAD
-                        <status class="status" size="sm" :status="row.item.state.current" />
-=======
                         <status
                             @click.native="addStatusToQuery(row.item.state.current)"
-                            class="status"
+                            class="status sm"
                             :status="row.item.state.current"
                         />
->>>>>>> feat(ui): allow select state by clicking it in executions
                     </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link

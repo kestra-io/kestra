@@ -1,5 +1,5 @@
 package org.kestra.core;
 
 public class Helpers {
-    public static long FLOWS_COUNT = 19;
+    public static long FLOWS_COUNT = 23;
 }

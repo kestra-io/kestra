@@ -1,6 +1,9 @@
 package org.kestra.core.models.flows;
 
-import com.google.common.base.Objects;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
@@ -10,28 +13,30 @@ import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.runners.RunContext;
+import org.kestra.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @Value
 @Builder
 public class Flow {
+    private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
+        .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
+            @Override
+            public boolean hasIgnoreMarker(final AnnotatedMember m) {
+                List<String> exclusions = Collections.singletonList("revision");
+                return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
+            }
+        });
+
     @NotNull
     private String id;
-
-    public String uid() {
-        return String.join("_", Arrays.asList(
-            this.getNamespace(),
-            this.getId(),
-            this.getRevision() != null ? String.valueOf(this.getRevision()) : "-1"
-        ));
-    }
 
     @NotNull
     private String namespace;
@@ -104,13 +109,10 @@ public class Flow {
     }
 
     public boolean equalsWithoutRevision(Flow o) {
-        if (this == o) return true;
-
-        return Objects.equal(getId(), o.getId()) &&
-            Objects.equal(getNamespace(), o.getNamespace()) &&
-            Objects.equal(getInputs(), o.getInputs()) &&
-            Objects.equal(getTasks(), o.getTasks()) &&
-            Objects.equal(getErrors(), o.getErrors()) &&
-            Objects.equal(getTriggers(), o.getTriggers());
+        try {
+            return jsonMapper.writeValueAsString(this).equals(jsonMapper.writeValueAsString(o));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

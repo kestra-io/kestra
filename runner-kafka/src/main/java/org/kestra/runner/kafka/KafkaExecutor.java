@@ -74,9 +74,7 @@ public class KafkaExecutor extends AbstractExecutor {
                     Consumed.with(Serdes.String(), JsonSerde.of(Execution.class))
                 )
                 .mapValues((readOnlyKey, execution) -> {
-                    Flow flow = this.flowRepository
-                        .findByExecution(execution)
-                        .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
+                    Flow flow = this.flowRepository.findByExecution(execution);
 
                     return new ExecutionWithFlow(flow, execution);
                 });

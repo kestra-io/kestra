@@ -1,0 +1,37 @@
+id: restart_with_sequential
+namespace: org.kestra.tests
+
+tasks:
+  - id: a-seq
+    type: org.kestra.core.tasks.flows.Sequential
+    tasks:
+      - id: a-1
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}} > {{taskrun.startDate}}"
+      - id: a-2
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}} > {{taskrun.id}}"
+      - id: a-3-seq
+        type: org.kestra.core.tasks.flows.Sequential
+        tasks:
+          - id: a-3-1
+            type: org.kestra.core.tasks.debugs.Return
+            format: "{{task.id}} > {{taskrun.id}}"
+          - id: a-3-2.seq
+            type: org.kestra.core.tasks.flows.Sequential
+            tasks:
+              - id: a-3-2.1
+                type: org.kestra.core.tasks.debugs.Return
+                format: "{{task.id}} > {{taskrun.startDate}}"
+              - id: a-3-2.2.end
+                type: org.kestra.core.tasks.debugs.Return
+                format: "{{task.id}} > {{taskrun.id}}"
+          - id: a-3-3.end
+            type: org.kestra.core.tasks.debugs.Return
+            format: "{{task.id}} > {{taskrun.id}}"
+      - id: a-4.end
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}} > {{taskrun.startDate}}"
+  - id: b.end
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

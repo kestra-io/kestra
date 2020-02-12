@@ -1,5 +1,6 @@
 package org.kestra.core.models.tasks;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
@@ -42,7 +43,7 @@ abstract public class Task {
             return Optional.of(this);
         }
 
-        if (this instanceof FlowableTask) {
+        if (this.isFlowable()) {
             Optional<Task> childs = ((FlowableTask<?>) this).childTasks(runContext, taskRun)
                 .stream()
                 .map(resolvedTask -> resolvedTask.getTask().findById(id, runContext, taskRun))
@@ -62,7 +63,7 @@ abstract public class Task {
                 .findFirst();
         }
 
-        if (this instanceof FlowableTask && ((FlowableTask<?>) this).getErrors() != null) {
+        if (this.isFlowable() && ((FlowableTask<?>) this).getErrors() != null) {
             Optional<Task> errorChilds = ((FlowableTask<?>) this).getErrors()
                 .stream()
                 .map(task -> task.findById(id, runContext, taskRun))
@@ -76,5 +77,10 @@ abstract public class Task {
         }
 
         return Optional.empty();
+    }
+
+    @JsonIgnore
+    public boolean isFlowable() {
+        return this instanceof FlowableTask;
     }
 }

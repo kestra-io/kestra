@@ -56,7 +56,8 @@ export default {
             for (const task of this.execution.taskRunList || []) {
                 for (const key in task.outputs) {
                     const item = { key: task.taskId, value: task.outputs[key], task: task.id };
-                    if (task.outputs[key].startsWith("kestra:///")) {
+                    if (typeof task.outputs[key] === "string" && task.outputs[key].startsWith &&
+                        task.outputs[key].startsWith("kestra:///")) {
                         item.download = true;
                     }
                     outputs.push(item);

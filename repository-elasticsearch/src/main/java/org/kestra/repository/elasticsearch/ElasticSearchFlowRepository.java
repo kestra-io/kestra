@@ -22,6 +22,7 @@ import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,9 +30,27 @@ import java.util.stream.Collectors;
 @Singleton
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository<Flow> implements FlowRepositoryInterface {
+    private static final String INDEX_NAME = "flows";
+    private static final String REVISIONS_NAME = "flows-revisions";
+
     @Inject
     public ElasticSearchFlowRepository(RestHighLevelClient client, List<IndicesConfig> indicesConfigs) {
         super(client, indicesConfigs, Flow.class);
+    }
+
+    private static String flowId(Flow flow) {
+        return String.join("_", Arrays.asList(
+            flow.getNamespace(),
+            flow.getId()
+        ));
+    }
+
+    private static String flowUid(Flow flow) {
+        return String.join("_", Arrays.asList(
+            flow.getNamespace(),
+            flow.getId(),
+            flow.getRevision() != null ? String.valueOf(flow.getRevision()) : "-1"
+        ));
     }
 
     @Override
@@ -48,7 +67,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             .sort(new FieldSortBuilder("revision").order(SortOrder.DESC))
             .size(1);
 
-        List<Flow> query = this.query(sourceBuilder);
+        List<Flow> query = this.query(REVISIONS_NAME, sourceBuilder);
 
         return query.size() > 0 ? Optional.of(query.get(0)) : Optional.empty();
     }
@@ -63,7 +82,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             .query(bool)
             .sort(new FieldSortBuilder("revision").order(SortOrder.ASC));
 
-        return this.scroll(sourceBuilder);
+        return this.scroll(REVISIONS_NAME, sourceBuilder);
     }
 
     @Override
@@ -71,7 +90,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(QueryBuilders.matchAllQuery());
 
-        return this.scroll(sourceBuilder);
+        return this.scroll(INDEX_NAME, sourceBuilder);
     }
 
     @Override
@@ -90,7 +109,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             );
         }
 
-        return this.query(sourceBuilder);
+        return this.query(INDEX_NAME, sourceBuilder);
     }
 
     @Override
@@ -108,14 +127,16 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             flow = flow.withRevision(1);
         }
 
-        this.putRequest(flow.uid(), flow);
+        this.putRequest(INDEX_NAME, flowId(flow), flow);
+        this.putRequest(REVISIONS_NAME, flowUid(flow), flow);
 
         return flow;
     }
 
     @Override
     public void delete(Flow flow) {
-        this.deleteRequest(flow.uid());
+        this.deleteRequest(INDEX_NAME, flowId(flow));
+        this.deleteRequest(REVISIONS_NAME, flowUid(flow));
     }
 
     @Override
@@ -134,7 +155,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             .query(prefixQuery)
             .aggregation(termsAggregationBuilder);
 
-        SearchRequest searchRequest = searchRequest(sourceBuilder, false);
+        SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
 
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);

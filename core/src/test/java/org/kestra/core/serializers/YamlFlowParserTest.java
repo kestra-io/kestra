@@ -50,6 +50,6 @@ class YamlFlowParserTest {
         Flow flow = TestsUtils.parse("flows/valids/minimal.yaml");
 
         String s = mapper.writeValueAsString(flow);
-        assertThat(s, is("{\"id\":\"minimal\",\"namespace\":\"org.kestra.tests\",\"tasks\":[{\"id\":\"date\",\"type\":\"org.kestra.core.tasks.debugs.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"));
+        assertThat(s, is("{\"id\":\"minimal\",\"namespace\":\"org.kestra.tests\",\"revision\":2,\"tasks\":[{\"id\":\"date\",\"type\":\"org.kestra.core.tasks.debugs.Return\",\"format\":\"{{taskrun.startDate}}\"}]}"));
     }
 }

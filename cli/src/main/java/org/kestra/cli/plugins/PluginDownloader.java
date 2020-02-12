@@ -28,6 +28,7 @@ import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -101,6 +102,7 @@ public class PluginDownloader {
                 localRepositoryPath = Files.createTempDirectory(this.getClass().getSimpleName().toLowerCase())
                     .toAbsolutePath()
                     .toString();
+                new File(localRepositoryPath).deleteOnExit();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

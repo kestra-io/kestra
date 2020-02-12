@@ -1,5 +1,6 @@
 id: minimal
 namespace: org.kestra.tests
+revision: 2
 
 tasks:
 - id: date

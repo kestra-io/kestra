@@ -52,6 +52,20 @@ public class TaskRun {
         );
     }
 
+    public TaskRun forChildExecution(String id, String executionId, String parentTaskRunId, State state) {
+        return TaskRun.builder()
+            .id(id)
+            .executionId(executionId)
+            .flowId(this.getFlowId())
+            .taskId(this.getTaskId())
+            .parentTaskRunId(parentTaskRunId)
+            .value(this.getValue())
+            .attempts(this.getAttempts())
+            .outputs(this.getOutputs())
+            .state(state)
+            .build();
+    }
+
     public static TaskRun of(Execution execution, ResolvedTask resolvedTask) {
         return TaskRun.builder()
             .id(FriendlyId.createFriendlyId())
@@ -72,7 +86,7 @@ public class TaskRun {
         return this
             .attempts
             .stream()
-            .reduce((a, b) ->  b)
+            .reduce((a, b) -> b)
             .orElse(null);
     }
 

@@ -4,8 +4,8 @@
             <template v-slot:navbar>
                 <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
                 <v-s />
-                <search-field @onSearch="onSearch" :fields="searchableFields" />
-                <date-range @onDate="onSearch"/>
+                <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
+                <date-range @onDate="onSearch" />
             </template>
             <template v-slot:table>
                 <b-table
@@ -31,7 +31,15 @@
                         v-slot:cell(state.endDate)="row"
                     >{{row.item.state.endDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
                     <template v-slot:cell(state.current)="row">
-                        <status class="status" :status="row.item.state.current" />
+<<<<<<< HEAD
+                        <status class="status" size="sm" :status="row.item.state.current" />
+=======
+                        <status
+                            @click.native="addStatusToQuery(row.item.state.current)"
+                            class="status"
+                            :status="row.item.state.current"
+                        />
+>>>>>>> feat(ui): allow select state by clicking it in executions
                     </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link
@@ -65,7 +73,14 @@ import DateRange from "../layout/DateRange";
 
 export default {
     mixins: [RouteContext, DataTableActions],
-    components: { Status, Eye, DataTable, SearchField, NamespaceSelector, DateRange },
+    components: {
+        Status,
+        Eye,
+        DataTable,
+        SearchField,
+        NamespaceSelector,
+        DateRange
+    },
     data() {
         return {
             dataType: "execution"
@@ -120,16 +135,23 @@ export default {
                 }
             ];
         },
-        executionQuery () {
-            if (this.$route.name === 'flow') {
-                const filter = `flowId:${this.$route.params.id}`
-                return this.query === '*' ? filter : `${this.query} AND ${filter}`
+        executionQuery() {
+            if (this.$route.name === "flow") {
+                const filter = `flowId:${this.$route.params.id}`;
+                return this.query === "*"
+                    ? filter
+                    : `${this.query} AND ${filter}`;
             } else {
-                return this.query
+                return this.query;
             }
         }
     },
     methods: {
+        addStatusToQuery(status) {
+            const token = this.query === "*" ? status.toUpperCase() : `${this.$refs.searchField.search} AND ${status.toUpperCase()}`
+            this.$refs.searchField.search = token
+            this.$refs.searchField.onSearch()
+        },
         triggerExecution() {
             this.$store
                 .dispatch("execution/triggerExecution", this.$route.params)

@@ -10,8 +10,21 @@ import java.util.Optional;
 public interface FlowRepositoryInterface {
     Optional<Flow> findById(String namespace, String id, Optional<Integer> revision);
 
-    default Optional<Flow> findByExecution(Execution execution) {
-        return this.findById(execution.getNamespace(), execution.getFlowId(), Optional.of(execution.getFlowRevision()));
+    default Flow findByExecution(Execution execution) {
+        Optional<Flow> find = this.findById(
+            execution.getNamespace(),
+            execution.getFlowId(),
+            Optional.of(execution.getFlowRevision())
+        );
+
+        if (find.isEmpty()) {
+            throw new IllegalStateException("Unable to find flow '" + execution.getNamespace() + "." +
+                execution.getFlowId() + "' with revision " + execution.getFlowRevision() + " on execution " +
+                execution.getId()
+            );
+        } else {
+            return find.get();
+        }
     }
 
     default Optional<Flow> findById(String namespace, String id) {

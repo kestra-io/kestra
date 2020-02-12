@@ -12,6 +12,8 @@ properties:
     properties: {}
   namespace:
     type: keyword
+  parentId:
+    type: keyword
   state:
     properties:
       current:

@@ -47,9 +47,7 @@ public class MemoryExecutor extends AbstractExecutor {
     @Override
     public void run() {
         this.executionQueue.receive(MemoryExecutor.class, execution -> {
-            Flow flow = this.flowRepository
-                .findByExecution(execution)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid flow id '" + execution.getFlowId() + "'"));
+            Flow flow = this.flowRepository.findByExecution(execution);
 
             synchronized (lock) {
                 if (execution.isTerminatedWithListeners(flow)) {

@@ -21,6 +21,8 @@ import java.util.Optional;
 @Singleton
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepository<Execution> implements ExecutionRepositoryInterface {
+    private static final String INDEX_NAME = "executions";
+
     @Inject
     public ElasticSearchExecutionRepository(RestHighLevelClient client, List<IndicesConfig> indicesConfigs) {
         super(client, indicesConfigs, Execution.class);
@@ -28,7 +30,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
     @Override
     public Optional<Execution> findById(String id) {
-        return this.getRequest(id);
+        return this.getRequest(INDEX_NAME, id);
     }
 
     @Override
@@ -47,7 +49,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             );
         }
 
-        return this.query(sourceBuilder);
+        return this.query(INDEX_NAME, sourceBuilder);
     }
 
     @Override
@@ -69,12 +71,12 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             );
         }
 
-        return this.query(sourceBuilder);
+        return this.query(INDEX_NAME, sourceBuilder);
     }
 
     @Override
     public Execution save(Execution execution) {
-        this.putRequest(execution.getId(), execution);
+        this.putRequest(INDEX_NAME, execution.getId(), execution);
 
         return execution;
     }

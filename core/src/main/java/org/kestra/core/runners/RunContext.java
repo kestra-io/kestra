@@ -1,11 +1,5 @@
 package org.kestra.core.runners;
 
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.AppenderBase;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
@@ -23,13 +17,10 @@ import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.storages.StorageObject;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URI;
-import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,9 +34,8 @@ public class RunContext {
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
     private MetricRegistry meterRegistry;
-    private ContextAppender contextAppender;
-    private String loggerName;
-    private Logger logger;
+    private RunContextLogger runContextLogger;
+
 
     public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
         this.init(applicationContext);
@@ -63,7 +53,7 @@ public class RunContext {
 
         this.storageOutputPrefix = URI.create("");
         this.variables = variables;
-        this.loggerName = "flow.unitest";
+        this.runContextLogger = new RunContextLogger("flow.unitest");
     }
 
     private void init(ApplicationContext applicationContext) {
@@ -71,11 +61,12 @@ public class RunContext {
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
         this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
+        this.runContextLogger = new RunContextLogger();
     }
 
     private void init(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
         this.variables = this.variables(flow, task, execution, taskRun);
-        this.loggerName = "flow." + flow.getId() + (taskRun != null ? "." + taskRun.getTaskId() : "");
+        this.runContextLogger = new RunContextLogger("flow." + flow.getId() + (taskRun != null ? "." + taskRun.getTaskId() : ""));
         if (taskRun != null) {
             this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
         }
@@ -231,23 +222,6 @@ public class RunContext {
         return this;
     }
 
-    public org.slf4j.Logger logger(Class<?> cls) {
-        if (this.logger == null) {
-            LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-            this.logger = loggerContext.getLogger(this.loggerName != null ? loggerName : cls.getName());
-
-            this.contextAppender = new ContextAppender();
-            this.contextAppender.setContext(loggerContext);
-            this.contextAppender.start();
-
-            this.logger.addAppender(this.contextAppender);
-            this.logger.setLevel(Level.TRACE);
-            this.logger.setAdditive(true);
-        }
-
-        return this.logger;
-    }
-
     public String render(String inline) throws IOException {
         return variableRenderer.render(inline, this.variables);
     }
@@ -268,22 +242,12 @@ public class RunContext {
         );
     }
 
-    public List<LogEntry> logs() {
-        if (this.contextAppender == null) {
-            return new ArrayList<>();
-        }
+    public org.slf4j.Logger logger(Class<?> cls) {
+        return runContextLogger.logger(cls);
+    }
 
-        return this.contextAppender
-            .events
-            .stream()
-            .map(event -> LogEntry.builder()
-                .level(org.slf4j.event.Level.valueOf(event.getLevel().toString()))
-                .message(event.getFormattedMessage())
-                .timestamp(Instant.ofEpochMilli(event.getTimeStamp()))
-                .thread(event.getThreadName())
-                .build()
-            )
-            .collect(Collectors.toList());
+    public List<LogEntry> logs() {
+        return runContextLogger.logs();
     }
 
     public InputStream uriToInputStream(URI uri) throws FileNotFoundException {
@@ -306,11 +270,25 @@ public class RunContext {
         throw new IllegalArgumentException("Invalid scheme for uri '" + uri + "'");
     }
 
-    public StorageObject putFile(File file) throws IOException {
+    /**
+     * Put the temporary file on storage and delete it after.
+     *
+     * @param file the temporary file to upload to storage
+     * @return the {@code StorageObject} created
+     * @throws IOException If the temporary file can't be read
+     */
+    public StorageObject putTempFile(File file) throws IOException {
         URI uri = URI.create(this.storageOutputPrefix.toString());
         URI resolve = uri.resolve(uri.getPath() + "/" + file.getName());
 
-        return this.storageInterface.put(resolve, new FileInputStream(file));
+        StorageObject put = this.storageInterface.put(resolve, new FileInputStream(file));
+
+        boolean delete = file.delete();
+        if (!delete) {
+            runContextLogger.logger(RunContext.class).warn("Failed to delete temporary file");
+        }
+
+        return put;
     }
 
     public List<AbstractMetricEntry<?>> metrics() {
@@ -360,25 +338,5 @@ public class RunContext {
         values.add(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, clsName));
 
         return String.join(".", values);
-    }
-
-    public static class ContextAppender extends AppenderBase<ILoggingEvent> {
-        private final ConcurrentLinkedQueue<ILoggingEvent> events = new ConcurrentLinkedQueue<>();
-
-        @Override
-        public void start() {
-            super.start();
-        }
-
-        @Override
-        public void stop() {
-            super.stop();
-            events.clear();
-        }
-
-        @Override
-        protected void append(ILoggingEvent e) {
-            events.add(e);
-        }
     }
 }

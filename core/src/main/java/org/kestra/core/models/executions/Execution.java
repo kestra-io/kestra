@@ -40,6 +40,8 @@ public class Execution {
     @NotNull
     private State state;
 
+    private String parentId;
+
     public Execution withState(State.Type state) {
         return new Execution(
             this.id,
@@ -48,7 +50,8 @@ public class Execution {
             this.flowRevision,
             this.taskRunList,
             this.inputs,
-            this.state.withState(state)
+            this.state.withState(state),
+            this.parentId
         );
     }
 
@@ -62,7 +65,7 @@ public class Execution {
         );
 
         if (!b) {
-            throw new IllegalStateException("Can't replace taskRun '" +  taskRun.getId() + "' on execution'" +  this.getId() + "'");
+            throw new IllegalStateException("Can't replace taskRun '" + taskRun.getId() + "' on execution'" + this.getId() + "'");
         }
 
         return new Execution(
@@ -72,21 +75,29 @@ public class Execution {
             this.flowRevision,
             newTaskRunList,
             this.inputs,
-            this.state
+            this.state,
+            this.parentId
         );
     }
 
-    public TaskRun findTaskRunByTaskId(String id) {
-        Optional<TaskRun> find = this.taskRunList
+    public Execution childExecution(String childExecutionId, List<TaskRun> taskRunList, State state) {
+        return new Execution(
+            childExecutionId,
+            this.namespace,
+            this.flowId,
+            this.flowRevision,
+            taskRunList,
+            this.inputs,
+            state,
+            this.id
+        );
+    }
+
+    public List<TaskRun> findTaskRunsByTaskId(String id) {
+        return this.taskRunList
             .stream()
             .filter(taskRun -> taskRun.getTaskId().equals(id))
-            .findFirst();
-
-        if (find.isEmpty()) {
-            throw new IllegalArgumentException("Can't find taskrun with task id '" + id + "' on execution '" + this.id + "'");
-        }
-
-        return find.get();
+            .collect(Collectors.toList());
     }
 
     public TaskRun findTaskRunByTaskRunId(String id) {
@@ -118,7 +129,8 @@ public class Execution {
     /**
      * Determine if the current execution is on error &amp; normal tasks
      * Used only from the flow
-     * @param resolvedTasks normal tasks
+     *
+     * @param resolvedTasks  normal tasks
      * @param resolvedErrors errors tasks
      * @return the flow we need to follow
      */
@@ -128,13 +140,13 @@ public class Execution {
 
     /**
      * Determine if the current execution is on error &amp; normal tasks
-     *
+     * <p>
      * if the current have errors, return tasks from errors
      * if not, return the normal tasks
      *
-     * @param resolvedTasks normal tasks
+     * @param resolvedTasks  normal tasks
      * @param resolvedErrors errors tasks
-     * @param parentTaskRun the parent task
+     * @param parentTaskRun  the parent task
      * @return the flow we need to follow
      */
     public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks, List<ResolvedTask> resolvedErrors, TaskRun parentTaskRun) {

@@ -59,9 +59,8 @@ export default {
 }
 .menu-not-collapsed {
     transition: all 0.3s;
-    left: 350px;
-    width: calc(100% - 350px);
-
+    left: $menu-width;
+    width: calc(100% - #{$menu-width});
 }
 
 .top-line {

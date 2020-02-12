@@ -19,21 +19,23 @@ public class IndicesConfig {
     private final static ObjectMapper jsonMapper = JacksonMapper.ofJson();
     private final static TypeReference<Map<String, Object>> typeReference = new TypeReference<>() {};
 
-    String cls;
-
     String name;
+
+    Class<?> cls;
+
+    String index;
 
     String settings;
 
-    String mapping;
+    String mappingFile;
 
-    public IndicesConfig(@Parameter String cls) {
-        this.cls = cls;
+    public IndicesConfig(@Parameter String name) {
+        this.name = name;
     }
 
-    public String getMapping() {
+    public String getMappingContent() {
         URL url = Objects.requireNonNull(IndicesConfig.class.getClassLoader()
-            .getResource("mappings/" + this.getCls() + ".yml"));
+            .getResource("mappings/" + this.getMappingFile() + ".yml"));
 
         try {
             Map<String, Object> map = yamlMapper.readValue(url, typeReference);

@@ -26,8 +26,15 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(23));
 
-        TaskRun last = execution.findTaskRunByTaskId("2_return");
+        TaskRun last = execution.findTaskRunsByTaskId("2_return").get(0);
         TaskRun vars = execution.findTaskRunByTaskIdAndValue("1_2_1-return", Arrays.asList("s1", "a"));
         assertThat((String) last.getOutputs().get("value"), containsString((String) vars.getOutputs().get("value")));
+    }
+
+    @Test
+    void eachEmpty() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "each-empty");
+
+        assertThat(execution.getTaskRunList(), hasSize(2));
     }
 }

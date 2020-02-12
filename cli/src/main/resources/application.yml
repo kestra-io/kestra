@@ -73,10 +73,19 @@ kestra:
 
   elasticsearch:
     indices:
-      org-kestra-core-models-flows-flow:
-        name: "kestra_flows"
-      org-kestra-core-models-executions-execution:
-        name: "kestra_executions"
+      flows:
+        index: "kestra_flows"
+        cls: org.kestra.core.models.flows.Flow
+        mapping-file: flow
+      flows-revisions:
+        index: "kestra_flows_revisions"
+        cls: org.kestra.core.models.flows.Flow
+        mapping-file: flow
+      executions:
+        index: "kestra_executions"
+        cls: org.kestra.core.models.executions.Execution
+        mapping-file: execution
+
 
   plugins:
     repositories:

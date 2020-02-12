@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
+import org.kestra.core.models.executions.metrics.ExecutionMetrics;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueFactoryInterface;
@@ -428,7 +429,6 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                         .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                     Execution.class
                 );
-
                 assertThat(restartedExec, notNullValue());
                 assertThat(restartedExec.getId(), is(firstExecution.getId()));
                 assertThat(restartedExec.getParentId(), nullValue());
@@ -458,5 +458,33 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         // Errors tasks
         assertThat(finishedRestartedExecution.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(finishedRestartedExecution.getTaskRunList().get(5).getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+    @Test
+    @Disabled("This test can only be run against elastic search, not in memory mode")
+    void testAgg() throws TimeoutException {
+        // Run several execution
+        Execution full = runnerUtils.runOne(TESTS_FLOW_NS, "full");
+        Execution minimal = runnerUtils.runOne(TESTS_FLOW_NS, "minimal");
+        Execution logs = runnerUtils.runOne(TESTS_FLOW_NS, "logs");
+        Execution seqWithLocalErrors = runnerUtils.runOne(TESTS_FLOW_NS, "sequential-with-local-errors");
+        Execution seqWithGlobalErrors = runnerUtils.runOne(TESTS_FLOW_NS, "sequential-with-global-errors");
+
+        assertThat(full.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(minimal.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(logs.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(seqWithLocalErrors.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(seqWithGlobalErrors.getState().getCurrent(), is(State.Type.FAILED));
+
+        final String query = "namespace:org.kestra.tests";
+
+        PagedResults<Execution> aggFind = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/agg?q=" + query),
+            Argument.of(PagedResults.class, ExecutionMetrics.class)
+        );
+
+        assertThat(aggFind.getTotal(), greaterThanOrEqualTo(5L));
+
+
     }
 }

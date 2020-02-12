@@ -15,4 +15,5 @@ dependencies {
     testCompile project(':repository-memory')
     testCompile project(':runner-memory')
     testCompile project(':storage-local')
+    testCompile project(":repository-elasticsearch")
 }

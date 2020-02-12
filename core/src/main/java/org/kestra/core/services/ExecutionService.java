@@ -95,7 +95,7 @@ public class ExecutionService {
 
         final TaskRun taskRun = execution.getTaskRunList().get(taskRunIndex);
 
-        State state = null;
+        State state;
 
         if (taskRunIndex == referenceTaskRunIndex)
             // The current task run is the reference task run, its default state will be CREATED
@@ -118,7 +118,7 @@ public class ExecutionService {
      * @return a set containing the reference task run ancestors
      */
     private Set<String> getAncestors(final Execution execution, int referenceTaskRunIndex) throws IllegalArgumentException {
-        final Set ancestors = new HashSet();
+        final Set<String> ancestors = new HashSet<>();
 
         String nextAncestorId = null;
         int currentIndex = referenceTaskRunIndex;
@@ -156,7 +156,7 @@ public class ExecutionService {
         final Predicate<TaskRun> isNotFailed = taskRun -> !taskRun.getState().getCurrent().equals(State.Type.FAILED);
 
         // Extract the reference task run index
-        final Long refTaskRunIndex = execution
+        final long refTaskRunIndex = execution
             .getTaskRunList()
             .stream()
             .takeWhile(isNotFailed.and(isNotReferenceTask))
@@ -170,15 +170,15 @@ public class ExecutionService {
 
         // This map will be used to map old ids to new ids
         final Map<String, String> oldToNewIdsMap = new HashMap<>();
-        final Set<String> refTaskRunAncestors = getAncestors(execution, refTaskRunIndex.intValue());
+        final Set<String> refTaskRunAncestors = getAncestors(execution, (int) refTaskRunIndex);
 
         // Create new task run list
         List<TaskRun> newTaskRuns = IntStream
-            .range(0, refTaskRunIndex.intValue() + 1)
+            .range(0, (int) refTaskRunIndex + 1)
             .mapToObj(currentIndex -> {
                 final TaskRun originalTaskRun = execution.getTaskRunList().get(currentIndex);
 
-                final State state = getRestartState(execution, currentIndex, refTaskRunIndex.intValue(), refTaskRunAncestors);
+                final State state = getRestartState(execution, currentIndex, (int) refTaskRunIndex, refTaskRunAncestors);
 
                 final String newTaskRunId = FriendlyId.createFriendlyId();
 
@@ -221,7 +221,7 @@ public class ExecutionService {
         };
 
         // Find first failed task run
-        final Long refTaskRunIndex = execution
+        final long refTaskRunIndex = execution
             .getTaskRunList()
             .stream()
             .takeWhile(notLastFailed)
@@ -231,19 +231,19 @@ public class ExecutionService {
             throw new IllegalArgumentException("No failed task found to restart execution from !");
         }
 
-        final Set<String> refTaskRunAncestors = getAncestors(execution, refTaskRunIndex.intValue());
+        final Set<String> refTaskRunAncestors = getAncestors(execution, (int) refTaskRunIndex);
 
         final Execution toRestart = execution
             .withState(State.Type.RUNNING)
-            .withTaskRunList(execution.getTaskRunList().subList(0, refTaskRunIndex.intValue() + 1));
+            .withTaskRunList(execution.getTaskRunList().subList(0, (int) refTaskRunIndex + 1));
 
         IntStream
-            .range(0, refTaskRunIndex.intValue() + 1)
+            .range(0, (int) refTaskRunIndex + 1)
             .forEach(i -> {
                 TaskRun originalTaskRun = execution.getTaskRunList().get(i);
 
                 // Update original task run state
-                State state = getRestartState(execution, i, refTaskRunIndex.intValue(), refTaskRunAncestors);
+                State state = getRestartState(execution, i, (int) refTaskRunIndex, refTaskRunAncestors);
 
                 if (!originalTaskRun.getState().getCurrent().equals(state.getCurrent())) {
                     originalTaskRun = originalTaskRun.withState(state.getCurrent());

@@ -1,7 +1,7 @@
 <template>
   <div v-if="execution">
 <b-row>
-            <b-col md="2" sm="12">{{$moment(this.start).format('MM DD YYYY')}} {{$t('to')}} {{$moment(this.stop()).format('MM DD YYYY')}}</b-col>
+            <b-col md="2" sm="12" class="date">{{$moment(this.start).format('YYYY-MM-DD')}}</b-col>
             <b-col v-for="(date, i) in dates" :key="i" md="2" class="time-tick" >{{date}}</b-col>
         </b-row>    <b-row v-for="taskItem in series" :key="taskItem.id">
       <b-col :id="`task-title-wrapper-${taskItem.id}`" class="task-id text-md-right" md="2" sm="12">
@@ -160,8 +160,14 @@ export default {
   border-radius: 4px;
 }
 
-.time-tick {
-    border-left: 2px solid $gray-500;
-    padding: 1px;
+.time-tick, .date {
+    border-left: 1px solid $gray-500;
+    font-size: $font-size-xs;
+    padding: 0.2rem 0.4rem ;
+    margin-bottom: 0.2rem;
+}
+
+.date {
+    border: 0;
 }
 </style>

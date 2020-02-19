@@ -16,6 +16,7 @@ plugins {
 
     // test
     id 'com.adarshr.test-logger' version '2.0.0'
+    id 'org.gradle.test-retry' version '1.0.0'
 
     // helper
     id "com.github.ben-manes.versions" version "0.27.0"
@@ -115,6 +116,7 @@ allprojects {
  **********************************************************************************************************************/
 subprojects {
     apply plugin: "com.adarshr.test-logger"
+    apply plugin: "org.gradle.test-retry"
 
     dependencies {
         testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
@@ -139,6 +141,11 @@ subprojects {
 
     test {
         useJUnitPlatform()
+
+        retry {
+            maxRetries = 3
+            maxFailures = 15
+        }
     }
 
     testlogger {

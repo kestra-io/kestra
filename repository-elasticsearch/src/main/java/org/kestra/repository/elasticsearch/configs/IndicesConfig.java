@@ -34,7 +34,7 @@ public class IndicesConfig {
     }
 
     public String getMappingContent() {
-        URL url = Objects.requireNonNull(IndicesConfig.class.getClassLoader()
+        URL url = Objects.requireNonNull(this.getClass().getClassLoader()
             .getResource("mappings/" + this.getMappingFile() + ".yml"));
 
         try {

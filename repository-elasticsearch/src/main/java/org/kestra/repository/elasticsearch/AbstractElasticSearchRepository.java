@@ -2,6 +2,11 @@ package org.kestra.repository.elasticsearch;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
+import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.DocWriteResponse;
+import org.elasticsearch.action.ShardOperationFailedException;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
@@ -12,6 +17,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.WriteRequest;
+import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
@@ -19,18 +25,24 @@ import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 
+@Slf4j
 abstract public class AbstractElasticSearchRepository <T> {
     protected static final ObjectMapper mapper = JacksonMapper.ofJson();
     protected Class<T> cls;
@@ -69,6 +81,21 @@ abstract public class AbstractElasticSearchRepository <T> {
         }
     }
 
+    protected static void handleWriteErrors(DocWriteResponse indexResponse) throws Exception {
+        ReplicationResponse.ShardInfo shardInfo = indexResponse.getShardInfo();
+        if (shardInfo.getTotal() != shardInfo.getSuccessful()) {
+            log.warn("Replication incomplete, expected " + shardInfo.getTotal() + ", got " + shardInfo.getSuccessful()) ;
+        }
+
+        if (shardInfo.getFailed() > 0) {
+            throw new Exception(
+                Stream.of(shardInfo.getFailures())
+                    .map(ShardOperationFailedException::reason)
+                    .collect(Collectors.joining("\n"))
+            );
+        }
+    }
+
     protected IndexResponse putRequest(String index, String id, T source) {
         IndexRequest request = new IndexRequest(this.indicesConfigs.get(index).getIndex());
         request.id(id);
@@ -82,8 +109,11 @@ abstract public class AbstractElasticSearchRepository <T> {
         }
 
         try {
-            return client.index(request, RequestOptions.DEFAULT);
-        } catch (IOException e) {
+            IndexResponse response = client.index(request, RequestOptions.DEFAULT);
+            handleWriteErrors(response);
+
+            return response;
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -93,8 +123,11 @@ abstract public class AbstractElasticSearchRepository <T> {
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
         try {
-            return client.delete(request, RequestOptions.DEFAULT);
-        } catch (IOException e) {
+            DeleteResponse response = client.delete(request, RequestOptions.DEFAULT);
+            handleWriteErrors(response);
+
+            return response;
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -109,6 +142,29 @@ abstract public class AbstractElasticSearchRepository <T> {
         }
 
         return searchRequest;
+    }
+
+    protected SearchSourceBuilder searchSource(QueryBuilder query, Pageable pageable) {
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(query)
+            .size(pageable.getSize())
+            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
+        for (Sort.Order order : pageable.getSort().getOrderBy()) {
+            sourceBuilder = sourceBuilder.sort(
+                order.getProperty(),
+                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
+            );
+        }
+
+        return sourceBuilder;
+    }
+
+    protected ArrayListTotal<T> findQueryString(String index, String query, Pageable pageable) {
+        QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
+        SearchSourceBuilder sourceBuilder = this.searchSource(queryString, pageable);
+
+        return this.query(index, sourceBuilder);
     }
 
     private List<T> map(SearchHit[] searchHits) {
@@ -157,7 +213,6 @@ abstract public class AbstractElasticSearchRepository <T> {
 
         return result;
     }
-
 
     @PostConstruct
     public void initMapping() {

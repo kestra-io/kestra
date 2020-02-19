@@ -1,7 +1,6 @@
 package org.kestra.repository.elasticsearch;
 
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -95,21 +94,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
     @Override
     public ArrayListTotal<Flow> find(String query, Pageable pageable) {
-        QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
-
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(queryString)
-            .size(pageable.getSize())
-            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
-
-        for (Sort.Order order : pageable.getSort().getOrderBy()) {
-            sourceBuilder = sourceBuilder.sort(
-                order.getProperty(),
-                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
-            );
-        }
-
-        return this.query(INDEX_NAME, sourceBuilder);
+        return super.findQueryString(INDEX_NAME, query, pageable);
     }
 
     @Override

@@ -83,6 +83,7 @@ jobs:
 
       # Publish
       - name: Publish package to Bintray
+        if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
         env:
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
           BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}

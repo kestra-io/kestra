@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.List;
 
 @Singleton
-class ElasticSearchRepositoryTestUtils {
+public class ElasticSearchRepositoryTestUtils {
 
     @Inject
     RestHighLevelClient client;
@@ -22,7 +22,10 @@ class ElasticSearchRepositoryTestUtils {
     List<IndicesConfig> indicesConfigs;
 
     @Inject
-    ElasticSearchFlowRepository elasticSearchFlowRepository;
+    ElasticSearchFlowRepository flowRepository;
+
+    @Inject
+    ElasticSearchExecutionRepository executionRepository;
 
     @AfterEach
     public void tearDown() throws IOException {
@@ -32,6 +35,7 @@ class ElasticSearchRepositoryTestUtils {
             .indicesOptions(IndicesOptions.LENIENT_EXPAND_OPEN);
         client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT);
 
-        elasticSearchFlowRepository.initMapping();
+        flowRepository.initMapping();
+        executionRepository.initMapping();
     }
 }

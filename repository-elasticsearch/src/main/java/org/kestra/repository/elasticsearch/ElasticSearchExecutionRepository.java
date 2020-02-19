@@ -1,22 +1,19 @@
 package org.kestra.repository.elasticsearch;
 
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.SortOrder;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
@@ -35,21 +32,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
     @Override
     public ArrayListTotal<Execution> find(String query, Pageable pageable) {
-        QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
-
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-                .query(queryString)
-                .size(pageable.getSize())
-                .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
-
-        for (Sort.Order order : pageable.getSort().getOrderBy()) {
-            sourceBuilder = sourceBuilder.sort(
-                    order.getProperty(),
-                    order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
-            );
-        }
-
-        return this.query(INDEX_NAME, sourceBuilder);
+        return super.findQueryString(INDEX_NAME, query, pageable);
     }
 
     @Override
@@ -58,18 +41,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             .must(QueryBuilders.termQuery("namespace", namespace))
             .must(QueryBuilders.termQuery("flowId", id));
 
-
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(bool)
-            .size(pageable.getSize())
-            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
-
-        for (Sort.Order order:  pageable.getSort().getOrderBy()) {
-            sourceBuilder = sourceBuilder.sort(
-                order.getProperty(),
-                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
-            );
-        }
+        SearchSourceBuilder sourceBuilder = this.searchSource(bool, pageable);
 
         return this.query(INDEX_NAME, sourceBuilder);
     }

@@ -16,7 +16,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.metrics.ExecutionMetrics;
+import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
@@ -78,14 +78,15 @@ public class ExecutionController {
     }
 
     @Get(uri = "executions/agg", produces = MediaType.TEXT_JSON)
-    public PagedResults<ExecutionMetrics> agg(
+    public PagedResults<ExecutionMetricsAggregation> agg(
         @QueryValue(value = "q") String query,
+        @QueryValue(value = "startDate") String startDate,
         @QueryValue(value = "page", defaultValue = "1") int page,
         @QueryValue(value = "size", defaultValue = "10") int size,
         @Nullable @QueryValue(value = "sort") List<String> sort
     ) throws HttpStatusException {
         return PagedResults.of(
-            executionService.findAndAggregate(query, PageableUtils.from(page, size, sort))
+            executionService.findAndAggregate(query,startDate, PageableUtils.from(page, size, sort))
         );
     }
 

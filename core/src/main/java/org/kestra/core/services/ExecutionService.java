@@ -5,7 +5,8 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
-import org.kestra.core.models.executions.metrics.ExecutionMetrics;
+import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
+import org.kestra.core.models.executions.metrics.Stats;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
@@ -32,6 +33,8 @@ public class ExecutionService {
     @Inject
     ExecutionRepositoryInterface executionRepositoryInterface;
 
+    public static final double TREND_VARIATION_PERCENTAGE_THRESHOLD = 30;
+
     /**
      * Returns an execution that can be run from a specific task.
      * <p>
@@ -39,7 +42,8 @@ public class ExecutionService {
      * <ul>
      *     <li>If a {@code referenceTaskId} is provided, a new execution (with a new execution id) is created. The
      *     returned execution will start from the the task whose id equals the {@code referenceTaskId}.
-     *     If a task before the reference task is in failed state, an {@code IllegalArgumentException} will be thrown.</li>
+     *     If a task before the reference task is in failed state, an {@code IllegalArgumentException} will be thrown
+     *     .</li>
      *     <li>If no {@code referenceTaskId} is provided, the {@code execution} (with the same execution id) is updated
      *     and returned so that it can be run from the last failed task.</li>
      * </ul>
@@ -50,7 +54,8 @@ public class ExecutionService {
      * @return an execution that can be run
      * @throws IllegalStateException    If provided execution is not in a terminated state.
      * @throws IllegalArgumentException If no referenceTaskId is provided or if there is no failed task. Also thrown if
-     *                                  a {@code referenceTaskId} is provided but there is a failed task before the reference task.
+     *                                  a {@code referenceTaskId} is provided but there is a failed task before the
+     *                                  reference task.
      */
     public Execution getRestartExecution(final Execution execution, String referenceTaskId) throws IllegalStateException, IllegalArgumentException {
         if (!execution.getState().isTerninated()) {
@@ -96,7 +101,8 @@ public class ExecutionService {
      * @return an execution that can be run
      * @throws IllegalArgumentException If the provided {@code taskRunIndex} is not valid
      */
-    private State getRestartState(final Execution execution, int taskRunIndex, int referenceTaskRunIndex, Set<String> referenceTaskRunAncestors) throws IllegalArgumentException {
+    private State getRestartState(final Execution execution, int taskRunIndex, int referenceTaskRunIndex,
+                                  Set<String> referenceTaskRunAncestors) throws IllegalArgumentException {
         if (taskRunIndex < 0 || taskRunIndex >= execution.getTaskRunList().size() || taskRunIndex > referenceTaskRunIndex)
             throw new IllegalArgumentException("Unable to determine restart state !");
 
@@ -185,7 +191,8 @@ public class ExecutionService {
             .mapToObj(currentIndex -> {
                 final TaskRun originalTaskRun = execution.getTaskRunList().get(currentIndex);
 
-                final State state = getRestartState(execution, currentIndex, (int) refTaskRunIndex, refTaskRunAncestors);
+                final State state = getRestartState(execution, currentIndex, (int) refTaskRunIndex,
+                    refTaskRunAncestors);
 
                 final String newTaskRunId = FriendlyId.createFriendlyId();
 
@@ -262,13 +269,78 @@ public class ExecutionService {
         return toRestart;
     }
 
-
     /**
+     * Find and aggregate executions for all existing flows
+     *
      * @param query
      * @param pageable
      * @return
      */
-    public ArrayListTotal<ExecutionMetrics> findAndAggregate(String query, Pageable pageable) {
-        return executionRepositoryInterface.findAndAggregate(query, pageable);
+    public ArrayListTotal<ExecutionMetricsAggregation> findAndAggregate(String query, String startDate,
+                                                                        Pageable pageable) {
+
+        final String execQuery = "state.startDate:[" + startDate + " TO *]";
+        Map<String, ExecutionMetricsAggregation> periodAggregationMap =
+            executionRepositoryInterface.aggregateByStateWithDurationStats(execQuery, pageable);
+
+        Map<String, Stats> last24hStatsMap =
+            executionRepositoryInterface.findLast24hDurationStats(execQuery, pageable);
+
+        List<Flow> flows = flowRepositoryInterface.find(query, pageable);
+
+        // We build a map of all the flows (since some flows do no have executions but we want them)
+        Map<String, ExecutionMetricsAggregation> result = new HashMap<>();
+        flows.stream()
+            .forEach(flow -> {
+
+                final String mapKey = Flow.getUniqueIdWithoutRevision(flow.getNamespace(), flow.getId());
+
+                ExecutionMetricsAggregation periodAggregation = periodAggregationMap.get(mapKey);
+                Stats last24hStats = last24hStatsMap.get(mapKey);
+
+                result.put(mapKey, ExecutionMetricsAggregation.builder()
+                    .id(flow.getId())
+                    .namespace(flow.getNamespace())
+                    .metrics(periodAggregation != null && periodAggregation.getMetrics() != null ?
+                        periodAggregation.getMetrics() : null)
+                    .periodDurationStats(periodAggregation != null && periodAggregation.getPeriodDurationStats() != null ? periodAggregation.getPeriodDurationStats() :
+                        null)
+                    .lastDayDurationStats(last24hStats)
+                    .trend(computeTrendOnAvgDuration(periodAggregation != null ?
+                        periodAggregation.getPeriodDurationStats() : null, last24hStats))
+                    .build());
+            });
+
+
+        return new ArrayListTotal<ExecutionMetricsAggregation>(new ArrayList(result.values()),
+            result.values().size());
+    }
+
+    /**
+     * Indicates whether avg time taken by an execution is trending up, down or neutral
+     * <p>
+     * The used algorithm is really simple.
+     * An improved version should take into account the standard deviation.
+     *
+     * @param periodDurationStats
+     * @param lastDurationStats
+     * @return
+     */
+    private ExecutionMetricsAggregation.Trend computeTrendOnAvgDuration(Stats periodDurationStats,
+                                                                        Stats lastDurationStats) {
+        if (periodDurationStats == null || lastDurationStats == null) {
+            return null;
+        }
+
+        double originalValue = periodDurationStats.getAvg();
+        double lastValue = lastDurationStats.getAvg();
+        double toleratedDiff = originalValue * (TREND_VARIATION_PERCENTAGE_THRESHOLD / 100);
+
+        if (lastValue < (originalValue - toleratedDiff)) {
+            return ExecutionMetricsAggregation.Trend.DOWN;
+        } else if (lastValue > (originalValue + toleratedDiff)) {
+            return ExecutionMetricsAggregation.Trend.UP;
+        }
+        return ExecutionMetricsAggregation.Trend.NEUTRAL;
     }
 }

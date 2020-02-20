@@ -18,7 +18,9 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.metrics.ExecutionMetrics;
+import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.executions.metrics.Stats;
+import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -29,10 +31,7 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
@@ -40,7 +39,6 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
     private static final String INDEX_NAME = "executions";
     public static final String START_DATE_FORMAT = "yyyy-MM-dd";
-
 
     @Inject
     public ElasticSearchExecutionRepository(RestHighLevelClient client, List<IndicesConfig> indicesConfigs) {
@@ -52,65 +50,125 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         return this.getRequest(INDEX_NAME, id);
     }
 
-    public ArrayListTotal<ExecutionMetrics> findAndAggregate(String query, Pageable pageable) {
+
+    public Map<String, ExecutionMetricsAggregation> aggregateByStateWithDurationStats(String query, Pageable pageable) {
         QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
 
-        final List<CompositeValuesSourceBuilder<?>> sources = new ArrayList<>();
-        sources.add(new TermsValuesSourceBuilder("namespace").field("namespace"));
-        sources.add(new TermsValuesSourceBuilder("flowId").field("flowId"));
-        sources.add(new TermsValuesSourceBuilder("state.current").field("state.current"));
-        sources.add(new DateHistogramValuesSourceBuilder("state.startDate")
-            .field("state.startDate")
-            .dateHistogramInterval(DateHistogramInterval.DAY)
-            .interval(1)
-            .format(START_DATE_FORMAT)
-        );
+        final List<CompositeValuesSourceBuilder<?>> multipleFieldsSources = new ArrayList<>();
+        multipleFieldsSources.add(new TermsValuesSourceBuilder("namespace").field("namespace"));
+        multipleFieldsSources.add(new TermsValuesSourceBuilder("flowId").field("flowId"));
+        multipleFieldsSources.add(new TermsValuesSourceBuilder("state.current").field("state.current"));
+        multipleFieldsSources.add(new DateHistogramValuesSourceBuilder("state.startDate").field("state.startDate").dateHistogramInterval(DateHistogramInterval.DAY).interval(1).format(START_DATE_FORMAT));
 
-        CompositeAggregationBuilder compositeAggregationBuilder = AggregationBuilders
-            .composite("group_by_multiple_fields", sources)
-            .subAggregation(
-                new StatsAggregationBuilder("state.duration")
-                    .field("state.duration")
-            );
+        CompositeAggregationBuilder groupByMultipleFieldsAggBuilder = AggregationBuilders.composite(
+            "group_by_multiple_fields", multipleFieldsSources);
 
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(queryString)
-            .aggregation(compositeAggregationBuilder)
-            .size(pageable.getSize())
-            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+        final List<CompositeValuesSourceBuilder<?>> durationSources = new ArrayList<>();
+        durationSources.add(new TermsValuesSourceBuilder("namespace").field("namespace"));
+        durationSources.add(new TermsValuesSourceBuilder("flowId").field("flowId"));
+
+        CompositeAggregationBuilder durationAggBuilder =
+            AggregationBuilders.composite("duration", durationSources).subAggregation(new StatsAggregationBuilder(
+                "state.duration").field("state.duration"));
+
+        SearchSourceBuilder sourceBuilder =
+            new SearchSourceBuilder().query(queryString).aggregation(groupByMultipleFieldsAggBuilder).aggregation(durationAggBuilder).size(pageable.getSize()).from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
 
         for (Sort.Order order : pageable.getSort().getOrderBy()) {
-            sourceBuilder = sourceBuilder.sort(
-                order.getProperty(),
-                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
-            );
+            sourceBuilder = sourceBuilder.sort(order.getProperty(), order.getDirection() == Sort.Order.Direction.ASC
+                ? SortOrder.ASC : SortOrder.DESC);
         }
 
         try {
             SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            ParsedComposite parsedComposite = searchResponse.getAggregations().get("group_by_multiple_fields");
+            ParsedComposite multipleFieldsParsedComposite = searchResponse.getAggregations().get(
+                "group_by_multiple_fields");
+            ParsedComposite durationParsedComposite = searchResponse.getAggregations().get("duration");
 
-            return new ArrayListTotal<>(parsedComposite
-                .getBuckets()
-                .stream()
-                .map(bucket -> {
-                    return ExecutionMetrics.builder()
-                        .namespace(bucket.getKey().get("namespace").toString())
-                        .flowId(bucket.getKey().get("flowId").toString())
-                        .state(State.Type.valueOf(bucket.getKey().get("state.current").toString()))
-                        .startDate(LocalDate.parse(bucket.getKey().get("state.startDate").toString(), DateTimeFormatter.ISO_LOCAL_DATE))
-                        .count(bucket.getDocCount())
-                        .durationStats(Stats.builder()
-                            .avg(((ParsedStats) bucket.getAggregations().get("state.duration")).getAvg())
-                            .count(((ParsedStats) bucket.getAggregations().get("state.duration")).getCount())
-                            .max(((ParsedStats) bucket.getAggregations().get("state.duration")).getMax())
-                            .min(((ParsedStats) bucket.getAggregations().get("state.duration")).getMin())
-                            .sum(((ParsedStats) bucket.getAggregations().get("state.duration")).getSum())
-                            .build()
-                        )
-                        .build();
-                }).collect(Collectors.toList()), parsedComposite.getBuckets().size());
+            Map<String, ExecutionMetricsAggregation> map = new HashMap<>();
+
+            multipleFieldsParsedComposite.getBuckets().stream().forEach(bucket -> {
+                final String namespace = bucket.getKey().get("namespace").toString();
+                final String flowId = bucket.getKey().get("flowId").toString();
+                final String mapKey = Flow.getUniqueIdWithoutRevision(namespace, flowId);
+
+                final State.Type state = State.Type.valueOf(bucket.getKey().get("state.current").toString());
+
+                ExecutionMetricsAggregation executionMetricsAggregation = map.getOrDefault(mapKey,
+                    ExecutionMetricsAggregation.builder().namespace(namespace).id(flowId).metrics(new ArrayList<>()).build());
+
+                executionMetricsAggregation.getMetrics().add(ExecutionMetrics.builder().state(state).count(bucket.getDocCount())
+                    // TODO : Local date  ?
+                    .startDate(LocalDate.parse(bucket.getKey().get("state.startDate").toString(),
+                        DateTimeFormatter.ISO_LOCAL_DATE))
+                    .build());
+
+                map.put(mapKey, executionMetricsAggregation);
+            });
+
+            durationParsedComposite.getBuckets().stream().forEach(bucket -> {
+                final String namespace = bucket.getKey().get("namespace").toString();
+                final String flowId = bucket.getKey().get("flowId").toString();
+                final String mapKey = Flow.getUniqueIdWithoutRevision(namespace, flowId);
+
+                // FIXME : What to do if not present (should never occur)
+                ExecutionMetricsAggregation executionMetricsAggregation = map.get(mapKey);
+
+                executionMetricsAggregation.setPeriodDurationStats(Stats.builder()
+                    .avg(((ParsedStats) bucket.getAggregations().get("state.duration")).getAvg())
+                    .build());
+
+            });
+
+            return map;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Map<String, Stats> findLast24hDurationStats(String query, Pageable pageable) {
+        QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
+
+        final List<CompositeValuesSourceBuilder<?>> durationSources = new ArrayList<>();
+        durationSources.add(new TermsValuesSourceBuilder("namespace").field("namespace"));
+        durationSources.add(new TermsValuesSourceBuilder("flowId").field("flowId"));
+
+        final String durationAggKey = "duration";
+
+        CompositeAggregationBuilder durationAggBuilder =
+            AggregationBuilders.composite(durationAggKey, durationSources).subAggregation(new StatsAggregationBuilder(
+                "state.duration").field("state.duration"));
+
+        SearchSourceBuilder sourceBuilder =
+            new SearchSourceBuilder().query(queryString)
+                .aggregation(durationAggBuilder)
+                .size(pageable.getSize()).from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
+        for (Sort.Order order : pageable.getSort().getOrderBy()) {
+            sourceBuilder = sourceBuilder.sort(order.getProperty(), order.getDirection() == Sort.Order.Direction.ASC
+                ? SortOrder.ASC : SortOrder.DESC);
+        }
+
+        try {
+            SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            ParsedComposite durationParsedComposite = searchResponse.getAggregations().get(durationAggKey);
+
+            Map<String, Stats> map = new HashMap<>();
+
+            durationParsedComposite.getBuckets().stream().forEach(bucket -> {
+                final String namespace = bucket.getKey().get("namespace").toString();
+                final String flowId = bucket.getKey().get("flowId").toString();
+                final String mapKey = Flow.getUniqueIdWithoutRevision(namespace, flowId);
+
+                map.put(mapKey, Stats.builder()
+                    .avg(((ParsedStats) bucket.getAggregations().get("state.duration")).getAvg())
+                    .build()
+                );
+            });
+
+            return map;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -121,16 +179,12 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     public ArrayListTotal<Execution> find(String query, Pageable pageable) {
         QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
 
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(queryString)
-            .size(pageable.getSize())
-            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+        SearchSourceBuilder sourceBuilder =
+            new SearchSourceBuilder().query(queryString).size(pageable.getSize()).from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
 
         for (Sort.Order order : pageable.getSort().getOrderBy()) {
-            sourceBuilder = sourceBuilder.sort(
-                order.getProperty(),
-                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
-            );
+            sourceBuilder = sourceBuilder.sort(order.getProperty(), order.getDirection() == Sort.Order.Direction.ASC
+                ? SortOrder.ASC : SortOrder.DESC);
         }
 
         return this.query(INDEX_NAME, sourceBuilder);
@@ -138,20 +192,15 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
     @Override
     public ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable) {
-        BoolQueryBuilder bool = QueryBuilders.boolQuery()
-            .must(QueryBuilders.termQuery("namespace", namespace))
-            .must(QueryBuilders.termQuery("flowId", id));
+        BoolQueryBuilder bool =
+            QueryBuilders.boolQuery().must(QueryBuilders.termQuery("namespace", namespace)).must(QueryBuilders.termQuery("flowId", id));
 
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(bool)
-            .size(pageable.getSize())
-            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+        SearchSourceBuilder sourceBuilder =
+            new SearchSourceBuilder().query(bool).size(pageable.getSize()).from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
 
         for (Sort.Order order : pageable.getSort().getOrderBy()) {
-            sourceBuilder = sourceBuilder.sort(
-                order.getProperty(),
-                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
-            );
+            sourceBuilder = sourceBuilder.sort(order.getProperty(), order.getDirection() == Sort.Order.Direction.ASC
+                ? SortOrder.ASC : SortOrder.DESC);
         }
 
         return this.query(INDEX_NAME, sourceBuilder);

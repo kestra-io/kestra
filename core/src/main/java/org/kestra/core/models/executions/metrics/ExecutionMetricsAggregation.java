@@ -1,28 +1,30 @@
 package org.kestra.core.models.executions.metrics;
 
 import lombok.Builder;
-import lombok.Value;
-import org.kestra.core.models.flows.State;
+import lombok.Data;
 
 import javax.validation.constraints.NotNull;
-import java.time.LocalDate;
+import java.util.List;
 
-@Value
+@Data
 @Builder
-public class ExecutionMetrics {
+public class ExecutionMetricsAggregation {
     @NotNull
     private String namespace;
     @NotNull
-    private String flowId;
-
-
-
+    private String id;
     @NotNull
-    private State.Type state;
-    @NotNull
-    private LocalDate startDate;
-    @NotNull
-    private Long count;
+    private List<ExecutionMetrics> metrics;
 
-    private Stats durationStats;
+    private Stats periodDurationStats;
+
+    private Stats lastDayDurationStats;
+
+    private Trend trend;
+
+    public enum Trend {
+        UP,
+        DOWN,
+        NEUTRAL
+    }
 }

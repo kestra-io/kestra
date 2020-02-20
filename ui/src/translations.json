@@ -70,7 +70,10 @@
         "value": "value",
         "parent execution": "parent execution",
         "toggle periodic refresh each 10 seconds": "toggle periodic refresh each 10 seconds",
-        "trigger refresh": "trigger refresh"
+        "trigger refresh": "trigger refresh",
+        "execution statistics": "execution statistics",
+        "avg duration": "avg. execution duration",
+        "no execution yet": "No execution yet"
     },
     "fr": {
         "id": "identifiant",
@@ -142,6 +145,9 @@
         "value": "valeur",
         "parent execution": "execution parente",
         "toggle periodic refresh each 10 seconds": "activer le rafraîchissement toutes les 10 secondes",
-        "trigger refresh": "déclencher le rafraîchissement"
+        "trigger refresh": "déclencher le rafraîchissement",
+        "execution statistics": "statistiques d'execution ",
+        "avg duration": "Durée moyenne d'execution",
+        "no execution yet": "Aucune execution"
     }
 }

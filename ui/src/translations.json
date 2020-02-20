@@ -68,7 +68,10 @@
         "toggle output display": "toggle output display",
         "name": "name",
         "value": "value",
-        "parent execution": "parent execution"
+        "parent execution": "parent execution",
+        "execution statistics": "execution statistics",
+        "avg duration": "avg. execution duration",
+        "no execution yet": "No execution yet"
     },
     "fr": {
         "id": "identifiant",
@@ -138,6 +141,9 @@
         "toggle output display": "permutter l'affichage de sortie",
         "name": "nom",
         "value": "valeur",
-        "parent execution": "execution parente"
+        "parent execution": "execution parente",
+        "execution statistics": "statistiques d'execution ",
+        "avg duration": "Durée moyenne d'execution",
+        "no execution yet": "Aucune execution"
     }
 }

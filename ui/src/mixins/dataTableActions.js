@@ -1,4 +1,5 @@
 import queryBuilder from "../utils/queryBuilder";
+import { CardPlugin } from "bootstrap-vue";
 export default {
     created() {
         if (localStorage.getItem(this.storageName)) {
@@ -52,7 +53,7 @@ export default {
             });
             this.loadData();
         },
-        onRowDoubleClick(item) {
+        onRowDoubleClick(item) {            
             this.$router.push({ name: this.dataType, params: item });
         },
         onNamespaceSelect() {

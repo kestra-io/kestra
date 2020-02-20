@@ -5,10 +5,19 @@ export default {
         executions: undefined,
         execution: undefined,
         task: undefined,
+        flows: undefined,
         total: 0
     },
 
     actions: {
+        findExecutionsAgg({ commit }, options) {
+            const sortString = options.sort ? `?sort=${options.sort}` : ''
+            delete options.sort
+            return Vue.axios.get(`/api/v1/executions/agg`, { params: options }).then(response => {
+                commit('setFlows', response.data.results)
+                commit('setTotal', response.data.total)
+            })
+        },
         loadExecutions({ commit }, options) {
             return Vue.axios.get(`/api/v1/executions`, { params: options }).then(response => {
                 commit('setExecutions', response.data.results)
@@ -16,7 +25,7 @@ export default {
             })
         },
         restartExecution({ commit }, options) {
-            return Vue.axios.post(`/api/v1/executions/${options.id}/restart?taskId=${options.taskId}`, {params: options},{
+            return Vue.axios.post(`/api/v1/executions/${options.id}/restart?taskId=${options.taskId}`, { params: options }, {
                 headers: {
                     'content-type': 'multipart/form-data'
                 }
@@ -34,7 +43,7 @@ export default {
             if (sort) {
                 sortQueryString = `?sort=${sort}`
             }
-            return Vue.axios.get(`/api/v1/executions/search${sortQueryString}`, {params: options}).then(response => {
+            return Vue.axios.get(`/api/v1/executions/search${sortQueryString}`, { params: options }).then(response => {
                 commit('setExecutions', response.data.results)
                 commit('setTotal', response.data.total)
             })
@@ -67,6 +76,9 @@ export default {
         },
         setTotal(state, total) {
             state.total = total
+        },
+        setFlows(state, flows) {
+            state.flows = flows
         }
     },
     getters: {}

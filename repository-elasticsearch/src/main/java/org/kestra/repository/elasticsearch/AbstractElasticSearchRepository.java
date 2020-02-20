@@ -146,15 +146,17 @@ abstract public class AbstractElasticSearchRepository<T> {
         return searchRequest;
     }
 
-    protected SearchSourceBuilder searchSource(QueryBuilder query, Optional<AggregationBuilder> aggregation,
+    protected SearchSourceBuilder searchSource(QueryBuilder query, Optional<List<AggregationBuilder>> aggregations,
                                                Pageable pageable) {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(query)
             .size(pageable.getSize())
             .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
 
-        if (aggregation.isPresent()) {
-            sourceBuilder.aggregation(aggregation.get());
+        if (aggregations.isPresent()) {
+            for (AggregationBuilder aggregation : aggregations.get()) {
+                sourceBuilder.aggregation(aggregation);
+            }
         }
 
         for (Sort.Order order : pageable.getSort().getOrderBy()) {

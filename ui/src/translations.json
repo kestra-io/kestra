@@ -77,7 +77,10 @@
         "show task source": "show task source",
         "display output for specific task": "display output for specific task",
         "display direct sub tasks count": "display direct sub tasks count",
-        "stream": "stream"
+        "stream": "stream",
+        "execution statistics": "execution statistics",
+        "avg duration": "avg. execution duration",
+        "no execution yet": "No execution yet"
     },
     "fr": {
         "id": "identifiant",
@@ -158,6 +161,9 @@
         "specific task": "specific task",
         "display output for specific task": "afficher les output pour cette tâche",
         "display direct sub tasks count": "display les sous tâches directes",
-        "stream": "flux"
+        "stream": "flux",
+        "execution statistics": "statistiques d'execution ",
+        "avg duration": "Durée moyenne d'execution",
+        "no execution yet": "Aucune execution"
     }
 }

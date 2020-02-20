@@ -1,4 +1,5 @@
 import queryBuilder from "../utils/queryBuilder";
+import { CardPlugin } from "bootstrap-vue";
 export default {
     created() {
         if (localStorage.getItem(this.storageName) && this.$route.name === 'executionsList') {
@@ -53,7 +54,7 @@ export default {
             });
             this.loadData(this.onDataLoaded);
         },
-        onRowDoubleClick(item) {
+        onRowDoubleClick(item) {            
             this.$router.push({ name: this.dataType, params: item });
         },
         onNamespaceSelect() {

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
-import org.kestra.core.models.executions.metrics.ExecutionMetrics;
+import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueFactoryInterface;
@@ -481,7 +481,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         PagedResults<Execution> aggFind = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/executions/agg?q=" + query),
-            Argument.of(PagedResults.class, ExecutionMetrics.class)
+            Argument.of(PagedResults.class, ExecutionMetricsAggregation.class)
         );
 
         assertThat(aggFind.getTotal(), greaterThanOrEqualTo(5L));

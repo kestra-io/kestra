@@ -19,6 +19,8 @@ import org.kestra.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -126,6 +128,10 @@ public class Flow {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String getUniqueIdWithoutRevision(String namespace, String flowId) {
+        return namespace + flowId;
     }
 
     public Optional<ConstraintViolationException> validateUpdate(Flow updated) {

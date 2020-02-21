@@ -42,14 +42,28 @@ export default {
     },
     data() {
         return {
-            content: ""
+            content: "",
+            readOnlyEditFields: {}
         };
     },
     created() {
         this.loadFlow();
+        if (this.isEdit) {
+            this.readOnlyEditFields = {
+                id: this.flow.id,
+                namespace: this.flow.namespace,
+                revision: this.flow.revision
+            };
+        }
     },
     computed: {
         ...mapState("flow", ["flow"]),
+        isEdit() {
+            return (
+                this.$route.name === "flow" &&
+                this.$route.query.tab === "data-source"
+            );
+        },
         flowName() {
             return (this.flow && this.flow.id) || this.$t("new");
         },
@@ -77,11 +91,56 @@ export default {
         },
         save() {
             if (this.flow) {
+                const flow = Yaml.parse(this.content);
+                if (this.isEdit) {
+                    for (const key in this.readOnlyEditFields) {
+                        if (flow[key] !== this.readOnlyEditFields[key]) {
+                            this.$bvToast.toast(
+                                this.$t(
+                                    "read only fields have changed (id, namespace...)"
+                                ).capitalize(),
+                                {
+                                    title: this.$t(
+                                        "unable to save"
+                                    ).capitalize(),
+                                    autoHideDelay: 5000,
+                                    toaster: "b-toaster-top-right",
+                                    variant: "warning"
+                                }
+                            );
+                            return;
+                        }
+                    }
+                }
                 this.$store
                     .dispatch("flow/saveFlow", {
-                        flow: Yaml.parse(this.content)
+                        flow
                     })
-                    .finally(this.loadFlow);
+                    .then(() => {
+                        this.$bvToast.toast(
+                            this.$t("flow update ok").capitalize(),
+                            {
+                                title: this.$t("saved").capitalize(),
+                                autoHideDelay: 5000,
+                                toaster: "b-toaster-top-right",
+                                variant: "success"
+                            }
+                        );
+                    })
+                    .catch(() => {
+                        this.$bvToast.toast(
+                            this.$t("flow update aborted").capitalize(),
+                            {
+                                title: this.$t("fail").capitalize(),
+                                autoHideDelay: 5000,
+                                toaster: "b-toaster-top-right",
+                                variant: "danger"
+                            }
+                        );
+                    })
+                    .finally(() => {
+                        this.loadFlow();
+                    });
             } else {
                 const flow = Yaml.parse(this.content);
                 this.$store

@@ -50,14 +50,6 @@ export default {
     menu() {
       return [
         {
-          href: "/flows2",
-          title: this.$t("flows").capitalize()+" Agg",
-          icon: {
-            element: "graph",
-            class: "menu-icon"
-          }
-        },
-        {
           href: "/flows",
           title: this.$t("flows").capitalize(),
           icon: {
@@ -65,6 +57,14 @@ export default {
             class: "menu-icon"
           }
         },
+        /*{
+          href: "/flows",
+          title: this.$t("flows").capitalize(),
+          icon: {
+            element: "graph",
+            class: "menu-icon"
+          }
+        },*/
         {
           href: "/executions",
           title: this.$t("executions").capitalize(),

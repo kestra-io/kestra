@@ -7,17 +7,8 @@ export default {
         task: undefined,
         total: 0,
         dataTree: undefined
-        flows: undefined
     },
     actions: {
-        findExecutionsAgg({ commit }, options) {
-            const sortString = options.sort ? `?sort=${options.sort}` : ''
-            delete options.sort
-            return Vue.axios.get(`/api/v1/executions/agg`, { params: options }).then(response => {
-                commit('setFlows', response.data.results)
-                commit('setTotal', response.data.total)
-            })
-        },
         loadExecutions({ commit }, options) {
             return Vue.axios.get(`/api/v1/executions`, { params: options }).then(response => {
                 commit('setExecutions', response.data.results)
@@ -84,9 +75,6 @@ export default {
         },
         setDataTree(state, tree) {
             state.dataTree = tree
-        },
-        setFlows(state, flows) {
-            state.flows = flows
         }
     },
     getters: {}

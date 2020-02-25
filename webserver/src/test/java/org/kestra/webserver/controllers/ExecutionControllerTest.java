@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
-import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueFactoryInterface;
@@ -122,8 +121,10 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(result.getState().getCurrent(), is(State.Type.CREATED));
         assertThat(result.getFlowId(), is("inputs"));
         assertThat(result.getInputs().get("float"), is(42.42));
-        assertThat(((Map<String, String>) result.getInputs().get("file")).get("uri"), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
-        assertThat(((Map<String, String>) result.getInputs().get("optionalFile")).get("uri"), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
+        assertThat(((Map<String, String>) result.getInputs().get("file")).get("uri"), startsWith("kestra:///org" +
+            "/kestra/tests/inputs/executions/"));
+        assertThat(((Map<String, String>) result.getInputs().get("optionalFile")).get("uri"), startsWith("kestra" +
+            ":///org/kestra/tests/inputs/executions/"));
     }
 
     @Test
@@ -168,11 +169,13 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     @Test
     @Disabled("TODO: don't work")
     void triggerAndFollow() {
-        RxSseClient sseClient = embeddedServer.getApplicationContext().createBean(RxSseClient.class, embeddedServer.getURL());
+        RxSseClient sseClient = embeddedServer.getApplicationContext().createBean(RxSseClient.class,
+            embeddedServer.getURL());
 
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/trigger/org.kestra.tests/full", MultipartBody.builder().addPart("string", "myString").build())
+                .POST("/api/v1/executions/trigger/org.kestra.tests/full", MultipartBody.builder().addPart("string",
+                    "myString").build())
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
@@ -191,19 +194,22 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         final String referenceTaskId = "unknownTaskId";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null,
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             Execution createdChidExec = client.toBlocking().retrieve(
                 HttpRequest
-                    .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
+                    .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId,
+                        MultipartBody.builder().addPart("string", "myString").build())
                     .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                 Execution.class
             );
         });
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
-        assertThat(e.getResponse().getBody(java.lang.String.class).get(), is("Task [" + referenceTaskId + "] does not exist !"));
+        assertThat(e.getResponse().getBody(java.lang.String.class).get(), is("Task [" + referenceTaskId + "] does not" +
+            " exist !"));
     }
 
     @Test
@@ -211,19 +217,22 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         final String flowId = "restart_with_inputs";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null,
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             Execution createdChidExec = client.toBlocking().retrieve(
                 HttpRequest
-                    .POST("/api/v1/executions/" + parentExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
+                    .POST("/api/v1/executions/" + parentExecution.getId() + "/restart",
+                        MultipartBody.builder().addPart("string", "myString").build())
                     .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                 Execution.class
             );
         });
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
-        assertThat(e.getResponse().getBody(java.lang.String.class).get(), is("No failed task found to restart execution from !"));
+        assertThat(e.getResponse().getBody(java.lang.String.class).get(), is("No failed task found to restart " +
+            "execution from !"));
     }
 
     @Test
@@ -232,7 +241,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         final String referenceTaskId = "instant";
 
         // Run execution until it ends
-        Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null,
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
 
@@ -242,7 +252,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             parentExecution, () -> {
                 Execution createdChidExec = client.toBlocking().retrieve(
                     HttpRequest
-                        .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
+                        .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId,
+                            MultipartBody.builder().addPart("string", "myString").build())
                         .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                     Execution.class
                 );
@@ -293,7 +304,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             parentExecution, () -> {
                 Execution createdChidExec = client.toBlocking().retrieve(
                     HttpRequest
-                        .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
+                        .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId,
+                            MultipartBody.builder().addPart("string", "myString").build())
                         .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                     Execution.class
                 );
@@ -346,7 +358,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             firstExecution, () -> {
                 Execution restartedExec = client.toBlocking().retrieve(
                     HttpRequest
-                        .POST("/api/v1/executions/" + firstExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
+                        .POST("/api/v1/executions/" + firstExecution.getId() + "/restart",
+                            MultipartBody.builder().addPart("string", "myString").build())
                         .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                     Execution.class
                 );
@@ -424,7 +437,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             firstExecution, () -> {
                 Execution restartedExec = client.toBlocking().retrieve(
                     HttpRequest
-                        .POST("/api/v1/executions/" + firstExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
+                        .POST("/api/v1/executions/" + firstExecution.getId() + "/restart",
+                            MultipartBody.builder().addPart("string", "myString").build())
                         .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
                     Execution.class
                 );
@@ -457,33 +471,5 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         // Errors tasks
         assertThat(finishedRestartedExecution.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(finishedRestartedExecution.getTaskRunList().get(5).getState().getCurrent(), is(State.Type.SUCCESS));
-    }
-
-    @Test
-    @Disabled("This test can only be run against elastic search, not in memory mode")
-    void testAgg() throws TimeoutException {
-        // Run several execution
-        Execution full = runnerUtils.runOne(TESTS_FLOW_NS, "full");
-        Execution minimal = runnerUtils.runOne(TESTS_FLOW_NS, "minimal");
-        Execution logs = runnerUtils.runOne(TESTS_FLOW_NS, "logs");
-        Execution seqWithLocalErrors = runnerUtils.runOne(TESTS_FLOW_NS, "sequential-with-local-errors");
-        Execution seqWithGlobalErrors = runnerUtils.runOne(TESTS_FLOW_NS, "sequential-with-global-errors");
-
-        assertThat(full.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(minimal.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(logs.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(seqWithLocalErrors.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(seqWithGlobalErrors.getState().getCurrent(), is(State.Type.FAILED));
-
-        final String query = "namespace:org.kestra.tests";
-
-        PagedResults<Execution> aggFind = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/executions/agg?q=" + query),
-            Argument.of(PagedResults.class, ExecutionMetricsAggregation.class)
-        );
-
-        assertThat(aggFind.getTotal(), greaterThanOrEqualTo(5L));
-
-
     }
 }

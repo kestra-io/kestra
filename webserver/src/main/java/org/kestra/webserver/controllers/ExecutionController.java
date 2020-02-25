@@ -17,7 +17,6 @@ import io.reactivex.Maybe;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.hierarchies.FlowTree;
 import org.kestra.core.queues.QueueFactoryInterface;
@@ -31,6 +30,9 @@ import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 import org.reactivestreams.Publisher;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -39,9 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -78,19 +77,6 @@ public class ExecutionController {
         return PagedResults.of(
             executionRepository
                 .find(query, PageableUtils.from(page, size, sort))
-        );
-    }
-
-    @Get(uri = "executions/agg", produces = MediaType.TEXT_JSON)
-    public PagedResults<ExecutionMetricsAggregation> agg(
-        @QueryValue(value = "q") String query,
-        @QueryValue(value = "startDate") String startDate,
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size,
-        @Nullable @QueryValue(value = "sort") List<String> sort
-    ) throws HttpStatusException {
-        return PagedResults.of(
-            executionService.findAndAggregate(query,startDate, PageableUtils.from(page, size, sort))
         );
     }
 

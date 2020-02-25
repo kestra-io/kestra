@@ -2,7 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Settings from '../components/settings/Settings.vue'
 import Flows from '../components/flows/Flows.vue'
-import Flows2 from '../components/flows/Flows2.vue'
+import FlowsAgg from '../components/flows/FlowsAgg.vue'
 import FlowRoot from '../components/flows/FlowRoot.vue'
 import FlowEdit from '../components/flows/FlowEdit.vue'
 import Executions from '../components/executions/Executions.vue'
@@ -17,7 +17,7 @@ export default new VueRouter({
     routes: [
         //Flows
         { name: 'home', path: '/', component: Flows },
-        { name: 'flowsList2', path: '/flows2', component: Flows2 },
+        { name: 'flowsList2', path: '/flows2', component: FlowsAgg },
         { name: 'flowsList', path: '/flows', component: Flows },
         { name: 'flowsAdd', path: '/flows/add', component: FlowEdit },
         { name: 'flow', path: '/flows/:namespace/:id', component: FlowRoot },

@@ -5,19 +5,10 @@ export default {
         executions: undefined,
         execution: undefined,
         task: undefined,
-        flows: undefined,
         total: 0
     },
 
     actions: {
-        findExecutionsAgg({ commit }, options) {
-            const sortString = options.sort ? `?sort=${options.sort}` : ''
-            delete options.sort
-            return Vue.axios.get(`/api/v1/executions/agg`, { params: options }).then(response => {
-                commit('setFlows', response.data.results)
-                commit('setTotal', response.data.total)
-            })
-        },
         loadExecutions({ commit }, options) {
             return Vue.axios.get(`/api/v1/executions`, { params: options }).then(response => {
                 commit('setExecutions', response.data.results)

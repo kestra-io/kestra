@@ -131,7 +131,7 @@ export default {
     };
   },
   computed: {
-    ...mapState("execution", ["flows", "total"]),
+    ...mapState("flow", ["flows", "total"]),
     fields() {
       const title = title => {
         return this.$t(title).capitalize();
@@ -173,7 +173,7 @@ export default {
   },
   methods: {
     loadData() {
-      this.$store.dispatch("execution/findExecutionsAgg", {
+      this.$store.dispatch("flow/searchAndAggregate", {
         q: this.query,
         startDate: this.startDate.toISOString(),
         size: parseInt(this.$route.query.size || 25),

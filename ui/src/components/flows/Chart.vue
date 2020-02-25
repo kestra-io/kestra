@@ -1,6 +1,6 @@
 <script>
 import c3 from "c3";
-import { debounce, cloneDeep, defaultsDeep } from "lodash";
+import { debounce, cloneDeep, defaultsDeep, assign } from "lodash";
 
 export default {
   name: "c3-chart",
@@ -130,19 +130,22 @@ export default {
         let dateFormat = "YYYY-MM-DD";
         var d = day.format(dateFormat);
 
-        let realMetric = data.find(element => element.startDate == d);
+        let realMetric = data.filter(element => element.startDate == d);
 
-        if (realMetric) {
-          resultMetrics.push(realMetric);
+        let emptyMetric = {
+          startDate: d,
+          success: 0,
+          failed: 0,
+          created: 0,
+          running: 0,
+          durationStats: null
+        };
+
+        if (realMetric.length > 0) {
+          let metrics = assign.apply(null, [emptyMetric].concat(realMetric));
+          resultMetrics.push(metrics);
         } else {
-          resultMetrics.push({
-            startDate: d,
-            success: 0,
-            failed: 0,
-            created: 0,
-            running: 0,
-            durationStats: null
-          });
+          resultMetrics.push(emptyMetric);
         }
       }
 

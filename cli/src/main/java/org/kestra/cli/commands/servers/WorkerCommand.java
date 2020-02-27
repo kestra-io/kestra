@@ -1,12 +1,12 @@
 package org.kestra.cli.commands.servers;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.common.util.concurrent.UncaughtExceptionHandlers;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.runners.Worker;
 import org.kestra.core.utils.Await;
+import org.kestra.core.utils.UncaughtExceptionHandlers;
 import picocli.CommandLine;
 
 import javax.inject.Inject;

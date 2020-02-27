@@ -83,7 +83,15 @@ public class KafkaQueue<T> implements QueueInterface<T> {
         try {
             kafkaProducerService
                 .of(cls, JsonSerde.of(cls))
-                .send(new ProducerRecord<>(topicsConfig.getName(), this.key(message), message))
+                .send(new ProducerRecord<>(
+                    topicsConfig.getName(),
+                    this.key(message), message),
+                    (metadata, e) -> {
+                        if (e != null) {
+                            log.error("Failed to produce with metadata {}", metadata.toString());
+                        }
+                    }
+                )
                 .get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);

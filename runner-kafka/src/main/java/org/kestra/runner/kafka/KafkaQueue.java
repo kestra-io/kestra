@@ -88,7 +88,7 @@ public class KafkaQueue<T> implements QueueInterface<T> {
                     this.key(message), message),
                     (metadata, e) -> {
                         if (e != null) {
-                            log.error("Failed to produce '{}' with metadata '{}'", e, metadata);
+                            log.error("Failed to produce with metadata {}", metadata.toString());
                         }
                     }
                 )

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.utils.UncaughtExceptionHandlers;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -17,7 +18,10 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class StandAloneRunner implements RunnerInterface, Closeable {
     private ExecutorService poolExecutor = Executors.newCachedThreadPool(
-        new ThreadFactoryBuilder().setNameFormat("standalone-runner-%d").build()
+        new ThreadFactoryBuilder()
+            .setNameFormat("standalone-runner-%d")
+            .setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit())
+            .build()
     );
     private int threads = Math.max(3, Runtime.getRuntime().availableProcessors());
 

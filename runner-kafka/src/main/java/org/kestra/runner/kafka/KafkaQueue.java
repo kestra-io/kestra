@@ -14,6 +14,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.utils.UncaughtExceptionHandlers;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -40,7 +41,10 @@ public class KafkaQueue<T> implements QueueInterface<T> {
     private KafkaProducerService kafkaProducerService;
     private TopicsConfig topicsConfig;
     private static ExecutorService poolExecutor = Executors.newCachedThreadPool(
-        new ThreadFactoryBuilder().setNameFormat("kakfa-queue-%d").build()
+        new ThreadFactoryBuilder()
+            .setNameFormat("kakfa-queue-%d")
+            .setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit())
+            .build()
     );
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {

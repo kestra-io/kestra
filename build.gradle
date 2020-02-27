@@ -143,7 +143,7 @@ subprojects {
         useJUnitPlatform()
 
         retry {
-            maxRetries = 3
+            maxRetries = 5
             maxFailures = 15
         }
     }

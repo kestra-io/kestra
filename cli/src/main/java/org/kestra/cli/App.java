@@ -56,7 +56,7 @@ public class App implements Callable<Object> {
      * @param args args passed to java app
      * @return the application context created
      */
-    private static ApplicationContext applicationContext(String[] args) {
+    protected static ApplicationContext applicationContext(String[] args) {
         KestraApplicationContextBuilder builder = new KestraApplicationContextBuilder()
             .mainClass(App.class)
             .environments(Environment.CLI)

@@ -6,6 +6,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
+import org.kestra.core.utils.UncaughtExceptionHandlers;
 
 import java.io.IOException;
 import java.util.*;
@@ -20,7 +21,10 @@ public class MemoryQueue<T> implements QueueInterface<T> {
     private Class<T> cls;
     private static ExecutorService poolExecutor = Executors.newFixedThreadPool(
         Runtime.getRuntime().availableProcessors(),
-        new ThreadFactoryBuilder().setNameFormat("memory-queue-%d").build()
+        new ThreadFactoryBuilder()
+            .setNameFormat("memory-queue-%d")
+            .setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit())
+            .build()
 
     );
     private static final Object lock = new Object();

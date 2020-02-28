@@ -6,6 +6,7 @@
                 <v-s />
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <date-range @onDate="onSearch" />
+                <refresh-button class="float-right" @onRefresh="loadData"/>
             </template>
             <template v-slot:table>
                 <b-table
@@ -64,6 +65,7 @@ import DataTableActions from "../../mixins/dataTableActions";
 import SearchField from "../layout/SearchField";
 import NamespaceSelector from "../namespace/Selector";
 import DateRange from "../layout/DateRange";
+import RefreshButton from '../layout/RefreshButton'
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -73,7 +75,8 @@ export default {
         DataTable,
         SearchField,
         NamespaceSelector,
-        DateRange
+        DateRange,
+        RefreshButton
     },
     data() {
         return {

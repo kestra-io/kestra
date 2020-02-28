@@ -68,7 +68,9 @@
         "toggle output display": "toggle output display",
         "name": "name",
         "value": "value",
-        "parent execution": "parent execution"
+        "parent execution": "parent execution",
+        "toggle periodic refresh each 10 seconds": "toggle periodic refresh each 10 seconds",
+        "trigger refresh": "trigger refresh"
     },
     "fr": {
         "id": "identifiant",
@@ -138,6 +140,8 @@
         "toggle output display": "permutter l'affichage de sortie",
         "name": "nom",
         "value": "valeur",
-        "parent execution": "execution parente"
+        "parent execution": "execution parente",
+        "toggle periodic refresh each 10 seconds": "activer le rafraîchissement toutes les 10 secondes",
+        "trigger refresh": "déclencher le rafraîchissement"
     }
 }

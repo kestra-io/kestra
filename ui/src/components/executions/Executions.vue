@@ -37,6 +37,9 @@
                             :status="row.item.state.current"
                         />
                     </template>
+                     <template v-slot:cell(state.duration)="row">
+                        <p>{{row.item.state.duration | humanizeDuration}}</p>
+                    </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link
                             :to="{name: 'flow', params: {namespace: row.item.namespace, id: row.item.flowId}}"

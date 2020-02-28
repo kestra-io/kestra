@@ -144,9 +144,14 @@ export default {
     },
     methods: {
         addStatusToQuery(status) {
-            const token = this.query === "*" ? status.toUpperCase() : `${this.$refs.searchField.search} AND ${status.toUpperCase()}`
-            this.$refs.searchField.search = token
-            this.$refs.searchField.onSearch()
+            const token =
+                this.query === "*"
+                    ? status.toUpperCase()
+                    : `${
+                          this.$refs.searchField.search
+                      } AND ${status.toUpperCase()}`;
+            this.$refs.searchField.search = token;
+            this.$refs.searchField.onSearch();
         },
         triggerExecution() {
             this.$store

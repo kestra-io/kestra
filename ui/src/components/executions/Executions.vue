@@ -45,11 +45,6 @@
                             :to="{name: 'flow', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >{{row.item.flowId}}</router-link>
                     </template>
-                    <template v-slot:cell(namespace)="row">
-                        <router-link
-                            :to="{name: 'flowsList', query: {namespace: row.item.namespace}}"
-                        >{{row.item.namespace}}</router-link>
-                    </template>
                     <template v-slot:cell(id)="row">
                         <code>{{row.item.id | id}}</code>
                     </template>

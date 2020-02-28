@@ -31,12 +31,6 @@
                                 <eye id="edit-action" />
                             </router-link>
                         </template>
-                        <template v-slot:cell(namespace)="row">
-                            <a
-                                href
-                                @click.prevent="onNamespaceSelect(row.item.namespace)"
-                            >{{row.item.namespace}}</a>
-                        </template>
                     </b-table>
                 </template>
             </data-table>

@@ -31,6 +31,11 @@
                                 <eye id="edit-action" />
                             </router-link>
                         </template>
+                        <template v-slot:cell(id)="row">
+                            <router-link :to="{name: 'flow', params : row.item}">
+                                {{row.item.id}}
+                            </router-link>
+                        </template>
                     </b-table>
                 </template>
             </data-table>

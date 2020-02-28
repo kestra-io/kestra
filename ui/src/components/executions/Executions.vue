@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="ready">
         <data-table @onPageChanged="loadData" ref="dataTable" :total="total">
             <template v-slot:navbar>
                 <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
@@ -82,7 +82,7 @@ export default {
     },
     data() {
         return {
-            dataType: "execution"
+            dataType: "execution",
         };
     },
     beforeCreate () {
@@ -152,12 +152,7 @@ export default {
     },
     methods: {
         addStatusToQuery(status) {
-            const token =
-                this.query === "*"
-                    ? status.toUpperCase()
-                    : `${
-                          this.$refs.searchField.search
-                      } AND ${status.toUpperCase()}`;
+            const token = status.toUpperCase()
             this.$refs.searchField.search = token;
             this.$refs.searchField.onSearch();
         },
@@ -177,13 +172,13 @@ export default {
                     });
                 });
         },
-        loadData() {
+        loadData(callback) {
             this.$store.dispatch("execution/findExecutions", {
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
                 q: this.executionQuery,
                 sort: this.$route.query.sort
-            });
+            }).finally(callback);
         }
     }
 };

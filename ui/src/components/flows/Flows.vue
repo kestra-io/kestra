@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="ready">
         <div>
             <data-table
                 @onPageChanged="loadData"
@@ -113,13 +113,13 @@ export default {
         }
     },
     methods: {
-        loadData() {
+        loadData(callback) {
             this.$store.dispatch("flow/findFlows", {
                 q: this.query,
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
                 sort: this.$route.query.sort
-            });
+            }).finally(callback);
         }
     }
 };

@@ -85,6 +85,11 @@ export default {
             dataType: "execution"
         };
     },
+    beforeCreate () {
+        const params = JSON.parse(localStorage.getItem('executionQueries') || '{}')
+        params.sort = 'state.startDate:desc'
+        localStorage.setItem('executionQueries', JSON.stringify(params))
+    },
     computed: {
         ...mapState("execution", ["executions", "total"]),
         fields() {

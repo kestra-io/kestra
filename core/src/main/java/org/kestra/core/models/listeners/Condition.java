@@ -10,6 +10,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.util.function.BiPredicate;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
@@ -20,5 +21,6 @@ import java.util.function.BiPredicate;
 @Introspected
 public abstract class Condition implements BiPredicate<Flow, Execution> {
     @NotNull
+    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     protected String type;
 }

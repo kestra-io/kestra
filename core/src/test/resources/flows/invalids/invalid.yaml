@@ -1,3 +1,5 @@
+id: my.flow
+namespace: MY_NAMESPACE
 tasks:
 - type: org.kestra.core.tasks.scripts.Bash
   commands:

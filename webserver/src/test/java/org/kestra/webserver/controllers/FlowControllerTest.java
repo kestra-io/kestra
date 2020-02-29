@@ -9,20 +9,20 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.RxHttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.hateoas.JsonError;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.Helpers;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
-import org.kestra.webserver.responses.FlowResponse;
 import org.kestra.webserver.responses.PagedResults;
 
 import javax.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.*;
-import static io.micronaut.http.HttpStatus.NOT_FOUND;
-import static io.micronaut.http.HttpStatus.NO_CONTENT;
+import static io.micronaut.http.HttpStatus.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -48,12 +48,14 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void findAll() {
         PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal(), is(Helpers.FLOWS_COUNT));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void createFlow() {
         Flow flow = Flow.builder()
@@ -62,12 +64,10 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
             .build();
 
-        FlowResponse result = client.toBlocking().retrieve(
-            POST("/api/v1/flows", flow),
-            FlowResponse.class
-        );
-        assertThat(result.getFlow().getId(), is(flow.getId()));
-        assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
+
+        assertThat(result.getId(), is(flow.getId()));
+        assertThat(result.getInputs().get(0).getName(), is("a"));
 
         Flow get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), Flow.class);
         assertThat(get.getId(), is(flow.getId()));
@@ -75,6 +75,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void deleteFlow() {
         Flow flow = Flow.builder()
@@ -82,12 +83,9 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .namespace("org.kestra.unittest")
             .build();
 
-        FlowResponse result = client.toBlocking().retrieve(
-            POST("/api/v1/flows", flow),
-            FlowResponse.class
-        );
-        assertThat(result.getFlow().getId(), is(flow.getId()));
-        assertThat(result.getFlow().getRevision(), is(1));
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
+        assertThat(result.getId(), is(flow.getId()));
+        assertThat(result.getRevision(), is(1));
 
         HttpResponse<Void> deleteResult = client.toBlocking().exchange(
             DELETE("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId())
@@ -103,6 +101,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getStatus(), is(NOT_FOUND));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void updateFlow() {
         String flowId = FriendlyId.createFriendlyId();
@@ -113,13 +112,10 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
             .build();
 
-        FlowResponse result = client.toBlocking().retrieve(
-            POST("/api/v1/flows", flow),
-            FlowResponse.class
-        );
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
 
-        assertThat(result.getFlow().getId(), is(flow.getId()));
-        assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
+        assertThat(result.getId(), is(flow.getId()));
+        assertThat(result.getInputs().get(0).getName(), is("a"));
 
         flow = Flow.builder()
             .id(flowId)
@@ -142,7 +138,41 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             );
         });
         assertThat(e.getStatus(), is(NOT_FOUND));
+    }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    @Test
+    void invalidUpdateFlow() {
+        String flowId = FriendlyId.createFriendlyId();
 
+        Flow flow = Flow.builder()
+            .id(flowId)
+            .namespace("org.kestra.unittest")
+            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
+            .build();
+
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
+
+        assertThat(result.getId(), is(flow.getId()));
+
+        Flow finalFlow = Flow.builder()
+            .id(FriendlyId.createFriendlyId())
+            .namespace("org.kestra.unittest2")
+            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
+            .build();;
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().exchange(
+                PUT("/api/v1/flows/" + flow.getNamespace() + "/" + flowId, finalFlow),
+                Argument.of(Flow.class),
+                Argument.of(JsonError.class)
+            );
+        });
+
+        JsonError jsonError = e.getResponse().getBody(JsonError.class).get();
+
+        assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
+        assertThat(jsonError.getMessage(), containsString("flow.id"));
+        assertThat(jsonError.getMessage(), containsString("flow.namespace"));
     }
 }

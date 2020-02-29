@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 
 abstract public class TestsUtils {
-    private static final YamlFlowParser yamlFlowParser = new YamlFlowParser();
     private static ObjectMapper mapper = JacksonMapper.ofYaml();
 
     public static <T> T map(String path, Class<T> cls) throws IOException {
@@ -34,15 +33,6 @@ abstract public class TestsUtils {
         String read = Files.asCharSource(new File(resource.getFile()), Charsets.UTF_8).read();
 
         return mapper.readValue(read, cls);
-    }
-
-    public static Flow parse(String path) throws IOException {
-        URL resource = TestsUtils.class.getClassLoader().getResource(path);
-        assert resource != null;
-
-        File file = new File(resource.getFile());
-
-        return yamlFlowParser.parse(file);
     }
 
     public static void loads(LocalFlowRepositoryLoader repositoryLoader) throws IOException, URISyntaxException {

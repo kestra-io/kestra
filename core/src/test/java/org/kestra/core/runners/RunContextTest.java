@@ -26,7 +26,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getLogs(), hasSize(1));
         assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getLogs().get(0).getLevel(), is(Level.TRACE));
-        assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getLogs().get(0).getMessage(), is("first 1st"));
+        assertThat(execution.getTaskRunList().get(0).getAttempts().get(0).getLogs().get(0).getMessage(), is("first t1"));
 
         assertThat(execution.getTaskRunList().get(1).getAttempts().get(0).getLogs(), hasSize(1));
         assertThat(execution.getTaskRunList().get(1).getAttempts().get(0).getLogs().get(0).getLevel(), is(Level.WARN));

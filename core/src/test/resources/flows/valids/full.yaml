@@ -10,126 +10,61 @@ namespace: org.kestra.tests
 #
 
 tasks:
-- id: 1st
+- id: t1
   type: org.kestra.core.tasks.scripts.Bash
   commands:
   - 'echo "{{ task.id }}"'
 
-- id: 2nd
+- id: t2
   type: org.kestra.core.tasks.debugs.Return
   format: second {{ execution.id }}
 
-- id: 3rd
+- id: t3
   type: org.kestra.core.tasks.debugs.Echo
-  format: third all optional args {{ outputs.2nd.value }}
+  format: third all optional args {{ outputs.t2.value }}
   timeout: 1000
   retry:
     maxAttempt: 5
     type: constant
     interval: PT15M
 #
-#- id: 4th
-#  type: org.kestra.core.tasks.flows.Each
-#  values: [
-#    1,
-#    2,
-#    3
-#  ]
-#  tasks:
-#  - id: 4th - Each
-#    type: org.kestra.core.tasks.debugs.Echo
-#    format: each {{item}}
-
-- id: 5th
+- id: t5
   type: org.kestra.core.tasks.flows.Parallel
   concurrent: 3
   tasks:
-  - id: 5th - 1st
+  - id: t5-t1
     type: org.kestra.core.tasks.scripts.Bash
     commands:
-    - echo "4th - 1st {{execution.id}}"
-  - id: 5th - 2nd
+    - echo "t5-t1 {{execution.id}}"
+  - id: t5-t2
     type: org.kestra.core.tasks.scripts.Bash
     commands:
-    - echo "4th - 2nd {{execution.id}}"
-  - id: 5th - 3rd
+    - echo "t5-t2 {{execution.id}}"
+  - id: t5-t3
     type: org.kestra.core.tasks.scripts.Bash
     commands:
-    - echo "4th- 3rd {{execution.id}}"
-  - id: 5th - 4th
+    - echo "t4-t3 {{execution.id}}"
+  - id: t5-t4
     type: org.kestra.core.tasks.flows.Parallel
     tasks:
-      - id: 5th - 4th - 1st
+      - id: t5-t4-t1
         type: org.kestra.core.tasks.flows.Parallel
         tasks:
-        - id: 5th - 4th - 1st - 1st
+        - id: t5-t4-t1-t1
           type: org.kestra.core.tasks.flows.Parallel
           tasks:
-          - id: 5th - 4th - 1st - 1st - 1st
+          - id: t5-t4-t1-t1-t1
             type: org.kestra.core.tasks.flows.Parallel
             tasks:
-            - id: 5th - 4th - 1st - 1st - 1st - last
+            - id: t5-t4-t1-t1-t1-last
               type: org.kestra.core.tasks.scripts.Bash
               commands:
-                - 'echo "4th - 4th - 1st - 1st - 1st - last : {{execution.id}}"'
+                - 'echo "t5-t5-t1-t1-t1-last : {{execution.id}}"'
 
 
-- id: lastte
+- id: last
   type: org.kestra.core.tasks.scripts.Bash
   commands:
     - 'echo "last"'
     - 'sleep 1'
 
-#- type: python
-#  commands:
-#  - print(bla)
-#- type: each
-#  values: {{selector}}
-#  tasks:
-#  - type: org.kestra.core.tasks.scripts.Bash
-#    commands:
-#    - echo {{item}}
-#
-#- type: switch
-#  expression: {{selector}}
-#  cases:
-#     - value: hello
-#       tasks:
-#         - type: org.kestra.core.tasks.debugs.Echo
-#           text: hello world
-#     - value: bye
-#       tasks:
-#         - type: org.kestra.core.tasks.debugs.Echo
-#           text: goodbye world
-#  default:
-#    - tasks:
-#        -type: org.kestra.core.tasks.debugs.Echo
-#         text: something else
-#
-#- type: branch
-#  branches:
-#    first:
-#    - type: org.kestra.core.tasks.scripts.Bash
-#      commands:
-#      - echo "first branch - step 1"
-#    - type: org.kestra.core.tasks.scripts.Bash
-#      commands:
-#      - echo "first branch - step 2"
-#    second:
-#    - type: org.kestra.core.tasks.scripts.Bash
-#      commands:
-#      - echo "second branch - step 1"
-#    - type: org.kestra.core.tasks.scripts.Bash
-#      commands:
-#      - echo "second branch - step 2"
-#
-#- type: org.kestra.core.tasks.scripts.Bash
-#  commands: sleep 5
-#  timeout: 1
-#  errors:
-#    - type: org.kestra.core.tasks.scripts.Bash
-#      commands:
-#      - echo "first branch - step 1"
-#    - type: org.kestra.core.tasks.scripts.Bash
-#      commands:
-#      - echo "first branch - step 2"

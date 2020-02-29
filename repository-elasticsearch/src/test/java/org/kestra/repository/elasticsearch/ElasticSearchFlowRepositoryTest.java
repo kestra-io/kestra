@@ -3,9 +3,6 @@ package org.kestra.repository.elasticsearch;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.test.annotation.MicronautTest;
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -20,8 +17,8 @@ import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-@MicronautTest
 
+@MicronautTest
 class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
     @Inject
     RestHighLevelClient client;
@@ -32,6 +29,8 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
     @Inject
     ElasticSearchFlowRepository elasticSearchFlowRepository;
 
+    @Inject
+    private ElasticSearchRepositoryTestUtils utils;
 
     @Test
     void find() {
@@ -42,12 +41,7 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
 
     @AfterEach
     protected void tearDown() throws IOException {
-        DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest(indicesConfigs.stream()
-            .map(IndicesConfig::getIndex)
-            .toArray(String[]::new))
-            .indicesOptions(IndicesOptions.LENIENT_EXPAND_OPEN);
-        client.indices().delete(deleteIndexRequest, RequestOptions.DEFAULT);
-
+        utils.tearDown();
         elasticSearchFlowRepository.initMapping();
     }
 }

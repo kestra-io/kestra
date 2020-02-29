@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
-import org.kestra.core.repositories.ExecutionRepositoryInterface;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -23,7 +22,7 @@ class ElasticSearchExecutionRepositoryTest {
     public static final String FLOW = "full";
 
     @Inject
-    ExecutionRepositoryInterface executionRepository;
+    ElasticSearchExecutionRepository executionRepository;
 
     @Inject
     ElasticSearchRepositoryTestUtils utils;
@@ -79,5 +78,6 @@ class ElasticSearchExecutionRepositoryTest {
     @AfterEach
     protected void tearDown() throws IOException {
         utils.tearDown();
+        executionRepository.initMapping();
     }
 }

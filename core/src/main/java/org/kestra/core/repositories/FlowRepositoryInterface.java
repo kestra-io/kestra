@@ -6,6 +6,7 @@ import org.kestra.core.models.flows.Flow;
 
 import java.util.List;
 import java.util.Optional;
+import javax.validation.ConstraintViolationException;
 
 public interface FlowRepositoryInterface {
     Optional<Flow> findById(String namespace, String id, Optional<Integer> revision);
@@ -46,7 +47,9 @@ public interface FlowRepositoryInterface {
             .findFirst();
     }
 
-    Flow save(Flow flow);
+    Flow create(Flow flow) throws ConstraintViolationException;
+
+    Flow update(Flow flow, Flow previous) throws ConstraintViolationException;
 
     void delete(Flow flow);
 }

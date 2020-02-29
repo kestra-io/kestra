@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
@@ -12,6 +13,7 @@ import org.kestra.core.models.listeners.Listener;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.triggers.Trigger;
+import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
@@ -20,11 +22,17 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 @Value
 @Builder
+@Introspected
 public class Flow {
     private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
@@ -36,12 +44,16 @@ public class Flow {
         });
 
     @NotNull
-    private String id;
+    @NotBlank
+    @Pattern(regexp="[a-zA-Z0-9_-]+")
+    public String id;
 
     @NotNull
+    @Pattern(regexp="[a-z0-9.]+")
     private String namespace;
 
     @With
+    @Min(value = 1)
     private Integer revision;
 
     @Valid
@@ -113,6 +125,36 @@ public class Flow {
             return jsonMapper.writeValueAsString(this).equals(jsonMapper.writeValueAsString(o));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    public Optional<ConstraintViolationException> validateUpdate(Flow updated) {
+        Set<ConstraintViolation<?>> violations = new HashSet<>();
+
+        if (!updated.getId().equals(this.getId())) {
+            violations.add(ManualConstraintViolation.of(
+                "Illegal flow id update",
+                updated,
+                Flow.class,
+                "flow.id",
+                updated.getId()
+            ));
+        }
+
+        if (!updated.getNamespace().equals(this.getNamespace())) {
+            violations.add(ManualConstraintViolation.of(
+                "Illegal namespace update",
+                updated,
+                Flow.class,
+                "flow.namespace",
+                updated.getNamespace()
+            ));
+        }
+
+        if (violations.size() > 0) {
+            return Optional.of(new ConstraintViolationException(violations));
+        } else {
+            return Optional.empty();
         }
     }
 }

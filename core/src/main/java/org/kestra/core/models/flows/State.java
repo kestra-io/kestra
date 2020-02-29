@@ -9,11 +9,15 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @Value
 public class State {
+    @NotNull
     private Type current;
 
+    @Valid
     private List<History> histories;
 
     public State() {
@@ -92,7 +96,10 @@ public class State {
 
     @Value
     public static class History {
+        @NotNull
         private Type state;
+
+        @NotNull
         private Instant date;
     }
 }

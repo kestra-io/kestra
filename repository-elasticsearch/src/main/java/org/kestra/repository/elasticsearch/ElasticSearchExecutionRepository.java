@@ -5,6 +5,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -21,8 +22,12 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     private static final String INDEX_NAME = "executions";
 
     @Inject
-    public ElasticSearchExecutionRepository(RestHighLevelClient client, List<IndicesConfig> indicesConfigs) {
-        super(client, indicesConfigs, Execution.class);
+    public ElasticSearchExecutionRepository(
+        RestHighLevelClient client,
+        List<IndicesConfig> indicesConfigs,
+        ModelValidator modelValidator
+    ) {
+        super(client, indicesConfigs, modelValidator, Execution.class);
     }
 
     @Override

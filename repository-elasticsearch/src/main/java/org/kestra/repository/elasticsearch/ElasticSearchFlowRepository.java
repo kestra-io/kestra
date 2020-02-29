@@ -13,6 +13,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilde
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.FlowRepositoryInterface;
@@ -20,6 +21,7 @@ import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -33,8 +35,12 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     private static final String REVISIONS_NAME = "flows-revisions";
 
     @Inject
-    public ElasticSearchFlowRepository(RestHighLevelClient client, List<IndicesConfig> indicesConfigs) {
-        super(client, indicesConfigs, Flow.class);
+    public ElasticSearchFlowRepository(
+        RestHighLevelClient client,
+        List<IndicesConfig> indicesConfigs,
+        ModelValidator modelValidator
+    ) {
+        super(client, indicesConfigs, modelValidator, Flow.class);
     }
 
     private static String flowId(Flow flow) {
@@ -97,8 +103,31 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         return super.findQueryString(INDEX_NAME, query, pageable);
     }
 
-    @Override
-    public Flow save(Flow flow) {
+    public Flow create(Flow flow) throws ConstraintViolationException {
+        return this.save(flow);
+    }
+
+    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
+        // control if update is valid
+        this
+            .findById(previous.getNamespace(), previous.getId())
+            .map(current -> current.validateUpdate(flow))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        return this.save(flow);
+    }
+
+    public Flow save(Flow flow) throws ConstraintViolationException {
+        modelValidator
+            .isValid(flow)
+            .ifPresent(s -> {
+                throw s;
+            });
+
         Optional<Flow> exists = this.exists(flow);
         if (exists.isPresent()) {
             return exists.get();

@@ -5,6 +5,7 @@ import org.kestra.core.serializers.YamlFlowParser;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.validation.ConstraintViolationException;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -14,9 +15,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.google.common.io.Files.*;
+
 @Singleton
 public class LocalFlowRepositoryLoader {
-    private static final YamlFlowParser yamlFlowParser = new YamlFlowParser();
+    @Inject
+    private YamlFlowParser yamlFlowParser;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -27,13 +31,17 @@ public class LocalFlowRepositoryLoader {
 
     public void load(File basePath) throws IOException {
         List<Path> list = Files.walk(basePath.toPath())
-            .filter(path -> com.google.common.io.Files.getFileExtension(path.toString()).equals("yaml"))
+            .filter(path -> getFileExtension(path.toString()).equals("yaml"))
             .collect(Collectors.toList());
 
         for (Path file: list) {
             Flow parse = yamlFlowParser.parse(file.toFile());
 
-            flowRepository.save(parse);
+            try {
+                flowRepository.create(parse);
+            } catch (ConstraintViolationException ignored) {
+
+            }
         }
     }
 }

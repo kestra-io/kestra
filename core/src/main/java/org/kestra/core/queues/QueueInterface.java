@@ -4,7 +4,7 @@ import java.io.Closeable;
 import java.util.function.Consumer;
 
 public interface QueueInterface<T> extends Closeable {
-    void emit(T message);
+    void emit(T message) throws QueueException;
 
     Runnable receive(Consumer<T> consumer);
 

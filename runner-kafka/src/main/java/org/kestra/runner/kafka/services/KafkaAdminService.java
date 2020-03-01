@@ -36,7 +36,7 @@ public class KafkaAdminService {
         return AdminClient.create(properties);
     }
 
-    private TopicsConfig getTopicConfig(Class cls) {
+    private TopicsConfig getTopicConfig(Class<?> cls) {
         return this.topicsConfig
             .stream()
             .filter(r -> r.getCls().equals(cls.getName().toLowerCase().replace(".", "-")))
@@ -45,7 +45,7 @@ public class KafkaAdminService {
     }
 
     @SuppressWarnings("deprecation")
-    public boolean createIfNotExist(Class cls) {
+    public void createIfNotExist(Class<?> cls) {
         TopicsConfig topicConfig = this.getTopicConfig(cls);
 
         AdminClient admin = this.of();
@@ -70,7 +70,6 @@ public class KafkaAdminService {
         try {
             admin.createTopics(Collections.singletonList(newTopic)).all().get();
             log.info("Topic '{}' created", newTopic.name());
-            return true;
         } catch (ExecutionException | InterruptedException e) {
             if (e.getCause() instanceof TopicExistsException) {
                 try {
@@ -97,12 +96,9 @@ public class KafkaAdminService {
                 throw new RuntimeException(e);
             }
         }
-
-        return false;
     }
 
-
-    public String getTopicName(Class cls) {
+    public String getTopicName(Class<?> cls) {
         return this.getTopicConfig(cls).getName();
     }
 }

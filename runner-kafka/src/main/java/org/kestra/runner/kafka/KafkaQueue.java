@@ -11,6 +11,7 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
@@ -28,7 +29,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -75,7 +75,7 @@ public class KafkaQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public void emit(T message) {
+    public void emit(T message) throws QueueException {
         if (log.isTraceEnabled()) {
             log.trace("New message: topic '{}', value {}", topicsConfig.getName(), message);
         }
@@ -88,13 +88,13 @@ public class KafkaQueue<T> implements QueueInterface<T> {
                     this.key(message), message),
                     (metadata, e) -> {
                         if (e != null) {
-                            log.error("Failed to produce with metadata {}", metadata.toString());
+                            log.error("Failed to produce '{}' with metadata '{}'", e, metadata);
                         }
                     }
                 )
                 .get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            throw new QueueException("Failed to produce", e);
         }
     }
 
@@ -107,7 +107,7 @@ public class KafkaQueue<T> implements QueueInterface<T> {
     public Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
         AtomicBoolean running = new AtomicBoolean(true);
 
-        Future<?> submit = poolExecutor.submit(() -> {
+        poolExecutor.execute(() -> {
             KafkaConsumer<String, T> kafkaConsumer = kafkaConsumerService.of(
                 consumerGroup,
                 JsonSerde.of(this.cls)
@@ -159,7 +159,7 @@ public class KafkaQueue<T> implements QueueInterface<T> {
         }
     }
 
-    public static String getConsumerGroupName(Class group) {
+    public static String getConsumerGroupName(Class<?> group) {
         return "kestra_" +
             CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE,
                 group.getSimpleName().replace("Kafka", "")
@@ -168,8 +168,6 @@ public class KafkaQueue<T> implements QueueInterface<T> {
 
     @Override
     public void close() throws IOException {
-        if (!poolExecutor.isShutdown()) {
-            poolExecutor.shutdown();
-        }
+
     }
 }

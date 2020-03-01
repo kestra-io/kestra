@@ -7,6 +7,7 @@ import com.google.common.hash.Hashing;
 import io.micronaut.context.ApplicationContext;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.kestra.core.queues.QueueException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.TaskRunAttempt;
 import org.kestra.core.models.flows.State;
@@ -46,7 +47,7 @@ public class Worker implements Runnable {
         this.workerTaskQueue.receive(Worker.class, this::run);
     }
 
-    public void run(WorkerTask workerTask) {
+    public void run(WorkerTask workerTask) throws QueueException {
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, metricRegistry.tags(workerTask))
             .increment();
@@ -99,22 +100,34 @@ public class Worker implements Runnable {
 
             // emit
             finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
-            this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
 
-            // log
-            finalWorkerTask.logger().info(
-                "[execution: {}] [taskrun: {}] Task {} (type: {}) with state {} completed in {}",
-                finalWorkerTask.getTaskRun().getExecutionId(),
-                finalWorkerTask.getTaskRun().getId(),
-                finalWorkerTask.getTaskRun().getTaskId(),
-                finalWorkerTask.getTask().getClass().getSimpleName(),
-                state,
-                finalWorkerTask.getTaskRun().getState().humanDuration()
-            );
+            // if resulting object can't be emitted (mostly size of message), we just can't emit it like that.
+            // So we just tryed to failed the status of the worker task, in this case, no log can't be happend, just
+            // changing status must work in order to finish current task (except if we are near the upper bound size).
+            try {
+                this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
+            } catch (QueueException e) {
+                finalWorkerTask = workerTask
+                    .withTaskRun(workerTask.getTaskRun()
+                        .withState(State.Type.FAILED)
+                    );
+                this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
+            } finally {
+                // log
+                finalWorkerTask.logger().info(
+                    "[execution: {}] [taskrun: {}] Task {} (type: {}) with state {} completed in {}",
+                    finalWorkerTask.getTaskRun().getExecutionId(),
+                    finalWorkerTask.getTaskRun().getId(),
+                    finalWorkerTask.getTaskRun().getTaskId(),
+                    finalWorkerTask.getTask().getClass().getSimpleName(),
+                    finalWorkerTask.getTaskRun().getState(),
+                    finalWorkerTask.getTaskRun().getState().humanDuration()
+                );
 
-            metricRegistry
-                .counter(MetricRegistry.METRIC_WORKER_ENDED_COUNT, metricRegistry.tags(workerTask))
-                .increment();
+                metricRegistry
+                    .counter(MetricRegistry.METRIC_WORKER_ENDED_COUNT, metricRegistry.tags(finalWorkerTask))
+                    .increment();
+            }
         }
     }
 

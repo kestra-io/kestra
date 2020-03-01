@@ -7,6 +7,7 @@ import lombok.ToString;
 import org.kestra.core.models.annotations.InputProperty;
 
 import java.lang.reflect.Field;
+import javax.validation.constraints.NotNull;
 
 @Getter
 @EqualsAndHashCode
@@ -14,6 +15,8 @@ import java.lang.reflect.Field;
 public class InputDocumentation extends AbstractChildDocumentation<InputDocumentation> {
     @JsonIgnore
     private final InputProperty annotation;
+
+    private Boolean required;
 
     public String getDescription() {
         return this.annotation == null ? null : this.annotation.description();
@@ -36,5 +39,6 @@ public class InputDocumentation extends AbstractChildDocumentation<InputDocument
             DocumentationGenerator.getChildsInputs(field)
         );
         this.annotation = annotation;
+        this.required = field.getAnnotationsByType(NotNull.class).length > 0;
     }
 }

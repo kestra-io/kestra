@@ -21,7 +21,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
             (f, e) -> ImmutableMap.of("string", "FIRST")
         );
 
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("1st"));
+        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("t1"));
         assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("value"), is("FIRST"));
         assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("defaults"), is(false));
     }
@@ -35,10 +35,10 @@ class SwitchTest extends AbstractMemoryRunnerTest {
             (f, e) -> ImmutableMap.of("string", "SECOND")
         );
 
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("2nd"));
+        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("t2"));
         assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("value"), is("SECOND"));
         assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("defaults"), is(false));
-        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("2nd.sub"));
+        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("t2_sub"));
     }
 
     @Test
@@ -50,11 +50,11 @@ class SwitchTest extends AbstractMemoryRunnerTest {
             (f, e) -> ImmutableMap.of("string", "THIRD")
         );
 
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("3th"));
+        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("t3"));
         assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("value"), is("THIRD"));
         assertThat(execution.findTaskRunsByTaskId("parent-seq").get(0).getOutputs().get("defaults"), is(false));
         assertThat(execution.getTaskRunList().get(2).getTaskId(), is("failed"));
-        assertThat(execution.getTaskRunList().get(3).getTaskId(), is("error-1st"));
+        assertThat(execution.getTaskRunList().get(3).getTaskId(), is("error-t1"));
     }
 
     @Test

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import net.jodah.failsafe.RetryPolicy;
 import org.kestra.core.runners.WorkerTask;
 
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.time.Duration;
 
@@ -24,6 +25,7 @@ public abstract class AbstractRetry {
 
     private Duration maxDuration;
 
+    @Min(0)
     private Integer maxAttempt;
 
     public RetryPolicy<WorkerTask> toPolicy() {

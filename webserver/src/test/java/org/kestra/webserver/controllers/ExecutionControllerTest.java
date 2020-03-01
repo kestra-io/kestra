@@ -10,6 +10,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.client.sse.RxSseClient;
+import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.sse.Event;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.reactivex.Maybe;
@@ -202,7 +203,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
-        assertThat(e.getResponse().getBody(java.lang.String.class).get(), is("Task [" + referenceTaskId + "] does not exist !"));
+        assertThat(e.getResponse().getBody(JsonError.class).get().getMessage(), containsString("Task [" + referenceTaskId + "] does not exist !"));
     }
 
     @Test
@@ -222,7 +223,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
-        assertThat(e.getResponse().getBody(java.lang.String.class).get(), is("No failed task found to restart execution from !"));
+        assertThat(e.getResponse().getBody(JsonError.class).get().getMessage(), containsString("No failed task found to restart execution from !"));
     }
 
     @Test
@@ -278,7 +279,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     @Test
     void restartFromTaskIdWithSequential() throws TimeoutException {
         final String flowId = "restart_with_sequential";
-        final String referenceTaskId = "a-3-2.2.end";
+        final String referenceTaskId = "a-3-2-2_end";
 
         // Run execution until it ends
         Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null,
@@ -337,7 +338,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         flow.get().getTasks().set(2, b);
 
-        flowRepositoryInterface.save(flow.get());
+        flowRepositoryInterface.create(flow.get());
 
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(

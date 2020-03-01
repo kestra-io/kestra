@@ -31,6 +31,7 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
@@ -51,14 +52,18 @@ abstract public class AbstractElasticSearchRepository <T> {
 
     protected Map<String, IndicesConfig> indicesConfigs;
 
+    protected ModelValidator modelValidator;
+
     @Inject
     public AbstractElasticSearchRepository(
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
+        ModelValidator modelValidator,
         Class<T> cls
     ) {
         this.client = client;
         this.cls = cls;
+        this.modelValidator = modelValidator;
 
         this.indicesConfigs = indicesConfigs
             .stream()

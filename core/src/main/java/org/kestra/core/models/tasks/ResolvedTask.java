@@ -2,13 +2,12 @@ package org.kestra.core.models.tasks;
 
 import lombok.Builder;
 import lombok.Value;
-import org.apache.avro.reflect.Nullable;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 
 @Builder
 @Value
@@ -16,10 +15,8 @@ public class ResolvedTask {
     @NotNull
     protected Task task;
 
-    @NotNull
     protected String value;
 
-    @Nullable
     protected String parentId;
 
     public TaskRun toTaskRun(Execution execution) {

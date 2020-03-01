@@ -2,11 +2,14 @@ package org.kestra.repository.memory;
 
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
+import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.validation.ConstraintViolationException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,6 +17,9 @@ import java.util.stream.Collectors;
 @MemoryRepositoryEnabled
 public class MemoryFlowRepository implements FlowRepositoryInterface {
     private HashMap<String, HashMap<String, Map<Integer, Flow>>> flows = new HashMap<>();
+
+    @Inject
+    private ModelValidator modelValidator;
 
     @Override
     public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
@@ -85,30 +91,59 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return ArrayListTotal.of(pageable, this.findAll());
     }
 
-    @SuppressWarnings("ComparatorMethodParameterNotUsed")
-    @Override
-    public Flow save(Flow flow) {
+    public Flow create(Flow flow) throws ConstraintViolationException {
+        return this.save(flow);
+    }
+
+    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
+        // control if update is valid
+        this
+            .findById(previous.getNamespace(), previous.getId())
+            .map(current -> current.validateUpdate(flow))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        return this.save(flow);
+    }
+
+    private Flow save(Flow flow) throws ConstraintViolationException {
+        // validate the flow
+        modelValidator
+            .isValid(flow)
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        // flow exists, return it
         Optional<Flow> exists = this.exists(flow);
         if (exists.isPresent()) {
             return exists.get();
         }
 
+        // create namespace
         if (!this.flows.containsKey(flow.getNamespace())) {
             this.flows.put(flow.getNamespace(), new HashMap<>());
         }
-        HashMap<String, Map<Integer, Flow>> namespace = this.flows.get(flow.getNamespace());
 
+        // create flow in current namespace
+        HashMap<String, Map<Integer, Flow>> namespace = this.flows.get(flow.getNamespace());
         if (!namespace.containsKey(flow.getId())) {
             namespace.put(flow.getId(), new HashMap<>());
         }
+
         Map<Integer, Flow> revisions = namespace.get(flow.getId());
 
+        // revision is already set, just update
         if (flow.getRevision() != null) {
             revisions.put(flow.getRevision(), flow);
 
             return flow;
         }
 
+        // find max revision
         Optional<Integer> max = revisions
             .entrySet()
             .stream()
@@ -117,6 +152,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
         Flow saved = flow.withRevision(max.map(integer -> integer + 1).orElse(1));
 
+        // and save it
         revisions.put(saved.getRevision(), saved);
 
         return saved;

@@ -5,27 +5,27 @@ tasks:
   - id: parent-seq
     type: org.kestra.core.tasks.flows.Sequential
     tasks:
-      - id: 1st
+      - id: t1
         type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
-      - id: 2nd - child seq
+      - id: t2_seq
         type: org.kestra.core.tasks.flows.Sequential
         tasks:
-          - id: 2nd - 1st
+          - id: t2-t1
             type: org.kestra.core.tasks.scripts.Bash
             commands:
               - 'exit 1'
-          - id: 2nd - 2nd
+          - id: t2-t2
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
-          - id: 2nd - 3rd
+          - id: t2-t3
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
 
         errors:
-          - id: error-1st
+          - id: error-t1
             type: org.kestra.core.tasks.debugs.Return
             format: "Error Trigger ! {{task.id}}"
-          - id: error-2nd
+          - id: error-t2
             type: org.kestra.core.tasks.debugs.Return
             format: "Error Trigger ! {{task.id}}"

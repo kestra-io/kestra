@@ -6,15 +6,17 @@ import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.apache.avro.reflect.Nullable;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.kestra.core.runners.RunContext;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
+import javax.validation.Valid;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @SuperBuilder
@@ -23,18 +25,21 @@ import java.util.Optional;
 @Introspected
 abstract public class Task {
     @NotNull
+    @NotBlank
+    @Pattern(regexp="[a-zA-Z0-9_-]+")
     protected String id;
 
     @NotNull
+    @NotBlank
+    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     protected String type;
 
-    @Nullable
+    @Valid
     protected AbstractRetry retry;
 
-    @Nullable
+    @Min(0)
     protected Integer timeout;
 
-    @Nullable
     @Valid
     protected List<Task> errors;
 

@@ -2,25 +2,25 @@ id: parallel
 namespace: org.kestra.tests
 
 tasks:
-  - id: parent-par
+  - id: parent_par
     type: org.kestra.core.tasks.flows.Parallel
     tasks:
-      - id: 1st
+      - id: t1
         type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
-      - id: 2nd
+      - id: t2
         type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.id}}"
-      - id: 3th - child par
+      - id: t3_par
         type: org.kestra.core.tasks.flows.Parallel
         tasks:
-          - id: 3th - 1st
+          - id: t3-t1
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
-          - id: 3th - 2nd
+          - id: t3-t2
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
-          - id: 3th - 3rd
+          - id: t3-t3
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
   - id: last

@@ -19,6 +19,7 @@ import org.kestra.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,7 +29,7 @@ public class Worker implements Runnable {
     private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private MetricRegistry metricRegistry;
 
-    private Map<Long, AtomicInteger> metricRunningCount = new HashMap<>();
+    private Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
 
     public Worker(
         ApplicationContext applicationContext,

@@ -34,6 +34,7 @@ public class MetricRegistry {
     public final static String TAG_NAMESPACE_ID = "namespace_id";
     public final static String TAG_STATE = "state";
     public final static String TAG_ATTEMPT_COUNT = "attempt_count";
+    public final static String TAG_VALUE = "value";
 
     @Inject
     private MeterRegistry meterRegistry;

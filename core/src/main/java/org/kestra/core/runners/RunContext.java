@@ -305,22 +305,20 @@ public class RunContext {
     @SuppressWarnings("unchecked")
     private Map<String, String> metricsTags() {
         ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String>builder()
-            .put("flowId", ((Map<String, String>) this.variables.get("flow")).get("id"))
-            .put("namespace", ((Map<String, String>) this.variables.get("flow")).get("namespace"))
-            .put("revision", String.valueOf(((Map<String, String>) this.variables.get("flow")).get("revision")));
+            .put(MetricRegistry.TAG_FLOW_ID, ((Map<String, String>) this.variables.get("flow")).get("id"))
+            .put(MetricRegistry.TAG_NAMESPACE_ID, ((Map<String, String>) this.variables.get("flow")).get("namespace"));
 
         if (this.variables.containsKey("task")) {
             builder
-                .put("task_id", ((Map<String, String>) this.variables.get("task")).get("id"))
-                .put("task_type", ((Map<String, String>) this.variables.get("task")).get("type"));
+                .put(MetricRegistry.TAG_TASK_ID, ((Map<String, String>) this.variables.get("task")).get("id"))
+                .put(MetricRegistry.TAG_TASK_TYPE, ((Map<String, String>) this.variables.get("task")).get("type"));
         }
 
         if (this.variables.containsKey("taskrun")) {
             Map<String, String> taskrun = (Map<String, String>) this.variables.get("taskrun");
 
             if (taskrun.containsValue("value")) {
-                builder
-                    .put("value", taskrun.get("value"));
+                builder.put(MetricRegistry.TAG_VALUE, taskrun.get("value"));
             }
         }
 

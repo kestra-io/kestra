@@ -6,11 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.FlowRepositoryInterface;
-import org.kestra.core.storages.StorageObject;
+import org.kestra.core.storages.StorageInterface;
 
-import javax.inject.Inject;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -37,6 +38,9 @@ public class InputsTest extends AbstractMemoryRunnerTest {
 
     @Inject
     private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private StorageInterface storageInterface;
 
     private Map<String, Object> typedInputs(Map<String, String> map) {
         return runnerUtils.typedInputs(
@@ -84,16 +88,13 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     @Test
     void inputFile() throws URISyntaxException, IOException {
         Map<String, Object> typeds = typedInputs(inputs);
-        StorageObject file = (StorageObject) typeds.get("file");
+        URI file = (URI) typeds.get("file");
 
-        assertThat(file.getUri(), is(new URI("kestra:///org/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
-        assertThat(file.getClass(), is(StorageObject.class));
+        assertThat(file, is(new URI("kestra:///org/kestra/tests/inputs/executions/test/inputs/file/application.yml")));
+
+        InputStream inputStream = storageInterface.get(file);
         assertThat(
-            file.getContent(),
-            is(CharStreams.toString(new InputStreamReader(new FileInputStream(inputs.get("file")))))
-        );
-        assertThat(
-            CharStreams.toString(new InputStreamReader(file.getInputStream())),
+            CharStreams.toString(new InputStreamReader(inputStream)),
             is(CharStreams.toString(new InputStreamReader(new FileInputStream(inputs.get("file")))))
         );
     }
@@ -107,13 +108,11 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(7));
+        assertThat(execution.getTaskRunList(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        Arrays.asList("file-uri", "file").forEach(o ->
-            assertThat(
-                (String) execution.findTaskRunsByTaskId(o).get(0).getOutputs().get("value"),
-                matchesRegex("kestra:///org/kestra/tests/inputs/executions/.*/inputs/file/application.yml")
-            )
+        assertThat(
+            (String) execution.findTaskRunsByTaskId("file").get(0).getOutputs().get("value"),
+            matchesRegex("kestra:///org/kestra/tests/inputs/executions/.*/inputs/file/application.yml")
         );
     }
 }

@@ -32,12 +32,6 @@ tasks:
 - id: instant
   type: org.kestra.core.tasks.debugs.Return
   format: "{{inputs.instant}}"
-- id: file-content
-  type: org.kestra.core.tasks.debugs.Return
-  format: "{{inputs.file.content}}"
 - id: file
   type: org.kestra.core.tasks.debugs.Return
   format: "{{inputs.file}}"
-- id: file-uri
-  type: org.kestra.core.tasks.debugs.Return
-  format: "{{inputs.file.uri}}"

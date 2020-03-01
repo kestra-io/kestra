@@ -15,13 +15,9 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.storages.StorageInterface;
-import org.kestra.core.storages.StorageObject;
 import org.kestra.core.utils.Await;
 import org.reactivestreams.Publisher;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import java.io.File;
 import java.net.URI;
 import java.time.Duration;
@@ -36,6 +32,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 @Singleton
 public class RunnerUtils {
@@ -65,13 +64,13 @@ public class RunnerUtils {
                     throw new RuntimeException("Can't upload");
                 }
 
-                StorageObject from = storageInterface.from(flow, execution, file.getFilename(), tempFile);
+                URI from = storageInterface.from(flow, execution, file.getFilename(), tempFile);
                 //noinspection ResultOfMethodCallIgnored
                 tempFile.delete();
 
                 return new AbstractMap.SimpleEntry<>(
                     file.getFilename(),
-                    from.getUri().toString()
+                    from.toString()
                 );
             })
             .toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
@@ -137,7 +136,7 @@ public class RunnerUtils {
                             if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
                                 return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
                                     input.getName(),
-                                    new StorageObject(this.storageInterface, uri)
+                                    uri
                                 ));
                             } else {
                                 return Optional.of(new AbstractMap.SimpleEntry<String, Object>(

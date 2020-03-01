@@ -248,6 +248,9 @@ public class KafkaExecutor extends AbstractExecutor {
         KafkaAdminService kafkaAdminService;
 
         private Topology topology() {
+            this.kafkaAdminService.createIfNotExist(WorkerTaskResult.class);
+            this.kafkaAdminService.createIfNotExist(Execution.class);
+
             StreamsBuilder builder = new StreamsBuilder();
 
             builder

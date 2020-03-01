@@ -20,7 +20,7 @@ public class KafkaProducerService {
     @Inject
     private ProducerDefaultsConfig producerConfig;
 
-    public <V> KafkaProducerService.Producer<V> of(Class name, Serde<V> serde) {
+    public <V> KafkaProducerService.Producer<V> of(Class<?> name, Serde<V> serde) {
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
 

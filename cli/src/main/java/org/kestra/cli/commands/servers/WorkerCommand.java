@@ -1,17 +1,16 @@
 package org.kestra.cli.commands.servers;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.runners.Worker;
 import org.kestra.core.utils.Await;
-import org.kestra.core.utils.UncaughtExceptionHandlers;
+import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import picocli.CommandLine;
 
-import javax.inject.Inject;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.inject.Inject;
 
 @CommandLine.Command(
     name = "worker",
@@ -19,12 +18,8 @@ import java.util.concurrent.Executors;
 )
 @Slf4j
 public class WorkerCommand extends AbstractCommand {
-    private ExecutorService poolExecutor = Executors.newCachedThreadPool(
-        new ThreadFactoryBuilder()
-            .setNameFormat("worker-%d")
-            .setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit())
-            .build()
-    );
+    @Inject
+    private ThreadMainFactoryBuilder threadFactoryBuilder;
 
     @Inject
     private ApplicationContext applicationContext;
@@ -39,6 +34,8 @@ public class WorkerCommand extends AbstractCommand {
     @Override
     public void run() {
         super.run();
+
+        ExecutorService poolExecutor = Executors.newCachedThreadPool(threadFactoryBuilder.build("worker-%d"));
 
         for (int i = 0; i < thread; i++) {
             poolExecutor.execute(applicationContext.getBean(Worker.class));

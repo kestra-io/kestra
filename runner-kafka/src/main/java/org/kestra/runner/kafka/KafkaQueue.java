@@ -2,7 +2,6 @@ package org.kestra.runner.kafka;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -15,7 +14,7 @@ import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
-import org.kestra.core.utils.UncaughtExceptionHandlers;
+import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -40,14 +39,15 @@ public class KafkaQueue<T> implements QueueInterface<T> {
     private KafkaConsumerService kafkaConsumerService;
     private KafkaProducerService kafkaProducerService;
     private TopicsConfig topicsConfig;
-    private static ExecutorService poolExecutor = Executors.newCachedThreadPool(
-        new ThreadFactoryBuilder()
-            .setNameFormat("kakfa-queue-%d")
-            .setUncaughtExceptionHandler(UncaughtExceptionHandlers.systemExit())
-            .build()
-    );
+    private static ExecutorService poolExecutor;
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
+        if (poolExecutor == null) {
+            poolExecutor = Executors.newCachedThreadPool(
+                applicationContext.getBean(ThreadMainFactoryBuilder.class).build("kakfa-queue-%d")
+            );
+        }
+
         this.cls = cls;
         this.kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);

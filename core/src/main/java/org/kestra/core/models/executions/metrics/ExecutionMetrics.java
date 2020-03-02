@@ -28,11 +28,17 @@ public class ExecutionMetrics {
     private Long running;
 
     public static class ExecutionMetricsBuilder {
-
         public ExecutionMetrics build() {
             this.computeStateCount();
-            return new ExecutionMetrics(this.state, this.startDate, this.count, this.success, this.failed,
-                this.created, this.running);
+            return new ExecutionMetrics(
+                this.state,
+                this.startDate,
+                this.count,
+                this.success,
+                this.failed,
+                this.created,
+                this.running
+            );
         }
 
         private void computeStateCount() {

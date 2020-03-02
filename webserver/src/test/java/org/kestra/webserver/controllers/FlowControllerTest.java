@@ -66,8 +66,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @SuppressWarnings("unchecked")
     @Test
     void findAll() {
-        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"),
-            Argument.of(PagedResults.class, Flow.class));
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal(), is(Helpers.FLOWS_COUNT));
     }
 
@@ -85,9 +84,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(result.getId(), is(flow.getId()));
         assertThat(result.getInputs().get(0).getName(), is("a"));
 
-        Flow get =
-            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId())
-                , Flow.class);
+        Flow get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), Flow.class);
         assertThat(get.getId(), is(flow.getId()));
         assertThat(get.getInputs().get(0).getName(), is("a"));
 

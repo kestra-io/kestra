@@ -36,8 +36,7 @@ public class ExecutionService {
      * <ul>
      *     <li>If a {@code referenceTaskId} is provided, a new execution (with a new execution id) is created. The
      *     returned execution will start from the the task whose id equals the {@code referenceTaskId}.
-     *     If a task before the reference task is in failed state, an {@code IllegalArgumentException} will be thrown
-     *     .</li>
+     *     If a task before the reference task is in failed state, an {@code IllegalArgumentException} will be thrown.</li>
      *     <li>If no {@code referenceTaskId} is provided, the {@code execution} (with the same execution id) is updated
      *     and returned so that it can be run from the last failed task.</li>
      * </ul>
@@ -48,8 +47,7 @@ public class ExecutionService {
      * @return an execution that can be run
      * @throws IllegalStateException    If provided execution is not in a terminated state.
      * @throws IllegalArgumentException If no referenceTaskId is provided or if there is no failed task. Also thrown if
-     *                                  a {@code referenceTaskId} is provided but there is a failed task before the
-     *                                  reference task.
+     *                                  a {@code referenceTaskId} is provided but there is a failed task before the reference task.
      */
     public Execution getRestartExecution(final Execution execution, String referenceTaskId) throws IllegalStateException, IllegalArgumentException, IllegalVariableEvaluationException {
         if (!execution.getState().isTerninated()) {
@@ -95,8 +93,7 @@ public class ExecutionService {
      * @return an execution that can be run
      * @throws IllegalArgumentException If the provided {@code taskRunIndex} is not valid
      */
-    private State getRestartState(final Execution execution, int taskRunIndex, int referenceTaskRunIndex,
-                                  Set<String> referenceTaskRunAncestors) throws IllegalArgumentException {
+    private State getRestartState(final Execution execution, int taskRunIndex, int referenceTaskRunIndex, Set<String> referenceTaskRunAncestors) throws IllegalArgumentException {
         if (taskRunIndex < 0 || taskRunIndex >= execution.getTaskRunList().size() || taskRunIndex > referenceTaskRunIndex)
             throw new IllegalArgumentException("Unable to determine restart state !");
 
@@ -185,8 +182,7 @@ public class ExecutionService {
             .mapToObj(currentIndex -> {
                 final TaskRun originalTaskRun = execution.getTaskRunList().get(currentIndex);
 
-                final State state = getRestartState(execution, currentIndex, (int) refTaskRunIndex,
-                    refTaskRunAncestors);
+                final State state = getRestartState(execution, currentIndex, (int) refTaskRunIndex, refTaskRunAncestors);
 
                 final String newTaskRunId = FriendlyId.createFriendlyId();
 
@@ -263,4 +259,5 @@ public class ExecutionService {
 
         return toRestart;
     }
+
 }

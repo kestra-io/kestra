@@ -16,7 +16,7 @@ export default {
             })
         },
         restartExecution({ commit }, options) {
-            return Vue.axios.post(`/api/v1/executions/${options.id}/restart?taskId=${options.taskId}`, { params: options }, {
+            return Vue.axios.post(`/api/v1/executions/${options.id}/restart?taskId=${options.taskId}`, {params: options},{
                 headers: {
                     'content-type': 'multipart/form-data'
                 }
@@ -34,7 +34,7 @@ export default {
             if (sort) {
                 sortQueryString = `?sort=${sort}`
             }
-            return Vue.axios.get(`/api/v1/executions/search${sortQueryString}`, { params: options }).then(response => {
+            return Vue.axios.get(`/api/v1/executions/search${sortQueryString}`, {params: options}).then(response => {
                 commit('setExecutions', response.data.results)
                 commit('setTotal', response.data.total)
             })

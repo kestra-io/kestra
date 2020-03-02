@@ -54,7 +54,7 @@ export default {
             });
             this.loadData(this.onDataLoaded);
         },
-        onRowDoubleClick(item) {            
+        onRowDoubleClick(item) {
             this.$router.push({ name: this.dataType, params: item });
         },
         onNamespaceSelect() {

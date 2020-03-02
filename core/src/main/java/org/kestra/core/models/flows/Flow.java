@@ -20,8 +20,6 @@ import org.kestra.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,7 +49,7 @@ public class Flow {
     @NotNull
     @NotBlank
     @Pattern(regexp="[a-zA-Z0-9_-]+")
-    public String id;
+    private String id;
 
     @NotNull
     @Pattern(regexp="[a-z0-9.]+")
@@ -133,7 +131,7 @@ public class Flow {
         }
     }
 
-    public static String getUniqueIdWithoutRevision(String namespace, String flowId) {
+    public static String uniqueIdWithoutRevision(String namespace, String flowId) {
         return namespace + flowId;
     }
 

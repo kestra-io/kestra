@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 
 public class FlowService {
-
     @Inject
     FlowRepositoryInterface flowRepositoryInterface;
 
@@ -31,9 +30,7 @@ public class FlowService {
      * @param pageable
      * @return
      */
-    public ArrayListTotal<ExecutionMetricsAggregation> findAndAggregate(String query, String startDate,
-                                                                        Pageable pageable) {
-
+    public ArrayListTotal<ExecutionMetricsAggregation> findAndAggregate(String query, String startDate, Pageable pageable) {
         final String execQuery = "state.startDate:[" + startDate + " TO *]";
         Map<String, ExecutionMetricsAggregation> periodAggregationMap =
             executionRepositoryInterface.aggregateByStateWithDurationStats(execQuery, pageable);
@@ -48,7 +45,7 @@ public class FlowService {
         flows.stream()
             .forEach(flow -> {
 
-                final String mapKey = Flow.getUniqueIdWithoutRevision(flow.getNamespace(), flow.getId());
+                final String mapKey = Flow.uniqueIdWithoutRevision(flow.getNamespace(), flow.getId());
 
                 ExecutionMetricsAggregation periodAggregation = periodAggregationMap.get(mapKey);
                 Stats last24hStats = last24hStatsMap.get(mapKey);
@@ -56,13 +53,10 @@ public class FlowService {
                 result.put(mapKey, ExecutionMetricsAggregation.builder()
                     .id(flow.getId())
                     .namespace(flow.getNamespace())
-                    .metrics(periodAggregation != null && periodAggregation.getMetrics() != null ?
-                        periodAggregation.getMetrics() : null)
-                    .periodDurationStats(periodAggregation != null && periodAggregation.getPeriodDurationStats() != null ? periodAggregation.getPeriodDurationStats() :
-                        null)
+                    .metrics(periodAggregation != null && periodAggregation.getMetrics() != null ? periodAggregation.getMetrics() : null)
+                    .periodDurationStats(periodAggregation != null && periodAggregation.getPeriodDurationStats() != null ? periodAggregation.getPeriodDurationStats() : null)
                     .lastDayDurationStats(last24hStats)
-                    .trend(computeTrendOnAvgDuration(periodAggregation != null ?
-                        periodAggregation.getPeriodDurationStats() : null, last24hStats))
+                    .trend(computeTrendOnAvgDuration(periodAggregation != null ? periodAggregation.getPeriodDurationStats() : null, last24hStats))
                     .build());
             });
 
@@ -81,8 +75,7 @@ public class FlowService {
      * @param lastDurationStats
      * @return
      */
-    private ExecutionMetricsAggregation.Trend computeTrendOnAvgDuration(Stats periodDurationStats,
-                                                                        Stats lastDurationStats) {
+    private ExecutionMetricsAggregation.Trend computeTrendOnAvgDuration(Stats periodDurationStats, Stats lastDurationStats) {
         if (periodDurationStats == null || lastDurationStats == null) {
             return null;
         }

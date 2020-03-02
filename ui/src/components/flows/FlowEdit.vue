@@ -48,13 +48,6 @@ export default {
     },
     created() {
         this.loadFlow();
-        if (this.isEdit) {
-            this.readOnlyEditFields = {
-                id: this.flow.id,
-                namespace: this.flow.namespace,
-                revision: this.flow.revision
-            };
-        }
     },
     computed: {
         ...mapState("flow", ["flow"]),
@@ -84,6 +77,13 @@ export default {
     methods: {
         loadFlow() {
             this.content = Yaml.stringify(this.flow);
+            if (this.isEdit) {
+                this.readOnlyEditFields = {
+                    id: this.flow.id,
+                    namespace: this.flow.namespace,
+                    revision: this.flow.revision
+                };
+            }
         },
         editorInit: function() {
             require("brace/mode/yaml");

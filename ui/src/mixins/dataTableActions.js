@@ -9,7 +9,7 @@ export default {
             }
         }
         this.query = queryBuilder(this.$route, this.fields);
-        this.loadData();
+        this.loadData(this.onDataLoaded);
     },
     watch: {
         $route() {
@@ -22,7 +22,8 @@ export default {
     data() {
         return {
             query: "*",
-            sort: ""
+            sort: "",
+            ready: false
         };
     },
     computed: {
@@ -41,7 +42,7 @@ export default {
     methods: {
         onSearch() {
             this.query = queryBuilder(this.$route, this.fields);
-            this.loadData();
+            this.loadData(this.onDataLoaded);
         },
         onSort(sortItem) {
             const sort = [
@@ -50,14 +51,17 @@ export default {
             this.$router.push({
                 query: { ...this.$route.query, sort }
             });
-            this.loadData();
+            this.loadData(this.onDataLoaded);
         },
         onRowDoubleClick(item) {
             this.$router.push({ name: this.dataType, params: item });
         },
         onNamespaceSelect() {
             this.query = queryBuilder(this.$route, this.fields);
-            this.loadData();
+            this.loadData(this.onDataLoaded);
+        },
+        onDataLoaded () {
+            this.ready = true
         }
     }
 

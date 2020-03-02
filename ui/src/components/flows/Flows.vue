@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="ready">
         <div>
             <data-table
                 @onPageChanged="loadData"
@@ -31,11 +31,10 @@
                                 <eye id="edit-action" />
                             </router-link>
                         </template>
-                        <template v-slot:cell(namespace)="row">
-                            <a
-                                href
-                                @click.prevent="onNamespaceSelect(row.item.namespace)"
-                            >{{row.item.namespace}}</a>
+                        <template v-slot:cell(id)="row">
+                            <router-link :to="{name: 'flow', params : row.item}">
+                                {{row.item.id}}
+                            </router-link>
                         </template>
                     </b-table>
                 </template>
@@ -113,13 +112,13 @@ export default {
         }
     },
     methods: {
-        loadData() {
+        loadData(callback) {
             this.$store.dispatch("flow/findFlows", {
                 q: this.query,
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
                 sort: this.$route.query.sort
-            });
+            }).finally(callback);
         }
     }
 };

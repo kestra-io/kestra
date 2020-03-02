@@ -32,7 +32,7 @@ export default {
             return {
                 CREATED: "btn-info",
                 SUCCESS: "btn-success",
-                RUNNING: "btn-warning",
+                RUNNING: "btn-primary",
                 FAILED: "btn-danger"
             }[this.status] + (this.size ? " btn-" + this.size : "");
         },

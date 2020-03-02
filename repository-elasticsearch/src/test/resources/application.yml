@@ -1,11 +1,12 @@
-elasticsearch:
-  httpHosts: http://localhost:9200
 
 kestra:
   repository:
     type: elasticsearch
 
   elasticsearch:
+    client:
+      httpHosts: http://localhost:9200
+
     indices:
       flows:
         index: "kestra_flows"

@@ -120,8 +120,7 @@ public class ExecutionController {
      * @param id        The flow id
      * @return execution created
      */
-    @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes =
-        MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
     public Maybe<Execution> trigger(
         String namespace,
         String id,
@@ -175,8 +174,7 @@ public class ExecutionController {
      * @param taskId      the reference task id
      * @return
      */
-    @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON, consumes =
-        MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
     public Maybe<Execution> restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {

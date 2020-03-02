@@ -75,8 +75,7 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     protected Optional<T> getRequest(String index, String id) {
         try {
-            GetResponse response = client.get(new GetRequest(this.indicesConfigs.get(index).getIndex(), id),
-                RequestOptions.DEFAULT);
+            GetResponse response = client.get(new GetRequest(this.indicesConfigs.get(index).getIndex(), id), RequestOptions.DEFAULT);
 
             if (!response.isExists()) {
                 return Optional.empty();
@@ -91,7 +90,7 @@ abstract public class AbstractElasticSearchRepository<T> {
     protected static void handleWriteErrors(DocWriteResponse indexResponse) throws Exception {
         ReplicationResponse.ShardInfo shardInfo = indexResponse.getShardInfo();
         if (shardInfo.getTotal() != shardInfo.getSuccessful()) {
-            log.warn("Replication incomplete, expected " + shardInfo.getTotal() + ", got " + shardInfo.getSuccessful());
+            log.warn("Replication incomplete, expected " + shardInfo.getTotal() + ", got " + shardInfo.getSuccessful()) ;
         }
 
         if (shardInfo.getFailed() > 0) {
@@ -151,8 +150,7 @@ abstract public class AbstractElasticSearchRepository<T> {
         return searchRequest;
     }
 
-    protected SearchSourceBuilder searchSource(QueryBuilder query, Optional<List<AggregationBuilder>> aggregations,
-                                               Pageable pageable) {
+    protected SearchSourceBuilder searchSource(QueryBuilder query, Optional<List<AggregationBuilder>> aggregations, Pageable pageable) {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(query)
             .size(pageable.getSize())
@@ -198,8 +196,7 @@ abstract public class AbstractElasticSearchRepository<T> {
 
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            return new ArrayListTotal<T>(this.map(searchResponse.getHits().getHits()),
-                searchResponse.getHits().getTotalHits().value);
+            return new ArrayListTotal<T>(this.map(searchResponse.getHits().getHits()), searchResponse.getHits().getTotalHits().value);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

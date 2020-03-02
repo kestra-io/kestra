@@ -36,7 +36,6 @@ import java.util.*;
 @Singleton
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepository<Execution> implements ExecutionRepositoryInterface {
-
     private static final String INDEX_NAME = "executions";
     public static final String START_DATE_FORMAT = "yyyy-MM-dd";
 
@@ -92,7 +91,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             multipleFieldsParsedComposite.getBuckets().stream().forEach(bucket -> {
                 final String namespace = bucket.getKey().get("namespace").toString();
                 final String flowId = bucket.getKey().get("flowId").toString();
-                final String mapKey = Flow.getUniqueIdWithoutRevision(namespace, flowId);
+                final String mapKey = Flow.uniqueIdWithoutRevision(namespace, flowId);
 
                 final State.Type state = State.Type.valueOf(bucket.getKey().get("state.current").toString());
 
@@ -111,7 +110,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             durationParsedComposite.getBuckets().stream().forEach(bucket -> {
                 final String namespace = bucket.getKey().get("namespace").toString();
                 final String flowId = bucket.getKey().get("flowId").toString();
-                final String mapKey = Flow.getUniqueIdWithoutRevision(namespace, flowId);
+                final String mapKey = Flow.uniqueIdWithoutRevision(namespace, flowId);
 
                 // FIXME : What to do if not present (should never occur)
                 ExecutionMetricsAggregation executionMetricsAggregation = map.get(mapKey);
@@ -155,7 +154,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             durationParsedComposite.getBuckets().stream().forEach(bucket -> {
                 final String namespace = bucket.getKey().get("namespace").toString();
                 final String flowId = bucket.getKey().get("flowId").toString();
-                final String mapKey = Flow.getUniqueIdWithoutRevision(namespace, flowId);
+                final String mapKey = Flow.uniqueIdWithoutRevision(namespace, flowId);
 
                 map.put(mapKey, Stats.builder()
                     .avg(((ParsedStats) bucket.getAggregations().get("state.duration")).getAvg())
@@ -177,8 +176,10 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
     @Override
     public ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable) {
-        BoolQueryBuilder bool =
-            QueryBuilders.boolQuery().must(QueryBuilders.termQuery("namespace", namespace)).must(QueryBuilders.termQuery("flowId", id));
+        BoolQueryBuilder bool = QueryBuilders.boolQuery()
+            .must(QueryBuilders.termQuery("namespace", namespace))
+            .must(QueryBuilders.termQuery("flowId", id));
+
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
 
         return this.query(INDEX_NAME, sourceBuilder);

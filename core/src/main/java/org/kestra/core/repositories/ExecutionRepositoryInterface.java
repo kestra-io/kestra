@@ -17,7 +17,7 @@ public interface ExecutionRepositoryInterface {
 
     Map<String, ExecutionMetricsAggregation> aggregateByStateWithDurationStats(String query, Pageable pageable);
 
-    public Map<String, Stats> findLast24hDurationStats(String query, Pageable pageable);
+    Map<String, Stats> findLast24hDurationStats(String query, Pageable pageable);
 
     Execution save(Execution flow);
 }

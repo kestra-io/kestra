@@ -31,6 +31,7 @@ import org.kestra.webserver.responses.PagedResults;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -122,8 +123,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(result.getState().getCurrent(), is(State.Type.CREATED));
         assertThat(result.getFlowId(), is("inputs"));
         assertThat(result.getInputs().get("float"), is(42.42));
-        assertThat(((Map<String, String>) result.getInputs().get("file")).get("uri"), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
-        assertThat(((Map<String, String>) result.getInputs().get("optionalFile")).get("uri"), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
+        assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
+        assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
     }
 
     @Test
@@ -267,7 +268,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(finishedChildExecution, notNullValue());
         assertThat(finishedChildExecution.getParentId(), is(parentExecution.getId()));
-        assertThat(finishedChildExecution.getTaskRunList().size(), is(7));
+        assertThat(finishedChildExecution.getTaskRunList().size(), is(5));
 
         finishedChildExecution
             .getTaskRunList()

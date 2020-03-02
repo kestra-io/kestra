@@ -6,7 +6,6 @@ import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.AbstractMetricEntry;
 import org.kestra.core.models.executions.Execution;
@@ -16,7 +15,6 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.storages.StorageInterface;
-import org.kestra.core.storages.StorageObject;
 
 import java.io.*;
 import java.net.URI;
@@ -171,32 +169,6 @@ public class RunContext {
         return builder.build();
     }
 
-    @SneakyThrows
-    private Map<String, Object> resolveObjectStorage(Map<String, Object> variables) {
-        return variables
-            .entrySet()
-            .stream()
-            .map(r -> {
-                if (r.getValue() instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> map = (Map<String, Object>) r.getValue();
-
-                    if (map.containsKey("type") && map.get("type").equals(StorageObject.class.getName())) {
-                        r.setValue(new StorageObject(
-                            this.storageInterface,
-                            URI.create((String) map.get("uri"))
-                        ));
-                    } else {
-                        r.setValue(resolveObjectStorage(map));
-                    }
-                }
-
-                return r;
-            })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    @SuppressWarnings("unchecked")
     public RunContext forWorker(ApplicationContext applicationContext, TaskRun taskRun) {
         this.init(applicationContext);
 
@@ -204,18 +176,6 @@ public class RunContext {
 
         clone.remove("taskrun");
         clone.put("taskrun", this.variables(taskRun));
-
-        if (variables.containsKey("inputs")) {
-            Map<String, Object> inputs = resolveObjectStorage((Map<String, Object>) variables.get("inputs"));
-            clone.remove("inputs");
-            clone.put("inputs", inputs);
-        }
-
-        if (variables.containsKey("outputs")) {
-            Map<String, Object> outputs = resolveObjectStorage((Map<String, Object>) variables.get("outputs"));
-            clone.remove("outputs");
-            clone.put("outputs", outputs);
-        }
 
         this.variables = ImmutableMap.copyOf(clone);
 
@@ -277,11 +237,11 @@ public class RunContext {
      * @return the {@code StorageObject} created
      * @throws IOException If the temporary file can't be read
      */
-    public StorageObject putTempFile(File file) throws IOException {
+    public URI putTempFile(File file) throws IOException {
         URI uri = URI.create(this.storageOutputPrefix.toString());
         URI resolve = uri.resolve(uri.getPath() + "/" + file.getName());
 
-        StorageObject put = this.storageInterface.put(resolve, new FileInputStream(file));
+        URI put = this.storageInterface.put(resolve, new FileInputStream(file));
 
         boolean delete = file.delete();
         if (!delete) {

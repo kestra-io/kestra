@@ -18,7 +18,7 @@ import java.util.Arrays;
 public interface StorageInterface {
     InputStream get(URI uri) throws FileNotFoundException;
 
-    StorageObject put(URI uri, InputStream data) throws IOException;
+    URI put(URI uri, InputStream data) throws IOException;
 
     default URI uri(Flow flow, Execution execution, String inputName, String file) throws  URISyntaxException {
         return new URI("/" + String.join(
@@ -35,7 +35,7 @@ public interface StorageInterface {
         ));
     }
 
-    default StorageObject from(Flow flow, Execution execution, String input, File file) throws IOException {
+    default URI from(Flow flow, Execution execution, String input, File file) throws IOException {
         try {
             return this.put(
                 this.uri(flow, execution, input, file.getName()),
@@ -46,7 +46,7 @@ public interface StorageInterface {
         }
     }
 
-    default StorageObject from(Flow flow, Execution execution, Input input, File file) throws IOException {
+    default URI from(Flow flow, Execution execution, Input input, File file) throws IOException {
         return this.from(flow, execution, input.getName(), file);
     }
 

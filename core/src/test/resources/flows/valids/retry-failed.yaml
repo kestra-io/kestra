@@ -13,6 +13,6 @@ tasks:
     maxDuration: PT15S
 
 errors:
-  - id: 2nd
+  - id: t2
     type: org.kestra.core.tasks.debugs.Echo
     format: second {{task.id}}

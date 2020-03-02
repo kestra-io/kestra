@@ -3,6 +3,7 @@ package org.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
@@ -18,9 +19,11 @@ import java.util.Optional;
 @Slf4j
 public abstract class AbstractExecutor implements Runnable {
     protected ApplicationContext applicationContext;
+    protected MetricRegistry metricRegistry;
 
-    public AbstractExecutor(ApplicationContext applicationContext) {
+    public AbstractExecutor(ApplicationContext applicationContext, MetricRegistry metricRegistry) {
         this.applicationContext = applicationContext;
+        this.metricRegistry = metricRegistry;
     }
 
     protected Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
@@ -47,6 +50,10 @@ public abstract class AbstractExecutor implements Runnable {
         newExecution = execution.withTaskRunList(executionTasksRun);
 
         if (execution.getState().getCurrent() == State.Type.CREATED) {
+            metricRegistry
+                .timer(MetricRegistry.KESTRA_EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(execution))
+                .record(newExecution.getState().getDuration());
+
             flow.logger().info(
                 "[execution: {}] Flow started",
                 execution.getId()
@@ -54,6 +61,10 @@ public abstract class AbstractExecutor implements Runnable {
 
             newExecution = newExecution.withState(State.Type.RUNNING);
         }
+
+        metricRegistry
+            .counter(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_NEXT_COUNT, metricRegistry.tags(execution))
+            .increment(nexts.size());
 
         return newExecution;
     }
@@ -76,8 +87,15 @@ public abstract class AbstractExecutor implements Runnable {
                                 ImmutableMap.of()
                         ),
                     parent.getTask()
-                ));
+                ))
+                .stream()
+                .peek(workerTaskResult -> {
+                    metricRegistry
+                        .counter(MetricRegistry.KESTRA_EXECUTOR_WORKERTASKRESULT_COUNT, metricRegistry.tags(workerTaskResult))
+                        .increment();
 
+                })
+                .findFirst();
         }
 
         return Optional.empty();
@@ -115,6 +133,14 @@ public abstract class AbstractExecutor implements Runnable {
         if (logger.isTraceEnabled()) {
             logger.debug(execution.toString(true));
         }
+
+        metricRegistry
+            .counter(MetricRegistry.KESTRA_EXECUTOR_EXECUTION_END_COUNT, metricRegistry.tags(execution))
+            .increment();
+
+        metricRegistry
+            .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION, metricRegistry.tags(execution))
+            .record(newExecution.getState().getDuration());
 
         return newExecution;
     }

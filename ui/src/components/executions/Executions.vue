@@ -1,11 +1,12 @@
 <template>
-    <div>
+    <div v-if="ready">
         <data-table @onPageChanged="loadData" ref="dataTable" :total="total">
             <template v-slot:navbar>
                 <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
                 <v-s />
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <date-range @onDate="onSearch" />
+                <refresh-button class="float-right" @onRefresh="loadData"/>
             </template>
             <template v-slot:table>
                 <b-table
@@ -31,25 +32,19 @@
                         v-slot:cell(state.endDate)="row"
                     >{{row.item.state.endDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
                     <template v-slot:cell(state.current)="row">
-<<<<<<< HEAD
-                        <status class="status" size="sm" :status="row.item.state.current" />
-=======
                         <status
                             @click.native="addStatusToQuery(row.item.state.current)"
-                            class="status"
+                            class="status sm"
                             :status="row.item.state.current"
                         />
->>>>>>> feat(ui): allow select state by clicking it in executions
+                    </template>
+                     <template v-slot:cell(state.duration)="row">
+                        <p>{{row.item.state.duration | humanizeDuration}}</p>
                     </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link
                             :to="{name: 'flow', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >{{row.item.flowId}}</router-link>
-                    </template>
-                    <template v-slot:cell(namespace)="row">
-                        <router-link
-                            :to="{name: 'flowsList', query: {namespace: row.item.namespace}}"
-                        >{{row.item.namespace}}</router-link>
                     </template>
                     <template v-slot:cell(id)="row">
                         <code>{{row.item.id | id}}</code>
@@ -70,6 +65,7 @@ import DataTableActions from "../../mixins/dataTableActions";
 import SearchField from "../layout/SearchField";
 import NamespaceSelector from "../namespace/Selector";
 import DateRange from "../layout/DateRange";
+import RefreshButton from '../layout/RefreshButton'
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -79,12 +75,18 @@ export default {
         DataTable,
         SearchField,
         NamespaceSelector,
-        DateRange
+        DateRange,
+        RefreshButton
     },
     data() {
         return {
-            dataType: "execution"
+            dataType: "execution",
         };
+    },
+    beforeCreate () {
+        const params = JSON.parse(localStorage.getItem('executionQueries') || '{}')
+        params.sort = 'state.startDate:desc'
+        localStorage.setItem('executionQueries', JSON.stringify(params))
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
@@ -148,9 +150,9 @@ export default {
     },
     methods: {
         addStatusToQuery(status) {
-            const token = this.query === "*" ? status.toUpperCase() : `${this.$refs.searchField.search} AND ${status.toUpperCase()}`
-            this.$refs.searchField.search = token
-            this.$refs.searchField.onSearch()
+            const token = status.toUpperCase()
+            this.$refs.searchField.search = token;
+            this.$refs.searchField.onSearch();
         },
         triggerExecution() {
             this.$store
@@ -168,13 +170,13 @@ export default {
                     });
                 });
         },
-        loadData() {
+        loadData(callback) {
             this.$store.dispatch("execution/findExecutions", {
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
                 q: this.executionQuery,
                 sort: this.$route.query.sort
-            });
+            }).finally(callback);
         }
     }
 };

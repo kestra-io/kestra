@@ -3,6 +3,7 @@ package org.kestra.runner.memory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import lombok.extern.slf4j.Slf4j;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
@@ -35,9 +36,10 @@ public class MemoryExecutor extends AbstractExecutor {
         FlowRepositoryInterface flowRepository,
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
-        @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue
+        @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue,
+        MetricRegistry metricRegistry
     ) {
-        super(applicationContext);
+        super(applicationContext, metricRegistry);
         this.flowRepository = flowRepository;
         this.executionQueue = executionQueue;
         this.workerTaskQueue = workerTaskQueue;

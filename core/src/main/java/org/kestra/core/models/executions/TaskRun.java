@@ -20,6 +20,9 @@ public class TaskRun {
     private String executionId;
 
     @NotNull
+    private String namespace;
+
+    @NotNull
     private String flowId;
 
     @NotNull
@@ -42,6 +45,7 @@ public class TaskRun {
         return new TaskRun(
             this.id,
             this.executionId,
+            this.namespace,
             this.flowId,
             this.taskId,
             this.parentTaskRunId,
@@ -56,6 +60,7 @@ public class TaskRun {
         return TaskRun.builder()
             .id(id)
             .executionId(executionId)
+            .namespace(this.getNamespace())
             .flowId(this.getFlowId())
             .taskId(this.getTaskId())
             .parentTaskRunId(parentTaskRunId)
@@ -70,6 +75,7 @@ public class TaskRun {
         return TaskRun.builder()
             .id(FriendlyId.createFriendlyId())
             .executionId(execution.getId())
+            .namespace(execution.getNamespace())
             .flowId(execution.getFlowId())
             .taskId(resolvedTask.getTask().getId())
             .parentTaskRunId(resolvedTask.getParentId())

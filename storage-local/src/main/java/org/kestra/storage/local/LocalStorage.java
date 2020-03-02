@@ -1,14 +1,13 @@
 package org.kestra.storage.local;
 
 import org.kestra.core.storages.StorageInterface;
-import org.kestra.core.storages.StorageObject;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.*;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @LocalStorageEnabled
@@ -50,7 +49,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public StorageObject put(URI uri, InputStream data) throws IOException {
+    public URI put(URI uri, InputStream data) throws IOException {
         this.createDirectory(uri);
 
         OutputStream outStream = new FileOutputStream(getPath(uri).toFile());
@@ -64,8 +63,6 @@ public class LocalStorage implements StorageInterface {
         outStream.close();
         data.close();
 
-        URI result = URI.create("kestra://" + uri.getPath());
-
-        return new StorageObject(this, result);
+        return URI.create("kestra://" + uri.getPath());
     }
 }

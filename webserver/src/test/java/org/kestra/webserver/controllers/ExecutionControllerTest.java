@@ -10,6 +10,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.client.sse.RxSseClient;
+import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.sse.Event;
 import io.micronaut.runtime.server.EmbeddedServer;
 import io.reactivex.Maybe;
@@ -30,6 +31,7 @@ import org.kestra.webserver.responses.PagedResults;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -121,8 +123,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(result.getState().getCurrent(), is(State.Type.CREATED));
         assertThat(result.getFlowId(), is("inputs"));
         assertThat(result.getInputs().get("float"), is(42.42));
-        assertThat(((Map<String, String>) result.getInputs().get("file")).get("uri"), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
-        assertThat(((Map<String, String>) result.getInputs().get("optionalFile")).get("uri"), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
+        assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
+        assertThat(result.getInputs().get("file").toString(), startsWith("kestra:///org/kestra/tests/inputs/executions/"));
     }
 
     @Test
@@ -202,7 +204,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
-        assertThat(e.getResponse().getBody(java.lang.String.class).get(), is("Task [" + referenceTaskId + "] does not exist !"));
+        assertThat(e.getResponse().getBody(JsonError.class).get().getMessage(), containsString("Task [" + referenceTaskId + "] does not exist !"));
     }
 
     @Test
@@ -222,7 +224,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
-        assertThat(e.getResponse().getBody(java.lang.String.class).get(), is("No failed task found to restart execution from !"));
+        assertThat(e.getResponse().getBody(JsonError.class).get().getMessage(), containsString("No failed task found to restart execution from !"));
     }
 
     @Test
@@ -266,7 +268,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(finishedChildExecution, notNullValue());
         assertThat(finishedChildExecution.getParentId(), is(parentExecution.getId()));
-        assertThat(finishedChildExecution.getTaskRunList().size(), is(7));
+        assertThat(finishedChildExecution.getTaskRunList().size(), is(5));
 
         finishedChildExecution
             .getTaskRunList()
@@ -278,7 +280,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     @Test
     void restartFromTaskIdWithSequential() throws TimeoutException {
         final String flowId = "restart_with_sequential";
-        final String referenceTaskId = "a-3-2.2.end";
+        final String referenceTaskId = "a-3-2-2_end";
 
         // Run execution until it ends
         Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null,
@@ -337,7 +339,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         flow.get().getTasks().set(2, b);
 
-        flowRepositoryInterface.save(flow.get());
+        flowRepositoryInterface.create(flow.get());
 
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(

@@ -32,6 +32,7 @@ abstract public class DocumentationGenerator {
     private static Pattern DEFAULT_PACKAGES_TO_IGNORE = Pattern.compile("^(?:"
         + "|java"
         + "|javax"
+        + "|org.joda.time"
         + ")\\..*$");
 
     private static List<String> SIMPLE_NAME = Arrays.asList(
@@ -102,7 +103,11 @@ abstract public class DocumentationGenerator {
             fields.addAll(Arrays.asList(c.getDeclaredFields()));
         }
 
-        return fields;
+        return fields
+            .stream()
+            .filter(f -> !Modifier.isStatic(f.getModifiers()))
+            .filter(f -> !Modifier.isTransient(f.getModifiers()))
+            .collect(Collectors.toList());
     }
 
     public static Documentation getClassDoc(Class<?> cls) {
@@ -120,7 +125,6 @@ abstract public class DocumentationGenerator {
     private static List<InputDocumentation> getInputs(Class<?> cls) {
         return getFields(cls)
             .stream()
-            .filter(f -> !Modifier.isTransient(f.getModifiers()))
             .map(field -> new InputDocumentation(
                 cls,
                 field,

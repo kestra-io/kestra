@@ -107,7 +107,7 @@ public class Execution {
             .findFirst();
 
         if (find.isEmpty()) {
-            throw new IllegalArgumentException("Can't find taskrun with taskrun id '" + id + "' on execution '" + this.id + "'");
+            throw new IllegalArgumentException("Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' " + this.toString(true));
         }
 
         return find.get();
@@ -120,7 +120,7 @@ public class Execution {
             .findFirst();
 
         if (find.isEmpty()) {
-            throw new IllegalArgumentException("Can't find taskrun with taskrun id '" + id + "' with values '" + values + "' on execution '" + this.id + "'");
+            throw new IllegalArgumentException("Can't find taskrun with taskrunId '" + id + "' & value '" + values + "' on execution '" + this.id + "' " + this.toString(true));
         }
 
         return find.get();

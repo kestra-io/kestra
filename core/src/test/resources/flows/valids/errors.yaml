@@ -7,23 +7,23 @@ tasks:
   commands:
   - 'exit 1'
 errors:
-  - id: 2nd
+  - id: t2
     type: org.kestra.core.tasks.debugs.Echo
     format: second {{task.id}}
 
-  - id: 3rd
+  - id: t3
     type: org.kestra.core.tasks.flows.Parallel
     tasks:
-      - id: 3rd - 1st
+      - id: t3-t1
         type: org.kestra.core.tasks.flows.Parallel
         tasks:
-          - id: 3rd - 1st - 1st
+          - id: t3-t1-t1
             type: org.kestra.core.tasks.flows.Parallel
             tasks:
-              - id: 3rd - 1st - 1st - 1st
+              - id: t3-t1-t1-t1
                 type: org.kestra.core.tasks.flows.Parallel
                 tasks:
-                  - id: 3rd - 1st - 1st - 1st - last
+                  - id: t3-t1-t1-t1-last
                     type: org.kestra.core.tasks.scripts.Bash
                     commands:
-                      - 'echo "3rd - 1st - 1st - 1st - last : {{task.id}}"'
+                      - 'echo "t3-t1-t1-t1-last : {{task.id}}"'

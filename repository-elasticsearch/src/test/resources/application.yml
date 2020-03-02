@@ -1,11 +1,12 @@
-elasticsearch:
-  httpHosts: http://localhost:9200
 
 kestra:
   repository:
     type: elasticsearch
 
   elasticsearch:
+    client:
+      httpHosts: http://localhost:9200
+
     indices:
       flows:
         index: "kestra_flows"
@@ -13,13 +14,21 @@ kestra:
         mapping-file: flow
         settings: |
           {
-            "index.number_of_shards": 10
+            "index.number_of_replicas": 0
           }
       flows-revisions:
         index: "kestra_flows_revisions"
         cls: org.kestra.core.models.flows.Flow
         mapping-file: flow
+        settings: |
+          {
+            "index.number_of_replicas": 0
+          }
       executions:
         index: "kestra_executions"
         cls: org.kestra.core.models.executions.Execution
         mapping-file: execution
+        settings: |
+          {
+            "index.number_of_replicas": 0
+          }

@@ -1,10 +1,14 @@
 package org.kestra.core.runners;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.hash.Hashing;
 import io.micronaut.context.ApplicationContext;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.kestra.core.queues.QueueException;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.TaskRunAttempt;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.Output;
@@ -14,24 +18,29 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Worker implements Runnable {
     private ApplicationContext applicationContext;
     private QueueInterface<WorkerTask> workerTaskQueue;
     private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    private MetricRegistry metricRegistry;
+
+    private Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
 
     public Worker(
         ApplicationContext applicationContext,
         QueueInterface<WorkerTask> workerTaskQueue,
-        QueueInterface<WorkerTaskResult> workerTaskResultQueue
+        QueueInterface<WorkerTaskResult> workerTaskResultQueue,
+        MetricRegistry metricRegistry
     ) {
         this.applicationContext = applicationContext;
         this.workerTaskQueue = workerTaskQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
+        this.metricRegistry = metricRegistry;
     }
 
     @Override
@@ -39,7 +48,11 @@ public class Worker implements Runnable {
         this.workerTaskQueue.receive(Worker.class, this::run);
     }
 
-    public void run(WorkerTask workerTask) {
+    public void run(WorkerTask workerTask) throws QueueException {
+        metricRegistry
+            .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, metricRegistry.tags(workerTask))
+            .increment();
+
         workerTask.logger().info(
             "[execution: {}] [taskrun: {}] Task {} (type: {}) started",
             workerTask.getTaskRun().getExecutionId(),
@@ -63,6 +76,16 @@ public class Worker implements Runnable {
                     .onRetry(e -> {
                         current.set(e.getLastResult());
 
+                        metricRegistry
+                            .counter(
+                                MetricRegistry.METRIC_WORKER_RETRYED_COUNT,
+                                metricRegistry.tags(
+                                    current.get(),
+                                    MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(e.getAttemptCount())
+                                )
+                            )
+                            .increment();
+
                         this.workerTaskResultQueue.emit(
                             new WorkerTaskResult(e.getLastResult())
                         );
@@ -78,18 +101,34 @@ public class Worker implements Runnable {
 
             // emit
             finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
-            this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
 
-            // log
-            finalWorkerTask.logger().info(
-                "[execution: {}] [taskrun: {}] Task {} (type: {}) with state {} completed in {}",
-                finalWorkerTask.getTaskRun().getExecutionId(),
-                finalWorkerTask.getTaskRun().getId(),
-                finalWorkerTask.getTaskRun().getTaskId(),
-                finalWorkerTask.getTask().getClass().getSimpleName(),
-                state,
-                finalWorkerTask.getTaskRun().getState().humanDuration()
-            );
+            // if resulting object can't be emitted (mostly size of message), we just can't emit it like that.
+            // So we just tryed to failed the status of the worker task, in this case, no log can't be happend, just
+            // changing status must work in order to finish current task (except if we are near the upper bound size).
+            try {
+                this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
+            } catch (QueueException e) {
+                finalWorkerTask = workerTask
+                    .withTaskRun(workerTask.getTaskRun()
+                        .withState(State.Type.FAILED)
+                    );
+                this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
+            } finally {
+                // log
+                finalWorkerTask.logger().info(
+                    "[execution: {}] [taskrun: {}] Task {} (type: {}) with state {} completed in {}",
+                    finalWorkerTask.getTaskRun().getExecutionId(),
+                    finalWorkerTask.getTaskRun().getId(),
+                    finalWorkerTask.getTaskRun().getTaskId(),
+                    finalWorkerTask.getTask().getClass().getSimpleName(),
+                    finalWorkerTask.getTaskRun().getState(),
+                    finalWorkerTask.getTaskRun().getState().humanDuration()
+                );
+
+                metricRegistry
+                    .counter(MetricRegistry.METRIC_WORKER_ENDED_COUNT, metricRegistry.tags(finalWorkerTask))
+                    .increment();
+            }
         }
     }
 
@@ -116,13 +155,17 @@ public class Worker implements Runnable {
             .state(new State());
 
         Output output = null;
+        AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
 
         try {
+            metricRunningCount.incrementAndGet();
             output = task.run(runContext);
             state = State.Type.SUCCESS;
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             state = State.Type.FAILED;
+        } finally {
+            metricRunningCount.decrementAndGet();
         }
 
         // attempt
@@ -152,5 +195,23 @@ public class Worker implements Runnable {
                     .withAttempts(attempts)
                     .withOutputs(output != null ? output.toMap() : ImmutableMap.of())
             );
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    public AtomicInteger getMetricRunningCount(WorkerTask workerTask) {
+        String[] tags = this.metricRegistry.tags(workerTask);
+        Arrays.sort(tags);
+
+        long index = Hashing
+            .goodFastHash(64)
+            .hashString(String.join("-", tags), Charsets.UTF_8)
+            .asLong();
+
+        return this.metricRunningCount
+            .computeIfAbsent(index, l -> metricRegistry.gauge(
+                MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
+                new AtomicInteger(0),
+                metricRegistry.tags(workerTask)
+            ));
     }
 }

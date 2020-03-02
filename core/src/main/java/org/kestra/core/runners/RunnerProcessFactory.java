@@ -3,6 +3,7 @@ package org.kestra.core.runners;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 
@@ -16,12 +17,14 @@ public class RunnerProcessFactory {
     public Worker worker(
         ApplicationContext applicationContext,
         @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
-        @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue
+        @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue,
+        MetricRegistry metricRegistry
     ) {
         return new Worker(
             applicationContext,
             workerTaskQueue,
-            workerTaskResultQueue
+            workerTaskResultQueue,
+            metricRegistry
         );
     }
 }

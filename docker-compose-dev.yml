@@ -1,13 +1,49 @@
 version: "3.6"
 
 volumes:
-  minio-data:
+  zookeeper-data:
+    driver: local
+  zookeeper-log:
+    driver: local
+  kafka-data:
     driver: local
   elasticsearch-data:
     driver: local
 
+networks:
+  kestra: {}
 
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-log:/var/lib/zookeeper/log
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - kestra
+
+  kafka:
+    image: confluentinc/cp-kafka
+    volumes:
+      - kafka-data:/var/lib/kafka
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kestra:9092
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
+    links:
+      - zookeeper
+    ports:
+      - 127.8.9.13:9092:9092
+    networks:
+      kestra:
+        aliases:
+        - kestra
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
     environment:
@@ -21,6 +57,8 @@ services:
       - elasticsearch-data:/usr/share/elasticsearch/data
     ports:
       - 127.8.9.13:9200:9200
+    networks:
+      - kestra
 
   kibana:
     image: docker.elastic.co/kibana/kibana:7.4.2
@@ -28,5 +66,19 @@ services:
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
       - 127.8.9.13:5601:5601
-    links:
-      - elasticsearch
+    networks:
+      - kestra
+
+  kafkahq:
+    image: tchiotludo/kafkahq
+    environment:
+      KAFKAHQ_CONFIGURATION: |
+        kafkahq:
+          connections:
+            docker-kafka-server:
+              properties:
+                bootstrap.servers: "kestra:9092"
+    ports:
+      - 127.8.9.13:28080:8080
+    networks:
+      - kestra

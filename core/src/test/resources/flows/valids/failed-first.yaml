@@ -2,9 +2,9 @@ id: failed-first
 namespace: org.kestra.tests
 
 tasks:
-- id: 1st
+- id: t1
   type: org.kestra.core.tasks.debugs.Return
   format: "{{missingVar}}"
-- id: 2nd
+- id: t2
   type: org.kestra.core.tasks.debugs.Return
   format: Never Happen

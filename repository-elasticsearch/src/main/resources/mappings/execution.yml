@@ -8,7 +8,6 @@ properties:
     type: keyword
   inputs:
     type: object
-    dynamic: true
     properties: {}
   namespace:
     type: keyword
@@ -38,6 +37,11 @@ properties:
           keyword:
             type: keyword
       executionId:
+        type: text
+        fields:
+          keyword:
+            type: keyword
+      namespace:
         type: text
         fields:
           keyword:
@@ -104,7 +108,6 @@ properties:
                 properties: {}
       outputs:
         type: object
-        dynamic: true
         properties: {}
       state:
         properties:

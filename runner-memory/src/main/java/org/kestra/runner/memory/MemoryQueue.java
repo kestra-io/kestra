@@ -2,10 +2,11 @@ package org.kestra.runner.memory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
+import org.kestra.core.utils.ThreadMainFactoryBuilder;
 
 import java.io.IOException;
 import java.util.*;
@@ -18,16 +19,18 @@ import java.util.function.Consumer;
 public class MemoryQueue<T> implements QueueInterface<T> {
     private static final ObjectMapper mapper = JacksonMapper.ofJson();
     private Class<T> cls;
-    private static ExecutorService poolExecutor = Executors.newFixedThreadPool(
-        Runtime.getRuntime().availableProcessors(),
-        new ThreadFactoryBuilder().setNameFormat("memory-queue-%d").build()
-
-    );
+    private static ExecutorService poolExecutor;
     private static final Object lock = new Object();
 
     private Map<String, List<Consumer<T>>> consumers = new ConcurrentHashMap<>();
 
-    public MemoryQueue(Class<T> cls) {
+    public MemoryQueue(Class<T> cls, ApplicationContext applicationContext) {
+        if (poolExecutor == null) {
+            poolExecutor = Executors.newCachedThreadPool(
+                applicationContext.getBean(ThreadMainFactoryBuilder.class).build("memory-queue-%d")
+            );
+        }
+
         this.cls = cls;
     }
 

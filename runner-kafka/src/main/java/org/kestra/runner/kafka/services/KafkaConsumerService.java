@@ -28,7 +28,7 @@ public class KafkaConsumerService {
     @Inject
     private ConsumerDefaultsConfig consumerConfig;
 
-    public <V> Consumer<V> of(Class group, Serde<V> serde) {
+    public <V> Consumer<V> of(Class<?> group, Serde<V> serde) {
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
 

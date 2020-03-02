@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.kestra.cli.contexts.KestraClassLoader;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,7 +19,9 @@ import static org.hamcrest.Matchers.is;
 class PluginInstallCommandTest {
     @BeforeAll
     static void init() {
-        KestraClassLoader.create(PluginInstallCommandTest.class.getClassLoader());
+        if (!KestraClassLoader.isInit()) {
+            KestraClassLoader.create(PluginInstallCommandTest.class.getClassLoader());
+        }
     }
 
     @Test

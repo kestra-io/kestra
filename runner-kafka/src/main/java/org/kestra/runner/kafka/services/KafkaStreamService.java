@@ -26,7 +26,7 @@ public class KafkaStreamService {
     @Inject
     private StreamDefaultsConfig streamConfig;
 
-    public KafkaStreamService.Stream of(Class group, Topology topology) {
+    public KafkaStreamService.Stream of(Class<?> group, Topology topology) {
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
 

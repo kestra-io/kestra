@@ -19,9 +19,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
 public abstract class AbstractFlowRepositoryTest {
@@ -47,7 +49,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = builder()
             .revision(3)
             .build();
-        flowRepository.save(flow);
+        flowRepository.create(flow);
 
         Optional<Flow> full = flowRepository.findById(flow.getNamespace(), flow.getId());
         assertThat(full.isPresent(), is(true));
@@ -59,21 +61,24 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     void revision() throws JsonProcessingException {
-        Flow flow = flowRepository.save(Flow.builder()
+        // create
+        Flow flow = flowRepository.create(Flow.builder()
             .id("AbstractFlowRepositoryTest")
             .namespace("org.kestra.unittest")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
             .build());
 
-        Flow notSaved = flowRepository.save(flow);
-
+        // submit new one, no change
+        Flow notSaved = flowRepository.update(flow, flow);
         assertThat(flow, is(notSaved));
 
+        // submit new one with change
         Flow flowRev2 = Flow.builder()
             .id("AbstractFlowRepositoryTest")
             .namespace("org.kestra.unittest")
             .tasks(Collections.singletonList(
                 Bash.builder()
+                    .id("id")
                     .type(Bash.class.getName())
                     .commands(Collections.singletonList("echo 1").toArray(new String[0]))
                     .build()
@@ -81,16 +86,22 @@ public abstract class AbstractFlowRepositoryTest {
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
             .build();
 
-        Flow incremented = flowRepository.save(flowRev2);
+        // revision is incremented
+        Flow incremented = flowRepository.update(flowRev2, flow);
         assertThat(incremented.getRevision(), is(2));
 
-
+        // revision is well saved
         List<Flow> revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
         assertThat(revisions.size(), is(2));
 
-        Flow incremented2 = flowRepository.save(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class));
+        // submit the same one serialized, no changed
+        Flow incremented2 = flowRepository.update(
+            JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class),
+            flowRev2
+        );
         assertThat(incremented2.getRevision(), is(2));
 
+        // cleanup
         flowRepository.delete(flow);
         flowRepository.delete(incremented);
     }
@@ -98,7 +109,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void save() {
         Flow flow = builder().revision(12).build();
-        Flow save = flowRepository.save(flow);
+        Flow save = flowRepository.create(flow);
 
         assertThat(save.getRevision(), is(12));
     }
@@ -106,7 +117,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void saveNoRevision() {
         Flow flow = builder().build();
-        Flow save = flowRepository.save(flow);
+        Flow save = flowRepository.create(flow);
 
         assertThat(save.getRevision(), is(1));
 
@@ -124,9 +135,43 @@ public abstract class AbstractFlowRepositoryTest {
     void delete() {
         Flow flow = builder().build();
 
-        Flow save = flowRepository.save(flow);
+        Flow save = flowRepository.create(flow);
         flowRepository.delete(save);
 
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(false));
+    }
+
+
+    @Test
+    void updateConflict() {
+        String flowId = FriendlyId.createFriendlyId();
+
+        Flow flow = Flow.builder()
+            .id(flowId)
+            .namespace("org.kestra.unittest")
+            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
+            .build();
+
+        Flow save = flowRepository.create(flow);
+
+        assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
+
+        Flow update = Flow.builder()
+            .id(FriendlyId.createFriendlyId())
+            .namespace("org.kestra.unittest2")
+            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
+            .build();;
+
+        ConstraintViolationException e = assertThrows(
+            ConstraintViolationException.class,
+            () -> {
+                flowRepository.update(update, flow);
+            }
+        );
+
+        assertThat(e.getConstraintViolations().size(), is(2));
+
+        flowRepository.delete(save);
+
     }
 }

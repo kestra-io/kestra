@@ -86,6 +86,6 @@ class FlowTest extends AbstractMemoryRunnerTest {
             }, Duration.ofSeconds(5)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(7));
+        assertThat(execution.getTaskRunList(), hasSize(5));
     }
 }

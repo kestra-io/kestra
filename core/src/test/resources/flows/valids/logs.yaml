@@ -2,15 +2,15 @@ id: logs
 namespace: org.kestra.tests
 
 tasks:
-- id: 1st
+- id: t1
   type: org.kestra.core.tasks.debugs.Echo
   format: first {{task.id}}
   level: TRACE
-- id: 2nd
+- id: t2
   type: org.kestra.core.tasks.debugs.Echo
   format: second {{task.type}}
   level: WARN
-- id: 3rd
+- id: t3
   type: org.kestra.core.tasks.debugs.Echo
   format: third {{flow.id}}
   level: ERROR

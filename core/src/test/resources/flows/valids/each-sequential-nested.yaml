@@ -2,26 +2,26 @@ id: each-sequential-nested
 namespace: org.kestra.tests
 
 tasks:
-  - id: 1-each
+  - id: 1_each
     type: org.kestra.core.tasks.flows.EachSequential
     value: '["s1", "s2", "s3"]'
     tasks:
-      - id: 1_1-return
+      - id: 1-1_return
         type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
-      - id: 1_2-each
+      - id: 1-2_each
         type: org.kestra.core.tasks.flows.EachSequential
         value: '["a", "b"]'
         tasks:
-          - id: 1_2_1-return
+          - id: 1-2-1_return
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
-          - id: 1_2_2-return
+          - id: 1-2-2_return
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
-      - id: 1_3-return
+      - id: 1-3_return
         type: org.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
   - id: 2_return
     type: org.kestra.core.tasks.debugs.Return
-    format: "{{task.id}} > {{outputs.1_2_1-return.s1.a.value}}"
+    format: "{{task.id}} > {{outputs.1-2-1_return.s1.a.value}}"

@@ -11,18 +11,18 @@ tasks:
     value: "{{inputs.string}}"
     cases:
       FIRST:
-        - id: 1st
+        - id: t1
           type: org.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
       SECOND:
-        - id: 2nd
+        - id: t2
           type: org.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
-        - id: 2nd.sub
+        - id: t2_sub
           type: org.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
       THIRD:
-        - id: 3th
+        - id: t3
           type: org.kestra.core.tasks.flows.Sequential
           tasks:
             - id: failed
@@ -30,7 +30,7 @@ tasks:
               commands:
               - 'exit 1'
           errors:
-            - id: error-1st
+            - id: error-t1
               type: org.kestra.core.tasks.debugs.Return
               format: "Error Trigger ! {{task.id}}"
     defaults:

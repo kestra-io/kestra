@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.Helpers;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
+import org.kestra.core.models.hierarchies.FlowTree;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.webserver.responses.PagedResults;
 
@@ -37,6 +38,13 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(result.getId(), is("full"));
         assertThat(result.getTasks().size(), is(5));
+    }
+
+    @Test
+    void tree() {
+        FlowTree result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.kestra.tests/all-flowable/tree"), FlowTree.class);
+
+        assertThat(result.getTasks().size(), is(20));
     }
 
     @Test

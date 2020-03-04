@@ -4,6 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.models.hierarchies.ParentTaskTree;
+import org.kestra.core.models.hierarchies.RelationType;
+import org.kestra.core.models.hierarchies.TaskTree;
+import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 

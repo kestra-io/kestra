@@ -17,6 +17,7 @@ import io.reactivex.Maybe;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.hierarchies.FlowTree;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -28,9 +29,6 @@ import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 import org.reactivestreams.Publisher;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -39,6 +37,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 @Validated
 @Controller("/api/v1/")
@@ -74,6 +75,29 @@ public class ExecutionController {
             executionRepository
                 .find(query, PageableUtils.from(page, size, sort))
         );
+    }
+
+    /**
+     * Get an execution flow tree
+     *
+     * @param executionId The execution identifier
+     * @return the flow tree  with the provided identifier
+     */
+    @Get(uri = "executions/{executionId}/tree", produces = MediaType.TEXT_JSON)
+    public Maybe<FlowTree> getTree(String executionId) {
+        return executionRepository
+            .findById(executionId)
+            .map(execution -> {
+                Optional<Flow> flow = flowRepository.findById(
+                    execution.getNamespace(),
+                    execution.getFlowId(),
+                    Optional.of(execution.getFlowRevision())
+                );
+
+                return flow.map(value -> FlowTree.of(value, execution)).orElse(null);
+            })
+            .map(Maybe::just)
+            .orElse(Maybe.empty());
     }
 
     /**

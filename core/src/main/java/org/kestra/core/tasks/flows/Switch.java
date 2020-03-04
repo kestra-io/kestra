@@ -1,21 +1,29 @@
 package org.kestra.core.tasks.flows;
 
+import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.models.hierarchies.ParentTaskTree;
+import org.kestra.core.models.hierarchies.RelationType;
+import org.kestra.core.models.hierarchies.TaskTree;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
+import org.kestra.core.services.TreeService;
 
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuperBuilder
 @ToString
@@ -37,6 +45,31 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) {
+        return Stream
+            .concat(
+                this.defaults != null ? ImmutableMap.of("defaults", this.defaults).entrySet().stream() : Stream.empty(),
+                this.cases != null ? this.cases.entrySet().stream() : Stream.empty()
+            )
+            .flatMap(e -> {
+                List<ParentTaskTree> parents = Collections.singletonList((ParentTaskTree.builder()
+                    .id(this.id)
+                    .value(e.getKey())
+                    .build()));
+
+                return TreeService.sequential(
+                    e.getValue(),
+                    this.getErrors(),
+                    parents,
+                    execution,
+                    RelationType.CHOICE,
+                    groups
+                ).stream();
+            })
+            .collect(Collectors.toList());
     }
 
     @Override

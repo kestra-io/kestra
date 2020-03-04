@@ -86,11 +86,12 @@ public class TreeService {
         for (Task task : tasks) {
             if (task instanceof FlowableTask) {
                 FlowableTask<?> flowableTask = ((FlowableTask<?>) task);
-                (groups = new ArrayList<>(groups)).add(task.getId());
+                List<String> childs = new ArrayList<>(groups);
+                childs.add(task.getId());
 
                 result.addAll(toTaskTree(parents, task, relationType, execution, groups));
 
-                result.addAll(flowableTask.tasksTree(task.getId(), execution, groups));
+                result.addAll(flowableTask.tasksTree(task.getId(), execution, (childs)));
             } else {
                 result.addAll(toTaskTree(parents, task, relationType, execution, groups));
             }

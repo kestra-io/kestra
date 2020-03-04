@@ -51,8 +51,8 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) {
         return Stream
             .concat(
-                ImmutableMap.of("defaults", this.defaults).entrySet().stream(),
-                this.cases.entrySet().stream()
+                this.defaults != null ? ImmutableMap.of("defaults", this.defaults).entrySet().stream() : Stream.empty(),
+                this.cases != null ? this.cases.entrySet().stream() : Stream.empty()
             )
             .flatMap(e -> {
                 List<ParentTaskTree> parents = Collections.singletonList((ParentTaskTree.builder()

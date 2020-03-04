@@ -5,9 +5,9 @@ export default {
         executions: undefined,
         execution: undefined,
         task: undefined,
-        total: 0
+        total: 0,
+        dataTree: undefined
     },
-
     actions: {
         loadExecutions({ commit }, options) {
             return Vue.axios.get(`/api/v1/executions`, { params: options }).then(response => {
@@ -53,7 +53,12 @@ export default {
         },
         followExecution(_, options) {
             return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/executions/${options.id}/follow`, { format: 'json' })
-        }
+        },
+        loadTree({ commit }, execution) {
+            return Vue.axios.get(`/api/v1/executions/${execution.id}/tree`).then(response => {
+                commit('setDataTree', response.data.tasks)
+            })
+        },
     },
     mutations: {
         setExecutions(state, executions) {
@@ -67,7 +72,10 @@ export default {
         },
         setTotal(state, total) {
             state.total = total
-        }
+        },
+        setDataTree(state, tree) {
+            state.dataTree = tree
+        },
     },
     getters: {}
 }

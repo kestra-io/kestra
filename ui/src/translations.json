@@ -73,7 +73,9 @@
         "trigger refresh": "trigger refresh",
         "execution statistics": "execution statistics",
         "avg duration": "avg. execution duration",
-        "no execution yet": "No execution yet"
+        "neutral_trend": "stable",
+        "up_trend": "increasing",
+        "down_trend": "decreasing"
     },
     "fr": {
         "id": "identifiant",
@@ -148,6 +150,8 @@
         "trigger refresh": "déclencher le rafraîchissement",
         "execution statistics": "statistiques d'execution ",
         "avg duration": "Durée moyenne d'execution",
-        "no execution yet": "Aucune execution"
+        "neutral_trend": "stable",
+        "up_trend": "en augmentation",
+        "down_trend": "en baisse"
     }
 }

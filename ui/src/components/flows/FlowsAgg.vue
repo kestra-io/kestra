@@ -13,7 +13,6 @@
             @row-dblclicked="onRowDoubleClick"
             @sort-changed="onSort"
             responsive="xl"
-            fixed
             striped
             bordered
             hover
@@ -38,12 +37,9 @@
                 keys: { x: 'startDate', value: ['success', 'failed', 'created', 'running'] },
                 groups: [['success', 'failed', 'created', 'running']] }"
               />
-              <span v-if="!row.item.metrics">{{$t('no execution yet') | cap }}</span>
             </template>
 
             <template v-slot:cell(duration)="row">
-              <span v-if="!row.item.trend">{{$t('no execution yet') | cap }}</span>
-
               <trend v-if="row.item.trend" :trend="row.item.trend" />
 
               <div class="stats">
@@ -151,12 +147,14 @@ export default {
         {
           key: "state",
           label: title("execution statistics"),
-          sortable: false
+          sortable: false,
+          class:"row-state"
         },
         {
           key: "duration",
           label: title("avg duration"),
-          sortable: false
+          sortable: false,
+          class: "row-duration"
         },
         {
           key: "actions",

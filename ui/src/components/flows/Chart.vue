@@ -98,9 +98,8 @@ export default {
       };
       const bar = {
         width: {
-          ratio: 0.7
+          ratio: 0.5
         }
-        //width: 20
       };
 
       return defaultsDeep({ axis, color, legend, bar }, config);

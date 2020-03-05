@@ -1,7 +1,5 @@
 <template>
-  <b-button class="trend rounded-lg" :class="cls">
-    <component :is="icon"></component>
-  </b-button>
+  <component class="trend icon-2x" :title="title" :is="icon" :class="cls"></component>
 </template>
 <script>
 import TrendingDown from "vue-material-design-icons/TrendingDown";
@@ -25,14 +23,21 @@ export default {
     }
   },
   computed: {
-    cls() {
-      return (
+    title() {
+      return this.$t(
         {
-          NEUTRAL: "btn-info",
-          DOWN: "btn-success",
-          UP: "btn-warning"
-        }[this.trend] + (this.size ? " btn-" + this.size : "")
-      );
+          NEUTRAL: "neutral_trend",
+          DOWN: "down_trend",
+          UP: "up_trend"
+        }[this.trend]
+      ).capitalize();
+    },
+    cls() {
+      return {
+        NEUTRAL: "neutral",
+        DOWN: "down",
+        UP: "up"
+      }[this.trend];
     },
     icon() {
       return {
@@ -44,11 +49,19 @@ export default {
   }
 };
 </script>
-<style scoped>
-button.trend {
-  cursor: default;
-  white-space: nowrap;
+<style lang="scss" scoped>
+@import "../styles/variable";
+.trend {
   float: right;
-  margin-right: 20px;
+  padding-right: 50px;
+}
+.neutral {
+  color: $blue;
+}
+.down {
+  color: $green;
+}
+.up {
+  color: $red;
 }
 </style>

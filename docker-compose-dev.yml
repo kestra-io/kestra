@@ -75,7 +75,7 @@ services:
       KAFKAHQ_CONFIGURATION: |
         kafkahq:
           connections:
-            docker-kafka-server:
+            local:
               properties:
                 bootstrap.servers: "kestra:9092"
     ports:

@@ -1,5 +1,8 @@
 package org.kestra.core.models.executions;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxy;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import lombok.Builder;
@@ -9,9 +12,11 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.runners.FlowableUtils;
+import org.kestra.core.runners.RunContextLogger;
 import org.kestra.core.utils.MapUtils;
 
 import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -181,6 +186,7 @@ public class Execution {
             .findFirst();
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     public Optional<TaskRun> findLastByState(List<ResolvedTask> resolvedTasks, State.Type state, TaskRun taskRun) {
         return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
             .stream()
@@ -236,6 +242,99 @@ public class Execution {
         return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             .anyMatch(taskRun -> taskRun.getState().isFailed());
+    }
+
+    /**
+     * Convert an exception on {@link org.kestra.core.runners.AbstractExecutor} and add log to the current
+     * {@code RUNNING} taskRun, on the lastAttempts.
+     * If no Attempt is found, we create one (must be nominal case).
+     * The executor will catch the {@code FAILED} taskRun emitted and will failed the execution.
+     * In the worst case, we FAILED the execution (must not exists).
+     *
+     * @param e the exception throw from {@link org.kestra.core.runners.AbstractExecutor}
+     * @return a new execution with taskrun failed if possible or execution failed is other case
+     */
+    public Execution failedExecutionFromExecutor(Exception e) {
+        return this
+            .findFirstByState(State.Type.RUNNING)
+            .map(taskRun -> {
+                TaskRunAttempt lastAttempt = taskRun.lastAttempt();
+                if (lastAttempt == null) {
+                    return newAttemptsTaskRunForFailedExecution(taskRun, e);
+                } else {
+                    return lastAttemptsTaskRunForFailedExecution(taskRun, lastAttempt, e);
+                }
+            })
+            .map(this::withTaskRun)
+            .orElseGet(() -> this.withState(State.Type.FAILED));
+    }
+
+    /**
+     * Create a new attemps for failed worker execution
+     *
+     * @param taskRun the task run where we need to add an attempt
+     * @param e the exception raise
+     * @return new taskRun with added attempt
+     */
+    private static TaskRun newAttemptsTaskRunForFailedExecution(TaskRun taskRun, Exception e) {
+        return taskRun
+            .withAttempts(
+                Collections.singletonList(TaskRunAttempt.builder()
+                    .state(new State())
+                    .logs(RunContextLogger.logEntries(loggingEventFromException(e)).collect(Collectors.toList()))
+                    .build()
+                    .withState(State.Type.FAILED))
+            )
+            .withState(State.Type.FAILED);
+    }
+
+    /**
+     * Add exception log to last attempts
+     *
+     * @param taskRun the task run where we need to add an attempt
+     * @param lastAttempt the lastAttempt found to add
+     * @param e the exception raise
+     * @return new taskRun with updated attempt with logs
+     */
+    private static TaskRun lastAttemptsTaskRunForFailedExecution(TaskRun taskRun, TaskRunAttempt lastAttempt, Exception e) {
+        List<LogEntry> logs = Stream
+            .concat(
+                lastAttempt.getLogs().stream(),
+                RunContextLogger.logEntries(loggingEventFromException(e))
+            )
+            .collect(Collectors.toList());
+
+        lastAttempt
+            .withLogs(logs)
+            .withState(State.Type.FAILED);
+
+        return taskRun
+            .withAttempts(
+                Stream
+                    .concat(
+                        taskRun.getAttempts().stream().limit(taskRun.getAttempts().size() - 1),
+                        Stream.of(lastAttempt)
+                    )
+                    .collect(Collectors.toList())
+            )
+            .withState(State.Type.FAILED);
+    }
+
+    /**
+     * Transform an exception to {@link ILoggingEvent}
+     * @param e the current execption
+     * @return the {@link ILoggingEvent} waited to generate {@link LogEntry}
+     */
+    private static ILoggingEvent loggingEventFromException(Exception e) {
+        LoggingEvent loggingEvent = new LoggingEvent();
+        loggingEvent.setLevel(ch.qos.logback.classic.Level.ERROR);
+        loggingEvent.setThrowableProxy(new ThrowableProxy(e));
+        loggingEvent.setMessage(e.getMessage());
+        loggingEvent.setThreadName(Thread.currentThread().getName());
+        loggingEvent.setTimeStamp(Instant.now().toEpochMilli());
+        loggingEvent.setLoggerName(Execution.class.getName());
+
+        return loggingEvent;
     }
 
     public List<ResolvedTask> findValidListeners(Flow flow) {

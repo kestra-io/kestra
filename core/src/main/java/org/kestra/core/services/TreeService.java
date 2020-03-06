@@ -1,5 +1,6 @@
 package org.kestra.core.services;
 
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
@@ -19,7 +20,7 @@ public class TreeService {
         List<Task> errors,
         List<ParentTaskTree> parents,
         Execution execution
-    ) {
+    ) throws IllegalVariableEvaluationException {
         return sequential(
             tasks,
             errors,
@@ -36,7 +37,7 @@ public class TreeService {
         List<ParentTaskTree> parents,
         Execution execution,
         List<String> groups
-    ) {
+    ) throws IllegalVariableEvaluationException {
         return sequential(
             tasks,
             errors,
@@ -54,7 +55,7 @@ public class TreeService {
         Execution execution,
         RelationType relationType,
         List<String> groups
-    ) {
+    ) throws IllegalVariableEvaluationException {
         List<TaskTree> result = new ArrayList<>();
 
         // error cases
@@ -80,7 +81,7 @@ public class TreeService {
         RelationType relationType,
         Execution execution,
         List<String> groups
-    ) {
+    ) throws IllegalVariableEvaluationException {
         List<TaskTree> result = new ArrayList<>();
 
         for (Task task : tasks) {

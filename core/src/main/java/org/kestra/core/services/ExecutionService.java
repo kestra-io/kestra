@@ -2,6 +2,7 @@ package org.kestra.core.services;
 
 import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.core.util.StringUtils;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
@@ -15,6 +16,9 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static org.kestra.core.utils.Rethrow.throwFunction;
+import static org.kestra.core.utils.Rethrow.throwPredicate;
 
 /**
  * Provides business logic to manipulate {@link Execution}
@@ -45,7 +49,7 @@ public class ExecutionService {
      * @throws IllegalArgumentException If no referenceTaskId is provided or if there is no failed task. Also thrown if
      *                                  a {@code referenceTaskId} is provided but there is a failed task before the reference task.
      */
-    public Execution getRestartExecution(final Execution execution, String referenceTaskId) throws IllegalStateException, IllegalArgumentException {
+    public Execution getRestartExecution(final Execution execution, String referenceTaskId) throws IllegalStateException, IllegalArgumentException, IllegalVariableEvaluationException {
         if (!execution.getState().isTerninated()) {
             throw new IllegalStateException("Execution must be terminated to be restarted !");
         }
@@ -208,17 +212,17 @@ public class ExecutionService {
      * @return The provided execution that can be run again from the last failed task.
      * @throws IllegalArgumentException If there is no failed task.
      */
-    private Execution createRestartFromLastFailed(final Execution execution) throws IllegalArgumentException {
+    private Execution createRestartFromLastFailed(final Execution execution) throws IllegalArgumentException, IllegalVariableEvaluationException {
         final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
-        final Predicate<TaskRun> notLastFailed = taskRun -> {
+        final Predicate<TaskRun> notLastFailed = throwPredicate(taskRun -> {
             boolean isFailed = taskRun.getState().getCurrent().equals(State.Type.FAILED);
             boolean isFlowable = Optional.of(flow)
-                .map(f -> f.findTaskByTaskRun(taskRun, new RunContext()).getTask().isFlowable())
+                .map(throwFunction(f -> f.findTaskByTaskRun(taskRun, new RunContext()).getTask().isFlowable()))
                 .orElse(false);
 
             return !isFailed || isFlowable;
-        };
+        });
 
         // Find first failed task run
         final long refTaskRunIndex = execution

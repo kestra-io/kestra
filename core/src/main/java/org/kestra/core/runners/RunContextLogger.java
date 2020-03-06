@@ -53,7 +53,7 @@ public class RunContextLogger {
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    private static Stream<LogEntry> logEntries(ILoggingEvent event) {
+    public static Stream<LogEntry> logEntries(ILoggingEvent event) {
         Throwable throwable = throwable(event);
 
         if (throwable == null) {

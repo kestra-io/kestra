@@ -15,6 +15,7 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import org.apache.commons.io.FilenameUtils;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.hierarchies.FlowTree;
@@ -40,6 +41,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+
+import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @Validated
 @Controller("/api/v1/")
@@ -84,18 +87,20 @@ public class ExecutionController {
      * @return the flow tree  with the provided identifier
      */
     @Get(uri = "executions/{executionId}/tree", produces = MediaType.TEXT_JSON)
-    public Maybe<FlowTree> getTree(String executionId) {
+    public Maybe<FlowTree> getTree(String executionId) throws IllegalVariableEvaluationException {
         return executionRepository
             .findById(executionId)
-            .map(execution -> {
+            .map(throwFunction(execution -> {
                 Optional<Flow> flow = flowRepository.findById(
                     execution.getNamespace(),
                     execution.getFlowId(),
                     Optional.of(execution.getFlowRevision())
                 );
 
-                return flow.map(value -> FlowTree.of(value, execution)).orElse(null);
-            })
+                return flow
+                    .map(throwFunction(value -> FlowTree.of(value, execution)))
+                    .orElse(null);
+            }))
             .map(Maybe::just)
             .orElse(Maybe.empty());
     }
@@ -199,7 +204,7 @@ public class ExecutionController {
      * @return
      */
     @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
-    public Maybe<Execution> restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) {
+    public Maybe<Execution> restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) throws IllegalVariableEvaluationException {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
             return Maybe.empty();

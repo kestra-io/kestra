@@ -8,6 +8,7 @@ import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.listeners.Listener;
 import org.kestra.core.models.tasks.ResolvedTask;
@@ -29,6 +30,8 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+
+import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @Value
 @Builder
@@ -77,13 +80,13 @@ public class Flow {
         return LoggerFactory.getLogger("flow." + this.id);
     }
 
-    public ResolvedTask findTaskByTaskRun(TaskRun taskRun, RunContext runContext) {
+    public ResolvedTask findTaskByTaskRun(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException {
         return Stream.of(
             this.tasks,
             this.errors,
             this.listenersTasks()
         )
-            .flatMap(tasks -> this.findTaskByTaskId(tasks, taskRun.getTaskId(), runContext, taskRun).stream())
+            .flatMap(throwFunction(tasks -> this.findTaskByTaskId(tasks, taskRun.getTaskId(), runContext, taskRun).stream()))
             .map(task -> ResolvedTask.builder()
                 .task(task)
                 .parentId(taskRun.getParentTaskRunId())
@@ -109,14 +112,14 @@ public class Flow {
             .anyMatch(task -> task.getId().equals(id));
     }
 
-    private Optional<Task> findTaskByTaskId(List<Task> tasks, String id, RunContext runContext, TaskRun taskRun) {
+    private Optional<Task> findTaskByTaskId(List<Task> tasks, String id, RunContext runContext, TaskRun taskRun) throws IllegalVariableEvaluationException {
         if (tasks == null) {
             return Optional.empty();
         }
 
         return tasks
             .stream()
-            .flatMap(task -> task.findById(id, runContext, taskRun).stream())
+            .flatMap(throwFunction(task -> task.findById(id, runContext, taskRun).stream()))
             .findFirst();
     }
 

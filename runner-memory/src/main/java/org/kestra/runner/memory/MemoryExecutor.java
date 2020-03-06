@@ -3,6 +3,7 @@ package org.kestra.runner.memory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import lombok.extern.slf4j.Slf4j;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
@@ -19,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import static org.kestra.core.utils.Rethrow.throwConsumer;
 
 @Slf4j
 @Prototype
@@ -59,9 +62,22 @@ public class MemoryExecutor extends AbstractExecutor {
                 }
             }
 
-            this.handlChild(execution, flow);
+            try {
+                this.handleChild(execution, flow);
+            } catch (Exception e) {
+                this.executionQueue.emit(execution.failedExecutionFromExecutor(e));
+                return;
+            }
+
             this.handleListeners(execution, flow);
-            this.handleWorkerTask(execution, flow);
+
+            try {
+                this.handleWorkerTask(execution, flow);
+            } catch (Exception e) {
+                this.executionQueue.emit(execution.failedExecutionFromExecutor(e));
+                return;
+            }
+
             this.handleEnd(execution, flow);
             this.handleNext(execution, flow);
         });
@@ -82,7 +98,7 @@ public class MemoryExecutor extends AbstractExecutor {
         });
     }
 
-    private void handleWorkerTask(Execution execution, Flow flow) {
+    private void handleWorkerTask(Execution execution, Flow flow) throws IllegalVariableEvaluationException {
         if (execution.getTaskRunList() == null) {
             return;
         }
@@ -123,7 +139,7 @@ public class MemoryExecutor extends AbstractExecutor {
         }
     }
 
-    private void handlChild(Execution execution, Flow flow) {
+    private void handleChild(Execution execution, Flow flow) throws IllegalVariableEvaluationException {
         if (execution.getTaskRunList() == null) {
             return;
         }
@@ -132,14 +148,14 @@ public class MemoryExecutor extends AbstractExecutor {
             .getTaskRunList()
             .stream()
             .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING)
-            .peek(taskRun -> {
+            .peek(throwConsumer(taskRun -> {
                 this.childWorkerTaskResult(flow, execution, taskRun)
                     .ifPresent(this.workerTaskResultQueue::emit);
-            })
-            .forEach(taskRun -> {
+            }))
+            .forEach(throwConsumer(taskRun -> {
                 this.childNexts(flow, execution, taskRun)
                     .ifPresent(this.executionQueue::emit);
-            });
+            }));
     }
 
     private void handleListeners(Execution execution, Flow flow) {

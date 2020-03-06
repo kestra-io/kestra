@@ -26,8 +26,7 @@ import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
@@ -121,6 +120,16 @@ class KafkaRunnerTest {
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
         );
 
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void invalidVars() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "variables-invalid");
+
+        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().get(1).getAttempts().get(0).getLogs().get(0).getMessage(), containsString("Missing variable: inputs.invalid"));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 }

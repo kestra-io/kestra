@@ -21,14 +21,15 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.*;
+import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaStreamService;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 @KafkaQueueEnabled
 @Prototype
@@ -75,8 +76,21 @@ public class KafkaExecutor extends AbstractExecutor {
 
             StreamsBuilder builder = new StreamsBuilder();
 
-            // with flow
-            KStream<String, ExecutionWithFlow> stream = builder
+            KStream<String, ExecutionWithFlow> stream = this.withFlow(builder);
+            KStream<String, TaskRunExecutionWithFlow> streamTaskRuns = this.withTaskRun(stream);
+
+            this.handleEnd(stream);
+            this.handleListeners(stream);
+            this.handlChild(streamTaskRuns);
+            this.handlChildNext(streamTaskRuns);
+            this.handleWorkerTask(streamTaskRuns);
+            this.handleNext(stream);
+
+            return builder.build();
+        }
+
+        private KStream<String, ExecutionWithFlow> withFlow(StreamsBuilder builder) {
+            return builder
                 .stream(
                     kafkaAdminService.getTopicName(Execution.class),
                     Consumed.with(Serdes.String(), JsonSerde.of(Execution.class))
@@ -86,8 +100,25 @@ public class KafkaExecutor extends AbstractExecutor {
 
                     return new ExecutionWithFlow(flow, execution);
                 });
+        }
 
-            // on End
+        private KStream<String, TaskRunExecutionWithFlow> withTaskRun(KStream<String, ExecutionWithFlow> stream) {
+            return stream
+                .flatMapValues((readOnlyKey, value) -> {
+                    if (value.getExecution().getTaskRunList() == null) {
+                        return new ArrayList<>();
+                    }
+
+                    return value
+                        .getExecution()
+                        .getTaskRunList()
+                        .stream()
+                        .map(taskRun -> new TaskRunExecutionWithFlow(value.getFlow(), value.getExecution(), taskRun))
+                        .collect(Collectors.toList());
+                });
+        }
+
+        private void handleEnd(KStream<String, ExecutionWithFlow> stream) {
             stream
                 .filter((key, value) -> !value.getExecution().getState().isTerninated())
                 .mapValues((readOnlyKey, value) -> {
@@ -108,8 +139,10 @@ public class KafkaExecutor extends AbstractExecutor {
                     kafkaAdminService.getTopicName(Execution.class),
                     Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
                 );
+        }
 
-            // Listeners
+
+        private void handleListeners(KStream<String, ExecutionWithFlow> stream) {
             stream
                 .filter((key, value) -> value.getExecution().getState().isTerninated())
                 .mapValues((readOnlyKey, value) -> {
@@ -128,73 +161,101 @@ public class KafkaExecutor extends AbstractExecutor {
                     return null;
                 })
                 .filter((key, value) -> value != null)
+
                 .to(
                     kafkaAdminService.getTopicName(Execution.class),
                     Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
                 );
+        }
 
-            // with taskrun
-            KStream<String, TaskRunExecutionWithFlow> streamTaskRuns = stream
-                .flatMapValues((readOnlyKey, value) -> {
-                    if (value.getExecution().getTaskRunList() == null) {
-                        return new ArrayList<>();
+        private void handlChild(KStream<String, TaskRunExecutionWithFlow> stream) {
+            KStream<String, Either<WithException, WorkerTaskResult>> childWorkerTaskResult = stream
+                .filter((key, value) -> value.getTaskRun().getState().getCurrent() == State.Type.RUNNING)
+                .mapValues((readOnlyKey, value) -> {
+                    try {
+                        return Either.right(this.childWorkerTaskResult(
+                            value.getFlow(),
+                            value.getExecution(),
+                            value.getTaskRun()
+                        ).orElse(null));
+                    } catch (Exception e) {
+                        return Either.left(new WithException(value, e));
                     }
-
-                    return value
-                        .getExecution()
-                        .getTaskRunList()
-                        .stream()
-                        .map(taskRun -> new TaskRunExecutionWithFlow(value.getFlow(), value.getExecution(), taskRun))
-                        .collect(Collectors.toList());
                 });
 
-            // handlChild WorkerTaskResult
-            streamTaskRuns
-                .filter((key, value) -> value.getTaskRun().getState().getCurrent() == State.Type.RUNNING)
-                .mapValues((readOnlyKey, value) -> this.childWorkerTaskResult(value.getFlow(), value.getExecution(), value.getTaskRun()).orElse(null))
+            branchException(childWorkerTaskResult)
                 .filter((key, value) -> value != null)
                 .to(
                     kafkaAdminService.getTopicName(WorkerTaskResult.class),
                     Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
                 );
 
-            // handlChild nexts
-            streamTaskRuns
+        }
+
+        private void handlChildNext(KStream<String, TaskRunExecutionWithFlow> stream) {
+            KStream<String, Either<WithException, Execution>> streamEither = stream
                 .filter((key, value) -> value.getTaskRun().getState().getCurrent() == State.Type.RUNNING)
-                .mapValues((readOnlyKey, value) -> this.childNexts(value.getFlow(), value.getExecution(), value.getTaskRun()).orElse(null))
+                .mapValues((readOnlyKey, value) -> {
+                    try {
+                        return Either.right(
+                            this.childNexts(value.getFlow(), value.getExecution(), value.getTaskRun())
+                                .orElse(null)
+                        );
+                    } catch (Exception e) {
+                        return Either.left(new WithException(value, e));
+                    }
+                });
+
+            branchException(streamEither)
                 .filter((key, value) -> value != null)
                 .to(
                     kafkaAdminService.getTopicName(Execution.class),
                     Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
                 );
+        }
 
-            // Worker task
-            streamTaskRuns
+        private void handleWorkerTask(KStream<String, TaskRunExecutionWithFlow> stream) {
+            KStream<String, Either<WithException, WorkerTask>> streamEither = stream
                 .filter((key, value) -> value.getTaskRun().getState().getCurrent() == State.Type.CREATED)
                 .mapValues((readOnlyKey, taskRunExecutionWithFlow) -> {
-                    ResolvedTask resolvedTask = taskRunExecutionWithFlow.getFlow().findTaskByTaskRun(
-                        taskRunExecutionWithFlow.getTaskRun(),
-                        new RunContext(this.applicationContext, taskRunExecutionWithFlow.getFlow(), taskRunExecutionWithFlow.getExecution())
-                    );
+                    try {
+                        ResolvedTask resolvedTask = taskRunExecutionWithFlow.getFlow().findTaskByTaskRun(
+                            taskRunExecutionWithFlow.getTaskRun(),
+                            new RunContext(
+                                this.applicationContext,
+                                taskRunExecutionWithFlow.getFlow(),
+                                taskRunExecutionWithFlow.getExecution()
+                            )
+                        );
 
-                    return WorkerTask.builder()
-                        .runContext(new RunContext(
-                            this.applicationContext,
-                            taskRunExecutionWithFlow.getFlow(),
-                            resolvedTask,
-                            taskRunExecutionWithFlow.getExecution(),
-                            taskRunExecutionWithFlow.getTaskRun())
-                        )
-                        .taskRun(taskRunExecutionWithFlow.getTaskRun())
-                        .task(resolvedTask.getTask())
-                        .build();
-                })
+                        return Either.right(
+                            WorkerTask.builder()
+                                .runContext(new RunContext(
+                                        this.applicationContext,
+                                        taskRunExecutionWithFlow.getFlow(),
+                                        resolvedTask,
+                                        taskRunExecutionWithFlow.getExecution(),
+                                        taskRunExecutionWithFlow.getTaskRun()
+                                    )
+                                )
+                                .taskRun(taskRunExecutionWithFlow.getTaskRun())
+                                .task(resolvedTask.getTask())
+                                .build()
+                        );
+
+                    } catch (Exception e) {
+                        return Either.left(new WithException(taskRunExecutionWithFlow, e));
+                    }
+                });
+
+            branchException(streamEither)
                 .to(
                     kafkaAdminService.getTopicName(WorkerTask.class),
                     Produced.with(Serdes.String(), JsonSerde.of(WorkerTask.class))
                 );
+        }
 
-            // On next
+        private void handleNext(KStream<String, ExecutionWithFlow> stream) {
             stream
                 .mapValues((readOnlyKey, value) -> {
                     List<TaskRun> next = FlowableUtils.resolveSequentialNexts(
@@ -214,9 +275,21 @@ public class KafkaExecutor extends AbstractExecutor {
                     kafkaAdminService.getTopicName(Execution.class),
                     Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
                 );
+        }
 
+        private <T> KStream<String, T> branchException(KStream<String, Either<WithException, T>> stream) {
+            stream
+                .filter((key, value) -> value.isLeft())
+                .mapValues(Either::getLeft)
+                .mapValues(e -> e.getEntity().getExecution().failedExecutionFromExecutor(e.getException()))
+                .to(
+                    kafkaAdminService.getTopicName(Execution.class),
+                    Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
+                );
 
-            return builder.build();
+            return stream
+                .filter((key, value) -> value.isRight())
+                .mapValues(Either::getRight);
         }
 
         @Override
@@ -226,20 +299,30 @@ public class KafkaExecutor extends AbstractExecutor {
         }
     }
 
+    public interface ExecutionInterface {
+        Execution getExecution();
+    }
+
     @AllArgsConstructor
     @Getter
-    public static class ExecutionWithFlow {
+    public static class ExecutionWithFlow implements ExecutionInterface{
         Flow flow;
         Execution execution;
     }
 
-
     @AllArgsConstructor
     @Getter
-    public static class TaskRunExecutionWithFlow {
+    public static class TaskRunExecutionWithFlow implements ExecutionInterface {
         Flow flow;
         Execution execution;
         TaskRun taskRun;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static  class WithException {
+        ExecutionInterface entity;
+        Exception exception;
     }
 
     @AllArgsConstructor

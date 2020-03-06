@@ -1,6 +1,7 @@
 package org.kestra.core.models.hierarchies;
 
 import org.junit.jupiter.api.Test;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
@@ -23,7 +24,7 @@ class FlowTreeTest extends AbstractMemoryRunnerTest {
     private YamlFlowParser yamlFlowParser = new YamlFlowParser();
 
     @Test
-    void simple() throws IOException {
+    void simple() throws IOException, IllegalVariableEvaluationException {
         Flow flow = this.parse("flows/valids/return.yaml");
         FlowTree flowTree = FlowTree.of(flow);
 
@@ -42,7 +43,7 @@ class FlowTreeTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void sequentialNested() throws IOException {
+    void sequentialNested() throws IOException, IllegalVariableEvaluationException {
         Flow flow = this.parse("flows/valids/sequential.yaml");
         FlowTree flowTree = FlowTree.of(flow);
 
@@ -65,7 +66,7 @@ class FlowTreeTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void errors() throws IOException {
+    void errors() throws IOException, IllegalVariableEvaluationException {
         Flow flow = this.parse("flows/valids/errors.yaml");
         FlowTree flowTree = FlowTree.of(flow);
 
@@ -88,7 +89,7 @@ class FlowTreeTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void choice() throws IOException {
+    void choice() throws IOException, IllegalVariableEvaluationException {
         Flow flow = this.parse("flows/valids/switch.yaml");
         FlowTree flowTree = FlowTree.of(flow);
 
@@ -115,7 +116,7 @@ class FlowTreeTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void each() throws IOException {
+    void each() throws IOException, IllegalVariableEvaluationException {
         Flow flow = this.parse("flows/valids/each-sequential-nested.yaml");
         FlowTree flowTree = FlowTree.of(flow);
 
@@ -142,7 +143,7 @@ class FlowTreeTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void allFlowable() throws IOException {
+    void allFlowable() throws IOException, IllegalVariableEvaluationException {
         Flow flow = this.parse("flows/valids/all-flowable.yaml");
         FlowTree flowTree = FlowTree.of(flow);
 
@@ -150,7 +151,7 @@ class FlowTreeTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void eachWithExecution() throws IOException, TimeoutException {
+    void eachWithExecution() throws IOException, TimeoutException, IllegalVariableEvaluationException {
         Execution execution = runnerUtils.runOne("org.kestra.tests", "each-sequential");
 
         Flow flow = this.parse("flows/valids/each-sequential.yaml");

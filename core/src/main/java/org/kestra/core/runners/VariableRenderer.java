@@ -4,6 +4,7 @@ import com.github.jknack.handlebars.EscapingStrategy;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.runners.handlebars.helpers.InstantHelper;
 import org.kestra.core.runners.handlebars.helpers.JsonHelper;
 
@@ -27,7 +28,7 @@ public class VariableRenderer {
             throw new IllegalStateException("Missing variable: " + options.helperName);
         });
 
-    public String render(String inline, Map<String, Object> variables) throws IOException {
+    public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
         }
@@ -39,8 +40,12 @@ public class VariableRenderer {
 
 
         while(!isSame) {
-            template = handlebars.compileInline(handlebarTemplate);
-            current = template.apply(variables);
+            try {
+                template = handlebars.compileInline(handlebarTemplate);
+                current = template.apply(variables);
+            } catch (IOException e) {
+                throw new IllegalVariableEvaluationException(e);
+            }
 
             isSame = handlebarTemplate.equals(current);
             handlebarTemplate = current;
@@ -49,7 +54,7 @@ public class VariableRenderer {
         return current;
     }
 
-    public List<String> render(List<String> list, Map<String, Object> variables) throws IOException {
+    public List<String> render(List<String> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         List<String> result = new ArrayList<>();
 
         for (String inline : list) {

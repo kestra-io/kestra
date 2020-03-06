@@ -1,11 +1,13 @@
 package org.kestra.core.tasks.flows;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.executions.Execution;
@@ -54,7 +56,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
     private String value;
 
     @Override
-    public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) {
+    public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {
         return TreeService.sequential(
             this.getTasks(),
             this.errors,
@@ -70,19 +72,20 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
     }
 
     @Override
-    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) {
+    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return this.resolveTasks(runContext, parentTaskRun);
     }
 
-    private List<ResolvedTask> resolveTasks(RunContext runContext, TaskRun parentTaskRun) {
+    private List<ResolvedTask> resolveTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         ObjectMapper mapper = new ObjectMapper();
 
         String[] values;
+
+        String renderValue = runContext.render(this.value);
         try {
-            String renderValue = runContext.render(this.value);
             values = mapper.readValue(renderValue, String[].class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (JsonProcessingException e) {
+            throw new IllegalVariableEvaluationException(e);
         }
 
         return Arrays
@@ -100,7 +103,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
     }
 
     @Override
-    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
         if (childTasks.size() == 0) {
@@ -117,7 +120,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
 
 
     @Override
-    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveSequentialNexts(
             execution,
             this.resolveTasks(runContext, parentTaskRun),

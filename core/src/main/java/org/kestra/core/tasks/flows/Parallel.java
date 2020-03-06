@@ -2,6 +2,7 @@ package org.kestra.core.tasks.flows;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
@@ -33,7 +34,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     private List<Task> errors;
 
     @Override
-    public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) {
+    public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {
         return TreeService.sequential(
             this.tasks,
             this.errors,
@@ -47,12 +48,12 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     }
 
     @Override
-    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) {
+    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveTasks(this.tasks, parentTaskRun);
     }
 
     @Override
-    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException{
         return FlowableUtils.resolveSequentialNexts(
             execution,
             this.childTasks(runContext, parentTaskRun),

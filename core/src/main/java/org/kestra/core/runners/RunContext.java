@@ -6,6 +6,7 @@ import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import lombok.NoArgsConstructor;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.AbstractMetricEntry;
 import org.kestra.core.models.executions.Execution;
@@ -182,15 +183,15 @@ public class RunContext {
         return this;
     }
 
-    public String render(String inline) throws IOException {
+    public String render(String inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
 
-    public List<String> render(List<String> inline) throws IOException {
+    public List<String> render(List<String> inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
 
-    public String render(String inline, Map<String, Object> variables) throws IOException {
+    public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(
             inline,
             Stream

@@ -3,6 +3,7 @@ package org.kestra.core.runners;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
@@ -15,6 +16,8 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 public abstract class AbstractExecutor implements Runnable {
@@ -69,7 +72,7 @@ public abstract class AbstractExecutor implements Runnable {
         return newExecution;
     }
 
-    protected Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) {
+    protected Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException {
         RunContext runContext = new RunContext(this.applicationContext, flow, execution);
         ResolvedTask parent = flow.findTaskByTaskRun(taskRun, runContext);
 
@@ -78,7 +81,7 @@ public abstract class AbstractExecutor implements Runnable {
 
             return flowableParent
                 .resolveState(runContext, execution, taskRun)
-                .map(type -> new WorkerTaskResult(
+                .map(throwFunction(type -> new WorkerTaskResult(
                     taskRun
                         .withState(type)
                         .withOutputs(
@@ -87,7 +90,7 @@ public abstract class AbstractExecutor implements Runnable {
                                 ImmutableMap.of()
                         ),
                     parent.getTask()
-                ))
+                )))
                 .stream()
                 .peek(workerTaskResult -> {
                     metricRegistry
@@ -101,7 +104,7 @@ public abstract class AbstractExecutor implements Runnable {
         return Optional.empty();
     }
 
-    protected Optional<Execution> childNexts(Flow flow, Execution execution, TaskRun taskRun) {
+    protected Optional<Execution> childNexts(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException {
         ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(this.applicationContext, flow, execution));
 
         if (parent.getTask() instanceof FlowableTask) {

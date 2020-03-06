@@ -6,6 +6,7 @@ import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.kestra.core.runners.RunContext;
@@ -17,6 +18,8 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+
+import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @SuperBuilder
@@ -43,7 +46,7 @@ abstract public class Task {
     @Valid
     protected List<Task> errors;
 
-    public Optional<Task> findById(String id, RunContext runContext, TaskRun taskRun) {
+    public Optional<Task> findById(String id, RunContext runContext, TaskRun taskRun) throws IllegalVariableEvaluationException {
         if (this.getId().equals(id)) {
             return Optional.of(this);
         }
@@ -51,7 +54,7 @@ abstract public class Task {
         if (this.isFlowable()) {
             Optional<Task> childs = ((FlowableTask<?>) this).childTasks(runContext, taskRun)
                 .stream()
-                .map(resolvedTask -> resolvedTask.getTask().findById(id, runContext, taskRun))
+                .map(throwFunction(resolvedTask -> resolvedTask.getTask().findById(id, runContext, taskRun)))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .findFirst();
@@ -64,14 +67,14 @@ abstract public class Task {
         if (this.errors != null) {
             return this.errors
                 .stream()
-                .flatMap(task -> task.findById(id, runContext, taskRun).stream())
+                .flatMap(throwFunction(task -> task.findById(id, runContext, taskRun).stream()))
                 .findFirst();
         }
 
         if (this.isFlowable() && ((FlowableTask<?>) this).getErrors() != null) {
             Optional<Task> errorChilds = ((FlowableTask<?>) this).getErrors()
                 .stream()
-                .map(task -> task.findById(id, runContext, taskRun))
+                .map(throwFunction(task -> task.findById(id, runContext, taskRun)))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .findFirst();

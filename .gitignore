@@ -34,3 +34,4 @@ yarn.lock
 
 ### Docker
 /.env
+docker-compose*.overide.yml

@@ -70,7 +70,14 @@
         "value": "value",
         "parent execution": "parent execution",
         "toggle periodic refresh each 10 seconds": "toggle periodic refresh each 10 seconds",
-        "trigger refresh": "trigger refresh"
+        "trigger refresh": "trigger refresh",
+        "graph orientation": "graph orientation",
+        "show task logs": "show task logs",
+        "show task outputs": "show task outputs",
+        "show task source": "show task source",
+        "display output for specific task": "display output for specific task",
+        "display direct sub tasks count": "display direct sub tasks count",
+        "stream": "stream"
     },
     "fr": {
         "id": "identifiant",
@@ -100,6 +107,7 @@
         "duration": "durée",
         "choose file": "Choisir un fichier ou le glisser le ici...",
         "trigger execution": "Déclencher une execution",
+        "trigger": "Déclencher",
         "triggered": "Déclenchée",
         "topology": "topology",
         "created date": "date de création",
@@ -142,6 +150,14 @@
         "value": "valeur",
         "parent execution": "execution parente",
         "toggle periodic refresh each 10 seconds": "activer le rafraîchissement toutes les 10 secondes",
-        "trigger refresh": "déclencher le rafraîchissement"
+        "trigger refresh": "déclencher le rafraîchissement",
+        "graph orientation": "orientation du graph",
+        "show task logs": "afficher les journaux de la tâche",
+        "show task outputs": "afficher les outputs de la tâche",
+        "show task source": "afficher le code source de la tâche",
+        "specific task": "specific task",
+        "display output for specific task": "afficher les output pour cette tâche",
+        "display direct sub tasks count": "display les sous tâches directes",
+        "stream": "flux"
     }
 }

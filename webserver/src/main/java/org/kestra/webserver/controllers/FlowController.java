@@ -7,7 +7,9 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.validation.Validated;
 import io.reactivex.Maybe;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.hierarchies.FlowTree;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
@@ -18,11 +20,27 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
 
+import static org.kestra.core.utils.Rethrow.throwFunction;
+
 @Validated
 @Controller("/api/v1/flows")
 public class FlowController {
     @Inject
     private FlowRepositoryInterface flowRepository;
+
+    /**
+     * @param namespace The flow namespace
+     * @param id        The flow id
+     * @return flow tree found
+     */
+    @Get(uri = "{namespace}/{id}/tree", produces = MediaType.TEXT_JSON)
+    public Maybe<FlowTree> flowTree(String namespace, String id) throws IllegalVariableEvaluationException {
+        return flowRepository
+            .findById(namespace, id)
+            .map(throwFunction(FlowTree::of))
+            .map(Maybe::just)
+            .orElse(Maybe.empty());
+    }
 
     /**
      * @param namespace The flow namespace

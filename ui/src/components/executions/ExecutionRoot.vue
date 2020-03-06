@@ -7,6 +7,7 @@
                 @click="setTab(tab.tab)"
                 :active="$route.query.tab === tab.tab"
                 :title="tab.title"
+                lazy
             >
                 <b-card-text>
                     <div :is="tab.tab" @follow="follow" />
@@ -45,9 +46,6 @@ export default {
         };
     },
     created() {
-        if (!this.execution) {
-            this.$store.dispatch("execution/loadExecution", this.$route.params);
-        }
         this.follow();
     },
     methods: {
@@ -58,6 +56,7 @@ export default {
                     this.sse = sse;
                     sse.subscribe("", (data, event) => {
                         this.$store.commit("execution/setExecution", data);
+                        this.$store.dispatch('execution/loadTree', data)
                         if (event.lastEventId === "end") {
                             this.closeSSE();
                         }

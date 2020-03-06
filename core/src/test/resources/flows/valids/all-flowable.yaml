@@ -1,0 +1,87 @@
+id: all-flowable
+namespace: org.kestra.tests
+
+tasks:
+  # Each
+  - id: 1-each
+    type: org.kestra.core.tasks.flows.EachSequential
+    value: '["value 1", "value 2", "value 3"]'
+    tasks:
+      - id: 1-each-1
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}} > {{taskrun.value}}"
+      - id: 1-each-2
+        type: org.kestra.core.tasks.flows.EachSequential
+        value: '["a", "b"]'
+        tasks:
+          - id: 1-each-2-1
+            type: org.kestra.core.tasks.debugs.Return
+            format: "{{task.id}} > {{taskrun.value}}"
+
+
+  # Local Errors
+  - id: 2-local-errors
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{task.id}}"
+# @TODO: not working, local errrors only works on FlowableTask
+#    errors:
+#      - id: 2-local-errors-1
+#        type: org.kestra.core.tasks.debugs.Return
+#        format: "{{task.id}}"
+
+  # Sequential
+  - id: 3-sequential
+    type: org.kestra.core.tasks.flows.Sequential
+    tasks:
+      - id: 3-sequential-1
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}}"
+      - id: 3-sequential-2
+        type: org.kestra.core.tasks.flows.Sequential
+        tasks:
+          - id: 3-sequential-2-1
+            type: org.kestra.core.tasks.debugs.Return
+            format: "{{task.id}}"
+          - id: 3-sequential-2-2
+            type: org.kestra.core.tasks.flows.Sequential
+            tasks:
+              - id: 3-sequential-2-2-1
+                type: org.kestra.core.tasks.debugs.Return
+                format: "{{task.id}}"
+          - id: 3-sequential-2-3
+            type: org.kestra.core.tasks.debugs.Return
+            format: "{{task.id}}"
+      - id: 3-sequential-3
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}}"
+    errors:
+      - id: 3-sequential-local-errors
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}}"
+
+  # Switch
+  - id: 4-switch
+    type: org.kestra.core.tasks.flows.Switch
+    value: "FIRST"
+    cases:
+      FIRST:
+        - id: 4-sequential-case-1
+          type: org.kestra.core.tasks.debugs.Return
+          format: "{{task.id}}  > {{taskrun.value}}"
+      SECOND:
+        - id: 4-sequential-case-2
+          type: org.kestra.core.tasks.debugs.Return
+          format: "{{task.id}}  > {{taskrun.value}}"
+    defaults:
+      - id: 4-sequential-default
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}}  > {{taskrun.value}}"
+
+# Global Errors
+errors:
+  - id: error-1st
+    type: org.kestra.core.tasks.debugs.Return
+    format: "Error Trigger ! {{task.id}}"
+  - id: error-2nd
+    type: org.kestra.core.tasks.debugs.Return
+    format: "Error Trigger ! {{task.id}}"

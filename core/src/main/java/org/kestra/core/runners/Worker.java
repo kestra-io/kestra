@@ -95,8 +95,12 @@ public class Worker implements Runnable {
                 .get(() -> this.runAttempt(current.get()));
 
             // get last state
-            List<TaskRunAttempt> attempts = finalWorkerTask.getTaskRun().getAttempts();
-            TaskRunAttempt lastAttempt = attempts.get(attempts.size() - 1);
+            TaskRunAttempt lastAttempt = finalWorkerTask.getTaskRun().lastAttempt();
+            if (lastAttempt == null) {
+                throw new IllegalStateException("Can find lastAttempt on taskRun '" +
+                    finalWorkerTask.getTaskRun().toString(true) + "'"
+                );
+            }
             State.Type state = lastAttempt.getState().getCurrent();
 
             // emit
@@ -121,7 +125,7 @@ public class Worker implements Runnable {
                     finalWorkerTask.getTaskRun().getId(),
                     finalWorkerTask.getTaskRun().getTaskId(),
                     finalWorkerTask.getTask().getClass().getSimpleName(),
-                    finalWorkerTask.getTaskRun().getState(),
+                    finalWorkerTask.getTaskRun().getState().getCurrent(),
                     finalWorkerTask.getTaskRun().getState().humanDuration()
                 );
 

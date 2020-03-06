@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.kestra.core.models.executions.Execution;
@@ -37,7 +38,7 @@ public class KafkaQueue<T> implements QueueInterface<T> {
     private Class<T> cls;
     private KafkaAdminService kafkaAdminService;
     private KafkaConsumerService kafkaConsumerService;
-    private KafkaProducerService kafkaProducerService;
+    private KafkaProducer<String, T> kafkaProducer;
     private TopicsConfig topicsConfig;
     private static ExecutorService poolExecutor;
 
@@ -51,7 +52,7 @@ public class KafkaQueue<T> implements QueueInterface<T> {
         this.cls = cls;
         this.kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
-        this.kafkaProducerService = applicationContext.getBean(KafkaProducerService.class);
+        this.kafkaProducer = applicationContext.getBean(KafkaProducerService.class).of(cls, JsonSerde.of(cls));
         this.topicsConfig = applicationContext
             .getBeansOfType(TopicsConfig.class)
             .stream()
@@ -81,8 +82,7 @@ public class KafkaQueue<T> implements QueueInterface<T> {
         }
 
         try {
-            kafkaProducerService
-                .of(cls, JsonSerde.of(cls))
+            kafkaProducer
                 .send(new ProducerRecord<>(
                     topicsConfig.getName(),
                     this.key(message), message),

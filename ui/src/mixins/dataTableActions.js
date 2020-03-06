@@ -1,8 +1,8 @@
 import queryBuilder from "../utils/queryBuilder";
 export default {
     created() {
-        if (localStorage.getItem(this.storageName)) {
-            if (localStorage.getItem(this.storageName) != JSON.stringify(this.$route.query)) {
+        if (localStorage.getItem(this.storageName) && this.$route.name === 'executionsList') {
+            if (localStorage.getItem(this.storageName) !== JSON.stringify(this.$route.query)) {
                 this.$router.push({
                     query: JSON.parse(localStorage.getItem(this.storageName))
                 });

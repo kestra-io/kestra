@@ -9,8 +9,8 @@
                     <b-form-input
                         id="input-1"
                         v-model="filter"
-                        type="email"
                         required
+                        @input="onSearch"
                         :placeholder="$t('search') + '...'"
                     ></b-form-input>
                 </b-form-group>
@@ -41,6 +41,27 @@ export default {
                 "CRITICAL"
             ]
         };
+    },
+    created() {
+        if (this.$route.query.search) {
+            this.filter = this.$route.query.search || "";
+        }
+    },
+    watch: {
+        $route() {
+            if (this.$route.query.search !== this.filter) {
+                this.filter = this.$route.query.search || "";
+            }
+        }
+    },
+    methods: {
+        onSearch() {
+            if (this.$route.query.search !== this.filter) {
+                const newRoute = { query: { ...this.$route.query } };
+                newRoute.query.search = this.filter;
+                this.$router.push(newRoute);
+            }
+        }
     },
     computed: {
         filterTerm() {

@@ -1,23 +1,31 @@
 package org.kestra.core.tasks.flows;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
+import org.kestra.core.models.hierarchies.ParentTaskTree;
+import org.kestra.core.models.hierarchies.RelationType;
+import org.kestra.core.models.hierarchies.TaskTree;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
+import org.kestra.core.models.tasks.VoidOutput;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
+import org.kestra.core.services.TreeService;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,23 +52,40 @@ import java.util.stream.Collectors;
         "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
     }
 )
-public class EachSequential extends Sequential implements FlowableTask {
+public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
     private String value;
 
     @Override
-    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) {
+    public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {
+        return TreeService.sequential(
+            this.getTasks(),
+            this.errors,
+            Collections.singletonList(ParentTaskTree.builder()
+                .id(this.getId())
+                .value(this.value)
+                .build()
+            ),
+            execution,
+            RelationType.DYNAMIC,
+            groups
+        );
+    }
+
+    @Override
+    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return this.resolveTasks(runContext, parentTaskRun);
     }
 
-    private List<ResolvedTask> resolveTasks(RunContext runContext, TaskRun parentTaskRun) {
+    private List<ResolvedTask> resolveTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         ObjectMapper mapper = new ObjectMapper();
 
         String[] values;
+
+        String renderValue = runContext.render(this.value);
         try {
-            String renderValue = runContext.render(this.value);
             values = mapper.readValue(renderValue, String[].class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (JsonProcessingException e) {
+            throw new IllegalVariableEvaluationException(e);
         }
 
         return Arrays
@@ -78,7 +103,7 @@ public class EachSequential extends Sequential implements FlowableTask {
     }
 
     @Override
-    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
         if (childTasks.size() == 0) {
@@ -95,7 +120,7 @@ public class EachSequential extends Sequential implements FlowableTask {
 
 
     @Override
-    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) {
+    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveSequentialNexts(
             execution,
             this.resolveTasks(runContext, parentTaskRun),

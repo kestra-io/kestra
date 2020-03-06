@@ -117,49 +117,35 @@ export default {
 </script>
 <style lang="scss" scoped>
 @import "../../styles/_variable.scss";
-
 .log-wrapper {
   border-radius: 5px;
-
   .line:nth-child(odd) {
     background-color: lighten($dark, 5%);
   }
-
   div.attempt {
     display: flex;
     font-family: $font-family-sans-serif;
     font-size: $font-size-base;
     margin-top: $paragraph-margin-bottom*1.5;
     margin-bottom: 2px;
-
     .task-id {
     }
-
     .badge {
       font-size: $font-size-base;
       height: 100%;
       line-height: 100%;
       padding-bottom: 0;
     }
-
-
   }
-
   .attempt-wrapper {
     padding: 0.75rem;
-
     div:first-child > *  {
       margin-top: 0;
-
     }
   }
-
-
-
   .output {
     margin-right: 5px;
   }
-
   pre {
     border: 1px solid $light;
     background-color: $gray-200;

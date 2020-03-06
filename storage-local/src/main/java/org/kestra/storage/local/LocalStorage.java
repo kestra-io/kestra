@@ -42,26 +42,25 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public InputStream get(URI uri) throws FileNotFoundException {
-        return new FileInputStream(new File(getPath(URI.create(uri.getPath()))
+        return new BufferedInputStream(new FileInputStream(new File(getPath(URI.create(uri.getPath()))
             .toAbsolutePath()
             .toString()
-        ));
+        )));
     }
 
     @Override
     public URI put(URI uri, InputStream data) throws IOException {
         this.createDirectory(uri);
 
-        OutputStream outStream = new FileOutputStream(getPath(uri).toFile());
-
-        byte[] buffer = new byte[8 * 1024];
-        int bytesRead;
-        while ((bytesRead = data.read(buffer)) != -1) {
-            outStream.write(buffer, 0, bytesRead);
+        try (OutputStream outStream = new FileOutputStream(getPath(uri).toFile())) {
+            byte[] buffer = new byte[8 * 1024];
+            int bytesRead;
+            while ((bytesRead = data.read(buffer)) != -1) {
+                outStream.write(buffer, 0, bytesRead);
+            }
+        } finally {
+            data.close();
         }
-
-        outStream.close();
-        data.close();
 
         return URI.create("kestra://" + uri.getPath());
     }

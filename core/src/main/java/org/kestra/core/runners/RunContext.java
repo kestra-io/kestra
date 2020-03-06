@@ -217,7 +217,7 @@ public class RunContext {
         }
 
         if (uri.getScheme().equals("file")) {
-            return new FileInputStream(uri.toString());
+            return new FileInputStream(uri.getPath());
         }
 
         if (uri.getScheme().equals("http")) {
@@ -242,7 +242,7 @@ public class RunContext {
         URI uri = URI.create(this.storageOutputPrefix.toString());
         URI resolve = uri.resolve(uri.getPath() + "/" + file.getName());
 
-        URI put = this.storageInterface.put(resolve, new FileInputStream(file));
+        URI put = this.storageInterface.put(resolve, new BufferedInputStream(new FileInputStream(file)));
 
         boolean delete = file.delete();
         if (!delete) {

@@ -7,7 +7,7 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.exceptions.HttpStatusException;
-import io.micronaut.http.multipart.StreamingFileUpload;
+import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
 import io.micronaut.validation.Validated;
@@ -154,7 +154,7 @@ public class ExecutionController {
         String namespace,
         String id,
         @Nullable Map<String, String> inputs,
-        @Nullable Publisher<StreamingFileUpload> files
+        @Nullable Publisher<CompletedFileUpload> files
     ) {
         Optional<Flow> find = flowRepository.findById(namespace, id);
         if (find.isEmpty()) {

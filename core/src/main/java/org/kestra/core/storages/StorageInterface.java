@@ -1,6 +1,7 @@
 package org.kestra.core.storages;
 
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.http.multipart.CompletedFileUpload;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
@@ -33,6 +34,17 @@ public interface StorageInterface {
                 file
             )
         ));
+    }
+
+    default URI from(Flow flow, Execution execution, String input, CompletedFileUpload file) throws IOException {
+        try {
+            return this.put(
+                this.uri(flow, execution, input, file.getName()),
+                file.getInputStream()
+            );
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     default URI from(Flow flow, Execution execution, String input, File file) throws IOException {

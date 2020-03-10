@@ -19,3 +19,8 @@
 .wrap {
   word-wrap: break-word;
 }
+
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}

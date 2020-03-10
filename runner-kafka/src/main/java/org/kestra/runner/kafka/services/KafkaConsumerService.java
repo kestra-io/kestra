@@ -8,9 +8,11 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.runner.kafka.KafkaQueue;
 import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.configs.ConsumerDefaultsConfig;
+import org.kestra.runner.kafka.metrics.KafkaClientMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +30,9 @@ public class KafkaConsumerService {
     @Inject
     private ConsumerDefaultsConfig consumerConfig;
 
+    @Inject
+    private MetricRegistry metricRegistry;
+
     public <V> Consumer<V> of(Class<?> group, Serde<V> serde) {
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
@@ -43,7 +48,12 @@ public class KafkaConsumerService {
             properties.remove(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG);
         }
 
-        return new Consumer<>(properties, serde);
+        Consumer<V> consumer = new Consumer<>(properties, serde);
+
+        metricRegistry.bind(new KafkaClientMetrics(consumer));
+
+        return consumer;
+
     }
 
     public static class Consumer<V> extends KafkaConsumer<String, V> {

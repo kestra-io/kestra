@@ -2,6 +2,7 @@ package org.kestra.core.metrics;
 
 
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.Nullable;
 import org.apache.commons.lang3.ArrayUtils;
 import org.kestra.core.models.executions.Execution;
@@ -161,6 +162,15 @@ public class MetricRegistry {
             TAG_NAMESPACE_ID, execution.getNamespace(),
             TAG_STATE, execution.getState().getCurrent().name(),
         };
+    }
+
+    /**
+     * Attach a {@link MeterBinder} to current registry
+     *
+     * @param meterBinder the {@link MeterBinder} to bind to current registry
+     */
+    public void bind(MeterBinder meterBinder) {
+        meterBinder.bindTo(this.meterRegistry);
     }
 }
 

@@ -4,9 +4,11 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.runner.kafka.KafkaQueue;
 import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.configs.ProducerDefaultsConfig;
+import org.kestra.runner.kafka.metrics.KafkaClientMetrics;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -20,6 +22,9 @@ public class KafkaProducerService {
     @Inject
     private ProducerDefaultsConfig producerConfig;
 
+    @Inject
+    private MetricRegistry metricRegistry;
+
     public <V> KafkaProducerService.Producer<V> of(Class<?> name, Serde<V> serde) {
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
@@ -30,7 +35,11 @@ public class KafkaProducerService {
 
         properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(name));
 
-        return new KafkaProducerService.Producer<>(properties, serde);
+        Producer<V> producer = new Producer<>(properties, serde);
+
+        metricRegistry.bind(new KafkaClientMetrics(producer));
+
+        return producer;
     }
 
     public static class Producer<V> extends KafkaProducer<String, V> {

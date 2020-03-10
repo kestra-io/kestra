@@ -6,9 +6,12 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.StreamsException;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.runner.kafka.KafkaQueue;
 import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.configs.StreamDefaultsConfig;
+import org.kestra.runner.kafka.metrics.KafkaClientMetrics;
+import org.kestra.runner.kafka.metrics.KafkaStreamsMetrics;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -26,6 +29,9 @@ public class KafkaStreamService {
     @Inject
     private StreamDefaultsConfig streamConfig;
 
+    @Inject
+    private MetricRegistry metricRegistry;
+
     public KafkaStreamService.Stream of(Class<?> group, Topology topology) {
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
@@ -37,7 +43,11 @@ public class KafkaStreamService {
         properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
 
-        return new KafkaStreamService.Stream(topology, properties);
+        Stream stream = new Stream(topology, properties);
+
+        metricRegistry.bind(new KafkaStreamsMetrics(stream));
+
+        return stream;
     }
 
     public static class Stream extends KafkaStreams {

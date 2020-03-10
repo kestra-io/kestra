@@ -1,21 +1,22 @@
 package org.kestra.runner.kafka.services;
 
-import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.errors.TopicExistsException;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.configs.TopicDefaultsConfig;
 import org.kestra.runner.kafka.configs.TopicsConfig;
+import org.kestra.runner.kafka.metrics.KafkaClientMetrics;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
@@ -29,11 +30,18 @@ public class KafkaAdminService {
     @Inject
     private List<TopicsConfig> topicsConfig;
 
+    @Inject
+    private MetricRegistry metricRegistry;
+
     public AdminClient of() {
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
 
-        return AdminClient.create(properties);
+        AdminClient client = AdminClient.create(properties);
+
+        metricRegistry.bind(new KafkaClientMetrics(client));
+
+        return client;
     }
 
     private TopicsConfig getTopicConfig(Class<?> cls) {

@@ -99,6 +99,10 @@ public class Execution {
     }
 
     public List<TaskRun> findTaskRunsByTaskId(String id) {
+        if (this.taskRunList == null) {
+            return new ArrayList<>();
+        }
+
         return this.taskRunList
             .stream()
             .filter(taskRun -> taskRun.getTaskId().equals(id))

@@ -37,7 +37,7 @@ kestra:
   kafka:
     defaults:
       topic:
-        partitions: 64
+        partitions: 16
         replication-factor: 1
         properties:
           compression.type: "lz4"
@@ -47,6 +47,7 @@ kestra:
           isolation.level: "read_committed"
           auto.offset.reset: "earliest"
           enable.auto.commit: "false"
+          max.poll.interval.ms: 3600000 # max duration of tasks
 
       producer:
         properties:
@@ -67,6 +68,7 @@ kestra:
 
       org-kestra-core-runners-workertask:
         name: "kestra_workertask"
+        partitions: 64
 
       org-kestra-core-runners-workertaskresult:
         name: "kestra_workertaskresult"

@@ -14,6 +14,10 @@ public class TopicsConfig {
 
     String name;
 
+    Integer partitions;
+
+    Short replicationFactor;
+
     @MapFormat(transformation = MapFormat.MapTransformation.FLAT)
     Map<String, String> properties;
 

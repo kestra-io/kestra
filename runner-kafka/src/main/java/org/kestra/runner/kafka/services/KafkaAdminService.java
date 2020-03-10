@@ -59,8 +59,8 @@ public class KafkaAdminService {
         AdminClient admin = this.of();
         NewTopic newTopic = new NewTopic(
             topicConfig.getName(),
-            topicDefaultsConfig.getPartitions(),
-            topicDefaultsConfig.getReplicationFactor()
+            topicConfig.getPartitions() != null ? topicConfig.getPartitions() : topicDefaultsConfig.getPartitions(),
+            topicConfig.getReplicationFactor() != null ? topicConfig.getReplicationFactor() : topicDefaultsConfig.getReplicationFactor()
         );
 
         Map<String, String> properties = new HashMap<>();

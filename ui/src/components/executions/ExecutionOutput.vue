@@ -80,7 +80,7 @@ export default {
             for (const task of this.execution.taskRunList || []) {
                 for (const key in task.outputs) {
                     options.push({
-                        label: task.taskId,
+                        label: task.taskId + (task.value ? ` - ${task.value}`: ''),
                         value: task.outputs[key]
                     });
                 }
@@ -106,10 +106,11 @@ export default {
         outputs() {
             const outputs = [];
             for (const task of this.execution.taskRunList || []) {
-                if (!this.filter || task.taskId === this.filter) {
+                const token = task.taskId + (task.value ? ` - ${task.value}`: '')
+                if (!this.filter || token === this.filter) {
                     for (const key in task.outputs) {
                         const item = {
-                            key: task.taskId,
+                            key: token,
                             value: task.outputs[key],
                             task: task.id
                         };

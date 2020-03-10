@@ -80,8 +80,7 @@ export default {
             if (this.isEdit) {
                 this.readOnlyEditFields = {
                     id: this.flow.id,
-                    namespace: this.flow.namespace,
-                    revision: this.flow.revision
+                    namespace: this.flow.namespace
                 };
             }
         },

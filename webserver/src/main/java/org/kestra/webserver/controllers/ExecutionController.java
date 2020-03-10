@@ -238,6 +238,10 @@ public class ExecutionController {
 
         return Flowable
             .<Event<Execution>>create(emitter -> {
+                // emit the reposiytory one first in order to wait the queue connections 
+                execution.ifPresent(value -> emitter.onNext(Event.of(value).id("progress")));
+
+                // consume new value
                 Runnable receive = this.executionQueue.receive(current -> {
                     if (current.getId().equals(executionId)) {
 

@@ -1,9 +1,6 @@
 package org.kestra.core.storages;
 
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.http.multipart.CompletedFileUpload;
-import io.netty.handler.codec.http.multipart.DiskFileUpload;
-import io.netty.handler.codec.http.multipart.FileUpload;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
@@ -12,7 +9,6 @@ import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.utils.Slugify;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -36,37 +32,6 @@ public interface StorageInterface {
                 file
             )
         ));
-    }
-
-    default URI from(Flow flow, Execution execution, String input, CompletedFileUpload file) throws IOException {
-        try {
-            //@FIXME: ugly hack to access fileUpload
-            try {
-                Field f = file.getClass().getDeclaredField("fileUpload");
-                f.setAccessible(true);
-                FileUpload fileUpload = (FileUpload) f.get(file);
-
-                if (fileUpload instanceof DiskFileUpload) {
-                    URI put = this.put(
-                        this.uri(flow, execution, input, file.getName()),
-                        new BufferedInputStream(new FileInputStream(fileUpload.getFile()))
-                    );
-
-                    fileUpload.delete();
-
-                    return put;
-                }
-            } catch (IllegalAccessException | NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            }
-
-            return this.put(
-                this.uri(flow, execution, input, file.getName()),
-                file.getInputStream()
-            );
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     default URI from(Flow flow, Execution execution, String input, File file) throws IOException {

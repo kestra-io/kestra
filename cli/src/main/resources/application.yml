@@ -15,9 +15,9 @@ micronaut:
     multipart:
       max-file-size: 10GB
       disk: true
-    read-idle-timeout: 30s
-    write-idle-timeout: 30s
-    idle-timeout: 30s
+    read-idle-timeout: 60m
+    write-idle-timeout: 60m
+    idle-timeout: 60m
     netty:
       max-chunk-size: 10MB
 

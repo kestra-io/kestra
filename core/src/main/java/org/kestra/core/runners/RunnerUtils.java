@@ -2,9 +2,10 @@ package org.kestra.core.runners;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.http.multipart.CompletedFileUpload;
+import io.micronaut.http.multipart.StreamingFileUpload;
 import io.reactivex.Flowable;
-import lombok.extern.slf4j.Slf4j;
+import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import org.kestra.core.exceptions.MissingRequiredInput;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
@@ -36,7 +37,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Singleton
-@Slf4j
 public class RunnerUtils {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
@@ -48,22 +48,30 @@ public class RunnerUtils {
     @Inject
     private StorageInterface storageInterface;
 
-    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, String> in, Publisher<CompletedFileUpload> files) {
+    public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, String> in, Publisher<StreamingFileUpload> files) {
         if (files == null) {
             return this.typedInputs(flow, execution, in);
         }
 
         Map<String, String> uploads = Flowable.fromPublisher(files)
+            .subscribeOn(Schedulers.io())
             .map(file -> {
-                URI from = storageInterface.from(flow, execution, file.getFilename(), file);
+                File tempFile = File.createTempFile(file.getFilename() + "_", ".upl");
+                Publisher<Boolean> uploadPublisher = file.transferTo(tempFile);
+                Boolean bool = Single.fromPublisher(uploadPublisher).blockingGet();
+
+                if (!bool) {
+                    throw new RuntimeException("Can't upload");
+                }
+
+                URI from = storageInterface.from(flow, execution, file.getFilename(), tempFile);
+                //noinspection ResultOfMethodCallIgnored
+                tempFile.delete();
 
                 return new AbstractMap.SimpleEntry<>(
                     file.getFilename(),
                     from.toString()
                 );
-            })
-            .doOnError(throwable -> {
-                log.error(throwable.getMessage(), throwable);
             })
             .toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
             .blockingGet();

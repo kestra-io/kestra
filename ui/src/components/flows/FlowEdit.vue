@@ -170,9 +170,6 @@ export default {
                     });
             }
         }
-    },
-    destroyed() {
-        this.$store.commit("flow/setFlow", undefined);
     }
 };
 </script>

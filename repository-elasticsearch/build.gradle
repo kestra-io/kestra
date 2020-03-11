@@ -5,5 +5,7 @@ dependencies {
 
     compile "io.micronaut.configuration:micronaut-elasticsearch"
 
+    compile group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: "$elasticsearchVersion"
+
     testCompile project(':core').sourceSets.test.output
 }

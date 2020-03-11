@@ -14,13 +14,13 @@ import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInter
 import org.elasticsearch.search.aggregations.metrics.ParsedStats;
 import org.elasticsearch.search.aggregations.metrics.StatsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.metrics.ExecutionMetrics;
 import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.executions.metrics.Stats;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
@@ -61,7 +61,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         multipleFieldsSources.add(new TermsValuesSourceBuilder("namespace").field("namespace"));
         multipleFieldsSources.add(new TermsValuesSourceBuilder("flowId").field("flowId"));
         multipleFieldsSources.add(new TermsValuesSourceBuilder("state.current").field("state.current"));
-        multipleFieldsSources.add(new DateHistogramValuesSourceBuilder("state.startDate").field("state.startDate").dateHistogramInterval(DateHistogramInterval.DAY).interval(1).format(START_DATE_FORMAT));
+        multipleFieldsSources.add(new DateHistogramValuesSourceBuilder("state.startDate").field("state.startDate").fixedInterval(DateHistogramInterval.DAY).format(START_DATE_FORMAT));
 
         CompositeAggregationBuilder groupByMultipleFieldsAggBuilder = AggregationBuilders.composite(
             "group_by_multiple_fields", multipleFieldsSources);

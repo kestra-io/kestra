@@ -40,30 +40,6 @@ public class PluginListCommand extends AbstractCommand {
         PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
         List<RegisteredPlugin> scan = pluginScanner.scan(this.pluginsPath);
 
-        scan.forEach(registeredPlugin -> {
-            log.info("Found plugin on path: {}", registeredPlugin.getExternalPlugin().getLocation());
-
-            if (!registeredPlugin.getTasks().isEmpty()) {
-                log.info("Tasks:");
-                registeredPlugin.getTasks().forEach(cls -> log.info("- {}", cls.getName()));
-            }
-
-            if (!registeredPlugin.getConditions().isEmpty()) {
-                log.info("Condition:");
-                registeredPlugin.getConditions().forEach(cls -> log.info("- {}", cls.getName()));
-            }
-
-            if (!registeredPlugin.getControllers().isEmpty()) {
-                log.info("Controllers:");
-                registeredPlugin.getControllers().forEach(cls -> log.info("- {}", cls.getName()));
-            }
-
-            if (!registeredPlugin.getStorages().isEmpty()) {
-                log.info("Storages:");
-                registeredPlugin.getStorages().forEach(cls -> log.info("- {}", cls.getName()));
-            }
-
-            log.info("");
-        });
+        scan.forEach(registeredPlugin -> log.info(registeredPlugin.toString()));
     }
 }

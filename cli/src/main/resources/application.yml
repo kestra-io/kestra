@@ -104,3 +104,13 @@ kestra:
 
   metrics:
     prefix: kestra
+
+  server:
+    access-log:
+      enabled: true
+      name: org.kestra.webserver.access
+      format: "[Date: {}] [Duration: {} ms] [Method: {}] [Url: {}] [Status: {}] [Length: {}] [Ip: {}] [Port: {}]"
+      filters:
+        - ".*\\[Url: /ui/.*"
+        - ".*\\[Url: /health.*"
+        - ".*\\[Url: /prometheus.*"

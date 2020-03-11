@@ -38,6 +38,7 @@ import java.util.*;
 public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepository<Execution> implements ExecutionRepositoryInterface {
     private static final String INDEX_NAME = "executions";
     public static final String START_DATE_FORMAT = "yyyy-MM-dd";
+    public static final int MAX_BUCKET_SIZE = 1000;
 
     @Inject
     public ElasticSearchExecutionRepository(
@@ -53,7 +54,6 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         return this.getRequest(INDEX_NAME, id);
     }
 
-
     public Map<String, ExecutionMetricsAggregation> aggregateByStateWithDurationStats(String query, Pageable pageable) {
         QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
 
@@ -64,7 +64,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         multipleFieldsSources.add(new DateHistogramValuesSourceBuilder("state.startDate").field("state.startDate").fixedInterval(DateHistogramInterval.DAY).format(START_DATE_FORMAT));
 
         CompositeAggregationBuilder groupByMultipleFieldsAggBuilder = AggregationBuilders.composite(
-            "group_by_multiple_fields", multipleFieldsSources);
+            "group_by_multiple_fields", multipleFieldsSources).size(MAX_BUCKET_SIZE);
 
         final List<CompositeValuesSourceBuilder<?>> durationSources = new ArrayList<>();
         durationSources.add(new TermsValuesSourceBuilder("namespace").field("namespace"));
@@ -72,7 +72,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
         CompositeAggregationBuilder durationAggBuilder =
             AggregationBuilders.composite("duration", durationSources).subAggregation(new StatsAggregationBuilder(
-                "state.duration").field("state.duration"));
+                "state.duration").field("state.duration")).size(MAX_BUCKET_SIZE);
 
 
         SearchSourceBuilder sourceBuilder = this.searchSource(queryString,
@@ -112,8 +112,12 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                 final String flowId = bucket.getKey().get("flowId").toString();
                 final String mapKey = Flow.uniqueIdWithoutRevision(namespace, flowId);
 
-                // FIXME : What to do if not present (should never occur)
                 ExecutionMetricsAggregation executionMetricsAggregation = map.get(mapKey);
+
+                // Should never occur but since the map is filled from 2 different aggregations, we keep this check
+                if (executionMetricsAggregation == null) {
+                    return;
+                }
 
                 executionMetricsAggregation.setPeriodDurationStats(Stats.builder()
                     .avg(((ParsedStats) bucket.getAggregations().get("state.duration")).getAvg())

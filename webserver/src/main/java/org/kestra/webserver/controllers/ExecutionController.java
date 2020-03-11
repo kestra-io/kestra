@@ -87,7 +87,7 @@ public class ExecutionController {
      * @return the flow tree  with the provided identifier
      */
     @Get(uri = "executions/{executionId}/tree", produces = MediaType.TEXT_JSON)
-    public Maybe<FlowTree> getTree(String executionId) throws IllegalVariableEvaluationException {
+    public FlowTree getTree(String executionId) throws IllegalVariableEvaluationException {
         return executionRepository
             .findById(executionId)
             .map(throwFunction(execution -> {
@@ -101,8 +101,7 @@ public class ExecutionController {
                     .map(throwFunction(value -> FlowTree.of(value, execution)))
                     .orElse(null);
             }))
-            .map(Maybe::just)
-            .orElse(Maybe.empty());
+            .orElse(null);
     }
 
     /**
@@ -112,21 +111,19 @@ public class ExecutionController {
      * @return the execution with the provided identifier
      */
     @Get(uri = "executions/{executionId}", produces = MediaType.TEXT_JSON)
-    public Maybe<Execution> get(String executionId) {
+    public Execution get(String executionId) {
         return executionRepository
             .findById(executionId)
-            .map(Maybe::just)
-            .orElse(Maybe.empty());
+            .orElse(null);
     }
-
 
     /**
      * Find and returns all executions for a specific namespace and flow identifier
      *
      * @param namespace The flow namespace
-     * @param flowId    The flow identifier
-     * @param page      The number of result pages to return
-     * @param size      The number of result by page
+     * @param flowId The flow identifier
+     * @param page The number of result pages to return
+     * @param size The number of result by page
      * @return a list of found executions
      */
     @Get(uri = "executions", produces = MediaType.TEXT_JSON)
@@ -141,16 +138,15 @@ public class ExecutionController {
         );
     }
 
-
     /**
      * Trigger an new execution for current flow
      *
      * @param namespace The flow namespace
-     * @param id        The flow id
+     * @param id The flow id
      * @return execution created
      */
     @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
-    public Maybe<Execution> trigger(
+    public Execution trigger(
         String namespace,
         String id,
         @Nullable Map<String, String> inputs,
@@ -158,7 +154,7 @@ public class ExecutionController {
     ) {
         Optional<Flow> find = flowRepository.findById(namespace, id);
         if (find.isEmpty()) {
-            return Maybe.empty();
+            return null;
         }
 
         Execution current = runnerUtils.newExecution(
@@ -168,52 +164,50 @@ public class ExecutionController {
 
         executionQueue.emit(current);
 
-        return Maybe.just(current);
+        return current;
     }
 
     /**
      * Download file binary from uri parameter
      *
      * @param filePath The file URI to return
-     * @param type     The file storage type
+     * @param type The file storage type
      * @return data binary content
      */
     @Get(uri = "executions/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
-    public Maybe<StreamedFile> file(
+    public StreamedFile file(
         String executionId,
         @QueryValue(value = "filePath") URI filePath,
         @QueryValue(value = "type") String type
-    ) throws URISyntaxException, IOException {
+    ) throws IOException {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
-            return Maybe.empty();
+            return null;
         }
 
         InputStream fileHandler = storageInterface.get(filePath);
-        return Maybe.just(new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
-            .attach(FilenameUtils.getName(filePath.toString()))
-        );
+        return new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
+            .attach(FilenameUtils.getName(filePath.toString()));
     }
-
 
     /**
      * Create a new execution from an old one and start it from a specified ("reference") task id
      *
      * @param executionId the origin execution id to clone
-     * @param taskId      the reference task id
-     * @return
+     * @param taskId the reference task id
+     * @return the restarted execution
      */
     @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
-    public Maybe<Execution> restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) throws IllegalVariableEvaluationException {
+    public Execution restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) throws IllegalVariableEvaluationException {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
-            return Maybe.empty();
+            return null;
         }
 
         final Execution newExecution = executionService.getRestartExecution(execution.get(), taskId);
         executionQueue.emit(newExecution);
 
-        return Maybe.just(newExecution);
+        return newExecution;
     }
 
     /**
@@ -225,19 +219,21 @@ public class ExecutionController {
     @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_JSON)
     public Flowable<Event<Execution>> follow(String executionId) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
-
-        Optional<Execution> execution = executionRepository.findById(executionId);
-        if (execution.isPresent()) {
-            Flow flow = flowRepository.findByExecution(execution.get());
-            if (execution.get().isTerminatedWithListeners(flow)) {
-                return Flowable.just(Event.of(execution.get()).id("end"));
-            }
-        }
-
         final Flow[] flow = {null};
 
         return Flowable
             .<Event<Execution>>create(emitter -> {
+                // already finished execution
+                Optional<Execution> execution = executionRepository.findById(executionId);
+                if (execution.isPresent()) {
+                    Flow current = flowRepository.findByExecution(execution.get());
+                    if (execution.get().isTerminatedWithListeners(current)) {
+                        emitter.onNext(Event.of(execution.get()).id("end"));
+                        emitter.onComplete();
+                        return;
+                    }
+                }
+
                 // emit the reposiytory one first in order to wait the queue connections 
                 execution.ifPresent(value -> emitter.onNext(Event.of(value).id("progress")));
 

@@ -34,12 +34,11 @@ public class FlowController {
      * @return flow tree found
      */
     @Get(uri = "{namespace}/{id}/tree", produces = MediaType.TEXT_JSON)
-    public Maybe<FlowTree> flowTree(String namespace, String id) throws IllegalVariableEvaluationException {
+    public FlowTree flowTree(String namespace, String id) throws IllegalVariableEvaluationException {
         return flowRepository
             .findById(namespace, id)
             .map(throwFunction(FlowTree::of))
-            .map(Maybe::just)
-            .orElse(Maybe.empty());
+            .orElse(null);
     }
 
     /**
@@ -48,13 +47,11 @@ public class FlowController {
      * @return flow found
      */
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
-    public Maybe<Flow> index(String namespace, String id) {
+    public Flow index(String namespace, String id) {
         return flowRepository
             .findById(namespace, id)
-            .map(Maybe::just)
-            .orElse(Maybe.empty());
+            .orElse(null);
     }
-
 
     /**
      * @param query The flow query that is a lucen string
@@ -99,7 +96,6 @@ public class FlowController {
         }
 
         return HttpResponse.ok(flowRepository.update(flow, existingFlow.get()));
-
     }
 
     /**

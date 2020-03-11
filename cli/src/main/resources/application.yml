@@ -114,3 +114,4 @@ kestra:
         - ".*\\[Url: /ui/.*"
         - ".*\\[Url: /health.*"
         - ".*\\[Url: /prometheus.*"
+        - ".*\\[Url: /favicon.ico.*"

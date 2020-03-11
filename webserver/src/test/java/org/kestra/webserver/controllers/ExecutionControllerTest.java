@@ -132,14 +132,13 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         Execution result = triggerInputsFlowExecution();
 
         // Get the triggered execution by execution id
-        Maybe<Execution> foundExecution = client.retrieve(
+        Execution foundExecution = client.retrieve(
             HttpRequest.GET("/api/v1/executions/" + result.getId()),
             Execution.class
-        ).firstElement();
+        ).blockingFirst();
 
-        assertThat(foundExecution.isEmpty().blockingGet(), is(Boolean.FALSE));
-        assertThat(foundExecution.blockingGet().getId(), is(result.getId()));
-        assertThat(foundExecution.blockingGet().getNamespace(), is(result.getNamespace()));
+        assertThat(foundExecution.getId(), is(result.getId()));
+        assertThat(foundExecution.getNamespace(), is(result.getNamespace()));
     }
 
     @SuppressWarnings("unchecked")

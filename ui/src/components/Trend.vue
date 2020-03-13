@@ -53,7 +53,7 @@ export default {
 @import "../styles/variable";
 .trend {
   float: right;
-  padding-right: 50px;
+  margin-top: 5px;
 }
 .neutral {
   color: $blue;

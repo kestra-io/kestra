@@ -152,7 +152,7 @@ export default {
         },
         {
           key: "duration",
-          label: title("avg duration"),
+          label: title("duration"),
           sortable: false,
           class: "row-duration"
         },
@@ -187,6 +187,7 @@ export default {
 
 .stats {
   display: block;
+  font-size: $font-size-xs;
 }
 .stats span.title {
   padding-left: 10px;

@@ -95,4 +95,8 @@ small {
     padding: $pagination-padding-y-sm $pagination-padding-x-sm;
     white-space: nowrap;
 }
+
+/deep/ th {
+    white-space: nowrap;
+}
 </style>

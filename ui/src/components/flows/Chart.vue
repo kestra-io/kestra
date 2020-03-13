@@ -22,6 +22,9 @@ export default {
       default: () => ({
         axis: {
           x: { type: "category" }
+        },
+        tooltip: {
+          horizontal: false
         }
       })
     },
@@ -170,5 +173,3 @@ export default {
 <template>
   <div ref="root" class="chart-root"></div>
 </template>
-
-<style src="../../../../node_modules/c3/c3.css"></style>

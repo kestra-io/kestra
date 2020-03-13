@@ -29,6 +29,7 @@ import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.kestra.core.models.validations.ModelValidator;
@@ -36,15 +37,15 @@ import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 
 @Slf4j
-abstract public class AbstractElasticSearchRepository <T> {
+abstract public class AbstractElasticSearchRepository<T> {
     protected static final ObjectMapper mapper = JacksonMapper.ofJson();
     protected Class<T> cls;
 
@@ -149,11 +150,17 @@ abstract public class AbstractElasticSearchRepository <T> {
         return searchRequest;
     }
 
-    protected SearchSourceBuilder searchSource(QueryBuilder query, Pageable pageable) {
+    protected SearchSourceBuilder searchSource(QueryBuilder query, Optional<List<AggregationBuilder>> aggregations, Pageable pageable) {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(query)
             .size(pageable.getSize())
             .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
+        if (aggregations.isPresent()) {
+            for (AggregationBuilder aggregation : aggregations.get()) {
+                sourceBuilder.aggregation(aggregation);
+            }
+        }
 
         for (Sort.Order order : pageable.getSort().getOrderBy()) {
             sourceBuilder = sourceBuilder.sort(
@@ -167,7 +174,7 @@ abstract public class AbstractElasticSearchRepository <T> {
 
     protected ArrayListTotal<T> findQueryString(String index, String query, Pageable pageable) {
         QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
-        SearchSourceBuilder sourceBuilder = this.searchSource(queryString, pageable);
+        SearchSourceBuilder sourceBuilder = this.searchSource(queryString, Optional.empty(), pageable);
 
         return this.query(index, sourceBuilder);
     }

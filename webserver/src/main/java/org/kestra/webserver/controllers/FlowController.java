@@ -8,17 +8,19 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.validation.Validated;
 import io.reactivex.Maybe;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
+import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.hierarchies.FlowTree;
 import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.services.FlowService;
 import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 
-import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
+import java.util.List;
+import java.util.Optional;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -27,6 +29,9 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 public class FlowController {
     @Inject
     private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private FlowService flowService;
 
     /**
      * @param namespace The flow namespace
@@ -112,5 +117,18 @@ public class FlowController {
         } else {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
+    }
+
+    @Get(uri = "searchAndAggregate", produces = MediaType.TEXT_JSON)
+    public PagedResults<ExecutionMetricsAggregation> searchAndAggregate(
+        @QueryValue(value = "q") String query,
+        @QueryValue(value = "startDate") String startDateAsIsoString,
+        @QueryValue(value = "page", defaultValue = "1") int page,
+        @QueryValue(value = "size", defaultValue = "10") int size,
+        @Nullable @QueryValue(value = "sort") List<String> sort
+    ) throws HttpStatusException {
+        return PagedResults.of(
+            flowService.findAndAggregate(query, startDateAsIsoString, PageableUtils.from(page, size, sort))
+        );
     }
 }

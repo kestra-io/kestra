@@ -49,7 +49,7 @@ public class Flow {
     @NotNull
     @NotBlank
     @Pattern(regexp="[a-zA-Z0-9_-]+")
-    public String id;
+    private String id;
 
     @NotNull
     @Pattern(regexp="[a-z0-9.]+")
@@ -129,6 +129,10 @@ public class Flow {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String uniqueIdWithoutRevision(String namespace, String flowId) {
+        return namespace + flowId;
     }
 
     public Optional<ConstraintViolationException> validateUpdate(Flow updated) {

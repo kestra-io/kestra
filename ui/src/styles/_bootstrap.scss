@@ -15,7 +15,8 @@ ul.nav-tabs {
         border-bottom-color: transparent;
         color: $body-color;
 
-        &.active, &:hover.active {
+        &.active,
+        &:hover.active {
             font-weight: bold;
             color: $primary;
             border-bottom-color: $primary;
@@ -41,7 +42,6 @@ ul.nav-tabs {
     }
 }
 
-
 // table
 .table-responsive-xl {
     th.row-action {
@@ -50,6 +50,18 @@ ul.nav-tabs {
 
     td.row-action a {
         color: $body-color;
+    }
+
+    th.row-state {
+        width: 310px;
+    }
+
+    td.row-state {
+        padding: 0;
+    }
+
+    td.row-duration {
+        padding: $table-cell-padding/2;
     }
 }
 

@@ -75,7 +75,7 @@ export default {
         },
         setDataTree(state, tree) {
             state.dataTree = tree
-        },
+        }
     },
     getters: {}
 }

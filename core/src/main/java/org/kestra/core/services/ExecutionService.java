@@ -212,7 +212,8 @@ public class ExecutionService {
      * @return The provided execution that can be run again from the last failed task.
      * @throws IllegalArgumentException If there is no failed task.
      */
-    private Execution createRestartFromLastFailed(final Execution execution) throws IllegalArgumentException, IllegalVariableEvaluationException {
+    private Execution createRestartFromLastFailed(final Execution execution) throws IllegalArgumentException,
+        IllegalVariableEvaluationException {
         final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
         final Predicate<TaskRun> notLastFailed = throwPredicate(taskRun -> {

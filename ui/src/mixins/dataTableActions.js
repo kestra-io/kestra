@@ -1,4 +1,5 @@
 import queryBuilder from "../utils/queryBuilder";
+import { CardPlugin } from "bootstrap-vue";
 export default {
     created() {
         if (localStorage.getItem(this.storageName) && this.$route.name === 'executionsList') {

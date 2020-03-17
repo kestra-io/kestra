@@ -34,7 +34,11 @@ export default {
         },
         saveFlow({ commit }, options) {
             return Vue.axios.put(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}`, options.flow).then(response => {
-                commit('setFlow', response.data)
+                if (response.status >= 300) {
+                    return Promise.reject(new Error("Server error on flow save"))
+                } else {
+                    commit('setFlow', response.data)
+                }
             })
         },
         createFlow({ commit }, options) {

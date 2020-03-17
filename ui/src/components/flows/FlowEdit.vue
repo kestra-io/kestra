@@ -91,7 +91,18 @@ export default {
         },
         save() {
             if (this.flow) {
-                const flow = Yaml.parse(this.content);
+                let flow;
+                try {
+                    flow = Yaml.parse(this.content);
+                } catch (err) {
+                    this.$bvToast.toast(this.$t("check your the yaml is valid").capitalize(), {
+                        title: this.$t("invalid flow").capitalize(),
+                        autoHideDelay: 5000,
+                        toaster: "b-toaster-top-right",
+                        variant: "warning"
+                    });
+                    return
+                }
                 if (this.isEdit) {
                     for (const key in this.readOnlyEditFields) {
                         if (flow[key] !== this.readOnlyEditFields[key]) {
@@ -127,17 +138,6 @@ export default {
                             }
                         );
                     })
-                    .catch(() => {
-                        this.$bvToast.toast(
-                            this.$t("flow update aborted").capitalize(),
-                            {
-                                title: this.$t("fail").capitalize(),
-                                autoHideDelay: 5000,
-                                toaster: "b-toaster-top-right",
-                                variant: "danger"
-                            }
-                        );
-                    })
                     .finally(() => {
                         this.loadFlow();
                     });
@@ -160,14 +160,6 @@ export default {
                             variant: "success"
                         });
                     })
-                    .catch(() => {
-                        this.$bvToast.toast("Failed to save.", {
-                            title: "Flow save error",
-                            autoHideDelay: 5000,
-                            toaster: "b-toaster-top-right",
-                            variant: "danger"
-                        });
-                    });
             }
         }
     }

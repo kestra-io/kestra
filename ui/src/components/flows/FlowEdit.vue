@@ -88,6 +88,10 @@ export default {
         editorInit: function() {
             require("brace/mode/yaml");
             require("brace/theme/chrome");
+            // div col -> div ace_editor -> textarea
+            var textarea = editor.firstChild.firstChild.firstChild;
+            textarea.focus()
+
         },
         save() {
             if (this.flow) {

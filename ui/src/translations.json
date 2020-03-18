@@ -82,7 +82,9 @@
         "avg duration": "avg. execution duration",
         "neutral_trend": "stable",
         "up_trend": "increasing",
-        "down_trend": "decreasing"
+        "down_trend": "decreasing",
+        "flow update aborted": "flow update aborted",
+        "invalid flow": "invalid flow"
     },
     "fr": {
         "id": "identifiant",
@@ -168,6 +170,8 @@
         "avg duration": "Durée moyenne d'execution",
         "neutral_trend": "stable",
         "up_trend": "en augmentation",
-        "down_trend": "en baisse"
+        "down_trend": "en baisse",
+        "flow update aborted": "mise à jour du flow annulée",
+        "invalid flow": "flow invalide"
     }
 }

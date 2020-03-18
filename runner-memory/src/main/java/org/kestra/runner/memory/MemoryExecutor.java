@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
+import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
@@ -91,14 +92,18 @@ public class MemoryExecutor extends AbstractExecutor {
                 }
 
                 Execution execution = executions.get(taskRun.getExecutionId());
-                Execution newExecution = execution.withTaskRun(taskRun);
 
-                this.executionQueue.emit(newExecution);
+                try {
+                    Execution newExecution = execution.withTaskRun(taskRun);
+                    this.executionQueue.emit(newExecution);
+                } catch (Exception e) {
+                    this.executionQueue.emit(execution.failedExecutionFromExecutor(e));
+                }
             }
         });
     }
 
-    private void handleWorkerTask(Execution execution, Flow flow) throws IllegalVariableEvaluationException {
+    private void handleWorkerTask(Execution execution, Flow flow) throws IllegalVariableEvaluationException, InternalException {
         if (execution.getTaskRunList() == null) {
             return;
         }
@@ -139,7 +144,7 @@ public class MemoryExecutor extends AbstractExecutor {
         }
     }
 
-    private void handleChild(Execution execution, Flow flow) throws IllegalVariableEvaluationException {
+    private void handleChild(Execution execution, Flow flow) throws Exception {
         if (execution.getTaskRunList() == null) {
             return;
         }

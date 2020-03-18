@@ -49,7 +49,7 @@ public class ExecutionService {
      * @throws IllegalArgumentException If no referenceTaskId is provided or if there is no failed task. Also thrown if
      *                                  a {@code referenceTaskId} is provided but there is a failed task before the reference task.
      */
-    public Execution getRestartExecution(final Execution execution, String referenceTaskId) throws IllegalStateException, IllegalArgumentException, IllegalVariableEvaluationException {
+    public Execution getRestartExecution(final Execution execution, String referenceTaskId) throws Exception {
         if (!execution.getState().isTerninated()) {
             throw new IllegalStateException("Execution must be terminated to be restarted !");
         }
@@ -212,8 +212,7 @@ public class ExecutionService {
      * @return The provided execution that can be run again from the last failed task.
      * @throws IllegalArgumentException If there is no failed task.
      */
-    private Execution createRestartFromLastFailed(final Execution execution) throws IllegalArgumentException,
-        IllegalVariableEvaluationException {
+    private Execution createRestartFromLastFailed(final Execution execution) throws Exception {
         final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
         final Predicate<TaskRun> notLastFailed = throwPredicate(taskRun -> {

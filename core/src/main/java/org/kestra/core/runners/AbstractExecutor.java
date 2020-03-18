@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
+import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
@@ -72,7 +73,7 @@ public abstract class AbstractExecutor implements Runnable {
         return newExecution;
     }
 
-    protected Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException {
+    protected Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
         RunContext runContext = new RunContext(this.applicationContext, flow, execution);
         ResolvedTask parent = flow.findTaskByTaskRun(taskRun, runContext);
 
@@ -104,7 +105,7 @@ public abstract class AbstractExecutor implements Runnable {
         return Optional.empty();
     }
 
-    protected Optional<Execution> childNexts(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException {
+    protected Optional<Execution> childNexts(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
         ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(this.applicationContext, flow, execution));
 
         if (parent.getTask() instanceof FlowableTask) {

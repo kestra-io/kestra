@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
+import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.listeners.Listener;
 import org.kestra.core.models.tasks.ResolvedTask;
@@ -80,7 +81,7 @@ public class Flow {
         return LoggerFactory.getLogger("flow." + this.id);
     }
 
-    public ResolvedTask findTaskByTaskRun(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException {
+    public ResolvedTask findTaskByTaskRun(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException, InternalException {
         return Stream.of(
             this.tasks,
             this.errors,
@@ -94,7 +95,7 @@ public class Flow {
                 .build()
             )
             .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
+            .orElseThrow(() -> new InternalException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
     }
 
     public List<Task> listenersTasks() {

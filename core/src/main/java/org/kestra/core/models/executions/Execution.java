@@ -8,6 +8,7 @@ import com.google.common.collect.Streams;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
+import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
@@ -60,7 +61,7 @@ public class Execution {
         );
     }
 
-    public Execution withTaskRun(TaskRun taskRun) {
+    public Execution withTaskRun(TaskRun taskRun) throws InternalException {
         ArrayList<TaskRun> newTaskRunList = new ArrayList<>(this.taskRunList);
 
         boolean b = Collections.replaceAll(
@@ -109,27 +110,27 @@ public class Execution {
             .collect(Collectors.toList());
     }
 
-    public TaskRun findTaskRunByTaskRunId(String id) {
+    public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
         Optional<TaskRun> find = this.taskRunList
             .stream()
             .filter(taskRun -> taskRun.getId().equals(id))
             .findFirst();
 
         if (find.isEmpty()) {
-            throw new IllegalArgumentException("Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' " + this.toString(true));
+            throw new InternalException("Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' " + this.toString(true));
         }
 
         return find.get();
     }
 
-    public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values) {
+    public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values) throws InternalException {
         Optional<TaskRun> find = this.getTaskRunList()
             .stream()
             .filter(taskRun -> taskRun.getTaskId().equals(id) && findChildsValues(taskRun, true).equals(values))
             .findFirst();
 
         if (find.isEmpty()) {
-            throw new IllegalArgumentException("Can't find taskrun with taskrunId '" + id + "' & value '" + values + "' on execution '" + this.id + "' " + this.toString(true));
+            throw new InternalException("Can't find taskrun with taskrunId '" + id + "' & value '" + values + "' on execution '" + this.id + "' " + this.toString(true));
         }
 
         return find.get();
@@ -269,7 +270,14 @@ public class Execution {
                     return lastAttemptsTaskRunForFailedExecution(taskRun, lastAttempt, e);
                 }
             })
-            .map(this::withTaskRun)
+            .map(t -> {
+                try {
+                    return this.withTaskRun(t);
+                } catch (InternalException ex) {
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
             .orElseGet(() -> this.withState(State.Type.FAILED));
     }
 

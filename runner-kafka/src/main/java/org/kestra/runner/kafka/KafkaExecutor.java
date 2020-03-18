@@ -242,7 +242,6 @@ public class KafkaExecutor extends AbstractExecutor {
                                 .task(resolvedTask.getTask())
                                 .build()
                         );
-
                     } catch (Exception e) {
                         return Either.left(new WithException(taskRunExecutionWithFlow, e));
                     }
@@ -349,7 +348,13 @@ public class KafkaExecutor extends AbstractExecutor {
                             .withKeySerde(Serdes.String())
                             .withValueSerde(JsonSerde.of(Execution.class))
                     ),
-                    (workerTaskResult, execution) -> execution.withTaskRun(workerTaskResult.getTaskRun())
+                    (workerTaskResult, execution) -> {
+                        try {
+                            return execution.withTaskRun(workerTaskResult.getTaskRun());
+                        } catch (Exception e) {
+                            return execution.failedExecutionFromExecutor(e);
+                        }
+                    }
                 )
                 .to(
                     kafkaAdminService.getTopicName(Execution.class),

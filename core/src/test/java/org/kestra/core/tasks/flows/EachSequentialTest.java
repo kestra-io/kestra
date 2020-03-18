@@ -1,6 +1,7 @@
 package org.kestra.core.tasks.flows;
 
 import org.junit.jupiter.api.Test;
+import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
@@ -21,7 +22,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void sequentialNested() throws TimeoutException {
+    void sequentialNested() throws TimeoutException, InternalException {
         Execution execution = runnerUtils.runOne("org.kestra.tests", "each-sequential-nested");
 
         assertThat(execution.getTaskRunList(), hasSize(23));

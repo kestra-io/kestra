@@ -1,13 +1,18 @@
 package org.kestra.core.utils;
 
+import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Slf4j
 @Singleton
 public final class ThreadUncaughtExceptionHandlers implements UncaughtExceptionHandler {
+    @Inject
+    private ApplicationContext applicationContext;
+
     private final Runtime runtime = Runtime.getRuntime();
 
     @Override
@@ -21,6 +26,7 @@ public final class ThreadUncaughtExceptionHandlers implements UncaughtExceptionH
             System.err.println(e.getMessage());
             System.err.println(errorInLogging.getMessage());
         } finally {
+            applicationContext.close();
             runtime.exit(1);
         }
     }

@@ -22,27 +22,13 @@ import javax.inject.Singleton;
 @Slf4j
 public class KafkaAdminService {
     @Inject
-    private ClientConfig clientConfig;
+    private AdminClient adminClient;
 
     @Inject
     private TopicDefaultsConfig topicDefaultsConfig;
 
     @Inject
     private List<TopicsConfig> topicsConfig;
-
-    @Inject
-    private MetricRegistry metricRegistry;
-
-    public AdminClient of() {
-        Properties properties = new Properties();
-        properties.putAll(clientConfig.getProperties());
-
-        AdminClient client = AdminClient.create(properties);
-
-        metricRegistry.bind(new KafkaClientMetrics(client));
-
-        return client;
-    }
 
     private TopicsConfig getTopicConfig(Class<?> cls) {
         return this.topicsConfig
@@ -56,7 +42,6 @@ public class KafkaAdminService {
     public void createIfNotExist(Class<?> cls) {
         TopicsConfig topicConfig = this.getTopicConfig(cls);
 
-        AdminClient admin = this.of();
         NewTopic newTopic = new NewTopic(
             topicConfig.getName(),
             topicConfig.getPartitions() != null ? topicConfig.getPartitions() : topicDefaultsConfig.getPartitions(),
@@ -76,12 +61,12 @@ public class KafkaAdminService {
         newTopic.configs(properties);
 
         try {
-            admin.createTopics(Collections.singletonList(newTopic)).all().get();
+            adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
             log.info("Topic '{}' created", newTopic.name());
         } catch (ExecutionException | InterruptedException e) {
             if (e.getCause() instanceof TopicExistsException) {
                 try {
-                    admin
+                    adminClient
                         .alterConfigs(new HashMap<>() {{
                             put(
                                 new ConfigResource(ConfigResource.Type.TOPIC, newTopic.name()),

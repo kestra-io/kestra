@@ -209,7 +209,7 @@ public class HttpServerAccessLogHandler extends ChannelDuplexHandler {
                     .stream()
                     .anyMatch(message::matches);
 
-                if (filtered) {
+                if (!filtered) {
                     return;
                 }
 

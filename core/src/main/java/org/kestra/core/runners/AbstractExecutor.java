@@ -33,7 +33,9 @@ public abstract class AbstractExecutor implements Runnable {
     protected Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
         if (log.isTraceEnabled()) {
             log.trace(
-                "[execution: {}] Found {} next(s) {}",
+                "[namespace: {}] [flow: {}] [execution: {}] Found {} next(s) {}",
+                execution.getNamespace(),
+                execution.getFlowId(),
                 execution.getId(),
                 nexts.size(),
                 nexts
@@ -59,7 +61,9 @@ public abstract class AbstractExecutor implements Runnable {
                 .record(newExecution.getState().getDuration());
 
             flow.logger().info(
-                "[execution: {}] Flow started",
+                "[namespace: {}] [flow: {}] [execution: {}] Flow started",
+                execution.getNamespace(),
+                execution.getFlowId(),
                 execution.getId()
             );
 
@@ -128,7 +132,9 @@ public abstract class AbstractExecutor implements Runnable {
         Logger logger = flow.logger();
 
         logger.info(
-            "[execution: {}] Flow completed with state {} in {}",
+            "[namespace: {}] [flow: {}] [execution: {}] Flow completed with state {} in {}",
+            newExecution.getNamespace(),
+            newExecution.getFlowId(),
             newExecution.getId(),
             newExecution.getState().getCurrent(),
             newExecution.getState().humanDuration()

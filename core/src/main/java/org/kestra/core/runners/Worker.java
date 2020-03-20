@@ -55,10 +55,12 @@ public class Worker implements Runnable {
             .increment();
 
         workerTask.logger().info(
-            "[execution: {}] [taskrun: {}] Task {} (type: {}) started",
+            "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] Type {} started",
+            workerTask.getTaskRun().getNamespace(),
+            workerTask.getTaskRun().getFlowId(),
+            workerTask.getTaskRun().getTaskId(),
             workerTask.getTaskRun().getExecutionId(),
             workerTask.getTaskRun().getId(),
-            workerTask.getTaskRun().getTaskId(),
             workerTask.getTask().getClass().getSimpleName()
         );
 
@@ -120,11 +122,13 @@ public class Worker implements Runnable {
                 this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
             } finally {
                 // log
-                finalWorkerTask.logger().info(
-                    "[execution: {}] [taskrun: {}] Task {} (type: {}) with state {} completed in {}",
-                    finalWorkerTask.getTaskRun().getExecutionId(),
-                    finalWorkerTask.getTaskRun().getId(),
-                    finalWorkerTask.getTaskRun().getTaskId(),
+                workerTask.logger().info(
+                    "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] Type {} with state {} completed in {}",
+                    workerTask.getTaskRun().getNamespace(),
+                    workerTask.getTaskRun().getFlowId(),
+                    workerTask.getTaskRun().getTaskId(),
+                    workerTask.getTaskRun().getExecutionId(),
+                    workerTask.getTaskRun().getId(),
                     finalWorkerTask.getTask().getClass().getSimpleName(),
                     finalWorkerTask.getTaskRun().getState().getCurrent(),
                     finalWorkerTask.getTaskRun().getState().humanDuration()

@@ -1,6 +1,7 @@
 package org.kestra.core.services;
 
 import com.devskiller.friendly_id.FriendlyId;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.util.StringUtils;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
@@ -27,6 +28,9 @@ import static org.kestra.core.utils.Rethrow.throwPredicate;
  */
 @Singleton
 public class ExecutionService {
+    @Inject
+    ApplicationContext applicationContext;
+
     @Inject
     private FlowRepositoryInterface flowRepositoryInterface;
 

@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.Prototype;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
@@ -28,6 +29,7 @@ public class MemoryExecutor extends AbstractExecutor {
     private final QueueInterface<Execution> executionQueue;
     private final QueueInterface<WorkerTask> workerTaskQueue;
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    private final QueueInterface<LogEntry> logQueue;
     private static final ConcurrentHashMap<String, ExecutionState> executions = new ConcurrentHashMap<>();
 
     public MemoryExecutor(
@@ -36,6 +38,7 @@ public class MemoryExecutor extends AbstractExecutor {
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
         @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue,
+        @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRegistry metricRegistry
     ) {
         super(runContextFactory, metricRegistry);
@@ -43,6 +46,7 @@ public class MemoryExecutor extends AbstractExecutor {
         this.executionQueue = executionQueue;
         this.workerTaskQueue = workerTaskQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
+        this.logQueue = logQueue;
     }
 
     @Override
@@ -100,7 +104,7 @@ public class MemoryExecutor extends AbstractExecutor {
                 }
             } catch (Exception e) {
                 log.error("Failed from executor with {}", e.getMessage(), e);
-                this.toExecution(execution.failedExecutionFromExecutor(e));
+                this.toExecution(execution.failedExecutionFromExecutor(e, logQueue));
                 return;
             }
 

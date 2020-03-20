@@ -13,9 +13,6 @@ import java.util.Optional;
 @Builder
 public class TaskRunAttempt {
     @With
-    private List<LogEntry> logs;
-
-    @With
     private List<AbstractMetricEntry<?>> metrics;
 
     @NotNull
@@ -23,7 +20,6 @@ public class TaskRunAttempt {
 
     public TaskRunAttempt withState(State.Type state) {
         return new TaskRunAttempt(
-            this.logs,
             this.metrics,
             this.state.withState(state)
         );

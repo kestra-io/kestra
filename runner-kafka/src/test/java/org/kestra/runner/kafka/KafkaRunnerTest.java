@@ -4,8 +4,12 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueException;
+import org.kestra.core.queues.QueueFactoryInterface;
+import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.InputsTest;
 import org.kestra.core.runners.ListenersTest;
 import org.kestra.core.runners.RunnerCaseTest;
@@ -13,12 +17,11 @@ import org.kestra.core.runners.RunnerCaseTest;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -139,11 +142,16 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void invalidVars() throws TimeoutException {
+        List<LogEntry> logs = new ArrayList<>();
+        workerTaskLogQueue.receive(logs::add);
+
         Execution execution = runnerUtils.runOne("org.kestra.tests", "variables-invalid", null, null, Duration.ofSeconds(60));
+
+        List<LogEntry> filters = TestsUtils.filterLogs(logs, execution.getTaskRunList().get(1));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(1).getAttempts().get(0).getLogs().get(0).getMessage(), containsString("Missing variable: inputs.invalid"));
+        assertThat(filters.get(0).getMessage(), containsString("Missing variable: inputs.invalid"));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 

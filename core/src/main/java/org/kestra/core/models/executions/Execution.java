@@ -15,6 +15,7 @@ import org.kestra.core.models.DeletedInterface;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
+import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContextLogger;
 import org.kestra.core.utils.MapUtils;
@@ -328,17 +329,18 @@ public class Execution implements DeletedInterface {
      * In the worst case, we FAILED the execution (must not exists).
      *
      * @param e the exception throw from {@link org.kestra.core.runners.AbstractExecutor}
+     * @param logQueue the log queue in order to emit log
      * @return a new execution with taskrun failed if possible or execution failed is other case
      */
-    public Execution failedExecutionFromExecutor(Exception e) {
+    public Execution failedExecutionFromExecutor(Exception e, QueueInterface<LogEntry> logQueue) {
         return this
             .findFirstByState(State.Type.RUNNING)
             .map(taskRun -> {
                 TaskRunAttempt lastAttempt = taskRun.lastAttempt();
                 if (lastAttempt == null) {
-                    return newAttemptsTaskRunForFailedExecution(taskRun, e);
+                    return newAttemptsTaskRunForFailedExecution(taskRun, e, logQueue);
                 } else {
-                    return lastAttemptsTaskRunForFailedExecution(taskRun, lastAttempt, e);
+                    return lastAttemptsTaskRunForFailedExecution(taskRun, lastAttempt, e, logQueue);
                 }
             })
             .map(t -> {
@@ -357,14 +359,17 @@ public class Execution implements DeletedInterface {
      *
      * @param taskRun the task run where we need to add an attempt
      * @param e the exception raise
+     * @param logQueue the log queue in order to emit log
      * @return new taskRun with added attempt
      */
-    private static TaskRun newAttemptsTaskRunForFailedExecution(TaskRun taskRun, Exception e) {
+    private static TaskRun newAttemptsTaskRunForFailedExecution(TaskRun taskRun, Exception e, QueueInterface<LogEntry> logQueue) {
+        RunContextLogger.logEntries(loggingEventFromException(e), taskRun)
+            .forEach(logQueue::emit);
+
         return taskRun
             .withAttempts(
                 Collections.singletonList(TaskRunAttempt.builder()
                     .state(new State())
-                    .logs(RunContextLogger.logEntries(loggingEventFromException(e)).collect(Collectors.toList()))
                     .build()
                     .withState(State.Type.FAILED))
             )
@@ -376,19 +381,15 @@ public class Execution implements DeletedInterface {
      *
      * @param taskRun the task run where we need to add an attempt
      * @param lastAttempt the lastAttempt found to add
+     * @param logQueue the log queue in order to emit log
      * @param e the exception raise
      * @return new taskRun with updated attempt with logs
      */
-    private static TaskRun lastAttemptsTaskRunForFailedExecution(TaskRun taskRun, TaskRunAttempt lastAttempt, Exception e) {
-        List<LogEntry> logs = Stream
-            .concat(
-                lastAttempt.getLogs().stream(),
-                RunContextLogger.logEntries(loggingEventFromException(e))
-            )
-            .collect(Collectors.toList());
+    private static TaskRun lastAttemptsTaskRunForFailedExecution(TaskRun taskRun, TaskRunAttempt lastAttempt, Exception e, QueueInterface<LogEntry> logQueue) {
+        RunContextLogger.logEntries(loggingEventFromException(e), taskRun)
+            .forEach(logQueue::emit);
 
         lastAttempt
-            .withLogs(logs)
             .withState(State.Type.FAILED);
 
         return taskRun

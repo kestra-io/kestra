@@ -67,3 +67,7 @@ kestra:
         cls: org.kestra.core.runners.WorkerTaskResult
         properties:
           cleanup.policy: "delete,compact"
+
+      logentry:
+        cls: org.kestra.core.models.executions.LogEntry
+        name: "kestra_logs"

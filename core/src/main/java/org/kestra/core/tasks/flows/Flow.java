@@ -65,7 +65,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     @SuppressWarnings("unchecked")
     @Override
     public Flow.Output run(RunContext runContext) throws Exception {
-        Logger logger = runContext.logger(this.getClass());
+        Logger logger = runContext.logger();
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
         FlowRepositoryInterface flowRepository = runContext.getApplicationContext().getBean(FlowRepositoryInterface.class);
         QueueInterface<Execution> executionQueue = (QueueInterface<Execution>) runContext.getApplicationContext().getBean(

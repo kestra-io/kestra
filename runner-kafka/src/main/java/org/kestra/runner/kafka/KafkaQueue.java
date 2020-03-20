@@ -12,6 +12,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
@@ -76,6 +77,8 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             return ((WorkerTask) object).getTaskRun().getId();
         } else if (this.cls == WorkerTaskResult.class) {
             return ((WorkerTaskResult) object).getTaskRun().getId();
+        } else if (this.cls == LogEntry.class) {
+            return null;
         } else if (this.cls == Flow.class) {
             return ((Flow) object).uid();
         } else {
@@ -145,6 +148,9 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
                     }
                 });
             }
+
+            kafkaConsumers.remove(kafkaConsumer);
+            kafkaConsumer.close();
         });
 
         return () -> {

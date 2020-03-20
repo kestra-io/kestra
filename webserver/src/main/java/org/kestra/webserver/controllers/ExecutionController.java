@@ -262,6 +262,11 @@ public class ExecutionController {
 
                 cancel.set(receive);
             }, BackpressureStrategy.BUFFER)
+            .doOnCancel(() -> {
+                if (cancel.get() != null) {
+                    cancel.get().run();
+                }
+            })
             .doOnComplete(() -> {
                 if (cancel.get() != null) {
                     cancel.get().run();

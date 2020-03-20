@@ -5,15 +5,34 @@ import lombok.Value;
 import org.slf4j.event.Level;
 
 import java.time.Instant;
+import javax.validation.constraints.NotNull;
 
 @Value
 @Builder
 public class LogEntry {
-    Instant timestamp;
+    @NotNull
+    private String namespace;
 
-    Level level;
+    @NotNull
+    private String flowId;
 
-    String thread;
+    @NotNull
+    private String taskId;
 
-    String message;
+    @NotNull
+    private String executionId;
+
+    @NotNull
+    private String taskRunId;
+
+    @NotNull
+    private int attemptNumber;
+
+    private Instant timestamp;
+
+    private Level level;
+
+    private String thread;
+
+    private String message;
 }

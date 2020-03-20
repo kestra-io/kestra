@@ -15,8 +15,13 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.flows.State;
+import org.kestra.core.models.tasks.ResolvedTask;
+import org.kestra.core.queues.QueueFactoryInterface;
+import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.*;
 import org.kestra.core.utils.Either;
@@ -32,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 @KafkaQueueEnabled
 @Prototype
@@ -44,6 +50,7 @@ public class KafkaExecutor extends AbstractExecutor {
     KafkaStreamService kafkaStreamService;
     KafkaAdminService kafkaAdminService;
     FlowRepositoryInterface flowRepository;
+    QueueInterface<LogEntry> logQueue;
 
     @Inject
     public KafkaExecutor(
@@ -51,12 +58,14 @@ public class KafkaExecutor extends AbstractExecutor {
         FlowRepositoryInterface flowRepository,
         KafkaStreamService kafkaStreamService,
         KafkaAdminService kafkaAdminService,
+        @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRegistry metricRegistry
     ) {
         super(runContextFactory, metricRegistry);
         this.flowRepository = flowRepository;
         this.kafkaStreamService = kafkaStreamService;
         this.kafkaAdminService = kafkaAdminService;
+        this.logQueue = logQueue;
     }
 
     public Topology topology() {
@@ -124,8 +133,8 @@ public class KafkaExecutor extends AbstractExecutor {
                 kafkaAdminService.getTopicName(Execution.class),
                 Consumed.with(Serdes.String(), JsonSerde.of(Execution.class))
             )
-            .filter((key, value) -> value.getTaskRunList() == null || 
-                value.getTaskRunList().size() == 0 || 
+            .filter((key, value) -> value.getTaskRunList() == null ||
+                value.getTaskRunList().size() == 0 ||
                 value.isJustRestarted(),
                 Named.as("executionToExecutor")
             )
@@ -134,8 +143,7 @@ public class KafkaExecutor extends AbstractExecutor {
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
             );
     }
-
-    private GlobalKTable<String, Flow> flowKTable(StreamsBuilder builder) {
+private GlobalKTable<String, Flow> flowKTable(StreamsBuilder builder) {
         return builder
             .globalTable(
                 kafkaAdminService.getTopicName(Flow.class),
@@ -222,7 +230,7 @@ public class KafkaExecutor extends AbstractExecutor {
                             try {
                                 return new HasJoin(execution.withTaskRun(workerTaskResult.getTaskRun()), true);
                             } catch (Exception e) {
-                                return new HasJoin(execution.failedExecutionFromExecutor(e), false);
+                                return new HasJoin(execution.failedExecutionFromExecutor(e, this.logQueue), false);
                             }
                         })
                         .orElseGet(() -> new HasJoin(execution, false));
@@ -467,7 +475,7 @@ public class KafkaExecutor extends AbstractExecutor {
             .filter((key, value) -> value.isLeft(), Named.as(methodName + "-isLeft-filter"))
             .mapValues(Either::getLeft, Named.as(methodName + "-isLeft-map"))
             .mapValues(
-                e -> e.getEntity().getExecution().failedExecutionFromExecutor(e.getException()),
+                e -> e.getEntity().getExecution().failedExecutionFromExecutor(e.getException(), this.logQueue),
                 Named.as(methodName + "-isLeft-failedExecutionFromExecutor-map")
             );
 
@@ -492,7 +500,7 @@ public class KafkaExecutor extends AbstractExecutor {
             .filter((key, value) -> !value.isJoined(), Named.as("join-isNotJoined-filter"))
             .mapValues((readOnlyKey, value) -> value.getExecution(), Named.as("join-isNotJoined-map"));
     }
-    
+
     private void toExecution(KStream<String, Execution> stream, String methodName) {
         methodName = methodName + "-toExecution";
 
@@ -543,7 +551,7 @@ public class KafkaExecutor extends AbstractExecutor {
         Execution execution;
         boolean joined;
     }
-    
+
     @AllArgsConstructor
     @Getter
     public static class ExecutionWithFlow implements ExecutionInterface {

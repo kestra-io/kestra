@@ -153,7 +153,7 @@ public class Worker implements Runnable {
             .getRunContext()
             .forWorker(this.applicationContext, workerTask.getTaskRun());
 
-        Logger logger = runContext.logger(workerTask.getTask().getClass());
+        Logger logger = runContext.logger();
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new State());
@@ -178,7 +178,6 @@ public class Worker implements Runnable {
 
         // attempt
         TaskRunAttempt taskRunAttempt = builder
-            .logs(runContext.logs())
             .metrics(runContext.metrics())
             .build()
             .withState(state);

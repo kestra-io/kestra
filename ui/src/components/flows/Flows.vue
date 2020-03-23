@@ -40,9 +40,7 @@
                                 :dateInterval="dateInterval"
                                 :endDate="endDate"
                                 :startDate="startDate"
-                                :data="{json : row.item.metrics,
-                keys: { x: 'startDate', value: statuses },
-                groups: [statuses] }"
+                                :data="chartData(row)"
                             />
                         </template>
 
@@ -125,8 +123,7 @@ export default {
     },
     data() {
         return {
-            dataType: "flow",
-            statuses: ["success", "failed", "created", "running"]
+            dataType: "flow"
         };
     },
     computed: {
@@ -172,6 +169,14 @@ export default {
         }
     },
     methods: {
+        chartData(row) {
+            const statuses = ["success", "failed", "created", "running"];
+            return {
+                json: row.item.metrics,
+                keys: { x: "startDate", value: statuses },
+                groups: [statuses]
+            };
+        },
         loadData(callback) {
             this.$store.dispatch("flow/searchAndAggregate", {
                 q: this.query,

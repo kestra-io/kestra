@@ -82,8 +82,6 @@ export default {
 
 select {
     width: auto;
-    -webkit-appearance: none;
-    -moz-appearance: none;
 }
 
 .navbar {

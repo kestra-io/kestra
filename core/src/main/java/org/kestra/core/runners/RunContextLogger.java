@@ -7,6 +7,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.core.AppenderBase;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.LogEntry;
@@ -14,10 +15,14 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.queues.QueueInterface;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class RunContextLogger {
+    private static final int MAX_MESSAGE_LENGTH = 1024*10;
     private Logger logger;
     private QueueInterface<LogEntry> logQueue;
     private String loggerName;
@@ -34,34 +39,43 @@ public class RunContextLogger {
         this.taskRun = taskRun;
     }
 
-    private static LogEntry logEntry(ILoggingEvent event, String message, org.slf4j.event.Level level, TaskRun taskRun) {
-        return LogEntry.builder()
-            .namespace(taskRun.getNamespace())
-            .flowId(taskRun.getFlowId())
-            .taskId(taskRun.getTaskId())
-            .executionId(taskRun.getExecutionId())
-            .taskRunId(taskRun.getId())
-            .attemptNumber(taskRun.attemptNumber())
-            .level(level != null ? level : org.slf4j.event.Level.valueOf(event.getLevel().toString()))
-            .message(message)
-            .timestamp(Instant.ofEpochMilli(event.getTimeStamp()))
-            .thread(event.getThreadName())
-            .build();
+    private static List<LogEntry> logEntry(ILoggingEvent event, String message, org.slf4j.event.Level level, TaskRun taskRun) {
+        Iterable<String> split;
+
+        if (message.length() > MAX_MESSAGE_LENGTH) {
+            split = Splitter.fixedLength(MAX_MESSAGE_LENGTH).split(message);
+        } else {
+            split = Collections.singletonList(message);
+        }
+
+        return StreamSupport.stream(split.spliterator(), false)
+            .map(s -> LogEntry.builder()
+                .namespace(taskRun.getNamespace())
+                .flowId(taskRun.getFlowId())
+                .taskId(taskRun.getTaskId())
+                .executionId(taskRun.getExecutionId())
+                .taskRunId(taskRun.getId())
+                .attemptNumber(taskRun.attemptNumber())
+                .level(level != null ? level : org.slf4j.event.Level.valueOf(event.getLevel().toString()))
+                .message(s)
+                .timestamp(Instant.ofEpochMilli(event.getTimeStamp()))
+                .thread(event.getThreadName())
+                .build()
+            )
+            .collect(Collectors.toList());
     }
 
-    @SuppressWarnings("UnstableApiUsage")
-    public static Stream<LogEntry> logEntries(ILoggingEvent event, TaskRun taskRun) {
+    public static List<LogEntry> logEntries(ILoggingEvent event, TaskRun taskRun) {
         Throwable throwable = throwable(event);
 
         if (throwable == null) {
-            return Stream.of(logEntry(event, event.getFormattedMessage(), null, taskRun));
+            return logEntry(event, event.getFormattedMessage(), null, taskRun);
         }
 
-        Stream.Builder<LogEntry> builder = Stream.<LogEntry>builder()
-            .add(logEntry(event, event.getMessage(), null, taskRun));
+        List<LogEntry> result = new ArrayList<>(logEntry(event, event.getMessage(), null, taskRun));
 
         if (Throwables.getCausalChain(throwable).size() > 1) {
-            builder.add(logEntry(
+            result.addAll(logEntry(
                 event,
                 Throwables
                     .getCausalChain(throwable)
@@ -74,9 +88,9 @@ public class RunContextLogger {
             ));
         }
 
-        return builder
-            .add(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.TRACE, taskRun))
-            .build();
+        result.addAll(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.TRACE, taskRun));
+
+        return result;
     }
 
     private static Throwable throwable(ILoggingEvent event) {

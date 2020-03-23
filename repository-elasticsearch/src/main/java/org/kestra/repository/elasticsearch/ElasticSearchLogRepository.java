@@ -58,9 +58,9 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     }
 
     @Override
-    public LogEntry save(LogEntry logEntry) {
-        this.putRequest(INDEX_NAME, FriendlyId.createFriendlyId(), logEntry);
+    public LogEntry save(LogEntry log) {
+        this.putRequest(INDEX_NAME, FriendlyId.createFriendlyId(), log);
 
-        return logEntry;
+        return log;
     }
 }

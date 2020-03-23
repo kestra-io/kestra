@@ -103,8 +103,7 @@ public class MemoryExecutor extends AbstractExecutor {
                     return;
                 }
             } catch (Exception e) {
-                log.error("Failed from executor with {}", e.getMessage(), e);
-                this.toExecution(execution.failedExecutionFromExecutor(e, logQueue));
+                handleFailedExecutionFromExecutor(execution, e);
                 return;
             }
 

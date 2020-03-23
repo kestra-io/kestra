@@ -15,16 +15,15 @@ import org.kestra.core.models.DeletedInterface;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
-import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContextLogger;
 import org.kestra.core.utils.MapUtils;
 
-import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.validation.constraints.NotNull;
 import java.util.zip.CRC32;
 
 @Value
@@ -203,7 +202,7 @@ public class Execution implements DeletedInterface {
         if (this.taskRunList == null) {
             return Optional.empty();
         }
-        
+
         return this.taskRunList
             .stream()
             .filter(t -> t.getState().getCurrent() == state)
@@ -329,51 +328,57 @@ public class Execution implements DeletedInterface {
      * In the worst case, we FAILED the execution (must not exists).
      *
      * @param e the exception throw from {@link org.kestra.core.runners.AbstractExecutor}
-     * @param logQueue the log queue in order to emit log
      * @return a new execution with taskrun failed if possible or execution failed is other case
      */
-    public Execution failedExecutionFromExecutor(Exception e, QueueInterface<LogEntry> logQueue) {
+    public FailedExecutionWithLog failedExecutionFromExecutor(Exception e) {
         return this
             .findFirstByState(State.Type.RUNNING)
             .map(taskRun -> {
                 TaskRunAttempt lastAttempt = taskRun.lastAttempt();
                 if (lastAttempt == null) {
-                    return newAttemptsTaskRunForFailedExecution(taskRun, e, logQueue);
+                    return newAttemptsTaskRunForFailedExecution(taskRun, e);
                 } else {
-                    return lastAttemptsTaskRunForFailedExecution(taskRun, lastAttempt, e, logQueue);
+                    return lastAttemptsTaskRunForFailedExecution(taskRun, lastAttempt, e);
                 }
             })
             .map(t -> {
                 try {
-                    return this.withTaskRun(t);
+                    return new FailedExecutionWithLog(
+                        this.withTaskRun(t.getTaskRun()),
+                        t.getLogs()
+                    );
                 } catch (InternalException ex) {
                     return null;
                 }
             })
             .filter(Objects::nonNull)
-            .orElseGet(() -> this.withState(State.Type.FAILED));
+            .orElseGet(() -> new FailedExecutionWithLog(
+                this.withState(State.Type.FAILED),
+                Collections.emptyList()
+            )
+        );
     }
+
 
     /**
      * Create a new attemps for failed worker execution
      *
      * @param taskRun the task run where we need to add an attempt
      * @param e the exception raise
-     * @param logQueue the log queue in order to emit log
      * @return new taskRun with added attempt
      */
-    private static TaskRun newAttemptsTaskRunForFailedExecution(TaskRun taskRun, Exception e, QueueInterface<LogEntry> logQueue) {
-        RunContextLogger.logEntries(loggingEventFromException(e), taskRun)
-            .forEach(logQueue::emit);
-
-        return taskRun
-            .withAttempts(
-                Collections.singletonList(TaskRunAttempt.builder()
-                    .state(new State())
-                    .build()
-                    .withState(State.Type.FAILED))
-            )
-            .withState(State.Type.FAILED);
+    private static FailedTaskRunWithLog newAttemptsTaskRunForFailedExecution(TaskRun taskRun, Exception e) {
+        return new FailedTaskRunWithLog(
+            taskRun
+                .withAttempts(
+                    Collections.singletonList(TaskRunAttempt.builder()
+                        .state(new State())
+                        .build()
+                        .withState(State.Type.FAILED))
+                )
+                .withState(State.Type.FAILED),
+            RunContextLogger.logEntries(loggingEventFromException(e), taskRun)
+        );
     }
 
     /**
@@ -381,27 +386,37 @@ public class Execution implements DeletedInterface {
      *
      * @param taskRun the task run where we need to add an attempt
      * @param lastAttempt the lastAttempt found to add
-     * @param logQueue the log queue in order to emit log
      * @param e the exception raise
      * @return new taskRun with updated attempt with logs
      */
-    private static TaskRun lastAttemptsTaskRunForFailedExecution(TaskRun taskRun, TaskRunAttempt lastAttempt, Exception e, QueueInterface<LogEntry> logQueue) {
-        RunContextLogger.logEntries(loggingEventFromException(e), taskRun)
-            .forEach(logQueue::emit);
+    private static FailedTaskRunWithLog lastAttemptsTaskRunForFailedExecution(TaskRun taskRun, TaskRunAttempt lastAttempt, Exception e) {
+        return new FailedTaskRunWithLog(
+            taskRun
+                .withAttempts(
+                    Stream
+                        .concat(
+                            taskRun.getAttempts().stream().limit(taskRun.getAttempts().size() - 1),
+                            Stream.of(lastAttempt
+                                .withState(State.Type.FAILED))
+                        )
+                        .collect(Collectors.toList())
+                )
+                .withState(State.Type.FAILED),
+            RunContextLogger.logEntries(loggingEventFromException(e), taskRun)
+        );
+    }
 
-        lastAttempt
-            .withState(State.Type.FAILED);
+    @Value
+    public static class FailedTaskRunWithLog {
+        private TaskRun taskRun;
+        private List<LogEntry> logs;
+    }
 
-        return taskRun
-            .withAttempts(
-                Stream
-                    .concat(
-                        taskRun.getAttempts().stream().limit(taskRun.getAttempts().size() - 1),
-                        Stream.of(lastAttempt)
-                    )
-                    .collect(Collectors.toList())
-            )
-            .withState(State.Type.FAILED);
+    @Value
+    @Builder
+    public static class FailedExecutionWithLog {
+        private Execution execution;
+        private List<LogEntry> logs;
     }
 
     /**

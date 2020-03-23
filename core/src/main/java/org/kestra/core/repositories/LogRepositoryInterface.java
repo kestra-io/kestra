@@ -10,5 +10,5 @@ public interface LogRepositoryInterface {
 
     ArrayListTotal<LogEntry> find(String query, Pageable pageable);
 
-    LogEntry save(LogEntry flow);
+    LogEntry save(LogEntry log);
 }

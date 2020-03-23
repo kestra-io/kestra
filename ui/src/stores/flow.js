@@ -10,7 +10,6 @@ export default {
 
     actions: {
         searchAndAggregate({ commit }, options) {
-            const sortString = options.sort ? `?sort=${options.sort}` : ''
             delete options.sort
             return Vue.axios.get(`/api/v1/flows/searchAndAggregate`, { params: options }).then(response => {
                 commit('setFlows', response.data.results)

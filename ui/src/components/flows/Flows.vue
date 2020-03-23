@@ -25,16 +25,43 @@
                         hover
                         :items="flows"
                         :fields="fields"
+                        ref="table"
                     >
                         <template v-slot:cell(actions)="row">
                             <router-link :to="{name: 'flow', params : row.item}">
                                 <eye id="edit-action" />
                             </router-link>
                         </template>
-                        <template v-slot:cell(id)="row">
-                            <router-link :to="{name: 'flow', params : row.item}">
-                                {{row.item.id}}
-                            </router-link>
+
+                        <template v-slot:cell(state)="row">
+                            <chart
+                                v-if="row.item.metrics"
+                                dateFormat="YYYY-MM-DD"
+                                :dateInterval="dateInterval"
+                                :endDate="endDate"
+                                :startDate="startDate"
+                                :data="chartData(row)"
+                            />
+                        </template>
+
+                        <template v-slot:cell(duration)="row">
+                            <trend v-if="row.item.trend" :trend="row.item.trend" />
+
+                            <div class="stats">
+                                <span
+                                    v-if="row.item.lastDayDurationStats"
+                                    class="value"
+                                >{{row.item.lastDayDurationStats.avg | humanizeDuration }}</span>
+                                <span v-if="row.item.lastDayDurationStats" class="title">(24h)</span>
+                            </div>
+
+                            <div class="stats">
+                                <span
+                                    v-if="row.item.periodDurationStats"
+                                    class="value"
+                                >{{row.item.periodDurationStats.avg | humanizeDuration }}</span>
+                                <span v-if="row.item.periodDurationStats" class="title">(30d)</span>
+                            </div>
                         </template>
                     </b-table>
                 </template>
@@ -65,6 +92,8 @@ import RouteContext from "../../mixins/routeContext";
 import DataTableActions from "../../mixins/dataTableActions";
 import DataTable from "../layout/DataTable";
 import SearchField from "../layout/SearchField";
+import Chart from "./Chart";
+import Trend from "../Trend";
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -74,7 +103,23 @@ export default {
         Plus,
         Eye,
         DataTable,
-        SearchField
+        SearchField,
+        Chart,
+        Trend
+    },
+    props: {
+        endDate: {
+            type: Date,
+            default: () => {
+                return new Date();
+            }
+        },
+        dateInterval: {
+            type: Number,
+            default: () => {
+                return -30;
+            }
+        }
     },
     data() {
         return {
@@ -90,7 +135,7 @@ export default {
             return [
                 {
                     key: "id",
-                    label: title("id"),
+                    label: title("flow"),
                     sortable: true
                 },
                 {
@@ -99,9 +144,16 @@ export default {
                     sortable: true
                 },
                 {
-                    key: "revision",
-                    label: title("revision"),
-                    sortable: true
+                    key: "state",
+                    label: title("execution statistics"),
+                    sortable: false,
+                    class: "row-state"
+                },
+                {
+                    key: "duration",
+                    label: title("duration"),
+                    sortable: false,
+                    class: "row-duration"
                 },
                 {
                     key: "actions",
@@ -109,17 +161,47 @@ export default {
                     class: "row-action"
                 }
             ];
+        },
+        startDate() {
+            return this.$moment(this.endDate)
+                .add(this.dateInterval, "days")
+                .toDate();
         }
     },
     methods: {
+        chartData(row) {
+            const statuses = ["success", "failed", "created", "running"];
+            return {
+                json: row.item.metrics,
+                keys: { x: "startDate", value: statuses },
+                groups: [statuses]
+            };
+        },
         loadData(callback) {
-            this.$store.dispatch("flow/findFlows", {
+            this.$store.dispatch("flow/searchAndAggregate", {
                 q: this.query,
+                startDate: this.startDate.toISOString(),
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
                 sort: this.$route.query.sort
-            }).finally(callback);
+            });
+            callback();
         }
     }
 };
 </script>
+<style lang="scss" scoped>
+@import "../../styles/_variable.scss";
+
+.stats {
+    display: block;
+    font-size: $font-size-xs;
+}
+.stats span.title {
+    padding-left: 10px;
+    color: $gray-600;
+}
+.stats span.value {
+    color: $gray-900;
+}
+</style>

@@ -1,6 +1,7 @@
 package org.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -42,6 +43,11 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> illegalArgumentException(HttpRequest<?> request, IllegalArgumentException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Illegal argument");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> invalidFormatException(HttpRequest<?> request, InvalidFormatException e) {
+        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid Format");
     }
 
     @Error(global = true)

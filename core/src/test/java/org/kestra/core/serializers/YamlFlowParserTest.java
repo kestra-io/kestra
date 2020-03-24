@@ -1,6 +1,7 @@
 package org.kestra.core.serializers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.flows.Flow;
@@ -11,10 +12,12 @@ import org.kestra.core.utils.TestsUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -51,6 +54,51 @@ class YamlFlowParserTest {
         } catch (ConstraintViolationException e) {
             assertThat(e.getConstraintViolations().size(), is(4));
         }
+    }
+
+    @Test
+    void empty() {
+        ConstraintViolationException exception = assertThrows(
+            ConstraintViolationException.class,
+            () -> this.parse("flows/invalids/empty.yaml")
+        );
+
+        assertThat(exception.getConstraintViolations().size(), is(1));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), is("must not be empty"));
+    }
+
+    @Test
+    void inputs() {
+        ConstraintViolationException exception = assertThrows(
+            ConstraintViolationException.class,
+            () -> this.parse("flows/invalids/inputs.yaml")
+        );
+
+        assertThat(exception.getConstraintViolations().size(), is(2));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("must match"));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage(), is("must not be null"));
+    }
+
+    @Test
+    void inputsBadType() {
+        InvalidFormatException exception = assertThrows(
+            InvalidFormatException.class,
+            () -> this.parse("flows/invalids/inputs-bad-type.yaml")
+        );
+
+        assertThat(exception.getMessage(), containsString("not one of the values accepted for Enum class"));
+    }
+
+    @Test
+    void listeners() {
+        ConstraintViolationException exception = assertThrows(
+            ConstraintViolationException.class,
+            () -> this.parse("flows/invalids/listener.yaml")
+        );
+
+        assertThat(exception.getConstraintViolations().size(), is(2));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("must not be empty"));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage(), is("must not be empty"));
     }
 
     @Test

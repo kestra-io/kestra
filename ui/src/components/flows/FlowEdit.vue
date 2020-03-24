@@ -88,6 +88,7 @@ export default {
         editorInit: function() {
             require("brace/mode/yaml");
             require("brace/theme/chrome");
+            this.$refs.aceEditor.editor.textInput.focus()
         },
         save() {
             if (this.flow) {

@@ -75,8 +75,8 @@ class YamlFlowParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size(), is(2));
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("must match"));
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage(), is("must not be null"));
+        assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].name")).findFirst().orElseThrow().getMessage(), containsString("must match"));
+        assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].type")).findFirst().orElseThrow().getMessage(), is("must not be null"));
     }
 
     @Test

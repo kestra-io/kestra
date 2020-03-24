@@ -10,6 +10,7 @@ import org.kestra.core.Helpers;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
 import org.kestra.core.serializers.JacksonMapper;
+import org.kestra.core.tasks.debugs.Return;
 import org.kestra.core.tasks.scripts.Bash;
 import org.kestra.core.utils.TestsUtils;
 
@@ -41,7 +42,8 @@ public abstract class AbstractFlowRepositoryTest {
     private static Flow.FlowBuilder builder() {
         return Flow.builder()
             .id(FriendlyId.createFriendlyId())
-            .namespace("org.kestra.unittest");
+            .namespace("org.kestra.unittest")
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("").build()));
     }
 
     @Test
@@ -65,6 +67,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = flowRepository.create(Flow.builder()
             .id("AbstractFlowRepositoryTest")
             .namespace("org.kestra.unittest")
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("").build()))
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
             .build());
 
@@ -150,6 +153,7 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace("org.kestra.unittest")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("").build()))
             .build();
 
         Flow save = flowRepository.create(flow);
@@ -160,13 +164,12 @@ public abstract class AbstractFlowRepositoryTest {
             .id(FriendlyId.createFriendlyId())
             .namespace("org.kestra.unittest2")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("").build()))
             .build();;
 
         ConstraintViolationException e = assertThrows(
             ConstraintViolationException.class,
-            () -> {
-                flowRepository.update(update, flow);
-            }
+            () -> flowRepository.update(update, flow)
         );
 
         assertThat(e.getConstraintViolations().size(), is(2));

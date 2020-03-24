@@ -57,7 +57,7 @@ export default {
                     sse.subscribe("", (data, event) => {
                         this.$store.commit("execution/setExecution", data);
                         this.$store.dispatch('execution/loadTree', data)
-                        if (event.lastEventId === "end") {
+                        if (event && event.lastEventId === "end") {
                             this.closeSSE();
                         }
                     });
@@ -106,7 +106,16 @@ export default {
                     },
                     {
                         label: this.$t("executions"),
-                        link: {}
+                        link: {
+                            name: 'flow',
+                            params: {
+                                namespace: ns,
+                                id: this.$route.params.flowId
+                            },
+                            query: {
+                                tab: 'executions'
+                            }
+                        }
                     },
                     {
                         label: this.$route.params.id,

@@ -20,9 +20,11 @@ import org.kestra.core.models.flows.Input;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.FlowTree;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
+import org.kestra.core.tasks.debugs.Return;
 import org.kestra.webserver.responses.PagedResults;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.concurrent.TimeoutException;
 
 import static io.micronaut.http.HttpRequest.*;
@@ -77,6 +79,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .id(FriendlyId.createFriendlyId())
             .namespace("org.kestra.unittest")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
@@ -96,6 +99,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         Flow flow = Flow.builder()
             .id(FriendlyId.createFriendlyId())
             .namespace("org.kestra.unittest")
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
@@ -125,6 +129,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .id(flowId)
             .namespace("org.kestra.unittest")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
@@ -136,6 +141,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .id(flowId)
             .namespace("org.kestra.unittest")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
         Flow get = client.toBlocking().retrieve(
@@ -164,6 +170,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .id(flowId)
             .namespace("org.kestra.unittest")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
@@ -174,6 +181,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .id(FriendlyId.createFriendlyId())
             .namespace("org.kestra.unittest2")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
         ;
 

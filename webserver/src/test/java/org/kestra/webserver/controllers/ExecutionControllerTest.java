@@ -186,12 +186,14 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromUnknownTaskId() throws TimeoutException {
+    void restartFromUnknownTaskId() throws TimeoutException, InterruptedException {
         final String flowId = "restart_with_inputs";
         final String referenceTaskId = "unknownTaskId";
 
         // Run execution until it ends
         Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+
+        Thread.sleep(10);
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             Execution createdChidExec = client.toBlocking().retrieve(
@@ -227,7 +229,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromTaskId() throws TimeoutException {
+    void restartFromTaskId() throws TimeoutException, InterruptedException {
         final String flowId = "restart_with_inputs";
         final String referenceTaskId = "instant";
 
@@ -235,6 +237,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
+
+        Thread.sleep(10);
 
         // Run child execution starting from a specific task and wait until it finishes
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
@@ -277,7 +281,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromTaskIdWithSequential() throws TimeoutException {
+    void restartFromTaskIdWithSequential() throws TimeoutException, InterruptedException {
         final String flowId = "restart_with_sequential";
         final String referenceTaskId = "a-3-2-2_end";
 
@@ -286,6 +290,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
+
+        Thread.sleep(10);
 
         // Run child execution starting from a specific task and wait until it finishes
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
@@ -317,7 +323,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromLastFailed() throws TimeoutException {
+    void restartFromLastFailed() throws TimeoutException, InterruptedException {
         final String flowId = "restart_last_failed";
 
         // Run execution until it ends
@@ -339,6 +345,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         flow.get().getTasks().set(2, b);
 
         flowRepositoryInterface.create(flow.get());
+
+        Thread.sleep(10);
 
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
@@ -390,7 +398,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromLastFailedWithErrorsTwoTimes() throws TimeoutException {
+    void restartFromLastFailedWithErrorsTwoTimes() throws TimeoutException, InterruptedException {
         final String flowId = "sequential-with-global-errors";
 
         // Run execution until it ends
@@ -417,6 +425,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         // Update task's command to make second execution successful
         Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
+
+        Thread.sleep(10);
 
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(

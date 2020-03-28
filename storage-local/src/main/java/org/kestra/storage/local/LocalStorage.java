@@ -37,7 +37,7 @@ public class LocalStorage implements StorageInterface {
 
         if (!file.exists()) {
             if (!file.mkdirs()) {
-                throw new RuntimeException("Cannot create directory for local storage!");
+                throw new SecurityException();
             }
         }
     }

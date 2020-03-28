@@ -36,7 +36,9 @@ public class LocalStorage implements StorageInterface {
         }
 
         if (!file.exists()) {
-            file.mkdirs();
+            if (!file.mkdirs()) {
+                throw new RuntimeException("Cannot create directory: " + file.getAbsolutePath());
+            }
         }
     }
 

@@ -282,7 +282,7 @@ task runStandalone(type: JavaExec) {
     group = "application"
     classpath = project(":cli").sourceSets.main.runtimeClasspath
     main = mainClassName
-    args 'standalone'
+    args 'server', 'standalone'
 }
 
 /**********************************************************************************************************************\

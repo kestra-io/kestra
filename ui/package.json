@@ -3,9 +3,9 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "serve": "cd ui && vue-cli-service serve --port 8090",
-        "build": "cd ui && vue-cli-service build",
-        "lint": "cd ui && vue-cli-service lint"
+        "serve": "vue-cli-service serve --port 8090",
+        "build": "vue-cli-service build",
+        "lint": "vue-cli-service lint"
     },
     "dependencies": {
         "axios": "^0.19.2",

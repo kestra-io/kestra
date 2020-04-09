@@ -1,3 +1,7 @@
+plugins {
+    id 'org.siouan.frontend'
+}
+
 bintrayUpload.enabled = false
 
 frontend {

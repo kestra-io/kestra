@@ -22,7 +22,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.27.0"
 
     // front
-    id 'org.siouan.frontend' version '1.3.0'
+    id 'org.siouan.frontend' version '1.3.0' apply false
 
     // release
     id "com.jfrog.bintray" version "1.8.4" apply false
@@ -194,7 +194,7 @@ jar {
 }
 
 shadowJar {
-    dependsOn = [assembleFrontend]
+    dependsOn = ['ui:assembleFrontend']
 
     archiveClassifier.set(null)
     mergeServiceFiles()

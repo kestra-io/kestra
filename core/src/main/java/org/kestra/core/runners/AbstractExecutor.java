@@ -141,15 +141,15 @@ public abstract class AbstractExecutor implements Runnable {
         );
 
         if (logger.isTraceEnabled()) {
-            logger.debug(execution.toString(true));
+            logger.debug(newExecution.toString(true));
         }
 
         metricRegistry
-            .counter(MetricRegistry.KESTRA_EXECUTOR_EXECUTION_END_COUNT, metricRegistry.tags(execution))
+            .counter(MetricRegistry.KESTRA_EXECUTOR_EXECUTION_END_COUNT, metricRegistry.tags(newExecution))
             .increment();
 
         metricRegistry
-            .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION, metricRegistry.tags(execution))
+            .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION, metricRegistry.tags(newExecution))
             .record(newExecution.getState().getDuration());
 
         return newExecution;

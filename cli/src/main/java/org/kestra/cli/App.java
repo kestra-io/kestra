@@ -50,7 +50,7 @@ public class App implements Callable<Object> {
     }
 
     /**
-     * Create an {@link ApplicationContext} with additionals properties based on configuration files (--config) and
+     * Create an {@link ApplicationContext} with additional properties based on configuration files (--config) and
      * forced Properties from current command.
      *
      * @param args args passed to java app

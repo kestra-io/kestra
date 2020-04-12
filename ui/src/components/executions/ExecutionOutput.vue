@@ -62,8 +62,8 @@ export default {
         }
     },
     methods: {
-        itemUrl(value) {
-            return `${apiRoot}executions/${this.execution.id}/file?filePath=${value.uri}&type=${value.type}`;
+        itemUrl(item) {
+            return `${apiRoot}executions/${this.execution.id}/file?type=upl&filePath=${item.value}&key=${item.key}`;
         },
         onSearch() {
             if (this.filter && this.$route.query.search !== this.filter) {

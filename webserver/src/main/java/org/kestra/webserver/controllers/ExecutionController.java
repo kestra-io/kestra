@@ -37,6 +37,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -170,24 +172,24 @@ public class ExecutionController {
     /**
      * Download file binary from uri parameter
      *
-     * @param filePath The file URI to return
      * @param type The file storage type
      * @return data binary content
      */
     @Get(uri = "executions/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
     public StreamedFile file(
         String executionId,
-        @QueryValue(value = "filePath") URI filePath,
-        @QueryValue(value = "type") String type
-    ) throws IOException {
+        @QueryValue(value = "key") String key
+    ) throws IOException, URISyntaxException {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
             return null;
         }
-
-        InputStream fileHandler = storageInterface.get(filePath);
+        String StringUri = (String)execution.get().getInputs().get(key);
+        String[] uriSplit = StringUri.toString().split("/");
+        String filename = executionId + "_" + uriSplit[uriSplit.length - 1];
+        InputStream fileHandler = storageInterface.get(new URI(StringUri));
         return new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
-            .attach(FilenameUtils.getName(filePath.toString()));
+            .attach(FilenameUtils.getName(filename));
     }
 
     /**

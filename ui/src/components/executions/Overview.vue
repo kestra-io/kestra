@@ -36,7 +36,7 @@
                         class="btn btn-primary"
                         v-if="['optionalFile', 'file'].includes(row.item.key)"
                         target="_blank"
-                        :href="itemUrl(row.item.value)"
+                        :href="itemUrl(row.item)"
                     >{{$t('download') | cap}}</b-link>
                 </template>
             </b-table>
@@ -58,8 +58,8 @@ export default {
         Restart
     },
     methods: {
-        itemUrl(value) {
-            return `${apiRoot}executions/${this.execution.id}/file?filePath=${value.uri}&type=${value.type}`;
+        itemUrl(item) {
+            return `${apiRoot}executions/${this.execution.id}/file?type=upl&filePath=${item.value}&key=${item.key}`;
         },
         restart() {
             this.$emit("follow");

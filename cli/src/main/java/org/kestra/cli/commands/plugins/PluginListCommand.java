@@ -33,7 +33,7 @@ public class PluginListCommand extends AbstractCommand {
 
         if (this.pluginsPath == null) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), "Missing required options '--plugins' " +
-                "or environnement variable 'KESTRA_PLUGINS_PATH"
+                "or environment variable 'KESTRA_PLUGINS_PATH"
             );
         }
 

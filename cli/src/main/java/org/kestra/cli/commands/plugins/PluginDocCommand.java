@@ -20,7 +20,7 @@ import java.util.List;
 )
 @Slf4j
 public class PluginDocCommand extends AbstractCommand {
-    @CommandLine.Parameters(index = "0", description = "the pauth to write documentations files")
+    @CommandLine.Parameters(index = "0", description = "Path to write documentations files")
     private Path output = Paths.get(System.getProperty("user.dir"), "docs");
 
     public PluginDocCommand() {

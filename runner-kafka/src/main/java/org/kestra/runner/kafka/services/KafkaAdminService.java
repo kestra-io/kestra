@@ -6,13 +6,13 @@ import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.errors.TopicExistsException;
-import org.kestra.core.metrics.MetricRegistry;
-import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.configs.TopicDefaultsConfig;
 import org.kestra.runner.kafka.configs.TopicsConfig;
-import org.kestra.runner.kafka.metrics.KafkaClientMetrics;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -33,15 +33,17 @@ public class KafkaAdminService {
     private TopicsConfig getTopicConfig(Class<?> cls) {
         return this.topicsConfig
             .stream()
-            .filter(r -> r.getCls().equals(cls.getName().toLowerCase().replace(".", "-")))
+            .filter(r -> r.getCls() == cls)
             .findFirst()
             .orElseThrow();
     }
 
-    @SuppressWarnings("deprecation")
     public void createIfNotExist(Class<?> cls) {
-        TopicsConfig topicConfig = this.getTopicConfig(cls);
+        this.createIfNotExist(this.getTopicConfig(cls));
+    }
 
+    @SuppressWarnings("deprecation")
+    public void createIfNotExist(TopicsConfig topicConfig) {
         NewTopic newTopic = new NewTopic(
             topicConfig.getName(),
             topicConfig.getPartitions() != null ? topicConfig.getPartitions() : topicDefaultsConfig.getPartitions(),

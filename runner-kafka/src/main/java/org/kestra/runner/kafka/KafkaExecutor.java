@@ -314,7 +314,7 @@ public class KafkaExecutor extends AbstractExecutor {
 
     @AllArgsConstructor
     @Getter
-    public static class ExecutionWithFlow implements ExecutionInterface{
+    public static class ExecutionWithFlow implements ExecutionInterface {
         Flow flow;
         Execution execution;
     }

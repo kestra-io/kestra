@@ -111,4 +111,13 @@ public class TaskRun {
             ", attemps=" + this.getAttempts() +
             ")";
     }
+
+    public String toStringState() {
+        return "TaskRun(" +
+            "id=" + this.getId() +
+            ", taskId=" + this.getTaskId() +
+            ", value=" + this.getValue() +
+            ", state=" + this.getState().getCurrent().toString() +
+            ")";
+    }
 }

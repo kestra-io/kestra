@@ -42,7 +42,7 @@ class KafkaRunnerTest {
 
     @BeforeEach
     private void init() throws IOException, URISyntaxException {
-        runner.setThreads(1);
+        runner.setExecutorThreads(1);
         runner.run();
         TestsUtils.loads(repositoryLoader);
     }
@@ -52,6 +52,13 @@ class KafkaRunnerTest {
         Execution execution = runnerUtils.runOne("org.kestra.tests", "full", null, null, Duration.ofSeconds(15));
 
         assertThat(execution.getTaskRunList(), hasSize(13));
+    }
+
+    @Test
+    void logs() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "logs");
+
+        assertThat(execution.getTaskRunList(), hasSize(3));
     }
 
     @Test

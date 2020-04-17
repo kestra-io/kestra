@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.CRC32;
 
 @Value
 @Builder
@@ -59,6 +60,16 @@ public class Execution {
             this.state.withState(state),
             this.parentId
         );
+    }
+
+    public boolean hasTaskRun(TaskRun taskRun)  {
+        if (this.taskRunList == null) {
+            return false;
+        }
+
+        return this.taskRunList
+            .stream()
+            .anyMatch(r -> r.getId().equals(taskRun.getId()));
     }
 
     public Execution withTaskRun(TaskRun taskRun) throws InternalException {
@@ -473,5 +484,27 @@ public class Execution {
             "\n  ], " +
             "\n  inputs=" + this.getInputs() +
             "\n)";
+    }
+
+    public String toStringState() {
+        return "(" +
+            "\n  state=" + this.getState().getCurrent().toString() +
+            "\n  taskRunList=" +
+            "\n  [" +
+            "\n    " +
+            (this.getTaskRunList() == null ? "" : this.getTaskRunList()
+                .stream()
+                .map(TaskRun::toStringState)
+                .collect(Collectors.joining(",\n    "))
+            ) +
+            "\n  ] " +
+            "\n)";
+    }
+
+    public Long toCrc32State() {
+        CRC32 crc32 = new CRC32();
+        crc32.update(this.toStringState().getBytes());
+
+        return crc32.getValue();
     }
 }

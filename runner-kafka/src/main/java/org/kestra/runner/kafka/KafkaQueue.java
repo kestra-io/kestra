@@ -59,7 +59,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         this.topicsConfig = applicationContext
             .getBeansOfType(TopicsConfig.class)
             .stream()
-            .filter(r -> r.getCls().equals(this.cls.getName().toLowerCase().replace(".", "-")))
+            .filter(r -> r.getCls() == this.cls)
             .findFirst()
             .orElseThrow();
 
@@ -71,7 +71,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         if (this.cls == Execution.class) {
             return ((Execution) object).getId();
         } else if (this.cls == WorkerTask.class) {
-            return ((WorkerTask) object).getTaskRun().getExecutionId();
+            return ((WorkerTask) object).getTaskRun().getId();
         } else if (this.cls == WorkerTaskResult.class) {
             return ((WorkerTaskResult) object).getTaskRun().getExecutionId();
         } else {

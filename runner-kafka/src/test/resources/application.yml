@@ -15,7 +15,7 @@ kestra:
 
     defaults:
       topic:
-        partitions: 1
+        partitions: 8
         properties:
           compression.type: "lz4"
 
@@ -36,14 +36,17 @@ kestra:
           state.dir: "/tmp/"
 
     topics:
-      org-kestra-core-models-executions-execution:
+      execution:
         name: "kestra_execution"
+        cls: org.kestra.core.models.executions.Execution
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
-      org-kestra-core-runners-workertask:
+      workertask:
         name: "kestra_workertask"
+        cls: org.kestra.core.runners.WorkerTask
 
-      org-kestra-core-runners-workertaskresult:
+      workertaskresult:
         name: "kestra_workertaskresult"
+        cls: org.kestra.core.runners.WorkerTaskResult

@@ -17,10 +17,20 @@ import javax.inject.Named;
 @Slf4j
 public class StandAloneRunner implements RunnerInterface, Closeable {
     private ExecutorService poolExecutor;
-    private int threads = Math.max(3, Runtime.getRuntime().availableProcessors());
+    private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    private int executorThreads = Math.max(3, Runtime.getRuntime().availableProcessors());
+    private int indexerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
 
-    public void setThreads(int threads) {
-        this.threads = threads;
+    public void setWorkerThread(int workerThread) {
+        this.workerThread = workerThread;
+    }
+
+    public void setExecutorThreads(int threads) {
+        this.executorThreads = threads;
+    }
+
+    public void setIndexerThread(int indexerThread) {
+        this.indexerThread = indexerThread;
     }
 
     @Inject
@@ -49,12 +59,16 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
 
         poolExecutor = Executors.newCachedThreadPool(threadFactoryBuilder.build("standalone-runner-%d"));
 
-        for (int i = 0; i < this.threads; i++) {
+        for (int i = 0; i < executorThreads; i++) {
             poolExecutor.execute(applicationContext.getBean(AbstractExecutor.class));
+        }
 
+        for (int i = 0; i < workerThread; i++) {
             poolExecutor.execute(applicationContext.getBean(Worker.class));
+        }
 
-            if (applicationContext.containsBean(Indexer.class)) {
+        if (applicationContext.containsBean(Indexer.class)) {
+            for (int i = 0; i < indexerThread; i++) {
                 poolExecutor.execute(applicationContext.getBean(Indexer.class));
             }
         }

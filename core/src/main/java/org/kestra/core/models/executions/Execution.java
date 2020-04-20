@@ -62,14 +62,23 @@ public class Execution {
         );
     }
 
-    public boolean hasTaskRun(TaskRun taskRun)  {
+    public boolean hasTaskRunJoinable(TaskRun taskRun)  {
         if (this.taskRunList == null) {
-            return false;
+            return true;
         }
+
+        // failedExecutionFromExecutor call before, so the workerTaskResult
+        // don't have changed to failed but taskRunList will contain a failed
+        // so we don't changed if current execution is terminated
 
         return this.taskRunList
             .stream()
-            .anyMatch(r -> r.getId().equals(taskRun.getId()));
+            .noneMatch(r -> r.getId().equals(taskRun.getId()) &&
+                (
+                    r.getState().getCurrent() == taskRun.getState().getCurrent() ||
+                        (r.getState().isTerninated() && !taskRun.getState().isTerninated())
+                )
+            );
     }
 
     public Execution withTaskRun(TaskRun taskRun) throws InternalException {

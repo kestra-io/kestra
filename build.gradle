@@ -1,7 +1,7 @@
 buildscript {
     ext {
         micronautVersion = "1.3.2"
-        kafkaVersion = "2.4.0"
+        kafkaVersion = "2.5.0"
         lombokVersion = "1.18.12"
     }
 }

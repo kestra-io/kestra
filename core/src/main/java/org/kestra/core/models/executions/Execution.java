@@ -122,7 +122,7 @@ public class Execution {
     }
 
     public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
-        Optional<TaskRun> find = this.taskRunList
+        Optional<TaskRun> find = (this.taskRunList == null ? new ArrayList<TaskRun>() : this.taskRunList)
             .stream()
             .filter(taskRun -> taskRun.getId().equals(id))
             .findFirst();
@@ -135,7 +135,7 @@ public class Execution {
     }
 
     public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values) throws InternalException {
-        Optional<TaskRun> find = this.getTaskRunList()
+        Optional<TaskRun> find = (this.taskRunList == null ? new ArrayList<TaskRun>() : this.taskRunList)
             .stream()
             .filter(taskRun -> taskRun.getTaskId().equals(id) && findChildsValues(taskRun, true).equals(values))
             .findFirst();
@@ -181,7 +181,7 @@ public class Execution {
     }
 
     public List<TaskRun> findTaskRunByTasks(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
-        if (resolvedTasks == null || this.getTaskRunList() == null) {
+        if (resolvedTasks == null || this.taskRunList == null) {
             return new ArrayList<>();
         }
 
@@ -196,7 +196,11 @@ public class Execution {
     }
 
     public Optional<TaskRun> findFirstByState(State.Type state) {
-        return this.getTaskRunList()
+        if (this.taskRunList == null) {
+            return Optional.empty();
+        }
+        
+        return this.taskRunList
             .stream()
             .filter(t -> t.getState().getCurrent() == state)
             .findFirst();
@@ -378,7 +382,7 @@ public class Execution {
     }
 
     public Map<String, Object> outputs() {
-        if (this.getTaskRunList() == null) {
+        if (this.taskRunList == null) {
             return ImmutableMap.of();
         }
 
@@ -476,7 +480,7 @@ public class Execution {
             "\n  taskRunList=" +
             "\n  [" +
             "\n    " +
-            (this.getTaskRunList() == null ? "" : this.getTaskRunList()
+            (this.taskRunList == null ? "" : this.taskRunList
                 .stream()
                 .map(t -> t.toString(true))
                 .collect(Collectors.joining(",\n    "))
@@ -492,7 +496,7 @@ public class Execution {
             "\n  taskRunList=" +
             "\n  [" +
             "\n    " +
-            (this.getTaskRunList() == null ? "" : this.getTaskRunList()
+            (this.taskRunList == null ? "" : this.taskRunList
                 .stream()
                 .map(TaskRun::toStringState)
                 .collect(Collectors.joining(",\n    "))

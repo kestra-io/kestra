@@ -28,12 +28,10 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
     links:
       - zookeeper
-    ports:
-      - 9092:9092
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
@@ -46,14 +44,42 @@ services:
         hard: -1
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
-    ports:
-      - 9200:9200
 
-  kibana:
-    image: docker.elastic.co/kibana/kibana:7.4.2
+  kestra:
+    image: kestra/kestra:develop
+    command: server standalone
     environment:
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      MICRONAUT_APPLICATION_JSON: |
+        {
+          "kestra": {
+            "kafka": {
+              "client": {
+                "properties": {
+                  "bootstrap.servers": "kafka:9092"
+                }
+              }
+            },
+            "elasticsearch": {
+              "client": {
+                "http-hosts": "http://elasticsearch:9200"
+              }
+            },
+            "repository": {
+              "type": "elasticsearch"
+            },
+            "storage": {
+              "type": "local",
+              "local": {
+                "base-path": "/tmp/kestra"
+              }
+            },
+            "queue": {
+              "type": "kafka"
+            }
+          }
+        }
     ports:
-      - 5601:5601
+      - 28080:8080
     links:
-      - elasticsearch
+      - kafka
+      - zookeeper

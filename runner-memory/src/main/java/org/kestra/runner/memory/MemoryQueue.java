@@ -67,7 +67,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
+    public synchronized Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
         String consumerGroupName;
         if (consumerGroup == null) {
             consumerGroupName = UUID.randomUUID().toString();

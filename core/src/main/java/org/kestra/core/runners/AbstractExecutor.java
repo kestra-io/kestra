@@ -109,7 +109,7 @@ public abstract class AbstractExecutor implements Runnable {
         return Optional.empty();
     }
 
-    protected Optional<Execution> childNexts(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
+    protected Optional<List<TaskRun>> childNextsTaskRun(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
         ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(this.applicationContext, flow, execution));
 
         if (parent.getTask() instanceof FlowableTask) {
@@ -117,11 +117,16 @@ public abstract class AbstractExecutor implements Runnable {
             List<TaskRun> nexts = flowableParent.resolveNexts(new RunContext(this.applicationContext, flow, execution), execution, taskRun);
 
             if (nexts.size() > 0) {
-                return Optional.of(this.onNexts(flow, execution, nexts));
+                return Optional.of(nexts);
             }
         }
 
         return Optional.empty();
+    }
+
+    protected Optional<Execution> childNexts(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
+        return this.childNextsTaskRun(flow, execution, taskRun)
+            .map(nexts -> this.onNexts(flow, execution, nexts));
     }
 
     protected Execution onEnd(Flow flow, Execution execution) {

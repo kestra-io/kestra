@@ -16,11 +16,12 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.*;
 
-import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import javax.inject.Named;
 
 import static org.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -28,12 +29,11 @@ import static org.kestra.core.utils.Rethrow.throwConsumer;
 @Prototype
 @MemoryQueueEnabled
 public class MemoryExecutor extends AbstractExecutor {
-    private FlowRepositoryInterface flowRepository;
+    private final FlowRepositoryInterface flowRepository;
     private final QueueInterface<Execution> executionQueue;
     private final QueueInterface<WorkerTask> workerTaskQueue;
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
-    private static ConcurrentHashMap<String, Execution> executions = new ConcurrentHashMap<>();
-    private static final Object lock = new Object();
+    private static final ConcurrentHashMap<String, ExecutionState> executions = new ConcurrentHashMap<>();
 
     public MemoryExecutor(
         ApplicationContext applicationContext,
@@ -52,21 +52,31 @@ public class MemoryExecutor extends AbstractExecutor {
 
     @Override
     public void run() {
-        this.executionQueue.receive(MemoryExecutor.class, execution -> {
-            Flow flow = this.flowRepository.findByExecution(execution);
+        this.executionQueue.receive(MemoryExecutor.class, this::executionQueue);
+        this.workerTaskResultQueue.receive(MemoryExecutor.class, this::workerTaskResultQueue);
+    }
 
-            synchronized (lock) {
-                if (execution.isTerminatedWithListeners(flow)) {
-                    executions.remove(execution.getId());
-                } else {
-                    executions.put(execution.getId(), execution);
-                }
+    private void executionQueue(Execution message) {
+        if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0) {
+            this.handleExecution(saveExecution(message));
+        }
+    }
+
+    private void handleExecution(ExecutionState state) {
+        synchronized (this) {
+            if (log.isDebugEnabled()) {
+                log.debug("Execution in with {}: {}", state.execution.toCrc32State(), state.execution.toStringState());
             }
+
+            Flow flow = this.flowRepository.findByExecution(state.execution);
+
+            Execution execution = state.execution;
 
             try {
                 this.handleChild(execution, flow);
             } catch (Exception e) {
-                this.executionQueue.emit(execution.failedExecutionFromExecutor(e));
+                log.error("Failed from executor with {}", e.getMessage(), e);
+                this.toExecution(execution.failedExecutionFromExecutor(e));
                 return;
             }
 
@@ -75,32 +85,73 @@ public class MemoryExecutor extends AbstractExecutor {
             try {
                 this.handleWorkerTask(execution, flow);
             } catch (Exception e) {
-                this.executionQueue.emit(execution.failedExecutionFromExecutor(e));
+                log.error("Failed from executor with {}", e.getMessage(), e);
+                this.toExecution(execution.failedExecutionFromExecutor(e));
                 return;
             }
 
             this.handleEnd(execution, flow);
             this.handleNext(execution, flow);
-        });
 
-        this.workerTaskResultQueue.receive(MemoryExecutor.class, message -> {
-            TaskRun taskRun = message.getTaskRun();
+            // Listeners need the last emit
+            if (execution.isTerminatedWithListeners(flow)) {
+                this.executionQueue.emit(execution);
+            }
+        }
+    }
 
-            synchronized (lock) {
-                if (!executions.containsKey(taskRun.getExecutionId())) {
-                    throw new RuntimeException("Unable to find execution '" + taskRun.getExecutionId() + "' on ExecutionState");
-                }
-
-                Execution execution = executions.get(taskRun.getExecutionId());
-
-                try {
-                    Execution newExecution = execution.withTaskRun(taskRun);
-                    this.executionQueue.emit(newExecution);
-                } catch (Exception e) {
-                    this.executionQueue.emit(execution.failedExecutionFromExecutor(e));
-                }
+    private ExecutionState saveExecution(Execution execution) {
+        ExecutionState queued;
+        queued = executions.compute(execution.getId(), (s, executionState) -> {
+            if (executionState == null) {
+                return new ExecutionState(execution);
+            } else {
+                return executionState.from(execution);
             }
         });
+
+        return queued;
+    }
+
+    private void toExecution(Execution execution) {
+        Flow flow = this.flowRepository.findByExecution(execution);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Execution out with {}: {}", execution.toCrc32State(), execution.toStringState());
+        }
+
+        this.handleExecution(saveExecution(execution));
+
+        // emit for other consumer than executor
+        this.executionQueue.emit(execution);
+
+        // delete if ended
+        if (execution.isTerminatedWithListeners(flow)) {
+            executions.remove(execution.getId());
+        }
+    }
+
+    private void workerTaskResultQueue(WorkerTaskResult message) {
+        synchronized (this) {
+            if (log.isDebugEnabled()) {
+                log.debug("WorkerTaskResult: {}", message.getTaskRun().toStringState());
+            }
+
+            // save WorkerTaskResult on current QueuedExecution
+            executions.compute(message.getTaskRun().getExecutionId(), (s, executionState) -> {
+                if (executionState == null) {
+                    throw new IllegalStateException("Invalid null QueuedExecution");
+                }
+
+                if (executionState.execution.hasTaskRunJoinable(message.getTaskRun())) {
+                    return executionState.from(message);
+                } else {
+                    return executionState;
+                }
+            });
+
+            this.toExecution(executions.get(message.getTaskRun().getExecutionId()).execution);
+        }
     }
 
     private void handleWorkerTask(Execution execution, Flow flow) throws IllegalVariableEvaluationException, InternalException {
@@ -121,13 +172,30 @@ public class MemoryExecutor extends AbstractExecutor {
                 new RunContext(this.applicationContext, flow, execution)
             );
 
-            this.workerTaskQueue.emit(
-                WorkerTask.builder()
-                    .runContext(new RunContext(this.applicationContext, flow, resolvedTask, execution, taskRun))
-                    .taskRun(taskRun)
-                    .task(resolvedTask.getTask())
-                    .build()
-            );
+            if (deduplicateWorkerTask(execution, taskRun)) {
+                this.workerTaskQueue.emit(
+                    WorkerTask.builder()
+                        .runContext(new RunContext(this.applicationContext, flow, resolvedTask, execution, taskRun))
+                        .taskRun(taskRun)
+                        .task(resolvedTask.getTask())
+                        .build()
+                );
+            }
+        }
+    }
+
+    private boolean deduplicateWorkerTask(Execution execution, TaskRun taskRun) {
+        ExecutionState executionState = executions.get(execution.getId());
+
+        String deduplicationKey = taskRun.getExecutionId() + "-" + taskRun.getId();
+        State.Type current = executionState.workerTaskDeduplication.get(deduplicationKey);
+
+        if (current == taskRun.getState().getCurrent()) {
+            return false;
+        } else {
+            executionState.workerTaskDeduplication.put(deduplicationKey, taskRun.getState().getCurrent());
+
+            return true;
         }
     }
 
@@ -138,9 +206,9 @@ public class MemoryExecutor extends AbstractExecutor {
             ResolvedTask.of(flow.getErrors())
         );
 
-        if (next.size() > 0) {
+        if (next.size() > 0 && deduplicateChild(execution, next)) {
             Execution newExecution = this.onNexts(flow, execution, next);
-            this.executionQueue.emit(newExecution);
+            this.toExecution(newExecution);
         }
     }
 
@@ -158,9 +226,29 @@ public class MemoryExecutor extends AbstractExecutor {
                     .ifPresent(this.workerTaskResultQueue::emit);
             }))
             .forEach(throwConsumer(taskRun -> {
-                this.childNexts(flow, execution, taskRun)
-                    .ifPresent(this.executionQueue::emit);
+                this.childNextsTaskRun(flow, execution, taskRun)
+                    .filter(nexts -> deduplicateChild(execution, nexts))
+                    .map(nexts -> this.onNexts(flow, execution, nexts))
+                    .ifPresent(this::toExecution);
             }));
+    }
+
+    private boolean deduplicateChild(Execution execution, List<TaskRun> taskRuns) {
+        ExecutionState executionState = executions.get(execution.getId());
+
+        return taskRuns
+            .stream()
+            .anyMatch(taskRun -> {
+                String deduplicationKey = taskRun.getParentTaskRunId() + "-" + taskRun.getTaskId() + "-" + taskRun.getValue();
+
+                if (executionState.childDeduplication.containsKey(deduplicationKey)) {
+                    return false;
+                } else {
+                    executionState.childDeduplication.put(deduplicationKey, taskRun.getId());
+
+                    return true;
+                }
+            });
     }
 
     private void handleListeners(Execution execution, Flow flow) {
@@ -178,7 +266,7 @@ public class MemoryExecutor extends AbstractExecutor {
 
         if (next.size() > 0) {
             Execution newExecution = this.onNexts(flow, execution, next);
-            this.executionQueue.emit(newExecution);
+            this.toExecution(newExecution);
         }
     }
 
@@ -194,7 +282,61 @@ public class MemoryExecutor extends AbstractExecutor {
 
         if (execution.isTerminated(currentTasks)) {
             Execution newExecution = this.onEnd(flow, execution);
-            this.executionQueue.emit(newExecution);
+            this.toExecution(newExecution);
+        }
+    }
+
+    private static class ExecutionState {
+        private final Execution execution;
+        private Map<String, TaskRun> taskRuns = new ConcurrentHashMap<>();
+        private Map<String, State.Type> workerTaskDeduplication = new ConcurrentHashMap<>();
+        private Map<String, String> childDeduplication = new ConcurrentHashMap<>();
+
+        public ExecutionState(Execution execution) {
+            this.execution = execution;
+        }
+
+        public ExecutionState(ExecutionState executionState, Execution execution) {
+            this.execution = execution;
+            this.taskRuns = executionState.taskRuns;
+            this.workerTaskDeduplication = executionState.workerTaskDeduplication;
+            this.childDeduplication = executionState.childDeduplication;
+        }
+
+        private static String taskRunKey(TaskRun taskRun) {
+            return taskRun.getId() + "-" + (taskRun.getValue() == null ? "null" : taskRun.getValue());
+        }
+
+        public ExecutionState from(Execution execution) {
+            List<TaskRun> taskRuns = execution.getTaskRunList()
+                .stream()
+                .map(taskRun -> {
+                    if (!this.taskRuns.containsKey(taskRunKey(taskRun))) {
+                        return taskRun;
+                    } else {
+                        TaskRun stateTaskRun = this.taskRuns.get(taskRunKey(taskRun));
+
+                        if (execution.hasTaskRunJoinable(stateTaskRun)) {
+                            return stateTaskRun;
+                        } else {
+                            return taskRun;
+                        }
+                    }
+                })
+                .collect(Collectors.toList());
+
+            Execution newExecution = execution.withTaskRunList(taskRuns);
+
+            return new ExecutionState(this, newExecution);
+        }
+
+        public ExecutionState from(WorkerTaskResult workerTaskResult) {
+            this.taskRuns.compute(
+                taskRunKey(workerTaskResult.getTaskRun()),
+                (key, taskRun) -> workerTaskResult.getTaskRun()
+            );
+
+            return this;
         }
     }
 }

@@ -13,7 +13,7 @@ tasks:
 - id: c
   type: org.kestra.core.tasks.scripts.Bash
   commands:
-    - 'exit 1'
+    - 'if [ "{{taskrun.attemptsCount}}" -eq 1 ]; then exit 0; else exit 1; fi'
 - id: d
   type: org.kestra.core.tasks.scripts.Bash
   commands:

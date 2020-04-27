@@ -1,19 +1,14 @@
 package org.kestra.runner.kafka;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.test.annotation.MicronautTest;
 import org.apache.kafka.common.errors.RecordTooLargeException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueException;
-import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.InputsTest;
 import org.kestra.core.runners.ListenersTest;
-import org.kestra.core.runners.RunnerUtils;
-import org.kestra.core.runners.StandAloneRunner;
-import org.kestra.core.utils.TestsUtils;
+import org.kestra.core.runners.RunnerCaseTest;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -29,23 +24,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest
-class KafkaRunnerTest {
+class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Inject
-    private StandAloneRunner runner;
-
-    @Inject
-    private RunnerUtils runnerUtils;
-
-    @Inject
-    private LocalFlowRepositoryLoader repositoryLoader;
-
-    @BeforeEach
-    private void init() throws IOException, URISyntaxException {
-        runner.setExecutorThreads(1);
-        runner.run();
-        TestsUtils.loads(repositoryLoader);
-    }
+    private RunnerCaseTest runnerCaseTest;
 
     @Test
     void full() throws TimeoutException, QueueException {
@@ -152,5 +133,10 @@ class KafkaRunnerTest {
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getTaskRunList().get(1).getAttempts().get(0).getLogs().get(0).getMessage(), containsString("Missing variable: inputs.invalid"));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void restart() throws Exception {
+        runnerCaseTest.restart();
     }
 }

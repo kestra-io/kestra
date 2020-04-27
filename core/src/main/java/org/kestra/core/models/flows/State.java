@@ -74,24 +74,37 @@ public class State {
 
     @JsonIgnore
     public boolean isTerninated() {
-        return this.current == Type.FAILED || this.current == Type.SUCCESS;
+        return this.current.isTerninated();
     }
 
     @JsonIgnore
     public boolean isRunning() {
-        return this.current == Type.RUNNING;
+        return this.current.isRunning();
     }
 
     @JsonIgnore
     public boolean isFailed() {
-        return this.current == Type.FAILED;
+        return this.current.isFailed();
     }
 
     public enum Type {
         CREATED,
         RUNNING,
+        RESTARTED,
         SUCCESS,
-        FAILED,
+        FAILED;
+
+        public boolean isTerninated() {
+            return this == Type.FAILED || this == Type.SUCCESS;
+        }
+
+        public boolean isRunning() {
+            return this == Type.RUNNING || this == Type.RESTARTED;
+        }
+
+        public boolean isFailed() {
+            return this == Type.FAILED;
+        }
     }
 
     @Value

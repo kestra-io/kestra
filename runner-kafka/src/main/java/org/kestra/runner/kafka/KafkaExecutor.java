@@ -24,6 +24,7 @@ import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaStreamService;
+import org.kestra.runner.kafka.streams.DeduplicationPurgeTransformer;
 import org.kestra.runner.kafka.streams.DeduplicationTransformer;
 
 import java.util.ArrayList;
@@ -73,7 +74,12 @@ public class KafkaExecutor extends AbstractExecutor {
         // logs
         logIfEnabled(
             executionKTable.toStream(Named.as("execution-toStream")),
-            (key, value) -> log.debug("Stream in with {}: {}", value.toCrc32State(), value.toStringState()),
+            (key, value) -> log.debug(
+                "Stream out execution '{}' with checksum '{}' : {}",
+                value.getId(),
+                value.toCrc32State(),
+                value.toStringState()
+            ),
             "execution-in"
         );
 
@@ -90,6 +96,7 @@ public class KafkaExecutor extends AbstractExecutor {
         this.handleChildNext(streamTaskRuns);
         this.handleWorkerTask(streamTaskRuns);
         this.handleFlowNext(stream);
+        // this.handleFlowRestart(stream);
 
         return builder.build();
     }
@@ -106,7 +113,7 @@ public class KafkaExecutor extends AbstractExecutor {
     }
 
     private KTable<String, WorkerTaskResult> workerTaskResultKTable(StreamsBuilder builder) {
-        return builder
+        KTable<String, WorkerTaskResult> workerTaskResultKTable = builder
             .table(
                 kafkaAdminService.getTopicName(WorkerTaskResult.class),
                 Consumed.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class)),
@@ -114,6 +121,22 @@ public class KafkaExecutor extends AbstractExecutor {
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(WorkerTaskResult.class))
             );
+
+        workerTaskResultKTable
+            .filter(
+                (key, value) -> value.getTaskRun().getState().isTerninated(),
+                Named.as("workerTaskResultKTable-terminated-filter")
+            )
+            .transformValues(
+                () -> new DeduplicationPurgeTransformer<>(
+                    WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
+                    (key, value) -> value.getTaskRun().getExecutionId() + "-" + value.getTaskRun().getId()
+                ),
+                Named.as("workerTaskResultKTable-deduplicationPurge-transform"),
+                WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
+            );
+
+        return workerTaskResultKTable;
     }
 
     private KStream<String, Execution> joinWorkerResult(StreamsBuilder builder, KTable<String, Execution> executionKTable) {
@@ -324,7 +347,7 @@ public class KafkaExecutor extends AbstractExecutor {
             );
 
         branchException(streamEither, "handleWorkerTask")
-            .transform(
+            .transformValues(
                 () -> new DeduplicationTransformer<>(
                     WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
                     (key, value) -> value.getTaskRun().getExecutionId() + "-" + value.getTaskRun().getId(),
@@ -333,6 +356,7 @@ public class KafkaExecutor extends AbstractExecutor {
                 Named.as("handleWorkerTask-deduplication-transform"),
                 WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
             )
+            .filter((key, value) -> value != null)
             .to(
                 kafkaAdminService.getTopicName(WorkerTask.class),
                 Produced.with(Serdes.String(), JsonSerde.of(WorkerTask.class))
@@ -401,7 +425,8 @@ public class KafkaExecutor extends AbstractExecutor {
         logIfEnabled(
             result,
             (key, value) -> log.debug(
-                "Stream out  with {} : {}",
+                "Stream out execution '{}' with checksum '{}' : {}",
+                value.getId(),
                 value.toCrc32State(),
                 value.toStringState()
             ),
@@ -462,9 +487,9 @@ public class KafkaExecutor extends AbstractExecutor {
 
         KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology());
 
-        //if (log.isTraceEnabled()) {
+        if (log.isTraceEnabled()) {
             log.info(this.topology().describe().toString());
-        //}
+        }
 
         resultStream.start();
     }

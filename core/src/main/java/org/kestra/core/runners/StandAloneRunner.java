@@ -17,9 +17,9 @@ import javax.inject.Named;
 @Slf4j
 public class StandAloneRunner implements RunnerInterface, Closeable {
     private ExecutorService poolExecutor;
-    private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
-    private int executorThreads = Math.max(3, Runtime.getRuntime().availableProcessors());
-    private int indexerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    protected int executorThreads = Math.max(3, Runtime.getRuntime().availableProcessors());
+    protected int indexerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
 
     public void setWorkerThread(int workerThread) {
         this.workerThread = workerThread;

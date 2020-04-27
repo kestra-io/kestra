@@ -57,7 +57,7 @@ public class MemoryExecutor extends AbstractExecutor {
     }
 
     private void executionQueue(Execution message) {
-        if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0) {
+        if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0 || message.isJustRestarted()) {
             this.handleExecution(saveExecution(message));
         }
     }
@@ -120,10 +120,11 @@ public class MemoryExecutor extends AbstractExecutor {
             log.debug("Execution out with {}: {}", execution.toCrc32State(), execution.toStringState());
         }
 
-        this.handleExecution(saveExecution(execution));
-
         // emit for other consumer than executor
         this.executionQueue.emit(execution);
+
+        // recursive search for other executor
+        this.handleExecution(saveExecution(execution));
 
         // delete if ended
         if (execution.isTerminatedWithListeners(flow)) {
@@ -144,7 +145,7 @@ public class MemoryExecutor extends AbstractExecutor {
                 }
 
                 if (executionState.execution.hasTaskRunJoinable(message.getTaskRun())) {
-                    return executionState.from(message);
+                     return executionState.from(message);
                 } else {
                     return executionState;
                 }

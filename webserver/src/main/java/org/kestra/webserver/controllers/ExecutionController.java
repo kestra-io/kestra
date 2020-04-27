@@ -204,10 +204,7 @@ public class ExecutionController {
             return null;
         }
 
-        final Execution newExecution = executionService.getRestartExecution(execution.get(), taskId);
-        executionQueue.emit(newExecution);
-
-        return newExecution;
+        return executionService.restart(execution.get(), taskId);
     }
 
     /**

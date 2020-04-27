@@ -21,6 +21,11 @@ public final class Rethrow {
         boolean test(T t) throws E;
     }
 
+    @FunctionalInterface
+    public interface RunnableChecked<E extends Exception> {
+        void run() throws E;
+    }
+
     public static <T, E extends Exception> Consumer<T> throwConsumer(ConsumerChecked<T, E> consumer) throws E {
         return t -> {
             try {
@@ -41,10 +46,20 @@ public final class Rethrow {
         };
     }
 
-    public static <T, R, E extends Exception> Function<T, R> throwFunction(FunctionChecked<T, R, E> function) throws E  {
+    public static <T, R, E extends Exception> Function<T, R> throwFunction(FunctionChecked<T, R, E> function) throws E {
         return t -> {
             try {
                 return function.apply(t);
+            } catch (Exception exception) {
+                throw throwException(exception);
+            }
+        };
+    }
+
+    public static <E extends Exception> Runnable throwRunnable(RunnableChecked<E> runnable) throws E {
+        return () -> {
+            try {
+                runnable.run();
             } catch (Exception exception) {
                 throw throwException(exception);
             }
@@ -55,5 +70,4 @@ public final class Rethrow {
     private static <E extends Exception> E throwException(Exception exception) throws E {
         return (E) exception;
     }
-
 }

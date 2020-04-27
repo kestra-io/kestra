@@ -96,6 +96,13 @@ public class TaskRun {
             .orElse(null);
     }
 
+    public boolean isSame(TaskRun taskRun) {
+        return this.getId().equals(taskRun.getId()) && (
+            (this.getValue() == null && taskRun.getValue() == null) ||
+                (this.getValue() != null && this.getValue().equals(taskRun.getValue()))
+        );
+    }
+
     public String toString(boolean pretty) {
         if (!pretty) {
             return super.toString();

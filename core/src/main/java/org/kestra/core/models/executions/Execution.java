@@ -3,11 +3,13 @@ package org.kestra.core.models.executions;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
+import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
@@ -25,6 +27,7 @@ import java.util.zip.CRC32;
 
 @Value
 @Builder
+@Slf4j
 public class Execution {
     @NotNull
     private String id;
@@ -60,25 +63,6 @@ public class Execution {
             this.state.withState(state),
             this.parentId
         );
-    }
-
-    public boolean hasTaskRunJoinable(TaskRun taskRun)  {
-        if (this.taskRunList == null) {
-            return true;
-        }
-
-        // failedExecutionFromExecutor call before, so the workerTaskResult
-        // don't have changed to failed but taskRunList will contain a failed
-        // so we don't changed if current execution is terminated
-
-        return this.taskRunList
-            .stream()
-            .noneMatch(r -> r.getId().equals(taskRun.getId()) &&
-                (
-                    r.getState().getCurrent() == taskRun.getState().getCurrent() ||
-                        (r.getState().isTerninated() && !taskRun.getState().isTerninated())
-                )
-            );
     }
 
     public Execution withTaskRun(TaskRun taskRun) throws InternalException {
@@ -271,6 +255,59 @@ public class Execution {
         return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             .anyMatch(taskRun -> taskRun.getState().isFailed());
+    }
+
+    @JsonIgnore
+    public boolean hasTaskRunJoinable(TaskRun taskRun)  {
+        if (this.taskRunList == null) {
+            return true;
+        }
+
+        TaskRun current = this.taskRunList
+            .stream()
+            .filter(r -> r.isSame(taskRun))
+            .findFirst()
+            .orElse(null);
+
+        if (current == null) {
+            return true;
+        }
+
+        // same status
+        if (current.getState().getCurrent() == taskRun.getState().getCurrent()) {
+            return false;
+        }
+
+        // failedExecutionFromExecutor call before, so the workerTaskResult
+        // don't have changed to failed but taskRunList will contain a failed
+        // same for restart, the CREATED status is directly on execution taskrun
+        // so we don't changed if current execution is terminated
+        if (current.getState().isTerninated() && !taskRun.getState().isTerninated()) {
+            return false;
+        }
+
+        // restart case mostly
+        // execution contains more state than taskrun so workerTaskResult is outdated
+        if (current.getState().getHistories().size() > taskRun.getState().getHistories().size()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @JsonIgnore
+    public boolean isJustRestarted() {
+        if (state.getHistories().size() < 2) {
+            return false;
+        }
+
+        State.History last = state.getHistories().get(state.getHistories().size() - 2);
+
+        if (last.getState() == State.Type.RESTARTED) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

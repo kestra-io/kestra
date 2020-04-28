@@ -1,34 +1,64 @@
 package org.kestra.runner.kafka.services;
 
+import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.errors.TopicExistsException;
+import org.kestra.core.metrics.MetricRegistry;
+import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.configs.TopicDefaultsConfig;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
-public class KafkaAdminService {
-    @Inject
-    private AdminClient adminClient;
-
+public class KafkaAdminService implements AutoCloseable {
     @Inject
     private TopicDefaultsConfig topicDefaultsConfig;
 
     @Inject
     private List<TopicsConfig> topicsConfig;
+
+    @Inject
+    private ClientConfig clientConfig;
+
+    @Inject
+    private MetricRegistry metricRegistry;
+
+    private AdminClient adminClient;
+
+    private KafkaClientMetrics kafkaClientMetrics;
+
+    public AdminClient of() {
+        if (this.adminClient == null) {
+            Properties properties = new Properties();
+            properties.putAll(clientConfig.getProperties());
+
+            adminClient = AdminClient.create(properties);
+
+            kafkaClientMetrics = new KafkaClientMetrics(adminClient);
+            metricRegistry.bind(kafkaClientMetrics);
+        }
+
+        return adminClient;
+    }
+
+    @PreDestroy
+    @Override
+    public void close() throws Exception {
+        adminClient.close();
+        kafkaClientMetrics.close();
+    }
 
     private TopicsConfig getTopicConfig(Class<?> cls) {
         return this.topicsConfig
@@ -63,7 +93,7 @@ public class KafkaAdminService {
         newTopic.configs(properties);
 
         try {
-            adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
+            this.of().createTopics(Collections.singletonList(newTopic)).all().get();
             log.info("Topic '{}' created", newTopic.name());
         } catch (ExecutionException | InterruptedException e) {
             if (e.getCause() instanceof TopicExistsException) {

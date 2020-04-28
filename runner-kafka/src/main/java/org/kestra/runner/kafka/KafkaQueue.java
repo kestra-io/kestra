@@ -37,12 +37,12 @@ import javax.annotation.PreDestroy;
 
 @Slf4j
 public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
-    private Class<T> cls;
-    private AdminClient adminClient;
-    private KafkaConsumerService kafkaConsumerService;
-    private KafkaProducer<String, T> kafkaProducer;
-    private List<KafkaConsumer<String, T>> kafkaConsumers = new ArrayList<>();
-    private TopicsConfig topicsConfig;
+    private final Class<T> cls;
+    private final AdminClient adminClient;
+    private final KafkaConsumerService kafkaConsumerService;
+    private final KafkaProducer<String, T> kafkaProducer;
+    private final List<KafkaConsumer<String, T>> kafkaConsumers = new ArrayList<>();
+    private final TopicsConfig topicsConfig;
     private static ExecutorService poolExecutor;
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
@@ -52,8 +52,10 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             );
         }
 
+        KafkaAdminService kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
+
         this.cls = cls;
-        this.adminClient = applicationContext.getBean(AdminClient.class);
+        this.adminClient = kafkaAdminService.of();
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
         this.kafkaProducer = applicationContext.getBean(KafkaProducerService.class).of(cls, JsonSerde.of(cls));
         this.topicsConfig = applicationContext
@@ -63,7 +65,6 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             .findFirst()
             .orElseThrow();
 
-        KafkaAdminService kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
         kafkaAdminService.createIfNotExist(this.cls);
     }
 

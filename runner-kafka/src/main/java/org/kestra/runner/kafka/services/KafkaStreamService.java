@@ -1,5 +1,6 @@
 package org.kestra.runner.kafka.services;
 
+import io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.streams.KafkaStreams;
@@ -10,14 +11,12 @@ import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.runner.kafka.KafkaQueue;
 import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.configs.StreamDefaultsConfig;
-import org.kestra.runner.kafka.metrics.KafkaClientMetrics;
-import org.kestra.runner.kafka.metrics.KafkaStreamsMetrics;
 
+import java.time.Duration;
+import java.util.Properties;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
-import java.time.Duration;
-import java.util.Properties;
 
 @Singleton
 @Slf4j
@@ -43,16 +42,17 @@ public class KafkaStreamService {
         properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
 
-        Stream stream = new Stream(topology, properties);
-
-        metricRegistry.bind(new KafkaStreamsMetrics(stream));
-
-        return stream;
+        return new Stream(topology, properties, metricRegistry);
     }
 
     public static class Stream extends KafkaStreams {
-        private Stream(Topology topology, Properties props) {
+        private final KafkaStreamsMetrics metrics;
+
+        private Stream(Topology topology, Properties props, MetricRegistry meterRegistry) {
             super(topology, props);
+
+            metrics = new KafkaStreamsMetrics(this);
+            meterRegistry.bind(metrics);
         }
 
         @Override
@@ -73,6 +73,18 @@ public class KafkaStreamService {
             }));
 
             super.start();
+        }
+
+        @Override
+        public void close() {
+            metrics.close();
+            super.close();
+        }
+
+        @Override
+        public boolean close(Duration timeout) {
+            metrics.close();
+            return super.close(timeout);
         }
     }
 }

@@ -8,6 +8,7 @@ import io.reactivex.Flowable;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.config.ConfigResource;
+import org.kestra.runner.kafka.services.KafkaAdminService;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -25,10 +26,10 @@ public class KafkaHealthIndicator implements HealthIndicator {
     /**
      * Constructs a new Kafka health indicator for the given arguments.
      *
-     * @param adminClient The admin client
+     * @param adminService The admin service
      */
-    public KafkaHealthIndicator(AdminClient adminClient) {
-        this.adminClient = adminClient;
+    public KafkaHealthIndicator(KafkaAdminService adminService) {
+        this.adminClient = adminService.of();
     }
 
     @Override

@@ -67,14 +67,23 @@ kestra:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
+      executor:
+        name: "kestra_executor"
+        properties:
+          cleanup.policy: "delete,compact"
+
       workertask:
         name: "kestra_workertask"
         cls: org.kestra.core.runners.WorkerTask
         partitions: 64
+        properties:
+          cleanup.policy: "delete,compact"
 
       workertaskresult:
         name: "kestra_workertaskresult"
         cls: org.kestra.core.runners.WorkerTaskResult
+        properties:
+          cleanup.policy: "delete,compact"
 
   elasticsearch:
     indices:

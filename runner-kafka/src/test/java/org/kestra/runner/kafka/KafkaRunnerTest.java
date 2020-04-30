@@ -30,7 +30,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void full() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "full", null, null, Duration.ofSeconds(15));
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "full");
 
         assertThat(execution.getTaskRunList(), hasSize(13));
     }
@@ -44,7 +44,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void errors() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "errors", null, null, Duration.ofSeconds(15));
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "errors");
 
         assertThat(execution.getTaskRunList(), hasSize(7));
     }

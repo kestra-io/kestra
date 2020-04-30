@@ -32,7 +32,10 @@ public class KafkaStreamService {
     private MetricRegistry metricRegistry;
 
     public KafkaStreamService.Stream of(Class<?> group, Topology topology) {
-        Properties properties = new Properties();
+        return this.of(group, topology, new Properties());
+    }
+    
+    public KafkaStreamService.Stream of(Class<?> group, Topology topology, Properties properties) {
         properties.putAll(clientConfig.getProperties());
 
         if (this.streamConfig.getProperties() != null) {

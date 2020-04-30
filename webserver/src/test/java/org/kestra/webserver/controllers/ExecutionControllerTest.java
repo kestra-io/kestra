@@ -40,6 +40,7 @@ import javax.inject.Named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.kestra.core.utils.Rethrow.throwRunnable;
 
 class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -222,7 +223,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromTaskId() throws TimeoutException {
+    void restartFromTaskId() throws TimeoutException, InterruptedException {
         final String flowId = "restart_with_inputs";
         final String referenceTaskId = "instant";
 
@@ -234,7 +235,9 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         // Run child execution starting from a specific task and wait until it finishes
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
             flow.get(),
-            parentExecution, () -> {
+            parentExecution, throwRunnable(() -> {
+                Thread.sleep(100);
+
                 Execution createdChidExec = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
@@ -257,7 +260,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
                 assertThat(createdChidExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.CREATED));
                 assertThat(createdChidExec.getTaskRunList().get(3).getAttempts().size(), is(1));
-            },
+            }),
             Duration.ofSeconds(15));
 
         assertThat(finishedChildExecution, notNullValue());
@@ -272,7 +275,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromTaskIdWithSequential() throws TimeoutException {
+    void restartFromTaskIdWithSequential() throws TimeoutException, InterruptedException {
         final String flowId = "restart_with_sequential";
         final String referenceTaskId = "a-3-2-2_end";
 
@@ -285,7 +288,9 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         // Run child execution starting from a specific task and wait until it finishes
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
             flow.get(),
-            parentExecution, () -> {
+            parentExecution, throwRunnable(() -> {
+                Thread.sleep(100);
+
                 Execution createdChidExec = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
@@ -307,12 +312,12 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                 assertThat(createdChidExec.getTaskRunList().get(6).getState().getCurrent(), is(State.Type.SUCCESS));
                 assertThat(createdChidExec.getTaskRunList().get(7).getState().getCurrent(), is(State.Type.CREATED));
                 assertThat(createdChidExec.getTaskRunList().get(7).getAttempts().size(), is(1));
-            },
+            }),
             Duration.ofSeconds(30000));
     }
 
     @Test
-    void restartFromLastFailed() throws TimeoutException {
+    void restartFromLastFailed() throws TimeoutException, InterruptedException {
         final String flowId = "restart_last_failed";
 
         // Run execution until it ends
@@ -327,7 +332,9 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             flow.get(),
-            firstExecution, () -> {
+            firstExecution, throwRunnable(() -> {
+                Thread.sleep(100);
+
                 Execution restartedExec = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/executions/" + firstExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
@@ -352,7 +359,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                     assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.CREATED));
                     assertThat(restartedExec.getTaskRunList().get(2).getAttempts().size(), is(1));
                 });
-            },
+            }),
             Duration.ofSeconds(15)
         );
 

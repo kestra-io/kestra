@@ -39,6 +39,7 @@ public class RunnerCaseTest {
             flow,
             firstExecution,
             throwRunnable(() -> {
+                Thread.sleep(100);
                 Execution restartedExec = executionService.restart(firstExecution, null);
 
                 assertThat(restartedExec, notNullValue());

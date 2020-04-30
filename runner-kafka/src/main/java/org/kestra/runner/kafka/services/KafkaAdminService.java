@@ -56,8 +56,13 @@ public class KafkaAdminService implements AutoCloseable {
     @PreDestroy
     @Override
     public void close() throws Exception {
-        adminClient.close();
-        kafkaClientMetrics.close();
+        if (adminClient != null) {
+            adminClient.close();
+        }
+
+        if (kafkaClientMetrics != null) {
+            kafkaClientMetrics.close();
+        }
     }
 
     private TopicsConfig getTopicConfig(Class<?> cls) {
@@ -66,6 +71,18 @@ public class KafkaAdminService implements AutoCloseable {
             .filter(r -> r.getCls() == cls)
             .findFirst()
             .orElseThrow();
+    }
+
+    private TopicsConfig getTopicConfig(String key) {
+        return this.topicsConfig
+            .stream()
+            .filter(r -> r.getKey().equals(key))
+            .findFirst()
+            .orElseThrow();
+    }
+
+    public void createIfNotExist(String key) {
+        this.createIfNotExist(this.getTopicConfig(key));
     }
 
     public void createIfNotExist(Class<?> cls) {
@@ -125,5 +142,9 @@ public class KafkaAdminService implements AutoCloseable {
 
     public String getTopicName(Class<?> cls) {
         return this.getTopicConfig(cls).getName();
+    }
+
+    public String getTopicName(String key) {
+        return this.getTopicConfig(key).getName();
     }
 }

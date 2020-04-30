@@ -1,5 +1,9 @@
 bintrayUpload.enabled = false
 
+repositories {
+    maven { url "http://packages.confluent.io/maven/" }
+}
+
 dependencies {
     compile project(":core")
 
@@ -9,4 +13,7 @@ dependencies {
     testCompile project(':core').sourceSets.test.output
     testCompile project(':repository-memory')
     testCompile project(':storage-local')
+
+
+    testCompile group: 'com.bakdata.fluent-kafka-streams-tests', name: 'fluent-kafka-streams-tests', version: "2.1.0"
 }

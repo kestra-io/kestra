@@ -58,7 +58,7 @@ public class KafkaExecutor extends AbstractExecutor {
         this.kafkaAdminService = kafkaAdminService;
     }
 
-    private Topology topology() {
+    public Topology topology() {
         StreamsBuilder builder = new StreamsBuilder();
 
         // copy execution to be done on executor queue
@@ -77,7 +77,7 @@ public class KafkaExecutor extends AbstractExecutor {
         logIfEnabled(
             executionKTable.toStream(Named.as("execution-toStream")),
             (key, value) -> log.debug(
-                "Stream out execution '{}' with checksum '{}' : {}",
+                "Execution in '{}' with checksum '{}': {}",
                 value.getId(),
                 value.toCrc32State(),
                 value.toStringState()
@@ -134,10 +134,7 @@ public class KafkaExecutor extends AbstractExecutor {
         return builder
             .table(
                 kafkaAdminService.getTopicName(WorkerTaskResult.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class)),
-                Materialized.<String, WorkerTaskResult, KeyValueStore<Bytes, byte[]>>as("workertaskresult")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(WorkerTaskResult.class))
+                Consumed.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
             );
     }
 
@@ -151,7 +148,7 @@ public class KafkaExecutor extends AbstractExecutor {
                     }
 
                     if (log.isDebugEnabled()) {
-                        log.debug("WorkerTaskResult: {}", workerTaskResult.getTaskRun().toStringState());
+                        log.debug("WorkerTaskResult in: {}", workerTaskResult.getTaskRun().toStringState());
                     }
 
                     try {
@@ -472,7 +469,7 @@ public class KafkaExecutor extends AbstractExecutor {
         KStream<String, Execution> executionKStream = logIfEnabled(
             result,
             (key, value) -> log.debug(
-                "Stream out execution '{}' with checksum '{}' : {}",
+                "Execution out '{}' with checksum '{}': {}",
                 value.getId(),
                 value.toCrc32State(),
                 value.toStringState()
@@ -542,7 +539,6 @@ public class KafkaExecutor extends AbstractExecutor {
         kafkaAdminService.createIfNotExist(WorkerTaskResult.class);
         kafkaAdminService.createIfNotExist(Execution.class);
         kafkaAdminService.createIfNotExist(TOPIC_EXECUTOR);
-
 
         KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology());
 

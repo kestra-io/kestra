@@ -58,7 +58,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void parallel() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "parallel");
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "parallel", null, null, Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList(), hasSize(8));
     }

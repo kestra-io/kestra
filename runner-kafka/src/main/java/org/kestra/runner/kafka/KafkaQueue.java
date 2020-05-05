@@ -74,7 +74,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         } else if (this.cls == WorkerTask.class) {
             return ((WorkerTask) object).getTaskRun().getId();
         } else if (this.cls == WorkerTaskResult.class) {
-            return ((WorkerTaskResult) object).getTaskRun().getExecutionId();
+            return ((WorkerTaskResult) object).getTaskRun().getId();
         } else {
             throw new IllegalArgumentException("Unknown type '" + this.cls.getName() + "'");
         }

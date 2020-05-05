@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -28,8 +29,7 @@ import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.streams.DeduplicationPurgeTransformer;
 import org.kestra.runner.kafka.streams.DeduplicationTransformer;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -100,7 +100,14 @@ public class KafkaExecutor extends AbstractExecutor {
         this.handleFlowNext(stream);
         this.purgeExecutor(stream);
 
-        return builder.build();
+        // build
+        Topology topology = builder.build();
+
+        if (log.isTraceEnabled()) {
+            log.trace(topology.describe().toString());
+        }
+
+        return topology;
     }
 
     private void executionToExecutor(StreamsBuilder builder) {
@@ -111,7 +118,8 @@ public class KafkaExecutor extends AbstractExecutor {
             )
             .filter((key, value) -> value.getTaskRunList() == null || 
                 value.getTaskRunList().size() == 0 || 
-                value.isJustRestarted()
+                value.isJustRestarted(),
+                Named.as("executionToExecutor")
             )
             .to(
                 kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
@@ -130,11 +138,40 @@ public class KafkaExecutor extends AbstractExecutor {
             );
     }
 
-    private KTable<String, WorkerTaskResult> workerTaskResultKTable(StreamsBuilder builder) {
+    private KTable<String, WorkerTaskResultState> workerTaskResultKTable(StreamsBuilder builder) {
         return builder
-            .table(
+            .stream(
                 kafkaAdminService.getTopicName(WorkerTaskResult.class),
                 Consumed.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
+            )
+            .filter((key, value) -> value != null, Named.as("workerTaskResultKTable-null-filter"))
+            .groupBy(
+                (key, value) -> value.getTaskRun().getExecutionId(),
+                Grouped.<String, WorkerTaskResult>as("workertaskresult_groupby")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(JsonSerde.of(WorkerTaskResult.class))
+            )
+            .aggregate(
+                WorkerTaskResultState::new,
+                (key, newValue, aggregate) -> {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Aggregate in: {}", newValue.getTaskRun().toStringState());
+                    }
+
+                    aggregate
+                        .getResults()
+                        .compute(
+                            newValue.getTaskRun().getId(),
+                            (s, workerTaskResult) -> newValue
+                        );
+
+                    return aggregate;
+                },
+                Named.as("workerTaskResultKTable-aggregate"),
+                Materialized.<String, WorkerTaskResultState, KeyValueStore<Bytes, byte[]>>as("workertaskresult")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(JsonSerde.of(WorkerTaskResultState.class))
+
             );
     }
 
@@ -142,20 +179,29 @@ public class KafkaExecutor extends AbstractExecutor {
         KStream<String, HasJoin> result = executionKTable
             .leftJoin(
                 this.workerTaskResultKTable(builder),
-                (execution, workerTaskResult) -> {
-                    if (workerTaskResult == null || !execution.hasTaskRunJoinable(workerTaskResult.getTaskRun())) {
+                (execution, workerTaskResultState) -> {
+                    if (workerTaskResultState == null) {
                         return new HasJoin(execution, false);
                     }
 
-                    if (log.isDebugEnabled()) {
-                        log.debug("WorkerTaskResult in: {}", workerTaskResult.getTaskRun().toStringState());
-                    }
+                    return workerTaskResultState
+                        .getResults()
+                        .values()
+                        .stream()
+                        .filter(workerTaskResult -> execution.hasTaskRunJoinable(workerTaskResult.getTaskRun()))
+                        .findFirst()
+                        .map(workerTaskResult -> {
+                            if (log.isDebugEnabled()) {
+                                log.debug("WorkerTaskResult in: {}", workerTaskResult.getTaskRun().toStringState());
+                            }
 
-                    try {
-                        return new HasJoin(execution.withTaskRun(workerTaskResult.getTaskRun()), true);
-                    } catch (Exception e) {
-                        return new HasJoin(execution.failedExecutionFromExecutor(e), false);
-                    }
+                            try {
+                                return new HasJoin(execution.withTaskRun(workerTaskResult.getTaskRun()), true);
+                            } catch (Exception e) {
+                                return new HasJoin(execution.failedExecutionFromExecutor(e), false);
+                            }
+                        })
+                        .orElseGet(() -> new HasJoin(execution, false));
                 },
                 Named.as("join-leftJoin")
             )
@@ -241,8 +287,15 @@ public class KafkaExecutor extends AbstractExecutor {
 
         // clean up workerTaskResult
         terminated
-            .mapValues(
-                (readOnlyKey, value) -> (WorkerTaskResult) null,
+            .flatMapValues(
+                (readOnlyKey, value) -> value.getExecution().getTaskRunList(),
+                Named.as("workerTaskResultKTable-toTaskRun-flatmap")
+            )
+            .map(
+                (readOnlyKey, value) -> new KeyValue<>(
+                    value.getId(),
+                    (WorkerTaskResult) null
+                ),
                 Named.as("workerTaskResultKTable-toNull-map")
             )
             .to(
@@ -316,6 +369,10 @@ public class KafkaExecutor extends AbstractExecutor {
 
         branchException(childWorkerTaskResult, "handleChild")
             .filter((key, value) -> value != null, Named.as("handleChild-null-filter"))
+            .selectKey(
+                (key, value) -> value.getTaskRun().getId(),
+                Named.as("handleChild-selectKey")
+            )
             .to(
                 kafkaAdminService.getTopicName(WorkerTaskResult.class),
                 Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
@@ -340,7 +397,7 @@ public class KafkaExecutor extends AbstractExecutor {
                         return Either.left(new WithException(value, e));
                     }
                 },
-                Named.as("handleChildNext-map-")
+                Named.as("handleChildNext-map")
             );
 
         KStream<String, Execution> result = branchException(streamEither, "handleChildNext");
@@ -529,9 +586,15 @@ public class KafkaExecutor extends AbstractExecutor {
 
     @AllArgsConstructor
     @Getter
-    public static  class WithException {
+    public static class WithException {
         ExecutionInterface entity;
         Exception exception;
+    }
+
+    @NoArgsConstructor
+    @Getter
+    public static class WorkerTaskResultState {
+        Map<String, WorkerTaskResult> results = new HashMap<>();
     }
 
     @Override
@@ -541,11 +604,6 @@ public class KafkaExecutor extends AbstractExecutor {
         kafkaAdminService.createIfNotExist(TOPIC_EXECUTOR);
 
         KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology());
-
-        if (log.isTraceEnabled()) {
-            log.info(this.topology().describe().toString());
-        }
-
         resultStream.start();
     }
 }

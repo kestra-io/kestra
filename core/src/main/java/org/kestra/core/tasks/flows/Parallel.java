@@ -39,7 +39,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {
-        return TreeService.sequential(
+        return TreeService.parallel(
             this.tasks,
             this.errors,
             Collections.singletonList(ParentTaskTree.builder()
@@ -54,18 +54,6 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveTasks(this.tasks, parentTaskRun);
-    }
-
-    @Override
-    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        Optional<State.Type> type = FlowableUtils.resolveState(
-            execution,
-            this.childTasks(runContext, parentTaskRun),
-            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            parentTaskRun
-        );
-
-        return type;
     }
 
     @Override

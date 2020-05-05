@@ -18,7 +18,7 @@ tasks:
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
           - id: 1-3-2_par
-            type: org.kestra.core.tasks.flows.Parallel
+            type: org.kestra.core.tasks.flows.Sequential
             tasks:
               - id: 1-3-2-1
                 type: org.kestra.core.tasks.debugs.Return

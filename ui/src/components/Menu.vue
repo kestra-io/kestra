@@ -23,10 +23,10 @@ import { SidebarMenu } from "vue-sidebar-menu";
 import ChevronLeft from "vue-material-design-icons/ChevronLeft";
 import ChevronRight from "vue-material-design-icons/ChevronRight";
 import Graph from "vue-material-design-icons/Graph";
-import Settings from "vue-material-design-icons/Settings";
+import Cog from "vue-material-design-icons/Cog";
 import TimelineClock from "vue-material-design-icons/TimelineClock";
 Vue.component("graph", Graph);
-Vue.component("settings", Settings);
+Vue.component("settings", Cog);
 Vue.component("timelineclock", TimelineClock);
 export default {
   components: {

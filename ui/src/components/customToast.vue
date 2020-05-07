@@ -35,7 +35,6 @@ export default {
     },
     mounted() {
         this.$bvToast.show(this.toastId);
-        console.log(this.content)
     },
     computed: {
         items() {

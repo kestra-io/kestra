@@ -14,7 +14,7 @@ export default {
                 commit('setConfigurationPanelPosition', position)
             }
         },
-        setNode({commit, dispatch}, node) {
+        setNode({commit}, node) {
             commit('setNode', node)
             // dispatch('updateConfigurationPanelPosition')
         },

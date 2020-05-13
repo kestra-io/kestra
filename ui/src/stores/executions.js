@@ -15,7 +15,7 @@ export default {
                 commit('setTotal', response.data.total)
             })
         },
-        restartExecution(options) {
+        restartExecution(_, options) {
             return Vue.axios.post(`/api/v1/executions/${options.id}/restart?taskId=${options.taskId}`, {params: options},{
                 headers: {
                     'content-type': 'multipart/form-data'

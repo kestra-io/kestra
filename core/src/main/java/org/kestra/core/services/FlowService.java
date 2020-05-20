@@ -38,7 +38,7 @@ public class FlowService {
         Map<String, Stats> last24hStatsMap =
             executionRepositoryInterface.findLast24hDurationStats(execQuery, pageable);
 
-        List<Flow> flows = flowRepositoryInterface.find(query, pageable);
+        ArrayListTotal<Flow> flows = flowRepositoryInterface.find(query, pageable);
 
         // We build a map of all the flows (since some flows do no have executions but we want them)
         Map<String, ExecutionMetricsAggregation> result = new HashMap<>();
@@ -62,7 +62,7 @@ public class FlowService {
 
 
         return new ArrayListTotal<ExecutionMetricsAggregation>(new ArrayList(result.values()),
-            result.values().size());
+            flows.getTotal());
     }
 
     /**

@@ -40,13 +40,6 @@ public interface FlowRepositoryInterface {
 
     List<String> findDistinctNamespace(Optional<String> prefix);
 
-    default Optional<Flow> exists(Flow flow) {
-        return this.findRevisions(flow.getNamespace(), flow.getId())
-            .stream()
-            .filter(f -> f.equalsWithoutRevision(flow))
-            .findFirst();
-    }
-
     Flow create(Flow flow) throws ConstraintViolationException;
 
     Flow update(Flow flow, Flow previous) throws ConstraintViolationException;

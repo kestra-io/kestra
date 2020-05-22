@@ -25,6 +25,7 @@ import org.kestra.webserver.responses.PagedResults;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static io.micronaut.http.HttpRequest.*;
@@ -224,5 +225,22 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(aggFind.getTotal(), greaterThanOrEqualTo(5L));
+    }
+
+    @Test
+    void listDistinctNamespace() {
+        List<String> namespaces = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
+
+        assertThat(namespaces.size(), is(2));
+    }
+
+    @Test
+    void listDistinctNamespaceWithPrefix() {
+        String prefix = "org.kestra.tests.minimal";
+        List<String> namespaces = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/flows/distinct-namespaces?prefix=" + prefix), Argument.listOf(String.class));
+
+        assertThat(namespaces.size(), is(1));
     }
 }

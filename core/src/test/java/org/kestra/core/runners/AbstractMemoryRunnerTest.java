@@ -22,7 +22,7 @@ abstract public class AbstractMemoryRunnerTest {
     protected LocalFlowRepositoryLoader repositoryLoader;
 
     @BeforeEach
-    private void init() throws IOException, URISyntaxException {
+    protected void init() throws IOException, URISyntaxException {
         if (!runner.isRunning()) {
             runner.run();
             TestsUtils.loads(repositoryLoader);

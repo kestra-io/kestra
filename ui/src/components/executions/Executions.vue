@@ -36,8 +36,9 @@
                     <template v-slot:cell(state.current)="row">
                         <status
                             @click.native="addStatusToQuery(row.item.state.current)"
-                            class="status sm"
+                            class="status"
                             :status="row.item.state.current"
+                            size="sm"
                         />
                     </template>
                      <template v-slot:cell(state.duration)="row">

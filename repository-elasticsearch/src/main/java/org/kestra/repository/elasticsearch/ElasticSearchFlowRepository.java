@@ -5,7 +5,8 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -13,20 +14,20 @@ import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilde
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
-import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.validation.ConstraintViolationException;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
@@ -60,7 +61,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
     @Override
     public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
-        BoolQueryBuilder bool = QueryBuilders.boolQuery()
+        BoolQueryBuilder bool = this.defaultFilter()
             .must(QueryBuilders.termQuery("namespace", namespace))
             .must(QueryBuilders.termQuery("id", id));
 
@@ -72,14 +73,14 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             .sort(new FieldSortBuilder("revision").order(SortOrder.DESC))
             .size(1);
 
-        List<Flow> query = this.query(REVISIONS_NAME, sourceBuilder);
+        List<Flow> query = this.query(revision.isPresent() ? REVISIONS_NAME : INDEX_NAME, sourceBuilder);
 
         return query.size() > 0 ? Optional.of(query.get(0)) : Optional.empty();
     }
 
     @Override
     public List<Flow> findRevisions(String namespace, String id) {
-        BoolQueryBuilder bool = QueryBuilders.boolQuery()
+        BoolQueryBuilder bool = this.defaultFilter()
             .must(QueryBuilders.termQuery("namespace", namespace))
             .must(QueryBuilders.termQuery("id", id));
 
@@ -93,7 +94,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     @Override
     public List<Flow> findAll() {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(QueryBuilders.matchAllQuery());
+            .query(this.defaultFilter());
 
         return this.scroll(INDEX_NAME, sourceBuilder);
     }
@@ -128,8 +129,8 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        Optional<Flow> exists = this.exists(flow);
-        if (exists.isPresent()) {
+        Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
+        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow)) {
             return exists.get();
         }
 
@@ -150,12 +151,12 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     @Override
     public void delete(Flow flow) {
         this.deleteRequest(INDEX_NAME, flowId(flow));
-        this.deleteRequest(REVISIONS_NAME, flowUid(flow));
     }
 
     @Override
     public List<String> findDistinctNamespace(Optional<String> prefix) {
-        PrefixQueryBuilder prefixQuery = QueryBuilders.prefixQuery("namespace", prefix.orElse(""));
+        BoolQueryBuilder query = this.defaultFilter()
+            .must(QueryBuilders.prefixQuery("namespace", prefix.orElse("")));
 
         // We want to keep only "distinct" values of field "namespace"
         // @TODO: use includeExclude(new IncludeExclude(0, 10)) to partition results
@@ -166,7 +167,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             .order(BucketOrder.key(true));
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(prefixQuery)
+            .query(query)
             .aggregation(termsAggregationBuilder);
 
         SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);

@@ -39,7 +39,9 @@ export default {
     },
     created() {
         this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
-            this.$store.dispatch("flow/loadTree", this.flow);
+            if (this.flow) {
+                this.$store.dispatch("flow/loadTree", this.flow);
+            }
         });
     },
     methods: {

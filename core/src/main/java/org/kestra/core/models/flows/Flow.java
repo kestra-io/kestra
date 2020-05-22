@@ -75,6 +75,9 @@ public class Flow {
     @Valid
     private List<Trigger> triggers;
 
+    @NotNull
+    private boolean deleted = false;
+
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);
     }

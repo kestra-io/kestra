@@ -30,7 +30,7 @@ import javax.inject.Singleton;
  */
 @Sharable
 @Singleton
-@Requires(property = "kestra.server.access-log.enabled", value = StringUtils.TRUE, defaultValue = StringUtils.TRUE)
+@Requires(property = "kestra.server.access-log.enabled", value = StringUtils.TRUE, defaultValue = StringUtils.FALSE)
 public class HttpServerAccessLogHandler extends ChannelDuplexHandler {
     private static final AttributeKey<AccessLog> LOG_HANDLER_CONTEXT = AttributeKey.valueOf("logHandlerContext");
     private static final String MISSING = "-";

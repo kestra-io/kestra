@@ -16,70 +16,57 @@ import java.util.stream.Collectors;
 @Singleton
 @MemoryRepositoryEnabled
 public class MemoryFlowRepository implements FlowRepositoryInterface {
-    private HashMap<String, HashMap<String, Map<Integer, Flow>>> flows = new HashMap<>();
+    private final HashMap<String, Flow> flows = new HashMap<>();
+    private final HashMap<String, Flow> revisions = new HashMap<>();
 
     @Inject
     private ModelValidator modelValidator;
 
+    private static String flowId(Flow flow) {
+        return flowId(flow.getNamespace(), flow.getId());
+    }
+
+    private static String flowId(String namespace, String id) {
+        return String.join("_", Arrays.asList(
+            namespace,
+            id
+        ));
+    }
+
+    private static String flowUid(Flow flow) {
+        return String.join("_", Arrays.asList(
+            flow.getNamespace(),
+            flow.getId(),
+            flow.getRevision() != null ? String.valueOf(flow.getRevision()) : "-1"
+        ));
+    }
+
     @Override
     public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
-        return this.getNamespace(namespace)
-            .flatMap(e -> this.getFlows(e, id))
-            .flatMap(e -> revision
-                .map(current -> this.getRevision(e, current))
-                .orElse(this.getLastRevision(e))
+        return revision
+            .map(integer -> this.findRevisions(namespace, id)
+                .stream()
+                .filter(flow -> flow.getRevision().equals(integer))
+                .findFirst()
+            )
+            .orElseGet(() -> this.flows.containsKey(flowId(namespace, id)) ?
+                Optional.of(this.flows.get(flowId(namespace, id))) :
+                Optional.empty()
             );
     }
 
     @Override
     public List<Flow> findRevisions(String namespace, String id) {
-        if (!this.flows.containsKey(namespace)) {
-            this.flows.put(namespace, new HashMap<>());
-        }
-
-        HashMap<String, Map<Integer, Flow>> namespaces = this.flows.get(namespace);
-
-        if (!namespaces.containsKey(id)) {
-            namespaces.put(id, new HashMap<>());
-        }
-
-        Map<Integer, Flow> revisions = namespaces.get(id);
-
-        return new ArrayList<>(revisions.values());
-    }
-
-    private Optional<HashMap<String, Map<Integer, Flow>>> getNamespace(String namespace) {
-        return this.flows.containsKey(namespace) ? Optional.of(this.flows.get(namespace)) : Optional.empty();
-    }
-
-    private Optional<Map<Integer, Flow>> getFlows(HashMap<String, Map<Integer, Flow>> map, String id) {
-        return map.containsKey(id) ? Optional.of(map.get(id)) : Optional.empty();
-    }
-
-    private Optional<Flow> getRevision(Map<Integer, Flow> map, Integer revision) {
-        return map.containsKey(revision) ? Optional.of(map.get(revision)) : Optional.empty();
-    }
-
-    @SuppressWarnings({"ComparatorMethodParameterNotUsed"})
-    private Optional<Flow> getLastRevision(Map<Integer, Flow> map) {
-        return map
-            .entrySet()
+        return revisions
+            .values()
             .stream()
-            .max((a, entry2) -> a.getKey() > entry2.getKey() ? 1 : -1)
-            .map(Map.Entry::getValue);
+            .filter(flow -> flow.getNamespace().equals(namespace) && flow.getId().equals(id))
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<Flow> findAll() {
-        return flows
-            .entrySet()
-            .stream()
-            .flatMap(e -> e.getValue()
-                .entrySet()
-                .stream()
-                .flatMap(f -> this.getLastRevision(f.getValue()).stream())
-            )
-            .collect(Collectors.toList());
+        return new ArrayList<>(flows.values());
     }
 
     public ArrayListTotal<Flow> find(String query, Pageable pageable) {
@@ -118,44 +105,23 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             });
 
         // flow exists, return it
-        Optional<Flow> exists = this.exists(flow);
-        if (exists.isPresent()) {
+        Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
+        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow)) {
             return exists.get();
         }
 
-        // create namespace
-        if (!this.flows.containsKey(flow.getNamespace())) {
-            this.flows.put(flow.getNamespace(), new HashMap<>());
+        Optional<Flow> current = this.findById(flow.getNamespace(), flow.getId());
+
+        if (current.isPresent()) {
+            flow = flow.withRevision(current.get().getRevision() + 1);
+        } else if (flow.getRevision() == null) {
+            flow = flow.withRevision(1);
         }
 
-        // create flow in current namespace
-        HashMap<String, Map<Integer, Flow>> namespace = this.flows.get(flow.getNamespace());
-        if (!namespace.containsKey(flow.getId())) {
-            namespace.put(flow.getId(), new HashMap<>());
-        }
+        this.flows.put(flowId(flow), flow);
+        this.revisions.put(flowUid(flow), flow);
 
-        Map<Integer, Flow> revisions = namespace.get(flow.getId());
-
-        // revision is already set, just update
-        if (flow.getRevision() != null) {
-            revisions.put(flow.getRevision(), flow);
-
-            return flow;
-        }
-
-        // find max revision
-        Optional<Integer> max = revisions
-            .entrySet()
-            .stream()
-            .max((a, b) -> a.getKey() > b.getKey() ? 1 : -1)
-            .map(Map.Entry::getKey);
-
-        Flow saved = flow.withRevision(max.map(integer -> integer + 1).orElse(1));
-
-        // and save it
-        revisions.put(saved.getRevision(), saved);
-
-        return saved;
+        return flow;
     }
 
     @Override
@@ -164,22 +130,19 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
         }
 
-        this.getNamespace(flow.getNamespace())
-            .flatMap(e -> this.getFlows(e, flow.getId()))
-            .ifPresent(e -> {
-                e.remove(flow.getRevision());
-            });
+        this.flows.remove(flowId(flow));
     }
 
     @Override
     public List<String> findDistinctNamespace(Optional<String> prefix) {
-        HashSet<String> namespaces = new HashSet<String>();
+        HashSet<String> namespaces = new HashSet<>();
         for (Flow f : this.findAll()) {
             if (f.getNamespace().startsWith(prefix.orElse(""))) {
                 namespaces.add(f.getNamespace());
             }
         }
-        ArrayList<String> namespacesList = new ArrayList<String>(namespaces);
+
+        ArrayList<String> namespacesList = new ArrayList<>(namespaces);
         Collections.sort(namespacesList);
         return new ArrayList<>(namespacesList);
     }

@@ -80,7 +80,7 @@ public class FlowController {
      */
     @Post(produces = MediaType.TEXT_JSON)
     public HttpResponse<Flow> create(@Body Flow flow) throws ConstraintViolationException {
-        if (flowRepository.exists(flow).isPresent()) {
+        if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
             return HttpResponse.status(HttpStatus.CONFLICT, "Flow already exists");
         }
 
@@ -130,5 +130,14 @@ public class FlowController {
         return PagedResults.of(
             flowService.findAndAggregate(query, startDateAsIsoString, PageableUtils.from(page, size, sort))
         );
+    }
+
+    /**
+     * @param prefix The searched namespace prefix
+     * @return The flow's namespaces set
+     */
+    @Get(uri = "distinct-namespaces", produces = MediaType.TEXT_JSON)
+    public List<String> listDistinctNamespace(Optional<String> prefix) {
+        return flowRepository.findDistinctNamespace(prefix);
     }
 }

@@ -29,3 +29,5 @@ properties:
         type: keyword
       type:
         type: keyword
+  deleted:
+    type: boolean

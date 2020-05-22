@@ -63,7 +63,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void revision() throws JsonProcessingException {
+    protected void revision() throws JsonProcessingException {
         // create
         Flow flow = flowRepository.create(Flow.builder()
             .id("AbstractFlowRepositoryTest")
@@ -105,9 +105,28 @@ public abstract class AbstractFlowRepositoryTest {
         );
         assertThat(incremented2.getRevision(), is(2));
 
+        // resubmit first one, revision is incremented
+        Flow incremented3 = flowRepository.update(
+            JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow), Flow.class),
+            flowRev2
+        );
+        assertThat(incremented3.getRevision(), is(3));
+
         // cleanup
         flowRepository.delete(flow);
         flowRepository.delete(incremented);
+
+        // revisions is still findable after delete
+        revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
+        assertThat(revisions.size(), is(3));
+
+        Optional<Flow> findDeleted = flowRepository.findById(
+            flow.getNamespace(),
+            flow.getId(),
+            Optional.of(flow.getRevision())
+        );
+        assertThat(findDeleted.isPresent(), is(true));
+        assertThat(findDeleted.get().getRevision(), is(flow.getRevision()));
     }
 
     @Test

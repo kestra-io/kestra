@@ -52,6 +52,9 @@ public class Execution {
 
     private String parentId;
 
+    @NotNull
+    private boolean deleted = false;
+
     public Execution withState(State.Type state) {
         return new Execution(
             this.id,

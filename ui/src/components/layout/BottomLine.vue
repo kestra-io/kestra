@@ -6,7 +6,7 @@
 <script>
     export default {}
 </script>
-<style lang="scss" scoped>
+<style lang="scss" >
     @import "../../styles/variable";
 
     .bottom-line {
@@ -15,5 +15,9 @@
         border-top: 1px solid $gray-300;
         z-index: 90;
         background-color: $white;
+
+        button {
+            margin-left: $spacer;
+        }
     }
 </style>

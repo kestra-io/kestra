@@ -125,3 +125,5 @@ properties:
                 type: date
               state:
                 type: keyword
+  deleted:
+    type: boolean

@@ -52,7 +52,7 @@ public class ExecutionController {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
-    private ExecutionRepositoryInterface executionRepository;
+    protected ExecutionRepositoryInterface executionRepository;
 
     @Inject
     private RunnerUtils runnerUtils;

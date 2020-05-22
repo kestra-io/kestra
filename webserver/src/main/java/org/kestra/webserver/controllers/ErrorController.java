@@ -61,7 +61,7 @@ public class ErrorController {
             .body(jsonError);
     }
 
-    private static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {
+    public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {
         if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
             log.error(e.getMessage(), e);
         } else {

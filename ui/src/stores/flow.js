@@ -45,6 +45,11 @@ export default {
                 commit('setFlow', response.data.flow)
             })
         },
+        deleteFlow({ commit }, flow) {
+            return Vue.axios.delete(`/api/v1/flows/${flow.namespace}/${flow.id}`).then(() => {
+                commit('setFlow', null)
+            })
+        },
         loadTree({ commit }, flow) {
             return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/tree`).then(response => {
                 commit('setDataTree', response.data.tasks)

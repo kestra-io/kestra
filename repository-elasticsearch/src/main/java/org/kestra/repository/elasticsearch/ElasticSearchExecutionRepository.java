@@ -55,7 +55,8 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     }
 
     public Map<String, ExecutionMetricsAggregation> aggregateByStateWithDurationStats(String query, Pageable pageable) {
-        QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.queryStringQuery(query));
 
         final List<CompositeValuesSourceBuilder<?>> multipleFieldsSources = new ArrayList<>();
         multipleFieldsSources.add(new TermsValuesSourceBuilder("namespace").field("namespace"));
@@ -75,7 +76,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                 "state.duration").field("state.duration")).size(MAX_BUCKET_SIZE);
 
 
-        SearchSourceBuilder sourceBuilder = this.searchSource(queryString,
+        SearchSourceBuilder sourceBuilder = this.searchSource(bool,
             Optional.of(List.of(groupByMultipleFieldsAggBuilder, durationAggBuilder)),
             pageable);
 

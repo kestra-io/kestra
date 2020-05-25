@@ -1,4 +1,4 @@
-FROM openjdk:11-slim
+FROM openjdk:11-jre-slim
 
 WORKDIR /app
 COPY docker /

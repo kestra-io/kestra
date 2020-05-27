@@ -26,6 +26,7 @@ import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
@@ -177,8 +178,15 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
 
     @Override
-    public ArrayListTotal<Execution> find(String query, Pageable pageable) {
-        return super.findQueryString(INDEX_NAME, query, pageable);
+    public ArrayListTotal<Execution> find(String query, Pageable pageable, @Nullable State.Type state) {
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.queryStringQuery(query));
+        if (state != null) {
+            bool = bool.must(QueryBuilders.termQuery("state.current", state.name()));
+        }
+        SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
+
+        return this.query(INDEX_NAME, sourceBuilder);
     }
 
     @Override

@@ -5,6 +5,7 @@ import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.executions.metrics.Stats;
+import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 
@@ -19,7 +20,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     private Map<String, Execution> executions = new HashMap<>();
 
     @Override
-    public ArrayListTotal<Execution> find(String query, Pageable pageable) {
+    public ArrayListTotal<Execution> find(String query, Pageable pageable, State.Type state) {
         throw new UnsupportedOperationException();
     }
 

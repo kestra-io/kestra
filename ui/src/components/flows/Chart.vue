@@ -45,6 +45,29 @@ export default {
                 }
             };
             const data = this.getData();
+            data.onclick = d => {
+                const executionDay = this.$moment(
+                    this.$chart.categories()[d.index]
+                );
+                const start = executionDay.unix() * 1000;
+                executionDay.add(1, "d");
+                const end = executionDay.unix() * 1000;
+
+                const routeParams = {
+                    name: "executionsByFlow",
+                    params: {
+                        namespace: data.row.item.namespace,
+                        flowId: data.row.item.id
+                    },
+                    query: {
+                        start,
+                        end,
+                        q: data.row.item.id,
+                        status: d.id.toUpperCase()
+                    }
+                };
+                this.$router.push(routeParams);
+            };
             const config = this.getConfig();
 
             return defaultsDeep({ data }, size, config);

@@ -179,7 +179,8 @@ export default {
             return {
                 json: row.item.metrics,
                 keys: { x: "startDate", value: statuses },
-                groups: [statuses]
+                groups: [statuses],
+                row
             };
         },
         loadData(callback) {

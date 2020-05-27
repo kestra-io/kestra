@@ -4,6 +4,7 @@ import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.executions.metrics.Stats;
+import org.kestra.core.models.flows.State;
 
 import java.util.Map;
 import java.util.Optional;
@@ -13,7 +14,7 @@ public interface ExecutionRepositoryInterface {
 
     ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable);
 
-    ArrayListTotal<Execution> find(String query, Pageable pageable);
+    ArrayListTotal<Execution> find(String query, Pageable pageable, State.Type state);
 
     Map<String, ExecutionMetricsAggregation> aggregateByStateWithDurationStats(String query, Pageable pageable);
 

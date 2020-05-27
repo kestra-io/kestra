@@ -27,10 +27,10 @@ Vue.use(VueProgressBar, {
   height: '2px'
 })
 Vue.use(VueSSE);
-Vue.use(VueMoment, { moment });
+Vue.use(VueMoment, { moment: extendMoment(moment) });
 Vue.use(VueSidebarMenu);
 Vue.use(BootstrapVue);
-Vue.use(extendMoment(moment));
+
 Vue.component('v-select', vSelect);
 Vue.component('v-s', VerticalSeparator);
 

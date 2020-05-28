@@ -21,7 +21,9 @@ import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class KafkaRunnerTest extends AbstractKafkaRunnerTest {
@@ -58,16 +60,23 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void parallel() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "parallel", null, null, Duration.ofSeconds(120));
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "parallel", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(8));
     }
 
     @Test
     void parallelNested() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "parallel-nested");
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "parallel-nested", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(11));
+    }
+
+    @Test
+    void sequentialNested() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "each-sequential-nested", null, null, Duration.ofSeconds(60));
+
+        assertThat(execution.getTaskRunList(), hasSize(23));
     }
 
     @Test

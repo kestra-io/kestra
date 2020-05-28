@@ -18,19 +18,22 @@ import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
-import org.kestra.core.models.flows.State;
-import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.repositories.FlowRepositoryInterface;
-import org.kestra.core.runners.*;
+import org.kestra.core.runners.AbstractExecutor;
+import org.kestra.core.runners.WorkerTask;
+import org.kestra.core.runners.WorkerTaskResult;
 import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.streams.DeduplicationPurgeTransformer;
 import org.kestra.runner.kafka.streams.DeduplicationTransformer;
+import org.kestra.runner.kafka.streams.ExecutionNextsDeduplicationTransformer;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 
 @KafkaQueueEnabled
@@ -38,6 +41,7 @@ import javax.inject.Inject;
 @Slf4j
 public class KafkaExecutor extends AbstractExecutor {
     private static final String WORKERTASK_DEDUPLICATION_STATE_STORE_NAME = "workertask_deduplication";
+    private static final String NEXTS_DEDUPLICATION_STATE_STORE_NAME = "next_deduplication";
     private static final String TOPIC_EXECUTOR = "executor";
 
     KafkaStreamService kafkaStreamService;
@@ -71,6 +75,13 @@ public class KafkaExecutor extends AbstractExecutor {
             Serdes.String()
         ));
 
+        // next deduplication
+        builder.addStateStore(Stores.keyValueStoreBuilder(
+            Stores.persistentKeyValueStore(NEXTS_DEDUPLICATION_STATE_STORE_NAME),
+            Serdes.String(),
+            JsonSerde.of(ExecutionNextsDeduplicationTransformer.Store.class)
+        ));
+
         KTable<String, Execution> executionKTable = this.executionKTable(builder);
 
         // logs
@@ -90,14 +101,13 @@ public class KafkaExecutor extends AbstractExecutor {
 
         // handle state on execution
         KStream<String, ExecutionWithFlow> stream = this.withFlow(executionKStream);
-        KStream<String, TaskRunExecutionWithFlow> streamTaskRuns = this.withTaskRun(stream);
 
-        this.handleEnd(stream);
-        this.handleListeners(stream);
-        this.handleChild(streamTaskRuns);
-        this.handleChildNext(streamTaskRuns);
-        this.handleWorkerTask(streamTaskRuns);
-        this.handleFlowNext(stream);
+        this.handleMain(stream);
+        this.handleNexts(stream);
+
+        this.handleWorkerTask(stream);
+        this.handleWorkerTaskResult(stream);
+
         this.purgeExecutor(stream);
 
         // build
@@ -222,49 +232,18 @@ public class KafkaExecutor extends AbstractExecutor {
             );
     }
 
-    private KStream<String, TaskRunExecutionWithFlow> withTaskRun(KStream<String, ExecutionWithFlow> stream) {
-        return stream
-            .flatMapValues(
-                (readOnlyKey, value) -> {
-                    if (value.getExecution().getTaskRunList() == null) {
-                        return new ArrayList<>();
-                    }
-
-                    return value
-                        .getExecution()
-                        .getTaskRunList()
-                        .stream()
-                        .map(taskRun -> new TaskRunExecutionWithFlow(value.getFlow(), value.getExecution(), taskRun))
-                        .collect(Collectors.toList());
-                },
-                Named.as("withTaskRun-map")
-            );
-    }
-
-    private void handleEnd(KStream<String, ExecutionWithFlow> stream) {
+    private void handleMain(KStream<String, ExecutionWithFlow> stream) {
         KStream<String, Execution> result = stream
-            .filter(
-                (key, value) -> !value.getExecution().getState().isTerninated(),
-                Named.as("handleEnd-terminated-filter")
-            )
             .mapValues(
                 (readOnlyKey, value) -> {
-                    List<ResolvedTask> currentTasks = value.getExecution()
-                        .findTaskDependingFlowState(
-                            ResolvedTask.of(value.getFlow().getTasks()),
-                            ResolvedTask.of(value.getFlow().getErrors())
-                        );
+                    Optional<Execution> main = this.doMain(value.getExecution(), value.getFlow());
 
-                    if (value.getExecution().isTerminated(currentTasks)) {
-                        return this.onEnd(value.getFlow(), value.getExecution());
-                    }
-
-                    return null;
+                    return main.orElse(null);
                 },
-                Named.as("handleEnd-map")
+                Named.as("handleMain-map")
             );
 
-        this.toExecution(result, "handleEnd");
+        this.toExecution(result, "handleMain");
     }
 
     private void purgeExecutor(KStream<String, ExecutionWithFlow> stream) {
@@ -278,7 +257,7 @@ public class KafkaExecutor extends AbstractExecutor {
         terminated
             .mapValues(
                 (readOnlyKey, value) -> (Execution) null,
-                Named.as("purgeExecutor-toNull-map")
+                Named.as("purgeExecutor-executorToNull-map")
             )
             .to(
                 kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
@@ -289,162 +268,100 @@ public class KafkaExecutor extends AbstractExecutor {
         terminated
             .flatMapValues(
                 (readOnlyKey, value) -> value.getExecution().getTaskRunList(),
-                Named.as("workerTaskResultKTable-toTaskRun-flatmap")
+                Named.as("purgeExecutor-toTaskRun-flatmap")
             )
             .map(
                 (readOnlyKey, value) -> new KeyValue<>(
                     value.getId(),
                     (WorkerTaskResult) null
                 ),
-                Named.as("workerTaskResultKTable-toNull-map")
+                Named.as("purgeExecutor-workerTaskToNull-map")
             )
             .to(
                 kafkaAdminService.getTopicName(WorkerTaskResult.class),
                 Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
             );
 
-        // clean up deduplication state
+        // clean up WorkerTask deduplication state
         terminated
-            .flatMapValues((readOnlyKey, value) -> value.getExecution().getTaskRunList())
+            .flatMapValues(
+                (readOnlyKey, value) -> value.getExecution().getTaskRunList(),
+                Named.as("purgeExecutor-toTaskRun-flapMap")
+            )
             .transformValues(
                 () -> new DeduplicationPurgeTransformer<>(
                     WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
                     (key, value) -> value.getExecutionId() + "-" + value.getId()
                 ),
-                Named.as("workerTaskResultKTable-deduplicationPurge-transform"),
+                Named.as("purgeExecutor-workerTaskPurge-transform"),
                 WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
             );
+
+        // clean up Execution Nexts deduplication state
+        terminated
+            .transformValues(
+                () -> new DeduplicationPurgeTransformer<>(
+                    NEXTS_DEDUPLICATION_STATE_STORE_NAME,
+                    (key, value) -> value.getExecution().getId()
+                ),
+                Named.as("executionNexts-nextsPurge-transform"),
+                NEXTS_DEDUPLICATION_STATE_STORE_NAME
+            );
     }
 
-    private void handleListeners(KStream<String, ExecutionWithFlow> stream) {
-        KStream<String, Execution> result = stream
-            .filter(
-                (key, value) -> value.getExecution().getState().isTerninated(),
-                Named.as("handleListeners-terminated-filter")
-            )
-            .mapValues(
-                (readOnlyKey, value) -> {
-                    List<ResolvedTask> currentTasks = value.getExecution().findValidListeners(value.getFlow());
-
-                    List<TaskRun> next = FlowableUtils.resolveSequentialNexts(
-                        value.getExecution(),
-                        currentTasks,
-                        new ArrayList<>()
-                    );
-
-                    if (next.size() > 0) {
-                        return this.onNexts(value.getFlow(), value.getExecution(), next);
-                    }
-
-                    return null;
-                },
-                Named.as("handleListeners-map")
-            )
-            .filter((key, value) -> value != null, Named.as("handleListeners-null-filter"));
-
-        this.toExecution(result, "handleListeners");
-    }
-
-
-    private void handleChild(KStream<String, TaskRunExecutionWithFlow> stream) {
-        KStream<String, Either<WithException, WorkerTaskResult>> childWorkerTaskResult = stream
-            .filter(
-                (key, value) -> value.getTaskRun().getState().getCurrent() == State.Type.RUNNING,
-                Named.as("handleChild-running-filter")
-            )
+    private void handleNexts(KStream<String, ExecutionWithFlow> stream) {
+        KStream<String, Either<WithException, ExecutionNexts>> streamEither = stream
             .mapValues(
                 (readOnlyKey, value) -> {
                     try {
-                        return Either.right(this.childWorkerTaskResult(
+                        Optional<List<TaskRun>> nexts = this.doNexts(value.getExecution(), value.getFlow());
+
+                        return Either.right(new ExecutionNexts(
                             value.getFlow(),
                             value.getExecution(),
-                            value.getTaskRun()
-                        ).orElse(null));
+                            nexts.orElse(null)
+                        ));
                     } catch (Exception e) {
                         return Either.left(new WithException(value, e));
                     }
                 },
-                Named.as("handleChild-map")
+                Named.as("handleNexts-map")
             );
 
-        branchException(childWorkerTaskResult, "handleChild")
-            .filter((key, value) -> value != null, Named.as("handleChild-null-filter"))
-            .selectKey(
-                (key, value) -> value.getTaskRun().getId(),
-                Named.as("handleChild-selectKey")
+        KStream<String, Execution> result = branchException(streamEither, "handleNexts")
+            .transformValues(
+                () -> new ExecutionNextsDeduplicationTransformer(
+                    NEXTS_DEDUPLICATION_STATE_STORE_NAME
+                ),
+                Named.as("handleNexts-deduplication-transform"),
+                NEXTS_DEDUPLICATION_STATE_STORE_NAME
             )
-            .to(
-                kafkaAdminService.getTopicName(WorkerTaskResult.class),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
-            );
-
-    }
-
-    private void handleChildNext(KStream<String, TaskRunExecutionWithFlow> stream) {
-        KStream<String, Either<WithException, Execution>> streamEither = stream
-            .filter(
-                (key, value) -> value.getTaskRun().getState().getCurrent() == State.Type.RUNNING,
-                Named.as("handleChildNext-running-filter")
-            )
+            .filter((key, value) -> value != null, Named.as("handleNexts-dedupNull-filter"))
             .mapValues(
-                (readOnlyKey, value) -> {
-                    try {
-                        return Either.right(
-                            this.childNexts(value.getFlow(), value.getExecution(), value.getTaskRun())
-                                .orElse(null)
-                        );
-                    } catch (Exception e) {
-                        return Either.left(new WithException(value, e));
-                    }
-                },
-                Named.as("handleChildNext-map")
+                (readOnlyKey, value) -> this.onNexts(value.getFlow(), value.getExecution(), value.getNexts()),
+                Named.as("handleNexts-onNexts-map")
             );
-
-        KStream<String, Execution> result = branchException(streamEither, "handleChildNext");
 
         this.toExecution(result, "handleChildNext");
     }
 
-    private void handleWorkerTask(KStream<String, TaskRunExecutionWithFlow> stream) {
-        KStream<String, Either<WithException, WorkerTask>> streamEither = stream
-            .filter(
-                (key, value) -> value.getTaskRun().getState().getCurrent() == State.Type.CREATED,
-                Named.as("handleWorkerTask-created-filter")
-            )
+    private void handleWorkerTask(KStream<String, ExecutionWithFlow> stream) {
+        KStream<String, Either<WithException, List<WorkerTask>>> streamEither = stream
             .mapValues(
-                (readOnlyKey, taskRunExecutionWithFlow) -> {
+                (readOnlyKey, value) -> {
                     try {
-                        ResolvedTask resolvedTask = taskRunExecutionWithFlow.getFlow().findTaskByTaskRun(
-                            taskRunExecutionWithFlow.getTaskRun(),
-                            new RunContext(
-                                this.applicationContext,
-                                taskRunExecutionWithFlow.getFlow(),
-                                taskRunExecutionWithFlow.getExecution()
-                            )
-                        );
-
                         return Either.right(
-                            WorkerTask.builder()
-                                .runContext(new RunContext(
-                                        this.applicationContext,
-                                        taskRunExecutionWithFlow.getFlow(),
-                                        resolvedTask,
-                                        taskRunExecutionWithFlow.getExecution(),
-                                        taskRunExecutionWithFlow.getTaskRun()
-                                    )
-                                )
-                                .taskRun(taskRunExecutionWithFlow.getTaskRun())
-                                .task(resolvedTask.getTask())
-                                .build()
+                            this.doWorkerTask(value.getExecution(), value.getFlow()).orElse(null)
                         );
                     } catch (Exception e) {
-                        return Either.left(new WithException(taskRunExecutionWithFlow, e));
+                        return Either.left(new WithException(value, e));
                     }
                 },
                 Named.as("handleWorkerTask-map")
             );
 
-        branchException(streamEither, "handleWorkerTask")
+        KStream<String, WorkerTask> result = branchException(streamEither, "handleWorkerTask")
+            .flatMapValues((readOnlyKey, value) -> value)
             .transformValues(
                 () -> new DeduplicationTransformer<>(
                     WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
@@ -456,32 +373,62 @@ public class KafkaExecutor extends AbstractExecutor {
             )
             .filter((key, value) -> value != null, Named.as("handleWorkerTask-null-filter"))
             .map((key, value) -> new KeyValue<>(value.getTaskRun().getId(), value))
+            .selectKey(
+                (key, value) -> value.getTaskRun().getId(),
+                Named.as("handleWorkerTask-selectKey")
+            );
+
+        KStream<String, WorkerTask> workerTaskKStream = logIfEnabled(
+            result,
+            (key, value) -> log.debug(
+                "WorkerTask out: {}",
+                value.getTaskRun().toStringState()
+            ),
+            "handleWorkerTask-log"
+        );
+
+        workerTaskKStream
             .to(
                 kafkaAdminService.getTopicName(WorkerTask.class),
                 Produced.with(Serdes.String(), JsonSerde.of(WorkerTask.class))
             );
     }
 
-    private void handleFlowNext(KStream<String, ExecutionWithFlow> stream) {
-        KStream<String, Execution> result = stream
+    private void handleWorkerTaskResult(KStream<String, ExecutionWithFlow> stream) {
+        KStream<String, Either<WithException, List<WorkerTaskResult>>> streamEither = stream
             .mapValues(
                 (readOnlyKey, value) -> {
-                    List<TaskRun> next = FlowableUtils.resolveSequentialNexts(
-                        value.getExecution(),
-                        ResolvedTask.of(value.getFlow().getTasks()),
-                        ResolvedTask.of(value.getFlow().getErrors())
-                    );
-
-                    if (next.size() > 0) {
-                        return this.onNexts(value.getFlow(), value.getExecution(), next);
+                    try {
+                        return Either.right(
+                            this.doWorkerTaskResult(value.getExecution(), value.getFlow()).orElse(null)
+                        );
+                    } catch (Exception e) {
+                        return Either.left(new WithException(value, e));
                     }
-
-                    return null;
                 },
-                Named.as("handleFlowNext-map")
+                Named.as("handleWorkerTaskResult-map")
             );
 
-        this.toExecution(result, "handleFlowNext");
+        branchException(streamEither, "handleWorkerTaskResult")
+            .flatMapValues((readOnlyKey, value) -> value)
+            .transformValues(
+                () -> new DeduplicationTransformer<>(
+                    WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
+                    (key, value) -> value.getTaskRun().getExecutionId() + "-" + value.getTaskRun().getId(),
+                    (key, value) -> value.getTaskRun().getState().getCurrent().name()
+                ),
+                Named.as("handleWorkerTaskResult-deduplication-transform"),
+                WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
+            )
+            .filter((key, value) -> value != null, Named.as("handleWorkerTaskResult-null-filter"))
+            .selectKey(
+                (key, value) -> value.getTaskRun().getId(),
+                Named.as("handleWorkerTaskResult-selectKey")
+            )
+            .to(
+                kafkaAdminService.getTopicName(WorkerTaskResult.class),
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
+            );
     }
 
     private <T> KStream<String, T> branchException(KStream<String, Either<WithException, T>> stream, String methodName) {
@@ -499,9 +446,9 @@ public class KafkaExecutor extends AbstractExecutor {
 
         return stream
             .filter((key, value) -> value.isRight(), Named.as(methodName + "-isRight-filter"))
-            .mapValues(Either::getRight, Named.as(methodName + "-isRight-map"));
+            .mapValues(Either::getRight, Named.as(methodName + "-isRight-map"))
+            .filter((key, value) -> value != null, Named.as(methodName + "-isRight-notNull-filter"));
     }
-
 
     private KStream<String, Execution> toExecutionJoin(KStream<String, HasJoin> stream) {
         KStream<String, Execution> result = stream
@@ -567,7 +514,6 @@ public class KafkaExecutor extends AbstractExecutor {
         Execution execution;
         boolean joined;
     }
-
     
     @AllArgsConstructor
     @Getter
@@ -578,10 +524,10 @@ public class KafkaExecutor extends AbstractExecutor {
 
     @AllArgsConstructor
     @Getter
-    public static class TaskRunExecutionWithFlow implements ExecutionInterface {
+    public static class ExecutionNexts implements ExecutionInterface {
         Flow flow;
         Execution execution;
-        TaskRun taskRun;
+        List<TaskRun> nexts;
     }
 
     @AllArgsConstructor

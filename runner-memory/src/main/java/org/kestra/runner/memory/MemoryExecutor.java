@@ -3,27 +3,25 @@ package org.kestra.runner.memory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import lombok.extern.slf4j.Slf4j;
-import org.kestra.core.exceptions.IllegalVariableEvaluationException;
-import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
-import org.kestra.core.runners.*;
+import org.kestra.core.runners.AbstractExecutor;
+import org.kestra.core.runners.WorkerTask;
+import org.kestra.core.runners.WorkerTaskResult;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.inject.Named;
-
-import static org.kestra.core.utils.Rethrow.throwConsumer;
 
 @Slf4j
 @Prototype
@@ -72,26 +70,42 @@ public class MemoryExecutor extends AbstractExecutor {
 
             Execution execution = state.execution;
 
+            Optional<Execution> main = this.doMain(execution, flow);
+            if (main.isPresent()) {
+                this.toExecution(main.get());
+                return;
+            }
+
             try {
-                this.handleChild(execution, flow);
+                Optional<List<TaskRun>> nexts = this.doNexts(execution, flow);
+                if (nexts.isPresent() && deduplicateNexts(execution, nexts.get())) {
+                    this.toExecution(this.onNexts(flow, execution, nexts.get()));
+                    return;
+                }
+
+                Optional<List<WorkerTask>> workerTasks = this.doWorkerTask(execution, flow);
+                if (workerTasks.isPresent()) {
+                    workerTasks.stream()
+                        .flatMap(Collection::stream)
+                        .filter(workerTask -> this.deduplicateWorkerTask(execution, workerTask.getTaskRun()))
+                        .forEach(workerTaskQueue::emit);
+
+                    return;
+                }
+
+                Optional<List<WorkerTaskResult>> workerTaskResults = this.doWorkerTaskResult(execution, flow);
+                if (workerTaskResults.isPresent()) {
+                    workerTaskResults.stream()
+                        .flatMap(Collection::stream)
+                        .forEach(workerTaskResultQueue::emit);
+
+                    return;
+                }
             } catch (Exception e) {
                 log.error("Failed from executor with {}", e.getMessage(), e);
                 this.toExecution(execution.failedExecutionFromExecutor(e));
                 return;
             }
-
-            this.handleListeners(execution, flow);
-
-            try {
-                this.handleWorkerTask(execution, flow);
-            } catch (Exception e) {
-                log.error("Failed from executor with {}", e.getMessage(), e);
-                this.toExecution(execution.failedExecutionFromExecutor(e));
-                return;
-            }
-
-            this.handleEnd(execution, flow);
-            this.handleNext(execution, flow);
 
             // Listeners need the last emit
             if (execution.isTerminatedWithListeners(flow)) {
@@ -155,36 +169,6 @@ public class MemoryExecutor extends AbstractExecutor {
         }
     }
 
-    private void handleWorkerTask(Execution execution, Flow flow) throws IllegalVariableEvaluationException, InternalException {
-        if (execution.getTaskRunList() == null) {
-            return;
-        }
-
-        // submit TaskRun when receiving created, must be done after the state execution store
-        List<TaskRun> nexts = execution
-            .getTaskRunList()
-            .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.CREATED)
-            .collect(Collectors.toList());
-
-        for (TaskRun taskRun: nexts) {
-            ResolvedTask resolvedTask = flow.findTaskByTaskRun(
-                taskRun,
-                new RunContext(this.applicationContext, flow, execution)
-            );
-
-            if (deduplicateWorkerTask(execution, taskRun)) {
-                this.workerTaskQueue.emit(
-                    WorkerTask.builder()
-                        .runContext(new RunContext(this.applicationContext, flow, resolvedTask, execution, taskRun))
-                        .taskRun(taskRun)
-                        .task(resolvedTask.getTask())
-                        .build()
-                );
-            }
-        }
-    }
-
     private boolean deduplicateWorkerTask(Execution execution, TaskRun taskRun) {
         ExecutionState executionState = executions.get(execution.getId());
 
@@ -192,49 +176,15 @@ public class MemoryExecutor extends AbstractExecutor {
         State.Type current = executionState.workerTaskDeduplication.get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
+            log.warn("Duplicate WorkerTask on execution '{}' for taskRun '{}'", execution.getId(), taskRun.getId());
             return false;
         } else {
             executionState.workerTaskDeduplication.put(deduplicationKey, taskRun.getState().getCurrent());
-
             return true;
         }
     }
 
-    private void handleNext(Execution execution, Flow flow) {
-        List<TaskRun> next = FlowableUtils.resolveSequentialNexts(
-            execution,
-            ResolvedTask.of(flow.getTasks()),
-            ResolvedTask.of(flow.getErrors())
-        );
-
-        if (next.size() > 0 && deduplicateChild(execution, next)) {
-            Execution newExecution = this.onNexts(flow, execution, next);
-            this.toExecution(newExecution);
-        }
-    }
-
-    private void handleChild(Execution execution, Flow flow) throws Exception {
-        if (execution.getTaskRunList() == null) {
-            return;
-        }
-
-        execution
-            .getTaskRunList()
-            .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING)
-            .peek(throwConsumer(taskRun -> {
-                this.childWorkerTaskResult(flow, execution, taskRun)
-                    .ifPresent(this.workerTaskResultQueue::emit);
-            }))
-            .forEach(throwConsumer(taskRun -> {
-                this.childNextsTaskRun(flow, execution, taskRun)
-                    .filter(nexts -> deduplicateChild(execution, nexts))
-                    .map(nexts -> this.onNexts(flow, execution, nexts))
-                    .ifPresent(this::toExecution);
-            }));
-    }
-
-    private boolean deduplicateChild(Execution execution, List<TaskRun> taskRuns) {
+    private boolean deduplicateNexts(Execution execution, List<TaskRun> taskRuns) {
         ExecutionState executionState = executions.get(execution.getId());
 
         return taskRuns
@@ -243,48 +193,13 @@ public class MemoryExecutor extends AbstractExecutor {
                 String deduplicationKey = taskRun.getParentTaskRunId() + "-" + taskRun.getTaskId() + "-" + taskRun.getValue();
 
                 if (executionState.childDeduplication.containsKey(deduplicationKey)) {
+                    log.warn("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
                     return false;
                 } else {
                     executionState.childDeduplication.put(deduplicationKey, taskRun.getId());
-
                     return true;
                 }
             });
-    }
-
-    private void handleListeners(Execution execution, Flow flow) {
-        if (!execution.getState().isTerninated()) {
-            return;
-        }
-
-        List<ResolvedTask> currentTasks = execution.findValidListeners(flow);
-
-        List<TaskRun> next = FlowableUtils.resolveSequentialNexts(
-            execution,
-            currentTasks,
-            new ArrayList<>()
-        );
-
-        if (next.size() > 0) {
-            Execution newExecution = this.onNexts(flow, execution, next);
-            this.toExecution(newExecution);
-        }
-    }
-
-    private void handleEnd(Execution execution, Flow flow) {
-        if (execution.getState().isTerninated()) {
-            return;
-        }
-
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
-            ResolvedTask.of(flow.getTasks()),
-            ResolvedTask.of(flow.getErrors())
-        );
-
-        if (execution.isTerminated(currentTasks)) {
-            Execution newExecution = this.onEnd(flow, execution);
-            this.toExecution(newExecution);
-        }
     }
 
     private static class ExecutionState {

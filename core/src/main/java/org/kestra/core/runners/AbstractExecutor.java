@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -77,7 +78,7 @@ public abstract class AbstractExecutor implements Runnable {
         return newExecution;
     }
 
-    protected Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
+    private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
         RunContext runContext = new RunContext(this.applicationContext, flow, execution);
         ResolvedTask parent = flow.findTaskByTaskRun(taskRun, runContext);
 
@@ -109,7 +110,7 @@ public abstract class AbstractExecutor implements Runnable {
         return Optional.empty();
     }
 
-    protected Optional<List<TaskRun>> childNextsTaskRun(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
+    private Optional<List<TaskRun>> childNextsTaskRun(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
         ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(this.applicationContext, flow, execution));
 
         if (parent.getTask() instanceof FlowableTask) {
@@ -124,12 +125,7 @@ public abstract class AbstractExecutor implements Runnable {
         return Optional.empty();
     }
 
-    protected Optional<Execution> childNexts(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
-        return this.childNextsTaskRun(flow, execution, taskRun)
-            .map(nexts -> this.onNexts(flow, execution, nexts));
-    }
-
-    protected Execution onEnd(Flow flow, Execution execution) {
+    private Execution onEnd(Flow flow, Execution execution) {
         Execution newExecution = execution.withState(
             execution.hasFailed() ? State.Type.FAILED : State.Type.SUCCESS
         );
@@ -158,5 +154,149 @@ public abstract class AbstractExecutor implements Runnable {
             .record(newExecution.getState().getDuration());
 
         return newExecution;
+    }
+
+    protected Optional<Execution> doMain(Execution execution, Flow flow) {
+        return this.handleEnd(execution, flow);
+    }
+
+    protected Optional<List<TaskRun>> doNexts(Execution execution, Flow flow) throws Exception {
+        List<TaskRun> nexts;
+
+        nexts = this.handleNext(execution, flow);
+        if (nexts.size() > 0) {
+            return Optional.of(nexts);
+        }
+
+        nexts = this.handleChildNext(execution, flow);
+        if (nexts.size() > 0) {
+            return Optional.of(nexts);
+        }
+
+        nexts = this.handleListeners(execution, flow);
+        if (nexts.size() > 0) {
+            return Optional.of(nexts);
+        }
+
+        return Optional.empty();
+    }
+
+    protected Optional<List<WorkerTask>> doWorkerTask(Execution execution, Flow flow) throws Exception {
+        List<WorkerTask> nexts;
+
+        nexts = this.handleWorkerTask(execution, flow);
+        if (nexts.size() > 0) {
+            return Optional.of(nexts);
+        }
+
+        return Optional.empty();
+    }
+
+    protected Optional<List<WorkerTaskResult>> doWorkerTaskResult(Execution execution, Flow flow) throws Exception {
+        List<WorkerTaskResult> nexts;
+
+        nexts = this.handleChildWorkerTaskResult(execution, flow);
+        if (nexts.size() > 0) {
+            return Optional.of(nexts);
+        }
+
+        return Optional.empty();
+    }
+
+    private List<TaskRun> handleNext(Execution execution, Flow flow) {
+        return FlowableUtils.resolveSequentialNexts(
+            execution,
+            ResolvedTask.of(flow.getTasks()),
+            ResolvedTask.of(flow.getErrors())
+        );
+    }
+
+    private List<TaskRun> handleChildNext(Execution execution, Flow flow) throws Exception {
+        if (execution.getTaskRunList() == null) {
+            return new ArrayList<>();
+        }
+
+        return execution
+            .getTaskRunList()
+            .stream()
+            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING)
+            .flatMap(throwFunction(taskRun -> this.childNextsTaskRun(flow, execution, taskRun)
+                .orElse(new ArrayList<>())
+                .stream()
+            ))
+            .collect(Collectors.toList());
+    }
+
+    private List<WorkerTaskResult> handleChildWorkerTaskResult(Execution execution, Flow flow) throws Exception {
+        if (execution.getTaskRunList() == null) {
+            return new ArrayList<>();
+        }
+
+        return execution
+            .getTaskRunList()
+            .stream()
+            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING)
+            .map(throwFunction(taskRun -> {
+                return this.childWorkerTaskResult(flow, execution, taskRun);
+            }))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+    }
+
+    private List<TaskRun> handleListeners(Execution execution, Flow flow) {
+        if (!execution.getState().isTerninated()) {
+            return new ArrayList<>();
+        }
+
+        List<ResolvedTask> currentTasks = execution.findValidListeners(flow);
+
+        return FlowableUtils.resolveSequentialNexts(
+            execution,
+            currentTasks,
+            new ArrayList<>()
+        );
+    }
+
+    private Optional<Execution> handleEnd(Execution execution, Flow flow) {
+        if (execution.getState().isTerninated()) {
+            return Optional.empty();
+        }
+
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
+            ResolvedTask.of(flow.getTasks()),
+            ResolvedTask.of(flow.getErrors())
+        );
+
+        if (!execution.isTerminated(currentTasks)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(this.onEnd(flow, execution));
+    }
+
+    private List<WorkerTask> handleWorkerTask(Execution execution, Flow flow) throws Exception {
+        if (execution.getTaskRunList() == null) {
+            return new ArrayList<>();
+        }
+
+        // submit TaskRun when receiving created, must be done after the state execution store
+        return execution
+            .getTaskRunList()
+            .stream()
+            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.CREATED)
+            .map(throwFunction(taskRun -> {
+                ResolvedTask resolvedTask = flow.findTaskByTaskRun(
+                    taskRun,
+                    new RunContext(this.applicationContext, flow, execution)
+                );
+
+                return  WorkerTask.builder()
+                    .runContext(new RunContext(this.applicationContext, flow, resolvedTask, execution, taskRun))
+                    .taskRun(taskRun)
+                    .task(resolvedTask.getTask())
+                    .build();
+                }))
+            .collect(Collectors.toList());
     }
 }

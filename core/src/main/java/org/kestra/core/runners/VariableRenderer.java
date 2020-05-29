@@ -9,12 +9,13 @@ import org.kestra.core.runners.handlebars.helpers.InstantHelper;
 import org.kestra.core.runners.handlebars.helpers.JsonHelper;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.kestra.core.utils.Rethrow.throwFunction;
 
 public class VariableRenderer {
-    private static Handlebars handlebars = new Handlebars()
+    private static final Handlebars handlebars = new Handlebars()
         .with(EscapingStrategy.NOOP)
         .registerHelpers(ConditionalHelpers.class)
         .registerHelpers(EachHelper.class)
@@ -52,6 +53,30 @@ public class VariableRenderer {
         }
 
         return current;
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return in
+            .entrySet()
+            .stream()
+            .map(throwFunction(r -> {
+                Object value = r.getValue();
+
+                if (r.getValue() instanceof Map) {
+                    value = this.render((Map) r.getValue(), variables);
+                } else if (r.getValue() instanceof Collection) {
+                    value = this.render((List) r.getValue(), variables);
+                } else if (r.getValue() instanceof String) {
+                    value = this.render((String) r.getValue(), variables);
+                }
+
+                return new AbstractMap.SimpleEntry<>(
+                    r.getKey(),
+                    value
+                );
+            }))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
     }
 
     public List<String> render(List<String> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {

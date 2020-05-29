@@ -46,12 +46,14 @@ public class PluginInstallCommand extends AbstractCommand {
 
         if (this.pluginsPath == null) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), "Missing required options '--plugins' " +
-                "or environnement variable 'KESTRA_PLUGINS_PATH"
+                "or environment variable 'KESTRA_PLUGINS_PATH"
             );
         }
 
         if (!pluginsPath.toFile().exists()) {
-            pluginsPath.toFile().mkdir();
+            if (!pluginsPath.toFile().mkdir()) {
+                throw new RuntimeException("Cannot create directory: " + pluginsPath.toFile().getAbsolutePath());
+            }
         }
 
         try {

@@ -3,6 +3,7 @@ package org.kestra.core.models.flows;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Value;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -13,6 +14,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 @Value
+@Slf4j
 public class State {
     @NotNull
     private Type current;
@@ -34,7 +36,8 @@ public class State {
 
     public State withState(Type state) {
         if (this.current == state) {
-            throw new IllegalStateException("Can't change state, already " + current);
+            log.warn("Can't change state, already " + current);
+            return this;
         }
 
         return new State(state, this);
@@ -74,24 +77,37 @@ public class State {
 
     @JsonIgnore
     public boolean isTerninated() {
-        return this.current == Type.FAILED || this.current == Type.SUCCESS;
+        return this.current.isTerninated();
     }
 
     @JsonIgnore
     public boolean isRunning() {
-        return this.current == Type.RUNNING;
+        return this.current.isRunning();
     }
 
     @JsonIgnore
     public boolean isFailed() {
-        return this.current == Type.FAILED;
+        return this.current.isFailed();
     }
 
     public enum Type {
         CREATED,
         RUNNING,
+        RESTARTED,
         SUCCESS,
-        FAILED,
+        FAILED;
+
+        public boolean isTerninated() {
+            return this == Type.FAILED || this == Type.SUCCESS;
+        }
+
+        public boolean isRunning() {
+            return this == Type.RUNNING || this == Type.RESTARTED;
+        }
+
+        public boolean isFailed() {
+            return this == Type.FAILED;
+        }
     }
 
     @Value

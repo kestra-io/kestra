@@ -5,6 +5,7 @@ import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
+import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
 import org.kestra.core.models.hierarchies.TaskTree;
 import org.kestra.core.models.tasks.FlowableTask;
@@ -16,8 +17,11 @@ import org.kestra.core.runners.RunContext;
 import org.kestra.core.services.TreeService;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @SuperBuilder
 @ToString
@@ -35,7 +39,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {
-        return TreeService.sequential(
+        return TreeService.parallel(
             this.tasks,
             this.errors,
             Collections.singletonList(ParentTaskTree.builder()
@@ -54,14 +58,6 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException{
-        return FlowableUtils.resolveSequentialNexts(
-            execution,
-            this.childTasks(runContext, parentTaskRun),
-            FlowableUtils.resolveTasks(this.errors, parentTaskRun),
-            parentTaskRun
-        );
-
-        /*
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
@@ -76,18 +72,21 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             .stream()
             .filter(resolvedTask -> taskRuns
                 .stream()
-                .noneMatch(taskRun -> FlowableUtils.equals(resolvedTask, taskRun, parentTaskRun))
+                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
             )
             .collect(Collectors.toList());
 
-        if (notFinds.size() > 0) {
+        // first created, leave
+        Optional<TaskRun> lastCreated = execution.findLastByState(currentTasks, State.Type.CREATED, parentTaskRun);
+
+        if (notFinds.size() > 0 && lastCreated.isEmpty()) {
             return notFinds
                 .stream()
                 .map(resolvedTask -> resolvedTask.toTaskRun(execution))
+                .limit(1)
                 .collect(Collectors.toList());
         }
 
         return new ArrayList<>();
-        */
     }
 }

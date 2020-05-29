@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
+import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.listeners.Listener;
 import org.kestra.core.models.tasks.ResolvedTask;
@@ -26,10 +27,7 @@ import java.util.stream.Stream;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import javax.validation.constraints.*;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -49,7 +47,7 @@ public class Flow {
     @NotNull
     @NotBlank
     @Pattern(regexp="[a-zA-Z0-9_-]+")
-    public String id;
+    private String id;
 
     @NotNull
     @Pattern(regexp="[a-z0-9.]+")
@@ -65,6 +63,7 @@ public class Flow {
     private Map<String, Object> variables;
 
     @Valid
+    @NotEmpty
     private List<Task> tasks;
 
     @Valid
@@ -76,11 +75,14 @@ public class Flow {
     @Valid
     private List<Trigger> triggers;
 
+    @NotNull
+    private boolean deleted = false;
+
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);
     }
 
-    public ResolvedTask findTaskByTaskRun(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException {
+    public ResolvedTask findTaskByTaskRun(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException, InternalException {
         return Stream.of(
             this.tasks,
             this.errors,
@@ -94,7 +96,7 @@ public class Flow {
                 .build()
             )
             .findFirst()
-            .orElseThrow(() -> new IllegalArgumentException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
+            .orElseThrow(() -> new InternalException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
     }
 
     public List<Task> listenersTasks() {
@@ -129,6 +131,10 @@ public class Flow {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String uniqueIdWithoutRevision(String namespace, String flowId) {
+        return namespace + flowId;
     }
 
     public Optional<ConstraintViolationException> validateUpdate(Flow updated) {

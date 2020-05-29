@@ -191,6 +191,10 @@ public class RunContext {
         return variableRenderer.render(inline, this.variables);
     }
 
+    public Map<String, Object> render(Map<String, Object> inline) throws IllegalVariableEvaluationException {
+        return variableRenderer.render(inline, this.variables);
+    }
+
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(
             inline,

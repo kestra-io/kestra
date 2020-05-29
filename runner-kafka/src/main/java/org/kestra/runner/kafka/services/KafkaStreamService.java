@@ -1,20 +1,22 @@
 package org.kestra.runner.kafka.services;
 
+import io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.StreamsException;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.runner.kafka.KafkaQueue;
 import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.configs.StreamDefaultsConfig;
 
+import java.time.Duration;
+import java.util.Properties;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
-import java.time.Duration;
-import java.util.Properties;
 
 @Singleton
 @Slf4j
@@ -26,8 +28,14 @@ public class KafkaStreamService {
     @Inject
     private StreamDefaultsConfig streamConfig;
 
+    @Inject
+    private MetricRegistry metricRegistry;
+
     public KafkaStreamService.Stream of(Class<?> group, Topology topology) {
-        Properties properties = new Properties();
+        return this.of(group, topology, new Properties());
+    }
+    
+    public KafkaStreamService.Stream of(Class<?> group, Topology topology, Properties properties) {
         properties.putAll(clientConfig.getProperties());
 
         if (this.streamConfig.getProperties() != null) {
@@ -37,12 +45,17 @@ public class KafkaStreamService {
         properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
 
-        return new KafkaStreamService.Stream(topology, properties);
+        return new Stream(topology, properties, metricRegistry);
     }
 
     public static class Stream extends KafkaStreams {
-        private Stream(Topology topology, Properties props) {
+        private final KafkaStreamsMetrics metrics;
+
+        private Stream(Topology topology, Properties props, MetricRegistry meterRegistry) {
             super(topology, props);
+
+            metrics = new KafkaStreamsMetrics(this);
+            meterRegistry.bind(metrics);
         }
 
         @Override
@@ -63,6 +76,18 @@ public class KafkaStreamService {
             }));
 
             super.start();
+        }
+
+        @Override
+        public void close() {
+            metrics.close();
+            super.close();
+        }
+
+        @Override
+        public boolean close(Duration timeout) {
+            metrics.close();
+            return super.close(timeout);
         }
     }
 }

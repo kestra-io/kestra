@@ -18,11 +18,10 @@ import java.util.function.Consumer;
 @Slf4j
 public class MemoryQueue<T> implements QueueInterface<T> {
     private static final ObjectMapper mapper = JacksonMapper.ofJson();
-    private Class<T> cls;
     private static ExecutorService poolExecutor;
-    private static final Object lock = new Object();
 
-    private Map<String, List<Consumer<T>>> consumers = new ConcurrentHashMap<>();
+    private final Class<T> cls;
+    private final Map<String, List<Consumer<T>>> consumers = new ConcurrentHashMap<>();
 
     public MemoryQueue(Class<T> cls, ApplicationContext applicationContext) {
         if (poolExecutor == null) {
@@ -67,7 +66,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
+    public synchronized Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
         String consumerGroupName;
         if (consumerGroup == null) {
             consumerGroupName = UUID.randomUUID().toString();
@@ -83,7 +82,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
         int index = this.consumers.get(consumerGroupName).size() - 1;
 
         return () -> {
-            synchronized (lock) {
+            synchronized (this) {
                 this.consumers.get(consumerGroupName).remove(index);
 
                 if (this.consumers.get(consumerGroupName).size() == 0) {

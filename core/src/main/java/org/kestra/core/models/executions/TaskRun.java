@@ -96,6 +96,13 @@ public class TaskRun {
             .orElse(null);
     }
 
+    public boolean isSame(TaskRun taskRun) {
+        return this.getId().equals(taskRun.getId()) && (
+            (this.getValue() == null && taskRun.getValue() == null) ||
+                (this.getValue() != null && this.getValue().equals(taskRun.getValue()))
+        );
+    }
+
     public String toString(boolean pretty) {
         if (!pretty) {
             return super.toString();
@@ -109,6 +116,15 @@ public class TaskRun {
             ", state=" + this.getState().getCurrent().toString() +
             ", outputs=" + this.getOutputs() +
             ", attemps=" + this.getAttempts() +
+            ")";
+    }
+
+    public String toStringState() {
+        return "TaskRun(" +
+            "id=" + this.getId() +
+            ", taskId=" + this.getTaskId() +
+            ", value=" + this.getValue() +
+            ", state=" + this.getState().getCurrent().toString() +
             ")";
     }
 }

@@ -68,6 +68,7 @@ abstract public class AbstractCommand implements Runnable {
     public void run() {
         Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(CommandLine.Command.class).name());
         startLogger();
+        sendServerLog();
         startWebserver();
     }
 
@@ -87,10 +88,20 @@ abstract public class AbstractCommand implements Runnable {
             );
     }
 
+    private void sendServerLog() {
+        if (log.isTraceEnabled()) {
+            KestraClassLoader.instance()
+                .getPluginRegistry()
+                .getPlugins()
+                .forEach(c -> log.trace(c.toString()));
+        }
+    }
+
     private void startWebserver() {
         if (!this.withServer) {
             return;
         }
+
 
         applicationContext
             .findBean(EmbeddedServer.class)
@@ -128,7 +139,6 @@ abstract public class AbstractCommand implements Runnable {
 
         return ImmutableMap.of();
     }
-
 
     @SuppressWarnings("unused")
     public PluginRegistry initPluginRegistry() {

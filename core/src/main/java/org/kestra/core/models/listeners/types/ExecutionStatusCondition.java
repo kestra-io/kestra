@@ -1,6 +1,7 @@
 package org.kestra.core.models.listeners.types;
 
 
+import io.micronaut.core.annotation.Introspected;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.List;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@Introspected
 public class ExecutionStatusCondition extends Condition {
     @Valid
     public List<State.Type> in;

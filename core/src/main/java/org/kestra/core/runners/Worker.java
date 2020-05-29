@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
 import io.micronaut.context.ApplicationContext;
+import lombok.Getter;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.kestra.core.queues.QueueException;
@@ -54,10 +55,12 @@ public class Worker implements Runnable {
             .increment();
 
         workerTask.logger().info(
-            "[execution: {}] [taskrun: {}] Task {} (type: {}) started",
+            "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] Type {} started",
+            workerTask.getTaskRun().getNamespace(),
+            workerTask.getTaskRun().getFlowId(),
+            workerTask.getTaskRun().getTaskId(),
             workerTask.getTaskRun().getExecutionId(),
             workerTask.getTaskRun().getId(),
-            workerTask.getTaskRun().getTaskId(),
             workerTask.getTask().getClass().getSimpleName()
         );
 
@@ -119,11 +122,13 @@ public class Worker implements Runnable {
                 this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
             } finally {
                 // log
-                finalWorkerTask.logger().info(
-                    "[execution: {}] [taskrun: {}] Task {} (type: {}) with state {} completed in {}",
-                    finalWorkerTask.getTaskRun().getExecutionId(),
-                    finalWorkerTask.getTaskRun().getId(),
-                    finalWorkerTask.getTaskRun().getTaskId(),
+                workerTask.logger().info(
+                    "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] Type {} with state {} completed in {}",
+                    workerTask.getTaskRun().getNamespace(),
+                    workerTask.getTaskRun().getFlowId(),
+                    workerTask.getTaskRun().getTaskId(),
+                    workerTask.getTaskRun().getExecutionId(),
+                    workerTask.getTaskRun().getId(),
                     finalWorkerTask.getTask().getClass().getSimpleName(),
                     finalWorkerTask.getTaskRun().getState().getCurrent(),
                     finalWorkerTask.getTaskRun().getState().humanDuration()
@@ -147,7 +152,6 @@ public class Worker implements Runnable {
 
     private WorkerTask runAttempt(WorkerTask workerTask) {
         RunnableTask<?> task = (RunnableTask<?>) workerTask.getTask();
-        State.Type state;
 
         RunContext runContext = workerTask
             .getRunContext()
@@ -158,19 +162,23 @@ public class Worker implements Runnable {
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new State());
 
-        Output output = null;
         AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
 
+        metricRunningCount.incrementAndGet();
+
+        WorkerThread workerThread = new WorkerThread(logger, task, runContext);
+        workerThread.start();
+
+        State.Type state;
         try {
-            metricRunningCount.incrementAndGet();
-            output = task.run(runContext);
-            state = State.Type.SUCCESS;
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            workerThread.join();
+            state = workerThread.getTaskState();
+        } catch (InterruptedException e) {
+            logger.error("Failed to join WorkerThread {}", e.getMessage(), e);
             state = State.Type.FAILED;
-        } finally {
-            metricRunningCount.decrementAndGet();
         }
+
+        metricRunningCount.decrementAndGet();
 
         // attempt
         TaskRunAttempt taskRunAttempt = builder
@@ -179,8 +187,8 @@ public class Worker implements Runnable {
             .build()
             .withState(state);
 
-        if (output != null) {
-            logger.debug("Outputs\n{}", JacksonMapper.log(output));
+        if (workerThread.getTaskOutput() != null) {
+            logger.debug("Outputs\n{}", JacksonMapper.log(workerThread.getTaskOutput()));
         }
 
         if (runContext.metrics().size() > 0) {
@@ -197,7 +205,7 @@ public class Worker implements Runnable {
             .withTaskRun(
                 workerTask.getTaskRun()
                     .withAttempts(attempts)
-                    .withOutputs(output != null ? output.toMap() : ImmutableMap.of())
+                    .withOutputs(workerThread.getTaskOutput() != null ? workerThread.getTaskOutput().toMap() : ImmutableMap.of())
             );
     }
 
@@ -217,5 +225,39 @@ public class Worker implements Runnable {
                 new AtomicInteger(0),
                 metricRegistry.tags(workerTask)
             ));
+    }
+
+    @Getter
+    public static class WorkerThread extends Thread {
+        Logger logger;
+        RunnableTask<?> task;
+        RunContext runContext;
+
+        Output taskOutput;
+        org.kestra.core.models.flows.State.Type taskState;
+
+        public WorkerThread(Logger logger, RunnableTask<?> task, RunContext runContext) {
+            super("WorkerThread");
+            this.setUncaughtExceptionHandler(this::exceptionHandler);
+
+            this.logger = logger;
+            this.task = task;
+            this.runContext = runContext;
+        }
+
+        @Override
+        public void run() {
+            try {
+                taskOutput = task.run(runContext);
+                taskState = org.kestra.core.models.flows.State.Type.SUCCESS;
+            } catch (Exception e) {
+                this.exceptionHandler(this, e);
+            }
+        }
+
+        private void exceptionHandler(Thread t, Throwable e) {
+            logger.error(e.getMessage(), e);
+            taskState = org.kestra.core.models.flows.State.Type.FAILED;
+        }
     }
 }

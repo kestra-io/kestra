@@ -56,7 +56,7 @@
                         v-if="hasOutputs"
                         class="btn-secondary"
                         :title="$t('show task outputs')"
-                        :to="{name:'execution', params: $route.params, query: {tab:'execution-output', search: task.id}}"
+                        :to="{name:'execution', params: $route.params, query: {tab:'execution-output', search: task.id + (value ? ` - ${value}` : '')}}"
                     >
                         <location-exit title />
                     </router-link>
@@ -158,6 +158,9 @@ export default {
         },
         task() {
             return this.n.task;
+        },
+        value () {
+            return this.n.taskRun && this.n.taskRun.value
         }
     }
 };

@@ -22,7 +22,11 @@ export default (callback, store) => {
     instance.interceptors.response.use(response => {
         stopLoad()
         return response
+    }, errorResponse => {
+        store.dispatch('core/showErrorMessage', errorResponse.response.data)
+        return errorResponse
     })
+
     Vue.use(
         VueAxios,
         instance

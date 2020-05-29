@@ -16,6 +16,11 @@
         <bottom-line>
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
+                    <b-button class="btn-danger" @click="deleteFlow">
+                        <span class="text-capitalize">{{$t('delete')}}</span>
+                        <delete title />
+                    </b-button>
+
                     <b-button @click="save">
                         <span class="text-capitalize">{{$t('save')}}</span>
                         <content-save title />
@@ -29,6 +34,7 @@
 <script>
 import { mapState } from "vuex";
 import ContentSave from "vue-material-design-icons/ContentSave";
+import Delete from "vue-material-design-icons/Delete";
 import Yaml from "yaml";
 import BottomLine from "../layout/BottomLine";
 import RouteContext from "../../mixins/routeContext";
@@ -38,6 +44,7 @@ export default {
     components: {
         editor: require("vue2-ace-editor"),
         ContentSave,
+        Delete,
         BottomLine
     },
     data() {
@@ -88,10 +95,57 @@ export default {
         editorInit: function() {
             require("brace/mode/yaml");
             require("brace/theme/chrome");
+            this.$refs.aceEditor.editor.textInput.focus()
+        },
+        deleteFlow() {
+            if (this.flow) {
+                let flow = this.flow;
+                const title = this.$t("deleted").capitalize();
+                const desc = this.$t("flow delete ok").capitalize();
+
+                this.$bvModal
+                    .msgBoxConfirm(
+                        [this.$createElement('span', {domProps: {innerHTML: this.$t("delete confirm", {msg: flow.id})}})],
+                        {title: [this.$t("confirmation")]}
+                    )
+                    .then(confirm => {
+                        if (confirm) {
+                            this.$store
+                                .dispatch("flow/deleteFlow", flow)
+                                .then(() => {
+                                    this.$router.push({
+                                        name: "flowsList"
+                                    });
+
+
+                                    this.$bvToast.toast(
+                                        desc,
+                                        {
+                                            title,
+                                            autoHideDelay: 5000,
+                                            toaster: "b-toaster-top-right",
+                                            variant: "success"
+                                        }
+                                    );
+                                });
+                        }
+                    });
+            }
         },
         save() {
             if (this.flow) {
-                const flow = Yaml.parse(this.content);
+                let flow;
+                try {
+                    flow = Yaml.parse(this.content);
+                } catch (err) {
+                    this.$bvToast.toast(this.$t("check your the yaml is valid").capitalize(), {
+                        title: this.$t("invalid flow").capitalize(),
+                        autoHideDelay: 5000,
+                        toaster: "b-toaster-top-right",
+                        variant: "warning"
+                    });
+                    return
+                }
                 if (this.isEdit) {
                     for (const key in this.readOnlyEditFields) {
                         if (flow[key] !== this.readOnlyEditFields[key]) {
@@ -127,17 +181,6 @@ export default {
                             }
                         );
                     })
-                    .catch(() => {
-                        this.$bvToast.toast(
-                            this.$t("flow update aborted").capitalize(),
-                            {
-                                title: this.$t("fail").capitalize(),
-                                autoHideDelay: 5000,
-                                toaster: "b-toaster-top-right",
-                                variant: "danger"
-                            }
-                        );
-                    })
                     .finally(() => {
                         this.loadFlow();
                     });
@@ -160,19 +203,8 @@ export default {
                             variant: "success"
                         });
                     })
-                    .catch(() => {
-                        this.$bvToast.toast("Failed to save.", {
-                            title: "Flow save error",
-                            autoHideDelay: 5000,
-                            toaster: "b-toaster-top-right",
-                            variant: "danger"
-                        });
-                    });
             }
         }
-    },
-    destroyed() {
-        this.$store.commit("flow/setFlow", undefined);
     }
 };
 </script>

@@ -4,6 +4,7 @@ import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
@@ -22,8 +23,8 @@ import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaConsumerService;
 import org.kestra.runner.kafka.services.KafkaProducerService;
 
-import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -32,14 +33,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.annotation.PreDestroy;
 
 @Slf4j
-public class KafkaQueue<T> implements QueueInterface<T> {
-    private Class<T> cls;
-    private KafkaAdminService kafkaAdminService;
-    private KafkaConsumerService kafkaConsumerService;
-    private KafkaProducer<String, T> kafkaProducer;
-    private TopicsConfig topicsConfig;
+public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
+    private final Class<T> cls;
+    private final AdminClient adminClient;
+    private final KafkaConsumerService kafkaConsumerService;
+    private final KafkaProducer<String, T> kafkaProducer;
+    private final List<KafkaConsumer<String, T>> kafkaConsumers = new ArrayList<>();
+    private final TopicsConfig topicsConfig;
     private static ExecutorService poolExecutor;
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
@@ -49,27 +52,29 @@ public class KafkaQueue<T> implements QueueInterface<T> {
             );
         }
 
+        KafkaAdminService kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
+
         this.cls = cls;
-        this.kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
+        this.adminClient = kafkaAdminService.of();
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
         this.kafkaProducer = applicationContext.getBean(KafkaProducerService.class).of(cls, JsonSerde.of(cls));
         this.topicsConfig = applicationContext
             .getBeansOfType(TopicsConfig.class)
             .stream()
-            .filter(r -> r.getCls().equals(this.cls.getName().toLowerCase().replace(".", "-")))
+            .filter(r -> r.getCls() == this.cls)
             .findFirst()
             .orElseThrow();
 
-        this.kafkaAdminService.createIfNotExist(this.cls);
+        kafkaAdminService.createIfNotExist(this.cls);
     }
 
     private String key(Object object) {
         if (this.cls == Execution.class) {
             return ((Execution) object).getId();
         } else if (this.cls == WorkerTask.class) {
-            return ((WorkerTask) object).getTaskRun().getExecutionId();
+            return ((WorkerTask) object).getTaskRun().getId();
         } else if (this.cls == WorkerTaskResult.class) {
-            return ((WorkerTaskResult) object).getTaskRun().getExecutionId();
+            return ((WorkerTaskResult) object).getTaskRun().getId();
         } else {
             throw new IllegalArgumentException("Unknown type '" + this.cls.getName() + "'");
         }
@@ -112,6 +117,9 @@ public class KafkaQueue<T> implements QueueInterface<T> {
                 consumerGroup,
                 JsonSerde.of(this.cls)
             );
+
+            kafkaConsumers.add(kafkaConsumer);
+
             if (consumerGroup != null) {
                 kafkaConsumer.subscribe(Collections.singleton(topicsConfig.getName()));
             } else {
@@ -143,7 +151,7 @@ public class KafkaQueue<T> implements QueueInterface<T> {
 
     private List<TopicPartition> getTopicPartition() {
         try {
-            return this.kafkaAdminService.of()
+            return this.adminClient
                 .describeTopics(Collections.singleton(topicsConfig.getName()))
                 .all()
                 .get()
@@ -166,8 +174,10 @@ public class KafkaQueue<T> implements QueueInterface<T> {
             );
     }
 
+    @PreDestroy
     @Override
-    public void close() throws IOException {
-
+    public void close() {
+        kafkaProducer.close();
+        kafkaConsumers.forEach(KafkaConsumer::close);
     }
 }

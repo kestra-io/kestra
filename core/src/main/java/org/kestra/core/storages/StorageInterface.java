@@ -6,7 +6,6 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
 import org.kestra.core.models.tasks.ResolvedTask;
-import org.kestra.core.models.tasks.Task;
 import org.kestra.core.utils.Slugify;
 
 import java.io.*;
@@ -39,7 +38,7 @@ public interface StorageInterface {
         try {
             return this.put(
                 this.uri(flow, execution, input, file.getName()),
-                new FileInputStream(file)
+                new BufferedInputStream(new FileInputStream(file))
             );
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);

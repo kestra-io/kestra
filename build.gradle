@@ -1,11 +1,3 @@
-buildscript {
-    ext {
-        micronautVersion = "1.3.2"
-        kafkaVersion = "2.4.0"
-        lombokVersion = "1.18.12"
-    }
-}
-
 plugins {
     // micronaut
     id "java"
@@ -22,7 +14,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.27.0"
 
     // front
-    id 'org.siouan.frontend' version '1.3.0'
+    id 'org.siouan.frontend' version '1.3.0' apply false
 
     // release
     id "com.jfrog.bintray" version "1.8.4" apply false
@@ -88,6 +80,7 @@ allprojects {
         implementation "io.micronaut.data:micronaut-data-model"
         implementation "io.micronaut:micronaut-management"
         implementation "io.micronaut.configuration:micronaut-micrometer-core"
+        implementation "io.micrometer:micrometer-core:1.4.2"
         implementation "io.micronaut.configuration:micronaut-micrometer-registry-prometheus"
         api "io.micronaut:micronaut-http-client"
 
@@ -194,7 +187,7 @@ jar {
 }
 
 shadowJar {
-    dependsOn = [assembleFrontend]
+    dependsOn = ['ui:assembleFrontend']
 
     archiveClassifier.set(null)
     mergeServiceFiles()
@@ -282,7 +275,7 @@ task runStandalone(type: JavaExec) {
     group = "application"
     classpath = project(":cli").sourceSets.main.runtimeClasspath
     main = mainClassName
-    args 'standalone'
+    args 'server', 'standalone'
 }
 
 /**********************************************************************************************************************\

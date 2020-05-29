@@ -3,6 +3,8 @@ package org.kestra.repository.memory;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
+import org.kestra.core.models.executions.metrics.Stats;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 
@@ -33,13 +35,13 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
         }
 
         List<Execution> filteredExecutions = executions
-                .values()
-                .stream()
-                .filter(e -> Objects.nonNull(namespace))
-                .filter(e -> e.getNamespace().equals(namespace))
-                .filter(e -> Objects.nonNull(e.getFlowId()))
-                .filter(e -> e.getFlowId().equals(flowId))
-                .collect(Collectors.toList());
+            .values()
+            .stream()
+            .filter(e -> Objects.nonNull(namespace))
+            .filter(e -> e.getNamespace().equals(namespace))
+            .filter(e -> Objects.nonNull(e.getFlowId()))
+            .filter(e -> e.getFlowId().equals(flowId))
+            .collect(Collectors.toList());
 
         return ArrayListTotal.of(pageable, filteredExecutions);
     }
@@ -47,5 +49,15 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     @Override
     public Execution save(Execution execution) {
         return executions.put(execution.getId(), execution);
+    }
+
+    @Override
+    public Map<String, ExecutionMetricsAggregation> aggregateByStateWithDurationStats(String query, Pageable pageable) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Map<String, Stats> findLast24hDurationStats(String query, Pageable pageable) {
+        return null;
     }
 }

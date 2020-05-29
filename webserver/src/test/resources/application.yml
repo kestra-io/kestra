@@ -14,3 +14,7 @@ kestra:
     type: local
     local:
       base-path: /tmp/unittest
+
+  server:
+    access-log:
+      enabled: false

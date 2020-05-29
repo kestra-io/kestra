@@ -7,10 +7,13 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.queues.QueueFactoryInterface;
+import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.RunContext;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.*;
 import java.util.function.Predicate;
@@ -25,9 +28,12 @@ import static org.kestra.core.utils.Rethrow.throwPredicate;
  */
 @Singleton
 public class ExecutionService {
+    @Inject
+    private FlowRepositoryInterface flowRepositoryInterface;
 
     @Inject
-    FlowRepositoryInterface flowRepositoryInterface;
+    @Named(QueueFactoryInterface.EXECUTION_NAMED)
+    private QueueInterface<Execution> executionQueue;
 
     /**
      * Returns an execution that can be run from a specific task.
@@ -49,9 +55,18 @@ public class ExecutionService {
      * @throws IllegalArgumentException If no referenceTaskId is provided or if there is no failed task. Also thrown if
      *                                  a {@code referenceTaskId} is provided but there is a failed task before the reference task.
      */
-    public Execution getRestartExecution(final Execution execution, String referenceTaskId) throws IllegalStateException, IllegalArgumentException, IllegalVariableEvaluationException {
+    public Execution restart(final Execution execution, String referenceTaskId) throws Exception {
+        final Execution newExecution = this.getRestartExecution(execution, referenceTaskId);
+        executionQueue.emit(newExecution);
+
+        return newExecution;
+    }
+
+    private Execution getRestartExecution(final Execution execution, String referenceTaskId) throws Exception {
         if (!execution.getState().isTerninated()) {
-            throw new IllegalStateException("Execution must be terminated to be restarted !");
+            throw new IllegalStateException("Execution must be terminated to be restarted, " +
+                "current state is '" + execution.getState().getCurrent() + "' !"
+            );
         }
 
         if (StringUtils.hasText(referenceTaskId)) {
@@ -106,7 +121,9 @@ public class ExecutionService {
             state = new State();
         else if (referenceTaskRunAncestors.contains(taskRun.getId()))
             // The current task run is an ascendant of the reference task run
-            state = new State().withState(State.Type.RUNNING);
+            state = new State()
+                .withState(State.Type.RESTARTED)
+                .withState(State.Type.RUNNING);
         else
             state = new State().withState(State.Type.SUCCESS);
 
@@ -201,7 +218,10 @@ public class ExecutionService {
         return execution.childExecution(
             newExecutionId,
             newTaskRuns,
-            new State().withState(State.Type.RUNNING));
+            new State()
+                .withState(State.Type.RESTARTED)
+                .withState(State.Type.CREATED)
+        );
     }
 
 
@@ -212,7 +232,7 @@ public class ExecutionService {
      * @return The provided execution that can be run again from the last failed task.
      * @throws IllegalArgumentException If there is no failed task.
      */
-    private Execution createRestartFromLastFailed(final Execution execution) throws IllegalArgumentException, IllegalVariableEvaluationException {
+    private Execution createRestartFromLastFailed(final Execution execution) throws Exception {
         final Flow flow = flowRepositoryInterface.findByExecution(execution);
 
         final Predicate<TaskRun> notLastFailed = throwPredicate(taskRun -> {
@@ -238,6 +258,7 @@ public class ExecutionService {
         final Set<String> refTaskRunAncestors = getAncestors(execution, (int) refTaskRunIndex);
 
         final Execution toRestart = execution
+            .withState(State.Type.RESTARTED)
             .withState(State.Type.RUNNING)
             .withTaskRunList(execution.getTaskRunList().subList(0, (int) refTaskRunIndex + 1));
 
@@ -258,5 +279,4 @@ public class ExecutionService {
 
         return toRestart;
     }
-
 }

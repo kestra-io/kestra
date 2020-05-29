@@ -1,19 +1,14 @@
 package org.kestra.runner.kafka;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.test.annotation.MicronautTest;
 import org.apache.kafka.common.errors.RecordTooLargeException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueException;
-import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.InputsTest;
 import org.kestra.core.runners.ListenersTest;
-import org.kestra.core.runners.RunnerUtils;
-import org.kestra.core.runners.StandAloneRunner;
-import org.kestra.core.utils.TestsUtils;
+import org.kestra.core.runners.RunnerCaseTest;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -26,37 +21,32 @@ import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest
-class KafkaRunnerTest {
+class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Inject
-    private StandAloneRunner runner;
-
-    @Inject
-    private RunnerUtils runnerUtils;
-
-    @Inject
-    private LocalFlowRepositoryLoader repositoryLoader;
-
-    @BeforeEach
-    private void init() throws IOException, URISyntaxException {
-        runner.setThreads(1);
-        runner.run();
-        TestsUtils.loads(repositoryLoader);
-    }
+    private RunnerCaseTest runnerCaseTest;
 
     @Test
     void full() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "full", null, null, Duration.ofSeconds(15));
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "full");
 
         assertThat(execution.getTaskRunList(), hasSize(13));
     }
 
     @Test
+    void logs() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "logs");
+
+        assertThat(execution.getTaskRunList(), hasSize(3));
+    }
+
+    @Test
     void errors() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "errors", null, null, Duration.ofSeconds(15));
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "errors");
 
         assertThat(execution.getTaskRunList(), hasSize(7));
     }
@@ -66,6 +56,27 @@ class KafkaRunnerTest {
         Execution execution = runnerUtils.runOne("org.kestra.tests", "sequential");
 
         assertThat(execution.getTaskRunList(), hasSize(11));
+    }
+
+    @Test
+    void parallel() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "parallel", null, null, Duration.ofSeconds(60));
+
+        assertThat(execution.getTaskRunList(), hasSize(8));
+    }
+
+    @Test
+    void parallelNested() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "parallel-nested", null, null, Duration.ofSeconds(60));
+
+        assertThat(execution.getTaskRunList(), hasSize(11));
+    }
+
+    @Test
+    void sequentialNested() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "each-sequential-nested", null, null, Duration.ofSeconds(60));
+
+        assertThat(execution.getTaskRunList(), hasSize(23));
     }
 
     @Test
@@ -131,5 +142,10 @@ class KafkaRunnerTest {
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getTaskRunList().get(1).getAttempts().get(0).getLogs().get(0).getMessage(), containsString("Missing variable: inputs.invalid"));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+    }
+
+    @Test
+    void restart() throws Exception {
+        runnerCaseTest.restart();
     }
 }

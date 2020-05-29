@@ -1,6 +1,7 @@
 package org.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -45,6 +46,11 @@ public class ErrorController {
     }
 
     @Error(global = true)
+    public HttpResponse<JsonError> invalidFormatException(HttpRequest<?> request, InvalidFormatException e) {
+        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid Format");
+    }
+
+    @Error(global = true)
     public HttpResponse<JsonError> internalServerError(HttpRequest<?> request, Throwable e) {
         return jsonError(request, e, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
     }
@@ -55,7 +61,7 @@ public class ErrorController {
             .body(jsonError);
     }
 
-    private static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {
+    public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {
         if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
             log.error(e.getMessage(), e);
         } else {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.ShardOperationFailedException;
@@ -18,17 +19,22 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
+import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.kestra.core.models.validations.ModelValidator;
@@ -36,15 +42,17 @@ import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 @Slf4j
-abstract public class AbstractElasticSearchRepository <T> {
+abstract public class AbstractElasticSearchRepository<T> {
     protected static final ObjectMapper mapper = JacksonMapper.ofJson();
     protected Class<T> cls;
 
@@ -72,15 +80,31 @@ abstract public class AbstractElasticSearchRepository <T> {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    protected BoolQueryBuilder defaultFilter() {
+        return QueryBuilders.boolQuery()
+            .must(QueryBuilders.matchQuery("deleted", false));
+    }
+
     protected Optional<T> getRequest(String index, String id) {
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.termQuery("_id", id));
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool)
+            .size(1);
+
+        SearchRequest searchRequest = this.searchRequest(
+            index,
+            sourceBuilder,
+            false
+        );
+
         try {
-            GetResponse response = client.get(new GetRequest(this.indicesConfigs.get(index).getIndex(), id), RequestOptions.DEFAULT);
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
-            if (!response.isExists()) {
-                return Optional.empty();
-            }
-
-            return Optional.of(mapper.readValue(response.getSourceAsString(), this.cls));
+            return this.map(searchResponse.getHits().getHits())
+                .stream()
+                .findFirst();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -123,18 +147,29 @@ abstract public class AbstractElasticSearchRepository <T> {
         }
     }
 
-    protected DeleteResponse deleteRequest(String index, String id) {
-        DeleteRequest request = new DeleteRequest(this.indicesConfigs.get(index).getIndex(), id);
+    protected UpdateResponse updateRequest(String index, String id, XContentBuilder doc) {
+        UpdateRequest request = new UpdateRequest(this.indicesConfigs.get(index).getIndex(), id);
+        request.doc(doc);
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
         try {
-            DeleteResponse response = client.delete(request, RequestOptions.DEFAULT);
+            UpdateResponse response = client.update(request, RequestOptions.DEFAULT);
             handleWriteErrors(response);
 
             return response;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @SneakyThrows
+    protected UpdateResponse deleteRequest(String index, String id) {
+        XContentBuilder delete = jsonBuilder()
+            .startObject()
+            .field("deleted", true)
+            .endObject();
+
+        return this.updateRequest(index, id, delete);
     }
 
     protected SearchRequest searchRequest(String index, SearchSourceBuilder sourceBuilder, boolean scroll) {
@@ -149,11 +184,17 @@ abstract public class AbstractElasticSearchRepository <T> {
         return searchRequest;
     }
 
-    protected SearchSourceBuilder searchSource(QueryBuilder query, Pageable pageable) {
+    protected SearchSourceBuilder searchSource(QueryBuilder query, Optional<List<AggregationBuilder>> aggregations, Pageable pageable) {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(query)
             .size(pageable.getSize())
             .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
+        if (aggregations.isPresent()) {
+            for (AggregationBuilder aggregation : aggregations.get()) {
+                sourceBuilder.aggregation(aggregation);
+            }
+        }
 
         for (Sort.Order order : pageable.getSort().getOrderBy()) {
             sourceBuilder = sourceBuilder.sort(
@@ -166,8 +207,10 @@ abstract public class AbstractElasticSearchRepository <T> {
     }
 
     protected ArrayListTotal<T> findQueryString(String index, String query, Pageable pageable) {
-        QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
-        SearchSourceBuilder sourceBuilder = this.searchSource(queryString, pageable);
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.queryStringQuery(query));
+
+        SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
 
         return this.query(index, sourceBuilder);
     }

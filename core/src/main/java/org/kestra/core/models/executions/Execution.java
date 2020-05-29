@@ -3,11 +3,14 @@ package org.kestra.core.models.executions;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
+import lombok.extern.slf4j.Slf4j;
+import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
@@ -20,9 +23,11 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.CRC32;
 
 @Value
 @Builder
+@Slf4j
 public class Execution {
     @NotNull
     private String id;
@@ -47,6 +52,9 @@ public class Execution {
 
     private String parentId;
 
+    @NotNull
+    private boolean deleted = false;
+
     public Execution withState(State.Type state) {
         return new Execution(
             this.id,
@@ -60,7 +68,7 @@ public class Execution {
         );
     }
 
-    public Execution withTaskRun(TaskRun taskRun) {
+    public Execution withTaskRun(TaskRun taskRun) throws InternalException {
         ArrayList<TaskRun> newTaskRunList = new ArrayList<>(this.taskRunList);
 
         boolean b = Collections.replaceAll(
@@ -99,33 +107,37 @@ public class Execution {
     }
 
     public List<TaskRun> findTaskRunsByTaskId(String id) {
+        if (this.taskRunList == null) {
+            return new ArrayList<>();
+        }
+
         return this.taskRunList
             .stream()
             .filter(taskRun -> taskRun.getTaskId().equals(id))
             .collect(Collectors.toList());
     }
 
-    public TaskRun findTaskRunByTaskRunId(String id) {
-        Optional<TaskRun> find = this.taskRunList
+    public TaskRun findTaskRunByTaskRunId(String id) throws InternalException {
+        Optional<TaskRun> find = (this.taskRunList == null ? new ArrayList<TaskRun>() : this.taskRunList)
             .stream()
             .filter(taskRun -> taskRun.getId().equals(id))
             .findFirst();
 
         if (find.isEmpty()) {
-            throw new IllegalArgumentException("Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' " + this.toString(true));
+            throw new InternalException("Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' " + this.toString(true));
         }
 
         return find.get();
     }
 
-    public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values) {
-        Optional<TaskRun> find = this.getTaskRunList()
+    public TaskRun findTaskRunByTaskIdAndValue(String id, List<String> values) throws InternalException {
+        Optional<TaskRun> find = (this.taskRunList == null ? new ArrayList<TaskRun>() : this.taskRunList)
             .stream()
             .filter(taskRun -> taskRun.getTaskId().equals(id) && findChildsValues(taskRun, true).equals(values))
             .findFirst();
 
         if (find.isEmpty()) {
-            throw new IllegalArgumentException("Can't find taskrun with taskrunId '" + id + "' & value '" + values + "' on execution '" + this.id + "' " + this.toString(true));
+            throw new InternalException("Can't find taskrun with taskrunId '" + id + "' & value '" + values + "' on execution '" + this.id + "' " + this.toString(true));
         }
 
         return find.get();
@@ -165,7 +177,7 @@ public class Execution {
     }
 
     public List<TaskRun> findTaskRunByTasks(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
-        if (resolvedTasks == null || this.getTaskRunList() == null) {
+        if (resolvedTasks == null || this.taskRunList == null) {
             return new ArrayList<>();
         }
 
@@ -180,7 +192,11 @@ public class Execution {
     }
 
     public Optional<TaskRun> findFirstByState(State.Type state) {
-        return this.getTaskRunList()
+        if (this.taskRunList == null) {
+            return Optional.empty();
+        }
+        
+        return this.taskRunList
             .stream()
             .filter(t -> t.getState().getCurrent() == state)
             .findFirst();
@@ -244,6 +260,59 @@ public class Execution {
             .anyMatch(taskRun -> taskRun.getState().isFailed());
     }
 
+    @JsonIgnore
+    public boolean hasTaskRunJoinable(TaskRun taskRun)  {
+        if (this.taskRunList == null) {
+            return true;
+        }
+
+        TaskRun current = this.taskRunList
+            .stream()
+            .filter(r -> r.isSame(taskRun))
+            .findFirst()
+            .orElse(null);
+
+        if (current == null) {
+            return true;
+        }
+
+        // same status
+        if (current.getState().getCurrent() == taskRun.getState().getCurrent()) {
+            return false;
+        }
+
+        // failedExecutionFromExecutor call before, so the workerTaskResult
+        // don't have changed to failed but taskRunList will contain a failed
+        // same for restart, the CREATED status is directly on execution taskrun
+        // so we don't changed if current execution is terminated
+        if (current.getState().isTerninated() && !taskRun.getState().isTerninated()) {
+            return false;
+        }
+
+        // restart case mostly
+        // execution contains more state than taskrun so workerTaskResult is outdated
+        if (current.getState().getHistories().size() > taskRun.getState().getHistories().size()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @JsonIgnore
+    public boolean isJustRestarted() {
+        if (state.getHistories().size() < 2) {
+            return false;
+        }
+
+        State.History last = state.getHistories().get(state.getHistories().size() - 2);
+
+        if (last.getState() == State.Type.RESTARTED) {
+            return true;
+        }
+
+        return false;
+    }
+
     /**
      * Convert an exception on {@link org.kestra.core.runners.AbstractExecutor} and add log to the current
      * {@code RUNNING} taskRun, on the lastAttempts.
@@ -265,7 +334,14 @@ public class Execution {
                     return lastAttemptsTaskRunForFailedExecution(taskRun, lastAttempt, e);
                 }
             })
-            .map(this::withTaskRun)
+            .map(t -> {
+                try {
+                    return this.withTaskRun(t);
+                } catch (InternalException ex) {
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
             .orElseGet(() -> this.withState(State.Type.FAILED));
     }
 
@@ -355,7 +431,7 @@ public class Execution {
     }
 
     public Map<String, Object> outputs() {
-        if (this.getTaskRunList() == null) {
+        if (this.taskRunList == null) {
             return ImmutableMap.of();
         }
 
@@ -453,7 +529,7 @@ public class Execution {
             "\n  taskRunList=" +
             "\n  [" +
             "\n    " +
-            (this.getTaskRunList() == null ? "" : this.getTaskRunList()
+            (this.taskRunList == null ? "" : this.taskRunList
                 .stream()
                 .map(t -> t.toString(true))
                 .collect(Collectors.joining(",\n    "))
@@ -461,5 +537,27 @@ public class Execution {
             "\n  ], " +
             "\n  inputs=" + this.getInputs() +
             "\n)";
+    }
+
+    public String toStringState() {
+        return "(" +
+            "\n  state=" + this.getState().getCurrent().toString() +
+            "\n  taskRunList=" +
+            "\n  [" +
+            "\n    " +
+            (this.taskRunList == null ? "" : this.taskRunList
+                .stream()
+                .map(TaskRun::toStringState)
+                .collect(Collectors.joining(",\n    "))
+            ) +
+            "\n  ] " +
+            "\n)";
+    }
+
+    public Long toCrc32State() {
+        CRC32 crc32 = new CRC32();
+        crc32.update(this.toStringState().getBytes());
+
+        return crc32.getValue();
     }
 }

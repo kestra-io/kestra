@@ -15,9 +15,9 @@ micronaut:
     multipart:
       max-file-size: 10GB
       disk: true
-    read-idle-timeout: 5m
-    write-idle-timeout: 5m
-    idle-timeout: 5m
+    read-idle-timeout: 60m
+    write-idle-timeout: 60m
+    idle-timeout: 60m
     netty:
       max-chunk-size: 10MB
 
@@ -37,7 +37,7 @@ kestra:
   kafka:
     defaults:
       topic:
-        partitions: 64
+        partitions: 16
         replication-factor: 1
         properties:
           compression.type: "lz4"
@@ -47,6 +47,7 @@ kestra:
           isolation.level: "read_committed"
           auto.offset.reset: "earliest"
           enable.auto.commit: "false"
+          max.poll.interval.ms: 3600000 # max duration of tasks
 
       producer:
         properties:
@@ -59,17 +60,30 @@ kestra:
           acks: "all"
 
     topics:
-      org-kestra-core-models-executions-execution:
+      execution:
         name: "kestra_execution"
+        cls: org.kestra.core.models.executions.Execution
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
-      org-kestra-core-runners-workertask:
-        name: "kestra_workertask"
+      executor:
+        name: "kestra_executor"
+        properties:
+          cleanup.policy: "delete,compact"
 
-      org-kestra-core-runners-workertaskresult:
+      workertask:
+        name: "kestra_workertask"
+        cls: org.kestra.core.runners.WorkerTask
+        partitions: 64
+        properties:
+          cleanup.policy: "delete,compact"
+
+      workertaskresult:
         name: "kestra_workertaskresult"
+        cls: org.kestra.core.runners.WorkerTaskResult
+        properties:
+          cleanup.policy: "delete,compact"
 
   elasticsearch:
     indices:
@@ -102,3 +116,11 @@ kestra:
 
   metrics:
     prefix: kestra
+
+  server:
+    access-log:
+      enabled: true
+      name: org.kestra.webserver.access
+      format: "[Date: {}] [Duration: {} ms] [Method: {}] [Url: {}] [Status: {}] [Length: {}] [Ip: {}] [Port: {}]"
+      filters:
+        - ".*\\[Url: /api/.*"

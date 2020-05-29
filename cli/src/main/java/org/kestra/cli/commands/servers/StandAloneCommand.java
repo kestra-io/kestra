@@ -24,7 +24,7 @@ public class StandAloneCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when runinng with an memory flow repository)")
+    @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
     private File flowPath;
 
     public StandAloneCommand() {

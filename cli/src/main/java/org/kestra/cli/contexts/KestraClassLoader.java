@@ -39,6 +39,10 @@ public class KestraClassLoader extends ClassLoader {
         return INSTANCE;
     }
 
+    public PluginRegistry getPluginRegistry() {
+        return pluginRegistry;
+    }
+
     public void setPluginRegistry(PluginRegistry registry) {
         pluginRegistry = registry;
     }

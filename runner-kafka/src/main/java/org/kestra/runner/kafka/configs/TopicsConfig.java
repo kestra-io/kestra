@@ -10,15 +10,21 @@ import java.util.Map;
 @EachProperty("kestra.kafka.topics")
 @Getter
 public class TopicsConfig {
-    String cls;
+    String key;
+
+    Class<?> cls;
 
     String name;
+
+    Integer partitions;
+
+    Short replicationFactor;
 
     @MapFormat(transformation = MapFormat.MapTransformation.FLAT)
     Map<String, String> properties;
 
-    public TopicsConfig(@Parameter String cls) {
-        this.cls = cls;
+    public TopicsConfig(@Parameter String key) {
+        this.key = key;
     }
 }
 

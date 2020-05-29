@@ -70,5 +70,4 @@ public class KafkaHealthIndicator implements HealthIndicator {
                 .exception(throwable).build()
         );
     }
-
 }

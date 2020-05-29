@@ -2,6 +2,7 @@ package org.kestra.core.models.tasks.retrys;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.jodah.failsafe.RetryPolicy;
@@ -19,6 +20,7 @@ import java.time.Duration;
 })
 @Getter
 @NoArgsConstructor
+@Introspected
 public abstract class AbstractRetry {
     @NotNull
     protected String type;

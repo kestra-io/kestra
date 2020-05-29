@@ -1,5 +1,6 @@
 package org.kestra.core.models.hierarchies;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
@@ -86,6 +87,54 @@ class FlowTreeTest extends AbstractMemoryRunnerTest {
         assertThat(flowTree.getTasks().get(6).getTask().getId(), is("failed"));
         assertThat(flowTree.getTasks().get(6).getParent().size(), is(0));
         assertThat(flowTree.getTasks().get(6).getRelation(), is(RelationType.SEQUENTIAL));
+    }
+
+    @Test
+    void parallel() throws IOException, IllegalVariableEvaluationException {
+        Flow flow = this.parse("flows/valids/parallel.yaml");
+        FlowTree flowTree = FlowTree.of(flow);
+
+        assertThat(flowTree.getTasks().size(), is(8));
+
+        assertThat(flowTree.getTasks().get(0).getTask().getId(), is("parent"));
+        assertThat(flowTree.getTasks().get(0).getParent().size(), is(0));
+        assertThat(flowTree.getTasks().get(0).getRelation(), is(RelationType.SEQUENTIAL));
+
+        assertThat(flowTree.getTasks().get(3).getTask().getId(), is("t3"));
+        assertThat(flowTree.getTasks().get(3).getParent().get(0).getId(), is("parent"));
+        assertThat(flowTree.getTasks().get(3).getRelation(), is(RelationType.PARALLEL));
+
+        assertThat(flowTree.getTasks().get(6).getTask().getId(), is("t6"));
+        assertThat(flowTree.getTasks().get(6).getParent().get(0).getId(), is("parent"));
+        assertThat(flowTree.getTasks().get(6).getRelation(), is(RelationType.PARALLEL));
+
+        assertThat(flowTree.getTasks().get(7).getTask().getId(), is("last"));
+        assertThat(flowTree.getTasks().get(7).getParent().get(0).getId(), is("parent"));
+        assertThat(flowTree.getTasks().get(7).getRelation(), is(RelationType.SEQUENTIAL));
+    }
+
+    @Test
+    void parallelNested() throws IOException, IllegalVariableEvaluationException {
+        Flow flow = this.parse("flows/valids/parallel-nested.yaml");
+        FlowTree flowTree = FlowTree.of(flow);
+
+        assertThat(flowTree.getTasks().size(), is(11));
+
+        assertThat(flowTree.getTasks().get(0).getTask().getId(), is("1_par"));
+        assertThat(flowTree.getTasks().get(0).getParent().size(), is(0));
+        assertThat(flowTree.getTasks().get(0).getRelation(), is(RelationType.SEQUENTIAL));
+
+        assertThat(flowTree.getTasks().get(3).getTask().getId(), is("1-3_par"));
+        assertThat(flowTree.getTasks().get(3).getParent().get(0).getId(), is("1_par"));
+        assertThat(flowTree.getTasks().get(3).getRelation(), is(RelationType.PARALLEL));
+
+        assertThat(flowTree.getTasks().get(6).getTask().getId(), is("1-3-2-1"));
+        assertThat(flowTree.getTasks().get(6).getParent().get(0).getId(), is("1-3-2_par"));
+        assertThat(flowTree.getTasks().get(6).getRelation(), is(RelationType.SEQUENTIAL));
+
+        assertThat(flowTree.getTasks().get(10).getTask().getId(), is("2_end"));
+        assertThat(flowTree.getTasks().get(10).getParent().get(0).getId(), is("1_par"));
+        assertThat(flowTree.getTasks().get(10).getRelation(), is(RelationType.SEQUENTIAL));
     }
 
     @Test

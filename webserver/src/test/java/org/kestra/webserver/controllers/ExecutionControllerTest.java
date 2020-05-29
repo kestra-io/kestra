@@ -13,7 +13,6 @@ import io.micronaut.http.client.sse.RxSseClient;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.sse.Event;
 import io.micronaut.runtime.server.EmbeddedServer;
-import io.reactivex.Maybe;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
@@ -25,13 +24,9 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.runners.InputsTest;
-import org.kestra.core.tasks.scripts.Bash;
 import org.kestra.webserver.responses.PagedResults;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.File;
-import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -39,10 +34,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.kestra.core.utils.Rethrow.throwRunnable;
 
 class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -132,20 +130,17 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         Execution result = triggerInputsFlowExecution();
 
         // Get the triggered execution by execution id
-        Maybe<Execution> foundExecution = client.retrieve(
+        Execution foundExecution = client.retrieve(
             HttpRequest.GET("/api/v1/executions/" + result.getId()),
             Execution.class
-        ).firstElement();
+        ).blockingFirst();
 
-        assertThat(foundExecution.isEmpty().blockingGet(), is(Boolean.FALSE));
-        assertThat(foundExecution.blockingGet().getId(), is(result.getId()));
-        assertThat(foundExecution.blockingGet().getNamespace(), is(result.getNamespace()));
+        assertThat(foundExecution.getId(), is(result.getId()));
+        assertThat(foundExecution.getNamespace(), is(result.getNamespace()));
     }
 
-    @SuppressWarnings("unchecked")
-    @Disabled("TODO: this test is flakky since the execution can be terminated before the second call")
     @Test
-    void findByFlowId() throws TimeoutException {
+    void findByFlowId() {
         String namespace = "org.kestra.tests.minimal.bis";
         String flowId = "minimal-bis";
 
@@ -228,7 +223,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromTaskId() throws TimeoutException {
+    void restartFromTaskId() throws TimeoutException, InterruptedException {
         final String flowId = "restart_with_inputs";
         final String referenceTaskId = "instant";
 
@@ -240,7 +235,9 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         // Run child execution starting from a specific task and wait until it finishes
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
             flow.get(),
-            parentExecution, () -> {
+            parentExecution, throwRunnable(() -> {
+                Thread.sleep(100);
+
                 Execution createdChidExec = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
@@ -251,7 +248,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                 assertThat(createdChidExec, notNullValue());
                 assertThat(createdChidExec.getParentId(), is(parentExecution.getId()));
                 assertThat(createdChidExec.getTaskRunList().size(), is(4));
-                assertThat(createdChidExec.getState().getCurrent(), is(State.Type.RUNNING));
+                assertThat(createdChidExec.getState().getCurrent(), is(State.Type.CREATED));
 
                 IntStream
                     .range(0, 3)
@@ -263,7 +260,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
                 assertThat(createdChidExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.CREATED));
                 assertThat(createdChidExec.getTaskRunList().get(3).getAttempts().size(), is(1));
-            },
+            }),
             Duration.ofSeconds(15));
 
         assertThat(finishedChildExecution, notNullValue());
@@ -278,7 +275,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromTaskIdWithSequential() throws TimeoutException {
+    void restartFromTaskIdWithSequential() throws TimeoutException, InterruptedException {
         final String flowId = "restart_with_sequential";
         final String referenceTaskId = "a-3-2-2_end";
 
@@ -291,7 +288,9 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         // Run child execution starting from a specific task and wait until it finishes
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
             flow.get(),
-            parentExecution, () -> {
+            parentExecution, throwRunnable(() -> {
+                Thread.sleep(100);
+
                 Execution createdChidExec = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
@@ -302,7 +301,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                 assertThat(createdChidExec, notNullValue());
                 assertThat(createdChidExec.getParentId(), is(parentExecution.getId()));
                 assertThat(createdChidExec.getTaskRunList().size(), is(8));
-                assertThat(createdChidExec.getState().getCurrent(), is(State.Type.RUNNING));
+                assertThat(createdChidExec.getState().getCurrent(), is(State.Type.CREATED));
 
                 assertThat(createdChidExec.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
                 assertThat(createdChidExec.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
@@ -313,12 +312,12 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                 assertThat(createdChidExec.getTaskRunList().get(6).getState().getCurrent(), is(State.Type.SUCCESS));
                 assertThat(createdChidExec.getTaskRunList().get(7).getState().getCurrent(), is(State.Type.CREATED));
                 assertThat(createdChidExec.getTaskRunList().get(7).getAttempts().size(), is(1));
-            },
+            }),
             Duration.ofSeconds(30000));
     }
 
     @Test
-    void restartFromLastFailed() throws TimeoutException {
+    void restartFromLastFailed() throws TimeoutException, InterruptedException {
         final String flowId = "restart_last_failed";
 
         // Run execution until it ends
@@ -330,21 +329,12 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         // Update task's command to make second execution successful
         Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
 
-        Bash task = (Bash) flow.get().getTasks().get(2);
-        Bash b = Bash.builder()
-            .id(task.getId())
-            .type(task.getType())
-            .commands(new String[]{"exit 0"})
-            .build();
-
-        flow.get().getTasks().set(2, b);
-
-        flowRepositoryInterface.create(flow.get());
-
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             flow.get(),
-            firstExecution, () -> {
+            firstExecution, throwRunnable(() -> {
+                Thread.sleep(100);
+
                 Execution restartedExec = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/executions/" + firstExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
@@ -369,14 +359,14 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                     assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.CREATED));
                     assertThat(restartedExec.getTaskRunList().get(2).getAttempts().size(), is(1));
                 });
-            },
-            Duration.ofSeconds(15));
+            }),
+            Duration.ofSeconds(15)
+        );
 
         assertThat(finishedRestartedExecution, notNullValue());
         assertThat(finishedRestartedExecution.getId(), is(firstExecution.getId()));
         assertThat(finishedRestartedExecution.getParentId(), nullValue());
         assertThat(finishedRestartedExecution.getTaskRunList().size(), is(4));
-
 
         assertThat(finishedRestartedExecution.getTaskRunList().get(0).getAttempts().size(), is(1));
         assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size(), is(1));
@@ -388,76 +378,5 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             .stream()
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent(), is(State.Type.SUCCESS)));
-    }
-
-    @Test
-    void restartFromLastFailedWithErrorsTwoTimes() throws TimeoutException {
-        final String flowId = "sequential-with-global-errors";
-
-        // Run execution until it ends
-        Execution firstExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, null);
-        assertThat(firstExecution.getTaskRunList().size(), is(6));
-        // Execution status
-        assertThat(firstExecution.getState().getCurrent(), is(State.Type.FAILED));
-
-        // Main task fails
-        assertThat(firstExecution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(firstExecution.getTaskRunList().get(0).getAttempts(), nullValue());
-        assertThat(firstExecution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(firstExecution.getTaskRunList().get(1).getAttempts().size(), is(1));
-        assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(firstExecution.getTaskRunList().get(2).getAttempts(), nullValue());
-        assertThat(firstExecution.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(firstExecution.getTaskRunList().get(3).getAttempts().size(), is(1));
-
-        // Errors tasks are successful
-        assertThat(firstExecution.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(firstExecution.getTaskRunList().get(4).getAttempts().size(), is(1));
-        assertThat(firstExecution.getTaskRunList().get(5).getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(firstExecution.getTaskRunList().get(5).getAttempts().size(), is(1));
-
-        // Update task's command to make second execution successful
-        Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
-
-        // Restart execution and wait until it finishes
-        Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            flow.get(),
-            firstExecution, () -> {
-                Execution restartedExec = client.toBlocking().retrieve(
-                    HttpRequest
-                        .POST("/api/v1/executions/" + firstExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
-                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-                    Execution.class
-                );
-
-                assertThat(restartedExec, notNullValue());
-                assertThat(restartedExec.getId(), is(firstExecution.getId()));
-                assertThat(restartedExec.getParentId(), nullValue());
-                assertThat(restartedExec.getTaskRunList().size(), is(4));
-                assertThat(restartedExec.getState().getCurrent(), is(State.Type.RUNNING));
-
-                // Tasks
-                assertThat(restartedExec.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
-                assertThat(restartedExec.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.RUNNING));
-                // Last failed task
-                assertThat(restartedExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.CREATED));
-            },
-            Duration.ofSeconds(15));
-
-        assertThat(finishedRestartedExecution, notNullValue());
-        assertThat(finishedRestartedExecution.getId(), is(firstExecution.getId()));
-        assertThat(finishedRestartedExecution.getParentId(), nullValue());
-        assertThat(finishedRestartedExecution.getTaskRunList().size(), is(6));
-
-        // Tasks
-        assertThat(finishedRestartedExecution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(finishedRestartedExecution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.FAILED));
-        // Last failed task
-        assertThat(finishedRestartedExecution.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.FAILED));
-        // Errors tasks
-        assertThat(finishedRestartedExecution.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(finishedRestartedExecution.getTaskRunList().get(5).getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

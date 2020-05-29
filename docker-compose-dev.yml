@@ -69,10 +69,10 @@ services:
     networks:
       - kestra
 
-  kafkahq:
-    image: tchiotludo/kafkahq
+  akhq:
+    image: tchiotludo/akhq
     environment:
-      KAFKAHQ_CONFIGURATION: |
+      AKHQ_CONFIGURATION: |
         kafkahq:
           connections:
             local:

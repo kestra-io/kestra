@@ -33,7 +33,7 @@ public class VueStaticResourceResolver extends StaticResourceResolver {
     public Optional<URL> resolve(String resourcePath) {
         Optional<URL> resolve = super.resolve(resourcePath);
 
-        if (resolve.isEmpty()) {
+        if (resolve.isEmpty() && resourcePath.startsWith("/ui/")) {
             for (ResourceLoader loader : uiResourceLoader) {
                 return loader.getResource("index.html");
             }

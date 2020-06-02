@@ -453,7 +453,11 @@ public class Execution {
             .collect(Collectors.toList());
 
         if (childs.size() == 0) {
-            return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
+            if (taskRun.getValue() == null) {
+                return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
+            } else {
+                return Map.of(taskRun.getTaskId(), Map.of(taskRun.getValue(), taskRun.getOutputs()));
+            }
         }
 
         Map<String, Object> result = new HashMap<>();

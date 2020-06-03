@@ -16,12 +16,12 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import java.util.Map;
 
 abstract public class JacksonMapper {
-    private static ObjectMapper jsonMapper = JacksonMapper.configure(
+    private static ObjectMapper mapper = JacksonMapper.configure(
         new ObjectMapper()
     );
 
     public static ObjectMapper ofJson() {
-        return jsonMapper;
+        return mapper;
     }
 
     private static ObjectMapper yamlMapper = JacksonMapper.configure(
@@ -35,10 +35,6 @@ abstract public class JacksonMapper {
     public static ObjectMapper ofYaml() {
         return yamlMapper;
     }
-
-    private static final ObjectMapper mapper = JacksonMapper.configure(
-        new ObjectMapper()
-    );
 
     private static TypeReference<Map<String, Object>> typeReference = new TypeReference<>() {};
 

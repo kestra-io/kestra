@@ -1,6 +1,5 @@
 package org.kestra.core.models.hierarchies;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
@@ -13,7 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.TimeoutException;
-
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -182,7 +180,7 @@ class FlowTreeTest extends AbstractMemoryRunnerTest {
 
         assertThat(flowTree.getTasks().get(3).getTask().getId(), is("1-2-1_return"));
         assertThat(flowTree.getTasks().get(3).getParent().get(0).getId(), is("1-2_each"));
-        assertThat(flowTree.getTasks().get(3).getParent().get(0).getValue(), is("[\"a\", \"b\"]"));
+        assertThat(flowTree.getTasks().get(3).getParent().get(0).getValue(), is("[\"a a\", \"b b\"]"));
         assertThat(flowTree.getTasks().get(3).getRelation(), is(RelationType.DYNAMIC));
 
         assertThat(flowTree.getTasks().get(4).getTask().getId(), is("1-2-2_return"));

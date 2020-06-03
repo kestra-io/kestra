@@ -7,6 +7,7 @@ import com.github.jknack.handlebars.helper.*;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.runners.handlebars.helpers.EvalHelper;
 import org.kestra.core.runners.handlebars.helpers.InstantHelper;
+import org.kestra.core.runners.handlebars.helpers.JqHelper;
 import org.kestra.core.runners.handlebars.helpers.JsonHelper;
 
 import java.io.IOException;
@@ -33,6 +34,7 @@ public class VariableRenderer {
             .registerHelpers(InstantHelper.class)
             .registerHelpers(JsonHelper.class)
             .registerHelper("eval", new EvalHelper(this))
+            .registerHelper("jq", new JqHelper())
             .registerHelperMissing((context, options) -> {
                 throw new IllegalStateException("Missing variable: " + options.helperName);
             });

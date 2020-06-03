@@ -205,6 +205,14 @@ public class KafkaExecutor extends AbstractExecutor {
                                 log.debug("WorkerTaskResult in: {}", workerTaskResult.getTaskRun().toStringState());
                             }
 
+                            metricRegistry
+                                .counter(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(workerTaskResult))
+                                .increment();
+
+                            metricRegistry
+                                .timer(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(workerTaskResult))
+                                .record(workerTaskResult.getTaskRun().getState().getDuration());
+
                             try {
                                 return new HasJoin(execution.withTaskRun(workerTaskResult.getTaskRun()), true);
                             } catch (Exception e) {

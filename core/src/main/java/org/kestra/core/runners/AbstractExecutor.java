@@ -58,8 +58,8 @@ public abstract class AbstractExecutor implements Runnable {
 
         if (execution.getState().getCurrent() == State.Type.CREATED) {
             metricRegistry
-                .timer(MetricRegistry.KESTRA_EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(execution))
-                .record(newExecution.getState().getDuration());
+                .counter(MetricRegistry.KESTRA_EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(execution))
+                .increment();
 
             flow.logger().info(
                 "[namespace: {}] [flow: {}] [execution: {}] Flow started",

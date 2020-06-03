@@ -152,6 +152,14 @@ public class MemoryExecutor extends AbstractExecutor {
                 log.debug("WorkerTaskResult: {}", message.getTaskRun().toStringState());
             }
 
+            metricRegistry
+                .counter(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                .increment();
+
+            metricRegistry
+                .timer(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                .record(message.getTaskRun().getState().getDuration());
+
             // save WorkerTaskResult on current QueuedExecution
             executions.compute(message.getTaskRun().getExecutionId(), (s, executionState) -> {
                 if (executionState == null) {

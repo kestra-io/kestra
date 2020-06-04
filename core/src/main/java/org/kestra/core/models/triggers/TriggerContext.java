@@ -1,14 +1,19 @@
 package org.kestra.core.models.triggers;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Value;
-import org.kestra.core.models.flows.Flow;
+import lombok.experimental.SuperBuilder;
 
-import java.time.ZonedDateTime;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import java.time.Instant;
 
 @Value
-@Builder
 public class TriggerContext {
-    private Flow flow;
-    private ZonedDateTime date;
+    private Instant date;
 }

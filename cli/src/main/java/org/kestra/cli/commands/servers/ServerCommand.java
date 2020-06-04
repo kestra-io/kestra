@@ -11,6 +11,7 @@ import picocli.CommandLine;
     subcommands = {
         ExecutorCommand.class,
         IndexerCommand.class,
+        SchedulerCommand.class,
         StandAloneCommand.class,
         WebServerCommand.class,
         WorkerCommand.class,

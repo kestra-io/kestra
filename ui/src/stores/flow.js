@@ -5,7 +5,8 @@ export default {
         flows: undefined,
         flow: undefined,
         total: 0,
-        dataTree: undefined
+        dataTree: undefined,
+        triggers: []
     },
 
     actions: {
@@ -62,13 +63,33 @@ export default {
         },
         setFlow(state, flow) {
             state.flow = flow
+            if (flow.triggers) {
+                state.triggers = flow.triggers
+            }
+        },
+        setTriggers(state, triggers) {
+            state.triggers = triggers
+        },
+        removeTrigger(state, index) {
+            state.triggers.splice(index, 1);
+        },
+        addTrigger(state, trigger) {
+            state.triggers.push(trigger)
         },
         setTotal(state, total) {
             state.total = total
         },
-        setDataTree (state, dataTree) {
+        setDataTree(state, dataTree) {
             state.dataTree = dataTree
         }
     },
-    getters: {}
+    getters: {
+        flow (state) {
+            if (state.flow) {
+                const flow = state.flow
+                flow.triggers = state.triggers
+                return flow
+            }
+        }
+    }
 }

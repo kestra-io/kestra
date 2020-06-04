@@ -29,7 +29,7 @@ public class SchedulerCommand extends AbstractCommand {
         Scheduler scheduler = applicationContext.getBean(Scheduler.class);
         scheduler.run();
 
-        log.info("Scheduler started");
+        log.info("Indexer started");
 
         Await.until(() -> !this.applicationContext.isRunning());
     }

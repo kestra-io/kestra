@@ -51,22 +51,20 @@ export default {
       return [
         {
           href: "/flows",
+          alias: [
+            "/flows*"
+          ],
           title: this.$t("flows").capitalize(),
           icon: {
             element: "graph",
             class: "menu-icon"
           }
         },
-        /*{
-          href: "/flows",
-          title: this.$t("flows").capitalize(),
-          icon: {
-            element: "graph",
-            class: "menu-icon"
-          }
-        },*/
         {
           href: "/executions",
+          alias: [
+            "/executions*"
+          ],
           title: this.$t("executions").capitalize(),
           icon: {
             element: "timelineclock",
@@ -75,6 +73,9 @@ export default {
         },
         {
           href: "/settings",
+          alias: [
+            "/settings*"
+          ],
           title: this.$t("settings").capitalize(),
           icon: {
             element: "settings",

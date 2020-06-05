@@ -39,9 +39,7 @@ export default {
     },
     methods: {
         onMenuCollapse(collapse) {
-            this.menuCollapsed = collapse
-                ? "menu-collapsed"
-                : "menu-not-collapsed";
+            this.menuCollapsed = collapse ? "menu-collapsed" : "menu-not-collapsed";
         }
     }
 };
@@ -51,14 +49,6 @@ export default {
 <style lang="scss">
 @import "styles/variable";
 
-.menu-collapsed {
-    transition: all 0.3s ease;
-    padding-left: 50px;
-}
-.menu-not-collapsed {
-    transition: all 0.3s;
-    padding-left: $menu-width;
-}
 body {
     min-width: 320px;
 }
@@ -68,8 +58,19 @@ html,
 .container {
     height: 100% !important;
 }
+
 .content-wrapper {
     padding-top: 15px;
     padding-bottom: 60px !important;
+
+    &.menu-collapsed {
+        transition: all 0.3s ease;
+        padding-left: 50px;
+    }
+
+    &.menu-not-collapsed {
+        transition: all 0.3s;
+        padding-left: $menu-width;
+    }
 }
 </style>

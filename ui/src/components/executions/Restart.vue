@@ -2,13 +2,13 @@
   <div v-if="isButton" class="restart-wrapper">
     <b-button @click="restart" v-if="enabled" class="rounded-lg btn-info restart mr-1">
       <restart-icon />
-      {{$t("restart") | cap}}
+      {{$t("restart")}}
     </b-button>
   </div>
   <div v-else>
     <div @click="restart" v-if="enabled">
       <restart-icon />
-      {{$t("restart") | cap}}
+      {{$t("restart")}}
     </div>
   </div>
 </template>
@@ -38,15 +38,12 @@ export default {
           taskId: this.task ? this.task.taskId : null
         })
         .then(response => {
-          this.$bvToast.toast(this.$t("restarted").capitalize(), {
-            title: this.$t("execution").capitalize(),
-            autoHideDelay: 5000,
-            toaster: "b-toaster-top-right",
-            variant: "success"
-          });
           this.$store.commit('execution/setExecution', response.data);
-          this.$router.push({name: 'execution', params: response.data});
+          this.$router.push({name: 'executionEdit', params: response.data});
           this.$emit('restart')
+        })
+        .then(() => {
+          this.$toast().success({message: this.$t("restarted"), title: this.$t("execution")});
         })
     }
   },

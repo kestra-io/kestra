@@ -8,6 +8,7 @@
                     @click="setTab(tab.tab)"
                     :active="$route.query.tab === tab.tab"
                     :title="tab.title"
+                    :class="tab.class"
                     lazy
                 >
                     <b-card-text>
@@ -47,7 +48,7 @@ export default {
     methods: {
         setTab(tab) {
             this.$router.push({
-                name: "flow",
+                name: "flowEdit",
                 params: this.$route.params,
                 query: { tab }
             });
@@ -77,7 +78,7 @@ export default {
                     {
                         label: this.$route.params.id,
                         link: {
-                            name: "flow",
+                            name: "flowEdit",
                             params: {
                                 namespace: this.$route.params.namespace,
                                 id: this.$route.params.id
@@ -88,7 +89,7 @@ export default {
             };
         },
         tabs() {
-            const title = title => this.$t(title).capitalize();
+            const title = title => this.$t(title);
             return [
                 {
                     tab: "overview",
@@ -104,7 +105,8 @@ export default {
                 },
                 {
                     tab: "data-source",
-                    title: title("source")
+                    title: title("source"),
+                    class: "p-0"
                 }
             ];
         }
@@ -112,6 +114,5 @@ export default {
     destroyed () {
         this.$store.commit('flow/setFlow', undefined)
     }
-
 };
 </script>

@@ -23,7 +23,7 @@
                     @row-dblclicked="onRowDoubleClick"
                 >
                     <template v-slot:cell(details)="row">
-                        <router-link :to="{name: 'execution', params: row.item}">
+                        <router-link :to="{name: 'executionEdit', params: row.item}">
                             <eye id="edit-action" />
                         </router-link>
                     </template>
@@ -46,7 +46,7 @@
                     </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link
-                            :to="{name: 'flow', params: {namespace: row.item.namespace, id: row.item.flowId}}"
+                            :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >{{row.item.flowId}}</router-link>
                     </template>
                     <template v-slot:cell(id)="row">
@@ -97,7 +97,7 @@ export default {
         ...mapState("execution", ["executions", "total"]),
         fields() {
             const title = title => {
-                return this.$t(title).capitalize();
+                return this.$t(title);
             };
             return [
                 {
@@ -143,7 +143,7 @@ export default {
             ];
         },
         executionQuery() {
-            if (this.$route.name === "flow") {
+            if (this.$route.name === "flowEdit") {
                 const filter = `flowId:${this.$route.params.id}`;
                 return this.query === "*"
                     ? filter
@@ -163,17 +163,17 @@ export default {
             this.$store
                 .dispatch("execution/triggerExecution", this.$route.params)
                 .then(response => {
+                    console.log("1", response)
                     this.$router.push({
                         name: "execution",
                         params: response.data
                     });
-                    this.$bvToast.toast(this.$t("triggered").capitalize(), {
-                        title: this.$t("execution").capitalize(),
-                        autoHideDelay: 5000,
-                        toaster: "b-toaster-top-right",
-                        variant: "success"
-                    });
-                });
+
+                    return response.data
+                })
+                .then((execution) => {
+                    this.$toast().success({type: 'triggered', name: execution.id});
+                })
         },
         loadData(callback) {
             this.$store.dispatch("execution/findExecutions", {

@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import Menu from "./components/Menu.vue";
+import Menu from "Override/components/Menu.vue";
 import TopNavBar from "./components/layout/TopNavBar";
 import CustomToast from "./components/customToast";
 import { mapState } from "vuex";

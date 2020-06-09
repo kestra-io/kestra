@@ -54,7 +54,7 @@ export default {
             this.loadData(this.onDataLoaded);
         },
         onRowDoubleClick(item) {
-            this.$router.push({ name: this.dataType, params: item });
+            this.$router.push({ name: this.dataType + "Edit", params: item });
         },
         onNamespaceSelect() {
             this.query = queryBuilder(this.$route, this.fields);
@@ -64,5 +64,4 @@ export default {
             this.ready = true
         }
     }
-
 }

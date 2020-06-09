@@ -1,5 +1,5 @@
 <template>
-    <b-card v-if="node" :title="`${this.$t('task').capitalize()} → ${task.id}`">
+    <b-card v-if="node" :title="`${this.$t('task')} → ${task.id}`">
         <b-card-text>
             <b-table class="table-sm" striped hover :items="items">
                 <template v-slot:cell(value)="row">

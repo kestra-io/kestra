@@ -122,7 +122,7 @@ export default {
           name: task.taskId,
           start: (start / executionDelta) * 100,
           width: (stop / executionDelta) * 100,
-          tooltip: `${this.$t("duration").capitalize()} : ${humanDuration}`,
+          tooltip: `${this.$t("duration")} : ${humanDuration}`,
           color: this.colors[task.state.current],
           task
         });

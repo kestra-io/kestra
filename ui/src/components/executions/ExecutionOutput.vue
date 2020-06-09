@@ -1,11 +1,9 @@
 <template>
     <div v-if="execution && outputs">
-        <hr />
-        <h2>{{$t('outputs') | cap}}</h2>
         <b-row>
             <b-col md="6">
                 <b-form-group
-                    :label="$t('display output for specific task').capitalize()"
+                    :label="$t('display output for specific task')"
                     label-for="input-for-output"
                 >
                     <v-select
@@ -33,7 +31,7 @@
                     v-if="row.item.download"
                     target="_blank"
                     :href="itemUrl({uri: row.item.value})"
-                >{{$t('download') | cap}}</b-link>
+                >{{$t('download')}}</b-link>
                 <span v-else>{{row.item.value}}</span>
             </template>
         </b-table>

@@ -26,11 +26,11 @@ export default {
     title() {
       return this.$t(
         {
-          NEUTRAL: "neutral_trend",
-          DOWN: "down_trend",
-          UP: "up_trend"
+          NEUTRAL: "neutral trend",
+          DOWN: "down trend",
+          UP: "up trend"
         }[this.trend]
-      ).capitalize();
+      );
     },
     cls() {
       return {

@@ -28,7 +28,7 @@
                         ref="table"
                     >
                         <template v-slot:cell(actions)="row">
-                            <router-link :to="{name: 'flow', params : row.item}">
+                            <router-link :to="{name: 'flowEdit', params : row.item}">
                                 <eye id="edit-action" />
                             </router-link>
                         </template>
@@ -73,7 +73,7 @@
                     <router-link :to="{name: 'flowsAdd'}">
                         <b-button variant="primary">
                             <plus />
-                            {{$t('add flow') | cap }}
+                            {{$t('create')}}
                         </b-button>
                     </router-link>
                 </li>
@@ -130,7 +130,7 @@ export default {
         ...mapState("flow", ["flows", "total"]),
         fields() {
             const title = title => {
-                return this.$t(title).capitalize();
+                return this.$t(title);
             };
             return [
                 {

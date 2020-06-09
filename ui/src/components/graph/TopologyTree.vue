@@ -19,10 +19,10 @@
                 <b-tooltip
                     placement="left"
                     target="graph-orientation"
-                >{{$t('graph orientation') | cap}}</b-tooltip>
+                >{{$t('graph orientation')}}</b-tooltip>
                 <b-btn size="sm" @click="toggleOrientation" id="graph-orientation">
-                    <arrow-collapse-down title v-if="orientation" />
-                    <arrow-collapse-right title v-else />
+                    <arrow-collapse-down v-if="orientation" />
+                    <arrow-collapse-right v-else />
                 </b-btn>
             </div>
         </div>
@@ -149,7 +149,7 @@ export default {
             const getOptions = node => {
                 const edgeOption = {};
                 if (node.relation !== "SEQUENTIAL") {
-                    edgeOption.label = node.relation.toLowerCase().capitalize();
+                    edgeOption.label = node.relation.toLowerCase();
                     if (node.taskRun && node.taskRun.value) {
                         edgeOption.label += ` : ${node.taskRun.value}`;
                     }

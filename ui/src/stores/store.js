@@ -1,5 +1,3 @@
-import Vue from 'vue'
-import Vuex from 'vuex'
 import core from './core'
 import settings from './settings'
 import auth from './auth'
@@ -9,10 +7,7 @@ import namespace from './namespaces'
 import layout from './layout'
 import graph from './graph'
 
-Vue.use(Vuex)
-
-
-export default new Vuex.Store({
+export default {
     modules: {
         core,
         auth,
@@ -23,4 +18,4 @@ export default new Vuex.Store({
         layout,
         graph
     }
-})
+}

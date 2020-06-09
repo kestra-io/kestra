@@ -7,7 +7,7 @@
   >
     <a class="logo" slot="header" href="/">
       <span>
-        <img src="../assets/logo-white.svg" alt="Kestra" />
+        <img src="../../../src/assets/logo-white.svg" alt="Kestra" />
       </span>
     </a>
     <span slot="toggle-icon">
@@ -54,7 +54,7 @@ export default {
           alias: [
             "/flows*"
           ],
-          title: this.$t("flows").capitalize(),
+          title: this.$t("flows"),
           icon: {
             element: "graph",
             class: "menu-icon"
@@ -65,7 +65,7 @@ export default {
           alias: [
             "/executions*"
           ],
-          title: this.$t("executions").capitalize(),
+          title: this.$t("executions"),
           icon: {
             element: "timelineclock",
             class: "menu-icon"
@@ -76,7 +76,7 @@ export default {
           alias: [
             "/settings*"
           ],
-          title: this.$t("settings").capitalize(),
+          title: this.$t("settings"),
           icon: {
             element: "settings",
             class: "menu-icon"
@@ -89,7 +89,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../styles/variable";
+@import "src/styles/variable";
 
 .logo {
   height: 60px;

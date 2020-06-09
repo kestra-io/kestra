@@ -11,14 +11,14 @@
             <template v-slot:cell(value)="row">
                 <router-link
                     v-if="row.item.link"
-                    :to="{name: 'execution', params: row.item.link}"
+                    :to="{name: 'executionEdit', params: row.item.link}"
                 >{{row.item.value}}</router-link>
                 <span v-else>{{row.item.value}}</span>
             </template>
         </b-table>
         <div v-if="execution.inputs">
             <hr />
-            <h2>{{$t('inputs') | cap}}</h2>
+            <h2>{{$t('inputs')}}</h2>
             <b-table
                 responsive="xl"
                 striped
@@ -37,7 +37,7 @@
                         v-if="['optionalFile', 'file'].includes(row.item.key)"
                         target="_blank"
                         :href="itemUrl(row.item.value)"
-                    >{{$t('download') | cap}}</b-link>
+                    >{{$t('download')}}</b-link>
                 </template>
             </b-table>
         </div>

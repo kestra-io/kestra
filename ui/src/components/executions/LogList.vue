@@ -14,13 +14,13 @@
                 :target="`attempt-${index}-${attempt.state.startDate}`"
                 triggers="hover"
               >
-                {{$t('from') | cap}} : {{attempt.state.startDate | date('LLL:ss') }}
+                {{$t('from')}} : {{attempt.state.startDate | date('LLL:ss') }}
                 <br />
-                {{$t('to') | cap}} : {{attempt.state.endDate | date('LLL:ss') }}
+                {{$t('to')}} : {{attempt.state.endDate | date('LLL:ss') }}
                 <br />
                 <br />
                 <clock />
-                {{$t('duration') | cap}} : {{attempt.state.duration | humanizeDuration}}
+                {{$t('duration')}} : {{attempt.state.duration | humanizeDuration}}
               </b-tooltip>
 
               <div class="attempt">
@@ -29,7 +29,7 @@
                   <b-badge
                           :id="`attempt-badge-${taskItem.id}`"
                           variant="primary mr-1"
-                  >{{$t('attempt') | cap}} {{index + 1}}</b-badge>
+                  >{{$t('attempt')}} {{index + 1}}</b-badge>
                 </div>
 
                 <!-- Task id -->
@@ -45,7 +45,7 @@
                     </template>
                     <b-dropdown-item v-if="taskItem.outputs" @click="toggleShowOutput(taskItem)">
                       <eye />
-                      {{$t('toggle output') | cap}}
+                      {{$t('toggle output')}}
                     </b-dropdown-item>
                     <b-dropdown-item>
                       <restart

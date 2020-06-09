@@ -18,6 +18,10 @@
 
         button {
             margin-left: $spacer;
+
+            span:first-child {
+                margin-right: $spacer / 3;
+            }
         }
     }
 </style>

@@ -2,11 +2,11 @@
     <b-button-group size="sm">
         <b-tooltip
             target="toggle-automatic-refresh-action"
-        >{{$t('toggle periodic refresh each 10 seconds') | cap}}</b-tooltip>
+        >{{$t('toggle periodic refresh each 10 seconds')}}</b-tooltip>
         <b-button @click="toggleAutoRefresh" :pressed="autoRefresh" id="toggle-automatic-refresh-action">
             <clock title />
         </b-button>
-        <b-tooltip target="trigger-refresh-action">{{$t('trigger refresh') | cap}}</b-tooltip>
+        <b-tooltip target="trigger-refresh-action">{{$t('trigger refresh')}}</b-tooltip>
         <b-button @click="triggerRefresh" id="trigger-refresh-action">
             <refresh title />
         </b-button>

@@ -1,12 +1,12 @@
 <template>
     <b-nav-form @submit.prevent>
         <b-form-input
-            :label="$t('search').capitalize()"
+            :label="$t('search')"
             size="sm"
             @input="onSearch"
             v-model="search"
             class="mr-sm-2"
-            :placeholder="$t('search').capitalize()"
+            :placeholder="$t('search')"
         ></b-form-input>
     </b-nav-form>
 </template>

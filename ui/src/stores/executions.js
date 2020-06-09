@@ -41,6 +41,7 @@ export default {
         },
         triggerExecution(_, options) {
             return Vue.axios.post(`/api/v1/executions/trigger/${options.namespace}/${options.id}`, options.formData, {
+                timeout: 60 * 60 * 1000,
                 headers: {
                     'content-type': 'multipart/form-data'
                 }

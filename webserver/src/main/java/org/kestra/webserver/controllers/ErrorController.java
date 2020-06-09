@@ -55,6 +55,11 @@ public class ErrorController {
         return jsonError(request, e, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
     }
 
+    @Error(global = true, status = HttpStatus.NOT_FOUND)
+    public HttpResponse<JsonError> notFound(HttpRequest<?> request, Throwable e) {
+        return jsonError(request, e, HttpStatus.NOT_FOUND, "Not Found");
+    }
+
     private static HttpResponse<JsonError> jsonError(JsonError jsonError, HttpStatus status, String reason) {
         return HttpResponse
             .<JsonError>status(status, reason)
@@ -66,10 +71,9 @@ public class ErrorController {
             log.error(e.getMessage(), e);
         } else {
             log.trace(e.getMessage(), e);
-
         }
 
-        JsonError error = new JsonError(reason + ": " + e.getMessage())
+        JsonError error = new JsonError(reason + (e.getMessage() != null ? ": " + e.getMessage() : ""))
             .link(Link.SELF, Link.of(request.getUri()));
 
         return jsonError(error, status, reason);

@@ -3,7 +3,7 @@
         <b-row>
             <b-col md="6">
                 <b-form-group
-                    :label="$t('search term in message').capitalize()"
+                    :label="$t('search term in message')"
                     label-for="input-1"
                 >
                     <b-form-input
@@ -16,7 +16,7 @@
                 </b-form-group>
             </b-col>
             <b-col md="6">
-                <b-form-group :label="$t('filter by log level').capitalize()" label-for="input-2">
+                <b-form-group :label="$t('filter by log level')" label-for="input-2">
                     <b-form-select id="input-2" v-model="level" :options="levelOptions"></b-form-select>
                 </b-form-group>
             </b-col>

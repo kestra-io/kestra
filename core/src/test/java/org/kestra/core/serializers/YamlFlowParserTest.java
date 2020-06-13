@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.tasks.retrys.Constant;
+import org.kestra.core.tasks.debugs.Return;
 import org.kestra.core.utils.TestsUtils;
 
 import java.io.File;
@@ -107,6 +108,30 @@ class YamlFlowParserTest {
 
         String s = mapper.writeValueAsString(flow);
         assertThat(s, is("{\"id\":\"minimal\",\"namespace\":\"org.kestra.tests\",\"revision\":2,\"tasks\":[{\"id\":\"date\",\"type\":\"org.kestra.core.tasks.debugs.Return\",\"format\":\"{{taskrun.startDate}}\"}],\"deleted\":false}"));
+    }
+
+    @Test
+    void include() throws IOException {
+        Flow flow = parse("flows/helpers/include.yaml");
+
+        assertThat(flow.getId(), is("include"));
+        assertThat(flow.getTasks().size(), is(2));
+
+        assertThat(((Return) flow.getTasks().get(0)).getFormat(), containsString("Lorem Ipsum"));
+        assertThat(((Return) flow.getTasks().get(0)).getFormat(), containsString("\n"));
+        assertThat(((Return) flow.getTasks().get(1)).getFormat(), containsString("Lorem Ipsum"));
+        assertThat(((Return) flow.getTasks().get(1)).getFormat(), containsString("\n"));
+    }
+
+    @Test
+    void includeFailed() {
+        ConstraintViolationException exception = assertThrows(
+            ConstraintViolationException.class,
+            () -> this.parse("flows/helpers/include-failed.yaml")
+        );
+
+        assertThat(exception.getConstraintViolations().size(), is(1));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("File not found at location"));
     }
 
     private Flow parse(String path) throws IOException {

@@ -1,0 +1,10 @@
+id: include
+namespace: org.kestra.tests
+
+tasks:
+- id: t1
+  type: org.kestra.core.tasks.debugs.Return
+  format: "[[> lorem.txt]]"
+- id: t2
+  type: org.kestra.core.tasks.debugs.Return
+  format: "[[> ../../flows/helpers/lorem.txt]]"

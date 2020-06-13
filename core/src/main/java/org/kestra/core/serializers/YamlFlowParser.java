@@ -1,8 +1,12 @@
 package org.kestra.core.serializers;
 
+import com.fasterxml.jackson.databind.InjectableValues;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.serializers.helpers.HandleBarDeserializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,24 +16,41 @@ import javax.validation.ConstraintViolationException;
 
 @Singleton
 public class YamlFlowParser {
-    private static final ObjectMapper mapper = JacksonMapper.ofYaml();
+    public static final String CONTEXT_FLOW_DIRECTORY = "flowDirectory";
+
+    private static final ObjectMapper mapper = JacksonMapper.ofYaml()
+        .registerModule(new SimpleModule("HandleBarDeserializer")
+            .addDeserializer(String.class, new HandleBarDeserializer())
+        );
 
     @Inject
     private ModelValidator modelValidator;
 
     public Flow parse(File file) throws IOException {
-        Flow flow = mapper.readValue(file, Flow.class);
+        try {
+            Flow flow = mapper
+                .setInjectableValues(new InjectableValues.Std()
+                    .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
+                )
+                .readValue(file, Flow.class);
 
-        modelValidator
-            .isValid(flow)
-            .ifPresent(e -> {
-                throw new ConstraintViolationException(
-                    "Invalid flow '" + flow.getNamespace() + "." + flow.getId() + "', error: " + e.getConstraintViolations().toString(),
-                    e.getConstraintViolations()
-                );
-            });
+            modelValidator
+                .isValid(flow)
+                .ifPresent(e -> {
+                    throw new ConstraintViolationException(
+                        "Invalid flow '" + flow.getNamespace() + "." + flow.getId() + "', error: " + e.getConstraintViolations().toString(),
+                        e.getConstraintViolations()
+                    );
+                });
 
-        return flow;
+            return flow;
+        } catch (JsonMappingException e) {
+            if (e.getCause() instanceof ConstraintViolationException) {
+                throw (ConstraintViolationException) e.getCause();
+            } else {
+                throw e;
+            }
+        }
     }
 }
 

@@ -4,6 +4,7 @@ import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.kestra.cli.commands.TestCommand;
+import org.kestra.cli.commands.flows.FlowCommand;
 import org.kestra.cli.commands.plugins.PluginCommand;
 import org.kestra.cli.commands.servers.ServerCommand;
 import org.kestra.cli.contexts.KestraApplicationContextBuilder;
@@ -27,6 +28,7 @@ import java.util.concurrent.Callable;
     subcommands = {
         PluginCommand.class,
         ServerCommand.class,
+        FlowCommand.class,
         TestCommand.class,
     }
 )

@@ -11,7 +11,6 @@
             </b-nav-text>
         </b-navbar-nav>
         <Auth />
-        <vue-progress-bar></vue-progress-bar>
     </b-navbar>
 </template>
 <script>
@@ -22,7 +21,7 @@ import Auth from "Override/components/auth/Auth";
 export default {
     components: {
         Home,
-        Auth
+        Auth,
     },
     props: {
         menuCollapsed : {
@@ -30,18 +29,8 @@ export default {
             required: true
         }
     },
-    watch : {
-        loading() {
-            if (this.loading) {
-                this.$Progress.start()
-            } else {
-                this.$Progress.finish()
-            }
-        }
-    },
     computed: {
         ...mapState("layout", ["topNavbar"]),
-        ...mapState("core", ["loading"]),
         title() {
             return this.topNavbar.title;
         },

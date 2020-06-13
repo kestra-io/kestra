@@ -18,7 +18,7 @@
         </b-table>
         <div v-if="execution.inputs">
             <hr />
-            <h2>{{$t('inputs')}}</h2>
+            <h3>{{$t('inputs')}}</h3>
             <b-table
                 responsive="xl"
                 striped

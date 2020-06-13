@@ -25,7 +25,7 @@
     "vue-i18n": "^8.18.2",
     "vue-material-design-icons": "^4.7.1",
     "vue-moment": "^4.0.0",
-    "vue-progressbar": "^0.7.5",
+    "vue-nprogress": "^0.1.5",
     "vue-router": "^3.3.2",
     "vue-select": "^3.10.3",
     "vue-sidebar-menu": "^4.6.0",

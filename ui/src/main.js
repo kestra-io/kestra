@@ -11,7 +11,8 @@ import VerticalSeparator from './components/layout/VerticalSeparator'
 import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 import VueMoment from 'vue-moment'
-import VueProgressBar from 'vue-progressbar';
+import NProgress from 'vue-nprogress'
+
 import VueRouter from 'vue-router'
 import VueSSE from 'vue-sse';
 import VueSidebarMenu from 'vue-sidebar-menu'
@@ -42,10 +43,9 @@ if (app) {
     messages: Translations
   });
 
-  Vue.use(VueProgressBar, {
-    color: 'rgb(143, 255, 199)',
-    failedColor: 'red',
-    height: '2px'
+  const nprogress = new NProgress()
+  Vue.use(NProgress, {
+    latencyThreshold: 50,
   })
 
   Vue.use(VueSSE);
@@ -65,7 +65,8 @@ if (app) {
       render: h => h(App),
       router: router,
       store,
-      i18n
+      i18n,
+      nprogress
     }).$mount(app)
-  }, store);
+  }, store, nprogress);
 }

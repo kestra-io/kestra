@@ -5,7 +5,6 @@ export default {
 
             return {
                 message: function(type, message, name) {
-                    console.log(type, message, name)
                     if (name) {
                         return [self.$createElement('span', {domProps: {innerHTML: self.$t(type + " name", {name: name})}})];
                     } else if (message) {
@@ -30,7 +29,6 @@ export default {
                         })
                 },
                 success: function({message, title, name, type}) {
-                    console.log(message, title, name, type)
                     self.$bvToast.toast(this.message(type || "saved", message, name), {
                         title: title || self.$t("success"),
                         autoHideDelay: 5000,

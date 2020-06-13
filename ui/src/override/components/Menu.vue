@@ -5,11 +5,13 @@
     width="180px"
     :collapsed="collapsed"
   >
-    <a class="logo" slot="header" href="/">
-      <span>
-        <img src="../../../src/assets/logo-white.svg" alt="Kestra" />
-      </span>
-    </a>
+    <div class="logo" slot="header">
+      <router-link :to="{name: 'home'}">
+        <span>
+          <img src="../../../src/assets/logo-white.svg" alt="Kestra"/>
+        </span>
+      </router-link>
+    </div>
     <span slot="toggle-icon">
       <chevron-right v-if="collapsed" />
       <chevron-left v-else />

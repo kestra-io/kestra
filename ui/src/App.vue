@@ -1,5 +1,6 @@
 <template>
     <div>
+        <nprogress-container></nprogress-container>
         <top-nav-bar :menuCollapsed="menuCollapsed" />
         <Menu @onMenuCollapse="onMenuCollapse" />
         <custom-toast v-if="errorMessage" :noAutoHide="true" toastId="errorToast" :content="errorMessage" :title="$t('error')" />
@@ -15,13 +16,16 @@
 import Menu from "Override/components/Menu.vue";
 import TopNavBar from "./components/layout/TopNavBar";
 import CustomToast from "./components/customToast";
+import NprogressContainer from "vue-nprogress/src/NprogressContainer";
 import { mapState } from "vuex";
+
 export default {
     name: "app",
     components: {
         Menu,
         TopNavBar,
-        CustomToast
+        CustomToast,
+        NprogressContainer
     },
     data() {
         return {
@@ -47,30 +51,5 @@ export default {
 
 
 <style lang="scss">
-@import "styles/variable";
-
-body {
-    min-width: 320px;
-}
-
-body,
-html,
-.container {
-    height: 100% !important;
-}
-
-.content-wrapper {
-    padding-top: 15px;
-    padding-bottom: 60px !important;
-
-    &.menu-collapsed {
-        transition: all 0.3s ease;
-        padding-left: 50px;
-    }
-
-    &.menu-not-collapsed {
-        transition: all 0.3s;
-        padding-left: $menu-width;
-    }
-}
+    @import "app";
 </style>

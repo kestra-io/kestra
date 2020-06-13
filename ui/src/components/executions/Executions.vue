@@ -163,7 +163,6 @@ export default {
             this.$store
                 .dispatch("execution/triggerExecution", this.$route.params)
                 .then(response => {
-                    console.log("1", response)
                     this.$router.push({
                         name: "execution",
                         params: response.data

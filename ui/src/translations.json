@@ -95,7 +95,10 @@
         "up trend": "Increasing",
         "down trend": "Decreasing",
         "flow update aborted": "Flow update aborted",
-        "invalid flow": "Invalid flow"
+        "invalid flow": "Invalid flow",
+        "inputs": "Inputs",
+        "input": "Input",
+        "download": "Download"
     },
     "fr": {
         "id": "Identifiant",
@@ -194,6 +197,9 @@
         "up trend": "En augmentation",
         "down trend": "En baisse",
         "flow update aborted": "Mise à jour du flow annulée",
-        "invalid flow": "Flow invalide"
+        "invalid flow": "Flow invalide",
+        "inputs": "Entrées",
+        "input": "Entré",
+        "download": "Télécharger"
     }
 }

@@ -18,6 +18,7 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
 import java.io.IOException;
@@ -39,9 +40,10 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     public ElasticSearchFlowRepository(
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
-        ModelValidator modelValidator
+        ModelValidator modelValidator,
+        ThreadMainFactoryBuilder threadFactoryBuilder
     ) {
-        super(client, indicesConfigs, modelValidator, Flow.class);
+        super(client, indicesConfigs, modelValidator, threadFactoryBuilder, Flow.class);
     }
 
     private static String flowId(Flow flow) {

@@ -11,6 +11,7 @@ import lombok.Value;
 import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.exceptions.InternalException;
+import org.kestra.core.models.DeletedInterface;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
@@ -28,7 +29,7 @@ import java.util.zip.CRC32;
 @Value
 @Builder
 @Slf4j
-public class Execution {
+public class Execution implements DeletedInterface {
     @NotNull
     private String id;
 

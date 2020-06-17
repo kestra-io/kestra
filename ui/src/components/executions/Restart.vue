@@ -14,6 +14,9 @@
 </template>
 <script>
 import RestartIcon from "vue-material-design-icons/Restart";
+import {mapState} from "vuex";
+import permission from "../../models/permission";
+import action from "../../models/action";
 export default {
   components: { RestartIcon },
   props: {
@@ -48,29 +51,33 @@ export default {
     }
   },
   computed: {
+    ...mapState("me", ["user"]),
     enabled() {
       // TODO : Add a "restartable" property on task run object (backend side)
+      if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+        return false;
+      }
 
       // If a specific task has been passed, we see if it can be restarted
       if (this.task && this.task.taskId) {
         // We find the taskRun based on its taskId
         let taskRunIndex = this.execution.taskRunList.findIndex(
-          t => t.taskId == this.task.taskId
+          t => t.taskId === this.task.taskId
         );
 
-        if (taskRunIndex == -1) return false;
+        if (taskRunIndex === -1) return false;
 
         // There can be no taskRun with a failed state before
         // our specific task for it to be restarted
         let subList = this.execution.taskRunList.slice(0, taskRunIndex);
 
         let indexOfFailedTaskRun = subList.findIndex(
-          t => t.state.current == "FAILED"
+          t => t.state.current === "FAILED"
         );
 
-        return indexOfFailedTaskRun == -1;
+        return indexOfFailedTaskRun === -1;
       }
-      return this.execution.state.current == "FAILED";
+      return this.execution.state.current === "FAILED";
     }
   }
 };

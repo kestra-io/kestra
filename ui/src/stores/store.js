@@ -5,6 +5,7 @@ import flow from './flow'
 import execution from './executions'
 import namespace from './namespaces'
 import layout from './layout'
+import me from './me'
 import graph from './graph'
 
 export default {
@@ -16,6 +17,7 @@ export default {
         execution,
         namespace,
         layout,
+        me,
         graph
     }
 }

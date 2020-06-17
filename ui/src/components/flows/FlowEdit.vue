@@ -12,15 +12,18 @@
                 height="100%"
             ></editor>
         </div>
-        <bottom-line>
+        <bottom-line v-if="canSave || canDelete">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <b-button class="btn-danger" v-if="isEdit" @click="deleteFlow">
-                        <delete />
+                    <b-button
+                        class="btn-danger"
+                        v-if="canDelete"
+                        @click="deleteFlow">
+                        <delete/>
                         <span>{{$t('delete')}}</span>
                     </b-button>
 
-                    <b-button @click="save">
+                    <b-button @click="save" v-if="canSave">
                         <content-save />
                         <span>{{$t('save')}}</span>
                     </b-button>
@@ -37,6 +40,8 @@ import Delete from "vue-material-design-icons/Delete";
 import Yaml from "yaml";
 import BottomLine from "../layout/BottomLine";
 import RouteContext from "../../mixins/routeContext";
+import permission from "../../models/permission";
+import action from "../../models/action";
 
 export default {
     mixins: [RouteContext],
@@ -49,7 +54,9 @@ export default {
     data() {
         return {
             content: "",
-            readOnlyEditFields: {}
+            readOnlyEditFields: {},
+            permission: permission,
+            action: action
         };
     },
     created() {
@@ -57,11 +64,25 @@ export default {
     },
     computed: {
         ...mapState("flow", ["flow"]),
+        ...mapState("me", ["user"]),
         isEdit() {
             return (
                 this.$route.name === "flowEdit" &&
                 this.$route.query.tab === "data-source"
             );
+        },
+        canSave() {
+            return (
+                this.isEdit && this.user &&
+                    this.user.isAllowed(permission.FLOW, action.UPDATE, this.content.namespace)
+            ) || (
+                !this.isEdit && this.user &&
+                    this.user.isAllowed(permission.FLOW, action.CREATE, this.content.namespace)
+            );
+        },
+        canDelete() {
+            return this.isEdit && this.user &&
+                this.user.isAllowed(permission.FLOW, action.DELETE, this.content.namespace)
         },
         routeInfo() {
             return {
@@ -124,7 +145,8 @@ export default {
                         this.$t("check your the yaml is valid"),
                         this.$t("invalid flow")
                     );
-                    return
+
+                    return;
                 }
                 if (this.isEdit) {
                     for (const key in this.readOnlyEditFields) {

@@ -19,14 +19,23 @@ public interface StorageInterface {
 
     URI put(URI uri, InputStream data) throws IOException;
 
-    default URI uri(Flow flow, Execution execution, String inputName, String file) throws  URISyntaxException {
-        return new URI("/" + String.join(
+    default String executionPrefix(Flow flow, Execution execution) throws  URISyntaxException {
+        return String.join(
             "/",
             Arrays.asList(
                 flow.getNamespace().replace(".", "/"),
                 Slugify.of(flow.getId()),
                 "executions",
-                execution.getId(),
+                execution.getId()
+            )
+        );
+    }
+
+    default URI uri(Flow flow, Execution execution, String inputName, String file) throws  URISyntaxException {
+        return new URI("/" + String.join(
+            "/",
+            Arrays.asList(
+                executionPrefix(flow, execution),
                 "inputs",
                 inputName,
                 file

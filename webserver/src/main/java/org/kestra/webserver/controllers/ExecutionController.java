@@ -170,24 +170,32 @@ public class ExecutionController {
     /**
      * Download file binary from uri parameter
      *
-     * @param filePath The file URI to return
-     * @param type The file storage type
+     * @param path The file URI to return
      * @return data binary content
      */
     @Get(uri = "executions/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
     public StreamedFile file(
         String executionId,
-        @QueryValue(value = "filePath") URI filePath,
-        @QueryValue(value = "type") String type
-    ) throws IOException {
+        @QueryValue(value = "path") URI path
+    ) throws IOException, URISyntaxException {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
             return null;
         }
 
-        InputStream fileHandler = storageInterface.get(filePath);
+        Optional<Flow> flow = flowRepository.findById(execution.get().getNamespace(), execution.get().getFlowId());
+        if (flow.isEmpty()) {
+            return null;
+        }
+
+        String prefix = storageInterface.executionPrefix(flow.get(), execution.get());
+        if (!path.getPath().substring(1).startsWith(prefix)) {
+            throw new IllegalArgumentException("Invalid prefix path");
+        }
+
+        InputStream fileHandler = storageInterface.get(path);
         return new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
-            .attach(FilenameUtils.getName(filePath.toString()));
+            .attach(FilenameUtils.getName(path.toString()));
     }
 
     /**

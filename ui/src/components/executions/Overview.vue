@@ -59,7 +59,7 @@ export default {
     },
     methods: {
         itemUrl(value) {
-            return `${apiRoot}executions/${this.execution.id}/file?filePath=${value.uri}&type=${value.type}`;
+            return `${apiRoot}executions/${this.execution.id}/file?path=${value}`;
         },
         restart() {
             this.$emit("follow");

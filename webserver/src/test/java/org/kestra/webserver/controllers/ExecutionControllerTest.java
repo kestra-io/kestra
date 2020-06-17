@@ -1,5 +1,6 @@
 package org.kestra.webserver.controllers;
 
+import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -378,5 +379,31 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             .stream()
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent(), is(State.Type.SUCCESS)));
+    }
+
+    @Test
+    void downloadFile() throws TimeoutException {
+        Execution execution = runnerUtils.runOne(TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
+        assertThat(execution.getTaskRunList(), hasSize(5));
+
+        String path = (String) execution.getInputs().get("file");
+
+        String file = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path),
+            String.class
+        );
+
+        assertThat(file, containsString("micronaut:"));
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path.replace(execution.getId(),
+                    FriendlyId.createFriendlyId()
+                )),
+                String.class
+            );
+        });
+
+        assertThat(e.getStatus().getCode(), is(422));
     }
 }

@@ -1,7 +1,6 @@
 export default {
     namespaced: true,
     state: {
-        loading: false,
         errorMessage: undefined
     },
     actions: {
@@ -10,9 +9,6 @@ export default {
         }
     },
     mutations: {
-        setLoading(state, value) {
-            state.loading = value
-        },
         setErrorMessage(state, message) {
             state.errorMessage = message
         }

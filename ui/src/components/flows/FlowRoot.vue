@@ -8,6 +8,7 @@
                     @click="setTab(tab.tab)"
                     :active="$route.query.tab === tab.tab"
                     :title="tab.title"
+                    :class="tab.class"
                     lazy
                 >
                     <b-card-text>
@@ -27,6 +28,9 @@ import FlowActions from "./FlowActions";
 import Executions from "../executions/Executions";
 import RouteContext from "../../mixins/routeContext";
 import { mapState } from "vuex";
+import permission from "../../models/permission";
+import action from "../../models/action";
+
 export default {
     mixins: [RouteContext],
     components: {
@@ -47,7 +51,7 @@ export default {
     methods: {
         setTab(tab) {
             this.$router.push({
-                name: "flow",
+                name: "flowEdit",
                 params: this.$route.params,
                 query: { tab }
             });
@@ -55,6 +59,7 @@ export default {
     },
     computed: {
         ...mapState("flow", ["flow"]),
+        ...mapState("me", ["user"]),
         routeInfo() {
             return {
                 title: this.$route.params.id,
@@ -77,7 +82,7 @@ export default {
                     {
                         label: this.$route.params.id,
                         link: {
-                            name: "flow",
+                            name: "flowEdit",
                             params: {
                                 namespace: this.$route.params.namespace,
                                 id: this.$route.params.id
@@ -88,30 +93,39 @@ export default {
             };
         },
         tabs() {
-            const title = title => this.$t(title).capitalize();
-            return [
+            const title = title => this.$t(title);
+            const tabs = [
                 {
                     tab: "overview",
                     title: title("overview")
                 },
-                {
+            ];
+
+            if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
+                tabs.push({
                     tab: "executions",
                     title: title("executions")
-                },
-                {
+                });
+            }
+
+            if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
+                tabs.push({
                     tab: "execution-configuration",
-                    title: title("trigger")
-                },
-                {
-                    tab: "data-source",
-                    title: title("source")
-                }
-            ];
+                    title: title("trigger"),
+                });
+            }
+
+            tabs.push({
+                tab: "data-source",
+                title: title("source"),
+                class: "p-0"
+            });
+
+            return tabs;
         }
     },
     destroyed () {
         this.$store.commit('flow/setFlow', undefined)
     }
-
 };
 </script>

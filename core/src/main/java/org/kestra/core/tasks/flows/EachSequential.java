@@ -90,6 +90,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
 
         return Arrays
             .stream(values)
+            .distinct()
             .flatMap(value -> this.getTasks()
                 .stream()
                 .map(task -> ResolvedTask.builder()

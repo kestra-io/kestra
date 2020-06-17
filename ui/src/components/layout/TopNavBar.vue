@@ -2,24 +2,26 @@
     <b-navbar v-if="topNavbar" :class="menuCollapsed" class="top-line" type="dark" variant="dark">
         <b-navbar-nav>
             <b-nav-text >
-                <h1>{{title | cap}}</h1>
+                <h1>{{title}}</h1>
 
                 <b-breadcrumb>
-                    <b-breadcrumb-item><router-link :to="{ name: 'home'}"><home /> {{$t('home') | cap}}</router-link></b-breadcrumb-item>
+                    <b-breadcrumb-item><router-link :to="{ name: 'home'}"><home /> {{$t('home')}}</router-link></b-breadcrumb-item>
                     <b-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :text="item.label" :key="x" />
                 </b-breadcrumb>
             </b-nav-text>
         </b-navbar-nav>
-        <vue-progress-bar></vue-progress-bar>
+        <Auth />
     </b-navbar>
 </template>
 <script>
 import { mapState } from "vuex";
 import Home from "vue-material-design-icons/Home";
+import Auth from "Override/components/auth/Auth";
 
 export default {
     components: {
-        Home
+        Home,
+        Auth,
     },
     props: {
         menuCollapsed : {
@@ -27,18 +29,8 @@ export default {
             required: true
         }
     },
-    watch : {
-        loading() {
-            if (this.loading) {
-                this.$Progress.start()
-            } else {
-                this.$Progress.finish()
-            }
-        }
-    },
     computed: {
         ...mapState("layout", ["topNavbar"]),
-        ...mapState("core", ["loading"]),
         title() {
             return this.topNavbar.title;
         },

@@ -8,12 +8,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.ShardOperationFailedException;
-import org.elasticsearch.action.delete.DeleteRequest;
-import org.elasticsearch.action.delete.DeleteResponse;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
@@ -32,7 +29,6 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -40,19 +36,24 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.serializers.JacksonMapper;
+import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 @Slf4j
 abstract public class AbstractElasticSearchRepository<T> {
+    private static ExecutorService poolExecutor;
+
     protected static final ObjectMapper mapper = JacksonMapper.ofJson();
     protected Class<T> cls;
 
@@ -67,8 +68,11 @@ abstract public class AbstractElasticSearchRepository<T> {
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
         ModelValidator modelValidator,
+        ThreadMainFactoryBuilder threadFactoryBuilder,
         Class<T> cls
     ) {
+        this.startExecutor(threadFactoryBuilder);
+
         this.client = client;
         this.cls = cls;
         this.modelValidator = modelValidator;
@@ -78,6 +82,12 @@ abstract public class AbstractElasticSearchRepository<T> {
             .filter(r -> r.getCls() == this.cls)
             .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), r))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private synchronized void startExecutor(ThreadMainFactoryBuilder threadFactoryBuilder) {
+        if (poolExecutor == null) {
+            poolExecutor = Executors.newCachedThreadPool(threadFactoryBuilder.build("elasticsearch-repository-%d"));
+        }
     }
 
     protected BoolQueryBuilder defaultFilter() {
@@ -241,25 +251,46 @@ abstract public class AbstractElasticSearchRepository<T> {
     protected List<T> scroll(String index, SearchSourceBuilder sourceBuilder) {
         List<T> result = new ArrayList<>();
 
+        String scrollId = null;
         SearchRequest searchRequest = searchRequest(index, sourceBuilder, true);
         try {
             SearchResponse searchResponse;
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            scrollId = searchResponse.getScrollId();
 
             do {
                 result.addAll(this.map(searchResponse.getHits().getHits()));
 
                 SearchScrollRequest searchScrollRequest = new SearchScrollRequest()
-                    .scrollId(searchResponse.getScrollId())
+                    .scrollId(scrollId)
                     .scroll(new TimeValue(60000));
 
                 searchResponse = client.scroll(searchScrollRequest, RequestOptions.DEFAULT);
             } while (searchResponse.getHits().getHits().length != 0);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            this.clearScrollId(scrollId);
         }
 
         return result;
+    }
+
+    private void clearScrollId(String scrollId) {
+        if (scrollId == null) {
+            return;
+        }
+
+        poolExecutor.execute(() -> {
+            ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
+            clearScrollRequest.addScrollId(scrollId);
+
+            try {
+                client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
+            } catch (IOException e) {
+                log.warn("Failed to clear scroll", e);
+            }
+        });
     }
 
     @PostConstruct

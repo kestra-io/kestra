@@ -29,12 +29,7 @@ export default {
                 localStorage.setItem("lang", lang);
                 this.$moment.locale(lang);
                 this.$root.$i18n.locale = lang;
-                this.$bvToast.toast(this.$t("Successfully set"), {
-                    title: this.$t("Language"),
-                    autoHideDelay: 5000,
-                    toaster: "b-toaster-top-center",
-                    variant: "success"
-                });
+                this.$toast().success({message: this.$t("saved")});
             },
             get() {
                 return localStorage.getItem("lang") || "en";

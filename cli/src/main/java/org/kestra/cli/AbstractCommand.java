@@ -14,7 +14,6 @@ import org.kestra.core.plugins.PluginScanner;
 import org.kestra.core.plugins.RegisteredPlugin;
 import picocli.CommandLine;
 
-import javax.inject.Inject;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -23,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
 
 @CommandLine.Command(
     mixinStandardHelpOptions = true
@@ -79,6 +79,10 @@ abstract public class AbstractCommand implements Runnable {
             this.logLevel = LogLevel.TRACE;
         }
 
+        if (this.withServer) {
+            log.info("Starting Kestra with environments {}", applicationContext.getEnvironment().getActiveNames());
+        }
+
         ((LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory())
             .getLoggerList()
             .stream()
@@ -101,7 +105,6 @@ abstract public class AbstractCommand implements Runnable {
         if (!this.withServer) {
             return;
         }
-
 
         applicationContext
             .findBean(EmbeddedServer.class)

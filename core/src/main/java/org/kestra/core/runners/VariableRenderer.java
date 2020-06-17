@@ -5,31 +5,42 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
+import org.kestra.core.runners.handlebars.helpers.EvalHelper;
 import org.kestra.core.runners.handlebars.helpers.InstantHelper;
+import org.kestra.core.runners.handlebars.helpers.JqHelper;
 import org.kestra.core.runners.handlebars.helpers.JsonHelper;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.inject.Singleton;
+
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
+@Singleton
 public class VariableRenderer {
-    private static final Handlebars handlebars = new Handlebars()
-        .with(EscapingStrategy.NOOP)
-        .registerHelpers(ConditionalHelpers.class)
-        .registerHelpers(EachHelper.class)
-        .registerHelpers(LogHelper.class)
-        .registerHelpers(StringHelpers.class)
-        .registerHelpers(UnlessHelper.class)
-        .registerHelpers(WithHelper.class)
-        .registerHelpers(InstantHelper.class)
-        .registerHelpers(JsonHelper.class)
-        .registerHelperMissing((context, options) -> {
-            throw new IllegalStateException("Missing variable: " + options.helperName);
-        });
+    private final Handlebars handlebars;
 
-    public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+    public VariableRenderer() {
+        this.handlebars = new Handlebars()
+            .with(EscapingStrategy.NOOP)
+            .registerHelpers(ConditionalHelpers.class)
+            .registerHelpers(EachHelper.class)
+            .registerHelpers(LogHelper.class)
+            .registerHelpers(StringHelpers.class)
+            .registerHelpers(UnlessHelper.class)
+            .registerHelpers(WithHelper.class)
+            .registerHelpers(InstantHelper.class)
+            .registerHelpers(JsonHelper.class)
+            .registerHelper("eval", new EvalHelper(this))
+            .registerHelper("jq", new JqHelper())
+            .registerHelperMissing((context, options) -> {
+                throw new IllegalStateException("Missing variable: " + options.helperName);
+            });
+    }
+
+    public String recursiveRender(String inline, Object variables) throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
         }
@@ -39,8 +50,7 @@ public class VariableRenderer {
         String current = "";
         Template template;
 
-
-        while(!isSame) {
+        while (!isSame) {
             try {
                 template = handlebars.compileInline(handlebarTemplate);
                 current = template.apply(variables);
@@ -53,6 +63,10 @@ public class VariableRenderer {
         }
 
         return current;
+    }
+
+    public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return this.recursiveRender(inline, variables);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -83,7 +97,7 @@ public class VariableRenderer {
         List<String> result = new ArrayList<>();
 
         for (String inline : list) {
-            result.add(this.render(inline, variables));
+            result.add(this.recursiveRender(inline, variables));
         }
 
         return result;

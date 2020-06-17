@@ -5,11 +5,13 @@
     width="180px"
     :collapsed="collapsed"
   >
-    <a class="logo" slot="header" href="/">
-      <span>
-        <img src="../assets/logo-white.svg" alt="Kestra" />
-      </span>
-    </a>
+    <div class="logo" slot="header">
+      <router-link :to="{name: 'home'}">
+        <span>
+          <img src="../../../src/assets/logo-white.svg" alt="Kestra"/>
+        </span>
+      </router-link>
+    </div>
     <span slot="toggle-icon">
       <chevron-right v-if="collapsed" />
       <chevron-left v-else />
@@ -51,23 +53,21 @@ export default {
       return [
         {
           href: "/flows",
-          title: this.$t("flows").capitalize(),
+          alias: [
+            "/flows*"
+          ],
+          title: this.$t("flows"),
           icon: {
             element: "graph",
             class: "menu-icon"
           }
         },
-        /*{
-          href: "/flows",
-          title: this.$t("flows").capitalize(),
-          icon: {
-            element: "graph",
-            class: "menu-icon"
-          }
-        },*/
         {
           href: "/executions",
-          title: this.$t("executions").capitalize(),
+          alias: [
+            "/executions*"
+          ],
+          title: this.$t("executions"),
           icon: {
             element: "timelineclock",
             class: "menu-icon"
@@ -75,7 +75,10 @@ export default {
         },
         {
           href: "/settings",
-          title: this.$t("settings").capitalize(),
+          alias: [
+            "/settings*"
+          ],
+          title: this.$t("settings"),
           icon: {
             element: "settings",
             class: "menu-icon"
@@ -88,7 +91,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import "../styles/variable";
+@import "src/styles/variable";
 
 .logo {
   height: 60px;

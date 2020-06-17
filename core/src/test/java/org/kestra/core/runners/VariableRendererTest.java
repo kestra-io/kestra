@@ -35,4 +35,29 @@ class VariableRendererTest {
         assertThat((List<String>) render.get("list"), containsInAnyOrder("top", "awesome"));
         assertThat(render.get("int"), is(1));
     }
+
+    @Test
+    void recursive() throws IllegalVariableEvaluationException {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "first", "1",
+            "second", "{{third}}",
+            "third", "{{first}}"
+        );
+
+        String render = VARIABLE_RENDERER.render("{{ second }}", vars);
+
+        assertThat(render, is("1"));
+    }
+
+    @Test
+    void eval() throws IllegalVariableEvaluationException {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "block", ImmutableMap.of("test", ImmutableMap.of("child", "awesome")),
+            "inner", "test"
+        );
+
+        String render = VARIABLE_RENDERER.render("{{ eval 'block.[{{inner}}].child' }}", vars);
+
+        assertThat(render, is("awesome"));
+    }
 }

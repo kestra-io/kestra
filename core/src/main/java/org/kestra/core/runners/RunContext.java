@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 
 @NoArgsConstructor
 public class RunContext {
-    private static VariableRenderer variableRenderer = new VariableRenderer();
+    private VariableRenderer variableRenderer;
     private ApplicationContext applicationContext;
     private StorageInterface storageInterface;
     private URI storageOutputPrefix;
@@ -57,6 +57,7 @@ public class RunContext {
 
     private void init(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
+        this.variableRenderer = applicationContext.findBean(VariableRenderer.class).orElseThrow();
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
         this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();

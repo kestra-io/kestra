@@ -11,6 +11,7 @@ import lombok.Value;
 import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.exceptions.InternalException;
+import org.kestra.core.models.DeletedInterface;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
@@ -28,7 +29,7 @@ import java.util.zip.CRC32;
 @Value
 @Builder
 @Slf4j
-public class Execution {
+public class Execution implements DeletedInterface {
     @NotNull
     private String id;
 
@@ -453,7 +454,11 @@ public class Execution {
             .collect(Collectors.toList());
 
         if (childs.size() == 0) {
-            return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
+            if (taskRun.getValue() == null) {
+                return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
+            } else {
+                return Map.of(taskRun.getTaskId(), Map.of(taskRun.getValue(), taskRun.getOutputs()));
+            }
         }
 
         Map<String, Object> result = new HashMap<>();

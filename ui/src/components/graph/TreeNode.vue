@@ -40,7 +40,7 @@
                         :title="$t('show task logs')"
                         v-if="hasLogs"
                         class="btn-secondary"
-                        :to="{name:'execution', params: $route.params, query: {tab:'logs', search: task.id}}"
+                        :to="{name:'executionEdit', params: $route.params, query: {tab:'logs', search: task.id}}"
                     >
                         <format-list-checks title />
                     </router-link>
@@ -56,7 +56,7 @@
                         v-if="hasOutputs"
                         class="btn-secondary"
                         :title="$t('show task outputs')"
-                        :to="{name:'execution', params: $route.params, query: {tab:'execution-output', search: task.id + (value ? ` - ${value}` : '')}}"
+                        :to="{name:'executionEdit', params: $route.params, query: {tab:'execution-output', search: task.id + (value ? ` - ${value}` : '')}}"
                     >
                         <location-exit title />
                     </router-link>

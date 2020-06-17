@@ -19,8 +19,11 @@ public class MetricRegistry {
     public final static String METRIC_WORKER_STARTED_COUNT = "worker.started.count";
     public final static String METRIC_WORKER_RETRYED_COUNT = "worker.retryed.count";
     public final static String METRIC_WORKER_ENDED_COUNT = "worker.ended.count";
+    public final static String METRIC_WORKER_ENDED_DURATION = "worker.ended.duration";
 
     public final static String KESTRA_EXECUTOR_TASKRUN_NEXT_COUNT = "executor.taskrun.next.count";
+    public final static String KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT = "executor.taskrun.ended.count";
+    public final static String KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION = "executor.taskrun.ended.duration";
     public final static String KESTRA_EXECUTOR_WORKERTASKRESULT_COUNT = "executor.workertaskresult.count";
     public final static String KESTRA_EXECUTOR_EXECUTION_STARTED_COUNT = "executor.execution.started.count";
     public final static String KESTRA_EXECUTOR_EXECUTION_END_COUNT = "executor.execution.end.count";

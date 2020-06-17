@@ -11,14 +11,14 @@
             <template v-slot:cell(value)="row">
                 <router-link
                     v-if="row.item.link"
-                    :to="{name: 'execution', params: row.item.link}"
+                    :to="{name: 'executionEdit', params: row.item.link}"
                 >{{row.item.value}}</router-link>
                 <span v-else>{{row.item.value}}</span>
             </template>
         </b-table>
         <div v-if="execution.inputs">
             <hr />
-            <h2>{{$t('inputs') | cap}}</h2>
+            <h3>{{$t('inputs')}}</h3>
             <b-table
                 responsive="xl"
                 striped
@@ -37,7 +37,7 @@
                         v-if="['optionalFile', 'file'].includes(row.item.key)"
                         target="_blank"
                         :href="itemUrl(row.item.value)"
-                    >{{$t('download') | cap}}</b-link>
+                    >{{$t('download')}}</b-link>
                 </template>
             </b-table>
         </div>
@@ -59,7 +59,7 @@ export default {
     },
     methods: {
         itemUrl(value) {
-            return `${apiRoot}executions/${this.execution.id}/file?filePath=${value.uri}&type=${value.type}`;
+            return `${apiRoot}executions/${this.execution.id}/file?path=${value}`;
         },
         restart() {
             this.$emit("follow");

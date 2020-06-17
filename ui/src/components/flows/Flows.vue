@@ -28,7 +28,7 @@
                         ref="table"
                     >
                         <template v-slot:cell(actions)="row">
-                            <router-link :to="{name: 'flow', params : row.item}">
+                            <router-link :to="{name: 'flowEdit', params : row.item}">
                                 <eye id="edit-action" />
                             </router-link>
                         </template>
@@ -67,13 +67,13 @@
                 </template>
             </data-table>
         </div>
-        <bottom-line>
+        <bottom-line v-if="user && user.hasAny(permission.FLOW, action.READ)">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
                     <router-link :to="{name: 'flowsAdd'}">
                         <b-button variant="primary">
                             <plus />
-                            {{$t('add flow') | cap }}
+                            {{$t('create')}}
                         </b-button>
                     </router-link>
                 </li>
@@ -84,6 +84,8 @@
 
 <script>
 import { mapState } from "vuex";
+import permission from "../../models/permission";
+import action from "../../models/action";
 import NamespaceSelector from "../namespace/Selector";
 import Plus from "vue-material-design-icons/Plus";
 import Eye from "vue-material-design-icons/Eye";
@@ -123,14 +125,17 @@ export default {
     },
     data() {
         return {
-            dataType: "flow"
+            dataType: "flow",
+            permission: permission,
+            action: action
         };
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
+        ...mapState("me", ["user"]),
         fields() {
             const title = title => {
-                return this.$t(title).capitalize();
+                return this.$t(title);
             };
             return [
                 {

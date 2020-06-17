@@ -1,0 +1,46 @@
+@import "styles/variable";
+
+body {
+    min-width: 320px;
+}
+
+body,
+html,
+.container {
+    height: 100% !important;
+}
+
+#nprogress {
+    .bar {
+        background: $yellow;
+    }
+
+    .spinner {
+        top: 8px;
+        right: 8px;
+    }
+
+    .peg {
+        box-shadow: 0 0 10px $yellow, 0 0 5px $yellow;
+    }
+
+    .spinner-icon {
+        border-top-color: $yellow;
+        border-left-color: $yellow;
+    }
+}
+
+.content-wrapper {
+    padding-top: 15px;
+    padding-bottom: 60px !important;
+
+    &.menu-collapsed {
+        transition: all 0.3s ease;
+        padding-left: 50px;
+    }
+
+    &.menu-not-collapsed {
+        transition: all 0.3s;
+        padding-left: $menu-width;
+    }
+}

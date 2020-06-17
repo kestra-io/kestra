@@ -11,6 +11,7 @@ import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.hierarchies.FlowTree;
+import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.services.FlowService;
 import org.kestra.webserver.responses.PagedResults;
@@ -19,6 +20,7 @@ import org.kestra.webserver.utils.PageableUtils;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,7 +83,13 @@ public class FlowController {
     @Post(produces = MediaType.TEXT_JSON)
     public HttpResponse<Flow> create(@Body Flow flow) throws ConstraintViolationException {
         if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
-            return HttpResponse.status(HttpStatus.CONFLICT, "Flow already exists");
+            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
+                "Flow id already exists",
+                flow,
+                Flow.class,
+                "namespace.id",
+                flow.getId()
+            )));
         }
 
         return HttpResponse.ok(flowRepository.create(flow));

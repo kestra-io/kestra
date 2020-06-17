@@ -137,6 +137,10 @@ public class Worker implements Runnable {
                 metricRegistry
                     .counter(MetricRegistry.METRIC_WORKER_ENDED_COUNT, metricRegistry.tags(finalWorkerTask))
                     .increment();
+
+                metricRegistry
+                    .timer(MetricRegistry.METRIC_WORKER_ENDED_DURATION, metricRegistry.tags(finalWorkerTask))
+                    .record(finalWorkerTask.getTaskRun().getState().getDuration());
             }
         }
     }

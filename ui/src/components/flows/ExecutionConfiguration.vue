@@ -50,7 +50,7 @@
             </b-form-group>
             <b-form-group class="text-right mb-0">
                 <b-button type="submit" variant="primary">
-                    {{$t('trigger execution') | cap}}
+                    {{$t('trigger execution')}}
                     <trigger title/>
                 </b-button>
 
@@ -68,7 +68,7 @@
         computed: {
             ...mapState("flow", ["flow"]),
             placeholder() {
-                return this.$t("set a value for").capitalize();
+                return this.$t("set a value for");
             }
         },
         methods: {
@@ -84,17 +84,11 @@
                             formData.append(input.name, input.value);
                         }
                     } else if (input.required) {
-                        this.$bvToast.toast(
-                            `${this.$t("invalid field").capitalize()} : ${
-                                input.name
-                            }`,
-                            {
-                                title: this.$t("form error").capitalize(),
-                                autoHideDelay: 5000,
-                                toaster: "b-toaster-top-right",
-                                variant: "danger"
-                            }
-                        );
+                        this.$toast().error(
+                            this.$t("invalid field", {name: input.name}),
+                            this.$t("form error")
+                        )
+
                         return;
                     }
                 }
@@ -104,15 +98,14 @@
                         formData
                     })
                     .then(response => {
-                        this.$bvToast.toast(this.$t("triggered").capitalize(), {
-                            title: this.$t("execution").capitalize(),
-                            autoHideDelay: 5000,
-                            toaster: "b-toaster-top-right",
-                            variant: "success"
-                        });
                         this.$store.commit('execution/setExecution', response.data)
-                        this.$router.push({name: 'execution', params: response.data})
-                    });
+                        this.$router.push({name: 'executionEdit', params: response.data})
+
+                        return response.data;
+                    })
+                    .then((execution) => {
+                        this.$toast().success({type: 'triggered', name: execution.id});
+                    })
             }
         }
     };

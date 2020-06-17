@@ -10,6 +10,7 @@ import lombok.Value;
 import lombok.With;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.exceptions.InternalException;
+import org.kestra.core.models.DeletedInterface;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.listeners.Listener;
 import org.kestra.core.models.tasks.ResolvedTask;
@@ -34,7 +35,7 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 @Value
 @Builder
 @Introspected
-public class Flow {
+public class Flow implements DeletedInterface {
     private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override

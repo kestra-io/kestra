@@ -11,17 +11,17 @@ tasks:
         format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
       - id: 1-2_each
         type: org.kestra.core.tasks.flows.EachSequential
-        value: '["a", "b"]'
+        value: '["a a", "b b"]'
         tasks:
           - id: 1-2-1_return
             type: org.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
           - id: 1-2-2_return
             type: org.kestra.core.tasks.debugs.Return
-            format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+            format: "{{task.id}} > {{eval 'outputs.1-2-1_return.[s1].[{{taskrun.value}}].value' }} > {{taskrun.startDate}}"
       - id: 1-3_return
         type: org.kestra.core.tasks.debugs.Return
-        format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+        format: "{{task.id}} > {{eval 'outputs.1-1_return.[{{taskrun.value}}].value' }} > {{taskrun.startDate}}"
   - id: 2_return
     type: org.kestra.core.tasks.debugs.Return
-    format: "{{task.id}} > {{outputs.1-2-1_return.s1.a.value}}"
+    format: "{{task.id}} > {{outputs.1-2-1_return.[s1].[a a].value}}"

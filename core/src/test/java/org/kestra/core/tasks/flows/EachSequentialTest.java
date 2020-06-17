@@ -7,6 +7,8 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -19,6 +21,9 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne("org.kestra.tests", "each-sequential");
 
         assertThat(execution.getTaskRunList(), hasSize(8));
+
+        Map<String, Object> outputs = execution.outputs();
+        assertThat(execution.getTaskRunList(), hasSize(8));
     }
 
     @Test
@@ -28,8 +33,16 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getTaskRunList(), hasSize(23));
 
         TaskRun last = execution.findTaskRunsByTaskId("2_return").get(0);
-        TaskRun vars = execution.findTaskRunByTaskIdAndValue("1-2-1_return", Arrays.asList("s1", "a"));
-        assertThat((String) last.getOutputs().get("value"), containsString((String) vars.getOutputs().get("value")));
+        TaskRun lastWithValue = execution.findTaskRunByTaskIdAndValue("1-2-1_return", Arrays.asList("s1", "a a"));
+        assertThat((String) last.getOutputs().get("value"), containsString((String) lastWithValue.getOutputs().get("value")));
+
+        TaskRun evalL1 = execution.findTaskRunByTaskIdAndValue("1-3_return", Collections.singletonList("s1"));
+        TaskRun evalL1Lookup = execution.findTaskRunByTaskIdAndValue("1-1_return", Collections.singletonList("s1"));
+        assertThat((String) evalL1.getOutputs().get("value"), containsString((String) evalL1Lookup.getOutputs().get("value")));
+
+        TaskRun evalL2 = execution.findTaskRunByTaskIdAndValue("1-2-2_return", Arrays.asList("s1", "a a"));
+        TaskRun evalL2Lookup = execution.findTaskRunByTaskIdAndValue("1-2-1_return", Arrays.asList("s1", "a a"));
+        assertThat((String) evalL2.getOutputs().get("value"), containsString((String) evalL2Lookup.getOutputs().get("value")));
     }
 
     @Test

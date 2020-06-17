@@ -43,12 +43,29 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
     )
     private String[] commands;
 
+    @Builder.Default
+    @InputProperty(
+        description = "Exit if any non true return value",
+        body = {
+            "This tells bash that it should exit the script if any statement returns a non-true return value.",
+            "The benefit of using -e is that it prevents errors snowballing into serious issues when they could " +
+                "have been caught earlier."
+        },
+        dynamic = true
+    )
+    private boolean exitOnFailed = true;
+
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger(this.getClass());
 
         // renderer templates
         List<String> renderer = new ArrayList<>();
+
+        if (this.exitOnFailed) {
+            renderer.add("set -o errexit");
+        }
+
         for (String command : this.commands) {
             renderer.add(runContext.render(command));
         }
@@ -65,12 +82,14 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         LogThread stdOut = readInput(logger, process.getInputStream(), false);
         LogThread stdErr = readInput(logger, process.getErrorStream(), true);
 
-        // process.pid();
-
         int exitCode = process.waitFor();
 
         if (exitCode != 0) {
-            throw new RuntimeException("Command failed with code " + exitCode);
+            throw new BashException(
+                exitCode,
+                stdOut.getLogs(),
+                stdErr.getLogs()
+            );
         } else {
             logger.debug("Command succeed with code " + exitCode);
         }
@@ -143,5 +162,20 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             description = "The exit code of the whole execution"
         )
         private int exitCode;
+    }
+
+    @Getter
+    @Builder
+    public static class BashException extends Exception {
+        public BashException(int exitCode, List<String> stdOut, List<String> stdErr) {
+            super("Command failed with code " + exitCode + " and stdErr '" + String.join("\n", stdErr) + "'");
+            this.exitCode = exitCode;
+            this.stdOut = stdOut;
+            this.stdErr = stdErr;
+        }
+
+        private final int exitCode;
+        private final List<String> stdOut;
+        private final List<String> stdErr;
     }
 }

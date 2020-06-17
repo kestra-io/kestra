@@ -1,29 +1,31 @@
 <template>
     <div>
-        <b-row class="row editor-wrapper">
-            <b-col md="12">
-                <editor
-                    ref="aceEditor"
-                    v-model="content"
-                    @init="editorInit"
-                    lang="yaml"
-                    theme="chrome"
-                    width="100%"
-                    height="100%"
-                ></editor>
-            </b-col>
-        </b-row>
-        <bottom-line>
+        <div class="editor-wrapper">
+            <editor
+                ref="aceEditor"
+                v-model="content"
+                @init="editorInit"
+                lang="yaml"
+                theme="merbivore_soft"
+                width="100%"
+                minLines="5"
+                height="100%"
+            ></editor>
+        </div>
+        <bottom-line v-if="canSave || canDelete">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <b-button class="btn-danger" @click="deleteFlow">
-                        <span class="text-capitalize">{{$t('delete')}}</span>
-                        <delete title />
+                    <b-button
+                        class="btn-danger"
+                        v-if="canDelete"
+                        @click="deleteFlow">
+                        <delete/>
+                        <span>{{$t('delete')}}</span>
                     </b-button>
 
-                    <b-button @click="save">
-                        <span class="text-capitalize">{{$t('save')}}</span>
-                        <content-save title />
+                    <b-button @click="save" v-if="canSave">
+                        <content-save />
+                        <span>{{$t('save')}}</span>
                     </b-button>
                 </li>
             </ul>
@@ -38,6 +40,8 @@ import Delete from "vue-material-design-icons/Delete";
 import Yaml from "yaml";
 import BottomLine from "../layout/BottomLine";
 import RouteContext from "../../mixins/routeContext";
+import permission from "../../models/permission";
+import action from "../../models/action";
 
 export default {
     mixins: [RouteContext],
@@ -50,7 +54,9 @@ export default {
     data() {
         return {
             content: "",
-            readOnlyEditFields: {}
+            readOnlyEditFields: {},
+            permission: permission,
+            action: action
         };
     },
     created() {
@@ -58,14 +64,25 @@ export default {
     },
     computed: {
         ...mapState("flow", ["flow"]),
+        ...mapState("me", ["user"]),
         isEdit() {
             return (
-                this.$route.name === "flow" &&
+                this.$route.name === "flowEdit" &&
                 this.$route.query.tab === "data-source"
             );
         },
-        flowName() {
-            return (this.flow && this.flow.id) || this.$t("new");
+        canSave() {
+            return (
+                this.isEdit && this.user &&
+                    this.user.isAllowed(permission.FLOW, action.UPDATE, this.content.namespace)
+            ) || (
+                !this.isEdit && this.user &&
+                    this.user.isAllowed(permission.FLOW, action.CREATE, this.content.namespace)
+            );
+        },
+        canDelete() {
+            return this.isEdit && this.user &&
+                this.user.isAllowed(permission.FLOW, action.DELETE, this.content.namespace)
         },
         routeInfo() {
             return {
@@ -92,44 +109,30 @@ export default {
                 };
             }
         },
-        editorInit: function() {
+        editorInit: function(editor) {
             require("brace/mode/yaml");
-            require("brace/theme/chrome");
+            require("brace/theme/merbivore_soft");
+            require("brace/ext/language_tools")
+            require("brace/ext/error_marker")
+            require("brace/ext/searchbox")
             this.$refs.aceEditor.editor.textInput.focus()
+
+            editor.setOptions({
+                minLines: 5,
+                maxLines: Infinity
+            });
         },
         deleteFlow() {
             if (this.flow) {
-                let flow = this.flow;
-                const title = this.$t("deleted").capitalize();
-                const desc = this.$t("flow delete ok").capitalize();
-
-                this.$bvModal
-                    .msgBoxConfirm(
-                        [this.$createElement('span', {domProps: {innerHTML: this.$t("delete confirm", {msg: flow.id})}})],
-                        {title: [this.$t("confirmation")]}
-                    )
-                    .then(confirm => {
-                        if (confirm) {
-                            this.$store
-                                .dispatch("flow/deleteFlow", flow)
-                                .then(() => {
-                                    this.$router.push({
-                                        name: "flowsList"
-                                    });
-
-
-                                    this.$bvToast.toast(
-                                        desc,
-                                        {
-                                            title,
-                                            autoHideDelay: 5000,
-                                            toaster: "b-toaster-top-right",
-                                            variant: "success"
-                                        }
-                                    );
-                                });
-                        }
-                    });
+                this.$toast().confirm(this.flow.id, () => {
+                    return this.$store
+                        .dispatch("flow/deleteFlow", this.flow)
+                        .then(() => {
+                            return this.$router.push({
+                                name: "flowsList"
+                            });
+                        })
+                });
             }
         },
         save() {
@@ -138,30 +141,18 @@ export default {
                 try {
                     flow = Yaml.parse(this.content);
                 } catch (err) {
-                    this.$bvToast.toast(this.$t("check your the yaml is valid").capitalize(), {
-                        title: this.$t("invalid flow").capitalize(),
-                        autoHideDelay: 5000,
-                        toaster: "b-toaster-top-right",
-                        variant: "warning"
-                    });
-                    return
+                    this.$toast().warning(
+                        this.$t("check your the yaml is valid"),
+                        this.$t("invalid flow")
+                    );
+
+                    return;
                 }
                 if (this.isEdit) {
                     for (const key in this.readOnlyEditFields) {
                         if (flow[key] !== this.readOnlyEditFields[key]) {
-                            this.$bvToast.toast(
-                                this.$t(
-                                    "read only fields have changed (id, namespace...)"
-                                ).capitalize(),
-                                {
-                                    title: this.$t(
-                                        "unable to save"
-                                    ).capitalize(),
-                                    autoHideDelay: 5000,
-                                    toaster: "b-toaster-top-right",
-                                    variant: "warning"
-                                }
-                            );
+                            this.$toast().warning(this.$t("read only fields have changed (id, namespace...)"))
+
                             return;
                         }
                     }
@@ -171,15 +162,7 @@ export default {
                         flow
                     })
                     .then(() => {
-                        this.$bvToast.toast(
-                            this.$t("flow update ok").capitalize(),
-                            {
-                                title: this.$t("saved").capitalize(),
-                                autoHideDelay: 5000,
-                                toaster: "b-toaster-top-right",
-                                variant: "success"
-                            }
-                        );
+                        this.$toast().success({message: this.$t("flow update ok")});
                     })
                     .finally(() => {
                         this.loadFlow();
@@ -192,28 +175,18 @@ export default {
                     })
                     .then(() => {
                         this.$router.push({
-                            name: "flow",
+                            name: "flowEdit",
                             params: flow,
                             query: { tab: "data-source" }
                         });
-                        this.$bvToast.toast("Created.", {
-                            title: "Flow editor",
-                            autoHideDelay: 5000,
-                            toaster: "b-toaster-top-right",
-                            variant: "success"
-                        });
+                    })
+                    .then(() => {
+                        this.$toast().success({
+                            name: this.flow.id
+                        })
                     })
             }
         }
     }
 };
 </script>
-
-<style scoped lang="scss">
-.editor-wrapper {
-    height: calc(100vh - 133px);
-    > div {
-        padding: 0px;
-    }
-}
-</style>

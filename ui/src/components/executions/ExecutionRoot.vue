@@ -72,7 +72,7 @@ export default {
         setTab(tab) {
             this.$store.commit("execution/setTask", undefined);
             this.$router.push({
-                name: "execution",
+                name: "executionEdit",
                 params: this.$route.params,
                 query: { tab }
             });
@@ -97,7 +97,7 @@ export default {
                     {
                         label: `${ns}.${this.$route.params.flowId}`,
                         link: {
-                            name: "flow",
+                            name: "flowEdit",
                             params: {
                                 namespace: ns,
                                 id: this.$route.params.flowId
@@ -107,7 +107,7 @@ export default {
                     {
                         label: this.$t("executions"),
                         link: {
-                            name: 'flow',
+                            name: 'flowEdit',
                             params: {
                                 namespace: ns,
                                 id: this.$route.params.flowId
@@ -120,14 +120,14 @@ export default {
                     {
                         label: this.$route.params.id,
                         link: {
-                            name: "execution"
+                            name: "executionEdit"
                         }
                     }
                 ]
             };
         },
         tabs() {
-            const title = title => this.$t(title).capitalize();
+            const title = title => this.$t(title);
             return [
                 {
                     tab: "overview",

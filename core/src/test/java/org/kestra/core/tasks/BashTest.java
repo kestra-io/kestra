@@ -36,4 +36,50 @@ class BashTest {
         assertThat(run.getStdOut().size(), is(2));
         assertThat(run.getStdErr().size() > 0, is(true));
     }
+
+    @Test
+    void failed() throws Exception {
+        RunContext runContext = new RunContext(this.applicationContext, ImmutableMap.of());
+
+        Bash bash = Bash.builder()
+            .commands(new String[]{"echo 1 1>&2", "exit 66", "echo 2"})
+            .build();
+
+        Bash.Output run = bash.run(runContext);
+
+        assertThat(run.getExitCode(), is(66));
+        assertThat(run.getStdOut().size(), is(0));
+        assertThat(run.getStdErr().size(), is(1));
+    }
+
+    @Test
+    void stopOnFirstFailed() throws Exception {
+        RunContext runContext = new RunContext(this.applicationContext, ImmutableMap.of());
+
+        Bash bash = Bash.builder()
+            .commands(new String[]{"unknown", "echo 1"})
+            .build();
+
+        Bash.Output run = bash.run(runContext);
+
+        assertThat(run.getExitCode(), is(127));
+        assertThat(run.getStdOut().size(), is(0));
+        assertThat(run.getStdErr().size(), is(1));
+    }
+
+    @Test
+    void dontStopOnFirstFailed() throws Exception {
+        RunContext runContext = new RunContext(this.applicationContext, ImmutableMap.of());
+
+        Bash bash = Bash.builder()
+            .commands(new String[]{"unknown", "echo 1"})
+            .exitOnFailed(false)
+            .build();
+
+        Bash.Output run = bash.run(runContext);
+
+        assertThat(run.getExitCode(), is(0));
+        assertThat(run.getStdOut().size(), is(1));
+        assertThat(run.getStdErr().size(), is(1));
+    }
 }

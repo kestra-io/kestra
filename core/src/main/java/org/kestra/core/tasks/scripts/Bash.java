@@ -82,12 +82,14 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         LogThread stdOut = readInput(logger, process.getInputStream(), false);
         LogThread stdErr = readInput(logger, process.getErrorStream(), true);
 
-        // process.pid();
-
         int exitCode = process.waitFor();
 
         if (exitCode != 0) {
-            logger.error("Command failed with code " + exitCode);
+            throw new BashException(
+                exitCode,
+                stdOut.getLogs(),
+                stdErr.getLogs()
+            );
         } else {
             logger.debug("Command succeed with code " + exitCode);
         }
@@ -160,5 +162,20 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             description = "The exit code of the whole execution"
         )
         private int exitCode;
+    }
+
+    @Getter
+    @Builder
+    public static class BashException extends Exception {
+        public BashException(int exitCode, List<String> stdOut, List<String> stdErr) {
+            super("Command failed with code " + exitCode + " and stdErr '" + String.join("\n", stdErr) + "'");
+            this.exitCode = exitCode;
+            this.stdOut = stdOut;
+            this.stdErr = stdErr;
+        }
+
+        private final int exitCode;
+        private final List<String> stdOut;
+        private final List<String> stdErr;
     }
 }

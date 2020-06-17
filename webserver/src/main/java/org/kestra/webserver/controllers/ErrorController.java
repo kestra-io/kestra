@@ -56,14 +56,21 @@ public class ErrorController {
     }
 
     @Error(global = true, status = HttpStatus.NOT_FOUND)
-    public HttpResponse<JsonError> notFound(HttpRequest<?> request, Throwable e) {
-        return jsonError(request, e, HttpStatus.NOT_FOUND, "Not Found");
+    public HttpResponse<JsonError> notFound(HttpRequest<?> request) {
+        return jsonError(request, HttpStatus.NOT_FOUND, "Not Found");
     }
 
     private static HttpResponse<JsonError> jsonError(JsonError jsonError, HttpStatus status, String reason) {
         return HttpResponse
             .<JsonError>status(status, reason)
             .body(jsonError);
+    }
+
+    public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, HttpStatus status, String reason) {
+        JsonError error = new JsonError(reason)
+            .link(Link.SELF, Link.of(request.getUri()));
+
+        return jsonError(error, status, reason);
     }
 
     public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {

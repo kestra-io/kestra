@@ -2,4 +2,5 @@ dependencies {
     compile project(":core")
 
     testCompile project(':core').sourceSets.test.output
+    testCompile project(':runner-memory')
 }

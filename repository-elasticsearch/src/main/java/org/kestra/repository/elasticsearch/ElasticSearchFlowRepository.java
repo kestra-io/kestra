@@ -16,6 +16,8 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.validations.ModelValidator;
+import org.kestra.core.queues.QueueFactoryInterface;
+import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.utils.ThreadMainFactoryBuilder;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 
@@ -34,30 +37,27 @@ import javax.validation.ConstraintViolationException;
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository<Flow> implements FlowRepositoryInterface {
     private static final String INDEX_NAME = "flows";
-    private static final String REVISIONS_NAME = "flows-revisions";
+    protected static final String REVISIONS_NAME = "flows-revisions";
+
+    private final QueueInterface<Flow> flowQueue;
 
     @Inject
     public ElasticSearchFlowRepository(
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
         ModelValidator modelValidator,
-        ThreadMainFactoryBuilder threadFactoryBuilder
+        ThreadMainFactoryBuilder threadFactoryBuilder,
+        @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue
     ) {
         super(client, indicesConfigs, modelValidator, threadFactoryBuilder, Flow.class);
+
+        this.flowQueue = flowQueue;
     }
 
     private static String flowId(Flow flow) {
         return String.join("_", Arrays.asList(
             flow.getNamespace(),
             flow.getId()
-        ));
-    }
-
-    private static String flowUid(Flow flow) {
-        return String.join("_", Arrays.asList(
-            flow.getNamespace(),
-            flow.getId(),
-            flow.getRevision() != null ? String.valueOf(flow.getRevision()) : "-1"
         ));
     }
 
@@ -145,13 +145,16 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         }
 
         this.putRequest(INDEX_NAME, flowId(flow), flow);
-        this.putRequest(REVISIONS_NAME, flowUid(flow), flow);
+        this.putRequest(REVISIONS_NAME, flow.uid(), flow);
+
+        flowQueue.emit(flow);
 
         return flow;
     }
 
     @Override
     public void delete(Flow flow) {
+        flowQueue.emit(flow.toDeleted());
         this.deleteRequest(INDEX_NAME, flowId(flow));
     }
 

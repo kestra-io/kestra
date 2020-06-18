@@ -1,5 +1,6 @@
-
 kestra:
+  queue:
+    type: memory
   repository:
     type: elasticsearch
 

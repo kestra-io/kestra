@@ -7,6 +7,7 @@ import org.kestra.cli.commands.TestCommand;
 import org.kestra.cli.commands.flows.FlowCommand;
 import org.kestra.cli.commands.plugins.PluginCommand;
 import org.kestra.cli.commands.servers.ServerCommand;
+import org.kestra.cli.commands.sys.SysCommand;
 import org.kestra.cli.contexts.KestraApplicationContextBuilder;
 import org.kestra.cli.contexts.KestraClassLoader;
 import picocli.CommandLine;
@@ -30,6 +31,7 @@ import java.util.concurrent.Callable;
         ServerCommand.class,
         FlowCommand.class,
         TestCommand.class,
+        SysCommand.class
     }
 )
 public class App implements Callable<Object> {

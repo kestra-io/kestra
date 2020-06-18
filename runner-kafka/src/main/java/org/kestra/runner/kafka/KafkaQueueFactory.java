@@ -3,6 +3,7 @@ package org.kestra.runner.kafka;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.WorkerTask;
@@ -34,5 +35,11 @@ public class KafkaQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
     public QueueInterface<WorkerTaskResult> workerTaskResult() {
         return new KafkaQueue<>(WorkerTaskResult.class, applicationContext);
+    }
+
+    @Singleton
+    @Named(QueueFactoryInterface.FLOW_NAMED)
+    public QueueInterface<Flow> flow() {
+        return new KafkaQueue<>(Flow.class, applicationContext);
     }
 }

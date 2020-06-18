@@ -4,8 +4,10 @@ import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
+import org.kestra.core.runners.AbstractExecutor;
 import org.kestra.core.runners.StandAloneRunner;
 import org.kestra.core.utils.Await;
+import org.kestra.runner.kafka.KafkaExecutor;
 import picocli.CommandLine;
 
 import javax.inject.Inject;
@@ -23,6 +25,9 @@ public class StandAloneCommand extends AbstractCommand {
 
     @Inject
     private ApplicationContext applicationContext;
+
+    @Inject
+    private AbstractExecutor abstractExecutor;
 
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
     private File flowPath;
@@ -45,6 +50,11 @@ public class StandAloneCommand extends AbstractCommand {
         }
 
         StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
+
+        if (abstractExecutor instanceof KafkaExecutor) {
+            standAloneRunner.setExecutorThreads(1);
+        }
+
         standAloneRunner.run();
 
         Await.until(() -> !standAloneRunner.isRunning());

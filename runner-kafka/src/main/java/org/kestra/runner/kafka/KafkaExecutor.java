@@ -18,7 +18,6 @@ import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
-import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.AbstractExecutor;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
@@ -46,18 +45,15 @@ public class KafkaExecutor extends AbstractExecutor {
 
     KafkaStreamService kafkaStreamService;
     KafkaAdminService kafkaAdminService;
-    FlowRepositoryInterface flowRepository;
 
     @Inject
     public KafkaExecutor(
         ApplicationContext applicationContext,
-        FlowRepositoryInterface flowRepository,
         KafkaStreamService kafkaStreamService,
         KafkaAdminService kafkaAdminService,
         MetricRegistry metricRegistry
     ) {
         super(applicationContext, metricRegistry);
-        this.flowRepository = flowRepository;
         this.kafkaStreamService = kafkaStreamService;
         this.kafkaAdminService = kafkaAdminService;
     }
@@ -100,7 +96,7 @@ public class KafkaExecutor extends AbstractExecutor {
         KStream<String, Execution> executionKStream = this.joinWorkerResult(builder, executionKTable);
 
         // handle state on execution
-        KStream<String, ExecutionWithFlow> stream = this.withFlow(executionKStream);
+        KStream<String, ExecutionWithFlow> stream = this.withFlow(builder, executionKStream);
 
         this.handleMain(stream);
         this.handleNexts(stream);
@@ -134,6 +130,14 @@ public class KafkaExecutor extends AbstractExecutor {
             .to(
                 kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
+            );
+    }
+
+    private GlobalKTable<String, Flow> flowKTable(StreamsBuilder builder) {
+        return builder
+            .globalTable(
+                kafkaAdminService.getTopicName(Flow.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(Flow.class))
             );
     }
     
@@ -228,15 +232,13 @@ public class KafkaExecutor extends AbstractExecutor {
         return toExecutionJoin(result);
     }
 
-    private KStream<String, ExecutionWithFlow> withFlow(KStream<String, Execution> executionKStream) {
+    private KStream<String, ExecutionWithFlow> withFlow(StreamsBuilder builder, KStream<String, Execution> executionKStream) {
         return executionKStream
-            .mapValues(
-                (readOnlyKey, execution) -> {
-                    Flow flow = this.flowRepository.findByExecution(execution);
-
-                    return new ExecutionWithFlow(flow, execution);
-                },
-                Named.as("withFlow-map")
+            .join(
+                this.flowKTable(builder),
+                (key, value) -> Flow.uid(value),
+                (execution, flow) -> new ExecutionWithFlow(flow, execution),
+                Named.as("withFlow-join")
             );
     }
 

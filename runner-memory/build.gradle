@@ -4,4 +4,5 @@ dependencies {
     testCompile project(':core').sourceSets.test.output
     testCompile project(':repository-memory')
     testCompile project(':storage-local')
+    testCompile project(':runner-memory')
 }

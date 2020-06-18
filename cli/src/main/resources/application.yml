@@ -67,6 +67,14 @@ kestra:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
+      flow:
+        name: "kestra_flow"
+        cls: org.kestra.core.models.flows.Flow
+        properties:
+          cleanup.policy: "compact"
+          retention.ms: "-1"
+          segment.bytes: "10485760"
+
       executor:
         name: "kestra_executor"
         properties:

@@ -12,6 +12,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.WorkerTask;
@@ -75,6 +76,8 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             return ((WorkerTask) object).getTaskRun().getId();
         } else if (this.cls == WorkerTaskResult.class) {
             return ((WorkerTaskResult) object).getTaskRun().getId();
+        } else if (this.cls == Flow.class) {
+            return ((Flow) object).uid();
         } else {
             throw new IllegalArgumentException("Unknown type '" + this.cls.getName() + "'");
         }

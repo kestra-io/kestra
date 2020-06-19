@@ -135,6 +135,10 @@ public class RunContext {
             builder.put("vars", flow.getVariables());
         }
 
+        if (execution.getVariables() != null) {
+            builder.putAll(execution.getVariables());
+        }
+
         return builder.build();
     }
 

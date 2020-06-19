@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapState, mapGetters } from "vuex";
 import ContentSave from "vue-material-design-icons/ContentSave";
 import Delete from "vue-material-design-icons/Delete";
 import Yaml from "yaml";

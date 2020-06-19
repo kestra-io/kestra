@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
-import lombok.Getter;
 import lombok.Value;
 import lombok.With;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -19,7 +18,6 @@ import org.kestra.core.models.listeners.Listener;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.triggers.Trigger;
-import org.kestra.core.models.triggers.types.Schedule;
 import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.serializers.JacksonMapper;
@@ -83,18 +81,6 @@ public class Flow implements DeletedInterface {
     @Builder.Default
     @NotNull
     private boolean deleted = false;
-
-    public boolean hasNextSchedule() {
-        if (triggers == null) {
-            return false;
-        }
-        for (Trigger trigger: triggers) {
-            if (((Schedule)trigger).hasNextSchedule()) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);

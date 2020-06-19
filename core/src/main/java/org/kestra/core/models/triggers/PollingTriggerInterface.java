@@ -6,4 +6,6 @@ import java.util.Optional;
 
 public interface PollingTriggerInterface {
     Optional<Execution> evaluate(TriggerContext context);
+
+    String toLog();
 }

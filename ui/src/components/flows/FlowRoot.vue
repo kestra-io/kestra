@@ -1,4 +1,4 @@
-<template>
+tabs<template>
     <div>
         <b-card no-body>
             <b-tabs card>
@@ -110,18 +110,20 @@ export default {
                 });
             }
 
-            if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
-                tabs.push({
-                    tab: "execution-configuration",
-                    title: title("trigger")
-                });
-
+            if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.flow.namespace)) {
                 tabs.push({
                     tab: "data-source",
                     title: title("source"),
                     class: "p-0"
                 });
+
+                tabs.push({
+                    tab: "execution-configuration",
+                    title: title("trigger")
+                });
             }
+
+            return tabs;
         }
     },
     destroyed () {

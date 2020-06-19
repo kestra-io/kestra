@@ -16,10 +16,7 @@
                 />
             </b-breadcrumb>
             <div>
-                <b-tooltip
-                    placement="left"
-                    target="graph-orientation"
-                >{{$t('graph orientation')}}</b-tooltip>
+                <b-tooltip placement="left" target="graph-orientation">{{$t('graph orientation')}}</b-tooltip>
                 <b-btn size="sm" @click="toggleOrientation" id="graph-orientation">
                     <arrow-collapse-down v-if="orientation" />
                     <arrow-collapse-right v-else />
@@ -46,7 +43,7 @@
         </div>
 
         <div ref="vector-circle">
-            <vector-circle title />
+            <vector-circle v-if="!virtualRootNode" title />
         </div>
     </div>
 </template>
@@ -57,6 +54,18 @@ import * as d3 from "d3";
 import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight";
 import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown";
 import VectorCircle from "vue-material-design-icons/Circle";
+const parentHash = node => {
+    if (node.parent) {
+        const parent = node.parent[0];
+        return (
+            parent.id + (parent.value ? "-" + parent.value : "")
+        ).hashCode();
+    } else {
+        return undefined;
+    }
+};
+const nodeHash = node =>
+    (node.id + (node.value ? "-" + node.value : "")).hashCode();
 export default {
     components: {
         TreeNode,
@@ -129,7 +138,6 @@ export default {
         generateGraph() {
             this.filteredDataTree = this.getFilteredDataTree();
             this.virtualRootNode = this.getVirtualRootNode();
-
             // Create the input graph
             const arrowColor = "#ccc";
             if (this.zoom) {
@@ -158,38 +166,24 @@ export default {
                     {
                         ERROR: "error-edge",
                         DYNAMIC: "dynamic-edge",
-                        CHOICE: "choice-edge"
+                        CHOICE: "choice-edge",
+                        PARALLEL: "choice-edge"
                     }[node.relation] || "";
                 return edgeOption;
             };
-            const parentHash = node => {
-                if (node.parent) {
-                    const parent = node.parent[0];
-                    return (
-                        parent.id + (parent.value ? "-" + parent.value : "")
-                    ).hashCode();
-                } else {
-                    return undefined;
-                }
-            };
-            const parentMapping = {};
+            const subsetNodesHashes = new Set(
+                this.filteredDataTree.map(nodeHash)
+            );
             for (const node of this.filteredDataTree) {
                 const slug = this.slug(node);
-                if (node.parent) {
-                    parentMapping[slug] = slug;
-                }
-            }
-            for (const node of this.filteredDataTree) {
-                const slug = this.slug(node);
-
+                const hash = parentHash(node);
                 g.setNode(slug, {
                     labelType: "html",
                     label: `<div class="node-binder" id="node-${slug}"/>`
                 });
                 const options = getOptions(node);
-                const parentNodeHash = parentMapping[parentHash(node)];
-                if (parentNodeHash) {
-                    g.setEdge(parentNodeHash, slug, options);
+                if (subsetNodesHashes.has(hash)) {
+                    g.setEdge(parentHash(node), slug, options);
                 } else {
                     g.setEdge("parent node", slug, options);
                 }
@@ -244,7 +238,6 @@ export default {
             );
             const transform = d3.zoomIdentity.translate(50, 50).translate(0, 0);
             svgWrapper.call(this.zoom.transform, transform);
-            window.$e = this.$el.querySelector('#svg-canvas')
             this.bindNodes();
         },
         virtalNodeReady() {
@@ -296,11 +289,13 @@ export default {
             }
         },
         onFilterGroup(group) {
-            this.filterGroup = group;
-            this.$router.push({
-                query: { ...this.$route.query, filter: group }
-            });
-            this.generateGraph();
+            if (this.$route.query.filter != group) {
+                this.filterGroup = group;
+                this.$router.push({
+                    query: { ...this.$route.query, filter: group }
+                });
+                this.generateGraph();
+            }
         },
         slug(node) {
             const hash =

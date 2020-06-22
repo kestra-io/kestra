@@ -132,7 +132,7 @@ export default {
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
-        ...mapState("me", ["user"]),
+        ...mapState("auth", ["user"]),
         fields() {
             const title = title => {
                 return this.$t(title);

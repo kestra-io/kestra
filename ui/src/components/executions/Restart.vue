@@ -51,7 +51,7 @@ export default {
     }
   },
   computed: {
-    ...mapState("me", ["user"]),
+    ...mapState("auth", ["user"]),
     enabled() {
       // TODO : Add a "restartable" property on task run object (backend side)
       if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {

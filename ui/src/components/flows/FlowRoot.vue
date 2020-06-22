@@ -59,7 +59,7 @@ export default {
     },
     computed: {
         ...mapState("flow", ["flow"]),
-        ...mapState("me", ["user"]),
+        ...mapState("auth", ["user"]),
         routeInfo() {
             return {
                 title: this.$route.params.id,

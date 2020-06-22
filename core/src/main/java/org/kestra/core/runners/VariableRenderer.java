@@ -6,7 +6,7 @@ import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.runners.handlebars.helpers.EvalHelper;
-import org.kestra.core.runners.handlebars.helpers.InstantHelper;
+import org.kestra.core.runners.handlebars.helpers.DateHelper;
 import org.kestra.core.runners.handlebars.helpers.JqHelper;
 import org.kestra.core.runners.handlebars.helpers.JsonHelper;
 
@@ -31,7 +31,7 @@ public class VariableRenderer {
             .registerHelpers(StringHelpers.class)
             .registerHelpers(UnlessHelper.class)
             .registerHelpers(WithHelper.class)
-            .registerHelpers(InstantHelper.class)
+            .registerHelpers(DateHelper.class)
             .registerHelpers(JsonHelper.class)
             .registerHelper("eval", new EvalHelper(this))
             .registerHelper("jq", new JqHelper())

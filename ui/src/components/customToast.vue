@@ -5,7 +5,7 @@
                 <strong class="mr-auto">{{title}}</strong>
             </div>
         </template>
-        <span>{{content.message}}</span>
+        <span>{{content.message || content}}</span>
         <b-table v-if="items && items.length > 0" striped hover :items="items"></b-table>
     </b-toast>
 </template>

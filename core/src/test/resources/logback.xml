@@ -31,4 +31,7 @@
     <!--- Error registering AppInfo mbean -->
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="ERROR" />
 
+    <!-- Helper '{}' has been replaced by '{}' -->
+    <logger name="com.github.jknack.handlebars.helper" level="ERROR" />
+
 </configuration>

@@ -64,7 +64,7 @@ export default {
     },
     computed: {
         ...mapState("flow", ["flow"]),
-        ...mapState("me", ["user"]),
+        ...mapState("auth", ["user"]),
         isEdit() {
             return (
                 this.$route.name === "flowEdit" &&

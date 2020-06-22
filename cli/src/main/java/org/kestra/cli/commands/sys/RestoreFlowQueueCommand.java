@@ -1,5 +1,7 @@
 package org.kestra.cli.commands.sys;
 
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.models.flows.Flow;
@@ -22,19 +24,22 @@ import javax.inject.Named;
 @Slf4j
 public class RestoreFlowQueueCommand extends AbstractCommand {
     @Inject
-    private FlowRepositoryInterface flowRepository;
-
-    @Inject
-    @Named(QueueFactoryInterface.FLOW_NAMED)
-    private QueueInterface<Flow> flowQueue;
+    private ApplicationContext applicationContext;
 
     public RestoreFlowQueueCommand() {
         super(false);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void run() {
         super.run();
+
+        FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
+        QueueInterface<Flow> flowQueue = (QueueInterface<Flow>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED)
+        );
 
         List<Flow> list = flowRepository
             .findAll()
@@ -42,7 +47,7 @@ public class RestoreFlowQueueCommand extends AbstractCommand {
             .flatMap(flow -> flowRepository.findRevisions(flow.getNamespace(), flow.getId()).stream())
             .collect(Collectors.toList());
 
-        list.forEach(flow -> flowQueue.emit(flow));
+        list.forEach(flowQueue::emit);
 
         log.info("Successfully send {} flow to queue", list.size());
     }

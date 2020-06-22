@@ -13,6 +13,7 @@ import picocli.CommandLine;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 @CommandLine.Command(
     name = "standalone",
@@ -25,9 +26,6 @@ public class StandAloneCommand extends AbstractCommand {
 
     @Inject
     private ApplicationContext applicationContext;
-
-    @Inject
-    private AbstractExecutor abstractExecutor;
 
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
     private File flowPath;
@@ -51,7 +49,8 @@ public class StandAloneCommand extends AbstractCommand {
 
         StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
 
-        if (abstractExecutor instanceof KafkaExecutor) {
+        Optional<AbstractExecutor> executor = applicationContext.findBean(AbstractExecutor.class);
+        if (executor.isPresent() && executor.get() instanceof KafkaExecutor) {
             standAloneRunner.setExecutorThreads(1);
         }
 

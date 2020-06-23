@@ -7,12 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.tasks.retrys.Constant;
+import org.kestra.core.models.triggers.types.Schedule;
 import org.kestra.core.tasks.debugs.Return;
 import org.kestra.core.utils.TestsUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
@@ -121,6 +123,12 @@ class YamlFlowParserTest {
         assertThat(((Return) flow.getTasks().get(0)).getFormat(), containsString("\n"));
         assertThat(((Return) flow.getTasks().get(1)).getFormat(), containsString("Lorem Ipsum"));
         assertThat(((Return) flow.getTasks().get(1)).getFormat(), containsString("\n"));
+    }
+
+    @Test
+    void trigger() throws IOException {
+        Flow parse = this.parse("flows/tests/trigger.yaml");
+        assertThat(((Schedule) parse.getTriggers().get(0)).getBackfill().getStart(), is(ZonedDateTime.parse("2020-01-01T00:00:00+02:00")));
     }
 
     @Test

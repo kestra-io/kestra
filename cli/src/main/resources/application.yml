@@ -9,7 +9,6 @@ micronaut:
       ui:
         paths: classpath:ui
         mapping: /ui/**
-
   server:
     max-request-size: 10GB
     multipart:
@@ -107,7 +106,10 @@ kestra:
         index: "kestra_executions"
         cls: org.kestra.core.models.executions.Execution
         mapping-file: execution
-
+      triggers:
+        index: "kestra_triggers"
+        cls: org.kestra.core.models.triggers.Trigger
+        mapping-file: trigger
 
   plugins:
     repositories:

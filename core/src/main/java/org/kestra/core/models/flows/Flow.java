@@ -17,7 +17,7 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.listeners.Listener;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
-import org.kestra.core.models.triggers.Trigger;
+import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.serializers.JacksonMapper;
@@ -76,7 +76,7 @@ public class Flow implements DeletedInterface {
     private List<Listener> listeners;
 
     @Valid
-    private List<Trigger> triggers;
+    private List<AbstractTrigger> triggers;
 
     @Builder.Default
     @NotNull

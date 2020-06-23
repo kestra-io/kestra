@@ -1,23 +1,44 @@
 package org.kestra.core.models.triggers;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.micronaut.core.annotation.Introspected;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.models.executions.Execution;
 
-import javax.validation.constraints.NotBlank;
+import java.util.Arrays;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @SuperBuilder
+@ToString
+@EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Introspected
-abstract public class Trigger {
+public class Trigger extends TriggerContext {
     @NotNull
-    @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
-    protected String type;
+    private String executionId;
+
+    public String uid() {
+        return uid(this);
+    }
+
+    public static String uid(Trigger trigger) {
+        return String.join("_", Arrays.asList(
+            trigger.getNamespace(),
+            trigger.getFlowId(),
+            trigger.getTriggerId()
+        ));
+    }
+
+    public static Trigger of(TriggerContext triggerContext, Execution execution) {
+        return Trigger.builder()
+            .namespace(triggerContext.getNamespace())
+            .flowId(triggerContext.getFlowId())
+            .flowRevision(triggerContext.getFlowRevision())
+            .triggerId(triggerContext.getTriggerId())
+            .executionId(execution.getId())
+            .date(triggerContext.getDate())
+            .build();
+    }
 }

@@ -1,5 +1,6 @@
 package org.kestra.core.serializers;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,7 @@ public class YamlFlowParser {
     public static final String CONTEXT_FLOW_DIRECTORY = "flowDirectory";
 
     private static final ObjectMapper mapper = JacksonMapper.ofYaml()
+        .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
         .registerModule(new SimpleModule("HandleBarDeserializer")
             .addDeserializer(String.class, new HandleBarDeserializer())
         );

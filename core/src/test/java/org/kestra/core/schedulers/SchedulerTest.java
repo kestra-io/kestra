@@ -5,34 +5,36 @@ import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.flows.State;
 import org.kestra.core.models.triggers.types.Schedule;
-import org.kestra.core.models.validations.ModelValidator;
+import org.kestra.core.models.triggers.types.ScheduleBackfill;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
-import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.repositories.ExecutionRepositoryInterface;
+import org.kestra.core.repositories.TriggerRepositoryInterface;
 import org.kestra.core.services.FlowListenersService;
 import org.kestra.core.tasks.debugs.Return;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @MicronautTest
 class SchedulerTest {
     @Inject
-    @Named(QueueFactoryInterface.FLOW_NAMED)
-    private QueueInterface<Flow> flowQueue;
+    private TriggerRepositoryInterface triggerContextRepository;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Inject
     private FlowListenersService flowListenersService;
@@ -41,11 +43,16 @@ class SchedulerTest {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     private QueueInterface<Execution> executionQueue;
 
-    @Inject
-    private ThreadMainFactoryBuilder threadMainFactoryBuilder;
-
     private static Flow create() {
-        Schedule schedule = Schedule.builder().type(Schedule.class.getName()).cron("0 0 1 * *").build();
+        Schedule schedule = Schedule.builder()
+            .id("monthly")
+            .type(Schedule.class.getName())
+            .cron("0 0 1 * *")
+            .backfill(ScheduleBackfill.builder()
+                .start(date(-4))
+                .build()
+            )
+            .build();
 
         return Flow.builder()
             .id(FriendlyId.createFriendlyId())
@@ -56,10 +63,22 @@ class SchedulerTest {
             .build();
     }
 
+    private static ZonedDateTime date(int plus) {
+        return ZonedDateTime.now()
+            .withMonth(ZonedDateTime.now().getMonthValue() + plus)
+            .withDayOfMonth(1)
+            .withHour(0)
+            .withMinute(0)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS);
+    }
+
     @Test
     void taskPoolTrigger() throws Exception {
         // mock flow listeners
         FlowListenersService flowListenersServiceSpy = spy(this.flowListenersService);
+        ExecutionRepositoryInterface executionRepositorySpy = spy(this.executionRepository);
+        CountDownLatch queueCount = new CountDownLatch(5);
 
         Flow flow = create();
 
@@ -67,67 +86,27 @@ class SchedulerTest {
             .when(flowListenersServiceSpy)
             .getFlows();
 
+        // mock the backfill execution is ended
+        doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
+            .when(executionRepositorySpy)
+            .findById(any());
+
         // scheduler
-        Scheduler schedulerSpy = spy(new Scheduler(
+        try (Scheduler scheduler = new Scheduler(
             executionQueue,
             flowListenersServiceSpy,
-            threadMainFactoryBuilder
-        ));
+            executionRepositorySpy,
+            triggerContextRepository
+        )) {
 
-        // mock date
-        ZonedDateTime date = ZonedDateTime.now()
-            .withMonth(ZonedDateTime.now().getMonthValue() + 1)
-            .withDayOfMonth(1)
-            .withHour(0)
-            .withMinute(0)
-            .withSecond(0)
-            .minusSeconds(1)
-            .truncatedTo(ChronoUnit.SECONDS);
+            // wait for execution
+            executionQueue.receive(SchedulerTest.class, execution -> {
+                queueCount.countDown();
+                assertThat(execution.getFlowId(), is(flow.getId()));
+            });
 
-        doReturn(date)
-            .when(schedulerSpy)
-            .now();
-
-        schedulerSpy.run();
-
-        // wait for execution
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-
-
-        executionQueue.receive(SchedulerTest.class, execution -> {
-            countDownLatch.countDown();
-            assertThat(execution.getFlowId(), is(flow.getId()));
-        });
-
-        countDownLatch.await();
-
-        schedulerSpy.close();
+            scheduler.run();
+            queueCount.await();
+        }
     }
-
-
-//
-//    @Test
-//    void taskPoolTrigger() throws Exception {
-//        /*
-//        Secure and fast test for async system, avoid flaky tests
-//        wait 1 second max for expected result to append
-//        */
-//
-//        pool.upsert(scheduledFlow);
-//        AtomicBoolean executionFired = new AtomicBoolean(false);
-//        executionQueue.receive(Indexer.class, execution -> {
-//            executionFired.set(true);
-//            assertThat(execution.getFlowId(), is("scheduleFlowTest"));
-//        });
-//        long i = Instant.ofEpochMilli(new Predictor("* * * * *").nextMatchingDate().getTime()).getEpochSecond() - 1;
-//        pool.triggerReadyFlows(Instant.ofEpochSecond(i));
-//        int retryCount = 0;
-//        while (!executionFired.get() && retryCount++ < 100) {
-//            Thread.sleep(10);
-//        }
-//        assertThat(executionFired.get(), is(true));
-//        pool.upsert(Flow.builder().id("scheduleFlowTest").build());
-//        assertThat(pool.getActiveFlowCount(), is(0));
-//    }
-
 }

@@ -9,11 +9,17 @@ export default {
             selected: "all"
         };
     },
+    created() {
+        if (this.$route.query.status) {
+            this.selected = this.$route.query.status.toLowerCase();
+        }
+    },
     methods: {
         searchStatus() {
-            const token = this.selected.toUpperCase();
-            if (this.$route.query.q !== token) {
-                this.$emit("onRefresh", token === "ALL" ? "" : token);
+            const status = this.selected.toUpperCase();
+            if (this.$route.query.status !== status) {
+                this.$router.push({ query: { ...this.$route.query, status } });
+                this.$emit("onRefresh");
             }
         }
     }

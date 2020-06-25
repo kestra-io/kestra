@@ -6,7 +6,8 @@
             </div>
         </template>
         <span>{{content.message || content}}</span>
-        <b-table v-if="items && items.length > 0" striped hover :items="items"></b-table>
+        <b-table class="mt-2 mb-0" small bordered v-if="items && items.length > 0" striped hover
+                 :items="items"></b-table>
     </b-toast>
 </template>
 <script>
@@ -51,3 +52,9 @@ export default {
     }
 };
 </script>
+<style lang="scss">
+    @import "../styles/variable";
+    table {
+        background-color: $white;
+    }
+</style>

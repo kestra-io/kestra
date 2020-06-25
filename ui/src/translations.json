@@ -1,7 +1,7 @@
 {
     "en": {
         "id": "Id",
-        "namespace": "namespace",
+        "namespace": "Namespace",
         "revision": "Revision",
         "Language": "Language",
         "Set default page": "Set default page",
@@ -96,10 +96,18 @@
         "down trend": "Decreasing",
         "flow update aborted": "Flow update aborted",
         "invalid flow": "Invalid flow",
-        "add schedule": "add schedule",
-        "schedule": "schedule",
+        "add schedule": "Add a schedule",
+        "schedule": "Schedule",
+        "schedules": {
+            "cron": {
+                "expression": "Expression",
+                "backfilll": "Backfill",
+                "invalid": "Invalid cron expression"
+            }
+        },
         "inputs": "Inputs",
         "input": "Input",
+        "variables": "Variables",
         "download": "Download"
     },
     "fr": {
@@ -200,10 +208,18 @@
         "down trend": "En baisse",
         "flow update aborted": "Mise à jour du flow annulée",
         "invalid flow": "Flow invalide",
-        "add schedule": "ajouter récurrence",
-        "schedule": "tâche programmée",
+        "add schedule": "Ajouter un plannificationS",
+        "schedule": "Tâche plannifié",
+        "schedules": {
+            "cron": {
+                "expression": "Expression",
+                "backfilll": "Remblayage",
+                "invalid": "cron expression invalide"
+            }
+        },
         "inputs": "Entrées",
         "input": "Entré",
+        "variables": "Variables",
         "download": "Télécharger"
     }
 }

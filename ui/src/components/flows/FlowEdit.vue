@@ -42,6 +42,7 @@ import BottomLine from "../layout/BottomLine";
 import RouteContext from "../../mixins/routeContext";
 import permission from "../../models/permission";
 import action from "../../models/action";
+import { canSaveFlow, saveFlow } from "../../utils/flow";
 
 export default {
     mixins: [RouteContext],
@@ -72,13 +73,7 @@ export default {
             );
         },
         canSave() {
-            return (
-                this.isEdit && this.user &&
-                    this.user.isAllowed(permission.FLOW, action.UPDATE, this.content.namespace)
-            ) || (
-                !this.isEdit && this.user &&
-                    this.user.isAllowed(permission.FLOW, action.CREATE, this.content.namespace)
-            );
+            return canSaveFlow(true, this.user, this.content);
         },
         canDelete() {
             return this.isEdit && this.user &&
@@ -157,13 +152,8 @@ export default {
                         }
                     }
                 }
-                this.$store
-                    .dispatch("flow/saveFlow", {
-                        flow
-                    })
-                    .then(() => {
-                        this.$toast().success({message: this.$t("flow update ok")});
-                    })
+
+                saveFlow(this, flow)
                     .finally(() => {
                         this.loadFlow();
                     });

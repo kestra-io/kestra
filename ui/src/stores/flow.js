@@ -6,7 +6,6 @@ export default {
         flow: undefined,
         total: 0,
         dataTree: undefined,
-        triggers: []
     },
 
     actions: {
@@ -55,26 +54,60 @@ export default {
             return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/tree`).then(response => {
                 commit('setDataTree', response.data.tasks)
             })
-        },
+        }
     },
     mutations: {
         setFlows(state, flows) {
             state.flows = flows
         },
         setFlow(state, flow) {
-            state.flow = flow
-            if (flow.triggers) {
-                state.triggers = flow.triggers
+            if (flow.triggers !== undefined) {
+                flow.triggers = flow.triggers.map(trigger => {
+                    if (trigger.backfill  === undefined) {
+                        trigger.backfill = {
+                            start: undefined
+                        }
+                    }
+
+                    return trigger;
+                })
             }
+
+            state.flow = {...flow}
         },
-        setTriggers(state, triggers) {
-            state.triggers = triggers
+        setTrigger(state, {index, trigger}) {
+            let flow = state.flow;
+
+            if (flow.triggers === undefined) {
+                flow.triggers = []
+            }
+
+            flow.triggers[index] = trigger;
+
+            state.flow = {...flow}
         },
         removeTrigger(state, index) {
-            state.triggers.splice(index, 1);
+            let flow = state.flow;
+            flow.triggers.splice(index, 1);
+
+            state.flow = {...flow}
         },
         addTrigger(state, trigger) {
-            state.triggers.push(trigger)
+            let flow = state.flow;
+
+            if (trigger.backfill  === undefined) {
+                trigger.backfill = {
+                    start: undefined
+                }
+            }
+
+            if (flow.triggers === undefined) {
+                flow.triggers = []
+            }
+
+            flow.triggers.push(trigger)
+
+            state.flow = {...flow}
         },
         setTotal(state, total) {
             state.total = total
@@ -86,9 +119,7 @@ export default {
     getters: {
         flow (state) {
             if (state.flow) {
-                const flow = state.flow
-                flow.triggers = state.triggers
-                return flow
+                return state.flow;
             }
         }
     }

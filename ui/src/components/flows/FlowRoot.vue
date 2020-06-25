@@ -1,4 +1,4 @@
-<template>
+tabs<template>
     <div>
         <b-card no-body>
             <b-tabs card>
@@ -21,6 +21,7 @@
 </template>
 <script>
 import Overview from "./Overview";
+import Schedule from "./Schedule";
 import DataSource from "./DataSource";
 import ExecutionConfiguration from "./ExecutionConfiguration";
 import BottomLine from "../layout/BottomLine";
@@ -35,6 +36,7 @@ export default {
     mixins: [RouteContext],
     components: {
         Overview,
+        Schedule,
         BottomLine,
         DataSource,
         FlowActions,
@@ -108,18 +110,18 @@ export default {
                 });
             }
 
-            if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
+            if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.flow.namespace)) {
+                tabs.push({
+                    tab: "data-source",
+                    title: title("source"),
+                    class: "p-0"
+                });
+
                 tabs.push({
                     tab: "execution-configuration",
-                    title: title("trigger"),
+                    title: title("trigger")
                 });
             }
-
-            tabs.push({
-                tab: "data-source",
-                title: title("source"),
-                class: "p-0"
-            });
 
             return tabs;
         }

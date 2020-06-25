@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapState, mapGetters } from "vuex";
 import ContentSave from "vue-material-design-icons/ContentSave";
 import Delete from "vue-material-design-icons/Delete";
 import Yaml from "yaml";
@@ -63,7 +63,7 @@ export default {
         this.loadFlow();
     },
     computed: {
-        ...mapState("flow", ["flow"]),
+        ...mapGetters("flow", ["flow"]),
         ...mapState("auth", ["user"]),
         isEdit() {
             return (

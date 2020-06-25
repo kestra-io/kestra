@@ -15,8 +15,13 @@ dependencies {
     // utils
     compile group: 'net.jodah', name: 'failsafe', version: '2.3.1'
 
+    //scheduler
+    compile group: 'it.sauronsoftware.cron4j', name: 'cron4j', version: '2.2.5'
+
     // test
     testCompile project(':repository-memory')
     testCompile project(':runner-memory')
     testCompile project(':storage-local')
+
+    testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: '3.3.3'
 }

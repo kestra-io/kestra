@@ -1,5 +1,6 @@
 package org.kestra.core.services;
 
+import lombok.Getter;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
@@ -16,6 +17,7 @@ import javax.inject.Singleton;
 public class FlowListenersService {
     private final QueueInterface<Flow> flowQueue;
 
+    @Getter
     private final List<Flow> flows;
 
     private final List<Consumer<List<Flow>>> consumers = new ArrayList<>();

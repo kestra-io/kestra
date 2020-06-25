@@ -44,11 +44,11 @@ public class FlowListenersService {
         this.notifyConsumers();
     }
 
-    private boolean remove(Flow flow) {
+    private synchronized boolean remove(Flow flow) {
         return flows.removeIf(r -> r.equalsWithoutRevision(flow));
     }
 
-    private void upsert(Flow flow) {
+    private synchronized void upsert(Flow flow) {
         this.remove(flow);
 
         this.flows.add(flow);

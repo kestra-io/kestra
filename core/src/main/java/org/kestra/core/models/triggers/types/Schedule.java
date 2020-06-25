@@ -1,8 +1,12 @@
 package org.kestra.core.models.triggers.types;
 
+import com.cronutils.model.Cron;
+import com.cronutils.model.CronType;
+import com.cronutils.model.definition.CronDefinitionBuilder;
+import com.cronutils.model.time.ExecutionTime;
+import com.cronutils.parser.CronParser;
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
-import it.sauronsoftware.cron4j.Predictor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,9 +19,7 @@ import org.kestra.core.models.triggers.PollingTriggerInterface;
 import org.kestra.core.models.triggers.TriggerContext;
 import org.kestra.core.schedulers.validations.CronExpression;
 
-import java.sql.Date;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -29,45 +31,56 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 public class Schedule extends AbstractTrigger implements PollingTriggerInterface {
+    private static final CronParser CRON_PARSER = new CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX));
+
     @NotNull
     @CronExpression
     private String cron;
 
     private ScheduleBackfill backfill;
 
+    private Duration interval;
+
     public ZonedDateTime nextDate(Optional<? extends TriggerContext> last) {
         if (this.backfill == null) {
-            return computeNextDate(ZonedDateTime.now(ZoneId.systemDefault()));
+            return computeNextDate(ZonedDateTime.now(ZoneId.systemDefault())).orElse(null);
         }
 
         if (last.isEmpty()) {
             return backfill.getStart();
         } else {
-            return computeNextDate(last.get().getDate());
+            return computeNextDate(last.get().getDate()).orElse(null);
         }
     }
 
     public Optional<Execution> evaluate(TriggerContext context) {
-        // Predictor returns next date when cron is on current Instant.
-        // The date match is done on previous second.
-        ZonedDateTime next = zonedDateTime(new Predictor(
-            cron,
-            Date.from(context.getDate()
-                .minus(Duration.ofSeconds(1))
-                .toInstant())
-        )
-            .nextMatchingDate()
-            .getTime());
+        Cron parse = CRON_PARSER.parse(this.cron);
 
-        boolean isReady = next.toEpochSecond() == context.getDate().toEpochSecond();
+        ExecutionTime executionTime = ExecutionTime.forCron(parse);
+        Optional<ZonedDateTime> next = executionTime.nextExecution(context.getDate().minus(Duration.ofSeconds(1)));
+
+        if (next.isEmpty()) {
+            return Optional.empty();
+        }
+
+        boolean isReady = next.get().toEpochSecond() == context.getDate().toEpochSecond();
 
         if (!isReady) {
             return Optional.empty();
         }
 
-        if (next.toEpochSecond() > ZonedDateTime.now(ZoneId.systemDefault()).toEpochSecond()) {
+        if (next.get().toEpochSecond() > ZonedDateTime.now(ZoneId.systemDefault()).toEpochSecond()) {
             return Optional.empty();
         }
+
+        ImmutableMap.Builder<Object, Object> vars = ImmutableMap.builder()
+            .put("date", next.get());
+
+        computeNextDate(next.get())
+            .ifPresent(zonedDateTime -> vars.put("next", zonedDateTime));
+
+        executionTime.lastExecution(context.getDate())
+            .ifPresent(zonedDateTime -> vars.put("previous", zonedDateTime));
 
         Execution execution = Execution.builder()
             .id(FriendlyId.createFriendlyId())
@@ -76,22 +89,17 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .flowRevision(context.getFlowRevision())
             .state(new State())
             .variables(ImmutableMap.of(
-                "schedule", ImmutableMap.of(
-                    "date", next,
-                    "next", computeNextDate(next)
-                )
+                "schedule", vars.build()
             ))
             .build();
 
         return Optional.of(execution);
     }
 
-    private ZonedDateTime computeNextDate(ZonedDateTime date) {
-        return zonedDateTime(new Predictor(cron, date.toInstant().toEpochMilli()).nextMatchingDate().getTime());
-    }
+    private Optional<ZonedDateTime> computeNextDate(ZonedDateTime date) {
+        Cron parse = CRON_PARSER.parse(this.cron);
+        ExecutionTime executionTime = ExecutionTime.forCron(parse);
 
-    private static ZonedDateTime zonedDateTime(long millis) {
-        return Instant.ofEpochMilli(millis)
-            .atZone(ZoneId.systemDefault());
+        return executionTime.nextExecution(date);
     }
 }

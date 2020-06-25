@@ -1,91 +1,70 @@
 <template>
-    <div v-if="flow">
-        <b-row>
-            <b-col md="8">
-                <b-list-group>
-                    <schedule-item
-                        @remove="remove"
-                        :schedule="schedule"
-                        :index="x"
-                        v-for="(schedule, x) in triggers"
-                        :key="x"
-                    />
-                </b-list-group>
-            </b-col>
-            <b-col md="4">
-                <b-row>
-                    <b-col class="text-center">
-                        <p>
-                            <small>Cron helper</small>
-                        </p>
-                        <b-table responsive :items="cronHelpData"></b-table>
-                        <b-table responsive :items="cronHelpTokens"></b-table>
-                    </b-col>
-                </b-row>
-                <b-row>
-                    <b-col>
-                        <b-form-group>
-                            <b-btn variant="primary" @click="addSchedule">
-                                <plus />
-                                {{$t('add schedule') | cap}}
-                            </b-btn>
-                        </b-form-group>
-                    </b-col>
-                </b-row>
-            </b-col>
-        </b-row>
+    <div>
+        <b-list-group>
+            <schedule-item
+                @remove="remove"
+                @set="set"
+                :schedule="schedule"
+                :index="x"
+                v-for="(schedule, x) in (flow.triggers || []) "
+                :key="x"
+            />
+        </b-list-group>
+        <bottom-line v-if="canSave">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <b-button variant="primary" @click="addSchedule" v-if="canSave">
+                        <plus />
+                        {{ $t('add schedule') }}
+                    </b-button>
+
+                    <b-button @click="save" v-if="canSave">
+                        <content-save />
+                        <span>{{$t('save')}}</span>
+                    </b-button>
+                </li>
+            </ul>
+        </bottom-line>
     </div>
 </template>
 <script>
 import { mapState } from "vuex";
+import ContentSave from "vue-material-design-icons/ContentSave";
 import Plus from "vue-material-design-icons/Plus";
 import ScheduleItem from "./ScheduleItem";
+import BottomLine from "../layout/BottomLine";
+import { canSaveFlow, saveFlow } from "../../utils/flow";
 
 export default {
     components: {
         Plus,
-        ScheduleItem
-    },
-    watch: {
-        flow() {
-            console.log("on flow change");
-        }
+        ContentSave,
+        ScheduleItem,
+        BottomLine
     },
     computed: {
-        ...mapState("flow", ["flow", "triggers"]),
-        validForm() {
-            return true;
-        },
-
-        cronHelpData() {
-            const helpRecord = {};
-            helpRecord[this.$t("minute")] = "*";
-            helpRecord[this.$t("hour")] = "*";
-            helpRecord[this.$t("day (month)")] = "*";
-            helpRecord[this.$t("month")] = "*";
-            helpRecord[this.$t("day (week)")] = "*";
-            return [helpRecord];
-        },
-        cronHelpTokens() {
-            const helpRecord = {};
-            helpRecord[this.$t("any value")] = "*";
-            helpRecord[this.$t("value list separator")] = ",";
-            helpRecord[this.$t("range of values")] = "-";
-            helpRecord[this.$t("step values")] = "/";
-            return [helpRecord];
+        ...mapState("flow", ["flow"]),
+        ...mapState("auth", ["user"]),
+        canSave() {
+            return canSaveFlow(true, this.user, this.flow);
         }
     },
     methods: {
+        save() {
+            saveFlow(this, this.flow);
+        },
+        set(index, schedule) {
+            this.$store.commit("flow/setTrigger", {index, trigger: schedule});
+        },
         remove(index) {
             this.$store.commit("flow/removeTrigger", index);
-            this.$store.dispatch('flow/updateFlowTrigger')
         },
         addSchedule() {
             this.$store.commit("flow/addTrigger", {
+                id: "schedule",
                 cron: "0 4 * * 1,4",
-                type: "org.kestra.core.models.triggers.types.Schedule"
+                type: "org.kestra.core.models.triggers.types.Schedule",
             });
-            this.$store.dispatch('flow/updateFlowTrigger')
         }
     }
 };

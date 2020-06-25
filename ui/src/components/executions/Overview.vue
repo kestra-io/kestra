@@ -17,8 +17,7 @@
             </template>
         </b-table>
         <div v-if="execution.inputs">
-            <hr />
-            <h3>{{$t('inputs')}}</h3>
+            <h5>{{$t('inputs')}}</h5>
             <b-table
                 responsive="xl"
                 striped
@@ -38,6 +37,23 @@
                         target="_blank"
                         :href="itemUrl(row.item.value)"
                     >{{$t('download')}}</b-link>
+                </template>
+            </b-table>
+        </div>
+
+        <div v-if="variables.length > 0" class="mt-4">
+            <h5>{{$t('variables')}}</h5>
+            <b-table
+                responsive="xl"
+                striped
+                hover
+                bordered
+                :items="this.variables"
+                :fields="fields"
+                class="mb-0"
+            >
+                <template v-slot:cell(key)="row">
+                    <code>{{row.item.key}}</code>
                 </template>
             </b-table>
         </div>
@@ -63,6 +79,14 @@ export default {
         },
         restart() {
             this.$emit("follow");
+        },
+        flat(object) {
+            return Object.assign({}, ...function _flatten(child, path = []) {
+                return [].concat(...Object.keys(child).map(key => typeof child[key] === 'object'
+                    ? _flatten(child[key], path.concat([key]))
+                    : ({ [path.concat([key]).join(".")] : child[key] })
+                ));
+            }(object));
         }
     },
     watch: {
@@ -133,9 +157,24 @@ export default {
             for (const key in this.execution.inputs) {
                 inputs.push({ key, value: this.execution.inputs[key] });
             }
+
+            console.log(inputs);
             return inputs;
+        },
+        variables() {
+            const variables = [];
+
+            if (this.execution.variables !== undefined) {
+                const flat = this.flat(this.execution.variables);
+                for (const key in flat) {
+                    variables.push({ key, value: flat[key] });
+                }
+            }
+
+            return variables;
         }
-    }
+    },
+
 };
 </script>
 <style scoped lang="scss">

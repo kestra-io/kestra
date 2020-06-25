@@ -110,7 +110,14 @@ export default {
                 });
             }
 
-            if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.flow.namespace)) {
+            if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
+                tabs.push({
+                    tab: "execution-configuration",
+                    title: title("trigger")
+                });
+            }
+
+            if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace)) {
                 tabs.push({
                     tab: "data-source",
                     title: title("source"),
@@ -118,10 +125,11 @@ export default {
                 });
 
                 tabs.push({
-                    tab: "execution-configuration",
-                    title: title("trigger")
+                    tab: "schedule",
+                    title: title("schedule"),
                 });
             }
+
 
             return tabs;
         }

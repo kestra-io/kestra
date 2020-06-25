@@ -77,6 +77,8 @@ class KafkaExecutorTest {
     @Test
     void standard() {
         Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
+        this.flowInput().add(flow.uid(), flow);
+
         createExecution(flow);
 
         // task
@@ -92,6 +94,8 @@ class KafkaExecutorTest {
     @Test
     void concurrent() {
         Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
+        this.flowInput().add(flow.uid(), flow);
+
         createExecution(flow);
 
         // task
@@ -121,6 +125,8 @@ class KafkaExecutorTest {
     @Test
     void parallel() {
         Flow flow = flowRepository.findById("org.kestra.tests", "parallel").orElseThrow();
+        this.flowInput().add(flow.uid(), flow);
+
         createExecution(flow);
         Parallel parent = (Parallel) flow.getTasks().get(0);
         Task last = flow.getTasks().get(1);
@@ -234,6 +240,12 @@ class KafkaExecutorTest {
                 .build()
             );
 
+    }
+
+    private TestInput<String, Flow> flowInput() {
+        return this.testTopology
+            .input(kafkaAdminService.getTopicName(Flow.class))
+            .withSerde(Serdes.String(), JsonSerde.of(Flow.class));
     }
 
     private TestInput<String, Execution> executionInput() {

@@ -3,6 +3,7 @@ package org.kestra.core.runners;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.schedulers.Scheduler;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.utils.ThreadMainFactoryBuilder;
@@ -20,6 +21,7 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
     protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
     protected int executorThreads = Math.max(3, Runtime.getRuntime().availableProcessors());
     protected int indexerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    protected int schedulerThread = 1; //TODO scale
 
     public void setWorkerThread(int workerThread) {
         this.workerThread = workerThread;
@@ -31,6 +33,10 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
 
     public void setIndexerThread(int indexerThread) {
         this.indexerThread = indexerThread;
+    }
+
+    public void setSchedulerThread(int schedulerThread) {
+        this.schedulerThread = schedulerThread;
     }
 
     @Inject
@@ -65,6 +71,10 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
 
         for (int i = 0; i < workerThread; i++) {
             poolExecutor.execute(applicationContext.getBean(Worker.class));
+        }
+
+        for (int i = 0; i < schedulerThread; i++) {
+            poolExecutor.execute(applicationContext.getBean(Scheduler.class));
         }
 
         if (applicationContext.containsBean(Indexer.class)) {

@@ -1,4 +1,8 @@
 kestra:
+  repository:
+    type: memory
+  queue:
+    type: memory
   plugins:
     path: /tmp/plugins
     repositories:

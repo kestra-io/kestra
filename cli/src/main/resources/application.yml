@@ -9,7 +9,6 @@ micronaut:
       ui:
         paths: classpath:ui
         mapping: /ui/**
-
   server:
     max-request-size: 10GB
     multipart:
@@ -67,6 +66,14 @@ kestra:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
+      flow:
+        name: "kestra_flow"
+        cls: org.kestra.core.models.flows.Flow
+        properties:
+          cleanup.policy: "compact"
+          retention.ms: "-1"
+          segment.bytes: "10485760"
+
       executor:
         name: "kestra_executor"
         properties:
@@ -99,7 +106,10 @@ kestra:
         index: "kestra_executions"
         cls: org.kestra.core.models.executions.Execution
         mapping-file: execution
-
+      triggers:
+        index: "kestra_triggers"
+        cls: org.kestra.core.models.triggers.Trigger
+        mapping-file: trigger
 
   plugins:
     repositories:

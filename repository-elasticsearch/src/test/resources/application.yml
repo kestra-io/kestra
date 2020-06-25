@@ -1,5 +1,6 @@
-
 kestra:
+  queue:
+    type: memory
   repository:
     type: elasticsearch
 
@@ -16,6 +17,7 @@ kestra:
           {
             "index.number_of_replicas": 0
           }
+
       flows-revisions:
         index: "kestra_flows_revisions"
         cls: org.kestra.core.models.flows.Flow
@@ -24,10 +26,20 @@ kestra:
           {
             "index.number_of_replicas": 0
           }
+
       executions:
         index: "kestra_executions"
         cls: org.kestra.core.models.executions.Execution
         mapping-file: execution
+        settings: |
+          {
+            "index.number_of_replicas": 0
+          }
+
+      triggers:
+        index: "kestra_triggers"
+        cls: org.kestra.core.models.triggers.Trigger
+        mapping-file: trigger
         settings: |
           {
             "index.number_of_replicas": 0

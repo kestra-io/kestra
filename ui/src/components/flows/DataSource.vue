@@ -6,12 +6,12 @@
     </b-row>
 </template>
 <script>
-import { mapState } from "vuex";
+import { mapGetters } from "vuex";
 import FlowEdit from "./FlowEdit";
 export default {
     components: { FlowEdit },
     computed: {
-        ...mapState("flow", ["flow"])
+        ...mapGetters("flow", ["flow"])
     }
 };
 </script>

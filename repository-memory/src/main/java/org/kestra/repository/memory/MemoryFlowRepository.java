@@ -4,10 +4,13 @@ import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.queues.QueueFactoryInterface;
+import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 import java.util.*;
@@ -20,6 +23,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     private final HashMap<String, Flow> revisions = new HashMap<>();
 
     @Inject
+    @Named(QueueFactoryInterface.FLOW_NAMED)
+    private QueueInterface<Flow> flowQueue;
+
+    @Inject
     private ModelValidator modelValidator;
 
     private static String flowId(Flow flow) {
@@ -30,14 +37,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return String.join("_", Arrays.asList(
             namespace,
             id
-        ));
-    }
-
-    private static String flowUid(Flow flow) {
-        return String.join("_", Arrays.asList(
-            flow.getNamespace(),
-            flow.getId(),
-            flow.getRevision() != null ? String.valueOf(flow.getRevision()) : "-1"
         ));
     }
 
@@ -79,7 +78,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     public Flow create(Flow flow) throws ConstraintViolationException {
-        return this.save(flow);
+        Flow newFlow = this.save(flow);
+        flowQueue.emit(newFlow);
+
+        return newFlow;
     }
 
     public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
@@ -93,6 +95,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 throw s;
             });
 
+        flowQueue.emit(flow);
         return this.save(flow);
     }
 
@@ -119,7 +122,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         }
 
         this.flows.put(flowId(flow), flow);
-        this.revisions.put(flowUid(flow), flow);
+        this.revisions.put(flow.uid(), flow);
 
         return flow;
     }
@@ -130,6 +133,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
         }
 
+        flowQueue.emit(flow.toDeleted());
         this.flows.remove(flowId(flow));
     }
 

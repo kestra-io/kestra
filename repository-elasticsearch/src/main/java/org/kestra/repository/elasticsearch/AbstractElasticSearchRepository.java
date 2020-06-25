@@ -8,6 +8,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.ShardOperationFailedException;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.ClearScrollRequest;
@@ -115,6 +117,25 @@ abstract public class AbstractElasticSearchRepository<T> {
             return this.map(searchResponse.getHits().getHits())
                 .stream()
                 .findFirst();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected Optional<T> rawGetRequest(String index, String id) {
+        GetRequest getRequest = new GetRequest(
+            this.indicesConfigs.get(index).getIndex(),
+            id
+        );
+
+        try {
+            GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
+
+            if (!getResponse.isExists()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(mapper.readValue(getResponse.getSourceAsString(), this.cls));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

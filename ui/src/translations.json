@@ -1,7 +1,7 @@
 {
     "en": {
         "id": "Id",
-        "namespace": "namespace",
+        "namespace": "Namespace",
         "revision": "Revision",
         "Language": "Language",
         "Set default page": "Set default page",
@@ -16,10 +16,10 @@
         "success": "Success",
         "save": "Save",
         "saved": "Successfully saved",
-        "saved name": "<em>{name}</em> is successfully saved" ,
+        "saved name": "<em>{name}</em> is successfully saved",
         "delete": "Delete",
         "deleted": "Successfully deleted",
-        "deleted name": "<em>{name}</em> is successfully deleted!" ,
+        "deleted name": "<em>{name}</em> is successfully deleted!",
         "Select namespace": "Namespace",
         "Add flow": "Add flow",
         "add": "Add",
@@ -96,8 +96,18 @@
         "down trend": "Decreasing",
         "flow update aborted": "Flow update aborted",
         "invalid flow": "Invalid flow",
+        "add schedule": "Add a schedule",
+        "schedule": "Schedule",
+        "schedules": {
+            "cron": {
+                "expression": "Expression",
+                "backfilll": "Backfill",
+                "invalid": "Invalid cron expression"
+            }
+        },
         "inputs": "Inputs",
         "input": "Input",
+        "variables": "Variables",
         "download": "Download"
     },
     "fr": {
@@ -117,10 +127,10 @@
         "success": "Succcès",
         "save": "Enregistrer",
         "saved": "Enregistrement réussi",
-        "saved name": "<em>{name}</em> est enregistré avec succès" ,
+        "saved name": "<em>{name}</em> est enregistré avec succès",
         "delete": "Effacer",
         "deleted": "Effacement réussi",
-        "deleted name": "<em>{name}</em> est effacé !" ,
+        "deleted name": "<em>{name}</em> est effacé !",
         "Select namespace": "Espace de nom",
         "Add flow": "Ajouter un flow",
         "add": "Ajouter",
@@ -198,8 +208,18 @@
         "down trend": "En baisse",
         "flow update aborted": "Mise à jour du flow annulée",
         "invalid flow": "Flow invalide",
+        "add schedule": "Ajouter un plannificationS",
+        "schedule": "Tâche plannifié",
+        "schedules": {
+            "cron": {
+                "expression": "Expression",
+                "backfilll": "Remblayage",
+                "invalid": "cron expression invalide"
+            }
+        },
         "inputs": "Entrées",
         "input": "Entré",
+        "variables": "Variables",
         "download": "Télécharger"
     }
 }

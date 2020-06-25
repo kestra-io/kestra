@@ -5,7 +5,7 @@ export default {
         flows: undefined,
         flow: undefined,
         total: 0,
-        dataTree: undefined
+        dataTree: undefined,
     },
 
     actions: {
@@ -54,21 +54,73 @@ export default {
             return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/tree`).then(response => {
                 commit('setDataTree', response.data.tasks)
             })
-        },
+        }
     },
     mutations: {
         setFlows(state, flows) {
             state.flows = flows
         },
         setFlow(state, flow) {
-            state.flow = flow
+            if (flow.triggers !== undefined) {
+                flow.triggers = flow.triggers.map(trigger => {
+                    if (trigger.backfill  === undefined) {
+                        trigger.backfill = {
+                            start: undefined
+                        }
+                    }
+
+                    return trigger;
+                })
+            }
+
+            state.flow = {...flow}
+        },
+        setTrigger(state, {index, trigger}) {
+            let flow = state.flow;
+
+            if (flow.triggers === undefined) {
+                flow.triggers = []
+            }
+
+            flow.triggers[index] = trigger;
+
+            state.flow = {...flow}
+        },
+        removeTrigger(state, index) {
+            let flow = state.flow;
+            flow.triggers.splice(index, 1);
+
+            state.flow = {...flow}
+        },
+        addTrigger(state, trigger) {
+            let flow = state.flow;
+
+            if (trigger.backfill  === undefined) {
+                trigger.backfill = {
+                    start: undefined
+                }
+            }
+
+            if (flow.triggers === undefined) {
+                flow.triggers = []
+            }
+
+            flow.triggers.push(trigger)
+
+            state.flow = {...flow}
         },
         setTotal(state, total) {
             state.total = total
         },
-        setDataTree (state, dataTree) {
+        setDataTree(state, dataTree) {
             state.dataTree = dataTree
         }
     },
-    getters: {}
+    getters: {
+        flow (state) {
+            if (state.flow) {
+                return state.flow;
+            }
+        }
+    }
 }

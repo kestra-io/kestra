@@ -15,7 +15,7 @@ import org.kestra.core.models.annotations.OutputProperty;
 import org.kestra.core.models.tasks.Output;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.plugins.RegisteredPlugin;
-import org.kestra.core.runners.handlebars.helpers.InstantHelper;
+import org.kestra.core.runners.handlebars.helpers.DateHelper;
 import org.kestra.core.runners.handlebars.helpers.JsonHelper;
 import org.kestra.core.serializers.JacksonMapper;
 
@@ -49,7 +49,7 @@ abstract public class DocumentationGenerator {
         .registerHelpers(StringHelpers.class)
         .registerHelpers(UnlessHelper.class)
         .registerHelpers(WithHelper.class)
-        .registerHelpers(InstantHelper.class)
+        .registerHelpers(DateHelper.class)
         .registerHelpers(JsonHelper.class);
 
     public static List<Document> generate(RegisteredPlugin registeredPlugin) throws IOException {

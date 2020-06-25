@@ -132,7 +132,7 @@ export default {
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
-        ...mapState("me", ["user"]),
+        ...mapState("auth", ["user"]),
         fields() {
             const title = title => {
                 return this.$t(title);
@@ -179,7 +179,8 @@ export default {
             return {
                 json: row.item.metrics,
                 keys: { x: "startDate", value: statuses },
-                groups: [statuses]
+                groups: [statuses],
+                row
             };
         },
         loadData(callback) {

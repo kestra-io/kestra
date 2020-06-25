@@ -8,7 +8,7 @@
                 <date-range @onDate="onSearch" />
                 <refresh-button class="float-right" @onRefresh="loadData"/>
                 <v-s />
-                <status-filter-buttons @onRefresh="addStatusToQuery"/>
+                <status-filter-buttons @onRefresh="loadData"/>
             </template>
             <template v-slot:table>
                 <b-table
@@ -91,6 +91,7 @@ export default {
     beforeCreate () {
         const params = JSON.parse(localStorage.getItem('executionQueries') || '{}')
         params.sort = 'state.startDate:desc'
+        params.status = this.$route.query.status || params.status || 'ALL'
         localStorage.setItem('executionQueries', JSON.stringify(params))
     },
     computed: {
@@ -179,7 +180,8 @@ export default {
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
                 q: this.executionQuery,
-                sort: this.$route.query.sort
+                sort: this.$route.query.sort,
+                state: this.$route.query.status
             }).finally(callback);
         }
     }

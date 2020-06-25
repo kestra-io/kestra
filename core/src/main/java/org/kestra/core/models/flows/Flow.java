@@ -1,5 +1,6 @@
 package org.kestra.core.models.flows;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
@@ -11,11 +12,12 @@ import lombok.With;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.DeletedInterface;
+import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.listeners.Listener;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
-import org.kestra.core.models.triggers.Trigger;
+import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.serializers.JacksonMapper;
@@ -40,7 +42,7 @@ public class Flow implements DeletedInterface {
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
             public boolean hasIgnoreMarker(final AnnotatedMember m) {
-                List<String> exclusions = Collections.singletonList("revision");
+                List<String> exclusions = Arrays.asList("revision", "deleted");
                 return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
             }
         });
@@ -74,13 +76,31 @@ public class Flow implements DeletedInterface {
     private List<Listener> listeners;
 
     @Valid
-    private List<Trigger> triggers;
+    private List<AbstractTrigger> triggers;
 
+    @Builder.Default
     @NotNull
     private boolean deleted = false;
 
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);
+    }
+
+    @JsonIgnore
+    public String uid() {
+        return String.join("_", Arrays.asList(
+            this.getNamespace(),
+            this.getId(),
+            this.getRevision() != null ? String.valueOf(this.getRevision()) : "-1"
+        ));
+    }
+
+    public static String uid(Execution execution) {
+        return String.join("_", Arrays.asList(
+            execution.getNamespace(),
+            execution.getFlowId(),
+            String.valueOf(execution.getFlowRevision())
+        ));
     }
 
     public ResolvedTask findTaskByTaskRun(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException, InternalException {
@@ -166,5 +186,20 @@ public class Flow implements DeletedInterface {
         } else {
             return Optional.empty();
         }
+    }
+
+    public Flow toDeleted() {
+        return new Flow(
+            this.id,
+            this.namespace,
+            this.revision,
+            this.inputs,
+            this.variables,
+            this.tasks,
+            this.errors,
+            this.listeners,
+            this.triggers,
+            true
+        );
     }
 }

@@ -4,13 +4,16 @@ import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
+import org.kestra.core.runners.AbstractExecutor;
 import org.kestra.core.runners.StandAloneRunner;
 import org.kestra.core.utils.Await;
+import org.kestra.runner.kafka.KafkaExecutor;
 import picocli.CommandLine;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 @CommandLine.Command(
     name = "standalone",
@@ -45,6 +48,12 @@ public class StandAloneCommand extends AbstractCommand {
         }
 
         StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
+
+        Optional<AbstractExecutor> executor = applicationContext.findBean(AbstractExecutor.class);
+        if (executor.isPresent() && executor.get() instanceof KafkaExecutor) {
+            standAloneRunner.setExecutorThreads(1);
+        }
+
         standAloneRunner.run();
 
         Await.until(() -> !standAloneRunner.isRunning());

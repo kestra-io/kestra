@@ -3,6 +3,7 @@ package org.kestra.runner.memory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.*;
@@ -33,5 +34,11 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
     public QueueInterface<WorkerTaskResult> workerTaskResult() {
         return new MemoryQueue<>(WorkerTaskResult.class, applicationContext);
+    }
+
+    @Singleton
+    @Named(QueueFactoryInterface.FLOW_NAMED)
+    public QueueInterface<Flow> flow() {
+        return new MemoryQueue<>(Flow.class, applicationContext);
     }
 }

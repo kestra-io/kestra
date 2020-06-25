@@ -1,0 +1,16 @@
+dynamic: false
+properties:
+  namespace:
+    type: keyword
+  flowId:
+    type: keyword
+  flowRevision:
+    type: integer
+  triggerId:
+    type: keyword
+  executionId:
+    type: keyword
+  date:
+    type: date
+  deleted:
+    type: boolean

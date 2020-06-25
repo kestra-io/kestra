@@ -16,7 +16,8 @@ dependencies {
     compile group: 'net.jodah', name: 'failsafe', version: '2.3.1'
 
     //scheduler
-    compile group: 'it.sauronsoftware.cron4j', name: 'cron4j', version: '2.2.5'
+    compile group: 'com.cronutils', name: 'cron-utils', version: '9.0.2'
+
 
     // test
     testCompile project(':repository-memory')

@@ -73,6 +73,7 @@ class ScheduleTest {
         var vars = (Map<String, ZonedDateTime>) evaluate.get().getVariables().get("schedule");
         assertThat(vars.get("date"), is(date));
         assertThat(vars.get("next"), is(date.plusMonths(1)));
+        assertThat(vars.get("previous"), is(date.minusMonths(1)));
     }
 
     @SuppressWarnings("unchecked")
@@ -93,6 +94,7 @@ class ScheduleTest {
         var vars = (Map<String, ZonedDateTime>) evaluate.get().getVariables().get("schedule");
         assertThat(vars.get("date"), is(date));
         assertThat(vars.get("next"), is(date.plus(Duration.ofMinutes(1))));
+        assertThat(vars.get("previous"), is(date.minus(Duration.ofMinutes(1))));
     }
 
     @Test

@@ -61,19 +61,23 @@ export default {
             state.flows = flows
         },
         setFlow(state, flow) {
-            if (flow.triggers !== undefined) {
-                flow.triggers = flow.triggers.map(trigger => {
-                    if (trigger.backfill  === undefined) {
-                        trigger.backfill = {
-                            start: undefined
+            if (!flow) {
+                state.flow = flow;
+            } else {
+                if (flow.triggers !== undefined) {
+                    flow.triggers = flow.triggers.map(trigger => {
+                        if (trigger.backfill  === undefined) {
+                            trigger.backfill = {
+                                start: undefined
+                            }
                         }
-                    }
 
-                    return trigger;
-                })
+                        return trigger;
+                    })
+                }
+
+                state.flow = {...flow}
             }
-
-            state.flow = {...flow}
         },
         setTrigger(state, {index, trigger}) {
             let flow = state.flow;

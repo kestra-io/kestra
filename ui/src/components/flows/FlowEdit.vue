@@ -172,7 +172,7 @@ export default {
                     })
                     .then(() => {
                         this.$toast().success({
-                            name: this.flow.id
+                            name: flow.id
                         })
                     })
             }

@@ -158,7 +158,6 @@ export default {
                 inputs.push({ key, value: this.execution.inputs[key] });
             }
 
-            console.log(inputs);
             return inputs;
         },
         variables() {

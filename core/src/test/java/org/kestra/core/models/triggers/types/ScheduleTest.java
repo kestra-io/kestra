@@ -111,7 +111,7 @@ class ScheduleTest {
         ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
         ZonedDateTime next = trigger.nextDate(Optional.of(context(date, trigger)));
 
-        assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(ZonedDateTime.now(ZoneId.systemDefault()).plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)));
+        assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(date.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)));
     }
 
     @Test
@@ -138,4 +138,14 @@ class ScheduleTest {
 
         assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(next.format(DateTimeFormatter.ISO_LOCAL_DATE)));
     }
+
+
+    @Test
+    void emptyBackfillStartDate() {
+        Schedule trigger = Schedule.builder().cron("0 0 * * *").backfill(ScheduleBackfill.builder().build()).build();
+        ZonedDateTime next = trigger.nextDate(Optional.empty());
+
+        assertThat(next.getDayOfMonth(), is(ZonedDateTime.now(ZoneId.systemDefault()).plusDays(1).getDayOfMonth()));
+    }
+
 }

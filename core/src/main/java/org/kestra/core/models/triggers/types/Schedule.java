@@ -42,14 +42,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     private Duration interval;
 
     public ZonedDateTime nextDate(Optional<? extends TriggerContext> last) {
-        if (this.backfill == null) {
-            return computeNextDate(ZonedDateTime.now(ZoneId.systemDefault())).orElse(null);
-        }
-
-        if (last.isEmpty()) {
-            return backfill.getStart();
-        } else {
+        if (last.isPresent()) {
             return computeNextDate(last.get().getDate()).orElse(null);
+        } else {
+            if (backfill != null && backfill.getStart() != null) {
+                return backfill.getStart();
+            }
+
+            return computeNextDate(ZonedDateTime.now(ZoneId.systemDefault())).orElse(null);
         }
     }
 

@@ -39,7 +39,6 @@ public class Scheduler implements Runnable, AutoCloseable {
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
     private final Map<String, Optional<Trigger>> lastTriggers = new ConcurrentHashMap<>();
-    private final Map<String, Boolean> backfillLock = new ConcurrentHashMap<>();
 
     @Inject
     public Scheduler(

@@ -60,7 +60,12 @@ public class FlowListenersService {
 
     private boolean remove(Flow flow) {
         synchronized (this) {
-            return flows.removeIf(r -> r.equalsWithoutRevision(flow));
+            boolean remove = flows.removeIf(r -> r.getNamespace().equals(flow.getNamespace()) && r.getId().equals(flow.getId()));
+            if (!remove) {
+                log.warn("Can't remove flow {}.{}", flow.getNamespace(), flow.getId());
+            }
+
+            return remove;
         }
     }
 

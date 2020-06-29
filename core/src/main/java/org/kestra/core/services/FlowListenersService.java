@@ -1,6 +1,7 @@
 package org.kestra.core.services;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
@@ -14,6 +15,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Singleton
+@Slf4j
 public class FlowListenersService {
     private final QueueInterface<Flow> flowQueue;
 
@@ -38,10 +40,22 @@ public class FlowListenersService {
                 this.upsert(flow);
             }
 
+            if (log.isTraceEnabled()) {
+                log.trace("Received {} flow '{}.{}'",
+                    flow.isDeleted() ? "deletion" : "update",
+                    flow.getNamespace(),
+                    flow.getId()
+                );
+            }
+
             this.notifyConsumers();
         });
 
         this.notifyConsumers();
+
+        if (log.isTraceEnabled()) {
+            log.trace("FlowListenersService started with {} flows", flows.size());
+        }
     }
 
     private boolean remove(Flow flow) {

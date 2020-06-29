@@ -21,10 +21,12 @@ import org.kestra.core.utils.Await;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -78,12 +80,24 @@ public class Scheduler implements Runnable, AutoCloseable {
     }
 
     private synchronized void handle() {
-        this.flowListenersService
+        List<FlowWithTrigger> schedulable = this.flowListenersService
             .getFlows()
             .stream()
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
             .flatMap(flow -> flow.getTriggers().stream().map(trigger -> new FlowWithTrigger(flow, trigger)))
             .filter(flowWithTrigger -> flowWithTrigger.getTrigger() instanceof PollingTriggerInterface)
+            .collect(Collectors.toList());
+
+        if (log.isTraceEnabled()) {
+            log.trace(
+                "Scheduler next iteration with {} schedulables of {} flows",
+                schedulable.size(),
+                this.flowListenersService.getFlows().size()
+            );
+        }
+
+        schedulable
+            .stream()
             .map(flowWithTrigger -> FlowWithPollingTrigger.builder()
                 .flow(flowWithTrigger.getFlow())
                 .trigger((PollingTriggerInterface) flowWithTrigger.getTrigger())
@@ -174,6 +188,14 @@ public class Scheduler implements Runnable, AutoCloseable {
 
     private ExecutionWithTrigger evaluatePollingTrigger(FlowWithPollingTrigger flowWithTrigger) {
         Optional<Execution> evaluate = flowWithTrigger.getTrigger().evaluate(flowWithTrigger.getTriggerContext());
+
+        if (log.isDebugEnabled() && evaluate.isEmpty()) {
+            log.debug("Empty evaluation for flow '{}.{}' for date '{}, waiting !",
+                flowWithTrigger.getFlow().getNamespace(),
+                flowWithTrigger.getFlow().getId(),
+                flowWithTrigger.getTriggerContext().getDate()
+            );
+        }
 
         if (evaluate.isEmpty()) {
             return null;

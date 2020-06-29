@@ -44,14 +44,18 @@ public class FlowListenersService {
         this.notifyConsumers();
     }
 
-    private synchronized boolean remove(Flow flow) {
-        return flows.removeIf(r -> r.equalsWithoutRevision(flow));
+    private boolean remove(Flow flow) {
+        synchronized (this) {
+            return flows.removeIf(r -> r.equalsWithoutRevision(flow));
+        }
     }
 
     private synchronized void upsert(Flow flow) {
-        this.remove(flow);
+        synchronized (this) {
+            this.remove(flow);
 
-        this.flows.add(flow);
+            this.flows.add(flow);
+        }
     }
 
     private void notifyConsumers() {

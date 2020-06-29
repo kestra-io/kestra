@@ -28,15 +28,13 @@
                 class="mb-0"
             >
                 <template v-slot:cell(value)="row">
-                    <span
-                        v-if="['string', 'optional', 'float', 'int', 'instant'].includes(row.item.key)"
-                    >{{row.item.value}}</span>
                     <b-link
+                        v-if="isFile(row.item)"
                         class="btn btn-primary"
-                        v-if="['optionalFile', 'file'].includes(row.item.key)"
                         target="_blank"
                         :href="itemUrl(row.item.value)"
                     >{{$t('download')}}</b-link>
+                    <span v-else>{{row.item.value}}</span>
                 </template>
             </b-table>
         </div>
@@ -74,6 +72,9 @@ export default {
         Restart
     },
     methods: {
+        isFile(item) {
+            return `${this.execution.inputs[item.key]}`.startsWith("kestra:///")
+        },
         itemUrl(value) {
             return `${apiRoot}executions/${this.execution.id}/file?path=${value}`;
         },

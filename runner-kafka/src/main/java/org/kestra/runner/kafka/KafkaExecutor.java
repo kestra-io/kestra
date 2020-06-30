@@ -18,6 +18,7 @@ import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.AbstractExecutor;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
@@ -45,15 +46,18 @@ public class KafkaExecutor extends AbstractExecutor {
 
     KafkaStreamService kafkaStreamService;
     KafkaAdminService kafkaAdminService;
+    FlowRepositoryInterface flowRepository;
 
     @Inject
     public KafkaExecutor(
         ApplicationContext applicationContext,
+        FlowRepositoryInterface flowRepository,
         KafkaStreamService kafkaStreamService,
         KafkaAdminService kafkaAdminService,
         MetricRegistry metricRegistry
     ) {
         super(applicationContext, metricRegistry);
+        this.flowRepository = flowRepository;
         this.kafkaStreamService = kafkaStreamService;
         this.kafkaAdminService = kafkaAdminService;
     }
@@ -96,7 +100,8 @@ public class KafkaExecutor extends AbstractExecutor {
         KStream<String, Execution> executionKStream = this.joinWorkerResult(builder, executionKTable);
 
         // handle state on execution
-        KStream<String, ExecutionWithFlow> stream = this.withFlow(builder, executionKStream);
+        KStream<String, ExecutionWithFlow> stream = this.withFlow(
+            executionKStream);
 
         this.handleMain(stream);
         this.handleNexts(stream);
@@ -232,6 +237,23 @@ public class KafkaExecutor extends AbstractExecutor {
         return toExecutionJoin(result);
     }
 
+    private KStream<String, ExecutionWithFlow> withFlow(KStream<String, Execution> executionKStream) {
+        return executionKStream
+            .mapValues(
+                (readOnlyKey, execution) -> {
+                    Flow flow = this.flowRepository.findByExecution(execution);
+
+                    return new ExecutionWithFlow(flow, execution);
+                },
+                Named.as("withFlow-map")
+            );
+    }
+
+    /**
+     * Remove due to inconsistency on runner.
+     * Seems that the executor can miss some execution on this case, the execution is keep on RUNNING state without
+     * any further action
+     */
     private KStream<String, ExecutionWithFlow> withFlow(StreamsBuilder builder, KStream<String, Execution> executionKStream) {
         return executionKStream
             .join(

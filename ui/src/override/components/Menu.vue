@@ -2,7 +2,7 @@
   <sidebar-menu
     :menu="menu"
     @toggle-collapse="onToggleCollapse"
-    width="180px"
+    width="200px"
     :collapsed="collapsed"
   >
     <div class="logo" slot="header">
@@ -27,14 +27,18 @@ import ChevronRight from "vue-material-design-icons/ChevronRight";
 import Graph from "vue-material-design-icons/Graph";
 import Cog from "vue-material-design-icons/Cog";
 import TimelineClock from "vue-material-design-icons/TimelineClock";
+import BookOpen from "vue-material-design-icons/BookOpen";
+
 Vue.component("graph", Graph);
 Vue.component("settings", Cog);
 Vue.component("timelineclock", TimelineClock);
+Vue.component("bookopen", BookOpen);
+
 export default {
   components: {
     ChevronLeft,
     ChevronRight,
-    SidebarMenu
+    SidebarMenu,
   },
   methods: {
     onToggleCollapse(folded) {
@@ -70,6 +74,17 @@ export default {
           title: this.$t("executions"),
           icon: {
             element: "timelineclock",
+            class: "menu-icon"
+          }
+        },
+        {
+          href: "/plugins",
+          alias: [
+            "/plugins*"
+          ],
+          title: this.$t("plugins.documentation"),
+          icon: {
+            element: "bookopen",
             class: "menu-icon"
           }
         },

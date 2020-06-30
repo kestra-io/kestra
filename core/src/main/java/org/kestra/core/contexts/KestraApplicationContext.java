@@ -1,4 +1,4 @@
-package org.kestra.cli.contexts;
+package org.kestra.core.contexts;
 
 import io.micronaut.context.ApplicationContextConfiguration;
 import io.micronaut.context.DefaultApplicationContext;
@@ -8,6 +8,7 @@ import io.micronaut.inject.BeanDefinitionReference;
 import org.kestra.core.plugins.PluginRegistry;
 
 import javax.annotation.Nonnull;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +19,11 @@ import java.util.List;
 @SuppressWarnings("rawtypes")
 public class KestraApplicationContext extends DefaultApplicationContext {
     private List<BeanDefinitionReference> resolvedBeanReferences;
-    private PluginRegistry pluginRegistry;
+    private final PluginRegistry pluginRegistry;
+
+    public PluginRegistry getPluginRegistry() {
+        return pluginRegistry;
+    }
 
     public KestraApplicationContext(@Nonnull ApplicationContextConfiguration configuration, PluginRegistry pluginRegistry) {
         super(configuration);

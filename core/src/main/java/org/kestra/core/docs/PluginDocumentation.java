@@ -16,46 +16,37 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode
 @ToString
 @Builder
+@NoArgsConstructor
 public class PluginDocumentation<T> {
-    @JsonIgnore
-    private RegisteredPlugin plugin;
-
-    private Class<? extends T> cls;
+    private String cls;
+    private String group;
+    private String subGroup;
+    private String shortName;
+    private String docDescription;
+    private String docBody;
+    private List<ExampleDoc> docExamples;
+    private Map<String, InputDocumentation> inputs;
+    private Map<String, OutputDocumentation> outputs;
 
     private PluginDocumentation(RegisteredPlugin plugin, Class<T> cls) {
-        this.plugin = plugin;
-        this.cls = cls;
-        this.scan();
-    }
+        this.cls = cls.getName();
 
-    public static <T> PluginDocumentation<T> of(RegisteredPlugin plugin, Class<T> cls) {
-        return new PluginDocumentation<>(plugin, cls);
-    }
+        if (plugin.getManifest() != null) {
+            this.group = plugin.getManifest().getMainAttributes().getValue("X-Kestra-Group");
+        }
 
-    private String group;
+        if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length()) {
+            this.subGroup = cls.getPackageName().substring(this.group.length() + 1);
+        }
 
-    private String subGroup;
+        this.shortName = cls.getSimpleName();
 
-    public String getShortName() {
-        return cls.getSimpleName();
-    }
+        Documentation classDoc = DocumentationGenerator.getClassDoc(cls);
+        this.docDescription = classDoc == null ? null : classDoc.description();;
+        this.docBody = classDoc == null ? null : String.join("\n", classDoc.body());
 
-    @JsonIgnore
-    private Documentation documentation;
-
-    @JsonIgnore
-    private List<Example> examples;
-
-    public String getDocDescription() {
-        return this.documentation == null ? null : this.documentation.description();
-    }
-
-    public String getDocBody() {
-        return this.documentation == null ? null : String.join("\n", this.documentation.body());
-    }
-
-    public List<ExampleDoc> getDocExamples() {
-        return this.examples
+        List<Example> classExample = DocumentationGenerator.getClassExample(cls);
+        this.docExamples = classExample
             .stream()
             .map(r -> new ExampleDoc(
                 r.title(),
@@ -68,25 +59,13 @@ public class PluginDocumentation<T> {
                 ))
             ))
             .collect(Collectors.toList());
-    }
 
-    private Map<String, InputDocumentation> inputs;
-
-    private Map<String, OutputDocumentation> outputs;
-
-    public void scan() {
-        if (this.plugin.getManifest() != null) {
-            this.group = this.plugin.getManifest().getMainAttributes().getValue("X-Kestra-Group");
-        }
-
-        if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length()) {
-            this.subGroup = cls.getPackageName().substring(this.group.length() + 1);
-        }
-
-        this.documentation = DocumentationGenerator.getClassDoc(cls);
-        this.examples = DocumentationGenerator.getClassExample(cls);
         this.inputs = DocumentationGenerator.getMainInputs(cls);
         this.outputs = DocumentationGenerator.getMainOutput(cls);
+    }
+
+    public static <T> PluginDocumentation<T> of(RegisteredPlugin plugin, Class<T> cls) {
+        return new PluginDocumentation<>(plugin, cls);
     }
 
     @AllArgsConstructor

@@ -1,14 +1,12 @@
 package org.kestra.cli.commands.plugins;
 
-import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
-import org.kestra.cli.contexts.KestraClassLoader;
+import org.kestra.core.contexts.KestraClassLoader;
 import org.kestra.core.plugins.PluginScanner;
 import org.kestra.core.plugins.RegisteredPlugin;
 import picocli.CommandLine;
 
-import javax.inject.Inject;
 import java.util.List;
 
 @CommandLine.Command(
@@ -20,12 +18,12 @@ public class PluginListCommand extends AbstractCommand {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
-    @Inject
-    private ApplicationContext applicationContext;
-
     public PluginListCommand() {
         super(false);
     }
+
+    @CommandLine.Option(names = {"--core"}, description = "Also write core tasks plugins")
+    private boolean core = false;
 
     @Override
     public void run() {
@@ -39,6 +37,11 @@ public class PluginListCommand extends AbstractCommand {
 
         PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
         List<RegisteredPlugin> scan = pluginScanner.scan(this.pluginsPath);
+
+        if (core) {
+            PluginScanner corePluginScanner = new PluginScanner(PluginDocCommand.class.getClassLoader());
+            scan.add(corePluginScanner.scan());
+        }
 
         scan.forEach(registeredPlugin -> log.info(registeredPlugin.toString()));
     }

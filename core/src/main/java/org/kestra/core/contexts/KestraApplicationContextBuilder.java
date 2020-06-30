@@ -1,4 +1,4 @@
-package org.kestra.cli.contexts;
+package org.kestra.core.contexts;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;

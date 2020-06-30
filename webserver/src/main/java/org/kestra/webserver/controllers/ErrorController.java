@@ -11,6 +11,7 @@ import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.hateoas.Link;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintViolationException;
 
@@ -58,6 +59,11 @@ public class ErrorController {
     @Error(global = true, status = HttpStatus.NOT_FOUND)
     public HttpResponse<JsonError> notFound(HttpRequest<?> request) {
         return jsonError(request, HttpStatus.NOT_FOUND, "Not Found");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> notFound(HttpRequest<?> request, NoSuchElementException e) {
+        return jsonError(request, e, HttpStatus.NOT_FOUND, "Not Found");
     }
 
     private static HttpResponse<JsonError> jsonError(JsonError jsonError, HttpStatus status, String reason) {

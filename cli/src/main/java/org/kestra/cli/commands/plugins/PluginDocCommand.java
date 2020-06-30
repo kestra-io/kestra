@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 @CommandLine.Command(
@@ -35,13 +36,12 @@ public class PluginDocCommand extends AbstractCommand {
         super.run();
 
         PluginScanner pluginScanner = new PluginScanner(PluginDocCommand.class.getClassLoader());
-        List<RegisteredPlugin> scan = pluginScanner.scan(this.pluginsPath);
+        List<RegisteredPlugin> scan = new ArrayList<>(pluginScanner.scan(this.pluginsPath));
 
         if (core) {
             PluginScanner corePluginScanner = new PluginScanner(PluginDocCommand.class.getClassLoader());
             scan.add(corePluginScanner.scan());
         }
-
 
         for (RegisteredPlugin registeredPlugin : scan) {
             try {

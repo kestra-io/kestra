@@ -11,6 +11,7 @@ import org.kestra.core.models.tasks.Task;
 import org.kestra.core.storages.StorageInterface;
 
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
-
 
 @Slf4j
 public class PluginScanner {
@@ -98,6 +98,10 @@ public class PluginScanner {
             if (definition.isPresent()) {
                 final BeanIntrospectionReference ref = definition.load();
                 Class beanType = ref.getBeanType();
+
+                if (Modifier.isAbstract(beanType.getModifiers())) {
+                    continue;
+                }
 
                 if (Task.class.isAssignableFrom(beanType)) {
                     tasks.add(beanType);

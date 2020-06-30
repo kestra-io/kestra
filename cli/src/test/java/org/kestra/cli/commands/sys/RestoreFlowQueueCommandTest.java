@@ -7,7 +7,7 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.kestra.cli.contexts.KestraClassLoader;
+import org.kestra.core.contexts.KestraClassLoader;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;

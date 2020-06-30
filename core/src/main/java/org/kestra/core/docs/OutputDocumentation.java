@@ -1,8 +1,8 @@
 package org.kestra.core.docs;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.kestra.core.models.annotations.OutputProperty;
 
@@ -11,17 +11,10 @@ import java.lang.reflect.Field;
 @Getter
 @EqualsAndHashCode
 @ToString
+@NoArgsConstructor
 public class OutputDocumentation extends AbstractChildDocumentation<OutputDocumentation> {
-    @JsonIgnore
-    private final OutputProperty annotation;
-
-    public String getDescription() {
-        return this.annotation == null ? null : this.annotation.description();
-    }
-
-    public String getBody() {
-        return this.annotation == null ? null : String.join("\n", this.annotation.body());
-    }
+    private String description;
+    private String body;
 
     public OutputDocumentation(Class<?> parent, Field field, OutputProperty annotation) {
         super(
@@ -31,6 +24,8 @@ public class OutputDocumentation extends AbstractChildDocumentation<OutputDocume
             field.getType().getEnumConstants(),
             DocumentationGenerator.getChildsOutputs(field)
         );
-        this.annotation = annotation;
+
+        this.description = annotation == null ? null : annotation.description();
+        this.body = annotation == null ? null : String.join("\n", annotation.body());
     }
 }

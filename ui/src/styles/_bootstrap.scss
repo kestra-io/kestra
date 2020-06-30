@@ -69,3 +69,24 @@ ul.nav-tabs {
 .pagination .page-link {
     border-radius: 1px;
 }
+
+// pre
+
+pre {
+    background: $gray-800;
+    padding: 1rem;
+}
+
+blockquote {
+    border-left: 5px solid $gray-400;
+    margin-top: $spacer * 2;
+    padding: $spacer/4  0 $spacer/4 $spacer;
+    color: $gray-700;
+    p {
+        margin-bottom: 0;
+    }
+}
+
+mark {
+    color: darken($yellow, 30);
+}

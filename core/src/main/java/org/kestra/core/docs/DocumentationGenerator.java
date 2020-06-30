@@ -41,7 +41,7 @@ abstract public class DocumentationGenerator {
         "java.net"
     );
 
-    private static Handlebars handlebars = new Handlebars()
+    private static final Handlebars handlebars = new Handlebars()
         .with(EscapingStrategy.NOOP)
         .registerHelpers(ConditionalHelpers.class)
         .registerHelpers(EachHelper.class)
@@ -53,13 +53,6 @@ abstract public class DocumentationGenerator {
         .registerHelpers(JsonHelper.class);
 
     public static List<Document> generate(RegisteredPlugin registeredPlugin) throws IOException {
-        String hbsTemplate = IOUtils.toString(
-            Objects.requireNonNull(DocumentationGenerator.class.getClassLoader().getResourceAsStream("docs/task.hbs")),
-            Charsets.UTF_8
-        );
-
-        Template template = handlebars.compileInline(hbsTemplate);
-
         return registeredPlugin
             .getTasks()
             .stream()
@@ -72,21 +65,34 @@ abstract public class DocumentationGenerator {
                         "core"
                     );
 
-                    String renderer = template.apply(JacksonMapper.toMap(pluginDocumentation));
-                    final Pattern pattern = Pattern.compile("`\\{\\{(.*?)\\}\\}`", Pattern.MULTILINE);
-                    renderer = pattern.matcher(renderer).replaceAll("<code v-pre>{{ $1 }}</code>");
-
                     return new Document(
                         project + "/tasks/" +
                             (pluginDocumentation.getSubGroup() != null ? pluginDocumentation.getSubGroup() + "/" : "") +
-                            pluginDocumentation.getCls().getName() + ".md",
-                        renderer
+                            pluginDocumentation.getCls() + ".md",
+                        render(pluginDocumentation)
                     );
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             })
             .collect(Collectors.toList());
+    }
+
+    public static <T> String render(PluginDocumentation<T> pluginDocumentation) throws IOException {
+        String hbsTemplate = IOUtils.toString(
+            Objects.requireNonNull(DocumentationGenerator.class.getClassLoader().getResourceAsStream("docs/task.hbs")),
+            Charsets.UTF_8
+        );
+
+        Template template = handlebars.compileInline(hbsTemplate);
+
+        String renderer = template.apply(JacksonMapper.toMap(pluginDocumentation));
+
+        // vuepress {{ }} evaluation
+        Pattern pattern = Pattern.compile("`\\{\\{(.*?)\\}\\}`", Pattern.MULTILINE);
+        renderer = pattern.matcher(renderer).replaceAll("<code v-pre>{{ $1 }}</code>");
+
+        return renderer;
     }
 
     private static List<Field> getFields(Class<?> cls) {

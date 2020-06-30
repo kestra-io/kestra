@@ -108,7 +108,13 @@
         "inputs": "Inputs",
         "input": "Input",
         "variables": "Variables",
-        "download": "Download"
+        "download": "Download",
+        "plugins": {
+            "documentation": "Documentation",
+            "name": "Plugin",
+            "names": "Plugins",
+            "please": "Please choose a task on the right to see its documentation"
+        }
     },
     "fr": {
         "id": "Identifiant",
@@ -220,6 +226,12 @@
         "inputs": "Entrées",
         "input": "Entré",
         "variables": "Variables",
-        "download": "Télécharger"
+        "download": "Télécharger",
+        "plugins": {
+            "documentation": "Documentation",
+            "name": "Plugin",
+            "names": "Plugins",
+            "please": "Veuillez choisir une tache sur la droit afin de voir sa documentation"
+        }
     }
 }

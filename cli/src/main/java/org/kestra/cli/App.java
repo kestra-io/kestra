@@ -8,8 +8,8 @@ import org.kestra.cli.commands.flows.FlowCommand;
 import org.kestra.cli.commands.plugins.PluginCommand;
 import org.kestra.cli.commands.servers.ServerCommand;
 import org.kestra.cli.commands.sys.SysCommand;
-import org.kestra.cli.contexts.KestraApplicationContextBuilder;
-import org.kestra.cli.contexts.KestraClassLoader;
+import org.kestra.core.contexts.KestraApplicationContextBuilder;
+import org.kestra.core.contexts.KestraClassLoader;
 import picocli.CommandLine;
 
 import java.lang.reflect.InvocationTargetException;

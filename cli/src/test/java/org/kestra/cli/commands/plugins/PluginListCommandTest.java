@@ -6,7 +6,7 @@ import io.micronaut.context.env.Environment;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.kestra.cli.contexts.KestraClassLoader;
+import org.kestra.core.contexts.KestraClassLoader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;

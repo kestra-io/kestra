@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.*;
 
 import static org.kestra.core.utils.Rethrow.throwBiConsumer;
@@ -50,11 +51,31 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
     @InputProperty(
         description = "The commands to run",
         body = {
-            "All command will be launched with `/bin/sh -c \"commands\"`"
+            "Default command will be launched with `/bin/sh -c \"commands\"`"
         },
         dynamic = true
     )
     private String[] commands;
+
+    @Builder.Default
+    @InputProperty(
+        description = "Interpreter to used",
+        body = {
+            "Default is `/bin/sh`"
+        },
+        dynamic = false
+    )
+    private String interpreter = "/bin/sh";
+
+    @Builder.Default
+    @InputProperty(
+        description = "Interpreter args used",
+        body = {
+            "Default is `{\"-c\"}`"
+        },
+        dynamic = false
+    )
+    private String[] interpreterArgs = {"-c"};
 
     @Builder.Default
     @InputProperty(
@@ -109,11 +130,25 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
                 tempFiles.size() > 0 ? ImmutableMap.of("temp", tempFiles) : ImmutableMap.of()
             ));
         }
+        String commandAsString = String.join("\n", renderer);
 
-        logger.debug("Starting command [{}]", String.join("; ", renderer));
+        File bashTempFiles = null;
+        // https://www.in-ulm.de/~mascheck/various/argmax/ MAX_ARG_STRLEN (131072)
+        if (commandAsString.length() > 131072) {
+            bashTempFiles = File.createTempFile("bash", ".sh");
+            Files.write(bashTempFiles.toPath(), commandAsString.getBytes());
+
+            commandAsString = this.interpreter + " " + bashTempFiles.getAbsolutePath();
+        }
+
+        logger.debug("Starting command [{}]", commandAsString);
+
+        // build the final commands
+        List<String> commands = new ArrayList<>(Collections.singletonList(this.interpreter));
+        commands.addAll(Arrays.asList(this.interpreterArgs));
+        commands.add(commandAsString);
 
         // start
-        List<String> commands = Arrays.asList("/bin/sh", "-c", String.join("\n", renderer));
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(commands);
         Process process = processBuilder.start();
@@ -141,6 +176,11 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             forEach(throwBiConsumer((k, v) -> {
                 uploaded.put(k, runContext.putTempFile(new File(v)));
             }));
+
+        // bash temp files
+        if (bashTempFiles != null) {
+            bashTempFiles.delete();
+        }
 
         // output
         return Output.builder()

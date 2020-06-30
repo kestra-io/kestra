@@ -12,7 +12,9 @@ import org.kestra.core.tasks.scripts.Bash;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -128,5 +130,25 @@ class BashTest {
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOut().size(), is(1));
         assertThat(run.getStdErr().size(), is(1));
+    }
+
+    @Test
+    void longBashCreateTempFiles() throws Exception {
+        RunContext runContext = new RunContext(this.applicationContext, ImmutableMap.of());
+
+        List<String> commands = new ArrayList<>();
+        for (int i = 0; i < 15000; i++) {
+            commands.add("if [ \"" + i + "\" -eq 0 ] || [ \"" + i + "\" -eq 14999  ]; then echo " + i + ";fi;");
+        }
+
+        Bash bash = Bash.builder()
+            .commands(commands.toArray(String[]::new))
+            .build();
+
+        Bash.Output run = bash.run(runContext);
+
+        assertThat(run.getExitCode(), is(0));
+        assertThat(run.getStdOut().size(), is(2));
+        assertThat(run.getStdErr().size() > 0, is(false));
     }
 }

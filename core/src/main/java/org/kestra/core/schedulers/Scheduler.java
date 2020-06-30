@@ -38,7 +38,7 @@ public class Scheduler implements Runnable, AutoCloseable {
     private final ExecutionRepositoryInterface executionRepository;
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private final Map<String, Optional<Trigger>> lastTriggers = new ConcurrentHashMap<>();
+    private Map<String, Optional<Trigger>> lastTriggers = new ConcurrentHashMap<>();
 
     @Inject
     public Scheduler(
@@ -61,6 +61,11 @@ public class Scheduler implements Runnable, AutoCloseable {
             1,
             TimeUnit.SECONDS
         );
+
+        // empty cache on any flow changes
+        this.flowListenersService.listen(flows -> {
+            lastTriggers = new ConcurrentHashMap<>();
+        });
 
         // look at exception on the main thread
         Thread thread = new Thread(() -> {
@@ -135,6 +140,12 @@ public class Scheduler implements Runnable, AutoCloseable {
 
         // indexer hasn't received the execution, we skip
         if (execution.isEmpty()) {
+            log.warn("Execution '{}' for flow '{}.{}' is not found, schedule is blocked",
+                lastTrigger.get().getExecutionId(),
+                lastTrigger.get().getNamespace(),
+                lastTrigger.get().getFlowId()
+            );
+
             return false;
         }
 
@@ -144,8 +155,10 @@ public class Scheduler implements Runnable, AutoCloseable {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("Execution '{}' is still '{}', waiting for next backfill",
+            log.debug("Execution '{}' for flow '{}.{}' is still '{}', waiting for next backfill",
                 lastTrigger.get().getExecutionId(),
+                lastTrigger.get().getNamespace(),
+                lastTrigger.get().getFlowId(),
                 execution.get().getState().getCurrent()
             );
         }

@@ -8,7 +8,7 @@ import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.utils.URIBuilder;
-import org.kestra.cli.contexts.KestraClassLoader;
+import org.kestra.core.contexts.KestraClassLoader;
 import org.kestra.core.plugins.PluginRegistry;
 import org.kestra.core.plugins.PluginScanner;
 import org.kestra.core.plugins.RegisteredPlugin;

@@ -3,6 +3,7 @@ package org.kestra.core.docs;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.util.Arrays;
@@ -12,14 +13,13 @@ import java.util.stream.Collectors;
 @Getter
 @EqualsAndHashCode
 @ToString
+@NoArgsConstructor
 abstract public class AbstractChildDocumentation<T extends AbstractChildDocumentation<T>> {
-    private final Class<?> parent;
-
-    private final String name;
-
-    private final String type;
-
-    private final List<String> values;
+    @JsonIgnore
+    private Class<?> parent;
+    private String name;
+    private String type;
+    private List<String> values;
 
     protected AbstractChildDocumentation(Class<?> parent, String name, String type, Object[] values, List<T> childs) {
         this.parent = parent;
@@ -30,5 +30,5 @@ abstract public class AbstractChildDocumentation<T extends AbstractChildDocument
     }
 
     @JsonIgnore
-    private final List<T> childs;
+    private List<T> childs;
 }

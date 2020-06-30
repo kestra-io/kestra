@@ -1,8 +1,8 @@
 package org.kestra.core.docs;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.kestra.core.models.annotations.InputProperty;
 
@@ -12,23 +12,12 @@ import javax.validation.constraints.NotNull;
 @Getter
 @EqualsAndHashCode
 @ToString
+@NoArgsConstructor
 public class InputDocumentation extends AbstractChildDocumentation<InputDocumentation> {
-    @JsonIgnore
-    private final InputProperty annotation;
-
+    private String description;
+    private String body;
+    private Boolean dynamic;
     private Boolean required;
-
-    public String getDescription() {
-        return this.annotation == null ? null : this.annotation.description();
-    }
-
-    public String getBody() {
-        return this.annotation == null ? null : String.join("\n", this.annotation.body());
-    }
-
-    public Boolean getDynamic() {
-        return this.annotation == null ? null : this.annotation.dynamic();
-    }
 
     public InputDocumentation(Class<?> parent, Field field, InputProperty annotation) {
         super(
@@ -38,7 +27,9 @@ public class InputDocumentation extends AbstractChildDocumentation<InputDocument
             field.getType().getEnumConstants(),
             DocumentationGenerator.getChildsInputs(field)
         );
-        this.annotation = annotation;
+        this.description = annotation == null ? null : annotation.description();
+        this.body = annotation == null ? null : String.join("\n", annotation.body());
+        this.dynamic = annotation == null ? null : annotation.dynamic();
         this.required = field.getAnnotationsByType(NotNull.class).length > 0;
     }
 }

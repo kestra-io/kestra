@@ -8,7 +8,10 @@ import org.kestra.core.models.listeners.Condition;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.storages.StorageInterface;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
@@ -29,11 +32,40 @@ public class RegisteredPlugin {
         return tasks.size() > 0 || conditions.size() > 0 || controllers.size() > 0 || storages.size() > 0;
     }
 
+    public boolean hasClass(String cls) {
+        return allClass()
+            .stream()
+            .anyMatch(r -> r.getName().equals(cls));
+    }
+
+    public Optional<Class> findClass(String cls) {
+        return allClass()
+            .stream()
+            .filter(r -> r.getName().equals(cls))
+            .findFirst();
+    }
+
+    @SuppressWarnings("rawtypes")
+    public List<Class> allClass() {
+        List<Class> result = new ArrayList<>();
+
+        result.addAll(Arrays.asList(this.getTasks().toArray(Class[]::new)));
+        result.addAll(Arrays.asList(this.getConditions().toArray(Class[]::new)));
+        result.addAll(Arrays.asList(this.getControllers().toArray(Class[]::new)));
+        result.addAll(Arrays.asList(this.getStorages().toArray(Class[]::new)));
+
+        return result;
+    }
+
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
 
-        b.append("Found plugin on path: ").append(this.getExternalPlugin().getLocation()).append(" ");
+        if (this.getExternalPlugin() != null) {
+            b.append("Found plugin on path: ").append(this.getExternalPlugin().getLocation()).append(" ");
+        } else {
+            b.append("Core plugin: ");
+        }
 
         if (!this.getTasks().isEmpty()) {
             b.append("[Tasks: ");

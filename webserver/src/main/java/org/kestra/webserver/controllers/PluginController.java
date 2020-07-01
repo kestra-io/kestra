@@ -53,7 +53,10 @@ public class PluginController {
         KestraApplicationContext context = (KestraApplicationContext) applicationContext;
         PluginRegistry pluginRegistry = context.getPluginRegistry();
 
-        List<RegisteredPlugin> plugins = new ArrayList<>(pluginRegistry.getPlugins());
+        List<RegisteredPlugin> plugins = new ArrayList<>();
+        if (pluginRegistry != null) {
+            plugins = new ArrayList<>(pluginRegistry.getPlugins());
+        }
 
         PluginScanner corePluginScanner = new PluginScanner(PluginController.class.getClassLoader());
         plugins.add(corePluginScanner.scan());

@@ -93,7 +93,7 @@ abstract public class AbstractCommand implements Runnable {
     }
 
     private void sendServerLog() {
-        if (log.isTraceEnabled()) {
+        if (log.isTraceEnabled() && KestraClassLoader.instance().getPluginRegistry() != null) {
             KestraClassLoader.instance()
                 .getPluginRegistry()
                 .getPlugins()

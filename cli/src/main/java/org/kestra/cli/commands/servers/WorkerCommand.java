@@ -1,13 +1,16 @@
 package org.kestra.cli.commands.servers;
 
+import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
+import org.kestra.core.models.ServerType;
 import org.kestra.core.runners.Worker;
 import org.kestra.core.utils.Await;
 import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import picocli.CommandLine;
 
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
@@ -29,6 +32,13 @@ public class WorkerCommand extends AbstractCommand {
 
     public WorkerCommand() {
         super(true);
+    }
+
+    @SuppressWarnings("unused")
+    public static Map<String, Object> propertiesOverrides() {
+        return ImmutableMap.of(
+            "kestra.server-type", ServerType.WORKER
+        );
     }
 
     @Override

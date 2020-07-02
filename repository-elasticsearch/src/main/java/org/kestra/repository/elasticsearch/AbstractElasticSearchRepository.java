@@ -326,9 +326,7 @@ abstract public class AbstractElasticSearchRepository<T> {
                 GetIndexRequest exists = new GetIndexRequest(index.getValue().getIndex());
                 if (!client.indices().exists(exists, RequestOptions.DEFAULT)) {
                     CreateIndexRequest request = new CreateIndexRequest(index.getValue().getIndex());
-                    if (index.getValue().getSettings() != null) {
-                        request.settings(index.getValue().getSettings(), XContentType.JSON);
-                    }
+                    request.settings(index.getValue().getSettingsContent(), XContentType.JSON);
 
                     client.indices().create(request, RequestOptions.DEFAULT);
                 }

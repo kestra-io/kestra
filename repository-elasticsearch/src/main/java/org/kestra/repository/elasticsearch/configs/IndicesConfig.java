@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import org.kestra.core.serializers.JacksonMapper;
+import org.kestra.core.utils.MapUtils;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Objects;
@@ -33,16 +34,30 @@ public class IndicesConfig {
         this.name = name;
     }
 
-    public String getMappingContent() {
+    @SneakyThrows
+    private Map<String, Object> readYamlFile(String path) {
         URL url = Objects.requireNonNull(this.getClass().getClassLoader()
-            .getResource("mappings/" + this.getMappingFile() + ".yml"));
+            .getResource(path));
 
-        try {
-            Map<String, Object> map = yamlMapper.readValue(url, typeReference);
-            return jsonMapper.writeValueAsString(map);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return yamlMapper.readValue(url, typeReference);
+    }
+
+    @SneakyThrows
+    public String getSettingsContent() {
+        Map<String, Object> defaults = this.readYamlFile("settings.yml");
+
+        Map<String, Object> override = this.getSettings() == null ? Map.of() : jsonMapper.readValue(this.getSettings(), typeReference);
+
+        return jsonMapper.writeValueAsString(
+            MapUtils.merge(defaults, override)
+        );
+    }
+
+    @SneakyThrows
+    public String getMappingContent() {
+        return jsonMapper.writeValueAsString(
+            this.readYamlFile("mappings/" + this.getMappingFile() + ".yml")
+        );
     }
 }
 

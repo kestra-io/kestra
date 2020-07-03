@@ -1,5 +1,6 @@
 package org.kestra.core.tasks.scripts;
 
+import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.annotations.Documentation;
@@ -11,13 +12,13 @@ import org.kestra.core.models.tasks.Task;
 import org.kestra.core.runners.RunContext;
 import org.slf4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.io.*;
+import java.net.URI;
+import java.nio.file.Files;
+import java.util.*;
+
+import static org.kestra.core.utils.Rethrow.throwBiConsumer;
+import static org.kestra.core.utils.Rethrow.throwConsumer;
 
 @SuperBuilder
 @ToString
@@ -28,20 +29,53 @@ import java.util.List;
     description = "Execute a Bash script, command or set of commands."
 )
 @Example(
+    title = "Single bash command",
     code = {
         "commands:",
         "- echo \"The current execution is : {{execution.id}}\""
+    }
+)
+
+@Example(
+    title = "Bash command that generate file in storage accessible through ouputs",
+    code = {
+        "files:",
+        "- first",
+        "- second",
+        "commands:",
+        "- echo \"1\" >> {{ temp.first }}",
+        "- echo \"2\" >> {{ temp.second }}"
     }
 )
 public class Bash extends Task implements RunnableTask<Bash.Output> {
     @InputProperty(
         description = "The commands to run",
         body = {
-            "All command will be launched with `/bin/sh -c \"commands\"`"
+            "Default command will be launched with `/bin/sh -c \"commands\"`"
         },
         dynamic = true
     )
     private String[] commands;
+
+    @Builder.Default
+    @InputProperty(
+        description = "Interpreter to used",
+        body = {
+            "Default is `/bin/sh`"
+        },
+        dynamic = false
+    )
+    private String interpreter = "/bin/sh";
+
+    @Builder.Default
+    @InputProperty(
+        description = "Interpreter args used",
+        body = {
+            "Default is `{\"-c\"}`"
+        },
+        dynamic = false
+    )
+    private String[] interpreterArgs = {"-c"};
 
     @Builder.Default
     @InputProperty(
@@ -55,25 +89,66 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
     )
     private boolean exitOnFailed = true;
 
+    @InputProperty(
+        description = "The list of files that will be uploaded to internal storage",
+        body = {
+            "List of key that will generate temporary files.",
+            "On the command, just can use with special variable named `temp.key`.",
+            "If you add a files with `[\"first\"]`, you can use the special vars `echo 1 >> {[ temp.first }}`" +
+                " and you used on others tasks using `{{ outputs.task-id.files.first }}`"
+        },
+        dynamic = true
+    )
+    private List<String> files;
+
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger(this.getClass());
 
-        // renderer templates
+        // final command
         List<String> renderer = new ArrayList<>();
 
         if (this.exitOnFailed) {
             renderer.add("set -o errexit");
         }
 
-        for (String command : this.commands) {
-            renderer.add(runContext.render(command));
+        // temporary files
+        Map<String, String> tempFiles = new HashMap<>();
+        if (files != null && files.size() > 0) {
+            files
+                .forEach(throwConsumer(s -> {
+                    File tempFile = File.createTempFile(s + "_", ".tmp");
+
+                    tempFiles.put(s, tempFile.getAbsolutePath());
+                }));
         }
 
-        logger.debug("Starting command [{}]", String.join("; ", renderer));
+        // renderer command
+        for (String command : this.commands) {
+            renderer.add(runContext.render(
+                command,
+                tempFiles.size() > 0 ? ImmutableMap.of("temp", tempFiles) : ImmutableMap.of()
+            ));
+        }
+        String commandAsString = String.join("\n", renderer);
+
+        File bashTempFiles = null;
+        // https://www.in-ulm.de/~mascheck/various/argmax/ MAX_ARG_STRLEN (131072)
+        if (commandAsString.length() > 131072) {
+            bashTempFiles = File.createTempFile("bash", ".sh");
+            Files.write(bashTempFiles.toPath(), commandAsString.getBytes());
+
+            commandAsString = this.interpreter + " " + bashTempFiles.getAbsolutePath();
+        }
+
+        logger.debug("Starting command [{}]", commandAsString);
+
+        // build the final commands
+        List<String> commands = new ArrayList<>(Collections.singletonList(this.interpreter));
+        commands.addAll(Arrays.asList(this.interpreterArgs));
+        commands.add(commandAsString);
 
         // start
-        List<String> commands = Arrays.asList("/bin/sh", "-c", String.join("\n", renderer));
         ProcessBuilder processBuilder = new ProcessBuilder();
         processBuilder.command(commands);
         Process process = processBuilder.start();
@@ -94,10 +169,25 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             logger.debug("Command succeed with code " + exitCode);
         }
 
+        // upload generate files
+        Map<String, URI> uploaded = new HashMap<>();
+
+        tempFiles.
+            forEach(throwBiConsumer((k, v) -> {
+                uploaded.put(k, runContext.putTempFile(new File(v)));
+            }));
+
+        // bash temp files
+        if (bashTempFiles != null) {
+            bashTempFiles.delete();
+        }
+
+        // output
         return Output.builder()
             .exitCode(exitCode)
             .stdOut(stdOut.getLogs())
             .stdErr(stdErr.getLogs())
+            .files(uploaded)
             .build();
     }
 
@@ -151,17 +241,20 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         @OutputProperty(
             description = "The standard output of the commands"
         )
-        private List<String> stdOut;
+        private final List<String> stdOut;
 
         @OutputProperty(
             description = "The standard error of the commands"
         )
-        private List<String> stdErr;
+        private final List<String> stdErr;
 
         @OutputProperty(
             description = "The exit code of the whole execution"
         )
-        private int exitCode;
+        private final int exitCode;
+
+
+        private final Map<String, URI> files;
     }
 
     @Getter

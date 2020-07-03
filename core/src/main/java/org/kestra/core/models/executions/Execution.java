@@ -471,12 +471,16 @@ public class Execution implements DeletedInterface {
         Map<String, Object> current = result;
 
         for (TaskRun t : childs) {
-            HashMap<String, Object> item = new HashMap<>();
-            current.put(t.getValue(), item);
-            current = item;
+            if (t.getValue() != null) {
+                HashMap<String, Object> item = new HashMap<>();
+                current.put(t.getValue(), item);
+                current = item;
+            }
         }
 
-        current.put(taskRun.getValue(), taskRun.getOutputs());
+        if (taskRun.getOutputs() != null && taskRun.getValue() != null) {
+            current.put(taskRun.getValue(), taskRun.getOutputs());
+        }
 
         return Map.of(taskRun.getTaskId(), result);
     }

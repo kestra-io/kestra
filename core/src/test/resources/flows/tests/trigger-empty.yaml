@@ -1,0 +1,13 @@
+id: datetime
+namespace: org.kestra.tests
+
+tasks:
+  - id: date
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{taskrun.startDate}}"
+
+triggers:
+  - id: monthly
+    type: org.kestra.core.models.triggers.types.Schedule
+    cron: 0 0 1 * *
+    backfill: {}

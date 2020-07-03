@@ -1,4 +1,4 @@
-package org.kestra.cli.contexts;
+package org.kestra.core.contexts;
 
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.plugins.PluginRegistry;

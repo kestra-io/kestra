@@ -22,6 +22,7 @@ import org.kestra.core.schedulers.validations.CronExpression;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import javax.validation.constraints.NotNull;
 
@@ -42,14 +43,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     private Duration interval;
 
     public ZonedDateTime nextDate(Optional<? extends TriggerContext> last) {
-        if (this.backfill == null) {
-            return computeNextDate(ZonedDateTime.now(ZoneId.systemDefault())).orElse(null);
-        }
-
-        if (last.isEmpty()) {
-            return backfill.getStart();
-        } else {
+        if (last.isPresent()) {
             return computeNextDate(last.get().getDate()).orElse(null);
+        } else {
+            if (backfill != null && backfill.getStart() != null) {
+                return backfill.getStart();
+            }
+
+            return computeNextDate(ZonedDateTime.now(ZoneId.systemDefault())).orElse(null);
         }
     }
 
@@ -69,7 +70,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             return Optional.empty();
         }
 
-        if (next.get().toEpochSecond() > ZonedDateTime.now(ZoneId.systemDefault()).toEpochSecond()) {
+        if (next.get().toEpochSecond() > ZonedDateTime.now(ZoneId.systemDefault()).plus(Duration.ofSeconds(1)).toEpochSecond()) {
             return Optional.empty();
         }
 
@@ -100,6 +101,6 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         Cron parse = CRON_PARSER.parse(this.cron);
         ExecutionTime executionTime = ExecutionTime.forCron(parse);
 
-        return executionTime.nextExecution(date);
+        return executionTime.nextExecution(date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
     }
 }

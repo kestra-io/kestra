@@ -58,6 +58,7 @@ export default {
         },
         onNamespaceSelect() {
             this.query = queryBuilder(this.$route, this.fields);
+            this.$router.push({query: {...this.$route.query, page: 1}})
             this.loadData(this.onDataLoaded);
         },
         onDataLoaded () {

@@ -1,6 +1,7 @@
 package org.kestra.core.services;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
@@ -14,6 +15,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Singleton
+@Slf4j
 public class FlowListenersService {
     private final QueueInterface<Flow> flowQueue;
 
@@ -38,20 +40,41 @@ public class FlowListenersService {
                 this.upsert(flow);
             }
 
+            if (log.isTraceEnabled()) {
+                log.trace("Received {} flow '{}.{}'",
+                    flow.isDeleted() ? "deletion" : "update",
+                    flow.getNamespace(),
+                    flow.getId()
+                );
+            }
+
             this.notifyConsumers();
         });
 
         this.notifyConsumers();
+
+        if (log.isTraceEnabled()) {
+            log.trace("FlowListenersService started with {} flows", flows.size());
+        }
     }
 
     private boolean remove(Flow flow) {
-        return flows.removeIf(r -> r.equalsWithoutRevision(flow));
+        synchronized (this) {
+            boolean remove = flows.removeIf(r -> r.getNamespace().equals(flow.getNamespace()) && r.getId().equals(flow.getId()));
+            if (!remove && flow.isDeleted()) {
+                log.warn("Can't remove flow {}.{}", flow.getNamespace(), flow.getId());
+            }
+
+            return remove;
+        }
     }
 
-    private void upsert(Flow flow) {
-        this.remove(flow);
+    private synchronized void upsert(Flow flow) {
+        synchronized (this) {
+            this.remove(flow);
 
-        this.flows.add(flow);
+            this.flows.add(flow);
+        }
     }
 
     private void notifyConsumers() {

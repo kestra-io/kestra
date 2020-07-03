@@ -1,8 +1,10 @@
 package org.kestra.cli.commands.servers;
 
+import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
+import org.kestra.core.models.ServerType;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.AbstractExecutor;
 import org.kestra.core.runners.StandAloneRunner;
@@ -13,6 +15,7 @@ import picocli.CommandLine;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 @CommandLine.Command(
@@ -32,6 +35,13 @@ public class StandAloneCommand extends AbstractCommand {
 
     public StandAloneCommand() {
         super(true);
+    }
+
+    @SuppressWarnings("unused")
+    public static Map<String, Object> propertiesOverrides() {
+        return ImmutableMap.of(
+            "kestra.server-type", ServerType.STANDALONE
+        );
     }
 
     @Override

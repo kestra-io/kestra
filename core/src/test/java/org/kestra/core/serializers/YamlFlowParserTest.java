@@ -20,8 +20,7 @@ import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
@@ -129,6 +128,12 @@ class YamlFlowParserTest {
     void trigger() throws IOException {
         Flow parse = this.parse("flows/tests/trigger.yaml");
         assertThat(((Schedule) parse.getTriggers().get(0)).getBackfill().getStart(), is(ZonedDateTime.parse("2020-01-01T00:00:00+02:00")));
+    }
+
+    @Test
+    void triggerEmpty() throws IOException {
+        Flow parse = this.parse("flows/tests/trigger-empty.yaml");
+        assertThat(((Schedule) parse.getTriggers().get(0)).getBackfill().getStart(), nullValue());
     }
 
     @Test

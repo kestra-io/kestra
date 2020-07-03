@@ -21,7 +21,7 @@ title: {{shortName}}
 {{~/inline~}}
 
 {{~#*inline "fieldType" ~}}
-    <Badge vertical="middle" text="{{capitalize type}}" />
+    =={{replace type "<" "&lt;" }}==
 {{~/inline~}}
 
 {{!-- {{                 Main doc                 }} --}}

@@ -57,15 +57,15 @@ import VectorCircle from "vue-material-design-icons/Circle";
 const parentHash = node => {
     if (node.parent) {
         const parent = node.parent[0];
-        return (
-            parent.id + (parent.value ? "-" + parent.value : "")
-        ).hashCode();
+        return nodeHash(parent)
     } else {
         return undefined;
     }
 };
-const nodeHash = node =>
-    (node.id + (node.value ? "-" + node.value : "")).hashCode();
+const nodeHash = node => {
+    return (node.id + (node.value ? "-" + node.value : "")).hashCode();
+}
+
 export default {
     components: {
         TreeNode,
@@ -171,9 +171,10 @@ export default {
                     }[node.relation] || "";
                 return edgeOption;
             };
-            const subsetNodesHashes = new Set(
-                this.filteredDataTree.map(nodeHash)
+            const ancestorsHashes = new Set(
+                this.filteredDataTree.filter(e => e.parent).map(e => nodeHash(e.parent[0]))
             );
+            const virtualRootId = this.getVirtualRootNode() && this.getVirtualRootNode().task.id
             for (const node of this.filteredDataTree) {
                 const slug = this.slug(node);
                 const hash = parentHash(node);
@@ -182,10 +183,11 @@ export default {
                     label: `<div class="node-binder" id="node-${slug}"/>`
                 });
                 const options = getOptions(node);
-                if (subsetNodesHashes.has(hash)) {
+                const parentId = node.parent && node.parent[0] && node.parent[0].id
+                if (ancestorsHashes.has(hash) && ['SEQUENTIAL', 'ERROR'].includes(node.relation) && virtualRootId !== parentId) {
                     g.setEdge(parentHash(node), slug, options);
                 } else {
-                    g.setEdge("parent node", slug, options);
+                    g.setEdge("parent node", slug, options)
                 }
             }
             const rootNode = {

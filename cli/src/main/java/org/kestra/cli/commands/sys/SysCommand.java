@@ -1,7 +1,10 @@
 package org.kestra.cli.commands.sys;
 
+import io.micronaut.configuration.picocli.PicocliRunner;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
+import org.kestra.cli.App;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -16,5 +19,13 @@ import picocli.CommandLine;
 public class SysCommand extends AbstractCommand {
     public SysCommand() {
         super(false);
+    }
+
+    @SneakyThrows
+    @Override
+    public void run() {
+        super.run();
+
+        PicocliRunner.call(App.class, "sys",  "--help");
     }
 }

@@ -6,6 +6,7 @@ import namespace from './namespaces'
 import layout from './layout'
 import auth from './auth'
 import graph from './graph'
+import plugin from './plugins'
 
 export default {
     modules: {
@@ -16,6 +17,7 @@ export default {
         namespace,
         layout,
         auth,
-        graph
+        graph,
+        plugin
     }
 }

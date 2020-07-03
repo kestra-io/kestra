@@ -1,5 +1,6 @@
 package org.kestra.core.plugins;
 
+import com.google.common.collect.ImmutableList;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -23,7 +24,7 @@ public class PluginRegistry  {
     private Map<String, RegisteredPlugin> pluginsByClass;
 
     public PluginRegistry(List<RegisteredPlugin> registeredPlugin) {
-        this.plugins = registeredPlugin;
+        this.plugins = ImmutableList.copyOf(registeredPlugin);
         this.pluginsByClass = registeredPlugin
             .stream()
             .flatMap(plugin -> Stream.of(

@@ -1,7 +1,10 @@
 package org.kestra.cli.commands.servers;
 
+import io.micronaut.configuration.picocli.PicocliRunner;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
+import org.kestra.cli.App;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -21,5 +24,13 @@ import picocli.CommandLine;
 public class ServerCommand extends AbstractCommand {
     public ServerCommand() {
         super(false);
+    }
+
+    @SneakyThrows
+    @Override
+    public void run() {
+        super.run();
+
+        PicocliRunner.call(App.class, "server",  "--help");
     }
 }

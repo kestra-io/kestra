@@ -26,12 +26,12 @@ class FlowListenersServiceTest {
     @Inject
     FlowRepositoryInterface flowRepository;
 
-    private static Flow create() {
+    private static Flow create(String flowId, String taskId) {
         return Flow.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(flowId)
             .namespace("org.kestra.unittest")
             .revision(1)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
+            .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format("test").build()))
             .build();
     }
 
@@ -47,34 +47,47 @@ class FlowListenersServiceTest {
 
         wait(ref, () -> {
             assertThat(count.get(), is(0));
+            assertThat(flowListenersService.getFlows().size(), is(0));
         });
 
-        Flow first = create();
+        Flow first = create(FriendlyId.createFriendlyId(), "test");
 
         flowRepository.create(first);
         wait(ref, () -> {
             assertThat(count.get(), is(1));
+            assertThat(flowListenersService.getFlows().size(), is(1));
         });
 
         flowRepository.update(first, first);
         wait(ref, () -> {
             assertThat(count.get(), is(1));
+            assertThat(flowListenersService.getFlows().size(), is(1));
         });
 
 
         flowRepository.update(first.withRevision(2), first);
         wait(ref, () -> {
             assertThat(count.get(), is(1));
+            assertThat(flowListenersService.getFlows().size(), is(1));
         });
 
-        flowRepository.create(create());
+
+        flowRepository.update(create(first.getId(), "test2"), first);
+        wait(ref, () -> {
+            assertThat(count.get(), is(1));
+            assertThat(flowListenersService.getFlows().size(), is(1));
+        });
+
+        flowRepository.create(create(FriendlyId.createFriendlyId(), "test"));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
+            assertThat(flowListenersService.getFlows().size(), is(2));
         });
 
         flowRepository.delete(first);
         wait(ref, () -> {
             assertThat(count.get(), is(1));
+            assertThat(flowListenersService.getFlows().size(), is(1));
         });
     }
 

@@ -28,7 +28,7 @@ class PluginDocumentationTest {
         PluginDocumentation<? extends Task> doc = PluginDocumentation.of(scan.get(0), scan.get(0).getTasks().get(0));
 
 
-        assertThat(doc.getExamples().size(), is(2));
+        assertThat(doc.getDocExamples().size(), is(2));
 
         // @FIXME: Don't handle List<T> or Map<K, V>
         assertThat(doc.getInputs().size(), is(3));

@@ -62,5 +62,15 @@ class LocalStorageTest {
             CharStreams.toString(new InputStreamReader(get)),
             is(CharStreams.toString(new InputStreamReader(new FileInputStream(Objects.requireNonNull(resource).getFile()))))
         );
+
+        boolean delete = storageInterface.delete(new URI("/file/storage/put.yml"));
+        assertThat(delete, is(true));
+
+        delete = storageInterface.delete(new URI("/file/storage/put.yml"));
+        assertThat(delete, is(false));
+
+        assertThrows(FileNotFoundException.class, () -> {
+            storageInterface.get(new URI("/file/storage/put.yml"));
+        });
     }
 }

@@ -19,6 +19,8 @@ public interface StorageInterface {
 
     URI put(URI uri, InputStream data) throws IOException;
 
+    boolean delete(URI uri) throws IOException;
+
     default String executionPrefix(Flow flow, Execution execution) throws  URISyntaxException {
         return String.join(
             "/",

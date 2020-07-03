@@ -66,4 +66,14 @@ public class LocalStorage implements StorageInterface {
 
         return URI.create("kestra://" + uri.getPath());
     }
+
+    @Override
+    public boolean delete(URI uri) throws IOException {
+        File file = getPath(URI.create(uri.getPath())).toFile();
+        if (!file.exists()) {
+            return false;
+        }
+
+        return file.delete();
+    }
 }

@@ -10,8 +10,11 @@
                 class="task-id text-md-right"
                 md="2"
                 sm="12"
-            >
-                {{taskItem.name}}
+
+                >{{taskItem.name}}
+                <small
+                    v-if="taskItem.task && taskItem.task.value"
+                >{{taskItem.task.value | ellipsis(20)}}</small>
                 <b-tooltip
                     placement="right"
                     :target="`task-title-wrapper-${taskItem.id}`"

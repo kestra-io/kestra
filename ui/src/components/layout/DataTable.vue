@@ -97,4 +97,9 @@ small {
 /deep/ th {
     white-space: nowrap;
 }
+
+/deep/ .badge {
+    font-size: 100%;
+    margin-right: $spacer/4;
+}
 </style>

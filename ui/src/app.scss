@@ -44,3 +44,39 @@ html,
         padding-left: $menu-width;
     }
 }
+
+.accordion {
+    &.card {
+        button {
+            border: 0;
+            font-weight: bold;
+            color: $gray-600;
+        }
+    }
+    &.card:not(:last-child) {
+        margin-top: 0;
+        border-bottom: 0;
+    }
+    .card-body {
+        padding: $spacer/2;
+    }
+    ul {
+        padding-left: 0;
+        list-style: none;
+
+        a {
+            color: $gray-600;
+            padding-left: $spacer;
+        }
+        ul {
+            margin-bottom: $spacer / 2;
+        }
+    }
+}
+
+code[class*="language-"], pre[class*="language-"] {
+    font-size: $font-size-sm !important;
+    font-family: $font-family-monospace !important;
+    text-shadow: none !important;
+    line-height: 1.2 !important;
+}

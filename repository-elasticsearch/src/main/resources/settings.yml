@@ -6,7 +6,6 @@ index:
         tokenizer: standard
         filter:
           - word_delimiter
-          - standard
           - asciifolding
           - lowercase
           - prefix_ngrams
@@ -15,7 +14,6 @@ index:
         tokenizer: standard
         filter:
           - word_delimiter
-          - standard
           - asciifolding
           - lowercase
       analyser:

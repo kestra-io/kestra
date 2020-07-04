@@ -1,10 +1,10 @@
 <template>
     <div class="plugins-list">
-        <b-card no-body :key="plugin.manifest['X-Kestra-Title']" v-for="plugin in plugins">
+        <b-card class="accordion" no-body :key="plugin.manifest['X-Kestra-Title']" v-for="(plugin, index) in plugins">
             <b-card-header header-tag="header" class="p-0" role="tab">
-                <b-button block v-b-toggle.accordion-1 variant="light">{{ plugin.manifest['X-Kestra-Title'] }}</b-button>
+                <b-button block v-b-toggle="plugin.manifest['X-Kestra-Title']"  variant="light">{{ plugin.manifest['X-Kestra-Title'] }}</b-button>
             </b-card-header>
-            <b-collapse id="accordion-1" visible accordion="my-accordion" role="tabpanel">
+            <b-collapse :id="plugin.manifest['X-Kestra-Title']"  :visible="index === 0"  accordion="my-accordion" role="tabpanel">
                 <b-card-body>
                     <ul class="section-nav toc-h3">
                         <li v-for="(classes, namespace) in group(plugin.tasks)" :key="namespace">
@@ -65,33 +65,6 @@
 
     .plugins-list {
         font-size: $font-size-xs;
-
-        .card {
-            button {
-                border: 0;
-                font-weight: bold;
-                color: $gray-600;
-            }
-        }
-        .card:not(:last-child) {
-            margin-top: 0;
-            border-bottom: 0;
-        }
-        .card-body {
-            padding: $spacer/2;
-        }
-        ul {
-            padding-left: 0;
-            list-style: none;
-
-            a {
-                color: $gray-600;
-                padding-left: $spacer;
-            }
-            ul {
-                margin-bottom: $spacer / 2;
-            }
-        }
     }
 
 </style>

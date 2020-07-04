@@ -101,5 +101,12 @@ small {
 /deep/ .badge {
     font-size: 100%;
     margin-right: $spacer/4;
+    margin-bottom: $spacer/4;
+    padding: $badge-padding-y $badge-padding-y;
+
+    .badge {
+        margin: 0;
+        @include font-size($badge-font-size);
+    }
 }
 </style>

@@ -7,7 +7,6 @@ import 'vue-material-design-icons/styles.css';
 
 import App from './App.vue'
 import BootstrapVue from 'bootstrap-vue'
-import VerticalSeparator from './components/layout/VerticalSeparator'
 import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 import VueMoment from 'vue-moment'
@@ -56,7 +55,6 @@ if (app) {
   Vue.use(Toast)
 
   Vue.component('v-select', vSelect);
-  Vue.component('v-s', VerticalSeparator);
 
   Vue.config.productionTip = false;
 

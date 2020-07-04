@@ -4,11 +4,11 @@
             target="toggle-automatic-refresh-action"
         >{{$t('toggle periodic refresh each 10 seconds')}}</b-tooltip>
         <b-button @click="toggleAutoRefresh" :pressed="autoRefresh" id="toggle-automatic-refresh-action">
-            <clock title />
+            <clock/> <span class="label">{{$t('automatic refresh')}}</span>
         </b-button>
-        <b-tooltip target="trigger-refresh-action">{{$t('trigger refresh')}}</b-tooltip>
+        <b-tooltip target="trigger-refresh-action">{{ $t('trigger refresh') }}</b-tooltip>
         <b-button @click="triggerRefresh" id="trigger-refresh-action">
-            <refresh title />
+            <refresh/> <span class="label">{{ $t('trigger refresh') }}</span>
         </b-button>
     </b-button-group>
 </template>
@@ -53,3 +53,37 @@ export default {
     }
 };
 </script>
+
+<style lang="scss">
+@import "../../styles/variable";
+
+.btn-group {
+    .btn {
+        span.label {
+            display: none;
+        }
+    }
+}
+.navbar-collapse {
+    &.collapse.show {
+        .btn-group {
+            width: 100%;
+            display: flex !important;
+            .btn {
+                width: auto;
+                flex: 1;
+
+                @include media-breakpoint-up(sm) {
+                    span.label {
+                        display: inline-block;
+                    }
+
+                }
+
+            }
+        }
+    }
+}
+
+
+</style>

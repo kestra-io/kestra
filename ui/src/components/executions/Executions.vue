@@ -2,13 +2,11 @@
     <div v-if="ready">
         <data-table @onPageChanged="loadData" ref="dataTable" :total="total">
             <template v-slot:navbar>
-                <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
-                <v-s />
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
+                <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
+                <status-filter-buttons @onRefresh="loadData"/>
                 <date-range @onDate="onSearch" />
                 <refresh-button class="float-right" @onRefresh="loadData"/>
-                <v-s />
-                <status-filter-buttons @onRefresh="loadData"/>
             </template>
             <template v-slot:table>
                 <b-table

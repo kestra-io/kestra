@@ -30,7 +30,11 @@
                     >{{row.item.state.startDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
                     <template
                         v-slot:cell(state.endDate)="row"
-                    >{{row.item.state.endDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
+                    >
+                    <span v-if="!['RUNNING', 'CREATED'].includes(row.item.state.current)">
+                        {{row.item.state.endDate | date('YYYY/MM/DD HH:mm:ss')}}
+                    </span>
+                    </template>
                     <template v-slot:cell(state.current)="row">
                         <status
                             @click.native="addStatusToQuery(row.item.state.current)"
@@ -40,7 +44,8 @@
                         />
                     </template>
                      <template v-slot:cell(state.duration)="row">
-                        <p>{{row.item.state.duration | humanizeDuration}}</p>
+                        <p v-if="['RUNNING', 'CREATED'].includes(row.item.state.current)">{{durationFrom(row.item) | humanizeDuration}}</p>
+                        <p v-else>{{row.item.state.duration | humanizeDuration}}</p>
                     </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link
@@ -181,6 +186,9 @@ export default {
                 sort: this.$route.query.sort,
                 state: this.$route.query.status
             }).finally(callback);
+        },
+        durationFrom(item) {
+            return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
         }
     }
 };

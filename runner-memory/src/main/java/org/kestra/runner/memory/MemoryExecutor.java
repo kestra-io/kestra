@@ -114,6 +114,19 @@ public class MemoryExecutor extends AbstractExecutor {
         }
     }
 
+    private void handleFailedExecutionFromExecutor(Execution execution, Exception e) {
+        Execution.FailedExecutionWithLog failedExecutionWithLog = execution.failedExecutionFromExecutor(e);
+        try {
+            log.error("Failed from executor with {}", e.getMessage(), e);
+
+            failedExecutionWithLog.getLogs().forEach(logQueue::emit);
+
+            this.toExecution(failedExecutionWithLog.getExecution());
+        } catch (Exception ex) {
+            log.error("Failed to produce {}", e.getMessage(), ex);
+        }
+    }
+
     private ExecutionState saveExecution(Execution execution) {
         ExecutionState queued;
         queued = executions.compute(execution.getId(), (s, executionState) -> {

@@ -10,6 +10,7 @@ import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.LogRepositoryInterface;
+import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
 import java.util.List;
@@ -26,9 +27,10 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     public ElasticSearchLogRepository(
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
-        ModelValidator modelValidator
+        ModelValidator modelValidator,
+        ThreadMainFactoryBuilder threadFactoryBuilder
     ) {
-        super(client, indicesConfigs, modelValidator, LogEntry.class);
+        super(client, indicesConfigs, modelValidator, threadFactoryBuilder, LogEntry.class);
     }
 
     @Override

@@ -63,12 +63,12 @@
                             </div>
                         </div>
 
-                        <!-- Log lines -->
-                        <template v-if="logs && logs[taskItem.id]">
-                            <template v-for="log in logs[taskItem.id]">
-                                <log-line :level="level" :filter="filter" :log="log" :key="log.id" />
-                            </template>
-                        </template>
+<!--                        &lt;!&ndash; Log lines &ndash;&gt;-->
+<!--                        <template v-if="logs && logs[taskItem.id]" >-->
+<!--                            <div v-for="log in logs[taskItem.id]" :key="log.id" >-->
+<!--                                <log-line :level="level" :filter="filter" :log="log"/>-->
+<!--                            </div>-->
+<!--                        </template>-->
                     </template>
                 </div>
             </template>
@@ -83,13 +83,14 @@
 </template>
 <script>
 import { mapState } from "vuex";
-import LogLine from "./LogLine";
+// import LogLine from "./LogLine";
 import Restart from "./Restart";
 import Clock from "vue-material-design-icons/Clock";
 import Eye from "vue-material-design-icons/Eye";
 import Menu from "vue-material-design-icons/Menu";
 export default {
-    components: { LogLine, Restart, Clock, Eye, Menu },
+    //components: { LogLine, Restart, Clock, Eye, Menu },
+    components: { Restart, Clock, Eye, Menu },
     props: {
         level: {
             type: String,

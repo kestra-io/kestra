@@ -48,6 +48,7 @@ public class KafkaQueueFactory implements QueueFactoryInterface {
         return new KafkaQueue<>(LogEntry.class, applicationContext);
     }
 
+    @Override
     @Singleton
     @Named(QueueFactoryInterface.FLOW_NAMED)
     public QueueInterface<Flow> flow() {

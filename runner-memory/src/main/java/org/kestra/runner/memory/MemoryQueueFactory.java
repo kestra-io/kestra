@@ -47,6 +47,7 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
         return new MemoryQueue<>(LogEntry.class, applicationContext);
     }
 
+    @Override
     @Singleton
     @Named(QueueFactoryInterface.FLOW_NAMED)
     public QueueInterface<Flow> flow() {

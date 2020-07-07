@@ -1,7 +1,7 @@
 <template>
     <div v-if="execution">
-        <b-row>
-            <b-col md="2" sm="12" class="date">{{$moment(this.start).format('YYYY-MM-DD')}}</b-col>
+        <b-row class="font-weight-bold">
+            <b-col md="2" sm="12" class="date text-right">{{$moment(this.start).format('YYYY-MM-DD')}}</b-col>
             <b-col v-for="(date, i) in dates" :key="i" md="2" class="time-tick">{{date}}</b-col>
         </b-row>
         <b-row v-for="taskItem in series" :key="taskItem.id">
@@ -114,29 +114,31 @@ export default {
             ) {
                 this.stopRealTime();
             }
-
             const series = [];
             const executionDelta = this.delta(); //caching this value matters
             for (let task of this.execution.taskRunList || []) {
                 const lastIndex = task.state.histories.length - 1;
                 const startTs = ts(task.state.histories[0].date);
-                let stopTs = ts(task.state.histories[lastIndex].date);
+                const stopTs = ts(task.state.histories[lastIndex].date);
+
                 const start = startTs - this.start;
                 let stop = stopTs - this.start - start;
-                if ((stop / executionDelta) * 100 < 1) {
-                    stopTs = +new Date();
-                    stop = stopTs - this.start - start;
-                }
 
                 const delta = stopTs - startTs;
                 const duration = this.$moment.duration(delta);
                 const humanDuration = humanizeDuration(duration);
-
+                let width = (stop / executionDelta) * 100
+                if (['CREATED', 'RUNNING'].includes(task.state.current)) {
+                    width = ((this.stop() - startTs) / executionDelta) * 100 //(stop / executionDelta) * 100
+                }
+                if (width < 0.5) {
+                    width = 0.5
+                }
                 series.push({
                     id: task.id,
                     name: task.taskId,
                     start: (start / executionDelta) * 100,
-                    width: (stop / executionDelta) * 100,
+                    width,
                     tooltip: `${this.$t("duration")} : ${humanDuration}`,
                     color: this.colors[task.state.current],
                     task
@@ -185,5 +187,6 @@ export default {
 
 .date {
     border: 0;
+
 }
 </style>

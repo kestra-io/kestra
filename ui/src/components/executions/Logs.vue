@@ -31,14 +31,15 @@ export default {
     data() {
         return {
             filter: "",
-            level: "ALL",
+            level: "INFO",
             levelOptions: [
                 "ALL",
+                "TRACE",
                 "DEBUG",
                 "INFO",
                 "WARNING",
                 "ERROR",
-                "CRITICAL"
+                "CRITICAL",
             ]
         };
     },

@@ -1,5 +1,6 @@
 package org.kestra.core.schedulers;
 
+import io.micronaut.context.ApplicationContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,6 +33,7 @@ import javax.inject.Named;
 
 @Slf4j
 public class Scheduler implements Runnable, AutoCloseable {
+    private final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
     private final FlowListenersService flowListenersService;
     private final TriggerRepositoryInterface triggerContextRepository;
@@ -42,11 +44,13 @@ public class Scheduler implements Runnable, AutoCloseable {
 
     @Inject
     public Scheduler(
+        ApplicationContext applicationContext,
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         FlowListenersService flowListenersService,
         ExecutionRepositoryInterface executionRepository,
         TriggerRepositoryInterface triggerContextRepository
     ) {
+        this.applicationContext = applicationContext;
         this.executionQueue = executionQueue;
         this.flowListenersService = flowListenersService;
         this.triggerContextRepository = triggerContextRepository;
@@ -64,21 +68,26 @@ public class Scheduler implements Runnable, AutoCloseable {
 
         // empty cache on any flow changes
         this.flowListenersService.listen(flows -> {
-            lastTriggers = new ConcurrentHashMap<>();
+            synchronized (this) {
+                lastTriggers = new ConcurrentHashMap<>();
+            }
         });
 
         // look at exception on the main thread
-        Thread thread = new Thread(() -> {
-            Await.until(handle::isDone);
+        Thread thread = new Thread(
+            () -> {
+                Await.until(handle::isDone);
 
-            try {
-                handle.get();
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
-                log.warn("Interrupted scheduler", e);
-            }
-        });
+                try {
+                    handle.get();
+                } catch (ExecutionException | InterruptedException e) {
+                    log.error("Executor fatal exception", e);
+                    applicationContext.close();
+                    Runtime.getRuntime().exit(1);
+                }
+            },
+            "executor-listener"
+        );
 
         thread.start();
     }
@@ -118,10 +127,19 @@ public class Scheduler implements Runnable, AutoCloseable {
             )
             .peek(this::getLastTrigger)
             .filter(this::isExecutionRunning)
-            .map(f -> FlowWithPollingTriggerNextDate.of(
-                f,
-                f.getTrigger().nextDate(lastTriggers.get(f.getTriggerContext().uid()))
-            ))
+            .map(f -> {
+                synchronized (this) {
+                    if (!lastTriggers.containsKey(f.getTriggerContext().uid())) {
+                        return null;
+                    }
+
+                    return FlowWithPollingTriggerNextDate.of(
+                        f,
+                        f.getTrigger().nextDate(lastTriggers.get(f.getTriggerContext().uid()))
+                    );
+                }
+            })
+            .filter(Objects::nonNull)
             .map(this::evaluatePollingTrigger)
             .filter(Objects::nonNull)
             .peek(this::log)

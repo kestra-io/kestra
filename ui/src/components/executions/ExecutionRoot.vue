@@ -56,7 +56,9 @@ export default {
                     this.sse = sse;
                     sse.subscribe("", (data, event) => {
                         this.$store.commit("execution/setExecution", data);
-                        this.$store.dispatch('execution/loadTree', data)
+                        if (this.$route.query.tab === 'topology') {
+                            this.$store.dispatch('execution/loadTree', data)
+                        }
                         if (event && event.lastEventId === "end") {
                             this.closeSSE();
                         }

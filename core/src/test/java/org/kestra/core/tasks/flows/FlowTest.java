@@ -1,33 +1,23 @@
 package org.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
-import org.kestra.core.runners.AbstractMemoryRunnerTest;
-import org.kestra.core.runners.InputsTest;
-import org.kestra.core.runners.RunContext;
-import org.kestra.core.utils.Await;
+import org.kestra.core.runners.*;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.time.Duration;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-
 
 class FlowTest extends AbstractMemoryRunnerTest {
     @Inject
-    ApplicationContext applicationContext;
+    RunContextFactory runContextFactory;
 
     @Inject
     FlowRepositoryInterface flowRepositoryInterface;
@@ -38,9 +28,7 @@ class FlowTest extends AbstractMemoryRunnerTest {
 
     @Test
     void run() throws Exception {
-        RunContext runContext = new RunContext(
-            this.applicationContext,
-            ImmutableMap.of(
+        RunContext runContext = runContextFactory.of(ImmutableMap.of(
                 "namespace", "org.kestra.tests",
                 "flow", "inputs"
             )

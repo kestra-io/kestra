@@ -1,6 +1,5 @@
 package org.kestra.runner.memory;
 
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.metrics.MetricRegistry;
@@ -11,9 +10,7 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
-import org.kestra.core.runners.AbstractExecutor;
-import org.kestra.core.runners.WorkerTask;
-import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.runners.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,14 +31,14 @@ public class MemoryExecutor extends AbstractExecutor {
     private static final ConcurrentHashMap<String, ExecutionState> executions = new ConcurrentHashMap<>();
 
     public MemoryExecutor(
-        ApplicationContext applicationContext,
+        RunContextFactory runContextFactory,
         FlowRepositoryInterface flowRepository,
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
         @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue,
         MetricRegistry metricRegistry
     ) {
-        super(applicationContext, metricRegistry);
+        super(runContextFactory, metricRegistry);
         this.flowRepository = flowRepository;
         this.executionQueue = executionQueue;
         this.workerTaskQueue = workerTaskQueue;

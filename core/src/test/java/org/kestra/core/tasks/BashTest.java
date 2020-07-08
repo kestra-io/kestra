@@ -2,11 +2,11 @@ package org.kestra.core.tasks;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.kestra.core.runners.RunContext;
+import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.tasks.scripts.Bash;
 
@@ -24,16 +24,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @MicronautTest
 class BashTest {
     @Inject
-    ApplicationContext applicationContext;
+    RunContextFactory runContextFactory;
 
     @Inject
     StorageInterface storageInterface;
 
     @Test
     void run() throws Exception {
-        RunContext runContext = new RunContext(
-            this.applicationContext,
-            ImmutableMap.of(
+        RunContext runContext = runContextFactory.of(ImmutableMap.of(
                 "input", ImmutableMap.of("url", "www.google.fr")
             )
         );
@@ -51,7 +49,7 @@ class BashTest {
 
     @Test
     void files() throws Exception {
-        RunContext runContext = new RunContext(this.applicationContext, ImmutableMap.of());
+        RunContext runContext = runContextFactory.of();
 
         Bash bash = Bash.builder()
             .files(Arrays.asList("xml", "csv"))
@@ -81,7 +79,7 @@ class BashTest {
     @Test
     @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void failed() {
-        RunContext runContext = new RunContext(this.applicationContext, ImmutableMap.of());
+        RunContext runContext = runContextFactory.of();
 
         Bash bash = Bash.builder()
             .commands(new String[]{"echo 1 1>&2", "exit 66", "echo 2"})
@@ -100,7 +98,7 @@ class BashTest {
     @Test
     @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void stopOnFirstFailed() {
-        RunContext runContext = new RunContext(this.applicationContext, ImmutableMap.of());
+        RunContext runContext = runContextFactory.of();
 
         Bash bash = Bash.builder()
             .commands(new String[]{"unknown", "echo 1"})
@@ -118,7 +116,7 @@ class BashTest {
     @Test
     @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void dontStopOnFirstFailed() throws Exception {
-        RunContext runContext = new RunContext(this.applicationContext, ImmutableMap.of());
+        RunContext runContext = runContextFactory.of();
 
         Bash bash = Bash.builder()
             .commands(new String[]{"unknown", "echo 1"})
@@ -134,7 +132,7 @@ class BashTest {
 
     @Test
     void longBashCreateTempFiles() throws Exception {
-        RunContext runContext = new RunContext(this.applicationContext, ImmutableMap.of());
+        RunContext runContext = runContextFactory.of();
 
         List<String> commands = new ArrayList<>();
         for (int i = 0; i < 15000; i++) {

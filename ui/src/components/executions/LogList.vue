@@ -128,8 +128,6 @@ export default {
     font-size: $font-size-base;
     margin-top: $paragraph-margin-bottom*1.5;
     margin-bottom: 2px;
-    .task-id {
-    }
     .badge {
       font-size: $font-size-base;
       height: 100%;

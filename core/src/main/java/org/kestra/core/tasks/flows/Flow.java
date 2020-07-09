@@ -54,12 +54,13 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     )
     private Map<String, String> inputs;
 
+    @Builder.Default
     @InputProperty(
         description = "Wait the end of the execution.",
         body = "By default, we don't wait till the end of the flow, if you set to true, we wait the end of the trigger flow before continue this one.",
         dynamic = false
     )
-    private Boolean wait;
+    private Boolean wait = false;
 
     @SuppressWarnings("unchecked")
     @Override

@@ -75,7 +75,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
         }
 
         if (!this.consumers.containsKey(consumerGroupName)) {
-            this.consumers.put(consumerGroupName, new ArrayList<>());
+            this.consumers.put(consumerGroupName, Collections.synchronizedList(new ArrayList<>()));
         }
 
         this.consumers.get(consumerGroupName).add(consumer);

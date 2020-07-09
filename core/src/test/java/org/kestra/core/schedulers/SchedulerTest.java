@@ -1,6 +1,7 @@
 package org.kestra.core.schedulers;
 
 import com.devskiller.friendly_id.FriendlyId;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
@@ -30,6 +31,9 @@ import static org.mockito.Mockito.*;
 
 @MicronautTest
 class SchedulerTest {
+    @Inject
+    private ApplicationContext applicationContext;
+
     @Inject
     private TriggerRepositoryInterface triggerContextRepository;
 
@@ -93,6 +97,7 @@ class SchedulerTest {
 
         // scheduler
         try (Scheduler scheduler = new Scheduler(
+            applicationContext,
             executionQueue,
             flowListenersServiceSpy,
             executionRepositorySpy,

@@ -5,7 +5,6 @@
             size="sm"
             @input="onSearch"
             v-model="search"
-            class="mr-sm-2"
             :placeholder="$t('search')"
         ></b-form-input>
     </b-nav-form>

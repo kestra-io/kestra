@@ -1,10 +1,9 @@
 package org.kestra.core.tasks.storages;
 
-import com.google.common.collect.ImmutableMap;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.runners.RunContext;
+import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.storages.StorageInterface;
 
 import java.io.FileInputStream;
@@ -21,14 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @MicronautTest
 class DeleteTest {
     @Inject
-    ApplicationContext applicationContext;
+    RunContextFactory runContextFactory;
 
     @Inject
     StorageInterface storageInterface;
 
     @Test
     void run() throws Exception {
-        RunContext runContext = new RunContext(this.applicationContext, ImmutableMap.of());
+        RunContext runContext = runContextFactory.of();
         URL resource = DeleteTest.class.getClassLoader().getResource("application.yml");
 
         URI put = storageInterface.put(

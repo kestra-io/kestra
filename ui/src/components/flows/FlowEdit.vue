@@ -1,17 +1,9 @@
 <template>
     <div>
-        <div class="editor-wrapper">
-            <editor
-                ref="aceEditor"
-                v-model="content"
-                @init="editorInit"
-                lang="yaml"
-                theme="merbivore_soft"
-                width="100%"
-                minLines="5"
-                height="100%"
-            ></editor>
-        </div>
+        <editor
+            v-model="content"
+            lang="yaml"
+        ></editor>
         <bottom-line v-if="canSave || canDelete">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
@@ -39,6 +31,7 @@ import ContentSave from "vue-material-design-icons/ContentSave";
 import Delete from "vue-material-design-icons/Delete";
 import Yaml from "yaml";
 import BottomLine from "../layout/BottomLine";
+import Editor from "../inputs/Editor";
 import RouteContext from "../../mixins/routeContext";
 import permission from "../../models/permission";
 import action from "../../models/action";
@@ -47,7 +40,7 @@ import { canSaveFlow, saveFlow } from "../../utils/flow";
 export default {
     mixins: [RouteContext],
     components: {
-        editor: require("vue2-ace-editor"),
+        Editor,
         ContentSave,
         Delete,
         BottomLine

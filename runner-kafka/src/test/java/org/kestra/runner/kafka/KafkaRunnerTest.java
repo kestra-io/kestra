@@ -32,28 +32,28 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void full() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "full");
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "full", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(13));
     }
 
     @Test
     void logs() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "logs");
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "logs", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(3));
     }
 
     @Test
     void errors() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "errors");
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "errors", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(7));
     }
 
     @Test
     void sequential() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "sequential");
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "sequential", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(11));
     }
@@ -87,7 +87,8 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
             "org.kestra.tests",
             "listeners",
             null,
-            (f, e) -> ImmutableMap.of("string", "OK")
+            (f, e) -> ImmutableMap.of("string", "OK"),
+            Duration.ofSeconds(60)
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("ok"));
@@ -108,7 +109,8 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
                 "org.kestra.tests",
                 "inputs",
                 null,
-                (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
+                (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+                Duration.ofSeconds(60)
             );
         });
 
@@ -128,7 +130,8 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
             "org.kestra.tests",
             "inputs",
             null,
-            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+            Duration.ofSeconds(60)
         );
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
@@ -136,7 +139,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void invalidVars() throws TimeoutException {
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "variables-invalid");
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "variables-invalid", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));

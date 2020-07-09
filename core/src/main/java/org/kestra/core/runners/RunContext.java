@@ -35,7 +35,6 @@ public class RunContext {
     private MetricRegistry meterRegistry;
     private RunContextLogger runContextLogger;
 
-
     public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
         this.init(applicationContext);
         this.init(flow, null, execution, null);
@@ -46,7 +45,6 @@ public class RunContext {
         this.init(flow, task, execution, taskRun);
     }
 
-    @VisibleForTesting
     public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
         this.init(applicationContext);
 
@@ -55,7 +53,7 @@ public class RunContext {
         this.runContextLogger = new RunContextLogger("flow.unitest");
     }
 
-    private void init(ApplicationContext applicationContext) {
+    protected void init(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         this.variableRenderer = applicationContext.findBean(VariableRenderer.class).orElseThrow();
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
@@ -86,7 +84,7 @@ public class RunContext {
         return applicationContext;
     }
 
-    private Map<String, Object> variables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
+    protected Map<String, Object> variables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("envs", envVariables());
 

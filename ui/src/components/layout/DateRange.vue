@@ -1,11 +1,11 @@
 <template>
-    <div>
-        <time-line class="time-line" />
+    <div class="date-range">
         <date-picker
             @input="onDate"
             v-model="start"
             :required="false"
             type="datetime"
+            class="sm"
             :placeholder="$t('start datetime')"
         ></date-picker>
         <date-picker
@@ -13,15 +13,15 @@
             v-model="end"
             :required="false"
             type="datetime"
+            class="sm"
             :placeholder="$t('end datetime')"
         ></date-picker>
     </div>
 </template>
 <script>
 import DatePicker from "vue2-datepicker";
-import TimeLine from "vue-material-design-icons/TimelineClockOutline";
 export default {
-    components: { DatePicker, TimeLine },
+    components: { DatePicker },
     data() {
         return {
             start: null,

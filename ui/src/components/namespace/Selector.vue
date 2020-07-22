@@ -6,6 +6,7 @@
             @input="onNamespaceSelect"
             :placeholder="$t('Select namespace')"
             :options="namespaces"
+            class="ns-selector"
         ></v-select>
     </b-form-group>
 </template>
@@ -42,3 +43,8 @@ export default {
     }
 };
 </script>
+<style scoped>
+.ns-selector {
+    width:550px;
+}
+</style>

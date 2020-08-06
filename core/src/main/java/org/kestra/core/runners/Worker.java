@@ -8,6 +8,7 @@ import io.micronaut.context.ApplicationContext;
 import lombok.Getter;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
+import org.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.kestra.core.queues.QueueException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.TaskRunAttempt;
@@ -72,7 +73,7 @@ public class Worker implements Runnable {
 
             // run
             WorkerTask finalWorkerTask = Failsafe
-                .with(this.retryPolicy(workerTask.getTask())
+                .with(AbstractRetry.<WorkerTask>retryPolicy(workerTask.getTask().getRetry())
                     .handleResultIf(result -> result.getTaskRun().lastAttempt() != null &&
                         Objects.requireNonNull(result.getTaskRun().lastAttempt()).getState().isFailed()
                     )
@@ -143,15 +144,6 @@ public class Worker implements Runnable {
                     .record(finalWorkerTask.getTaskRun().getState().getDuration());
             }
         }
-    }
-
-    private RetryPolicy<WorkerTask> retryPolicy(Task task) {
-        if (task.getRetry() != null) {
-            return task.getRetry().toPolicy();
-        }
-
-        return new RetryPolicy<WorkerTask>()
-            .withMaxAttempts(1);
     }
 
     private WorkerTask runAttempt(WorkerTask workerTask) {

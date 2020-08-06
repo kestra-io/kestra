@@ -5,12 +5,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import net.jodah.failsafe.RetryPolicy;
-import org.kestra.core.runners.WorkerTask;
 
+import java.time.Duration;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
-import java.time.Duration;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
@@ -21,6 +21,7 @@ import java.time.Duration;
 @Getter
 @NoArgsConstructor
 @Introspected
+@SuperBuilder
 public abstract class AbstractRetry {
     @NotNull
     protected String type;
@@ -30,8 +31,8 @@ public abstract class AbstractRetry {
     @Min(0)
     private Integer maxAttempt;
 
-    public RetryPolicy<WorkerTask> toPolicy() {
-        RetryPolicy<WorkerTask> policy = new RetryPolicy<>();
+    public <T> RetryPolicy<T> toPolicy() {
+        RetryPolicy<T> policy = new RetryPolicy<>();
 
         if (this.maxDuration != null) {
             policy.withMaxDuration(maxDuration);
@@ -42,5 +43,14 @@ public abstract class AbstractRetry {
         }
 
         return policy;
+    }
+
+    public static <T> RetryPolicy<T> retryPolicy(AbstractRetry retry) {
+        if (retry != null) {
+            return retry.toPolicy();
+        }
+
+        return new RetryPolicy<T>()
+            .withMaxAttempts(1);
     }
 }

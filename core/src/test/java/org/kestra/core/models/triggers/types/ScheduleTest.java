@@ -139,7 +139,6 @@ class ScheduleTest {
         assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(next.format(DateTimeFormatter.ISO_LOCAL_DATE)));
     }
 
-
     @Test
     void emptyBackfillStartDate() {
         Schedule trigger = Schedule.builder().cron("0 0 * * *").backfill(ScheduleBackfill.builder().build()).build();
@@ -148,4 +147,29 @@ class ScheduleTest {
         assertThat(next.getDayOfMonth(), is(ZonedDateTime.now(ZoneId.systemDefault()).plusDays(1).getDayOfMonth()));
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void backfillChangedFromCronExpression() {
+        Schedule trigger = Schedule.builder().cron("30 0 1 * *").build();
+
+        ZonedDateTime date = ZonedDateTime.now()
+            .withMonth(ZonedDateTime.now().getMonthValue() - 1)
+            .withDayOfMonth(1)
+            .withHour(0)
+            .withMinute(45)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS);
+
+        ZonedDateTime expexted = date.withMinute(30)
+            .withMonth(date.getMonthValue() + 1);
+
+        Optional<Execution> evaluate = trigger.evaluate(context(date, trigger));
+
+        assertThat(evaluate.isPresent(), is(true));
+
+        var vars = (Map<String, ZonedDateTime>) evaluate.get().getVariables().get("schedule");
+        assertThat(vars.get("date"), is(expexted));
+        assertThat(vars.get("next"), is(expexted.plusMonths(1)));
+        assertThat(vars.get("previous"), is(expexted.minusMonths(1)));
+    }
 }

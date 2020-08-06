@@ -6,24 +6,57 @@
 @import '~bootstrap-vue/src/index.scss';
 
 $vs-colors: (
-        lightest: $gray-400,
-        light: $gray-600,
-        dark: $dark,
-        darkest: $gray-900,
+    lightest: $gray-400,
+    light: $gray-600,
+    dark: $dark,
+    darkest: $gray-900,
 );
 $vs-border-color: $input-border-color;
 $vs-dropdown-box-shadow: none;
 $vs-border-radius: $input-border-radius;
+$vs-dropdown-bg: $input-bg;
+$vs-state-active-bg: $primary;
+.v-select {
+    background: $input-bg;
+
+    .form-inline & {
+        width: 196px;
+    }
+
+    input {
+        color: $input-color;
+        &::placeholder {
+            color: $input-placeholder-color;
+        }
+    }
+}
 @import '~vue-select/src/scss/vue-select.scss';
 
 @import "./styles/_vue-sidebar-menu.scss";
 @import "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
 
-@import '~vue2-datepicker/scss/index';
 
-.mx-input {
-    border-radius: $border-radius;
+@import '~vue2-datepicker/scss/index';
+.mx-datepicker {
+    width: 196px;
+    .mx-input {
+        border-radius: $border-radius;
+
+        input {
+            color: $input-color;
+            &::placeholder {
+                color: $input-placeholder-color;
+            }
+        }
+    }
+
+    &.sm {
+        input {
+            height: 31px;
+        }
+    }
 }
+
 .form-group {
     .mx-datepicker {
         width: 100%;

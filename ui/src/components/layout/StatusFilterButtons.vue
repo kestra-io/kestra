@@ -1,5 +1,5 @@
 <template>
-    <b-form-select @input="searchStatus" v-model="selected" :options="statuses"></b-form-select>
+    <b-form-select @input="searchStatus" v-model="selected" size="sm" :options="statuses"></b-form-select>
 </template>
 <script>
 export default {

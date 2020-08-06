@@ -195,7 +195,7 @@ public class RunnerUtils {
         }, duration);
     }
 
-    private Execution awaitExecution(Predicate<Execution> predicate, Runnable executionEmitter, Duration duration) throws TimeoutException {
+    public Execution awaitExecution(Predicate<Execution> predicate, Runnable executionEmitter, Duration duration) throws TimeoutException {
         AtomicReference<Execution> receive = new AtomicReference<>();
 
         Runnable cancel = this.executionQueue.receive(current -> {
@@ -206,7 +206,11 @@ public class RunnerUtils {
 
         executionEmitter.run();
 
-        Await.until(() -> receive.get() != null, null, duration);
+        if (duration == null) {
+            Await.until(() -> receive.get() != null);
+        } else {
+            Await.until(() -> receive.get() != null, null, duration);
+        }
 
         cancel.run();
 
@@ -221,7 +225,7 @@ public class RunnerUtils {
         return this.awaitExecution(isTerminatedExecution(execution, flow), executionEmitter, duration);
     }
 
-    private Predicate<Execution> isTerminatedExecution(Execution execution, Flow flow) {
+    public Predicate<Execution> isTerminatedExecution(Execution execution, Flow flow) {
         return e -> e.getId().equals(execution.getId()) && e.isTerminatedWithListeners(flow);
     }
 

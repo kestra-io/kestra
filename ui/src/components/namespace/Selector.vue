@@ -1,10 +1,12 @@
 <template>
-    <b-form-group :label="$t('Select namespace')" label-cols-sm="auto">
+    <b-form-group>
         <v-select
             v-model="selectedNamespace"
             @search="onNamespaceSearch"
             @input="onNamespaceSelect"
+            :placeholder="$t('Select namespace')"
             :options="namespaces"
+            class="ns-selector"
         ></v-select>
     </b-form-group>
 </template>
@@ -41,8 +43,8 @@ export default {
     }
 };
 </script>
-<style lang="scss" scoped>
-/deep/ .v-select {
-    min-width: 300px;
+<style scoped>
+.ns-selector {
+    width:550px;
 }
 </style>

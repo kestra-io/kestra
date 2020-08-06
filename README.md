@@ -15,7 +15,7 @@
 
 ## Warning
 Be aware that this package is still in heavy developpement.
-Some breaking change will occure. Thank's for your comprehension.
+Some breaking change will occur. Thank's for your comprehension.
 
 ## License
 Apache 2.0 © [Nigh Tech](https://nigh.tech)

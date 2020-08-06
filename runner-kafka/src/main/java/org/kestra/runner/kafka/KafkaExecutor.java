@@ -1,6 +1,5 @@
 package org.kestra.runner.kafka;
 
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,9 +18,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.repositories.FlowRepositoryInterface;
-import org.kestra.core.runners.AbstractExecutor;
-import org.kestra.core.runners.WorkerTask;
-import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.runners.*;
 import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -50,13 +47,13 @@ public class KafkaExecutor extends AbstractExecutor {
 
     @Inject
     public KafkaExecutor(
-        ApplicationContext applicationContext,
+        RunContextFactory runContextFactory,
         FlowRepositoryInterface flowRepository,
         KafkaStreamService kafkaStreamService,
         KafkaAdminService kafkaAdminService,
         MetricRegistry metricRegistry
     ) {
-        super(applicationContext, metricRegistry);
+        super(runContextFactory, metricRegistry);
         this.flowRepository = flowRepository;
         this.kafkaStreamService = kafkaStreamService;
         this.kafkaAdminService = kafkaAdminService;

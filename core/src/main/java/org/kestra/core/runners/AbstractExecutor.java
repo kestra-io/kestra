@@ -1,7 +1,6 @@
 package org.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.exceptions.InternalException;
@@ -23,11 +22,11 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 public abstract class AbstractExecutor implements Runnable {
-    protected ApplicationContext applicationContext;
+    protected RunContextFactory runContextFactory;
     protected MetricRegistry metricRegistry;
 
-    public AbstractExecutor(ApplicationContext applicationContext, MetricRegistry metricRegistry) {
-        this.applicationContext = applicationContext;
+    public AbstractExecutor(RunContextFactory runContextFactory, MetricRegistry metricRegistry) {
+        this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
     }
 
@@ -79,7 +78,7 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
-        RunContext runContext = new RunContext(this.applicationContext, flow, execution);
+        RunContext runContext = runContextFactory.of(flow, execution);
         ResolvedTask parent = flow.findTaskByTaskRun(taskRun, runContext);
 
         if (parent.getTask() instanceof FlowableTask) {
@@ -111,11 +110,11 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     private Optional<List<TaskRun>> childNextsTaskRun(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
-        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, new RunContext(this.applicationContext, flow, execution));
+        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, runContextFactory.of(flow, execution));
 
         if (parent.getTask() instanceof FlowableTask) {
             FlowableTask<?> flowableParent = (FlowableTask<?>) parent.getTask();
-            List<TaskRun> nexts = flowableParent.resolveNexts(new RunContext(this.applicationContext, flow, execution), execution, taskRun);
+            List<TaskRun> nexts = flowableParent.resolveNexts(runContextFactory.of(flow, execution), execution, taskRun);
 
             if (nexts.size() > 0) {
                 return Optional.of(nexts);
@@ -288,11 +287,11 @@ public abstract class AbstractExecutor implements Runnable {
             .map(throwFunction(taskRun -> {
                 ResolvedTask resolvedTask = flow.findTaskByTaskRun(
                     taskRun,
-                    new RunContext(this.applicationContext, flow, execution)
+                    runContextFactory.of(flow, execution)
                 );
 
                 return  WorkerTask.builder()
-                    .runContext(new RunContext(this.applicationContext, flow, resolvedTask, execution, taskRun))
+                    .runContext(runContextFactory.of(flow, resolvedTask, execution, taskRun))
                     .taskRun(taskRun)
                     .task(resolvedTask.getTask())
                     .build();

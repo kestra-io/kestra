@@ -42,17 +42,23 @@ public class MemoryQueue<T> implements QueueInterface<T> {
         this.consumers
             .forEach((consumerGroup, consumers) -> {
                 poolExecutor.execute(() -> {
-                    if (consumers.size() == 0) {
-                        log.debug("No consumer connected on queue '" + this.cls.getName() + "'");
-                        return;
+                    Consumer<T> consumer;
+
+                    synchronized (this) {
+                        if (consumers.size() == 0) {
+                            log.debug("No consumer connected on queue '" + this.cls.getName() + "'");
+                            return;
+                        } else {
+                            int index = (new Random()).nextInt(consumers.size());
+                            consumer = consumers.get(index);
+                        }
                     }
 
                     // we force serialization to be a the same case than an another queue with serialization
                     // this enabled debugging classLoader
                     try {
                         T serialized = mapper.readValue(mapper.writeValueAsString(message), this.cls);
-                        int i = (new Random()).nextInt(consumers.size());
-                        consumers.get(i).accept(serialized);
+                        consumer.accept(serialized);
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
@@ -75,7 +81,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
         }
 
         if (!this.consumers.containsKey(consumerGroupName)) {
-            this.consumers.put(consumerGroupName, new ArrayList<>());
+            this.consumers.put(consumerGroupName, Collections.synchronizedList(new ArrayList<>()));
         }
 
         this.consumers.get(consumerGroupName).add(consumer);

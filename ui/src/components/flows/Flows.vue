@@ -10,9 +10,8 @@
                 :total="total"
             >
                 <template v-slot:navbar>
-                    <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
-                    <v-s />
                     <search-field @onSearch="onSearch" :fields="searchableFields" />
+                    <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
                 </template>
                 <template v-slot:table>
                     <b-table

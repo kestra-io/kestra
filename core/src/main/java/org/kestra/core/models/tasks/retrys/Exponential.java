@@ -1,14 +1,17 @@
 package org.kestra.core.models.tasks.retrys;
 
-import lombok.Value;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import net.jodah.failsafe.RetryPolicy;
-import org.kestra.core.runners.WorkerTask;
 
-import javax.validation.constraints.NotNull;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import javax.validation.constraints.NotNull;
 
-@Value
+@SuperBuilder
+@Getter
+@NoArgsConstructor
 public class Exponential extends AbstractRetry {
     @NotNull
     private Duration interval;
@@ -19,8 +22,8 @@ public class Exponential extends AbstractRetry {
     private Double delayFactor;
 
     @Override
-    public RetryPolicy<WorkerTask> toPolicy() {
-        RetryPolicy<WorkerTask> policy = super.toPolicy();
+    public <T> RetryPolicy<T> toPolicy() {
+        RetryPolicy<T> policy = super.toPolicy();
 
         if (this.delayFactor != null) {
             policy.withBackoff(this.interval.toMillis(), this.maxDuration.toMillis(), ChronoUnit.MILLIS, this.delayFactor);

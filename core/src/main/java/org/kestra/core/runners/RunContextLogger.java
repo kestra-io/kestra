@@ -1,18 +1,16 @@
 package org.kestra.core.runners;
 
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.core.AppenderBase;
 import com.google.common.base.Throwables;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.LogEntry;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -94,14 +92,19 @@ public class RunContextLogger {
 
     public org.slf4j.Logger logger(Class<?> cls) {
         if (this.logger == null) {
-            LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
+            LoggerContext loggerContext = new LoggerContext();
             this.logger = loggerContext.getLogger(this.loggerName != null ? loggerName : cls.getName());
 
             this.contextAppender = new ContextAppender();
             this.contextAppender.setContext(loggerContext);
             this.contextAppender.start();
 
+            ForwardAppender forwardAppender = new ForwardAppender();
+            forwardAppender.setContext(loggerContext);
+            forwardAppender.start();
+
             this.logger.addAppender(this.contextAppender);
+            this.logger.addAppender(forwardAppender);
             this.logger.setLevel(Level.TRACE);
             this.logger.setAdditive(true);
         }
@@ -126,6 +129,24 @@ public class RunContextLogger {
         @Override
         protected void append(ILoggingEvent e) {
             events.add(e);
+        }
+    }
+
+    @Slf4j
+    public static class ForwardAppender extends AppenderBase<ILoggingEvent> {
+        @Override
+        public void start() {
+            super.start();
+        }
+
+        @Override
+        public void stop() {
+            super.stop();
+        }
+
+        @Override
+        protected void append(ILoggingEvent e) {
+            ((ch.qos.logback.classic.Logger) log).callAppenders(e);
         }
     }
 }

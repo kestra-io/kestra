@@ -27,6 +27,7 @@ import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.RunnerUtils;
 import org.kestra.core.services.ExecutionService;
 import org.kestra.core.storages.StorageInterface;
+import org.kestra.core.utils.Await;
 import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 import org.reactivestreams.Publisher;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -226,35 +228,32 @@ public class ExecutionController {
     @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_JSON)
     public Flowable<Event<Execution>> follow(String executionId) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
-        final Flow[] flow = {null};
 
         return Flowable
             .<Event<Execution>>create(emitter -> {
                 // already finished execution
-                Optional<Execution> execution = executionRepository.findById(executionId);
-                if (execution.isPresent()) {
-                    Flow current = flowRepository.findByExecution(execution.get());
-                    if (execution.get().isTerminatedWithListeners(current)) {
-                        emitter.onNext(Event.of(execution.get()).id("end"));
-                        emitter.onComplete();
-                        return;
-                    }
+                Execution execution  = Await.until(
+                    () -> executionRepository.findById(executionId).orElse(null),
+                    Duration.ofMillis(500)
+                );
+                Flow flow = flowRepository.findByExecution(execution);
+
+                if (execution.isTerminatedWithListeners(flow)) {
+                    emitter.onNext(Event.of(execution).id("end"));
+                    emitter.onComplete();
+                    return;
                 }
 
-                // emit the reposiytory one first in order to wait the queue connections 
-                execution.ifPresent(value -> emitter.onNext(Event.of(value).id("progress")));
+                // emit the reposiytory one first in order to wait the queue connections
+                emitter.onNext(Event.of(execution).id("progress"));
 
                 // consume new value
                 Runnable receive = this.executionQueue.receive(current -> {
                     if (current.getId().equals(executionId)) {
 
-                        if (flow[0] == null) {
-                            flow[0] = flowRepository.findByExecution(current);
-                        }
-
                         emitter.onNext(Event.of(current).id("progress"));
 
-                        if (current.isTerminatedWithListeners(flow[0])) {
+                        if (current.isTerminatedWithListeners(flow)) {
                             emitter.onNext(Event.of(current).id("end"));
                             emitter.onComplete();
                         }

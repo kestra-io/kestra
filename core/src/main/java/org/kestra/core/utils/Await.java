@@ -2,7 +2,9 @@ package org.kestra.core.utils;
 
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 public class Await {
     private static final Duration defaultSleep = Duration.ofMillis(100);
@@ -42,6 +44,22 @@ public class Await {
                 }
             }
         }
+    }
+
+    public static <T> T until(Supplier<T> supplier, Duration sleep) {
+        AtomicReference<T> result = new AtomicReference<>();
+
+        Await.until(() -> {
+            T t = supplier.get();
+            if (t != null) {
+                result.set(t);
+                return true;
+            } else {
+                return false;
+            }
+        }, null);
+
+        return result.get();
     }
 
 }

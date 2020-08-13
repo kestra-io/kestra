@@ -76,7 +76,10 @@
       </template>
 
       <!-- Outputs -->
-      <pre :key="taskItem.id" v-if="showOutputs[taskItem.id] && taskItem.outputs">{{taskItem.outputs}}</pre>
+      <div v-if="showOutputs[taskItem.id] && taskItem.outputs" class="bg-dark mb-1 mt-1 outputs">
+        <h6 class="p-2 mb-0">{{ $t('outputs') }}</h6>
+        <pre class="bg-dark mb-0 mt-0" :key="taskItem.id">{{taskItem.outputs}}</pre>
+      </div>
     </div>
   </div>
 </template>
@@ -150,6 +153,15 @@ export default {
     padding: 10px;
     margin-top: 5px;
     margin-bottom: 20px;
+  }
+
+  .outputs {
+    h6 {
+      border-bottom: 1px solid $gray-600;
+    }
+    pre {
+      border: 0;
+    }
   }
 }
 </style>

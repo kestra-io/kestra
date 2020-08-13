@@ -159,9 +159,8 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public List<String> findDistinctNamespace(Optional<String> prefix) {
-        BoolQueryBuilder query = this.defaultFilter()
-            .must(QueryBuilders.prefixQuery("namespace", prefix.orElse("")));
+    public List<String> findDistinctNamespace() {
+        BoolQueryBuilder query = this.defaultFilter();
 
         // We want to keep only "distinct" values of field "namespace"
         // @TODO: use includeExclude(new IncludeExclude(0, 10)) to partition results

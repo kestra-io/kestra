@@ -234,13 +234,4 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(namespaces.size(), is(2));
     }
-
-    @Test
-    void listDistinctNamespaceWithPrefix() {
-        String prefix = "org.kestra.tests.minimal";
-        List<String> namespaces = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/flows/distinct-namespaces?prefix=" + prefix), Argument.listOf(String.class));
-
-        assertThat(namespaces.size(), is(1));
-    }
 }

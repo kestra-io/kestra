@@ -141,11 +141,10 @@ public class FlowController {
     }
 
     /**
-     * @param prefix The searched namespace prefix
      * @return The flow's namespaces set
      */
     @Get(uri = "distinct-namespaces", produces = MediaType.TEXT_JSON)
-    public List<String> listDistinctNamespace(Optional<String> prefix) {
-        return flowRepository.findDistinctNamespace(prefix);
+    public List<String> listDistinctNamespace() {
+        return flowRepository.findDistinctNamespace();
     }
 }

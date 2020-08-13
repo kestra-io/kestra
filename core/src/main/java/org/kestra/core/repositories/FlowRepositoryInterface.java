@@ -38,7 +38,7 @@ public interface FlowRepositoryInterface {
 
     ArrayListTotal<Flow> find(String query, Pageable pageable);
 
-    List<String> findDistinctNamespace(Optional<String> prefix);
+    List<String> findDistinctNamespace();
 
     Flow create(Flow flow) throws ConstraintViolationException;
 

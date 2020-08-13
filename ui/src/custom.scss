@@ -29,6 +29,23 @@ $vs-state-active-bg: $primary;
             color: $input-placeholder-color;
         }
     }
+
+    .vs__selected-options {
+        max-width: calc(100% - 41px);
+        flex-wrap: nowrap;
+
+        .vs__selected {
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .vs__dropdown-option {
+        display: inline-block;
+        min-width: 100%;
+    }
 }
 @import '~vue-select/src/scss/vue-select.scss';
 

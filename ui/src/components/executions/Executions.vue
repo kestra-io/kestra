@@ -148,7 +148,7 @@ export default {
         },
         executionQuery() {
             if (this.$route.name === "flowEdit") {
-                const filter = `flowId:${this.$route.params.id}`;
+                const filter = `namespace:${this.$route.params.namespace} AND flowId:${this.$route.params.id}`;
                 return this.query === "*"
                     ? filter
                     : `${this.query} AND ${filter}`;

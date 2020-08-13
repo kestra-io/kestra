@@ -68,6 +68,14 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return new ArrayList<>(flows.values());
     }
 
+    @Override
+    public List<Flow> findByNamespace(String namespace) {
+        return flows.values()
+            .stream()
+            .filter(flow -> flow.getNamespace().equals(namespace))
+            .collect(Collectors.toList());
+    }
+
     public ArrayListTotal<Flow> find(String query, Pageable pageable) {
         //TODO Non used query, returns just all at the moment
         if (pageable.getNumber() < 1) {

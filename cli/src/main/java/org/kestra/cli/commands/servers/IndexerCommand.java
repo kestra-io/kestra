@@ -33,8 +33,8 @@ public class IndexerCommand extends AbstractCommand {
     }
 
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         Indexer indexer = applicationContext.getBean(Indexer.class);
         indexer.run();
@@ -42,5 +42,7 @@ public class IndexerCommand extends AbstractCommand {
         log.info("Indexer started");
 
         Await.until(() -> !this.applicationContext.isRunning());
+
+        return 0;
     }
 }

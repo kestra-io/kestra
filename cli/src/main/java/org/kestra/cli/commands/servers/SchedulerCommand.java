@@ -33,8 +33,8 @@ public class SchedulerCommand extends AbstractCommand {
     }
 
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         Scheduler scheduler = applicationContext.getBean(Scheduler.class);
         scheduler.run();
@@ -42,5 +42,7 @@ public class SchedulerCommand extends AbstractCommand {
         log.info("Scheduler started");
 
         Await.until(() -> !this.applicationContext.isRunning());
+
+        return 0;
     }
 }

@@ -13,7 +13,6 @@ import picocli.CommandLine;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 @CommandLine.Command(
     name = "restore-flow-queue",
@@ -32,8 +31,8 @@ public class RestoreFlowQueueCommand extends AbstractCommand {
 
     @SuppressWarnings("unchecked")
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         QueueInterface<Flow> flowQueue = (QueueInterface<Flow>) applicationContext.getBean(
@@ -50,5 +49,7 @@ public class RestoreFlowQueueCommand extends AbstractCommand {
         list.forEach(flowQueue::emit);
 
         log.info("Successfully send {} flow to queue", list.size());
+
+        return 0;
     }
 }

@@ -1,24 +1,18 @@
 package org.kestra.cli.commands.plugins;
 
-import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
-import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.cli.plugins.PluginDownloader;
 import picocli.CommandLine;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 @CommandLine.Command(
     name = "install",
@@ -39,10 +33,9 @@ public class PluginInstallCommand extends AbstractCommand {
         super(false);
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         if (this.pluginsPath == null) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), "Missing required options '--plugins' " +
@@ -56,21 +49,19 @@ public class PluginInstallCommand extends AbstractCommand {
             }
         }
 
-        try {
-            List<URL> resolveUrl = pluginDownloader.resolve(dependencies);
-            log.debug("Resolved Plugin(s) with {}", resolveUrl);
+        List<URL> resolveUrl = pluginDownloader.resolve(dependencies);
+        log.debug("Resolved Plugin(s) with {}", resolveUrl);
 
-            for (URL url: resolveUrl) {
-                Files.copy(
-                    Paths.get(url.toURI()),
-                    Paths.get(pluginsPath.toString(), FilenameUtils.getName(url.toString())),
-                    StandardCopyOption.REPLACE_EXISTING
-                );
-            }
-
-            log.info("Successfully installed plugins {} into {}", dependencies, pluginsPath);
-        } catch (DependencyResolutionException | URISyntaxException | IOException e) {
-            throw new RuntimeException(e);
+        for (URL url: resolveUrl) {
+            Files.copy(
+                Paths.get(url.toURI()),
+                Paths.get(pluginsPath.toString(), FilenameUtils.getName(url.toString())),
+                StandardCopyOption.REPLACE_EXISTING
+            );
         }
+
+        log.info("Successfully installed plugins {} into {}", dependencies, pluginsPath);
+
+        return 0;
     }
 }

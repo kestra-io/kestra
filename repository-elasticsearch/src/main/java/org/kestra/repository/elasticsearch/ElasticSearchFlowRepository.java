@@ -102,6 +102,17 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
+    public List<Flow> findByNamespace(String namespace) {
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.termQuery("namespace", namespace));
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool);
+
+        return this.scroll(INDEX_NAME, sourceBuilder);
+    }
+
+    @Override
     public ArrayListTotal<Flow> find(String query, Pageable pageable) {
         return super.findQueryString(INDEX_NAME, query, pageable);
     }

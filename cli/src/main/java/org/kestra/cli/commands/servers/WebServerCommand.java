@@ -32,9 +32,11 @@ public class WebServerCommand extends AbstractCommand {
     }
 
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         Await.until(() -> !this.applicationContext.isRunning());
+
+        return 0;
     }
 }

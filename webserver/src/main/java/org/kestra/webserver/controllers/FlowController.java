@@ -6,7 +6,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.validation.Validated;
-import io.reactivex.Maybe;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.flows.Flow;
@@ -17,12 +16,14 @@ import org.kestra.core.services.FlowService;
 import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.validation.ConstraintViolationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.validation.ConstraintViolationException;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -93,6 +94,58 @@ public class FlowController {
         }
 
         return HttpResponse.ok(flowRepository.create(flow));
+    }
+
+    /**
+     * @param namespace The namespace to update
+     * @param flows The flows content, all flow will be created / updated for this namespace.
+     *                  Flow in repository but not in {@code flows} will also be deleted
+     * @return flows created or updated
+     */
+    @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON)
+    public List<Flow> updateNamespace(String namespace, @Body List<Flow> flows) throws ConstraintViolationException {
+        // control flow to update
+        Set<ManualConstraintViolation<Flow>> invalids = flows
+            .stream()
+            .filter(flow -> !flow.getNamespace().equals(namespace))
+            .map(flow -> ManualConstraintViolation.of(
+                "Flow namespace is invalid",
+                flow,
+                Flow.class,
+                "flow.namespace",
+                flow.getNamespace()
+            ))
+            .collect(Collectors.toSet());
+
+        if (invalids.size() > 0) {
+            throw new ConstraintViolationException(invalids);
+        }
+
+        // list all ids of updated flows
+        List<String> ids = flows
+            .stream()
+            .map(Flow::getId)
+            .collect(Collectors.toList());
+
+        // delete all not in updated ids
+        flowRepository
+            .findByNamespace(namespace)
+            .stream()
+            .filter(flow -> !ids.contains(flow.getId()))
+            .forEach(flow -> flowRepository.delete(flow));
+
+        // update or create flows
+        return flows
+            .stream()
+            .map(flow -> {
+                Optional<Flow> existingFlow = flowRepository.findById(namespace, flow.getId());
+                if (existingFlow.isPresent()) {
+                    return flowRepository.update(flow, existingFlow.get());
+                } else {
+                    return flowRepository.create(flow);
+                }
+            })
+            .collect(Collectors.toList());
     }
 
     /**

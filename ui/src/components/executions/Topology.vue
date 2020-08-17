@@ -7,9 +7,6 @@
                 :dataTree="dataTree"
                 :label="getLabel"
             />
-            <span v-else>
-                {{ dataTree }}
-            </span>
         </b-col>
     </b-row>
 </template>

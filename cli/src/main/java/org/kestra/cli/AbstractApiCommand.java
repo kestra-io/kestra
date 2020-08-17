@@ -37,8 +37,7 @@ public abstract class AbstractApiCommand extends AbstractCommand {
             List<String> split = Arrays.asList(this.user.split(":"));
             String user = split.get(0);
             String password = String.join(":", split.subList(1, split.size()));
-            System.out.println(user);
-            System.out.println(password);
+
             request.basicAuth(user, password);
         }
 

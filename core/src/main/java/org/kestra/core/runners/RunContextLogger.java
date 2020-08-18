@@ -23,9 +23,9 @@ import java.util.stream.StreamSupport;
 
 public class RunContextLogger {
     private static final int MAX_MESSAGE_LENGTH = 1024*10;
+    private final String loggerName;
     private Logger logger;
     private QueueInterface<LogEntry> logQueue;
-    private String loggerName;
     private TaskRun taskRun;
 
     @Deprecated
@@ -65,6 +65,7 @@ public class RunContextLogger {
             .collect(Collectors.toList());
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     public static List<LogEntry> logEntries(ILoggingEvent event, TaskRun taskRun) {
         Throwable throwable = throwable(event);
 
@@ -127,8 +128,8 @@ public class RunContextLogger {
     }
 
     public static class ContextAppender extends AppenderBase<ILoggingEvent> {
-        private QueueInterface<LogEntry> logQueue;
-        private TaskRun taskRun;
+        private final QueueInterface<LogEntry> logQueue;
+        private final TaskRun taskRun;
 
         public ContextAppender(QueueInterface<LogEntry> logQueue, TaskRun taskRun) {
             this.logQueue = logQueue;
@@ -156,7 +157,10 @@ public class RunContextLogger {
 
         @Override
         protected void append(ILoggingEvent e) {
-            ((ch.qos.logback.classic.Logger) log).callAppenders(e);
+            var logger = ((ch.qos.logback.classic.Logger) log);
+            if (logger.isEnabledFor(e.getLevel())) {
+                ((ch.qos.logback.classic.Logger) log).callAppenders(e);
+            }
         }
     }
 }

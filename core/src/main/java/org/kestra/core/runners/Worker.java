@@ -7,15 +7,13 @@ import com.google.common.hash.Hashing;
 import io.micronaut.context.ApplicationContext;
 import lombok.Getter;
 import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
-import org.kestra.core.models.tasks.retrys.AbstractRetry;
-import org.kestra.core.queues.QueueException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.TaskRunAttempt;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.Output;
 import org.kestra.core.models.tasks.RunnableTask;
-import org.kestra.core.models.tasks.Task;
+import org.kestra.core.models.tasks.retrys.AbstractRetry;
+import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
@@ -165,6 +163,15 @@ public class Worker implements Runnable {
         WorkerThread workerThread = new WorkerThread(logger, task, runContext);
         workerThread.start();
 
+        // emit attempts
+        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask
+            .withTaskRun(
+                workerTask.getTaskRun()
+                    .withAttempts(this.addAttempt(workerTask, builder.build()))
+            )
+        ));
+
+        // run it
         State.Type state;
         try {
             workerThread.join();
@@ -182,6 +189,7 @@ public class Worker implements Runnable {
             .build()
             .withState(state);
 
+        // logs
         if (workerThread.getTaskOutput() != null) {
             logger.debug("Outputs\n{}", JacksonMapper.log(workerThread.getTaskOutput()));
         }
@@ -190,18 +198,22 @@ public class Worker implements Runnable {
             logger.trace("Metrics\n{}", JacksonMapper.log(runContext.metrics()));
         }
 
-        ImmutableList<TaskRunAttempt> attempts = ImmutableList.<TaskRunAttempt>builder()
-            .addAll(workerTask.getTaskRun().getAttempts() == null ? new ArrayList<>() : workerTask.getTaskRun().getAttempts())
-            .add(taskRunAttempt)
-            .build();
-
         // save outputs
+        List<TaskRunAttempt> attempts = this.addAttempt(workerTask, taskRunAttempt);
+
         return workerTask
             .withTaskRun(
                 workerTask.getTaskRun()
                     .withAttempts(attempts)
                     .withOutputs(workerThread.getTaskOutput() != null ? workerThread.getTaskOutput().toMap() : ImmutableMap.of())
             );
+    }
+
+    public List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {
+        return ImmutableList.<TaskRunAttempt>builder()
+            .addAll(workerTask.getTaskRun().getAttempts() == null ? new ArrayList<>() : workerTask.getTaskRun().getAttempts())
+            .add(taskRunAttempt)
+            .build();
     }
 
     @SuppressWarnings("UnstableApiUsage")

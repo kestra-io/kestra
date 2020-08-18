@@ -33,8 +33,8 @@
                 </div>
                 <hr />
             </b-col>
-            <b-col v-if="hasTaskLog && task.id === taskItem.id" md="12">
-                <log-list />
+            <b-col v-if="task && task.id === taskItem.id" md="12">
+                <log-list :task-run-id="task.id" level="TRACE"/>
                 <br />
             </b-col>
         </b-row>

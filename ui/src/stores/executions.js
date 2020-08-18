@@ -56,6 +56,9 @@ export default {
         followExecution(_, options) {
             return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/executions/${options.id}/follow`, { format: 'json' })
         },
+        followLogs(_, options) {
+            return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/logs/${options.id}/follow`, { format: 'json', params: options.params })
+        },
         loadTree({ commit }, execution) {
             return Vue.axios.get(`/api/v1/executions/${execution.id}/tree`).then(response => {
                 commit('setDataTree', response.data.tasks)
@@ -63,21 +66,9 @@ export default {
         },
         loadLogs({ commit }, options) {
             return Vue.axios.get(`/api/v1/logs/${options.executionId}`, {
-                query: options.query
+                params: options.params
             }).then(response => {
-                const logs = {}
-                response.data.results.forEach(logLine => {
-                    if (!logs[logLine.taskRunId]) {
-                        logs[logLine.taskRunId] = [];
-                    }
-                    logs[logLine.taskRunId].push({
-                        id: `${logLine.timestamp}-${logLine.taskRunId}`,
-                        timestamp: logLine.timestamp,
-                        level: logLine.level,
-                        message: logLine.message
-                    });
-                });
-                commit('setLogs', logs)
+                commit('setLogs', response.data)
             })
         }
     },
@@ -99,6 +90,9 @@ export default {
         },
         setLogs(state, logs) {
             state.logs = logs
+        },
+        appendLogs(state, logs) {
+            state.logs.push(logs);
         }
     },
     getters: {}

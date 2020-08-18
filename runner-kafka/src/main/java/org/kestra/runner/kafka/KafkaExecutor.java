@@ -18,12 +18,13 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
-import org.kestra.core.models.flows.State;
-import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
-import org.kestra.core.runners.*;
+import org.kestra.core.runners.AbstractExecutor;
+import org.kestra.core.runners.RunContextFactory;
+import org.kestra.core.runners.WorkerTask;
+import org.kestra.core.runners.WorkerTaskResult;
 import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -32,11 +33,6 @@ import org.kestra.runner.kafka.streams.DeduplicationPurgeTransformer;
 import org.kestra.runner.kafka.streams.DeduplicationTransformer;
 import org.kestra.runner.kafka.streams.ExecutionNextsDeduplicationTransformer;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,7 +143,8 @@ public class KafkaExecutor extends AbstractExecutor {
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
             );
     }
-private GlobalKTable<String, Flow> flowKTable(StreamsBuilder builder) {
+
+    private GlobalKTable<String, Flow> flowKTable(StreamsBuilder builder) {
         return builder
             .globalTable(
                 kafkaAdminService.getTopicName(Flow.class),
@@ -481,6 +478,7 @@ private GlobalKTable<String, Flow> flowKTable(StreamsBuilder builder) {
         methodName = methodName + "-branchException";
 
         KStream<String, Execution.FailedExecutionWithLog> failedStream = stream
+            .filter((key, value) -> value != null, Named.as(methodName + "-isLeftNotNull-filter"))
             .filter((key, value) -> value.isLeft(), Named.as(methodName + "-isLeft-filter"))
             .mapValues(Either::getLeft, Named.as(methodName + "-isLeft-map"))
             .mapValues(
@@ -501,6 +499,7 @@ private GlobalKTable<String, Flow> flowKTable(StreamsBuilder builder) {
         this.toExecution(result, methodName + "-isLeft");
 
         return stream
+            .filter((key, value) -> value != null, Named.as(methodName + "-isRightNotNull-filter"))
             .filter((key, value) -> value.isRight(), Named.as(methodName + "-isRight-filter"))
             .mapValues(Either::getRight, Named.as(methodName + "-isRight-map"))
             .filter((key, value) -> value != null, Named.as(methodName + "-isRight-notNull-filter"));

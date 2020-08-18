@@ -15,6 +15,7 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.LogRepositoryInterface;
 import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
+import org.slf4j.event.Level;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -58,44 +59,20 @@ public class LogController {
      * Get execution log
      *
      * @param executionId The execution identifier
-     * @param page The current page
-     * @param size The current page size
-     * @param sort The sort of current page
+
      * @return Paged log result
      */
     @Get(uri = "logs/{executionId}", produces = MediaType.TEXT_JSON)
-    public PagedResults<LogEntry> findByExecution(
+    public List<LogEntry> findByExecution(
         String executionId,
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size,
-        @Nullable @QueryValue(value = "sort") List<String> sort
+        @Nullable @QueryValue(value = "minLevel") Level minLevel,
+        @Nullable @QueryValue(value = "taskRunId") String taskRunId
     ) {
-        return PagedResults.of(
-            logRepository.findByExecutionId(executionId, PageableUtils.from(page, size, sort))
-        );
-    }
-
-    /**
-     * Get execution log for a specific taskRun
-     *
-     * @param executionId The execution identifier
-     * @param taskRunId The taskrun identifier
-     * @param page The current page
-     * @param size The current page size
-     * @param sort The sort of current page
-     * @return Paged log result
-     */
-    @Get(uri = "logs/{executionId}/{taskRunId}", produces = MediaType.TEXT_JSON)
-    public PagedResults<LogEntry> findByTaskrun(
-        String executionId,
-        String taskRunId,
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size,
-        @Nullable @QueryValue(value = "sort") List<String> sort
-    ) {
-        return PagedResults.of(
-            logRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, PageableUtils.from(page, size, sort))
-        );
+        if (taskRunId != null) {
+            return logRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, minLevel);
+        } else {
+            return logRepository.findByExecutionId(executionId, minLevel);
+        }
     }
 
     /**
@@ -105,14 +82,24 @@ public class LogController {
      * @return execution log sse event
      */
     @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_JSON)
-    public Flowable<Event<LogEntry>> follow(String executionId) {
+    public Flowable<Event<LogEntry>> follow(String executionId, @Nullable @QueryValue(value = "minLevel") Level minLevel) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
+        List<Level> levels = LogEntry.findLevelsByMin(minLevel);
 
         return Flowable
             .<Event<LogEntry>>create(emitter -> {
+                // fetch repository first
+                logRepository.findByExecutionId(executionId, minLevel)
+                    .stream()
+                    .filter(logEntry -> levels.contains(logEntry.getLevel()))
+                    .forEach(logEntry -> emitter.onNext(Event.of(logEntry).id("progress")));
+
+                // consume in realtime
                 Runnable receive = this.logQueue.receive(current -> {
                     if (current.getExecutionId().equals(executionId)) {
-                        emitter.onNext(Event.of(current).id("progress"));
+                        if (levels.contains(current.getLevel())) {
+                            emitter.onNext(Event.of(current).id("progress"));
+                        }
                     }
                 });
 

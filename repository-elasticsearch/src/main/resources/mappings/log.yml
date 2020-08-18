@@ -20,3 +20,5 @@ properties:
     type: text
   timestamp:
     type: date
+  deleted:
+    type: boolean

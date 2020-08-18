@@ -2,11 +2,14 @@ package org.kestra.core.repositories;
 
 import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.LogEntry;
+import org.slf4j.event.Level;
+
+import java.util.List;
 
 public interface LogRepositoryInterface {
-    ArrayListTotal<LogEntry> findByExecutionId(String id, Pageable pageable);
+    List<LogEntry> findByExecutionId(String id, Level minLevel);
 
-    ArrayListTotal<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String TaskId, Pageable pageable);
+    List<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String TaskId, Level minLevel);
 
     ArrayListTotal<LogEntry> find(String query, Pageable pageable);
 

@@ -63,12 +63,18 @@
                             </div>
                         </div>
 
-<!--                        &lt;!&ndash; Log lines &ndash;&gt;-->
-<!--                        <template v-if="logs && logs[taskItem.id]" >-->
-<!--                            <div v-for="log in logs[taskItem.id]" :key="log.id" >-->
-<!--                                <log-line :level="level" :filter="filter" :log="log"/>-->
-<!--                            </div>-->
-<!--                        </template>-->
+                        <!-- Log lines -->
+                        <template >
+                            <template v-for="(log, i) in findLogs(taskItem.id, index)">
+                                <log-line
+                                    :level="level"
+                                    :filter="filter"
+                                    :log="log"
+                                    :name="`${taskItem.id}-${index}-${i}`"
+                                    :key="`${taskItem.id}-${index}-${i}`"
+                                />
+                            </template>
+                        </template>
                     </template>
                 </div>
             </template>
@@ -83,28 +89,41 @@
 </template>
 <script>
 import { mapState } from "vuex";
-// import LogLine from "./LogLine";
+import LogLine from "./LogLine";
 import Restart from "./Restart";
 import Clock from "vue-material-design-icons/Clock";
 import Eye from "vue-material-design-icons/Eye";
 import Menu from "vue-material-design-icons/Menu";
 export default {
-    //components: { LogLine, Restart, Clock, Eye, Menu },
-    components: { Restart, Clock, Eye, Menu },
+    components: { LogLine, Restart, Clock, Eye, Menu },
     props: {
         level: {
             type: String,
-            default: "ALL"
+            default: "INFO"
         },
         filter: {
             type: String,
             default: ""
-        }
+        },
+        taskRunId: {
+            type: String,
+        },
     },
     data() {
         return {
             showOutputs: {}
         };
+    },
+    watch: {
+        level: function () {
+            this.loadLogs()
+        },
+        execution: function() {
+            console.log(this.execution.id);
+        }
+    },
+    created() {
+        this.loadLogs();
     },
     computed: {
         ...mapState("execution", ["execution", "task", "logs"])
@@ -113,6 +132,46 @@ export default {
         toggleShowOutput(task) {
             this.showOutputs[task.id] = !this.showOutputs[task.id];
             this.$forceUpdate();
+        },
+        loadLogs() {
+            let params = {minLevel: this.level};
+
+            if (this.taskRunId) {
+                params.taskRunId = this.taskRunId
+            }
+
+            if (this.execution && this.execution.state.current === "RUNNING") {
+                this.$store
+                    .dispatch("execution/followLogs", {
+                        id: this.$route.params.id,
+                        params: params
+                    })
+                    .then(sse => {
+                        this.sse = sse;
+                        this.$store.commit("execution/setLogs", []);
+
+                        sse.subscribe("", (data) => {
+                            this.$store.commit("execution/appendLogs", data);
+                        });
+                    });
+            } else {
+                this.$store.dispatch("execution/loadLogs", {
+                    executionId: this.$route.params.id,
+                    params: params
+                });
+            }
+        },
+        findLogs(taskRunId, attemptNumber) {
+            return (this.logs || [])
+                .filter(log => {
+                    return log.taskRunId === taskRunId && log.attemptNumber === attemptNumber;
+                })
+        }
+    },
+    beforeDestroy() {
+        if (this.sse) {
+            this.sse.close();
+            this.sse = undefined;
         }
     }
 };

@@ -22,13 +22,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import javax.inject.Inject;
 
 @CommandLine.Command(
     mixinStandardHelpOptions = true
 )
 @Slf4j
-abstract public class AbstractCommand implements Runnable {
+abstract public class AbstractCommand implements Callable<Integer> {
     private final boolean withServer;
 
     @Inject
@@ -65,11 +66,13 @@ abstract public class AbstractCommand implements Runnable {
     }
 
     @Override
-    public void run() {
+    public Integer call() throws Exception {
         Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(CommandLine.Command.class).name());
         startLogger();
         sendServerLog();
         startWebserver();
+
+        return 0;
     }
 
     private void startLogger() {

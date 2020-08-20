@@ -68,6 +68,14 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return new ArrayList<>(flows.values());
     }
 
+    @Override
+    public List<Flow> findByNamespace(String namespace) {
+        return flows.values()
+            .stream()
+            .filter(flow -> flow.getNamespace().equals(namespace))
+            .collect(Collectors.toList());
+    }
+
     public ArrayListTotal<Flow> find(String query, Pageable pageable) {
         //TODO Non used query, returns just all at the moment
         if (pageable.getNumber() < 1) {
@@ -138,12 +146,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public List<String> findDistinctNamespace(Optional<String> prefix) {
+    public List<String> findDistinctNamespace() {
         HashSet<String> namespaces = new HashSet<>();
         for (Flow f : this.findAll()) {
-            if (f.getNamespace().startsWith(prefix.orElse(""))) {
-                namespaces.add(f.getNamespace());
-            }
+            namespaces.add(f.getNamespace());
         }
 
         ArrayList<String> namespacesList = new ArrayList<>(namespaces);

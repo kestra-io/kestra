@@ -14,6 +14,7 @@ import java.util.Map;
 @Value
 @Builder
 public class TaskRun {
+    @NotNull
     private String id;
 
     @NotNull
@@ -82,6 +83,14 @@ public class TaskRun {
             .value(resolvedTask.getValue())
             .state(new State())
             .build();
+    }
+
+    public int attemptNumber() {
+        if (this.attempts == null) {
+            return 0;
+        }
+
+        return this.attempts.size();
     }
 
     public TaskRunAttempt lastAttempt() {

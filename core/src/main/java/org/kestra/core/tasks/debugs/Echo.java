@@ -22,7 +22,7 @@ public class Echo extends Task implements RunnableTask<VoidOutput> {
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        Logger logger = runContext.logger(Echo.class);
+        Logger logger = runContext.logger();
 
         String render = runContext.render(this.format);
         

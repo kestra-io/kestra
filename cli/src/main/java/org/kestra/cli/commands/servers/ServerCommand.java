@@ -28,9 +28,11 @@ public class ServerCommand extends AbstractCommand {
 
     @SneakyThrows
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         PicocliRunner.call(App.class, "server",  "--help");
+
+        return 0;
     }
 }

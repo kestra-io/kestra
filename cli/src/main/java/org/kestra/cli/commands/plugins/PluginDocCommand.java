@@ -32,8 +32,8 @@ public class PluginDocCommand extends AbstractCommand {
     private boolean core = false;
 
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         PluginScanner pluginScanner = new PluginScanner(PluginDocCommand.class.getClassLoader());
         List<RegisteredPlugin> scan = new ArrayList<>(pluginScanner.scan(this.pluginsPath));
@@ -44,33 +44,31 @@ public class PluginDocCommand extends AbstractCommand {
         }
 
         for (RegisteredPlugin registeredPlugin : scan) {
-            try {
-                DocumentationGenerator
-                    .generate(registeredPlugin)
-                    .forEach(s -> {
-                            File file = Paths.get(output.toAbsolutePath().toString(), s.getPath()).toFile();
+            DocumentationGenerator
+                .generate(registeredPlugin)
+                .forEach(s -> {
+                        File file = Paths.get(output.toAbsolutePath().toString(), s.getPath()).toFile();
 
-                            if (!file.getParentFile().exists()) {
-                                //noinspection ResultOfMethodCallIgnored
-                                file.getParentFile().mkdirs();
-                            }
-
-                            try {
-                                com.google.common.io.Files
-                                    .asCharSink(
-                                        file,
-                                        Charsets.UTF_8
-                                    ).write(s.getBody());
-
-                                log.info("Generate doc in: {}", file);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
+                        if (!file.getParentFile().exists()) {
+                            //noinspection ResultOfMethodCallIgnored
+                            file.getParentFile().mkdirs();
                         }
-                    );
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+
+                        try {
+                            com.google.common.io.Files
+                                .asCharSink(
+                                    file,
+                                    Charsets.UTF_8
+                                ).write(s.getBody());
+
+                            log.info("Generate doc in: {}", file);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                );
         }
+
+        return 0;
     }
 }

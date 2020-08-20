@@ -30,8 +30,8 @@ public class ValidateCommand extends AbstractCommand {
     }
 
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         try {
             Flow parse = yamlFlowParser.parse(file.toFile());
@@ -42,9 +42,11 @@ public class ValidateCommand extends AbstractCommand {
                 .forEach(constraintViolation -> {
                     System.err.println("- " + constraintViolation.getMessage() + " with value '" + constraintViolation.getInvalidValue() + "'");
                 });
-            System.exit(1);
+            return 1;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        return 0;
     }
 }

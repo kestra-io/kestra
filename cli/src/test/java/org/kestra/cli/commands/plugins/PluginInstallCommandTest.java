@@ -31,7 +31,7 @@ class PluginInstallCommandTest {
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "org.kestra.task.notifications:task-notifications:0.1.0"};
-            PicocliRunner.run(PluginInstallCommand.class, ctx, args);
+            PicocliRunner.call(PluginInstallCommand.class, ctx, args);
 
             List<Path> files = Files.list(pluginsPath).collect(Collectors.toList());
 

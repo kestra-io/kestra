@@ -58,7 +58,7 @@ class RestoreFlowQueueCommandTest {
                 countDownLatch.countDown();
             });
 
-            PicocliRunner.run(RestoreFlowQueueCommand.class, ctx);
+            PicocliRunner.call(RestoreFlowQueueCommand.class, ctx);
 
             countDownLatch.await();
             assertThat(atomicInteger.get(), is(COUNT));

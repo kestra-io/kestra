@@ -20,6 +20,11 @@ export default {
     computed: {
         ...mapState("execution", ["execution", "dataTree"])
     },
+    created() {
+        if (!this.dataTree && this.execution) {
+            this.$store.dispatch('execution/loadTree', this.execution)
+        }
+    },
     methods: {
         getLabel(node) {
             return node.data.taskId;

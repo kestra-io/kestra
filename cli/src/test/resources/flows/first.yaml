@@ -1,0 +1,7 @@
+id: first
+namespace: org.kestra.cli
+
+tasks:
+- id: date
+  type: org.kestra.core.tasks.debugs.Return
+  format: "{{taskrun.startDate}}"

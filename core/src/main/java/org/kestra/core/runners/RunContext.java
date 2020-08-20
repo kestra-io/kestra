@@ -5,15 +5,18 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.NoArgsConstructor;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.AbstractMetricEntry;
 import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
+import org.kestra.core.queues.QueueFactoryInterface;
+import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.storages.StorageInterface;
 
@@ -35,39 +38,71 @@ public class RunContext {
     private MetricRegistry meterRegistry;
     private RunContextLogger runContextLogger;
 
+    /**
+     * Used by {@link AbstractExecutor} only on {@link FlowableTask}
+     *
+     * @param applicationContext the current {@link ApplicationContext}
+     * @param flow the current {@link Flow}
+     * @param execution the current {@link Execution}
+     */
     public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
-        this.init(applicationContext);
-        this.init(flow, null, execution, null);
+        this.initBean(applicationContext);
+        this.initContext(flow, null, execution, null);
     }
 
+    /**
+     * Used by {@link AbstractExecutor} only before submit to {@link WorkerTask}
+     *
+     * @param applicationContext the current {@link ApplicationContext}
+     * @param flow the current {@link Flow}
+     * @param task the current {@link org.kestra.core.models.tasks.Task}
+     * @param execution the current {@link Execution}
+     * @param taskRun the current {@link TaskRun}
+     */
     public RunContext(ApplicationContext applicationContext, Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
-        this.init(applicationContext);
-        this.init(flow, task, execution, taskRun);
+        this.initBean(applicationContext);
+        this.initContext(flow, task, execution, taskRun);
     }
 
+    /**
+     *  Used only by Unit Test
+     * @param applicationContext the current {@link ApplicationContext}
+     * @param variables The variable to inject
+     */
+    @VisibleForTesting
+    @Deprecated
     public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
-        this.init(applicationContext);
+        this.initBean(applicationContext);
 
         this.storageOutputPrefix = URI.create("");
         this.variables = variables;
         this.runContextLogger = new RunContextLogger("flow.unitest");
     }
 
-    protected void init(ApplicationContext applicationContext) {
+    protected void initBean(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         this.variableRenderer = applicationContext.findBean(VariableRenderer.class).orElseThrow();
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
         this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
-        this.runContextLogger = new RunContextLogger();
     }
 
-    private void init(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
+    private void initContext(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
         this.variables = this.variables(flow, task, execution, taskRun);
-        this.runContextLogger = new RunContextLogger("flow." + flow.getId() + (taskRun != null ? "." + taskRun.getTaskId() : ""));
         if (taskRun != null) {
             this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initLogger(TaskRun taskRun) {
+        this.runContextLogger = new RunContextLogger(
+            applicationContext.findBean(
+                QueueInterface.class,
+                Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+            ).orElseThrow(),
+            taskRun
+        );
     }
 
     public Map<String, Object> getVariables() {
@@ -174,7 +209,8 @@ public class RunContext {
     }
 
     public RunContext forWorker(ApplicationContext applicationContext, TaskRun taskRun) {
-        this.init(applicationContext);
+        this.initBean(applicationContext);
+        this.initLogger(taskRun);
 
         HashMap<String, Object> clone = new HashMap<>(this.variables);
 
@@ -210,12 +246,13 @@ public class RunContext {
         );
     }
 
+    @Deprecated
     public org.slf4j.Logger logger(Class<?> cls) {
-        return runContextLogger.logger(cls);
+        return runContextLogger.logger();
     }
 
-    public List<LogEntry> logs() {
-        return runContextLogger.logs();
+    public org.slf4j.Logger logger() {
+        return runContextLogger.logger();
     }
 
     public InputStream uriToInputStream(URI uri) throws FileNotFoundException {
@@ -253,7 +290,7 @@ public class RunContext {
 
         boolean delete = file.delete();
         if (!delete) {
-            runContextLogger.logger(RunContext.class).warn("Failed to delete temporary file");
+            runContextLogger.logger().warn("Failed to delete temporary file");
         }
 
         return put;

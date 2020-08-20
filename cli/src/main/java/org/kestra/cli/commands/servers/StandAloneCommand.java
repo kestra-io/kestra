@@ -12,11 +12,11 @@ import org.kestra.core.utils.Await;
 import org.kestra.runner.kafka.KafkaExecutor;
 import picocli.CommandLine;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import javax.inject.Inject;
 
 @CommandLine.Command(
     name = "standalone",
@@ -45,8 +45,8 @@ public class StandAloneCommand extends AbstractCommand {
     }
 
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         if (flowPath != null) {
             try {
@@ -67,5 +67,7 @@ public class StandAloneCommand extends AbstractCommand {
         standAloneRunner.run();
 
         Await.until(() -> !standAloneRunner.isRunning());
+
+        return 0;
     }
 }

@@ -2,7 +2,7 @@ package org.kestra.cli.commands.flows;
 
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
-import org.kestra.cli.commands.servers.*;
+import org.kestra.cli.commands.flows.namespaces.FlowNamespaceCommand;
 import picocli.CommandLine;
 
 @CommandLine.Command(
@@ -11,6 +11,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         ValidateCommand.class,
+        FlowNamespaceCommand.class,
     }
 )
 @Slf4j

@@ -30,10 +30,6 @@ class ExecutionFixture {
                 .state(new State())
                 .attempts(Collections.singletonList(
                     TaskRunAttempt.builder()
-                        .logs(Collections.singletonList(LogEntry.builder()
-                            .level(Level.TRACE)
-                            .message("message")
-                            .build()))
                         .metrics(Collections.singletonList(Counter.of("counter", 1)))
                         .build()
                 ))
@@ -59,10 +55,6 @@ class ExecutionFixture {
                 .state(new State())
                 .attempts(Collections.singletonList(
                     TaskRunAttempt.builder()
-                        .logs(Collections.singletonList(LogEntry.builder()
-                            .level(Level.TRACE)
-                            .message("message")
-                            .build()))
                         .metrics(Collections.singletonList(Timer.of("test", Duration.ofMillis(150))))
                         .build()
                 ))

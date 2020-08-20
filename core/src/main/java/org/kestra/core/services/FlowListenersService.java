@@ -79,11 +79,11 @@ public class FlowListenersService {
 
     private void notifyConsumers() {
         this.consumers
-            .forEach(consumer -> consumer.accept(this.flows));
+            .forEach(consumer -> consumer.accept(new ArrayList<>(this.flows)));
     }
 
     public void listen(Consumer<List<Flow>> consumer) {
         consumers.add(consumer);
-        consumer.accept(this.flows);
+        consumer.accept(new ArrayList<>(this.flows));
     }
 }

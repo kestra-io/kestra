@@ -2,7 +2,7 @@
     <b-form-group>
         <v-select
             v-model="selectedNamespace"
-            @search="onNamespaceSearch"
+
             @input="onNamespaceSelect"
             :placeholder="$t('Select namespace')"
             :options="namespaces"
@@ -14,7 +14,7 @@
 import { mapState } from "vuex";
 export default {
     created() {
-        this.$store.dispatch("namespace/loadNamespaces", { prefix: "" });
+        this.$store.dispatch("namespace/loadNamespaces");
         this.selectedNamespace = this.$route.query.namespace || "";
     },
     computed: {
@@ -26,11 +26,6 @@ export default {
         };
     },
     methods: {
-        onNamespaceSearch(prefix) {
-            if (prefix.length >= 3) {
-                this.$store.dispatch("namespace/loadNamespaces", { prefix });
-            }
-        },
         onNamespaceSelect() {
             const query = { ...this.$route.query };
             query.namespace = this.selectedNamespace;
@@ -43,8 +38,3 @@ export default {
     }
 };
 </script>
-<style scoped>
-.ns-selector {
-    width:550px;
-}
-</style>

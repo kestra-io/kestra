@@ -125,9 +125,11 @@ export default {
     computed: {
         ...mapState("graph", ["node"]),
         hasLogs() {
-            return (
-                this.attempts.filter(attempt => attempt.logs.length).length > 0
-            );
+            // @TODO
+            return true;
+            // return (
+            //     this.attempts.filter(attempt => attempt.logs.length).length > 0
+            // );
         },
         hasOutputs() {
             return this.n.taskRun && this.n.taskRun.outputs;

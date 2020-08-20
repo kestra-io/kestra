@@ -42,8 +42,8 @@ public class WorkerCommand extends AbstractCommand {
     }
 
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         ExecutorService poolExecutor = Executors.newCachedThreadPool(threadFactoryBuilder.build("worker-%d"));
 
@@ -54,5 +54,7 @@ public class WorkerCommand extends AbstractCommand {
         log.info("Workers started with {} thread(s)", this.thread);
 
         Await.until(() -> !this.applicationContext.isRunning());
+
+        return 0;
     }
 }

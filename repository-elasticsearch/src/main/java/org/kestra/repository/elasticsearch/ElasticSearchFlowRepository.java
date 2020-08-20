@@ -102,6 +102,17 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
+    public List<Flow> findByNamespace(String namespace) {
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.termQuery("namespace", namespace));
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool);
+
+        return this.scroll(INDEX_NAME, sourceBuilder);
+    }
+
+    @Override
     public ArrayListTotal<Flow> find(String query, Pageable pageable) {
         return super.findQueryString(INDEX_NAME, query, pageable);
     }
@@ -159,9 +170,8 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public List<String> findDistinctNamespace(Optional<String> prefix) {
-        BoolQueryBuilder query = this.defaultFilter()
-            .must(QueryBuilders.prefixQuery("namespace", prefix.orElse("")));
+    public List<String> findDistinctNamespace() {
+        BoolQueryBuilder query = this.defaultFilter();
 
         // We want to keep only "distinct" values of field "namespace"
         // @TODO: use includeExclude(new IncludeExclude(0, 10)) to partition results

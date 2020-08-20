@@ -155,6 +155,15 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findByNamespace() {
+        List<Flow> save = flowRepository.findByNamespace("org.kestra.tests");
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
+
+        save = flowRepository.findByNamespace("org.kestra.tests.minimal.bis");
+        assertThat((long) save.size(), is(1L));
+    }
+
+    @Test
     void delete() {
         Flow flow = builder().build();
 

@@ -3,7 +3,6 @@ package org.kestra.cli.commands;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
-import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.kestra.cli.AbstractCommand;
@@ -74,8 +73,8 @@ public class TestCommand extends AbstractCommand {
     }
 
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         MemoryRunner runner = applicationContext.getBean(MemoryRunner.class);
         LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
@@ -121,5 +120,7 @@ public class TestCommand extends AbstractCommand {
                     }
                 });
         }
+
+        return 0;
     }
 }

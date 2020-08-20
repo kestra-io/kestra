@@ -33,8 +33,8 @@ public class ExecutorCommand extends AbstractCommand {
     }
 
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         AbstractExecutor abstractExecutor = applicationContext.getBean(AbstractExecutor.class);
         abstractExecutor.run();
@@ -42,5 +42,7 @@ public class ExecutorCommand extends AbstractCommand {
         log.info("Executor started");
 
         Await.until(() -> !this.applicationContext.isRunning());
+
+        return 0;
     }
 }

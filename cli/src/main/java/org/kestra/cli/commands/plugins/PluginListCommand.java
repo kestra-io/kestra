@@ -26,8 +26,8 @@ public class PluginListCommand extends AbstractCommand {
     private boolean core = false;
 
     @Override
-    public void run() {
-        super.run();
+    public Integer call() throws Exception {
+        super.call();
 
         if (this.pluginsPath == null) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), "Missing required options '--plugins' " +
@@ -44,5 +44,7 @@ public class PluginListCommand extends AbstractCommand {
         }
 
         scan.forEach(registeredPlugin -> log.info(registeredPlugin.toString()));
+
+        return 0;
     }
 }

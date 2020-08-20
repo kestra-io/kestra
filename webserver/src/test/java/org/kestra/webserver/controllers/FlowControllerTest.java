@@ -23,10 +23,11 @@ import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.tasks.debugs.Return;
 import org.kestra.webserver.responses.PagedResults;
 
-import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+import javax.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
@@ -73,15 +74,75 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(flows.getTotal(), is(Helpers.FLOWS_COUNT));
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    @Test
+    void updateNamespace() {
+        // initial création
+        List<Flow> flows = Arrays.asList(
+            generateFlow("f1", "org.kestra.updatenamespace", "1"),
+            generateFlow("f2", "org.kestra.updatenamespace", "2"),
+            generateFlow("f3", "org.kestra.updatenamespace", "3")
+        );
+
+        List<Flow> updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/org.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
+        assertThat(updated.size(), is(3));
+
+        Flow retrieve = client.toBlocking().retrieve(GET("/api/v1/flows/org.kestra.updatenamespace/f1"), Flow.class);
+        assertThat(retrieve.getId(), is("f1"));
+
+        // update
+        flows = Arrays.asList(
+            generateFlow("f3", "org.kestra.updatenamespace", "3-3"),
+            generateFlow("f4", "org.kestra.updatenamespace", "4")
+        );
+
+        // f3 & f4 must be updated
+        updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/org.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
+        assertThat(updated.size(), is(2));
+        assertThat(updated.get(0).getInputs().get(0).getName(), is("3-3"));
+        assertThat(updated.get(1).getInputs().get(0).getName(), is("4"));
+
+        // f1 & f2 must be deleted
+        assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.kestra.updatenamespace/f1"), Flow.class);
+        });
+
+        assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.kestra.updatenamespace/f2"), Flow.class);
+        });
+
+        // create a flow in another namespace
+        Flow invalid = generateFlow("invalid1", "org.kestra.othernamespace", "1");
+        client.toBlocking().retrieve(POST("/api/v1/flows", invalid), Flow.class);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/flows/org.kestra.updatenamespace", Arrays.asList(
+                    invalid,
+                    generateFlow("f4", "org.kestra.updatenamespace", "5"),
+                    generateFlow("f6", "org.kestra.another", "5")
+                )),
+                Argument.listOf(Flow.class)
+            )
+        );
+        JsonError jsonError = e.getResponse().getBody(JsonError.class).get();
+        assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
+        assertThat(jsonError.getMessage(), containsString("flow.namespace"));
+
+        // flow is not created
+        assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.kestra.another/f6"), Flow.class);
+        });
+
+        // flow is not updated
+        retrieve = client.toBlocking().retrieve(GET("/api/v1/flows/org.kestra.updatenamespace/f4"), Flow.class);
+        assertThat(retrieve.getInputs().get(0).getName(), is("4"));
+    }
+
     @Test
     void createFlow() {
-        Flow flow = Flow.builder()
-            .id(FriendlyId.createFriendlyId())
-            .namespace("org.kestra.unittest")
-            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .build();
+        Flow flow = generateFlow("org.kestra.unittest", "a");
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
 
@@ -94,14 +155,9 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void deleteFlow() {
-        Flow flow = Flow.builder()
-            .id(FriendlyId.createFriendlyId())
-            .namespace("org.kestra.unittest")
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .build();
+        Flow flow = generateFlow("org.kestra.unittest", "a");
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
         assertThat(result.getId(), is(flow.getId()));
@@ -121,29 +177,18 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getStatus(), is(NOT_FOUND));
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void updateFlow() {
         String flowId = FriendlyId.createFriendlyId();
 
-        Flow flow = Flow.builder()
-            .id(flowId)
-            .namespace("org.kestra.unittest")
-            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .build();
+        Flow flow = generateFlow(flowId, "org.kestra.unittest", "a");
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
 
         assertThat(result.getId(), is(flow.getId()));
         assertThat(result.getInputs().get(0).getName(), is("a"));
 
-        flow = Flow.builder()
-            .id(flowId)
-            .namespace("org.kestra.unittest")
-            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .build();
+        flow = generateFlow(flowId, "org.kestra.unittest", "b");
 
         Flow get = client.toBlocking().retrieve(
             PUT("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId(), flow),
@@ -167,24 +212,12 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     void invalidUpdateFlow() {
         String flowId = FriendlyId.createFriendlyId();
 
-        Flow flow = Flow.builder()
-            .id(flowId)
-            .namespace("org.kestra.unittest")
-            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .build();
-
+        Flow flow = generateFlow(flowId, "org.kestra.unittest", "a");
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
 
         assertThat(result.getId(), is(flow.getId()));
 
-        Flow finalFlow = Flow.builder()
-            .id(FriendlyId.createFriendlyId())
-            .namespace("org.kestra.unittest2")
-            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .build();
-        ;
+        Flow finalFlow = generateFlow(FriendlyId.createFriendlyId(), "org.kestra.unittest2", "b");;
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().exchange(
@@ -202,6 +235,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     @Disabled("This test can only be run against elastic search, not in memory mode")
     void testSearchAndAggregate() throws TimeoutException {
         // Run several execution
@@ -235,12 +269,20 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(namespaces.size(), is(2));
     }
 
-    @Test
-    void listDistinctNamespaceWithPrefix() {
-        String prefix = "org.kestra.tests.minimal";
-        List<String> namespaces = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/flows/distinct-namespaces?prefix=" + prefix), Argument.listOf(String.class));
+    private Flow generateFlow(String namespace, String inputName) {
+        return generateFlow(FriendlyId.createFriendlyId(), namespace, inputName);
+    }
 
-        assertThat(namespaces.size(), is(1));
+    private Flow generateFlow(String friendlyId, String namespace, String inputName) {
+        return Flow.builder()
+            .id(friendlyId)
+            .namespace(namespace)
+            .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name(inputName).build()))
+            .tasks(Collections.singletonList(Return.builder()
+                .id("test")
+                .type(Return.class.getName())
+                .format("test")
+                .build()))
+            .build();
     }
 }

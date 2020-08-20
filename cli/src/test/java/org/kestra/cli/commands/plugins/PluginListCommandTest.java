@@ -45,7 +45,7 @@ class PluginListCommandTest {
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString()};
-            PicocliRunner.run(PluginListCommand.class, ctx, args);
+            PicocliRunner.call(PluginListCommand.class, ctx, args);
 
             assertThat(out.toString(), containsString("io.kestra.task.templates.Example"));
         }

@@ -1,4 +1,4 @@
-tabs<template>
+<template>
     <div>
         <b-card no-body>
             <b-tabs card>

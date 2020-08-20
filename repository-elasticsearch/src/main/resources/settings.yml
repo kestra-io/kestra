@@ -45,4 +45,4 @@ index:
         side: front
         max_gram: 30
         min_gram: 1
-        type: edgeNGram
+        type: edge_ngram

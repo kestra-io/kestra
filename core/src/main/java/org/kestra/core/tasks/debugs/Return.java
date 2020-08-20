@@ -37,7 +37,7 @@ public class Return extends Task implements RunnableTask<Return.Output> {
     public Return.Output run(RunContext runContext) throws Exception {
         long start = System.nanoTime();
 
-        Logger logger = runContext.logger(this.getClass());
+        Logger logger = runContext.logger();
 
         String render = runContext.render(format);
         logger.debug(render);

@@ -103,7 +103,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
 
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
-        Logger logger = runContext.logger(this.getClass());
+        Logger logger = runContext.logger();
 
         // final command
         List<String> renderer = new ArrayList<>();

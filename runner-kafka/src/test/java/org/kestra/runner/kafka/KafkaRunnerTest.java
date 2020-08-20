@@ -4,21 +4,24 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueException;
+import org.kestra.core.queues.QueueFactoryInterface;
+import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.InputsTest;
 import org.kestra.core.runners.ListenersTest;
 import org.kestra.core.runners.RunnerCaseTest;
+import org.kestra.core.utils.TestsUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -29,6 +32,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Inject
     private RunnerCaseTest runnerCaseTest;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    private QueueInterface<LogEntry> workerTaskLogQueue;
 
     @Test
     void full() throws TimeoutException, QueueException {
@@ -98,7 +105,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void recordTooLarge() {
-        char[] chars = new char[2000000];
+        char[] chars = new char[11000000];
         Arrays.fill(chars, 'a');
 
         HashMap<String, String> inputs = new HashMap<>(InputsTest.inputs);
@@ -120,6 +127,9 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void workerRecordTooLarge() throws TimeoutException {
+        List<LogEntry> logs = new ArrayList<>();
+        workerTaskLogQueue.receive(logs::add);
+
         char[] chars = new char[600000];
         Arrays.fill(chars, 'a');
 
@@ -134,16 +144,22 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(logs.size(), is(131));
     }
 
     @Test
     void invalidVars() throws TimeoutException {
+        List<LogEntry> logs = new ArrayList<>();
+        workerTaskLogQueue.receive(logs::add);
+
         Execution execution = runnerUtils.runOne("org.kestra.tests", "variables-invalid", null, null, Duration.ofSeconds(60));
+
+        List<LogEntry> filters = TestsUtils.filterLogs(logs, execution.getTaskRunList().get(1));
 
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(1).getAttempts().get(0).getLogs().get(0).getMessage(), containsString("Missing variable: inputs.invalid"));
+        assertThat(filters.get(0).getMessage(), containsString("Missing variable: inputs.invalid"));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 

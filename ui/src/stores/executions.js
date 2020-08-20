@@ -6,7 +6,8 @@ export default {
         execution: undefined,
         task: undefined,
         total: 0,
-        dataTree: undefined
+        dataTree: undefined,
+        logs: []
     },
     actions: {
         loadExecutions({ commit }, options) {
@@ -16,7 +17,7 @@ export default {
             })
         },
         restartExecution(_, options) {
-            return Vue.axios.post(`/api/v1/executions/${options.id}/restart?taskId=${options.taskId}`, {params: options},{
+            return Vue.axios.post(`/api/v1/executions/${options.id}/restart?taskId=${options.taskId}`, { params: options }, {
                 headers: {
                     'content-type': 'multipart/form-data'
                 }
@@ -34,7 +35,7 @@ export default {
             if (sort) {
                 sortQueryString = `?sort=${sort}`
             }
-            return Vue.axios.get(`/api/v1/executions/search${sortQueryString}`, {params: options}).then(response => {
+            return Vue.axios.get(`/api/v1/executions/search${sortQueryString}`, { params: options }).then(response => {
                 commit('setExecutions', response.data.results)
                 commit('setTotal', response.data.total)
             })
@@ -55,11 +56,21 @@ export default {
         followExecution(_, options) {
             return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/executions/${options.id}/follow`, { format: 'json' })
         },
+        followLogs(_, options) {
+            return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/logs/${options.id}/follow`, { format: 'json', params: options.params })
+        },
         loadTree({ commit }, execution) {
             return Vue.axios.get(`/api/v1/executions/${execution.id}/tree`).then(response => {
                 commit('setDataTree', response.data.tasks)
             })
         },
+        loadLogs({ commit }, options) {
+            return Vue.axios.get(`/api/v1/logs/${options.executionId}`, {
+                params: options.params
+            }).then(response => {
+                commit('setLogs', response.data)
+            })
+        }
     },
     mutations: {
         setExecutions(state, executions) {
@@ -76,6 +87,12 @@ export default {
         },
         setDataTree(state, tree) {
             state.dataTree = tree
+        },
+        setLogs(state, logs) {
+            state.logs = logs
+        },
+        appendLogs(state, logs) {
+            state.logs.push(logs);
         }
     },
     getters: {}

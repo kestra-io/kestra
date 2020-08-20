@@ -7,62 +7,76 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.core.AppenderBase;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.LogEntry;
+import org.kestra.core.models.executions.TaskRun;
+import org.kestra.core.queues.QueueInterface;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-@NoArgsConstructor
 public class RunContextLogger {
+    private static final int MAX_MESSAGE_LENGTH = 1024*10;
+    private final String loggerName;
     private Logger logger;
-    private String loggerName;
-    private ContextAppender contextAppender;
+    private QueueInterface<LogEntry> logQueue;
+    private TaskRun taskRun;
 
+    @Deprecated
     public RunContextLogger(String loggerName) {
         this.loggerName = loggerName;
     }
 
-    public List<LogEntry> logs() {
-        if (this.contextAppender == null) {
-            return new ArrayList<>();
+    public RunContextLogger(QueueInterface<LogEntry> logQueue, TaskRun taskRun) {
+        this.loggerName = "flow." + taskRun.getFlowId() + "." + taskRun.getExecutionId() + "." + taskRun.getId();
+        this.logQueue = logQueue;
+        this.taskRun = taskRun;
+    }
+
+    private static List<LogEntry> logEntry(ILoggingEvent event, String message, org.slf4j.event.Level level, TaskRun taskRun) {
+        Iterable<String> split;
+
+        if (message.length() > MAX_MESSAGE_LENGTH) {
+            split = Splitter.fixedLength(MAX_MESSAGE_LENGTH).split(message);
+        } else {
+            split = Collections.singletonList(message);
         }
 
-        return this.contextAppender
-            .events
-            .stream()
-            .flatMap(RunContextLogger::logEntries)
+        return StreamSupport.stream(split.spliterator(), false)
+            .map(s -> LogEntry.builder()
+                .namespace(taskRun.getNamespace())
+                .flowId(taskRun.getFlowId())
+                .taskId(taskRun.getTaskId())
+                .executionId(taskRun.getExecutionId())
+                .taskRunId(taskRun.getId())
+                .attemptNumber(taskRun.attemptNumber())
+                .level(level != null ? level : org.slf4j.event.Level.valueOf(event.getLevel().toString()))
+                .message(s)
+                .timestamp(Instant.ofEpochMilli(event.getTimeStamp()))
+                .thread(event.getThreadName())
+                .build()
+            )
             .collect(Collectors.toList());
     }
 
-    private static LogEntry logEntry(ILoggingEvent event, String message, org.slf4j.event.Level level) {
-        return LogEntry.builder()
-            .level(level != null ? level : org.slf4j.event.Level.valueOf(event.getLevel().toString()))
-            .message(message)
-            .timestamp(Instant.ofEpochMilli(event.getTimeStamp()))
-            .thread(event.getThreadName())
-            .build();
-    }
-
     @SuppressWarnings("UnstableApiUsage")
-    public static Stream<LogEntry> logEntries(ILoggingEvent event) {
+    public static List<LogEntry> logEntries(ILoggingEvent event, TaskRun taskRun) {
         Throwable throwable = throwable(event);
 
         if (throwable == null) {
-            return Stream.of(logEntry(event, event.getFormattedMessage(), null));
+            return logEntry(event, event.getFormattedMessage(), null, taskRun);
         }
 
-        Stream.Builder<LogEntry> builder = Stream.<LogEntry>builder()
-            .add(logEntry(event, event.getMessage(), null));
+        List<LogEntry> result = new ArrayList<>(logEntry(event, event.getMessage(), null, taskRun));
 
         if (Throwables.getCausalChain(throwable).size() > 1) {
-            builder.add(logEntry(
+            result.addAll(logEntry(
                 event,
                 Throwables
                     .getCausalChain(throwable)
@@ -70,13 +84,14 @@ public class RunContextLogger {
                     .skip(1)
                     .map(Throwable::getMessage)
                     .collect(Collectors.joining("\n")),
-                null
+                null,
+                taskRun
             ));
         }
 
-        return builder
-            .add(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.TRACE))
-            .build();
+        result.addAll(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.TRACE, taskRun));
+
+        return result;
     }
 
     private static Throwable throwable(ILoggingEvent event) {
@@ -90,20 +105,20 @@ public class RunContextLogger {
         return result;
     }
 
-    public org.slf4j.Logger logger(Class<?> cls) {
+    public org.slf4j.Logger logger() {
         if (this.logger == null) {
             LoggerContext loggerContext = new LoggerContext();
-            this.logger = loggerContext.getLogger(this.loggerName != null ? loggerName : cls.getName());
+            this.logger = loggerContext.getLogger(this.loggerName);
 
-            this.contextAppender = new ContextAppender();
-            this.contextAppender.setContext(loggerContext);
-            this.contextAppender.start();
+            ContextAppender contextAppender = new ContextAppender(this.logQueue, this.taskRun);
+            contextAppender.setContext(loggerContext);
+            contextAppender.start();
 
             ForwardAppender forwardAppender = new ForwardAppender();
             forwardAppender.setContext(loggerContext);
             forwardAppender.start();
 
-            this.logger.addAppender(this.contextAppender);
+            this.logger.addAppender(contextAppender);
             this.logger.addAppender(forwardAppender);
             this.logger.setLevel(Level.TRACE);
             this.logger.setAdditive(true);
@@ -113,22 +128,18 @@ public class RunContextLogger {
     }
 
     public static class ContextAppender extends AppenderBase<ILoggingEvent> {
-        private final ConcurrentLinkedQueue<ILoggingEvent> events = new ConcurrentLinkedQueue<>();
+        private final QueueInterface<LogEntry> logQueue;
+        private final TaskRun taskRun;
 
-        @Override
-        public void start() {
-            super.start();
-        }
-
-        @Override
-        public void stop() {
-            super.stop();
-            events.clear();
+        public ContextAppender(QueueInterface<LogEntry> logQueue, TaskRun taskRun) {
+            this.logQueue = logQueue;
+            this.taskRun = taskRun;
         }
 
         @Override
         protected void append(ILoggingEvent e) {
-            events.add(e);
+            logEntries(e, taskRun)
+                .forEach(l -> logQueue.emit(l));
         }
     }
 
@@ -146,7 +157,10 @@ public class RunContextLogger {
 
         @Override
         protected void append(ILoggingEvent e) {
-            ((ch.qos.logback.classic.Logger) log).callAppenders(e);
+            var logger = ((ch.qos.logback.classic.Logger) log);
+            if (logger.isEnabledFor(e.getLevel())) {
+                ((ch.qos.logback.classic.Logger) log).callAppenders(e);
+            }
         }
     }
 }

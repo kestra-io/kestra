@@ -13,7 +13,6 @@ import io.micronaut.http.sse.Event;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import io.reactivex.Maybe;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
@@ -32,9 +31,6 @@ import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 import org.reactivestreams.Publisher;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -44,6 +40,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -262,6 +261,11 @@ public class ExecutionController {
 
                 cancel.set(receive);
             }, BackpressureStrategy.BUFFER)
+            .doOnCancel(() -> {
+                if (cancel.get() != null) {
+                    cancel.get().run();
+                }
+            })
             .doOnComplete(() -> {
                 if (cancel.get() != null) {
                     cancel.get().run();

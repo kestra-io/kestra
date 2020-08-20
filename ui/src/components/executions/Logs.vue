@@ -21,11 +21,12 @@
                 </b-form-group>
             </b-col>
         </b-row>
-        <log-list :filter="filterTerm" :level="level" />
+        <log-list :filter="filterTerm" :level="level"/>
     </div>
 </template>
 <script>
 import LogList from "./LogList";
+import {mapState} from "vuex";
 export default {
     components: { LogList },
     data() {
@@ -33,7 +34,6 @@ export default {
             filter: "",
             level: "INFO",
             levelOptions: [
-                "ALL",
                 "TRACE",
                 "DEBUG",
                 "INFO",
@@ -46,6 +46,12 @@ export default {
     created() {
         if (this.$route.query.search) {
             this.filter = this.$route.query.search || "";
+        }
+    },
+    computed: {
+        ...mapState("execution", ["execution", "task", "logs"]),
+        filterTerm() {
+            return this.filter.toLowerCase();
         }
     },
     watch: {
@@ -62,12 +68,7 @@ export default {
                 newRoute.query.search = this.filter;
                 this.$router.push(newRoute);
             }
-        }
-    },
-    computed: {
-        filterTerm() {
-            return this.filter.toLowerCase();
-        }
+        },
     }
 };
 </script>

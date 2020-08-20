@@ -5,16 +5,13 @@ import lombok.Value;
 import lombok.With;
 import org.kestra.core.models.flows.State;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
+import javax.validation.constraints.NotNull;
 
 @Value
 @Builder
 public class TaskRunAttempt {
-    @With
-    private List<LogEntry> logs;
-
     @With
     private List<AbstractMetricEntry<?>> metrics;
 
@@ -23,7 +20,6 @@ public class TaskRunAttempt {
 
     public TaskRunAttempt withState(State.Type state) {
         return new TaskRunAttempt(
-            this.logs,
             this.metrics,
             this.state.withState(state)
         );

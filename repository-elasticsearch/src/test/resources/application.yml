@@ -30,9 +30,14 @@ kestra:
         mapping-file: execution
         settings: *settings
 
-
       triggers:
         index: "kestra_triggers"
         cls: org.kestra.core.models.triggers.Trigger
         mapping-file: trigger
+        settings: *settings
+
+      logs:
+        index: "kestra_logs"
+        cls: org.kestra.core.models.executions.LogEntry
+        mapping-file: log
         settings: *settings

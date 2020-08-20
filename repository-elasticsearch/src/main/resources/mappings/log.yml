@@ -1,0 +1,24 @@
+dynamic: false
+properties:
+  namespace:
+    type: keyword
+  flowId:
+    type: keyword
+  taskId:
+    type: keyword
+  executionId:
+    type: keyword
+  taskRunId:
+    type: keyword
+  attemptNumber:
+    type: integer
+  level:
+    type: keyword
+  message:
+    type: text
+  thread:
+    type: text
+  timestamp:
+    type: date
+  deleted:
+    type: boolean

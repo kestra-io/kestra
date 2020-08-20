@@ -28,12 +28,16 @@ kestra:
       producer:
         properties:
           acks: "all"
+          compression.type: "lz4"
+          max.request.size: "10485760"
 
       stream:
         properties:
           processing.guarantee: "exactly_once"
           acks: "all"
           state.dir: "/tmp/"
+          compression.type: "lz4"
+          max.request.size: "10485760"
 
     topics:
       execution:
@@ -67,3 +71,7 @@ kestra:
         cls: org.kestra.core.runners.WorkerTaskResult
         properties:
           cleanup.policy: "delete,compact"
+
+      logentry:
+        cls: org.kestra.core.models.executions.LogEntry
+        name: "kestra_logs"

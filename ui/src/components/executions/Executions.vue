@@ -3,7 +3,7 @@
         <data-table @onPageChanged="loadData" ref="dataTable" :total="total">
             <template v-slot:navbar>
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
-                <namespace-selector v-if="$route.name !== 'flowEdit'"  @onNamespaceSelect="onNamespaceSelect" />
+                <namespace-select v-if="$route.name !== 'flowEdit'"  @onNamespaceSelect="onNamespaceSelect" />
                 <status-filter-buttons @onRefresh="loadData"/>
                 <date-range @onDate="onSearch" />
                 <refresh-button class="float-right" @onRefresh="loadData"/>
@@ -69,7 +69,7 @@ import Status from "../Status";
 import RouteContext from "../../mixins/routeContext";
 import DataTableActions from "../../mixins/dataTableActions";
 import SearchField from "../layout/SearchField";
-import NamespaceSelector from "../namespace/Selector";
+import NamespaceSelect from "../namespace/NamespaceSelect";
 import DateRange from "../layout/DateRange";
 import RefreshButton from '../layout/RefreshButton'
 import StatusFilterButtons from '../layout/StatusFilterButtons'
@@ -81,7 +81,7 @@ export default {
         Eye,
         DataTable,
         SearchField,
-        NamespaceSelector,
+        NamespaceSelect,
         DateRange,
         RefreshButton,
         StatusFilterButtons

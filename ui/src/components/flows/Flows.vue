@@ -11,7 +11,7 @@
             >
                 <template v-slot:navbar>
                     <search-field @onSearch="onSearch" :fields="searchableFields" />
-                    <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
+                    <namespace-select @onNamespaceSelect="onNamespaceSelect" />
                 </template>
                 <template v-slot:table>
                     <b-table
@@ -76,7 +76,7 @@
 import { mapState } from "vuex";
 import permission from "../../models/permission";
 import action from "../../models/action";
-import NamespaceSelector from "../namespace/Selector";
+import NamespaceSelect from "../namespace/NamespaceSelect";
 import Plus from "vue-material-design-icons/Plus";
 import Eye from "vue-material-design-icons/Eye";
 import BottomLine from "../layout/BottomLine";
@@ -90,7 +90,7 @@ import DurationChart from "../stats/DurationChart";
 export default {
     mixins: [RouteContext, DataTableActions],
     components: {
-        NamespaceSelector,
+        NamespaceSelect,
         BottomLine,
         Plus,
         Eye,

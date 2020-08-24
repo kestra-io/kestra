@@ -66,12 +66,13 @@
                         const end = executionDay.unix() * 1000;
 
                         const routeParams = {
-                            name: "executionsByFlow",
+                            name: "flowEdit",
                             params: {
                                 namespace: self.namespace,
-                                flowId: self.flowId,
+                                id: self.flowId,
                             },
                             query: {
+                                tab: "executions",
                                 start,
                                 end,
                                 status: d.id.toUpperCase()

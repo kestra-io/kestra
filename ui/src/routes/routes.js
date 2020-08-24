@@ -17,7 +17,6 @@ export default {
         { name: 'flowEdit', path: '/flows/edit/:namespace/:id', component: FlowRoot },
 
         //Executions
-        { name: 'executionsByFlow', path: '/executions/:namespace/:flowId', component: Executions },
         { name: 'executionsList', path: '/executions', component: Executions },
         { name: 'executionEdit', path: '/executions/:namespace/:flowId/:id', component: ExecutionRoot },
 

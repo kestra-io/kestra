@@ -3,7 +3,7 @@
         <data-table @onPageChanged="loadData" ref="dataTable" :total="total">
             <template v-slot:navbar>
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
-                <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
+                <namespace-selector v-if="$route.name !== 'flowEdit'"  @onNamespaceSelect="onNamespaceSelect" />
                 <status-filter-buttons @onRefresh="loadData"/>
                 <date-range @onDate="onSearch" />
                 <refresh-button class="float-right" @onRefresh="loadData"/>
@@ -147,14 +147,13 @@ export default {
             ];
         },
         executionQuery() {
+            let filter;
+
             if (this.$route.name === "flowEdit") {
-                const filter = `namespace:${this.$route.params.namespace} AND flowId:${this.$route.params.id}`;
-                return this.query === "*"
-                    ? filter
-                    : `${this.query} AND ${filter}`;
-            } else {
-                return this.query;
+                filter = `namespace:${this.$route.params.namespace} AND flowId:${this.$route.params.id}`;
             }
+
+            return this.query + (filter ? " " + filter : "");
         }
     },
     methods: {

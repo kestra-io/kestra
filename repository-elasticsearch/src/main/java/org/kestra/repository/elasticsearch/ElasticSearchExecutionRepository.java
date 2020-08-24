@@ -7,18 +7,16 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.bucket.composite.*;
+import org.elasticsearch.search.aggregations.bucket.composite.DateHistogramValuesSourceBuilder;
+import org.elasticsearch.search.aggregations.bucket.composite.ParsedComposite;
+import org.elasticsearch.search.aggregations.bucket.composite.TermsValuesSourceBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.metrics.ParsedStats;
-import org.elasticsearch.search.aggregations.metrics.StatsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.metrics.ExecutionMetrics;
-import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
-import org.kestra.core.models.executions.metrics.Stats;
-import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
@@ -26,13 +24,15 @@ import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 
 @Singleton
@@ -57,125 +57,110 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         return this.getRequest(INDEX_NAME, id);
     }
 
-    public Map<String, ExecutionMetricsAggregation> aggregateByStateWithDurationStats(String query, Pageable pageable) {
-        BoolQueryBuilder bool = this.defaultFilter()
-            .must(QueryBuilders.queryStringQuery(query));
+    @Override
+    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(@Nullable String query) {
+        BoolQueryBuilder bool = this.defaultFilter();
 
-        final List<CompositeValuesSourceBuilder<?>> multipleFieldsSources = new ArrayList<>();
-        multipleFieldsSources.add(new TermsValuesSourceBuilder("namespace").field("namespace"));
-        multipleFieldsSources.add(new TermsValuesSourceBuilder("flowId").field("flowId"));
-        multipleFieldsSources.add(new TermsValuesSourceBuilder("state.current").field("state.current"));
-        multipleFieldsSources.add(new DateHistogramValuesSourceBuilder("state.startDate").field("state.startDate").fixedInterval(DateHistogramInterval.DAY).format(START_DATE_FORMAT));
+        if (query != null) {
+            bool.must(QueryBuilders.queryStringQuery(query));
+        }
 
-        CompositeAggregationBuilder groupByMultipleFieldsAggBuilder = AggregationBuilders.composite(
-            "group_by_multiple_fields", multipleFieldsSources).size(MAX_BUCKET_SIZE);
+        final String GROUP_AGG = "GROUP";
+        final String COUNT_AGG = "COUNT";
+        final String DURATION_AGG = "DURATION";
 
-        final List<CompositeValuesSourceBuilder<?>> durationSources = new ArrayList<>();
-        durationSources.add(new TermsValuesSourceBuilder("namespace").field("namespace"));
-        durationSources.add(new TermsValuesSourceBuilder("flowId").field("flowId"));
-
-        CompositeAggregationBuilder durationAggBuilder =
-            AggregationBuilders.composite("duration", durationSources).subAggregation(new StatsAggregationBuilder(
-                "state.duration").field("state.duration")).size(MAX_BUCKET_SIZE);
-
-
-        SearchSourceBuilder sourceBuilder = this.searchSource(bool,
-            Optional.of(List.of(groupByMultipleFieldsAggBuilder, durationAggBuilder)),
-            pageable);
+        SearchSourceBuilder sourceBuilder = this.searchSource(
+            bool,
+            Optional.of(Collections.singletonList(
+                AggregationBuilders
+                    .composite(GROUP_AGG, Arrays.asList(
+                        new TermsValuesSourceBuilder("namespace").field("namespace"),
+                        new TermsValuesSourceBuilder("flowId").field("flowId"),
+                        new DateHistogramValuesSourceBuilder("state.startDate").field("state.startDate")
+                            .fixedInterval(DateHistogramInterval.DAY)
+                            .format(START_DATE_FORMAT)
+                            .missingBucket(true)
+                    ))
+                    .subAggregation(AggregationBuilders.stats(DURATION_AGG).
+                        field("state.duration")
+                    )
+                    .subAggregation(AggregationBuilders.terms(COUNT_AGG)
+                        .field("state.current")
+                    )
+                    .size(MAX_BUCKET_SIZE)
+            )),
+            null
+        );
 
         try {
             SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            ParsedComposite multipleFieldsParsedComposite = searchResponse.getAggregations().get(
-                "group_by_multiple_fields");
-            ParsedComposite durationParsedComposite = searchResponse.getAggregations().get("duration");
+            ParsedComposite groupAgg = searchResponse
+                .getAggregations()
+                .get(GROUP_AGG);
 
-            Map<String, ExecutionMetricsAggregation> map = new HashMap<>();
+            Map<String, Map<String, List<DailyExecutionStatistics>>> result = new HashMap<>();
 
-            multipleFieldsParsedComposite.getBuckets().stream().forEach(bucket -> {
+            groupAgg.getBuckets().forEach(bucket -> {
+                ParsedStringTerms countAgg = bucket.getAggregations().get(COUNT_AGG);
+                ParsedStats durationAgg = bucket.getAggregations().get(DURATION_AGG);
+
                 final String namespace = bucket.getKey().get("namespace").toString();
                 final String flowId = bucket.getKey().get("flowId").toString();
-                final String mapKey = Flow.uniqueIdWithoutRevision(namespace, flowId);
+                final LocalDate startDate = LocalDate.parse(bucket.getKey().get("state.startDate").toString(),
+                    DateTimeFormatter.ISO_LOCAL_DATE);
 
-                final State.Type state = State.Type.valueOf(bucket.getKey().get("state.current").toString());
+                result.compute(namespace, (namespaceKey, namespaceMap) -> {
+                    if (namespaceMap == null) {
+                        namespaceMap = new HashMap<>();
+                    }
 
-                ExecutionMetricsAggregation executionMetricsAggregation = map.getOrDefault(mapKey,
-                    ExecutionMetricsAggregation.builder().namespace(namespace).id(flowId).metrics(new ArrayList<>()).build());
+                    namespaceMap.compute(flowId, (flowKey, flowList) -> {
+                        if (flowList == null) {
+                            flowList = new ArrayList<>();
+                        }
 
-                executionMetricsAggregation.getMetrics().add(ExecutionMetrics.builder().state(state).count(bucket.getDocCount())
-                    // TODO : Local date  ?
-                    .startDate(LocalDate.parse(bucket.getKey().get("state.startDate").toString(),
-                        DateTimeFormatter.ISO_LOCAL_DATE))
-                    .build());
+                        flowList.add(
+                         DailyExecutionStatistics.builder()
+                            .startDate(startDate)
+                            .duration(DailyExecutionStatistics.Duration.builder()
+                                .avg(durationFromDouble(durationAgg.getAvg()))
+                                .min(durationFromDouble(durationAgg.getMin()))
+                                .max(durationFromDouble(durationAgg.getMax()))
+                                .sum(durationFromDouble(durationAgg.getSum()))
+                                .count(durationAgg.getCount())
+                                .build()
+                            )
+                            .executionCounts(countAgg.getBuckets()
+                                .stream()
+                                .map(item -> DailyExecutionStatistics.ExecutionCount.builder()
+                                    .count(item.getDocCount())
+                                    .state(State.Type.valueOf(item.getKeyAsString()))
+                                    .build()
+                                )
+                                .collect(Collectors.toList())
+                            )
+                            .build()
+                        );
 
-                map.put(mapKey, executionMetricsAggregation);
+                        return flowList;
+                    });
+
+                    return namespaceMap;
+                });
             });
 
-            durationParsedComposite.getBuckets().stream().forEach(bucket -> {
-                final String namespace = bucket.getKey().get("namespace").toString();
-                final String flowId = bucket.getKey().get("flowId").toString();
-                final String mapKey = Flow.uniqueIdWithoutRevision(namespace, flowId);
-
-                ExecutionMetricsAggregation executionMetricsAggregation = map.get(mapKey);
-
-                // Should never occur but since the map is filled from 2 different aggregations, we keep this check
-                if (executionMetricsAggregation == null) {
-                    return;
-                }
-
-                executionMetricsAggregation.setPeriodDurationStats(Stats.builder()
-                    .avg(((ParsedStats) bucket.getAggregations().get("state.duration")).getAvg())
-                    .build());
-
-            });
-
-            return map;
+            return result;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public Map<String, Stats> findLast24hDurationStats(String query, Pageable pageable) {
-        QueryStringQueryBuilder queryString = QueryBuilders.queryStringQuery(query);
-
-
-        final List<CompositeValuesSourceBuilder<?>> durationSources = new ArrayList<>();
-        durationSources.add(new TermsValuesSourceBuilder("namespace").field("namespace"));
-        durationSources.add(new TermsValuesSourceBuilder("flowId").field("flowId"));
-
-        final String durationAggKey = "duration";
-
-        CompositeAggregationBuilder durationAggBuilder =
-            AggregationBuilders.composite(durationAggKey, durationSources).subAggregation(new StatsAggregationBuilder(
-                "state.duration").field("state.duration"));
-
-        SearchSourceBuilder sourceBuilder = this.searchSource(queryString, Optional.of(List.of(durationAggBuilder)),
-            pageable);
-
-        try {
-            SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            ParsedComposite durationParsedComposite = searchResponse.getAggregations().get(durationAggKey);
-
-            Map<String, Stats> map = new HashMap<>();
-
-            durationParsedComposite.getBuckets().stream().forEach(bucket -> {
-                final String namespace = bucket.getKey().get("namespace").toString();
-                final String flowId = bucket.getKey().get("flowId").toString();
-                final String mapKey = Flow.uniqueIdWithoutRevision(namespace, flowId);
-
-                map.put(mapKey, Stats.builder()
-                    .avg(((ParsedStats) bucket.getAggregations().get("state.duration")).getAvg())
-                    .build()
-                );
-            });
-
-            return map;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private static Duration durationFromDouble(double val) {
+        return Duration.ofMillis(
+            (long) (val * 1000)
+        );
     }
-
 
     @Override
     public ArrayListTotal<Execution> find(String query, Pageable pageable, @Nullable State.Type state) {

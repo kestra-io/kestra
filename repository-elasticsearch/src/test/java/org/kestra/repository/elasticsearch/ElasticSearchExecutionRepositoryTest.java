@@ -6,15 +6,23 @@ import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 @MicronautTest
 class ElasticSearchExecutionRepositoryTest {
@@ -27,13 +35,23 @@ class ElasticSearchExecutionRepositoryTest {
     @Inject
     ElasticSearchRepositoryTestUtils utils;
 
-    private static Execution.ExecutionBuilder builder() {
+    private static Execution.ExecutionBuilder builder(State.Type state, String flowId) {
+        State finalState = new State();
+
+        finalState = spy(finalState
+            .withState(state != null ? state : State.Type.SUCCESS));
+
+        Random rand = new Random();
+        doReturn(Duration.ofSeconds(rand.nextInt(150)))
+            .when(finalState)
+            .getDuration();
+
         return Execution.builder()
             .id(FriendlyId.createFriendlyId())
             .namespace(NAMESPACE)
-            .flowId(FLOW)
+            .flowId(flowId == null ? FLOW : flowId)
             .flowRevision(1)
-            .state(new State());
+            .state(finalState);
     }
 
     @Test
@@ -59,20 +77,31 @@ class ElasticSearchExecutionRepositoryTest {
     }
 
     @Test
-    void findByFlowId() {
+    void aggregateByStateWithDurationStats() {
         for (int i = 0; i < 28; i++) {
-            executionRepository.save(builder().build());
+            executionRepository.save(builder(
+                i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
+                i < 15 ? null : "second"
+            ).build());
         }
 
-        ArrayListTotal<Execution> page1 = executionRepository.findByFlowId(NAMESPACE, FLOW, Pageable.from(1, 10));
-        assertThat(page1.size(), is(10));
-        assertThat(page1.getTotal(), is(28L));
+        Map<String, Map<String, List<DailyExecutionStatistics>>> result = executionRepository.dailyGroupByFlowStatistics("state.startDate:[now-1d TO *] AND *");
 
-        ArrayListTotal<Execution> page2 = executionRepository.findByFlowId(NAMESPACE, FLOW, Pageable.from(2, 10));
-        assertThat(page2.size(), is(10));
+        assertThat(result.size(), is(1));
+        assertThat(result.get("org.kestra.unittest").size(), is(2));
 
-        ArrayListTotal<Execution> page3 = executionRepository.findByFlowId(NAMESPACE, FLOW, Pageable.from(3, 10));
-        assertThat(page3.size(), is(8));
+        DailyExecutionStatistics full = result.get("org.kestra.unittest").get(FLOW).get(0);
+        DailyExecutionStatistics second = result.get("org.kestra.unittest").get("second").get(0);
+
+        assertThat(full.getDuration().getAvg().getSeconds(), greaterThan(0L));
+        assertThat(full.getExecutionCounts().size(), is(3));
+        assertThat(full.getExecutionCounts().stream().filter(f -> f.getState() == State.Type.FAILED).findFirst().orElseThrow().getCount(), is(3L));
+        assertThat(full.getExecutionCounts().stream().filter(f -> f.getState() == State.Type.RUNNING).findFirst().orElseThrow().getCount(), is(5L));
+        assertThat(full.getExecutionCounts().stream().filter(f -> f.getState() == State.Type.SUCCESS).findFirst().orElseThrow().getCount(), is(7L));
+
+        assertThat(second.getDuration().getAvg().getSeconds(), greaterThan(0L));
+        assertThat(second.getExecutionCounts().size(), is(1));
+        assertThat(second.getExecutionCounts().stream().filter(f -> f.getState() == State.Type.SUCCESS).findFirst().orElseThrow().getCount(), is(13L));
     }
 
     @AfterEach

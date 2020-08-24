@@ -117,9 +117,6 @@ export default {
     watch: {
         level: function () {
             this.loadLogs()
-        },
-        execution: function() {
-            console.log(this.execution.id);
         }
     },
     created() {

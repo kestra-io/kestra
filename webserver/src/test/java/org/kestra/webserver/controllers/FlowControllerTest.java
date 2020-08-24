@@ -10,14 +10,10 @@ import io.micronaut.http.client.RxHttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.Helpers;
-import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
-import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.FlowTree;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.tasks.debugs.Return;
@@ -26,7 +22,6 @@ import org.kestra.webserver.responses.PagedResults;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.*;
@@ -232,33 +227,6 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
         assertThat(jsonError.getMessage(), containsString("flow.id"));
         assertThat(jsonError.getMessage(), containsString("flow.namespace"));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    @Disabled("This test can only be run against elastic search, not in memory mode")
-    void testSearchAndAggregate() throws TimeoutException {
-        // Run several execution
-        Execution full = runnerUtils.runOne(TESTS_FLOW_NS, "full");
-        Execution minimal = runnerUtils.runOne(TESTS_FLOW_NS, "minimal");
-        Execution logs = runnerUtils.runOne(TESTS_FLOW_NS, "logs");
-        Execution seqWithLocalErrors = runnerUtils.runOne(TESTS_FLOW_NS, "sequential-with-local-errors");
-        Execution seqWithGlobalErrors = runnerUtils.runOne(TESTS_FLOW_NS, "sequential-with-global-errors");
-
-        assertThat(full.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(minimal.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(logs.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(seqWithLocalErrors.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(seqWithGlobalErrors.getState().getCurrent(), is(State.Type.FAILED));
-
-        final String query = "namespace:org.kestra.tests";
-
-        PagedResults<Execution> aggFind = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/flows/searchAndAggregate?q=*&startDate=2020-01-26T15:30:33.243Z" + query),
-            Argument.of(PagedResults.class, ExecutionMetricsAggregation.class)
-        );
-
-        assertThat(aggFind.getTotal(), greaterThanOrEqualTo(5L));
     }
 
     @Test

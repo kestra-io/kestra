@@ -33,34 +33,25 @@
                         </template>
 
                         <template v-slot:cell(state)="row">
-                            <chart
-                                v-if="row.item.metrics"
+                            <state-chart
+                                v-if="statsReady"
                                 dateFormat="YYYY-MM-DD"
-                                :dateInterval="dateInterval"
                                 :endDate="endDate"
                                 :startDate="startDate"
+                                :namespace="row.item.namespace"
+                                :flowId="row.item.id"
                                 :data="chartData(row)"
                             />
                         </template>
 
                         <template v-slot:cell(duration)="row">
-                            <trend v-if="row.item.trend" :trend="row.item.trend" />
-
-                            <div class="stats">
-                                <span
-                                    v-if="row.item.lastDayDurationStats"
-                                    class="value"
-                                >{{row.item.lastDayDurationStats.avg | humanizeDuration }}</span>
-                                <span v-if="row.item.lastDayDurationStats" class="title">(24h)</span>
-                            </div>
-
-                            <div class="stats">
-                                <span
-                                    v-if="row.item.periodDurationStats"
-                                    class="value"
-                                >{{row.item.periodDurationStats.avg | humanizeDuration }}</span>
-                                <span v-if="row.item.periodDurationStats" class="title">(30d)</span>
-                            </div>
+                            <duration-chart
+                                v-if="statsReady"
+                                dateFormat="YYYY-MM-DD"
+                                :endDate="endDate"
+                                :startDate="startDate"
+                                :data="chartData(row)"
+                            />
                         </template>
                     </b-table>
                 </template>
@@ -93,8 +84,8 @@ import RouteContext from "../../mixins/routeContext";
 import DataTableActions from "../../mixins/dataTableActions";
 import DataTable from "../layout/DataTable";
 import SearchField from "../layout/SearchField";
-import Chart from "./Chart";
-import Trend from "../Trend";
+import StateChart from "../stats/StateChart";
+import DurationChart from "../stats/DurationChart";
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -105,32 +96,20 @@ export default {
         Eye,
         DataTable,
         SearchField,
-        Chart,
-        Trend
-    },
-    props: {
-        endDate: {
-            type: Date,
-            default: () => {
-                return new Date();
-            }
-        },
-        dateInterval: {
-            type: Number,
-            default: () => {
-                return -30;
-            }
-        }
+        StateChart,
+        DurationChart,
     },
     data() {
         return {
             dataType: "flow",
             permission: permission,
-            action: action
+            action: action,
+            statsReady: false,
         };
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
+        ...mapState("stat", ["stats"]),
         ...mapState("auth", ["user"]),
         fields() {
             const title = title => {
@@ -151,13 +130,13 @@ export default {
                     key: "state",
                     label: title("execution statistics"),
                     sortable: false,
-                    class: "row-state"
+                    class: "row-graph"
                 },
                 {
                     key: "duration",
                     label: title("duration"),
                     sortable: false,
-                    class: "row-duration"
+                    class: "row-graph"
                 },
                 {
                     key: "actions",
@@ -166,31 +145,51 @@ export default {
                 }
             ];
         },
+        endDate() {
+            return new Date();
+        },
         startDate() {
             return this.$moment(this.endDate)
-                .add(this.dateInterval, "days")
+                .add(-30, "days")
                 .toDate();
         }
     },
     methods: {
         chartData(row) {
-            const statuses = ["success", "failed", "created", "running"];
-            return {
-                json: row.item.metrics,
-                keys: { x: "startDate", value: statuses },
-                groups: [statuses],
-                row
-            };
+            if (this.stats && this.stats[row.item.namespace] && this.stats[row.item.namespace][row.item.id]) {
+                return this.stats[row.item.namespace][row.item.id];
+            } else {
+                return [];
+            }
         },
         loadData(callback) {
-            this.$store.dispatch("flow/searchAndAggregate", {
-                q: this.query,
-                startDate: this.startDate.toISOString(),
-                size: parseInt(this.$route.query.size || 25),
-                page: parseInt(this.$route.query.page || 1),
-                sort: this.$route.query.sort
-            });
-            callback();
+            this.$store
+                .dispatch("flow/findFlows", {
+                    q: this.query,
+                    size: parseInt(this.$route.query.size || 25),
+                    page: parseInt(this.$route.query.page || 1),
+                    sort: this.$route.query.sort
+                })
+                .then(flows => {
+                    this.statsReady = false;
+                    callback();
+
+                    if (flows.results && flows.results.length > 0) {
+                        let query = "((" + flows.results
+                            .map(flow => "flowId:" + flow.id + " AND namespace:" + flow.namespace)
+                            .join(") OR (") + "))"
+
+                        this.$store
+                            .dispatch("stat/dailyGroupByFlow", {
+                                q: query,
+                                startDate: this.$moment(this.startDate).format('YYYY-MM-DD'),
+                                endDate: this.$moment(this.endDate).format('YYYY-MM-DD')
+                            })
+                            .then(() => {
+                                this.statsReady = true
+                            })
+                    }
+                })
         }
     }
 };

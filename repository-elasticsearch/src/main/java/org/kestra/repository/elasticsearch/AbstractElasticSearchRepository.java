@@ -47,6 +47,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
@@ -215,23 +216,33 @@ abstract public class AbstractElasticSearchRepository<T> {
         return searchRequest;
     }
 
-    protected SearchSourceBuilder searchSource(QueryBuilder query, Optional<List<AggregationBuilder>> aggregations, Pageable pageable) {
+    protected SearchSourceBuilder searchSource(
+        QueryBuilder query,
+        Optional<List<AggregationBuilder>> aggregations,
+        @Nullable Pageable pageable
+    ) {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(query)
-            .size(pageable.getSize())
-            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+            .query(query);
+
+        if (pageable != null) {
+            sourceBuilder
+                .size(pageable.getSize())
+                .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
+            for (Sort.Order order : pageable.getSort().getOrderBy()) {
+                sourceBuilder = sourceBuilder.sort(
+                    order.getProperty(),
+                    order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
+                );
+            }
+        } else {
+            sourceBuilder.size(0);
+        }
 
         if (aggregations.isPresent()) {
             for (AggregationBuilder aggregation : aggregations.get()) {
                 sourceBuilder.aggregation(aggregation);
             }
-        }
-
-        for (Sort.Order order : pageable.getSort().getOrderBy()) {
-            sourceBuilder = sourceBuilder.sort(
-                order.getProperty(),
-                order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
-            );
         }
 
         return sourceBuilder;

@@ -1,6 +1,6 @@
 <template>
     <div v-if="ready">
-        <data-table @onPageChanged="loadData" ref="dataTable" :total="total">
+        <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total">
             <template v-slot:navbar>
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <namespace-select v-if="$route.name !== 'flowEdit'"  @onNamespaceSelect="onNamespaceSelect" />
@@ -44,8 +44,8 @@
                         />
                     </template>
                      <template v-slot:cell(state.duration)="row">
-                        <p v-if="['RUNNING', 'CREATED'].includes(row.item.state.current)">{{durationFrom(row.item) | humanizeDuration}}</p>
-                        <p v-else>{{row.item.state.duration | humanizeDuration}}</p>
+                        <span v-if="['RUNNING', 'CREATED'].includes(row.item.state.current)">{{durationFrom(row.item) | humanizeDuration}}</span>
+                        <span v-else>{{row.item.state.duration | humanizeDuration}}</span>
                     </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link

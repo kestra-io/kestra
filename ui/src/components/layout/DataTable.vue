@@ -9,6 +9,8 @@
             </b-collapse>
         </b-navbar>
 
+        <slot name="top"></slot>
+
         <slot name="table"></slot>
         <div class="d-flex">
             <div class="flex-grow-1">

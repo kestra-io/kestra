@@ -54,4 +54,9 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public List<DailyExecutionStatistics> dailyStatistics(String query) {
+        throw new UnsupportedOperationException();
+    }
 }

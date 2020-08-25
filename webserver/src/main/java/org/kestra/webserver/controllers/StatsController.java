@@ -16,10 +16,26 @@ import javax.inject.Inject;
 
 @Validated
 @Controller("/api/v1/stats")
-
 public class StatsController {
     @Inject
     protected ExecutionRepositoryInterface executionRepository;
+
+    /**
+     * Return daily statistics for all executions filter optionnaly by a lucene query
+     *
+     * @param q Lucene string to filter execution
+     * @param startDate default to now - 30 days
+     * @param endDate default to now
+     * @return a list of DailyExecutionStatistics
+     */
+    @Post(uri = "executions/daily", produces = MediaType.TEXT_JSON)
+    public List<DailyExecutionStatistics> dailyStatistics(
+        @Nullable String q,
+        @Nullable @Format("yyyy-MM-dd") LocalDate startDate,
+        @Nullable @Format("yyyy-MM-dd") LocalDate endDate
+    ) {
+        return executionRepository.dailyStatistics(query(q, startDate, endDate));
+    }
 
     /**
      * Return daily statistics for all executions filter optionnaly by a lucene query group by namespace & flow
@@ -27,7 +43,7 @@ public class StatsController {
      * @param q Lucene string to filter execution
      * @param startDate default to now - 30 days
      * @param endDate default to now
-     * @return map of namespace, containing a Map of flow, AbstractDailyExecutionStatistics
+     * @return map of namespace, containing a Map of flow, DailyExecutionStatistics
      */
     @Post(uri = "executions/daily/group-by-flow", produces = MediaType.TEXT_JSON)
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
@@ -35,16 +51,18 @@ public class StatsController {
         @Nullable @Format("yyyy-MM-dd") LocalDate startDate,
         @Nullable @Format("yyyy-MM-dd") LocalDate endDate
     ) {
+        return executionRepository.dailyGroupByFlowStatistics(query(q, startDate, endDate));
+    }
+
+    private static String query(String q, LocalDate startDate, LocalDate endDate) {
         if (startDate == null) {
             startDate = LocalDate.now().minusDays(30);
         }
 
-        final String execQuery = "state.startDate:[" +
+        return "state.startDate:[" +
             startDate.toString() +
             " TO " +
             (endDate != null ? endDate.toString() : "*") +
             "] AND " + (q != null ? q : "*");
-
-        return executionRepository.dailyGroupByFlowStatistics(execQuery);
     }
 }

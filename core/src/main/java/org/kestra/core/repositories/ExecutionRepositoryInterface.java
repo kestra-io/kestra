@@ -16,6 +16,8 @@ public interface ExecutionRepositoryInterface {
 
     ArrayListTotal<Execution> find(String query, Pageable pageable, State.Type state);
 
+    List<DailyExecutionStatistics> dailyStatistics(String query);
+
     Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query);
 
     Execution save(Execution flow);

@@ -13,6 +13,16 @@
                     <search-field @onSearch="onSearch" :fields="searchableFields" />
                     <namespace-select @onNamespaceSelect="onNamespaceSelect" />
                 </template>
+
+                <template v-slot:top>
+                    <state-global-chart
+                        :ready="dailyReady"
+                        :endDate="endDate"
+                        :startDate="startDate"
+                        :data="daily"
+                        />
+                </template>
+
                 <template v-slot:table>
                     <b-table
                         :no-local-sorting="true"
@@ -34,7 +44,7 @@
 
                         <template v-slot:cell(state)="row">
                             <state-chart
-                                v-if="statsReady"
+                                v-if="dailyGroupByFlowReady"
                                 dateFormat="YYYY-MM-DD"
                                 :endDate="endDate"
                                 :startDate="startDate"
@@ -46,7 +56,7 @@
 
                         <template v-slot:cell(duration)="row">
                             <duration-chart
-                                v-if="statsReady"
+                                v-if="dailyGroupByFlowReady"
                                 dateFormat="YYYY-MM-DD"
                                 :endDate="endDate"
                                 :startDate="startDate"
@@ -86,6 +96,7 @@ import DataTable from "../layout/DataTable";
 import SearchField from "../layout/SearchField";
 import StateChart from "../stats/StateChart";
 import DurationChart from "../stats/DurationChart";
+import StateGlobalChart from "../stats/StateGlobalChart";
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -98,18 +109,20 @@ export default {
         SearchField,
         StateChart,
         DurationChart,
+        StateGlobalChart,
     },
     data() {
         return {
             dataType: "flow",
             permission: permission,
             action: action,
-            statsReady: false,
+            dailyGroupByFlowReady: false,
+            dailyReady: false,
         };
     },
     computed: {
         ...mapState("flow", ["flows", "total"]),
-        ...mapState("stat", ["stats"]),
+        ...mapState("stat", ["dailyGroupByFlow", "daily"]),
         ...mapState("auth", ["user"]),
         fields() {
             const title = title => {
@@ -156,13 +169,24 @@ export default {
     },
     methods: {
         chartData(row) {
-            if (this.stats && this.stats[row.item.namespace] && this.stats[row.item.namespace][row.item.id]) {
-                return this.stats[row.item.namespace][row.item.id];
+            if (this.dailyGroupByFlow && this.dailyGroupByFlow[row.item.namespace] && this.dailyGroupByFlow[row.item.namespace][row.item.id]) {
+                return this.dailyGroupByFlow[row.item.namespace][row.item.id];
             } else {
                 return [];
             }
         },
         loadData(callback) {
+            this.dailyReady = false;
+            this.$store
+                .dispatch("stat/daily", {
+                    q: this.query,
+                    startDate: this.$moment(this.startDate).format('YYYY-MM-DD'),
+                    endDate: this.$moment(this.endDate).format('YYYY-MM-DD')
+                })
+                .then(() => {
+                    this.dailyReady = true;
+                });
+
             this.$store
                 .dispatch("flow/findFlows", {
                     q: this.query,
@@ -171,7 +195,7 @@ export default {
                     sort: this.$route.query.sort
                 })
                 .then(flows => {
-                    this.statsReady = false;
+                    this.dailyGroupByFlowReady = false;
                     callback();
 
                     if (flows.results && flows.results.length > 0) {
@@ -186,7 +210,7 @@ export default {
                                 endDate: this.$moment(this.endDate).format('YYYY-MM-DD')
                             })
                             .then(() => {
-                                this.statsReady = true
+                                this.dailyGroupByFlowReady = true
                             })
                     }
                 })

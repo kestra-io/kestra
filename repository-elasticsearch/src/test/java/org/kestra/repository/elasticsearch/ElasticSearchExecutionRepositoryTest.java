@@ -77,7 +77,7 @@ class ElasticSearchExecutionRepositoryTest {
     }
 
     @Test
-    void aggregateByStateWithDurationStats() {
+    void dailyGroupByFlowStatistics() {
         for (int i = 0; i < 28; i++) {
             executionRepository.save(builder(
                 i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
@@ -102,6 +102,27 @@ class ElasticSearchExecutionRepositoryTest {
         assertThat(second.getDuration().getAvg().getSeconds(), greaterThan(0L));
         assertThat(second.getExecutionCounts().size(), is(1));
         assertThat(second.getExecutionCounts().stream().filter(f -> f.getState() == State.Type.SUCCESS).findFirst().orElseThrow().getCount(), is(13L));
+    }
+
+
+    @Test
+    void dailyStatistics() {
+        for (int i = 0; i < 28; i++) {
+            executionRepository.save(builder(
+                i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
+                i < 15 ? null : "second"
+            ).build());
+        }
+
+        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics("state.startDate:[now-1d TO *] AND *");
+
+        assertThat(result.size(), is(1));
+        assertThat(result.get(0).getExecutionCounts().size(), is(3));
+        assertThat(result.get(0).getDuration().getAvg().getSeconds(), greaterThan(0L));
+
+        assertThat(result.get(0).getExecutionCounts().stream().filter(f -> f.getState() == State.Type.FAILED).findFirst().orElseThrow().getCount(), is(3L));
+        assertThat(result.get(0).getExecutionCounts().stream().filter(f -> f.getState() == State.Type.RUNNING).findFirst().orElseThrow().getCount(), is(5L));
+        assertThat(result.get(0).getExecutionCounts().stream().filter(f -> f.getState() == State.Type.SUCCESS).findFirst().orElseThrow().getCount(), is(20L));
     }
 
     @AfterEach

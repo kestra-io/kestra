@@ -116,7 +116,8 @@
             "name": "Plugin",
             "names": "Plugins",
             "please": "Please choose a task on the right to see its documentation"
-        }
+        },
+        "last 30 days executions": "Last 30 days executions"
     },
     "fr": {
         "id": "Identifiant",
@@ -236,6 +237,7 @@
             "name": "Plugin",
             "names": "Plugins",
             "please": "Veuillez choisir une tache sur la droit afin de voir sa documentation"
-        }
+        },
+        "last 30 days executions": "Execution des 30 derniers jours"
     }
 }

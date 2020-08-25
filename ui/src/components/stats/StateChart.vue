@@ -46,7 +46,10 @@
             },
             flowId: {
                 type: String,
-                required: true
+            },
+            global: {
+                type: Boolean,
+                default: () => false
             }
         },
 
@@ -108,7 +111,7 @@
             getConfig() {
                 const statuses = ["success", "failed", "created", "running"];
 
-                const defaultConfig = {
+                let defaultConfig = {
                     data: {
                         type: 'bar',
                         keys: {x: "startDate", value: statuses},
@@ -136,14 +139,25 @@
                     legend: {
                         show: false
                     },
-                    tooltip: {
-                        position: tooltipPosition
-                    },
                     bar: {
                         width: {
                             ratio: 0.7
                         }
                     }
+                }
+
+                if (!this.global) {
+                    defaultConfig = defaultsDeep(defaultConfig, {
+                        tooltip : {
+                            position: tooltipPosition
+                        }
+                    });
+                } else {
+                    defaultConfig = defaultsDeep({
+                        size: {
+                            height: 100
+                        },
+                    }, defaultConfig);
                 }
 
                 return defaultsDeep(defaultConfig, this.config);

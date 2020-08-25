@@ -8,6 +8,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.composite.CompositeValuesSourceBuilder;
 import org.elasticsearch.search.aggregations.bucket.composite.DateHistogramValuesSourceBuilder;
 import org.elasticsearch.search.aggregations.bucket.composite.ParsedComposite;
 import org.elasticsearch.search.aggregations.bucket.composite.TermsValuesSourceBuilder;
@@ -42,6 +43,10 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     public static final String START_DATE_FORMAT = "yyyy-MM-dd";
     public static final int MAX_BUCKET_SIZE = 1000;
 
+    public static final String GROUP_AGG = "GROUP";
+    public static final String COUNT_AGG = "COUNT";
+    public static final String DURATION_AGG = "DURATION";
+
     @Inject
     public ElasticSearchExecutionRepository(
         RestHighLevelClient client,
@@ -59,37 +64,12 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
     @Override
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(@Nullable String query) {
-        BoolQueryBuilder bool = this.defaultFilter();
-
-        if (query != null) {
-            bool.must(QueryBuilders.queryStringQuery(query));
-        }
-
-        final String GROUP_AGG = "GROUP";
-        final String COUNT_AGG = "COUNT";
-        final String DURATION_AGG = "DURATION";
-
-        SearchSourceBuilder sourceBuilder = this.searchSource(
-            bool,
-            Optional.of(Collections.singletonList(
-                AggregationBuilders
-                    .composite(GROUP_AGG, Arrays.asList(
-                        new TermsValuesSourceBuilder("namespace").field("namespace"),
-                        new TermsValuesSourceBuilder("flowId").field("flowId"),
-                        new DateHistogramValuesSourceBuilder("state.startDate").field("state.startDate")
-                            .fixedInterval(DateHistogramInterval.DAY)
-                            .format(START_DATE_FORMAT)
-                            .missingBucket(true)
-                    ))
-                    .subAggregation(AggregationBuilders.stats(DURATION_AGG).
-                        field("state.duration")
-                    )
-                    .subAggregation(AggregationBuilders.terms(COUNT_AGG)
-                        .field("state.current")
-                    )
-                    .size(MAX_BUCKET_SIZE)
-            )),
-            null
+        SearchSourceBuilder sourceBuilder = dailyExecutionStatisticsSourceBuilder(
+            query,
+            Arrays.asList(
+                new TermsValuesSourceBuilder("namespace").field("namespace"),
+                new TermsValuesSourceBuilder("flowId").field("flowId")
+            )
         );
 
         try {
@@ -120,34 +100,95 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                             flowList = new ArrayList<>();
                         }
 
-                        flowList.add(
-                         DailyExecutionStatistics.builder()
-                            .startDate(startDate)
-                            .duration(DailyExecutionStatistics.Duration.builder()
-                                .avg(durationFromDouble(durationAgg.getAvg()))
-                                .min(durationFromDouble(durationAgg.getMin()))
-                                .max(durationFromDouble(durationAgg.getMax()))
-                                .sum(durationFromDouble(durationAgg.getSum()))
-                                .count(durationAgg.getCount())
-                                .build()
-                            )
-                            .executionCounts(countAgg.getBuckets()
-                                .stream()
-                                .map(item -> DailyExecutionStatistics.ExecutionCount.builder()
-                                    .count(item.getDocCount())
-                                    .state(State.Type.valueOf(item.getKeyAsString()))
-                                    .build()
-                                )
-                                .collect(Collectors.toList())
-                            )
-                            .build()
-                        );
+                        flowList.add(dailyExecutionStatisticsMap(countAgg, durationAgg, startDate));
 
                         return flowList;
                     });
 
                     return namespaceMap;
                 });
+            });
+
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private SearchSourceBuilder dailyExecutionStatisticsSourceBuilder(String query, List<CompositeValuesSourceBuilder<?>> group) {
+        BoolQueryBuilder bool = this.defaultFilter();
+
+        if (query != null) {
+            bool.must(QueryBuilders.queryStringQuery(query));
+        }
+
+        List<CompositeValuesSourceBuilder<?>> compositeValuesSourceBuilders = group != null  ? new ArrayList<>(group) : new ArrayList<>();
+        compositeValuesSourceBuilders.add(new DateHistogramValuesSourceBuilder("state.startDate").field("state.startDate")
+            .fixedInterval(DateHistogramInterval.DAY)
+            .format(START_DATE_FORMAT)
+            .missingBucket(true));
+
+        return this.searchSource(
+            bool,
+            Optional.of(Collections.singletonList(
+                AggregationBuilders
+                    .composite(GROUP_AGG, compositeValuesSourceBuilders)
+                    .subAggregation(AggregationBuilders.stats(DURATION_AGG).
+                        field("state.duration")
+                    )
+                    .subAggregation(AggregationBuilders.terms(COUNT_AGG)
+                        .field("state.current")
+                    )
+                    .size(MAX_BUCKET_SIZE)
+            )),
+            null
+        );
+    }
+
+    private static DailyExecutionStatistics dailyExecutionStatisticsMap(ParsedStringTerms countAgg, ParsedStats durationAgg, LocalDate startDate) {
+        return DailyExecutionStatistics.builder()
+            .startDate(startDate)
+            .duration(DailyExecutionStatistics.Duration.builder()
+                .avg(durationFromDouble(durationAgg.getAvg()))
+                .min(durationFromDouble(durationAgg.getMin()))
+                .max(durationFromDouble(durationAgg.getMax()))
+                .sum(durationFromDouble(durationAgg.getSum()))
+                .count(durationAgg.getCount())
+                .build()
+            )
+            .executionCounts(countAgg.getBuckets()
+                .stream()
+                .map(item -> DailyExecutionStatistics.ExecutionCount.builder()
+                    .count(item.getDocCount())
+                    .state(State.Type.valueOf(item.getKeyAsString()))
+                    .build()
+                )
+                .collect(Collectors.toList())
+            )
+            .build();
+    }
+
+    @Override
+    public List<DailyExecutionStatistics> dailyStatistics(String query) {
+        SearchSourceBuilder sourceBuilder = dailyExecutionStatisticsSourceBuilder(query, null);
+
+        try {
+            SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            ParsedComposite groupAgg = searchResponse
+                .getAggregations()
+                .get(GROUP_AGG);
+
+            List<DailyExecutionStatistics> result = new ArrayList<>();
+
+            groupAgg.getBuckets().forEach(bucket -> {
+                ParsedStringTerms countAgg = bucket.getAggregations().get(COUNT_AGG);
+                ParsedStats durationAgg = bucket.getAggregations().get(DURATION_AGG);
+
+                final LocalDate startDate = LocalDate.parse(bucket.getKey().get("state.startDate").toString(), DateTimeFormatter.ISO_LOCAL_DATE);
+
+                result.add(dailyExecutionStatisticsMap(countAgg, durationAgg, startDate));
+
             });
 
             return result;

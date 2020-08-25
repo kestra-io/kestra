@@ -8,6 +8,16 @@
                 <date-range @onDate="onSearch" />
                 <refresh-button class="float-right" @onRefresh="loadData"/>
             </template>
+
+            <template v-slot:top>
+                <state-global-chart
+                    :ready="dailyReady"
+                    :endDate="endDate"
+                    :startDate="startDate"
+                    :data="daily"
+                />
+            </template>
+
             <template v-slot:table>
                 <b-table
                     :no-local-sorting="true"
@@ -73,6 +83,7 @@ import NamespaceSelect from "../namespace/NamespaceSelect";
 import DateRange from "../layout/DateRange";
 import RefreshButton from '../layout/RefreshButton'
 import StatusFilterButtons from '../layout/StatusFilterButtons'
+import StateGlobalChart from "@/components/stats/StateGlobalChart";
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -84,11 +95,13 @@ export default {
         NamespaceSelect,
         DateRange,
         RefreshButton,
-        StatusFilterButtons
+        StatusFilterButtons,
+        StateGlobalChart
     },
     data() {
         return {
             dataType: "execution",
+            dailyReady: false,
         };
     },
     beforeCreate () {
@@ -99,6 +112,7 @@ export default {
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
+        ...mapState("stat", ["daily"]),
         fields() {
             const title = title => {
                 return this.$t(title);
@@ -154,6 +168,14 @@ export default {
             }
 
             return this.query + (filter ? " " + filter : "");
+        },
+        endDate() {
+            return new Date();
+        },
+        startDate() {
+            return this.$moment(this.endDate)
+                .add(-30, "days")
+                .toDate();
         }
     },
     methods: {
@@ -178,6 +200,18 @@ export default {
                 })
         },
         loadData(callback) {
+            this.dailyReady = false;
+            this.$store
+                .dispatch("stat/daily", {
+                    q: this.executionQuery,
+                    startDate: this.$moment(this.startDate).format('YYYY-MM-DD'),
+                    endDate: this.$moment(this.endDate).format('YYYY-MM-DD')
+                })
+                .then(() => {
+                    this.dailyReady = true;
+                });
+
+
             this.$store.dispatch("execution/findExecutions", {
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
@@ -188,7 +222,7 @@ export default {
         },
         durationFrom(item) {
             return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
-        }
+        },
     }
 };
 </script>

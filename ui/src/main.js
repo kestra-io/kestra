@@ -16,6 +16,7 @@ import VueRouter from 'vue-router'
 import VueSSE from 'vue-sse';
 import VueSidebarMenu from 'vue-sidebar-menu'
 import Vuex from "vuex";
+import VueAnalytics from 'vue-analytics';
 
 import configureHttp from './http'
 import Toast from "./utils/toast";
@@ -34,6 +35,15 @@ if (app) {
 
   Vue.use(VueRouter);
   let router = new VueRouter(routes);
+
+  /* eslint-disable */
+  if (KESTRA_GOOGLE_ANALYTICS !== null) {
+    Vue.use(VueAnalytics, {
+      id: KESTRA_GOOGLE_ANALYTICS,
+      router
+    });
+  }
+  /* eslint-enable */
 
   Vue.use(VueI18n);
 

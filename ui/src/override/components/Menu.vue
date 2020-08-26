@@ -8,7 +8,7 @@
     <div class="logo" slot="header">
       <router-link :to="{name: 'home'}">
         <span>
-          <img src="../../../src/assets/logo-white.svg" alt="Kestra"/>
+          <span class="img" />
         </span>
       </router-link>
     </div>
@@ -117,8 +117,12 @@ export default {
     height: 52px;
     overflow: hidden;
     border-bottom: 2px solid $tertiary;
-    img {
-      height: 100%;
+    span.img {
+      height: 50px;
+      background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
+      background-size: 190px 60px;
+      background-position-y: -6px;
+      background-position-x: -2px;
     }
   }
 }

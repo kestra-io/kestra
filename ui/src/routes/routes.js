@@ -8,7 +8,8 @@ import Plugin from '../components/plugins/Plugin.vue'
 
 export default {
     mode: 'history',
-    base: '/ui/',
+    // eslint-disable-next-line no-undef
+    base: KESTRA_UI_PATH,
     routes: [
         //Flows
         { name: 'home', path: '/', component: Flows },

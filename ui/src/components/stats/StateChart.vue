@@ -163,7 +163,7 @@
                 return defaultsDeep(defaultConfig, this.config);
             },
             fillData(data) {
-                return dateFill(data, this.startDate, this.endDate, "startDate", this.dateFormat, {
+                return dateFill(this.$moment, data, this.startDate, this.endDate, "startDate", this.dateFormat, {
                     success: 0,
                     failed: 0,
                     created: 0,

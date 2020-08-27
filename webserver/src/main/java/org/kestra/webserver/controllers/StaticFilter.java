@@ -13,10 +13,10 @@ import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.server.netty.types.files.NettyStreamedFileCustomizableResponseType;
 import io.micronaut.http.server.netty.types.files.NettySystemFileCustomizableResponseType;
 import org.apache.commons.io.IOUtils;
-import org.kestra.core.docs.DocumentationGenerator;
 import org.reactivestreams.Publisher;
 
 import java.io.IOException;
+
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -46,7 +46,7 @@ public class StaticFilter implements HttpServerFilter {
                 if (first || second) {
                     try {
                         String content = IOUtils.toString(
-                            Objects.requireNonNull(DocumentationGenerator.class.getClassLoader().getResourceAsStream("ui/index.html")),
+                            Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),
                             Charsets.UTF_8
                         );
 

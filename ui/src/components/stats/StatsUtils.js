@@ -1,7 +1,6 @@
 import {assign, clone} from "lodash";
-import moment from "moment";
 
-export function dateFill(data, startDate, endDate, property, dateFormat, emptyMetric) {
+export function dateFill(moment, data, startDate, endDate, property, dateFormat, emptyMetric) {
     const dateRange = moment.range(startDate, endDate);
 
     let resultMetrics = [];

@@ -35,7 +35,6 @@ export default (callback, store, nprogress) => {
         instance
     );
 
-    // eslint-disable-next-line no-undef
     Vue.axios.defaults.baseURL = root;
     callback();
 };

@@ -5,6 +5,11 @@ class Me {
     }
 
     // eslint-disable-next-line no-unused-vars
+    hasAnyAction(permission, action, namespace) {
+        return true;
+    }
+
+    // eslint-disable-next-line no-unused-vars
     isAllowed(permission, action, namespace) {
         return true;
     }

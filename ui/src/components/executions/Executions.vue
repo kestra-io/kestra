@@ -37,12 +37,12 @@
                     </template>
                     <template
                         v-slot:cell(state.startDate)="row"
-                    >{{row.item.state.startDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
+                    >{{row.item.state.startDate | date('LLLL')}}</template>
                     <template
                         v-slot:cell(state.endDate)="row"
                     >
                     <span v-if="!['RUNNING', 'CREATED'].includes(row.item.state.current)">
-                        {{row.item.state.endDate | date('YYYY/MM/DD HH:mm:ss')}}
+                        {{row.item.state.endDate | date('LLLL')}}
                     </span>
                     </template>
                     <template v-slot:cell(state.current)="row">

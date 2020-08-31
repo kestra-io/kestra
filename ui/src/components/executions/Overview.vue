@@ -133,8 +133,8 @@ export default {
                     key: this.$t("revision"),
                     value: this.execution.flowRevision
                 },
-                { key: this.$t("created date"), value: startTs },
-                { key: this.$t("updated date"), value: stopTs },
+                { key: this.$t("created date"), value: this.$moment(startTs).format('LLLL') },
+                { key: this.$t("updated date"), value: this.$moment(stopTs).format('LLLL') },
                 { key: this.$t("duration"), value: humanDuration },
                 { key: this.$t("steps"), value: stepCount }
             ];
@@ -167,7 +167,14 @@ export default {
             if (this.execution.variables !== undefined) {
                 const flat = this.flat(this.execution.variables);
                 for (const key in flat) {
-                    variables.push({ key, value: flat[key] });
+
+                    let date = this.$moment(flat[key]);
+
+                    if (date.isValid()) {
+                        variables.push({key, value: date.format('LLLL')});
+                    } else {
+                        variables.push({key, value: flat[key]});
+                    }
                 }
             }
 

@@ -67,7 +67,7 @@
                 </template>
             </data-table>
         </div>
-        <bottom-line v-if="user && user.hasAny(permission.FLOW, action.READ)">
+        <bottom-line v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
                     <router-link :to="{name: 'flowsAdd'}">

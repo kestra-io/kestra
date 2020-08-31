@@ -1,7 +1,7 @@
 <template>
     <div class="line" v-if="filtered">
         <span :class="levelClass" class="badge">{{log.level.padEnd(9)}}</span>
-        <span class="badge bg-light text-dark">{{log.timestamp  | date('YYYY/MM/DD HH:mm:ss') }}</span>
+        <span class="badge bg-light text-dark">{{log.timestamp  | date('LLLL') }}</span>
         <span class="message">{{log.message}}</span>
     </div>
 </template>

@@ -40,7 +40,7 @@ public class Scheduler implements Runnable, AutoCloseable {
     private final ExecutionRepositoryInterface executionRepository;
 
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-    private Map<String, Optional<Trigger>> lastTriggers = new ConcurrentHashMap<>();
+    private Map<String, Trigger> lastTriggers = new ConcurrentHashMap<>();
 
     @Inject
     public Scheduler(
@@ -126,7 +126,7 @@ public class Scheduler implements Runnable, AutoCloseable {
                 .build()
             )
             .peek(this::getLastTrigger)
-            .filter(this::isExecutionRunning)
+            .filter(this::isExecutionNotRunning)
             .map(f -> {
                 synchronized (this) {
                     if (!lastTriggers.containsKey(f.getTriggerContext().uid())) {
@@ -135,7 +135,7 @@ public class Scheduler implements Runnable, AutoCloseable {
 
                     return FlowWithPollingTriggerNextDate.of(
                         f,
-                        f.getTrigger().nextDate(lastTriggers.get(f.getTriggerContext().uid()))
+                        f.getTrigger().nextDate(Optional.of(lastTriggers.get(f.getTriggerContext().uid())))
                     );
                 }
             })
@@ -148,20 +148,21 @@ public class Scheduler implements Runnable, AutoCloseable {
             .forEach(executionQueue::emit);
     }
 
-    private boolean isExecutionRunning(FlowWithPollingTrigger f) {
-        Optional<Trigger> lastTrigger = lastTriggers.get(f.getTriggerContext().uid());
-        if (lastTrigger.isEmpty()) {
+    private boolean isExecutionNotRunning(FlowWithPollingTrigger f) {
+        Trigger lastTrigger = lastTriggers.get(f.getTriggerContext().uid());
+
+        if (lastTrigger.getExecutionId() == null) {
             return true;
         }
 
-        Optional<Execution> execution = executionRepository.findById(lastTrigger.get().getExecutionId());
+        Optional<Execution> execution = executionRepository.findById(lastTrigger.getExecutionId());
 
         // indexer hasn't received the execution, we skip
         if (execution.isEmpty()) {
             log.warn("Execution '{}' for flow '{}.{}' is not found, schedule is blocked",
-                lastTrigger.get().getExecutionId(),
-                lastTrigger.get().getNamespace(),
-                lastTrigger.get().getFlowId()
+                lastTrigger.getExecutionId(),
+                lastTrigger.getNamespace(),
+                lastTrigger.getFlowId()
             );
 
             return false;
@@ -174,9 +175,9 @@ public class Scheduler implements Runnable, AutoCloseable {
 
         if (log.isDebugEnabled()) {
             log.debug("Execution '{}' for flow '{}.{}' is still '{}', waiting for next backfill",
-                lastTrigger.get().getExecutionId(),
-                lastTrigger.get().getNamespace(),
-                lastTrigger.get().getFlowId(),
+                lastTrigger.getExecutionId(),
+                lastTrigger.getNamespace(),
+                lastTrigger.getFlowId(),
                 execution.get().getState().getCurrent()
             );
         }
@@ -198,7 +199,19 @@ public class Scheduler implements Runnable, AutoCloseable {
     private void getLastTrigger(FlowWithPollingTrigger f) {
         lastTriggers.computeIfAbsent(
             f.getTriggerContext().uid(),
-            s -> triggerContextRepository.findLast(f.getTriggerContext())
+            s -> triggerContextRepository
+                .findLast(f.getTriggerContext())
+                // we don't find, so never started execution, create an trigger context with next date.
+                // this allow some edge case when the evaluation loop of schedulers will change second
+                // between start and end
+                .orElse(Trigger.builder()
+                    .date(ZonedDateTime.now(ZoneId.systemDefault()))
+                    .flowId(f.getFlow().getId())
+                    .flowRevision(f.getFlow().getRevision())
+                    .namespace(f.getFlow().getNamespace())
+                    .triggerId(f.getTriggerContext().getTriggerId())
+                    .build()
+                )
         );
     }
 
@@ -208,7 +221,7 @@ public class Scheduler implements Runnable, AutoCloseable {
             executionWithTrigger.getExecution()
         );
 
-        this.lastTriggers.put(executionWithTrigger.getTriggerContext().uid(), Optional.of(trigger));
+        this.lastTriggers.put(executionWithTrigger.getTriggerContext().uid(), trigger);
         this.triggerContextRepository.save(trigger);
     }
 

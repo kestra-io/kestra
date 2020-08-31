@@ -204,13 +204,18 @@ public class Scheduler implements Runnable, AutoCloseable {
                 // we don't find, so never started execution, create an trigger context with next date.
                 // this allow some edge case when the evaluation loop of schedulers will change second
                 // between start and end
-                .orElse(Trigger.builder()
-                    .date(ZonedDateTime.now(ZoneId.systemDefault()))
-                    .flowId(f.getFlow().getId())
-                    .flowRevision(f.getFlow().getRevision())
-                    .namespace(f.getFlow().getNamespace())
-                    .triggerId(f.getTriggerContext().getTriggerId())
-                    .build()
+                .orElseGet(() -> {
+                    ZonedDateTime nextDate = f.getTrigger().nextDate(Optional.empty());
+                    ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
+
+                    return Trigger.builder()
+                            .date(nextDate.toEpochSecond() < now.toEpochSecond() ? nextDate : now)
+                            .flowId(f.getFlow().getId())
+                            .flowRevision(f.getFlow().getRevision())
+                            .namespace(f.getFlow().getNamespace())
+                            .triggerId(f.getTriggerContext().getTriggerId())
+                            .build();
+                    }
                 )
         );
     }

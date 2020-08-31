@@ -51,7 +51,7 @@ class SchedulerTest {
         Schedule schedule = Schedule.builder()
             .id("monthly")
             .type(Schedule.class.getName())
-            .cron("0 0 1 * *")
+            .cron("0 0 2 * *")
             .backfill(ScheduleBackfill.builder()
                 .start(date(-4))
                 .build()

@@ -48,12 +48,14 @@ class SchedulerTest {
     private QueueInterface<Execution> executionQueue;
 
     private static Flow create() {
+        System.out.println(date(-4));
+
         Schedule schedule = Schedule.builder()
             .id("monthly")
             .type(Schedule.class.getName())
-            .cron("0 0 2 * *")
+            .cron("0 0 1 * *")
             .backfill(ScheduleBackfill.builder()
-                .start(date(-4))
+                .start(date(-5))
                 .build()
             )
             .build();

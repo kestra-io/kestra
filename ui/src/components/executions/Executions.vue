@@ -105,10 +105,16 @@ export default {
         };
     },
     beforeCreate () {
-        const params = JSON.parse(localStorage.getItem('executionQueries') || '{}')
-        params.sort = 'state.startDate:desc'
-        params.status = this.$route.query.status || params.status || 'ALL'
-        localStorage.setItem('executionQueries', JSON.stringify(params))
+        const queries = JSON.parse(localStorage.getItem('executionQueries') || '{}')
+        queries.sort = queries.sort ? queries.sort :  'state.startDate:desc'
+        queries.status = this.$route.query.status || queries.status || 'ALL'
+        if (!this.$route.query.sort) {
+            this.$router.push({
+                name: this.$route.name,
+                query: {...this.$route.query, ...queries}
+            });
+        }
+        localStorage.setItem('executionQueries', JSON.stringify(queries))
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),

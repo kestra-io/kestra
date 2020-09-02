@@ -20,7 +20,7 @@
                         :endDate="endDate"
                         :startDate="startDate"
                         :data="daily"
-                        />
+                    />
                 </template>
 
                 <template v-slot:table>
@@ -62,6 +62,12 @@
                                 :startDate="startDate"
                                 :data="chartData(row)"
                             />
+                        </template>
+
+                        <template v-slot:cell(id)="row">
+                            <router-link
+                                :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
+                            >{{row.item.id}}</router-link>
                         </template>
                     </b-table>
                 </template>

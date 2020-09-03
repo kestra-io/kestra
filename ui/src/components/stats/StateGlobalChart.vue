@@ -3,9 +3,6 @@
         <div class="title" :title="$t('last 30 days executions')">{{$t('last 30 days executions')}}</div>
         <state-chart
             v-if="ready"
-            dateFormat="YYYY-MM-DD"
-            :endDate="endDate"
-            :startDate="startDate"
             :data="data"
             :global="true"
         />
@@ -13,24 +10,15 @@
 </template>
 
 <script>
-    import StateChart from "../stats/StateChart";
+    import StateChart from "./StateChart";
 
     export default {
-        name: "c3-chart",
         components: {
             StateChart
         },
         props: {
             ready: {
                 type: Boolean,
-                required: true
-            },
-            startDate: {
-                type: Date,
-                required: true
-            },
-            endDate: {
-                type: Date,
                 required: true
             },
             data: {
@@ -68,7 +56,7 @@
         overflow: hidden;
     }
 
-    .state-charts {
+    .executions-charts {
         margin-left: 35px;
         top: 0;
         display: flex;

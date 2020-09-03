@@ -5,6 +5,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,9 +17,9 @@ public interface ExecutionRepositoryInterface {
 
     ArrayListTotal<Execution> find(String query, Pageable pageable, State.Type state);
 
-    List<DailyExecutionStatistics> dailyStatistics(String query);
+    List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate);
 
-    Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query);
+    Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query, LocalDate startDate, LocalDate endDate);
 
     Execution save(Execution flow);
 }

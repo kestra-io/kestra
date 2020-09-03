@@ -80,3 +80,37 @@ code[class*="language-"], pre[class*="language-"] {
     text-shadow: none !important;
     line-height: 1.2 !important;
 }
+
+.executions-charts {
+    position: relative;
+    > div {
+        height: 100px;
+    }
+
+    &.mini {
+        > div {
+            height: 50px;
+            width: 250px
+        }
+    }
+}
+
+.tooltip-stats {
+    font-size: $font-size-xs;
+    .tooltip-inner {
+        text-align: left;
+    }
+
+    h6 {
+        font-weight: bold;
+        font-size: $font-size-xs;
+    }
+
+    span.square {
+        border: 1px solid;
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-right: 5px;
+    }
+}

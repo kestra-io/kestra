@@ -1,189 +1,127 @@
 <template>
-    <div class="state-charts">
-        <vue-c3 :handler="handler"></vue-c3>
+    <div :id="uuid" :class="'executions-charts' + (this.global ? '' : ' mini')" v-if="dataReady">
+        <current-chart :data="collections" :options="options"></current-chart>
+        <b-tooltip
+            custom-class="tooltip-stats"
+            no-fade
+            :target="uuid"
+            :placement="(this.global ? 'bottom' : 'left')"
+            triggers="hover">
+            <span v-html="tooltip"></span>
+        </b-tooltip>
     </div>
 </template>
 
 <script>
-    import Vue from 'vue'
-    import VueC3 from 'vue-c3'
-    import {defaultsDeep} from "lodash";
-    import {dateFill, tooltipPosition} from "./StatsUtils";
+    import {Bar} from 'vue-chartjs'
+    import {uid} from "../../utils/utils.js";
+    import {tooltip, defaultConfig} from "../../utils/charts.js";
 
-    export default {
-        name: "c3-chart",
-        components: {
-            VueC3
-        },
-        data() {
-            return {
-                handler: new Vue(),
+    const CurrentChart = {
+        extends: Bar,
+        props: {
+            data: {
+                type: Object,
+                required: true
+            },
+            options: {
+                type: Object,
+                required: true
             }
         },
+        mounted() {
+            setTimeout(() => {
+                this.renderChart(this.data, this.options);
+            }, 0)
+        },
+    };
+
+    export default {
+        components: {
+            CurrentChart
+        },
         props: {
-            startDate: {
-                type: Date,
-                required: true
-            },
-            endDate: {
-                type: Date,
-                required: true
-            },
-            dateFormat: {
-                type: String,
-                required: true
-            },
-            config: {
-                type: Object,
-                default: () => ({})
-            },
             data: {
                 type: Array,
                 required: true
-            },
-            namespace: {
-                type: String,
-            },
-            flowId: {
-                type: String,
             },
             global: {
                 type: Boolean,
                 default: () => false
             }
         },
-
+        data() {
+            return {
+                uuid: uid(),
+                tooltip: undefined
+            };
+        },
         methods: {
-            getArgs() {
-                const data = this.getData();
-
-                if (this.namespace && this.flowId) {
-                    const self = this;
-                    data.onclick = function (d) {
-
-                        const executionDay = self.$moment(
-                            this.categories()[d.index]
-                        );
-                        const start = executionDay.unix() * 1000;
-                        executionDay.add(1, "d");
-                        const end = executionDay.unix() * 1000;
-
-                        const routeParams = {
-                            name: "flowEdit",
-                            params: {
-                                namespace: self.namespace,
-                                id: self.flowId,
-                            },
-                            query: {
-                                tab: "executions",
-                                start,
-                                end,
-                                status: d.id.toUpperCase()
-                            }
-                        };
-
-                        self.$router.push(routeParams);
-                    };
-                }
-
-                const config = this.getConfig();
-
-                return defaultsDeep({data: data}, config);
-            },
-            getData: function () {
-                return {
-                    json: this.fillData(this.data
-                        .map(d => {
-                            const r = {
-                                startDate: d.startDate,
-                            };
-
-                            d.executionCounts
-                                .forEach(c => {
-                                    return r[c.state.toLowerCase()] = c.count;
-                                })
-
-                            return r;
-                        })
-                    )
-                };
-            },
-            getConfig() {
-                const statuses = ["success", "failed", "created", "running"];
-
-                let defaultConfig = {
-                    data: {
-                        type: 'bar',
-                        keys: {x: "startDate", value: statuses},
-                        groups: [statuses],
-                    },
-                    size: {
-                        height: 50
-                    },
-                    axis: {
-                        y: {
-                            show: false,
-                            padding: 0,
-                            min: 0,
-                        },
-                        x: {
-                            show: true,
-                            type: "category",
-                            padding: 0,
-                            height: 1
-                        }
-                    },
-                    color: {
-                        pattern: ["#43ac6a", "#F04124", "#75bcdd", "#1AA5DE"]
-                    },
-                    legend: {
-                        show: false
-                    },
-                    bar: {
-                        width: {
-                            ratio: 0.7
-                        }
-                    }
-                }
-
-                if (!this.global) {
-                    defaultConfig = defaultsDeep(defaultConfig, {
-                        tooltip : {
-                            position: tooltipPosition
-                        }
-                    });
+            backgroundFromState(state) {
+                if (state === "SUCCESS") {
+                    return "#43ac6a"
+                } else if (state === "CREATED") {
+                    return "#75bcdd"
+                } else if (state === "RUNNING") {
+                    return "#1AA5DE"
                 } else {
-                    defaultConfig = defaultsDeep({
-                        size: {
-                            height: 100
-                        },
-                    }, defaultConfig);
+                    return "#F04124"
                 }
-
-                return defaultsDeep(defaultConfig, this.config);
-            },
-            fillData(data) {
-                return dateFill(this.$moment, data, this.startDate, this.endDate, "startDate", this.dateFormat, {
-                    success: 0,
-                    failed: 0,
-                    created: 0,
-                    running: 0,
-                });
             }
         },
-        mounted() {
-            const args = this.getArgs();
-            this.handler.$emit('init', args)
+        computed: {
+            dataReady() {
+                return this.data.length > 0;
+            },
+            collections() {
+                let self = this;
+
+                let datasets = this.data
+                    .reduce(function (accumulator, value) {
+                        Object.keys(value.executionCounts).forEach(function (state) {
+                            if (accumulator[state] === undefined) {
+                                accumulator[state] = {
+                                    label: state,
+                                    backgroundColor: self.backgroundFromState(state),
+                                    data: []
+                                };
+                            }
+
+                            accumulator[state].data.push(value.executionCounts[state]);
+                        });
+
+                        return accumulator;
+                    }, Object.create(null))
+
+
+                return {
+                    labels: this.data.map(r => r.startDate),
+                    datasets: Object.values(datasets)
+                }
+            },
+            options() {
+                let self = this
+
+                return defaultConfig({
+                    tooltips: {
+                        custom: function (tooltipModel) {
+                            let content = tooltip(tooltipModel);
+                            if (content) {
+                                self.tooltip = content;
+                            }
+                        }
+                    },
+
+                    scales: {
+                        xAxes: [{
+                            stacked: true,
+                        }],
+                        yAxes: [{
+                            stacked: true,
+                        }]
+                    },
+                })
+            }
         }
-    };
-</script>
-
-<style lang="scss">
-.state-charts {
-    .c3-axis-x path, .c3-axis-x line {
-        stroke: transparent;
     }
-}
-</style>
-
-
+</script>

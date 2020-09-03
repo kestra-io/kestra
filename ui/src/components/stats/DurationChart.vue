@@ -1,126 +1,106 @@
 <template>
-    <div class="duration-charts">
-        <vue-c3 :handler="handler"></vue-c3>
+    <div :id="uuid" :class="'executions-charts' + (this.global ? '' : ' mini')" v-if="dataReady">
+        <current-chart :data="collections" :options="options"></current-chart>
+        <b-tooltip
+            custom-class="tooltip-stats"
+            no-fade
+            :target="uuid"
+            :placement="(this.global ? 'bottom' : 'left')"
+            triggers="hover">
+            <span v-html="tooltip"></span>
+        </b-tooltip>
     </div>
 </template>
 
 <script>
-    import Vue from 'vue'
-    import VueC3 from 'vue-c3'
-    import {defaultsDeep} from "lodash";
-    import {dateFill, tooltipPosition} from "./StatsUtils";
+    import {Line} from 'vue-chartjs'
     import humanizeDuration from "humanize-duration";
+    import {tooltip, defaultConfig} from "../../utils/charts.js";
+    import {uid} from "../../utils/utils";
 
-    export default {
-        name: "c3-chart",
-        components: {
-            VueC3
-        },
-        data() {
-            return {
-                handler: new Vue(),
+    const CurrentChart = {
+        extends: Line,
+        props: {
+            data: {
+                type: Object,
+                required: true
+            },
+            options: {
+                type: Object,
+                required: true
             }
         },
+        mounted() {
+            setTimeout(() => {
+                this.renderChart(this.data, this.options);
+            }, 0)
+        },
+    };
+
+    export default {
+        components: {
+            CurrentChart
+        },
         props: {
-            startDate: {
-                type: Date,
-                required: true
-            },
-            endDate: {
-                type: Date,
-                required: true
-            },
-            dateFormat: {
-                type: String,
-                required: true
-            },
-            config: {
-                type: Object,
-                default: () => ({})
-            },
             data: {
                 type: Array,
                 required: true
             },
-        },
-
-        methods: {
-            getArgs() {
-                const data = this.getData();
-                const config = this.getConfig();
-
-                return defaultsDeep({data: data}, config);
-            },
-            getData: function () {
-                return {
-                    json: this.fillData(this.data
-                        .map(d => {
-                            return {
-                                startDate: d.startDate,
-                                duration: d.duration ? d.duration.avg : null
-                            };
-                        })
-                    )
-                };
-            },
-            getConfig() {
-                const defaultConfig = {
-                    data: {
-                        type: 'area',
-                        keys: {x: "startDate", value: ["duration"]},
-                    },
-                    size: {
-                        height: 50
-                    },
-                    axis: {
-                        y: {
-                            show: false,
-                            min: 0,
-                            padding: 0,
-                            tick: {
-                                format: function (d) { return humanizeDuration(d * 1000); }
-                            }
-                        },
-                        x: {
-                            show: true,
-                            type: "category",
-                            padding: 0,
-                            height: 1
-                        }
-                    },
-                    point: {
-                        r: 1
-                    },
-                    color: {
-                        pattern: ["#1DBAAF"]
-                    },
-                    legend: {
-                        show: false
-                    },
-                    tooltip: {
-                        position: tooltipPosition
-                    }
-                }
-
-                return defaultsDeep(defaultConfig, this.config);
-            },
-            fillData(data) {
-                return dateFill(this.$moment, data, this.startDate, this.endDate, "startDate", this.dateFormat, {
-                    duration: null
-                });
+            global: {
+                type: Boolean,
+                default: () => false
             }
         },
-        mounted() {
-            const args = this.getArgs();
-            this.handler.$emit('init', args)
-        }
-    };
-</script>
+        data() {
+            return {
+                uuid: uid(),
+                tooltip: undefined
+            };
+        },
+        computed: {
+            dataReady() {
+                return this.data.length > 0;
+            },
+            collections() {
+                let avgData = this.data
+                    .map((value) => {
+                        return value.duration.avg === 0 ? null : value.duration.avg;
+                    });
 
-<style lang="scss">
-.duration-charts {
-    .c3-axis-x path, .c3-axis-x line {
-        stroke: transparent;
+                return {
+                    labels: this.data.map(r => r.startDate),
+                    datasets: [{
+                        label: "Duration",
+                        backgroundColor: "#c7e7e5",
+                        fill: 'start',
+                        pointRadius: 1,
+                        borderWidth: 1,
+                        borderColor: "#1dbaaf",
+                        data: avgData
+                    }]
+                }
+            },
+
+            options() {
+                let self = this
+
+                return defaultConfig({
+                    tooltips: {
+                        custom: function(tooltipModel) {
+                            let content = tooltip(tooltipModel);
+                            if (content) {
+                                self.tooltip = content;
+                            }
+                        },
+                        callbacks: {
+                            label: function(tooltipItem) {
+                                return humanizeDuration(tooltipItem.yLabel * 1000);
+                            }
+                        }
+                    },
+
+                })
+            }
+        }
     }
-}
-</style>
+</script>

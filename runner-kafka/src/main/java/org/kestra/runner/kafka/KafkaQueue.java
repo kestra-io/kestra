@@ -86,11 +86,17 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         }
     }
 
+    private void log(T object, String message) {
+        if (log.isTraceEnabled()) {
+            log.trace("{} on  topic '{}', value {}", message, topicsConfig.getName(), object);
+        } else if (log.isDebugEnabled()) {
+            log.trace("{} on topic '{}', key {}", message, topicsConfig.getName(), this.key(object));
+        }
+    }
+
     @Override
     public void emit(T message) throws QueueException {
-        if (log.isTraceEnabled()) {
-            log.trace("New message: topic '{}', value {}", topicsConfig.getName(), message);
-        }
+        this.log(message, "Outgoing messsage");
 
         try {
             kafkaProducer
@@ -136,6 +142,8 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
                 ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofSeconds(1));
 
                 records.forEach(record -> {
+                    this.log(record.value(), "Incoming messsage");
+
                     consumer.accept(record.value());
 
                     if (consumerGroup != null) {

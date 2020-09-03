@@ -12,6 +12,7 @@ import org.kestra.core.repositories.ArrayListTotal;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -85,25 +86,30 @@ class ElasticSearchExecutionRepositoryTest {
             ).build());
         }
 
-        Map<String, Map<String, List<DailyExecutionStatistics>>> result = executionRepository.dailyGroupByFlowStatistics("state.startDate:[now-1d TO *] AND *");
+        Map<String, Map<String, List<DailyExecutionStatistics>>> result = executionRepository.dailyGroupByFlowStatistics(
+            "*",
+            LocalDate.now().minusDays(10),
+            LocalDate.now()
+        );
 
         assertThat(result.size(), is(1));
         assertThat(result.get("org.kestra.unittest").size(), is(2));
 
-        DailyExecutionStatistics full = result.get("org.kestra.unittest").get(FLOW).get(0);
-        DailyExecutionStatistics second = result.get("org.kestra.unittest").get("second").get(0);
+        DailyExecutionStatistics full = result.get("org.kestra.unittest").get(FLOW).get(10);
+        DailyExecutionStatistics second = result.get("org.kestra.unittest").get("second").get(10);
 
         assertThat(full.getDuration().getAvg().getSeconds(), greaterThan(0L));
-        assertThat(full.getExecutionCounts().size(), is(3));
-        assertThat(full.getExecutionCounts().stream().filter(f -> f.getState() == State.Type.FAILED).findFirst().orElseThrow().getCount(), is(3L));
-        assertThat(full.getExecutionCounts().stream().filter(f -> f.getState() == State.Type.RUNNING).findFirst().orElseThrow().getCount(), is(5L));
-        assertThat(full.getExecutionCounts().stream().filter(f -> f.getState() == State.Type.SUCCESS).findFirst().orElseThrow().getCount(), is(7L));
+        assertThat(full.getExecutionCounts().size(), is(5));
+        assertThat(full.getExecutionCounts().get(State.Type.FAILED), is(3L));
+        assertThat(full.getExecutionCounts().get(State.Type.RUNNING), is(5L));
+        assertThat(full.getExecutionCounts().get(State.Type.SUCCESS), is(7L));
+        assertThat(full.getExecutionCounts().get(State.Type.RESTARTED), is(0L));
 
         assertThat(second.getDuration().getAvg().getSeconds(), greaterThan(0L));
-        assertThat(second.getExecutionCounts().size(), is(1));
-        assertThat(second.getExecutionCounts().stream().filter(f -> f.getState() == State.Type.SUCCESS).findFirst().orElseThrow().getCount(), is(13L));
+        assertThat(second.getExecutionCounts().size(), is(5));
+        assertThat(second.getExecutionCounts().get(State.Type.SUCCESS), is(13L));
+        assertThat(second.getExecutionCounts().get(State.Type.RESTARTED), is(0L));
     }
-
 
     @Test
     void dailyStatistics() {
@@ -114,15 +120,19 @@ class ElasticSearchExecutionRepositoryTest {
             ).build());
         }
 
-        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics("state.startDate:[now-1d TO *] AND *");
+        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
+            "*",
+            LocalDate.now().minusDays(10),
+            LocalDate.now()
+        );
 
-        assertThat(result.size(), is(1));
-        assertThat(result.get(0).getExecutionCounts().size(), is(3));
-        assertThat(result.get(0).getDuration().getAvg().getSeconds(), greaterThan(0L));
+        assertThat(result.size(), is(11));
+        assertThat(result.get(10).getExecutionCounts().size(), is(5));
+        assertThat(result.get(10).getDuration().getAvg().getSeconds(), greaterThan(0L));
 
-        assertThat(result.get(0).getExecutionCounts().stream().filter(f -> f.getState() == State.Type.FAILED).findFirst().orElseThrow().getCount(), is(3L));
-        assertThat(result.get(0).getExecutionCounts().stream().filter(f -> f.getState() == State.Type.RUNNING).findFirst().orElseThrow().getCount(), is(5L));
-        assertThat(result.get(0).getExecutionCounts().stream().filter(f -> f.getState() == State.Type.SUCCESS).findFirst().orElseThrow().getCount(), is(20L));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED), is(3L));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING), is(5L));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(20L));
     }
 
     @AfterEach

@@ -12,8 +12,6 @@
             <template v-slot:top>
                 <state-global-chart
                     :ready="dailyReady"
-                    :endDate="endDate"
-                    :startDate="startDate"
                     :data="daily"
                 />
             </template>

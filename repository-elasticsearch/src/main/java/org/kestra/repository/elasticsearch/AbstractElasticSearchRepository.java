@@ -257,6 +257,22 @@ abstract public class AbstractElasticSearchRepository<T> {
         return this.query(index, sourceBuilder);
     }
 
+    protected List<T> searchByIds(String index, List<String> ids) {
+        if (ids == null) {
+            return new ArrayList<>();
+        }
+
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.idsQuery()
+                .addIds(ids.toArray(String[]::new))
+            );
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool);
+
+        return this.scroll(index, sourceBuilder);
+    }
+
     private List<T> map(SearchHit[] searchHits) {
         return Arrays.stream(searchHits)
             .map(documentFields -> {

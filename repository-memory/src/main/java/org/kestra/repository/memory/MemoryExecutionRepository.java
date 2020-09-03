@@ -8,6 +8,7 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
@@ -51,12 +52,12 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query) {
+    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query, LocalDate startDate, LocalDate endDate) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<DailyExecutionStatistics> dailyStatistics(String query) {
+    public List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate) {
         throw new UnsupportedOperationException();
     }
 }

@@ -17,8 +17,6 @@
                 <template v-slot:top>
                     <state-global-chart
                         :ready="dailyReady"
-                        :endDate="endDate"
-                        :startDate="startDate"
                         :data="daily"
                     />
                 </template>
@@ -45,11 +43,6 @@
                         <template v-slot:cell(state)="row">
                             <state-chart
                                 v-if="dailyGroupByFlowReady"
-                                dateFormat="YYYY-MM-DD"
-                                :endDate="endDate"
-                                :startDate="startDate"
-                                :namespace="row.item.namespace"
-                                :flowId="row.item.id"
                                 :data="chartData(row)"
                             />
                         </template>
@@ -57,9 +50,6 @@
                         <template v-slot:cell(duration)="row">
                             <duration-chart
                                 v-if="dailyGroupByFlowReady"
-                                dateFormat="YYYY-MM-DD"
-                                :endDate="endDate"
-                                :startDate="startDate"
                                 :data="chartData(row)"
                             />
                         </template>
@@ -185,7 +175,7 @@ export default {
             this.dailyReady = false;
             this.$store
                 .dispatch("stat/daily", {
-                    q: this.query,
+                    q: this.query.replace("id:" , "flowId:"),
                     startDate: this.$moment(this.startDate).format('YYYY-MM-DD'),
                     endDate: this.$moment(this.endDate).format('YYYY-MM-DD')
                 })

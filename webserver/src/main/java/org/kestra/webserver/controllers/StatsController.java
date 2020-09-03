@@ -34,7 +34,7 @@ public class StatsController {
         @Nullable @Format("yyyy-MM-dd") LocalDate startDate,
         @Nullable @Format("yyyy-MM-dd") LocalDate endDate
     ) {
-        return executionRepository.dailyStatistics(query(q, startDate, endDate));
+        return executionRepository.dailyStatistics(q, startDate, endDate);
     }
 
     /**
@@ -51,18 +51,6 @@ public class StatsController {
         @Nullable @Format("yyyy-MM-dd") LocalDate startDate,
         @Nullable @Format("yyyy-MM-dd") LocalDate endDate
     ) {
-        return executionRepository.dailyGroupByFlowStatistics(query(q, startDate, endDate));
-    }
-
-    private static String query(String q, LocalDate startDate, LocalDate endDate) {
-        if (startDate == null) {
-            startDate = LocalDate.now().minusDays(30);
-        }
-
-        return "state.startDate:[" +
-            startDate.toString() +
-            " TO " +
-            (endDate != null ? endDate.toString() : "*") +
-            "] AND " + (q != null ? q : "*");
+        return executionRepository.dailyGroupByFlowStatistics(q, startDate, endDate);
     }
 }

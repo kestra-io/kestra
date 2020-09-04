@@ -16,6 +16,7 @@
     import {Bar} from 'vue-chartjs'
     import Utils from "../../utils/utils.js";
     import {tooltip, defaultConfig} from "../../utils/charts.js";
+    import State from "../..//utils/state";
 
     const CurrentChart = {
         extends: Bar,
@@ -58,15 +59,7 @@
         },
         methods: {
             backgroundFromState(state) {
-                if (state === "SUCCESS") {
-                    return "#43ac6a"
-                } else if (state === "CREATED") {
-                    return "#75bcdd"
-                } else if (state === "RUNNING") {
-                    return "#1AA5DE"
-                } else {
-                    return "#F04124"
-                }
+                return State.color()[state]
             }
         },
         computed: {

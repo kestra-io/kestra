@@ -22,9 +22,12 @@ public class DailyExecutionStatistics {
     @Builder.Default
     private Map<State.Type, Long> executionCounts = new HashMap<>(Map.of(
         State.Type.CREATED, 0L,
-        State.Type.FAILED, 0L,
         State.Type.RUNNING, 0L,
-        State.Type.SUCCESS, 0L
+        State.Type.RESTARTED, 0L,
+        State.Type.KILLING, 0L,
+        State.Type.SUCCESS, 0L,
+        State.Type.FAILED, 0L,
+        State.Type.KILLED, 0L
     ));
 
     @Value

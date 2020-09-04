@@ -23,6 +23,9 @@ export default {
                 }
             })
         },
+        kill(_, options) {
+            return Vue.axios.delete(`/api/v1/executions/${options.id}/kill`);
+        },
         loadExecution({ commit }, options) {
             return Vue.axios.get(`/api/v1/executions/${options.id}`).then(response => {
                 commit('setExecution', response.data)

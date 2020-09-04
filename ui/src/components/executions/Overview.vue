@@ -3,7 +3,7 @@
         <b-row class="mb-3 text-right">
             <b-col>
                 <restart :execution="execution" @restart="restart"/>
-
+                <kill :execution="execution" />
                 <status :status="execution.state.current"/>
             </b-col>
         </b-row>
@@ -41,6 +41,7 @@
     import Vars from "./Vars";
     import humanizeDuration from "humanize-duration";
     import Restart from "./Restart";
+    import Kill from "./Kill";
 
     const ts = date => new Date(date).getTime();
 
@@ -48,7 +49,8 @@
         components: {
             Status,
             Restart,
-            Vars
+            Vars,
+            Kill
         },
         methods: {
             restart() {

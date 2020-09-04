@@ -52,7 +52,7 @@ export default class State {
     }
 
     static isRunning(current) {
-        return ["KILLING", 'CREATED', 'RUNNING'].includes(current);
+        return [State.KILLING, State.CREATED, State.RUNNING].includes(current);
     }
 
     static icon() {

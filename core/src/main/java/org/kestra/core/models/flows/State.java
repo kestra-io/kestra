@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -66,13 +67,7 @@ public class State {
     }
 
     public String humanDuration() {
-        String duration = getDuration()
-            .toString()
-            .substring(2)
-            .replaceAll("(\\d[HMS])(?!$)", " $1 ")
-            .toLowerCase();
-
-        return (duration.substring(0, duration.length() - 4) + "s").trim();
+        return DurationFormatUtils.formatDurationHMS(getDuration().toMillis());
     }
 
     @JsonIgnore
@@ -94,15 +89,17 @@ public class State {
         CREATED,
         RUNNING,
         RESTARTED,
+        KILLING,
         SUCCESS,
-        FAILED;
+        FAILED,
+        KILLED;
 
         public boolean isTerninated() {
-            return this == Type.FAILED || this == Type.SUCCESS;
+            return this == Type.FAILED || this == Type.SUCCESS || this == Type.KILLED;
         }
 
         public boolean isRunning() {
-            return this == Type.RUNNING || this == Type.RESTARTED;
+            return this == Type.RUNNING || this == Type.RESTARTED || this == Type.KILLING;
         }
 
         public boolean isFailed() {

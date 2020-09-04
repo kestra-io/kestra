@@ -1,25 +1,77 @@
 <template>
-    <b-row v-if="revisions">
-        <b-col md="5">
-            <b-form-select v-model="revisionLeft" :options="options"></b-form-select>
-            <pre>{{revisionLeftText}}</pre>
-        </b-col>
-        <b-col md="2">
-            <pre class="diff text-center text-info">{{diff}}</pre>
-        </b-col>
-        <b-col md="5">
-            <b-form-select v-model="revisionRight" :options="options"></b-form-select>
-            <pre>{{revisionRightText}}</pre>
-        </b-col>
-    </b-row>
+    <div v-if="revisions && revisions.length > 1">
+        <b-row>
+            <b-col md="12">
+                <b-form-select v-model="displayType" :options="displayTypes"></b-form-select>
+                <hr />
+            </b-col>
+
+            <b-col md="6">
+                <b-form-select v-model="revisionLeft" :options="options"></b-form-select>
+            </b-col>
+            <b-col md="6">
+                <b-form-select v-model="revisionRight" :options="options"></b-form-select>
+            </b-col>
+            <b-col md="12">
+                <br />
+                <code-diff
+                    :outputFormat="displayType"
+                    :old-string="revisionLeftText"
+                    :new-string="revisionRightText"
+                    :context="10"
+                />
+            </b-col>
+        </b-row>
+    </div>
+    <div v-else>
+        <b-alert show>{{$t('Revision information unavailable (only 1 revision ?)')}}</b-alert>
+    </div>
 </template>
 <script>
 import { mapState } from "vuex";
 import Yaml from "yaml";
+import CodeDiff from "vue-code-diff";
 
 export default {
+    components: { CodeDiff },
     created() {
-        this.$store.dispatch("flow/loadRevisions", this.$route.params);
+        this.$store
+            .dispatch("flow/loadRevisions", this.$route.params)
+            .then(() => {
+                const revisionLength = this.revisions.length;
+                if (revisionLength > 0) {
+                    this.revisionRight = revisionLength - 1;
+                }
+                if (revisionLength > 1) {
+                    this.revisionLeft = revisionLength - 2;
+                }
+                if (this.$route.query.revisionRight) {
+                    this.revisionRight = this.revisionIndex(
+                        this.$route.query.revisionRight
+                    );
+                    if (
+                        !this.$route.query.revisionLeft &&
+                        this.revisionRight > 0
+                    ) {
+                        this.revisionLeft = this.revisions.length - 1;
+                    }
+                }
+                if (this.$route.query.revisionLeft) {
+                    this.revisionLeft = this.revisionIndex(
+                        this.$route.query.revisionLeft
+                    );
+                }
+            });
+    },
+    methods: {
+        revisionIndex(revision) {
+            const rev = parseInt(revision);
+            for (let i = 0; i < this.revisions.length; i++) {
+                if (rev === this.revisions[i].revision) {
+                    return i;
+                }
+            }
+        },
     },
     computed: {
         ...mapState("flow", ["revisions"]),
@@ -56,17 +108,14 @@ export default {
     },
     data() {
         return {
-            revisionLeft: undefined,
-            revisionRight: undefined,
+            revisionLeft: 0,
+            revisionRight: 0,
+            displayType: "side-by-side",
+            displayTypes: [
+                { value: "side-by-side", text: "side-by-side" },
+                { value: "line-by-line", text: "line-by-line" },
+            ],
         };
     },
 };
 </script>
-<style lang="scss">
-@import "../../styles/variable";
-.diff {
-    margin-top: 38px;
-    background-color: $white;
-    border: none;
-}
-</style>

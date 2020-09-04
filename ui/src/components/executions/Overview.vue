@@ -13,7 +13,14 @@
                     v-if="row.item.link"
                     :to="{name: 'executionEdit', params: row.item.link}"
                 >{{row.item.value}}</router-link>
-                <span v-else>{{row.item.value}}</span>
+                <span v-else>
+                    <span v-if="row.item.key === $t('Revision')">
+                        <router-link
+                            :to="{name: 'flowEdit', params: {id: $route.params.flowId, namespace: $route.params.namespace}, query: {tab: 'revisions', revisionRight: row.item.value}}"
+                        >{{row.item.value}}</router-link>
+                    </span>
+                    <span v-else>{{row.item.value}}</span>
+                </span>
             </template>
         </b-table>
         <div v-if="execution.inputs">
@@ -64,16 +71,18 @@ import humanizeDuration from "humanize-duration";
 import { apiRoot } from "../../http";
 import Restart from "./Restart";
 
-const ts = date => new Date(date).getTime();
+const ts = (date) => new Date(date).getTime();
 
 export default {
     components: {
         Status,
-        Restart
+        Restart,
     },
     methods: {
         isFile(item) {
-            return `${this.execution.inputs[item.key]}`.startsWith("kestra:///")
+            return `${this.execution.inputs[item.key]}`.startsWith(
+                "kestra:///"
+            );
         },
         itemUrl(value) {
             return `${apiRoot}executions/${this.execution.id}/file?path=${value}`;
@@ -82,13 +91,19 @@ export default {
             this.$emit("follow");
         },
         flat(object) {
-            return Object.assign({}, ...function _flatten(child, path = []) {
-                return [].concat(...Object.keys(child).map(key => typeof child[key] === 'object'
-                    ? _flatten(child[key], path.concat([key]))
-                    : ({ [path.concat([key]).join(".")] : child[key] })
-                ));
-            }(object));
-        }
+            return Object.assign(
+                {},
+                ...(function _flatten(child, path = []) {
+                    return [].concat(
+                        ...Object.keys(child).map((key) =>
+                            typeof child[key] === "object"
+                                ? _flatten(child[key], path.concat([key]))
+                                : { [path.concat([key]).join(".")]: child[key] }
+                        )
+                    );
+                })(object)
+            );
+        },
     },
     watch: {
         $route() {
@@ -98,7 +113,7 @@ export default {
                     this.$route.params
                 );
             }
-        }
+        },
     },
     computed: {
         ...mapState("execution", ["execution"]),
@@ -106,12 +121,12 @@ export default {
             return [
                 {
                     key: "key",
-                    label: this.$t("name")
+                    label: this.$t("name"),
                 },
                 {
                     key: "value",
-                    label: this.$t("value")
-                }
+                    label: this.$t("value"),
+                },
             ];
         },
         items() {
@@ -131,12 +146,18 @@ export default {
                 { key: this.$t("flow"), value: this.execution.flowId },
                 {
                     key: this.$t("revision"),
-                    value: this.execution.flowRevision
+                    value: this.execution.flowRevision,
                 },
-                { key: this.$t("created date"), value: this.$moment(startTs).format('LLLL') },
-                { key: this.$t("updated date"), value: this.$moment(stopTs).format('LLLL') },
+                {
+                    key: this.$t("created date"),
+                    value: this.$moment(startTs).format("LLLL"),
+                },
+                {
+                    key: this.$t("updated date"),
+                    value: this.$moment(stopTs).format("LLLL"),
+                },
                 { key: this.$t("duration"), value: humanDuration },
-                { key: this.$t("steps"), value: stepCount }
+                { key: this.$t("steps"), value: stepCount },
             ];
 
             if (this.execution.parentId) {
@@ -146,8 +167,8 @@ export default {
                     link: {
                         flowId: this.execution.flowId,
                         id: this.execution.parentId,
-                        namespace: this.execution.namespace
-                    }
+                        namespace: this.execution.namespace,
+                    },
                 });
             }
 
@@ -167,21 +188,19 @@ export default {
             if (this.execution.variables !== undefined) {
                 const flat = this.flat(this.execution.variables);
                 for (const key in flat) {
-
                     let date = this.$moment(flat[key]);
 
                     if (date.isValid()) {
-                        variables.push({key, value: date.format('LLLL')});
+                        variables.push({ key, value: date.format("LLLL") });
                     } else {
-                        variables.push({key, value: flat[key]});
+                        variables.push({ key, value: flat[key] });
                     }
                 }
             }
 
             return variables;
-        }
+        },
     },
-
 };
 </script>
 <style scoped lang="scss">

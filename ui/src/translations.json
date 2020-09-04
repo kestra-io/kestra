@@ -123,7 +123,8 @@
             "names": "Plugins",
             "please": "Please choose a task on the right to see its documentation"
         },
-        "last 30 days executions": "Last 30 days executions"
+        "last 30 days executions": "Last 30 days executions",
+        "revisions": "Revisions"
     },
     "fr": {
         "id": "Identifiant",
@@ -250,6 +251,7 @@
             "names": "Plugins",
             "please": "Veuillez choisir une tache sur la droit afin de voir sa documentation"
         },
-        "last 30 days executions": "Execution des 30 derniers jours"
+        "last 30 days executions": "Execution des 30 derniers jours",
+        "revisions": "Révisions"
     }
 }

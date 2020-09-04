@@ -23,6 +23,7 @@
 import Overview from "./Overview";
 import Schedule from "./Schedule";
 import DataSource from "./DataSource";
+import Revisions from "./Revisions";
 import ExecutionConfiguration from "./ExecutionConfiguration";
 import BottomLine from "../layout/BottomLine";
 import FlowActions from "./FlowActions";
@@ -41,7 +42,8 @@ export default {
         DataSource,
         FlowActions,
         Executions,
-        ExecutionConfiguration
+        ExecutionConfiguration,
+        Revisions
     },
     created() {
         this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
@@ -130,6 +132,12 @@ export default {
                 });
             }
 
+            if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                tabs.push({
+                    tab: "revisions",
+                    title: title("revisions")
+                });
+            }
 
             return tabs;
         }

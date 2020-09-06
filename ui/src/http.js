@@ -3,7 +3,10 @@ import VueAxios from 'vue-axios';
 import axios from 'axios';
 
 // eslint-disable-next-line no-undef
-const root = (process.env.VUE_APP_API_URL || "") + KESTRA_BASE_PATH;
+let root = (process.env.VUE_APP_API_URL || "") + KESTRA_BASE_PATH;
+if (!root.endsWith("/")) {
+    root = root + "/";
+}
 
 export default (callback, store, nprogress) => {
     const instance = axios.create({
@@ -40,4 +43,4 @@ export default (callback, store, nprogress) => {
 };
 
 
-export const apiRoot = `${root}/api/v1/`
+export const apiRoot = `${root}api/v1/`

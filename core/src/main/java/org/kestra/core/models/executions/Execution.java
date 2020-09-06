@@ -353,7 +353,7 @@ public class Execution implements DeletedInterface {
             })
             .filter(Objects::nonNull)
             .orElseGet(() -> new FailedExecutionWithLog(
-                this.withState(State.Type.FAILED),
+                this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED) : this,
                 Collections.emptyList()
             )
         );

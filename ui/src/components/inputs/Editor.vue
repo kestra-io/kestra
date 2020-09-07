@@ -37,12 +37,17 @@
 
                 editor.setOptions({
                     minLines: 5,
-                    maxLines: Infinity
+                    maxLines: Infinity,
+                    fontFamily: '"Source Code Pro", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                    showPrintMargin: false,
+                    tabSize: 2,
+                    wrap: false,
+                    newLineMode: "unix",
                 });
             },
 
             onInput(value) {
-                this.$emit('input', value);
+                this.$emit('input', value.repalce("\r", "\n"));
             }
         }
     };

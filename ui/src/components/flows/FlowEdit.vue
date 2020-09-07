@@ -97,19 +97,6 @@ export default {
                 };
             }
         },
-        editorInit: function(editor) {
-            require("brace/mode/yaml");
-            require("brace/theme/merbivore_soft");
-            require("brace/ext/language_tools")
-            require("brace/ext/error_marker")
-            require("brace/ext/searchbox")
-            this.$refs.aceEditor.editor.textInput.focus()
-
-            editor.setOptions({
-                minLines: 5,
-                maxLines: Infinity
-            });
-        },
         deleteFlow() {
             if (this.flow) {
                 const flow = this.flow;
@@ -152,7 +139,7 @@ export default {
                 }
 
                 saveFlow(this, flow)
-                    .finally(() => {
+                    .then(() => {
                         this.loadFlow();
                     });
             } else {

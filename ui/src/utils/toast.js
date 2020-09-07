@@ -4,32 +4,40 @@ export default {
             const self = this;
 
             return {
-                message: function(type, message, name) {
-                    if (name) {
-                        return [self.$createElement('span', {domProps: {innerHTML: self.$t(type + " name", {name: name})}})];
-                    } else if (message) {
-                        return message;
-                    } else {
-                        return self.$t(type)
-                    }
+                _wrap: function(message) {
+                    return [self.$createElement('span', {domProps: {innerHTML: message}})];
                 },
-                confirm : function(name, callback) {
-                    self.$bvModal
+                confirm: function(message, callback) {
+                    return self.$bvModal
                         .msgBoxConfirm(
-                            [self.$createElement('span', {domProps: {innerHTML: self.$t("delete confirm", {msg: name})}})],
+                            this._wrap(message || self.$t("toast confirm")),
                             {title: [self.$t("confirmation")]}
                         )
                         .then(confirm => {
                             if (confirm) {
                                 callback()
-                                    .then(() => {
-                                        this.success({type: "deleted", name: name})
-                                    });
                             }
                         })
                 },
-                success: function({message, title, name, type}) {
-                    self.$bvToast.toast(this.message(type || "saved", message, name), {
+                saved: function(name, title) {
+                    self.$bvToast.toast(this._wrap(self.$t("saved done", {name: name})), {
+                        title: title || self.$t("saved"),
+                        autoHideDelay: 5000,
+                        toaster: "b-toaster-top-right",
+                        variant: "success"
+                    })
+                },
+                deleted: function(name, title) {
+                    console.log(self.$bvToast, this._wrap(self.$t("deleted confirm", {name: name})));
+                    self.$bvToast.toast(this._wrap(self.$t("deleted confirm", {name: name})), {
+                        title: title || self.$t("deleted"),
+                        autoHideDelay: 5000,
+                        toaster: "b-toaster-top-right",
+                        variant: "success"
+                    })
+                },
+                success: function(message, title) {
+                    self.$bvToast.toast(this._wrap(message), {
                         title: title || self.$t("success"),
                         autoHideDelay: 5000,
                         toaster: "b-toaster-top-right",
@@ -37,7 +45,7 @@ export default {
                     })
                 },
                 warning: function(message, title) {
-                    self.$bvToast.toast(message, {
+                    self.$bvToast.toast(this._wrap(message), {
                         title: title || self.$t("warning"),
                         autoHideDelay: 5000,
                         toaster: "b-toaster-top-right",
@@ -45,8 +53,8 @@ export default {
                     })
                 },
                 error: function(message, title) {
-                    self.$bvToast.toast(message, {
-                        title: title || self.$t("warning"),
+                    self.$bvToast.toast(this._wrap(message), {
+                        title: title || self.$t("error"),
                         autoHideDelay: 5000,
                         toaster: "b-toaster-top-right",
                         variant: "danger"

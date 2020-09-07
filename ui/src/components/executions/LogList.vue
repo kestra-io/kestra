@@ -5,66 +5,52 @@
                 <div class="bg-dark attempt-wrapper">
                     <template v-for="(attempt, index) in taskItem.attempts">
                         <div
-                            :id="`attempt-${index}-${attempt.state.startDate}`"
-                            :key="`attempt-${index}-${attempt.state.startDate}`"
+                            :id="`attempt-${index}-${taskItem.id}`"
+                            :key="`attempt-${index}-${taskItem.id}`"
                         >
-                            <!-- Tooltip -->
                             <b-tooltip
                                 placement="top"
-                                :target="`attempt-${index}-${attempt.state.startDate}`"
+                                :target="`attempt-${index}-${taskItem.id}`"
                                 triggers="hover"
                             >
-                                {{$t('from')}} : {{attempt.state.startDate | date('LLL:ss') }}
-                                <br />
-                                {{$t('to')}} : {{attempt.state.endDate | date('LLL:ss') }}
-                                <br />
-                                <br />
-                                <clock />
-                                {{$t('duration')}} : {{attempt.state.duration | humanizeDuration}}
+                                {{ $t('from') }} : {{ attempt.state.startDate | date('LLL:ss') }}
+                                <br/>
+                                {{ $t('to') }} : {{ attempt.state.endDate | date('LLL:ss') }}
+                                <br/>
+                                <br/>
+                                <clock/>
+                                {{ $t('duration') }} : {{ attempt.state.duration | humanizeDuration }}
                             </b-tooltip>
 
-                            <div class="attempt">
-                                <!-- Attempt Badge -->
-                                <div>
-                                    <b-badge
-                                        :id="`attempt-badge-${taskItem.id}`"
-                                        variant="primary mr-1"
-                                    >{{$t('attempt')}} {{index + 1}}</b-badge>
+                            <div class="attempt-header">
+                                <div class="attempt-number mr-1">
+                                    {{ $t('attempt') }} {{ index + 1 }}
                                 </div>
 
-                                <!-- Task id -->
                                 <div class="task-id flex-grow-1">
-                                    <span>{{taskItem.taskId | ellipsis(30)}}</span>
+                                    <code>{{ taskItem.taskId }}</code>
+                                    <small v-if="taskItem.value"> {{ taskItem.value }}</small>
                                 </div>
 
-                                <!-- Dropdown menu with actions -->
-                                <div>
-                                    <b-dropdown size="sm" right variant="primary" no-caret>
-                                        <template v-slot:button-content>
-                                            <Menu />
-                                        </template>
-                                        <b-dropdown-item
-                                            v-if="taskItem.outputs"
-                                            @click="toggleShowOutput(taskItem)"
-                                        >
-                                            <eye />
-                                            {{$t('toggle output')}}
-                                        </b-dropdown-item>
-                                        <b-dropdown-item>
-                                            <restart
-                                                :key="`restart-${index}-${attempt.state.startDate}`"
-                                                :isButton="false"
-                                                :execution="execution"
-                                                :task="taskItem"
-                                            />
-                                        </b-dropdown-item>
-                                    </b-dropdown>
-                                </div>
+                                <b-button-group>
+                                    <b-button
+                                        v-if="taskItem.outputs"
+                                        :title="$t('toggle output')"
+                                        @click="toggleShowOutput(taskItem)"
+                                    ><eye /></b-button>
+
+                                    <restart
+                                        :key="`restart-${index}-${attempt.state.startDate}`"
+                                        :isButtonGroup="true"
+                                        :execution="execution"
+                                        :task="taskItem"
+                                    />
+                                </b-button-group>
                             </div>
                         </div>
 
                         <!-- Log lines -->
-                        <template >
+                        <template>
                             <template v-for="(log, i) in findLogs(taskItem.id, index)">
                                 <log-line
                                     :level="level"
@@ -75,146 +61,162 @@
                                 />
                             </template>
                         </template>
+
                     </template>
+                    <!-- Outputs -->
+                    <div v-if="showOutputs[taskItem.id] && taskItem.outputs" class="mb-1 mt-1 outputs">
+                        <h6 class="p-2 mb-0">{{ $t('outputs') }}</h6>
+                        <pre class="bg-dark mb-0 mt-0" :key="taskItem.id">{{ taskItem.outputs }}</pre>
+                    </div>
                 </div>
             </template>
-            <!-- Outputs -->
-            <div v-if="showOutputs[taskItem.id] && taskItem.outputs" class="bg-dark mb-1 mt-1 outputs">
-        <h6 class="p-2 mb-0">{{ $t('outputs') }}</h6>
-        <pre class="bg-dark mb-0 mt-0" :key="taskItem.id">{{taskItem.outputs}}</pre>
+
+
         </div>
-        <!-- <pre>{{execution}}</pre> -->
-        <!-- <pre>{{logs}}</pre> -->
-    </div></div>
+    </div>
 </template>
 <script>
-import { mapState } from "vuex";
-import LogLine from "./LogLine";
-import Restart from "./Restart";
-import Clock from "vue-material-design-icons/Clock";
-import Eye from "vue-material-design-icons/Eye";
-import Menu from "vue-material-design-icons/Menu";
-export default {
-    components: { LogLine, Restart, Clock, Eye, Menu },
-    props: {
-        level: {
-            type: String,
-            default: "INFO"
-        },
-        filter: {
-            type: String,
-            default: ""
-        },
-        taskRunId: {
-            type: String,
-        },
-    },
-    data() {
-        return {
-            showOutputs: {}
-        };
-    },
-    watch: {
-        level: function () {
-            this.loadLogs()
-        }
-    },
-    created() {
-        this.loadLogs();
-    },
-    computed: {
-        ...mapState("execution", ["execution", "task", "logs"])
-    },
-    methods: {
-        toggleShowOutput(task) {
-            this.showOutputs[task.id] = !this.showOutputs[task.id];
-            this.$forceUpdate();
-        },
-        loadLogs() {
-            let params = {minLevel: this.level};
+    import {mapState} from "vuex";
+    import LogLine from "./LogLine";
+    import Restart from "./Restart";
+    import Clock from "vue-material-design-icons/Clock";
+    import Eye from "vue-material-design-icons/Eye";
 
-            if (this.taskRunId) {
-                params.taskRunId = this.taskRunId
+    export default {
+        components: {LogLine, Restart, Clock, Eye},
+        props: {
+            level: {
+                type: String,
+                default: "INFO"
+            },
+            filter: {
+                type: String,
+                default: ""
+            },
+            taskRunId: {
+                type: String,
+            },
+        },
+        data() {
+            return {
+                showOutputs: {}
+            };
+        },
+        watch: {
+            level: function () {
+                this.loadLogs()
             }
+        },
+        created() {
+            this.loadLogs();
+        },
+        computed: {
+            ...mapState("execution", ["execution", "task", "logs"])
+        },
+        methods: {
+            toggleShowOutput(task) {
+                this.showOutputs[task.id] = !this.showOutputs[task.id];
+                this.$forceUpdate();
+            },
+            loadLogs() {
+                let params = {minLevel: this.level};
 
-            if (this.execution && this.execution.state.current === "RUNNING") {
-                this.$store
-                    .dispatch("execution/followLogs", {
-                        id: this.$route.params.id,
-                        params: params
-                    })
-                    .then(sse => {
-                        this.sse = sse;
-                        this.$store.commit("execution/setLogs", []);
+                if (this.taskRunId) {
+                    params.taskRunId = this.taskRunId
+                }
 
-                        sse.subscribe("", (data) => {
-                            this.$store.commit("execution/appendLogs", data);
+                if (this.execution && this.execution.state.current === "RUNNING") {
+                    this.$store
+                        .dispatch("execution/followLogs", {
+                            id: this.$route.params.id,
+                            params: params
+                        })
+                        .then(sse => {
+                            this.sse = sse;
+                            this.$store.commit("execution/setLogs", []);
+
+                            sse.subscribe("", (data) => {
+                                this.$store.commit("execution/appendLogs", data);
+                            });
                         });
+                } else {
+                    this.$store.dispatch("execution/loadLogs", {
+                        executionId: this.$route.params.id,
+                        params: params
                     });
-            } else {
-                this.$store.dispatch("execution/loadLogs", {
-                    executionId: this.$route.params.id,
-                    params: params
-                });
+                }
+            },
+            findLogs(taskRunId, attemptNumber) {
+                return (this.logs || [])
+                    .filter(log => {
+                        return log.taskRunId === taskRunId && log.attemptNumber === attemptNumber;
+                    })
             }
         },
-        findLogs(taskRunId, attemptNumber) {
-            return (this.logs || [])
-                .filter(log => {
-                    return log.taskRunId === taskRunId && log.attemptNumber === attemptNumber;
-                })
+        beforeDestroy() {
+            if (this.sse) {
+                this.sse.close();
+                this.sse = undefined;
+            }
         }
-    },
-    beforeDestroy() {
-        if (this.sse) {
-            this.sse.close();
-            this.sse = undefined;
-        }
-    }
-};
+    };
 </script>
 <style lang="scss" scoped>
 @import "../../styles/_variable.scss";
+
 .log-wrapper {
-    border-radius: 5px;
     .line:nth-child(odd) {
-        background-color: lighten($dark, 5%);
+        background-color: $gray-800;
     }
-    div.attempt {
+    .line:nth-child(even) {
+        background-color: lighten($gray-800, 5%);
+    }
+
+    .attempt-header {
         display: flex;
         font-family: $font-family-sans-serif;
         font-size: $font-size-base;
         margin-top: $paragraph-margin-bottom * 1.5;
         margin-bottom: 2px;
-        .badge {
-            font-size: $font-size-base;
-            height: 100%;
-            line-height: 100%;
-            padding-bottom: 0;
+        line-height: $btn-line-height;
+
+        .attempt-number {
+            background: $primary;
+            padding: $btn-padding-y $btn-padding-x;
+        }
+        .task-id {
+            padding: $btn-padding-y $btn-padding-x;
         }
     }
+
     .attempt-wrapper {
-        padding: 0.75rem;
+        margin-bottom: $spacer;
+
         div:first-child > * {
             margin-top: 0;
         }
     }
+
     .output {
         margin-right: 5px;
     }
+
     pre {
         border: 1px solid $light;
         background-color: $gray-200;
         padding: 10px;
         margin-top: 5px;
         margin-bottom: 20px;
-    }.outputs {
-    h6 {
-      border-bottom: 1px solid $gray-600;
     }
-    pre {
-      border: 0;
+
+    .outputs {
+        h6 {
+            border-bottom: 1px solid $gray-600;
+        }
+
+        pre {
+            border: 0;
+        }
     }
-  }
 }
 </style>

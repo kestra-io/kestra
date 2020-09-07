@@ -112,15 +112,20 @@ export default {
         },
         deleteFlow() {
             if (this.flow) {
-                this.$toast().confirm(this.flow.id, () => {
-                    return this.$store
-                        .dispatch("flow/deleteFlow", this.flow)
-                        .then(() => {
-                            return this.$router.push({
-                                name: "flowsList"
-                            });
-                        })
-                });
+                const flow = this.flow;
+                this.$toast()
+                    .confirm(this.$t("delete confirm", {name: flow.id}), () => {
+                        return this.$store
+                            .dispatch("flow/deleteFlow", flow)
+                            .then(() => {
+                                return this.$router.push({
+                                    name: "flowsList"
+                                });
+                            })
+                            .then(() => {
+                                this.$toast().deleted(flow.id);
+                            })
+                    });
             }
         },
         save() {

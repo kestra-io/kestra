@@ -200,7 +200,7 @@ export default {
                     return response.data
                 })
                 .then((execution) => {
-                    this.$toast().success({type: 'triggered', name: execution.id});
+                    this.$toast().success(this.$t('triggered done', {name: execution.id}));
                 })
         },
         loadData(callback) {

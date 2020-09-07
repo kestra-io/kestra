@@ -124,7 +124,8 @@
             "please": "Please choose a task on the right to see its documentation"
         },
         "last 30 days executions": "Last 30 days executions",
-        "revisions": "Revisions"
+        "revisions": "Revisions",
+        "no revisions found": "Only one revision exist for this flow"
     },
     "fr": {
         "id": "Identifiant",
@@ -252,6 +253,7 @@
             "please": "Veuillez choisir une tache sur la droit afin de voir sa documentation"
         },
         "last 30 days executions": "Execution des 30 derniers jours",
-        "revisions": "Révisions"
+        "revisions": "Révisions",
+        "no revisions found": "Une seule révision existe pour ce flow"
     }
 }

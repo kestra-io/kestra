@@ -58,8 +58,8 @@ public class FlowController {
 
     /**
      * @param namespace The flow namespace
-     * @param id        The flow id
-     * @return flow found
+     * @param id The flow id
+     * @return flow revisions found
      */
     @Get(uri = "{namespace}/{id}/revisions", produces = MediaType.TEXT_JSON)
     public List<Flow> revisions(String namespace, String id) {

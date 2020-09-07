@@ -24,7 +24,7 @@
         </b-row>
     </div>
     <div v-else>
-        <b-alert show>{{$t('Revision information unavailable (only 1 revision ?)')}}</b-alert>
+        <b-alert class="mb-0" show>{{$t('no revisions found')}}</b-alert>
     </div>
 </template>
 <script>

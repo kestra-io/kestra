@@ -7,7 +7,7 @@ properties:
   revision:
     type: integer
   inputs:
-    type: nested
+#    type: nested
     properties:
       name:
         type: text
@@ -16,14 +16,14 @@ properties:
       required:
         type: boolean
   tasks:
-    type: nested
+#    type: nested
     properties:
       id:
         type: keyword
       type:
         type: keyword
   errors:
-    type: nested
+#    type: nested
     properties:
       id:
         type: keyword

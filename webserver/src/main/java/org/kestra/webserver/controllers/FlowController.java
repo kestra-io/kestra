@@ -57,6 +57,16 @@ public class FlowController {
     }
 
     /**
+     * @param namespace The flow namespace
+     * @param id The flow id
+     * @return flow revisions found
+     */
+    @Get(uri = "{namespace}/{id}/revisions", produces = MediaType.TEXT_JSON)
+    public List<Flow> revisions(String namespace, String id) {
+        return flowRepository.findRevisions(namespace, id);
+    }
+
+    /**
      * @param query The flow query that is a lucen string
      * @param page  Page in flow pagination
      * @param size  Element count in pagination selection

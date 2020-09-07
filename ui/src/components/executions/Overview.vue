@@ -13,7 +13,14 @@
                     v-if="row.item.link"
                     :to="{name: 'executionEdit', params: row.item.link}"
                 >{{row.item.value}}</router-link>
-                <span v-else>{{row.item.value}}</span>
+                <span v-else>
+                    <span v-if="row.item.key === $t('Revision')">
+                        <router-link
+                            :to="{name: 'flowEdit', params: {id: $route.params.flowId, namespace: $route.params.namespace}, query: {tab: 'revisions', revisionRight: row.item.value}}"
+                        >{{row.item.value}}</router-link>
+                    </span>
+                    <span v-else>{{row.item.value}}</span>
+                </span>
             </template>
         </b-table>
         <div v-if="execution.inputs">
@@ -179,9 +186,8 @@ export default {
             }
 
             return variables;
-        }
+        },
     },
-
 };
 </script>
 <style scoped lang="scss">

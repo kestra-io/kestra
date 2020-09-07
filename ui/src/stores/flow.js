@@ -6,6 +6,7 @@ export default {
         flow: undefined,
         total: 0,
         dataTree: undefined,
+        revisions: undefined,
     },
 
     actions: {
@@ -49,11 +50,19 @@ export default {
             return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/tree`).then(response => {
                 commit('setDataTree', response.data.tasks)
             })
-        }
+        },
+        loadRevisions({ commit }, options) {
+            return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}/revisions`).then(response => {
+                commit('setRevisions', response.data)
+            })
+        },
     },
     mutations: {
         setFlows(state, flows) {
             state.flows = flows
+        },
+        setRevisions(state, revisions) {
+            state.revisions = revisions
         },
         setFlow(state, flow) {
             if (!flow) {

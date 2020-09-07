@@ -31,6 +31,7 @@
     "vue-analytics": "^5.22.1",
     "vue-axios": "^2.1.5",
     "vue-chartjs": "^3.5.1",
+    "vue-code-diff": "0.0.5",
     "vue-i18n": "^8.21.0",
     "vue-material-design-icons": "^4.9.0",
     "vue-moment": "^4.0.0",

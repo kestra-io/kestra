@@ -35,9 +35,15 @@
                                 <b-button-group>
                                     <b-button
                                         v-if="taskItem.outputs"
+                                        :title="$t('toggle metrics')"
+                                        @click="toggleShowMetric(taskItem, index)"
+                                    ><chart-areaspline :title="$t('toggle metrics')" /></b-button>
+
+                                    <b-button
+                                        v-if="taskItem.outputs"
                                         :title="$t('toggle output')"
                                         @click="toggleShowOutput(taskItem)"
-                                    ><location-exit /></b-button>
+                                    ><location-exit :title="$t('toggle output')" /></b-button>
 
                                     <restart
                                         :key="`restart-${index}-${attempt.state.startDate}`"
@@ -62,13 +68,24 @@
                             </template>
                         </template>
 
+                        <!-- Metrics -->
+                        <vars
+                            v-if="showMetrics[taskItem.id + '-' + index]"
+                            :title="$t('metrics')"
+                            :execution="execution"
+                            :key="`metrics-${index}-${taskItem.id}`"
+                            :data="convertMetric(attempt.metrics)" />
+
                     </template>
                     <!-- Outputs -->
                     <vars
-                        v-if="showOutputs[taskItem.id] && taskItem.outputs"
+                        v-if="showOutputs[taskItem.id]"
+                        :title="$t('outputs')"
                         :execution="execution"
                         :key="taskItem.id"
                         :data="taskItem.outputs" />
+
+
                 </div>
             </template>
 
@@ -78,14 +95,16 @@
 </template>
 <script>
     import {mapState} from "vuex";
+    import humanizeDuration from "humanize-duration";
     import LogLine from "./LogLine";
     import Restart from "./Restart";
     import Vars from "./Vars";
     import Clock from "vue-material-design-icons/Clock";
     import LocationExit from "vue-material-design-icons/LocationExit";
+    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";
 
     export default {
-        components: {LogLine, Restart, Clock, LocationExit, Vars},
+        components: {LogLine, Restart, Clock, LocationExit, Vars, ChartAreaspline},
         props: {
             level: {
                 type: String,
@@ -101,7 +120,8 @@
         },
         data() {
             return {
-                showOutputs: {}
+                showOutputs: {},
+                showMetrics: {}
             };
         },
         watch: {
@@ -118,6 +138,10 @@
         methods: {
             toggleShowOutput(task) {
                 this.showOutputs[task.id] = !this.showOutputs[task.id];
+                this.$forceUpdate();
+            },
+            toggleShowMetric(task, index) {
+                this.showMetrics[task.id + "-" + index] = !this.showMetrics[task.id + "-" + index];
                 this.$forceUpdate();
             },
             loadLogs() {
@@ -153,7 +177,15 @@
                     .filter(log => {
                         return log.taskRunId === taskRunId && log.attemptNumber === attemptNumber;
                     })
-            }
+            },
+            convertMetric(metrics) {
+                return (metrics || [])
+                    .reduce((accumulator, r)  => {
+                        accumulator[r.name] = r.type === "timer" ? humanizeDuration(parseInt(r.value * 1000)) : r.value
+                        return accumulator;
+                    }, Object.create(null));
+
+            },
         },
         beforeDestroy() {
             if (this.sse) {

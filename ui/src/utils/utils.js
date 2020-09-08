@@ -21,20 +21,26 @@ export default class Utils {
     }
 
     static executionVars(data) {
-        const variables = [];
-        if (data !== undefined) {
-            const flat = Utils.flatten(data);
-            for (const key in flat) {
-                let date = moment(flat[key], moment.ISO_8601);
-
-                if (date.isValid()) {
-                    variables.push({key, value: date.format('LLLL')});
-                } else {
-                    variables.push({key, value: flat[key]});
-                }
-            }
+        if (data === undefined) {
+            return [];
         }
 
-        return variables;
+        const flat = Utils.flatten(data);
+
+        return Object.keys(flat).map(key =>  {
+            if (typeof(flat[key]) === "string") {
+                let date = moment(flat[key], moment.ISO_8601);
+                if (date.isValid()) {
+                    return {key, value: date.format('LLLL')};
+                }
+            }
+
+            if (typeof(flat[key]) === "number") {
+                return {key, value: flat[key].toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1 ')};
+            }
+
+            return {key, value: flat[key]};
+
+        })
     }
 }

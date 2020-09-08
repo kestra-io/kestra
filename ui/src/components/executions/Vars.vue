@@ -4,12 +4,25 @@
         hover
         bordered
         small
+        show-empty
         :items="variables"
         :fields="fields"
         class="mb-0"
     >
         <template v-slot:cell(value)="row">
             <var-value :execution="execution" :value="row.item.value" />
+        </template>
+
+        <template v-slot:thead-top v-if="title">
+            <b-tr class="top">
+                <b-th colspan="2">{{ title }}</b-th>
+            </b-tr>
+        </template>
+
+        <template v-slot:empty>
+            <div class="alert alert-info mb-0" role="alert">
+                {{ $t("no data current task")}}
+            </div>
         </template>
 
         <template v-slot:cell(key)="row">
@@ -30,6 +43,10 @@
             data: {
                 type: Object,
                 required: true
+            },
+            title: {
+                type: String,
+                required: false
             },
             execution: {
                 type: Object,
@@ -58,11 +75,11 @@
 </script>
 
 <style scoped lang="scss">
-/deep/ thead {
+/deep/ thead tr:not(.top) {
     display: none;
 }
 
 /deep/ td.key {
-    width: 250px;
+    width: 150px;
 }
 </style>

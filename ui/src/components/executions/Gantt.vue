@@ -232,9 +232,7 @@ table {
 
         td {
             position: relative;
-            .log-wrapper .attempt-wrapper {
-                margin-bottom: 0;
-            }
+
             .task-progress {
                 position: absolute;
                 transition: all 0.3s;
@@ -256,4 +254,9 @@ table {
         }
     }
 }
+
+/deep/ .log-wrapper .attempt-wrapper {
+    margin-bottom: 0;
+}
+
 </style>

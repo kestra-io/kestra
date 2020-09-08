@@ -28,7 +28,6 @@ export default {
                     })
                 },
                 deleted: function(name, title) {
-                    console.log(self.$bvToast, this._wrap(self.$t("deleted confirm", {name: name})));
                     self.$bvToast.toast(this._wrap(self.$t("deleted confirm", {name: name})), {
                         title: title || self.$t("deleted"),
                         autoHideDelay: 5000,

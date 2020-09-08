@@ -16,6 +16,7 @@
 
                 <template v-slot:top>
                     <state-global-chart
+                        v-if="daily"
                         :ready="dailyReady"
                         :data="daily"
                     />

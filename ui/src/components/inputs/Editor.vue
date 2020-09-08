@@ -47,7 +47,7 @@
             },
 
             onInput(value) {
-                this.$emit('input', value.repalce("\r", "\n"));
+                this.$emit('input', value);
             }
         }
     };

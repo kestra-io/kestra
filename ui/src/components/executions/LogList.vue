@@ -1,5 +1,5 @@
 <template>
-    <div v-if="execution" class="log-wrapper text-white text-monospace">
+    <div v-if="execution" class="log-wrapper text-white">
         <div v-for="taskItem in execution.taskRunList" :key="taskItem.id">
             <template v-if="(!task || task.id === taskItem.id) && taskItem.attempts">
                 <div class="bg-dark attempt-wrapper">
@@ -37,7 +37,7 @@
                                         v-if="taskItem.outputs"
                                         :title="$t('toggle output')"
                                         @click="toggleShowOutput(taskItem)"
-                                    ><eye /></b-button>
+                                    ><location-exit /></b-button>
 
                                     <restart
                                         :key="`restart-${index}-${attempt.state.startDate}`"
@@ -64,10 +64,11 @@
 
                     </template>
                     <!-- Outputs -->
-                    <div v-if="showOutputs[taskItem.id] && taskItem.outputs" class="mb-1 mt-1 outputs">
-                        <h6 class="p-2 mb-0">{{ $t('outputs') }}</h6>
-                        <pre class="bg-dark mb-0 mt-0" :key="taskItem.id">{{ taskItem.outputs }}</pre>
-                    </div>
+                    <vars
+                        v-if="showOutputs[taskItem.id] && taskItem.outputs"
+                        :execution="execution"
+                        :key="taskItem.id"
+                        :data="taskItem.outputs" />
                 </div>
             </template>
 
@@ -79,11 +80,12 @@
     import {mapState} from "vuex";
     import LogLine from "./LogLine";
     import Restart from "./Restart";
+    import Vars from "./Vars";
     import Clock from "vue-material-design-icons/Clock";
-    import Eye from "vue-material-design-icons/Eye";
+    import LocationExit from "vue-material-design-icons/LocationExit";
 
     export default {
-        components: {LogLine, Restart, Clock, Eye},
+        components: {LogLine, Restart, Clock, LocationExit, Vars},
         props: {
             level: {
                 type: String,
@@ -177,7 +179,6 @@
         font-family: $font-family-sans-serif;
         font-size: $font-size-base;
         margin-top: $paragraph-margin-bottom * 1.5;
-        margin-bottom: 2px;
         line-height: $btn-line-height;
 
         .attempt-number {
@@ -207,16 +208,6 @@
         padding: 10px;
         margin-top: 5px;
         margin-bottom: 20px;
-    }
-
-    .outputs {
-        h6 {
-            border-bottom: 1px solid $gray-600;
-        }
-
-        pre {
-            border: 0;
-        }
     }
 }
 </style>

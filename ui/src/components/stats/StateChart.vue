@@ -14,7 +14,7 @@
 
 <script>
     import {Bar} from 'vue-chartjs'
-    import {uid} from "../../utils/utils.js";
+    import Utils from "../../utils/utils.js";
     import {tooltip, defaultConfig} from "../../utils/charts.js";
 
     const CurrentChart = {
@@ -52,7 +52,7 @@
         },
         data() {
             return {
-                uuid: uid(),
+                uuid: Utils.uid(),
                 tooltip: undefined
             };
         },

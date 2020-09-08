@@ -16,7 +16,7 @@
     import {Line} from 'vue-chartjs'
     import humanizeDuration from "humanize-duration";
     import {tooltip, defaultConfig} from "../../utils/charts.js";
-    import {uid} from "../../utils/utils";
+    import Utils from "../../utils/utils";
 
     const CurrentChart = {
         extends: Line,
@@ -53,7 +53,7 @@
         },
         data() {
             return {
-                uuid: uid(),
+                uuid: Utils.uid(),
                 tooltip: undefined
             };
         },

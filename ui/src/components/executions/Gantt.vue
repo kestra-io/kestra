@@ -1,7 +1,7 @@
 <template>
     <div v-if="execution">
         <div class="table-responsive">
-            <table class="table table-hover table-sm table-bordered">
+            <table class="table table-sm table-bordered">
                 <thead>
                     <tr class="bg-light">
                         <th>{{ duration }}</th>
@@ -232,7 +232,9 @@ table {
 
         td {
             position: relative;
-
+            .log-wrapper .attempt-wrapper {
+                margin-bottom: 0;
+            }
             .task-progress {
                 position: absolute;
                 transition: all 0.3s;

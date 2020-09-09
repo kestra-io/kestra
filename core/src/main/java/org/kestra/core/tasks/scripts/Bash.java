@@ -10,15 +10,16 @@ import org.kestra.core.models.annotations.OutputProperty;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.runners.RunContext;
+import org.kestra.core.tasks.debugs.Return;
 import org.slf4j.Logger;
 
 import java.io.*;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.Function;
 
-import static org.kestra.core.utils.Rethrow.throwBiConsumer;
-import static org.kestra.core.utils.Rethrow.throwConsumer;
+import static org.kestra.core.utils.Rethrow.*;
 
 @SuperBuilder
 @ToString
@@ -37,7 +38,7 @@ import static org.kestra.core.utils.Rethrow.throwConsumer;
 )
 
 @Example(
-    title = "Bash command that generate file in storage accessible through ouputs",
+    title = "Bash command that generate file in storage accessible through outputs",
     code = {
         "files:",
         "- first",
@@ -55,7 +56,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         },
         dynamic = true
     )
-    private String[] commands;
+    protected String[] commands;
 
     @Builder.Default
     @InputProperty(
@@ -65,7 +66,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         },
         dynamic = false
     )
-    private String interpreter = "/bin/sh";
+    protected String interpreter = "/bin/sh";
 
     @Builder.Default
     @InputProperty(
@@ -75,7 +76,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         },
         dynamic = false
     )
-    private String[] interpreterArgs = {"-c"};
+    protected String[] interpreterArgs = {"-c"};
 
     @Builder.Default
     @InputProperty(
@@ -87,10 +88,19 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         },
         dynamic = true
     )
-    private boolean exitOnFailed = true;
+    protected boolean exitOnFailed = true;
 
     @InputProperty(
-        description = "The list of files that will be uploaded to internal storage",
+        description = "The list of files that will be uploaded to internal storage, ",
+        body = {
+            "/!\\legacy property, use 'outputs' property instead"
+        },
+        dynamic = true
+    )
+    protected List<String> files;
+
+    @InputProperty(
+        description = "Output file list that will be uploaded to internal storage",
         body = {
             "List of key that will generate temporary files.",
             "On the command, just can use with special variable named `temp.key`.",
@@ -99,10 +109,31 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         },
         dynamic = true
     )
-    private List<String> files;
+    protected List<String> outputs;
 
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
+        return run(runContext, throwFunction((tempFiles) -> {
+            // final command
+            List<String> renderer = new ArrayList<>();
+
+            if (this.exitOnFailed) {
+                renderer.add("set -o errexit");
+            }
+
+            // renderer command
+            for (String command : this.commands) {
+                renderer.add(runContext.render(
+                    command,
+                    tempFiles.size() > 0 ? ImmutableMap.of("temp", tempFiles) : ImmutableMap.of()
+                ));
+            }
+
+            return String.join("\n", renderer);
+        }));
+    }
+
+    protected Bash.Output run(RunContext runContext, Function<Map<String, String>, String> function) throws Exception {
         Logger logger = runContext.logger();
 
         // final command
@@ -112,25 +143,26 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             renderer.add("set -o errexit");
         }
 
+        List<String> outputs = new ArrayList<>();
+
+        if (this.outputs != null && this.outputs.size() > 0) {
+            outputs.addAll(this.outputs);
+        }
+
+        if (files != null && files.size() > 0) {
+            outputs.addAll(files);
+        }
+
         // temporary files
         Map<String, String> tempFiles = new HashMap<>();
-        if (files != null && files.size() > 0) {
-            files
+            outputs
                 .forEach(throwConsumer(s -> {
                     File tempFile = File.createTempFile(s + "_", ".tmp");
 
                     tempFiles.put(s, tempFile.getAbsolutePath());
                 }));
-        }
 
-        // renderer command
-        for (String command : this.commands) {
-            renderer.add(runContext.render(
-                command,
-                tempFiles.size() > 0 ? ImmutableMap.of("temp", tempFiles) : ImmutableMap.of()
-            ));
-        }
-        String commandAsString = String.join("\n", renderer);
+        String commandAsString = function.apply(tempFiles);
 
         File bashTempFiles = null;
         // https://www.in-ulm.de/~mascheck/various/argmax/ MAX_ARG_STRLEN (131072)
@@ -158,6 +190,8 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         LogThread stdErr = readInput(logger, process.getErrorStream(), true);
 
         int exitCode = process.waitFor();
+
+        this.cleanup();
 
         if (exitCode != 0) {
             throw new BashException(
@@ -191,6 +225,10 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             .build();
     }
 
+    protected void cleanup() throws IOException {
+
+    }
+
     private LogThread readInput(Logger logger, InputStream inputStream, boolean isStdErr) {
         LogThread thread = new LogThread(logger, inputStream, isStdErr);
         thread.setName("bash-log");
@@ -199,13 +237,13 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         return thread;
     }
 
-    private static class LogThread extends Thread {
+    protected class LogThread extends Thread {
         private Logger logger;
         private InputStream inputStream;
         private boolean isStdErr;
         private List<String> logs = new ArrayList<>();
 
-        private LogThread(Logger logger, InputStream inputStream, boolean isStdErr) {
+        protected LogThread(Logger logger, InputStream inputStream, boolean isStdErr) {
             this.logger = logger;
             this.inputStream = inputStream;
             this.isStdErr = isStdErr;
@@ -271,4 +309,5 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         private final List<String> stdOut;
         private final List<String> stdErr;
     }
+
 }

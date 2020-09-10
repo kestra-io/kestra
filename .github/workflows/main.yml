@@ -12,11 +12,14 @@ on:
     branches:
       - master
       - develop
+  repository_dispatch:
+    types: [rebuild]
 
 jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     strategy:
       matrix:

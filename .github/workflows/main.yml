@@ -14,7 +14,7 @@ on:
       - develop
   repository_dispatch:
     types: [rebuild]
-    workflow_dispatch:
+  workflow_dispatch:
 
 
 jobs:

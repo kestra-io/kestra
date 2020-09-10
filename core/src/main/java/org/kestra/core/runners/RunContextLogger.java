@@ -7,6 +7,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.core.AppenderBase;
+import com.cronutils.utils.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
@@ -28,9 +29,9 @@ public class RunContextLogger {
     private QueueInterface<LogEntry> logQueue;
     private TaskRun taskRun;
 
-    @Deprecated
-    public RunContextLogger(String loggerName) {
-        this.loggerName = loggerName;
+    @VisibleForTesting
+    public RunContextLogger() {
+        this.loggerName = "unit-test";
     }
 
     public RunContextLogger(QueueInterface<LogEntry> logQueue, TaskRun taskRun) {
@@ -110,16 +111,20 @@ public class RunContextLogger {
             LoggerContext loggerContext = new LoggerContext();
             this.logger = loggerContext.getLogger(this.loggerName);
 
-            ContextAppender contextAppender = new ContextAppender(this.logQueue, this.taskRun);
-            contextAppender.setContext(loggerContext);
-            contextAppender.start();
+            // unit test don't need the logqueue
+            if (this.logQueue != null && this.taskRun != null) {
+                ContextAppender contextAppender = new ContextAppender(this.logQueue, this.taskRun);
+                contextAppender.setContext(loggerContext);
+                contextAppender.start();
+
+                this.logger.addAppender(contextAppender);
+            }
 
             ForwardAppender forwardAppender = new ForwardAppender();
             forwardAppender.setContext(loggerContext);
             forwardAppender.start();
-
-            this.logger.addAppender(contextAppender);
             this.logger.addAppender(forwardAppender);
+
             this.logger.setLevel(Level.TRACE);
             this.logger.setAdditive(true);
         }
@@ -139,7 +144,7 @@ public class RunContextLogger {
         @Override
         protected void append(ILoggingEvent e) {
             logEntries(e, taskRun)
-                .forEach(l -> logQueue.emit(l));
+                .forEach(logQueue::emit);
         }
     }
 

@@ -77,36 +77,94 @@ public abstract class AbstractExecutor implements Runnable {
         return newExecution;
     }
 
-    private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
+    private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException, InternalException {
         RunContext runContext = runContextFactory.of(flow, execution);
-        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, runContext);
+        ResolvedTask parent = flow.findTaskByTaskRun(parentTaskRun, runContext);
 
         if (parent.getTask() instanceof FlowableTask) {
             FlowableTask<?> flowableParent = (FlowableTask<?>) parent.getTask();
 
-            return flowableParent
-                .resolveState(runContext, execution, taskRun)
-                .map(throwFunction(type -> new WorkerTaskResult(
-                    taskRun
-                        .withState(type)
-                        .withOutputs(
-                            flowableParent.outputs(runContext, execution, taskRun) != null ?
-                                flowableParent.outputs(runContext, execution, taskRun).toMap() :
-                                ImmutableMap.of()
-                        ),
-                    parent.getTask()
-                )))
-                .stream()
-                .peek(workerTaskResult -> {
-                    metricRegistry
-                        .counter(MetricRegistry.KESTRA_EXECUTOR_WORKERTASKRESULT_COUNT, metricRegistry.tags(workerTaskResult))
-                        .increment();
+            // first find the normal ended child tasks and send result
+            Optional<WorkerTaskResult> endedTask = childWorkerTaskTypeToWorkerTask(
+                flowableParent
+                    .resolveState(runContext, execution, parentTaskRun),
+                parent,
+                parentTaskRun,
+                runContext,
+                execution
+            );
 
-                })
-                .findFirst();
+            if (endedTask.isPresent()) {
+                return endedTask;
+            }
+
+            // after if the execution is KILLING, we find if all already started tasks if finished
+            if (execution.getState().getCurrent() == State.Type.KILLING) {
+                // first notified the parent taskRun of killing to avoid new creation of tasks
+                if (parentTaskRun.getState().getCurrent() != State.Type.KILLING) {
+                    return childWorkerTaskTypeToWorkerTask(
+                        Optional.of(State.Type.KILLING),
+                        parent,
+                        parentTaskRun,
+                        runContext,
+                        execution
+                    );
+                }
+
+                // Then wait for completion (KILLED or whatever) on child taks to KILLED the parennt one.
+                List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
+                    flowableParent.childTasks(runContext, parentTaskRun),
+                    FlowableUtils.resolveTasks(flowableParent.getErrors(), parentTaskRun)
+                );
+
+                List<TaskRun> taskRunByTasks = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
+
+                if (taskRunByTasks.stream().filter(t -> t.getState().isTerninated()).count() == taskRunByTasks.size()) {
+                    return childWorkerTaskTypeToWorkerTask(
+                        Optional.of(State.Type.KILLED),
+                        parent,
+                        parentTaskRun,
+                        runContext,
+                        execution
+                    );
+                }
+            }
         }
 
         return Optional.empty();
+    }
+
+    private Optional<WorkerTaskResult> childWorkerTaskTypeToWorkerTask(
+        Optional<State.Type> findState,
+        ResolvedTask parentTask,
+        TaskRun parentTaskRun,
+        RunContext runContext,
+        Execution execution
+    ) throws IllegalVariableEvaluationException {
+        FlowableTask<?> flowableParent = (FlowableTask<?>) parentTask.getTask();
+
+        return findState
+            .map(throwFunction(type -> new WorkerTaskResult(
+                parentTaskRun
+                    .withState(type)
+                    .withOutputs(
+                        flowableParent.outputs(runContext, execution, parentTaskRun) != null ?
+                            flowableParent.outputs(runContext, execution, parentTaskRun).toMap() :
+                            ImmutableMap.of()
+                    ),
+                parentTask.getTask()
+            )))
+            .stream()
+            .peek(workerTaskResult -> {
+                metricRegistry
+                    .counter(
+                        MetricRegistry.KESTRA_EXECUTOR_WORKERTASKRESULT_COUNT,
+                        metricRegistry.tags(workerTaskResult)
+                    )
+                    .increment();
+
+            })
+            .findFirst();
     }
 
     private Optional<List<TaskRun>> childNextsTaskRun(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
@@ -125,9 +183,7 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     private Execution onEnd(Flow flow, Execution execution) {
-        Execution newExecution = execution.withState(
-            execution.hasFailed() ? State.Type.FAILED : State.Type.SUCCESS
-        );
+        Execution newExecution = execution.withState(execution.guessFinalState());
 
         Logger logger = flow.logger();
 
@@ -156,22 +212,31 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     protected Optional<Execution> doMain(Execution execution, Flow flow) {
-        return this.handleEnd(execution, flow);
+        Optional<Execution> end = this.handleEnd(execution, flow);
+        if (end.isPresent()) {
+            return end;
+        }
+
+        return this.handleKilling(execution, flow);
     }
 
     protected Optional<List<TaskRun>> doNexts(Execution execution, Flow flow) throws Exception {
         List<TaskRun> nexts;
 
-        nexts = this.handleNext(execution, flow);
-        if (nexts.size() > 0) {
-            return Optional.of(nexts);
+        // killing, so no more nexts
+        if (execution.getState().getCurrent() != State.Type.KILLING && execution.getState().getCurrent() != State.Type.KILLED) {
+            nexts = this.handleNext(execution, flow);
+            if (nexts.size() > 0) {
+                return Optional.of(nexts);
+            }
+
+            nexts = this.handleChildNext(execution, flow);
+            if (nexts.size() > 0) {
+                return Optional.of(nexts);
+            }
         }
 
-        nexts = this.handleChildNext(execution, flow);
-        if (nexts.size() > 0) {
-            return Optional.of(nexts);
-        }
-
+        // but keep listeners on killing
         nexts = this.handleListeners(execution, flow);
         if (nexts.size() > 0) {
             return Optional.of(nexts);
@@ -218,7 +283,7 @@ public abstract class AbstractExecutor implements Runnable {
         return execution
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING)
+            .filter(taskRun -> taskRun.getState().isRunning())
             .flatMap(throwFunction(taskRun -> this.childNextsTaskRun(flow, execution, taskRun)
                 .orElse(new ArrayList<>())
                 .stream()
@@ -234,10 +299,8 @@ public abstract class AbstractExecutor implements Runnable {
         return execution
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING)
-            .map(throwFunction(taskRun -> {
-                return this.childWorkerTaskResult(flow, execution, taskRun);
-            }))
+            .filter(taskRun -> taskRun.getState().isRunning())
+            .map(throwFunction(taskRun -> this.childWorkerTaskResult(flow, execution, taskRun)))
             .filter(Optional::isPresent)
             .map(Optional::get)
             .collect(Collectors.toList());
@@ -274,8 +337,28 @@ public abstract class AbstractExecutor implements Runnable {
         return Optional.of(this.onEnd(flow, execution));
     }
 
+    private Optional<Execution> handleKilling(Execution execution, Flow flow) {
+        if (execution.getState().getCurrent() != State.Type.KILLING) {
+            return Optional.empty();
+        }
+
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
+            ResolvedTask.of(flow.getTasks()),
+            ResolvedTask.of(flow.getErrors())
+        );
+
+        if (execution.hasRunning(currentTasks) || execution.findFirstByState(State.Type.CREATED).isPresent()) {
+            return Optional.empty();
+        }
+
+        Execution newExecution = execution.withState(State.Type.KILLED);
+
+        return Optional.of(newExecution);
+    }
+
+
     private List<WorkerTask> handleWorkerTask(Execution execution, Flow flow) throws Exception {
-        if (execution.getTaskRunList() == null) {
+        if (execution.getTaskRunList() == null || execution.getState().getCurrent() == State.Type.KILLING) {
             return new ArrayList<>();
         }
 

@@ -8,6 +8,16 @@
     <meta name="msapplication-TileColor" content="#4c4c4d">
     <meta name="theme-color" content="#4c4c4d">
     <title>Kestra</title>
+    <script>
+      const KESTRA_GOOGLE_ANALYTICS = null;
+      const KESTRA_UI_PATH = "<%= BASE_URL %>";
+      const KESTRA_BASE_PATH = function() {
+          const split = KESTRA_UI_PATH.split('/');
+          split.pop();
+          split.pop();
+          return split.join('/') + "/";
+      }();
+    </script>
   </head>
   <body>
     <noscript>

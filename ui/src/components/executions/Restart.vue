@@ -1,96 +1,87 @@
 <template>
-  <div v-if="isButton" class="restart-wrapper">
-    <b-button @click="restart" v-if="enabled" class="rounded-lg btn-info restart mr-1">
-      <restart-icon />
-      {{$t("restart")}}
+  <span>
+    <b-button
+        @click="restart"
+        v-if="enabled"
+        :class="!isButtonGroup ? 'rounded-lg btn-info restart mr-1' : ''"
+        :title="$t('restart')"
+    >
+      <restart-icon/>
+      {{ (isButtonGroup ? '' : $t("restart")) }}
     </b-button>
-  </div>
-  <div v-else>
-    <div @click="restart" v-if="enabled">
-      <restart-icon />
-      {{$t("restart")}}
-    </div>
-  </div>
+  </span>
 </template>
 <script>
-import RestartIcon from "vue-material-design-icons/Restart";
-import {mapState} from "vuex";
-import permission from "../../models/permission";
-import action from "../../models/action";
-export default {
-  components: { RestartIcon },
-  props: {
-    isButton: {
-      type: Boolean,
-      default: true
-    },
-    execution: {
-      type: Object,
-      required: true
-    },
-    task: {
-      type: Object,
-      required: false
-    }
-  },
-  methods: {
-    restart() {
-      this.$store
-        .dispatch("execution/restartExecution", {
-          id: this.execution.id,
-          taskId: this.task ? this.task.taskId : null
-        })
-        .then(response => {
-          this.$store.commit('execution/setExecution', response.data);
-          this.$router.push({name: 'executionEdit', params: response.data});
-          this.$emit('restart')
-        })
-        .then(() => {
-          this.$toast().success({message: this.$t("restarted"), title: this.$t("execution")});
-        })
-    }
-  },
-  computed: {
-    ...mapState("auth", ["user"]),
-    enabled() {
-      // TODO : Add a "restartable" property on task run object (backend side)
-      if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
-        return false;
-      }
+    import RestartIcon from "vue-material-design-icons/Restart";
+    import {mapState} from "vuex";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
-      // If a specific task has been passed, we see if it can be restarted
-      if (this.task && this.task.taskId) {
-        // We find the taskRun based on its taskId
-        let taskRunIndex = this.execution.taskRunList.findIndex(
-          t => t.taskId === this.task.taskId
-        );
+    export default {
+        components: {RestartIcon},
+        props: {
+            isButtonGroup: {
+                type: Boolean,
+                default: false
+            },
+            execution: {
+                type: Object,
+                required: true
+            },
+            task: {
+                type: Object,
+                required: false
+            }
+        },
+        methods: {
+            restart() {
+                this.$toast()
+                    .confirm(this.$t("restart confirm", {id: this.execution.id}), () => {
+                        this.$store
+                            .dispatch("execution/restartExecution", {
+                                id: this.execution.id,
+                                taskId: this.task ? this.task.taskId : null
+                            })
+                            .then(response => {
+                                this.$store.commit('execution/setExecution', response.data);
+                                this.$router.push({name: 'executionEdit', params: response.data});
+                                this.$emit('restart')
+                            })
+                            .then(() => {
+                                this.$toast().success(this.$t("restarted"));
+                            })
+                    });
+            }
+        },
+        computed: {
+            ...mapState("auth", ["user"]),
+            enabled() {
+                // TODO : Add a "restartable" property on task run object (backend side)
+                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                    return false;
+                }
 
-        if (taskRunIndex === -1) return false;
+                // If a specific task has been passed, we see if it can be restarted
+                if (this.task && this.task.taskId) {
+                    // We find the taskRun based on its taskId
+                    let taskRunIndex = this.execution.taskRunList.findIndex(
+                        t => t.taskId === this.task.taskId
+                    );
 
-        // There can be no taskRun with a failed state before
-        // our specific task for it to be restarted
-        let subList = this.execution.taskRunList.slice(0, taskRunIndex);
+                    if (taskRunIndex === -1) return false;
 
-        let indexOfFailedTaskRun = subList.findIndex(
-          t => t.state.current === "FAILED"
-        );
+                    // There can be no taskRun with a failed state before
+                    // our specific task for it to be restarted
+                    let subList = this.execution.taskRunList.slice(0, taskRunIndex);
 
-        return indexOfFailedTaskRun === -1;
-      }
-      return this.execution.state.current === "FAILED";
-    }
-  }
-};
+                    let indexOfFailedTaskRun = subList.findIndex(
+                        t => t.state.current === "FAILED"
+                    );
+
+                    return indexOfFailedTaskRun === -1;
+                }
+                return this.execution.state.current === "FAILED";
+            }
+        }
+    };
 </script>
-<style scoped>
-.restart-wrapper {
-  display: inline;
-}
-.restart {
-  margin-left: 10px;
-  margin-right: 10px;
-  padding-left: 15px;
-  padding-right: 15px;
-  border-radius: 5px;
-}
-</style>

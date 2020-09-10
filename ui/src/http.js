@@ -2,6 +2,12 @@ import Vue from 'vue';
 import VueAxios from 'vue-axios';
 import axios from 'axios';
 
+// eslint-disable-next-line no-undef
+let root = (process.env.VUE_APP_API_URL || "") + KESTRA_BASE_PATH;
+if (!root.endsWith("/")) {
+    root = root + "/";
+}
+
 export default (callback, store, nprogress) => {
     const instance = axios.create({
         timeout: 15000,
@@ -32,9 +38,9 @@ export default (callback, store, nprogress) => {
         instance
     );
 
-    Vue.axios.defaults.baseURL = (process.env.VUE_APP_API_URL || "") + "/";
+    Vue.axios.defaults.baseURL = root;
     callback();
 };
 
 
-export const apiRoot = `${process.env.VUE_APP_API_URL}/api/v1/`
+export const apiRoot = `${root}api/v1/`

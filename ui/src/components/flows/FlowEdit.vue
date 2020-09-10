@@ -97,30 +97,22 @@ export default {
                 };
             }
         },
-        editorInit: function(editor) {
-            require("brace/mode/yaml");
-            require("brace/theme/merbivore_soft");
-            require("brace/ext/language_tools")
-            require("brace/ext/error_marker")
-            require("brace/ext/searchbox")
-            this.$refs.aceEditor.editor.textInput.focus()
-
-            editor.setOptions({
-                minLines: 5,
-                maxLines: Infinity
-            });
-        },
         deleteFlow() {
             if (this.flow) {
-                this.$toast().confirm(this.flow.id, () => {
-                    return this.$store
-                        .dispatch("flow/deleteFlow", this.flow)
-                        .then(() => {
-                            return this.$router.push({
-                                name: "flowsList"
-                            });
-                        })
-                });
+                const flow = this.flow;
+                this.$toast()
+                    .confirm(this.$t("delete confirm", {name: flow.id}), () => {
+                        return this.$store
+                            .dispatch("flow/deleteFlow", flow)
+                            .then(() => {
+                                return this.$router.push({
+                                    name: "flowsList"
+                                });
+                            })
+                            .then(() => {
+                                this.$toast().deleted(flow.id);
+                            })
+                    });
             }
         },
         save() {
@@ -147,7 +139,7 @@ export default {
                 }
 
                 saveFlow(this, flow)
-                    .finally(() => {
+                    .then(() => {
                         this.loadFlow();
                     });
             } else {

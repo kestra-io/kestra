@@ -19,6 +19,7 @@ plugins {
     // release
     id "com.jfrog.bintray" version "1.8.4" apply false
     id 'net.researchgate.release' version '2.8.1'
+    id "com.gorylenko.gradle-git-properties" version "2.2.3"
 }
 
 idea {

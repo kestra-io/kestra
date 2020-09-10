@@ -56,6 +56,16 @@ export default {
         onRowDoubleClick(item) {
             this.$router.push({ name: this.dataType + "Edit", params: item });
         },
+        onPageChanged(item) {
+            this.$router.push({
+                query: {
+                    ...this.$route.query,
+                    size: item.size,
+                    page: item.page
+                }
+            });
+            this.loadData(this.onDataLoaded);
+        },
         onNamespaceSelect() {
             this.query = queryBuilder(this.$route, this.fields);
             this.$router.push({query: {...this.$route.query, page: 1}})

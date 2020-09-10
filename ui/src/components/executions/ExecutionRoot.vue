@@ -50,6 +50,8 @@ export default {
     },
     methods: {
         follow() {
+            this.closeSSE();
+
             this.$store
                 .dispatch("execution/followExecution", this.$route.params)
                 .then(sse => {

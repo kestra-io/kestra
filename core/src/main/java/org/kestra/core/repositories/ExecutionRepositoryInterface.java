@@ -2,10 +2,11 @@ package org.kestra.core.repositories;
 
 import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
-import org.kestra.core.models.executions.metrics.Stats;
+import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,9 +17,9 @@ public interface ExecutionRepositoryInterface {
 
     ArrayListTotal<Execution> find(String query, Pageable pageable, State.Type state);
 
-    Map<String, ExecutionMetricsAggregation> aggregateByStateWithDurationStats(String query, Pageable pageable);
+    List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate);
 
-    Map<String, Stats> findLast24hDurationStats(String query, Pageable pageable);
+    Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query, LocalDate startDate, LocalDate endDate);
 
     Execution save(Execution flow);
 }

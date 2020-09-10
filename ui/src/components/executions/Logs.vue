@@ -37,7 +37,7 @@ export default {
                 "TRACE",
                 "DEBUG",
                 "INFO",
-                "WARNING",
+                "WARN",
                 "ERROR",
                 "CRITICAL",
             ]

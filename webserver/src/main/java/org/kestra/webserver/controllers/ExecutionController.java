@@ -1,11 +1,9 @@
 package org.kestra.webserver.controllers;
 
 import io.micronaut.data.model.Pageable;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.Post;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
@@ -16,6 +14,7 @@ import io.reactivex.Flowable;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.FlowTree;
@@ -68,6 +67,10 @@ public class ExecutionController {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.KILL_NAMED)
+    protected QueueInterface<ExecutionKilled> killQueue;
 
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
     public PagedResults<Execution> find(
@@ -216,6 +219,28 @@ public class ExecutionController {
         }
 
         return executionService.restart(execution.get(), taskId);
+    }
+
+    /**
+     * Kill an execution and stop all works
+     *
+     * @param executionId the execution id to kill
+     * @throws IllegalArgumentException if the executions is already finished
+     */
+    @Delete(uri = "executions/{executionId}/kill", produces = MediaType.TEXT_JSON)
+    public HttpResponse<?> kill(String executionId) throws Exception {
+        Optional<Execution> execution = executionRepository.findById(executionId);
+        if (execution.isPresent() && execution.get().getState().isTerninated()) {
+            throw new IllegalArgumentException("Execution is already finished, can't kill it");
+        }
+
+        killQueue.emit(ExecutionKilled
+            .builder()
+            .executionId(executionId)
+            .build()
+        );
+
+        return HttpResponse.noContent();
     }
 
     /**

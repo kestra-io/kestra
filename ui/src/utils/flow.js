@@ -17,6 +17,6 @@ export function saveFlow(self, flow) {
             flow
         })
         .then(() => {
-            self.$toast().success({message: self.$t("flow update ok")});
+            self.$toast().success(self.$t("flow update ok"));
         })
 }

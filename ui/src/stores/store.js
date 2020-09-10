@@ -2,6 +2,7 @@ import core from './core'
 import settings from './settings'
 import flow from './flow'
 import execution from './executions'
+import stat from './stat'
 import namespace from './namespaces'
 import layout from './layout'
 import auth from './auth'
@@ -14,6 +15,7 @@ export default {
         settings,
         flow,
         execution,
+        stat,
         namespace,
         layout,
         auth,

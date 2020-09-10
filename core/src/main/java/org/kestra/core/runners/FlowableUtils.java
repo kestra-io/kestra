@@ -53,7 +53,7 @@ public class FlowableUtils {
         }
 
         // have running, leave
-        Optional<TaskRun> lastRunning = execution.findLastByState(currentTasks, State.Type.RUNNING, parentTaskRun);
+        Optional<TaskRun> lastRunning = execution.findLastRunning(currentTasks, parentTaskRun);
         if (lastRunning.isPresent()) {
             return new ArrayList<>();
         }
@@ -91,12 +91,12 @@ public class FlowableUtils {
         } else if (currentTasks.size() > 0) {
             // handle nominal case, tasks or errors flow are ready to be analysed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {
-                return Optional.of(execution.hasFailed(currentTasks) ? State.Type.FAILED : State.Type.SUCCESS);
+                return Optional.of(execution.guessFinalState(currentTasks, parentTaskRun));
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
             if (execution.hasFailed(tasks, parentTaskRun)) {
-                return Optional.of(execution.hasFailed(tasks) ? State.Type.FAILED : State.Type.SUCCESS);
+                return Optional.of(execution.guessFinalState());
             }
         }
 

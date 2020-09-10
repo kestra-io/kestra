@@ -3,15 +3,15 @@ package org.kestra.repository.memory;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.metrics.ExecutionMetricsAggregation;
-import org.kestra.core.models.executions.metrics.Stats;
+import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 
-import javax.inject.Singleton;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 
 @Singleton
 @MemoryRepositoryEnabled
@@ -52,12 +52,12 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public Map<String, ExecutionMetricsAggregation> aggregateByStateWithDurationStats(String query, Pageable pageable) {
+    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query, LocalDate startDate, LocalDate endDate) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Map<String, Stats> findLast24hDurationStats(String query, Pageable pageable) {
+    public List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate) {
         throw new UnsupportedOperationException();
     }
 }

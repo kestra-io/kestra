@@ -48,6 +48,7 @@ public class RunContext {
     public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
         this.initBean(applicationContext);
         this.initContext(flow, null, execution, null);
+        this.runContextLogger = new RunContextLogger();
     }
 
     /**
@@ -62,6 +63,7 @@ public class RunContext {
     public RunContext(ApplicationContext applicationContext, Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
         this.initBean(applicationContext);
         this.initContext(flow, task, execution, taskRun);
+        this.runContextLogger = new RunContextLogger();
     }
 
     /**
@@ -70,13 +72,12 @@ public class RunContext {
      * @param variables The variable to inject
      */
     @VisibleForTesting
-    @Deprecated
     public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
         this.initBean(applicationContext);
 
         this.storageOutputPrefix = URI.create("");
         this.variables = variables;
-        this.runContextLogger = new RunContextLogger("flow.unitest");
+        this.runContextLogger = new RunContextLogger();
     }
 
     protected void initBean(ApplicationContext applicationContext) {

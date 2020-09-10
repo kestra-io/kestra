@@ -49,11 +49,11 @@ class SchedulerTest {
 
     private static Flow create() {
         Schedule schedule = Schedule.builder()
-            .id("monthly")
+            .id("hourly")
             .type(Schedule.class.getName())
-            .cron("0 0 1 * *")
+            .cron("0 * * * *")
             .backfill(ScheduleBackfill.builder()
-                .start(date(-4))
+                .start(date(5))
                 .build()
             )
             .build();
@@ -69,12 +69,8 @@ class SchedulerTest {
 
     private static ZonedDateTime date(int plus) {
         return ZonedDateTime.now()
-            .withMonth(ZonedDateTime.now().getMonthValue() + plus)
-            .withDayOfMonth(1)
-            .withHour(0)
-            .withMinute(0)
-            .withSecond(0)
-            .truncatedTo(ChronoUnit.SECONDS);
+            .minusHours(plus)
+            .truncatedTo(ChronoUnit.HOURS);
     }
 
     @Test

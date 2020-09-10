@@ -1,192 +1,262 @@
 <template>
     <div v-if="execution">
-        <b-row class="font-weight-bold">
-            <b-col md="2" sm="12" class="date text-right">{{$moment(this.start).format('YYYY-MM-DD')}}</b-col>
-            <b-col v-for="(date, i) in dates" :key="i" md="2" class="time-tick">{{date}}</b-col>
-        </b-row>
-        <b-row v-for="taskItem in series" :key="taskItem.id">
-            <b-col
-                :id="`task-title-wrapper-${taskItem.id}`"
-                class="task-id text-md-right"
-                md="2"
-                sm="12"
-
-                >{{taskItem.name}}
-                <small
-                    v-if="taskItem.task && taskItem.task.value"
-                >{{taskItem.task.value | ellipsis(20)}}</small>
-                <b-tooltip
-                    placement="right"
-                    :target="`task-title-wrapper-${taskItem.id}`"
-                >{{taskItem.id}}</b-tooltip>
-            </b-col>
-            <b-col md="10" sm="12">
-                <b-tooltip :target="`task-body-wrapper-${taskItem.id}`">{{taskItem.tooltip}}</b-tooltip>
-                <div
-                    :id="`task-body-wrapper-${taskItem.id}`"
-                    :style="{left: taskItem.start + '%', position: 'relative', width: taskItem.width + '%', height: '20px', cursor:'pointer'}"
-                    :class="taskItem.color"
-                    class="task-progress"
-                    @click="onTaskSelect(taskItem.task)"
-                >
-                    <span class="task-content">{{taskItem.text}}</span>
-                </div>
-                <hr />
-            </b-col>
-            <b-col v-if="task && task.id === taskItem.id" md="12">
-                <log-list :task-run-id="task.id" level="TRACE"/>
-                <br />
-            </b-col>
-        </b-row>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr class="bg-light">
+                        <th>{{ duration }}</th>
+                        <td v-for="(date, i) in dates" :key="i">{{ date }}</td>
+                    </tr>
+                </thead>
+                <tbody v-for="taskItem in series" :key="taskItem.id">
+                    <tr>
+                        <th :id="`task-title-wrapper-${taskItem.id}`">
+                            <code>{{ taskItem.name }}</code>
+                            <small v-if="taskItem.task && taskItem.task.value"> {{ taskItem.task.value }}</small>
+                            <b-tooltip
+                                placement="right"
+                                :target="`task-title-wrapper-${taskItem.id}`"
+                            >
+                                <code>{{ taskItem.name }}</code>
+                                <span v-if="taskItem.task && taskItem.task.value"><br/>{{ taskItem.task.value }}</span>
+                            </b-tooltip>
+                        </th>
+                        <td :colspan="dates.length">
+                            <b-tooltip
+                                :target="`task-progress-${taskItem.id}`"
+                                placement="left"><span v-html="taskItem.tooltip"></span>
+                            </b-tooltip>
+                            <div
+                                :style="{left: Math.max(1, (taskItem.start - 1)) + '%', width: taskItem.width - 1 + '%'}"
+                                class="task-progress"
+                                @click="onTaskSelect(taskItem.task)"
+                                :id="`task-progress-${taskItem.id}`"
+                            >
+                                <div class="progress">
+                                    <div class="progress-bar"
+                                         :style="{left: taskItem.left + '%', width: (100-taskItem.left) + '%'}"
+                                         :class="'bg-' + taskItem.color + (taskItem.running ? ' progress-bar-striped' : '')"
+                                         role="progressbar">
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr v-if="task && task.id === taskItem.id">
+                        <td :colspan="dates.length + 1">
+                            <log-list :task-run-id="task.id" level="TRACE"/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </template>
 <script>
-import LogList from "./LogList";
-import { mapState } from "vuex";
-import humanizeDuration from "humanize-duration";
+    import LogList from "./LogList";
+    import {mapState} from "vuex";
+    import humanizeDuration from "humanize-duration";
+    import State from "../../utils/state";
 
-const ts = date => new Date(date).getTime();
+    const ts = date => new Date(date).getTime();
 
-export default {
-    components: { LogList },
-    data() {
-        return {
-            colors: {
-                SUCCESS: "bg-success text-white",
-                RUNNING: "bg-primary text-white",
-                FAILED: "bg-danger text-white"
+    export default {
+        components: {LogList},
+        data() {
+            return {
+                colors: State.colorClass(),
+                series: [],
+                intervalHandler: undefined
+            };
+        },
+        watch: {
+            execution() {
+                this.computeSeries();
+            }
+        },
+        mounted() {
+            this.intervalHandler = setInterval(this.computeSeries, 40);
+        },
+        computed: {
+            ...mapState("execution", ["execution", "task"]),
+            dates() {
+                const ticks = 5;
+                const date = ts => this.$moment(ts).format("h:mm:ss");
+                const start = this.start;
+                const delta = this.delta() / ticks;
+                const dates = [];
+                for (let i = 0; i < ticks; i++) {
+                    dates.push(date(start + i * delta));
+                }
+                return dates;
             },
-            series: [],
-            intervalHandler: undefined
-        };
-    },
-    watch: {
-        execution() {
-            this.computeSeries();
-        }
-    },
-    mounted() {
-        this.intervalHandler = setInterval(this.computeSeries, 40);
-    },
-    computed: {
-        ...mapState("execution", ["execution", "task"]),
-        dates() {
-            const ticks = 5;
-            const date = ts => this.$moment(ts).format("h:mm:ss");
-            const start = this.start;
-            const delta = this.delta() / ticks;
-            const dates = [];
-            for (let i = 0; i < ticks; i++) {
-                dates.push(date(start + i * delta));
+            hasTaskLog() {
+                return (
+                    this.task &&
+                    this.task.attempts &&
+                    this.task.attempts.length &&
+                    this.task.attempts[0].logs &&
+                    this.task.attempts[0].logs.length
+                );
+            },
+            start() {
+                return ts(this.execution.state.histories[0].date);
+            },
+            duration() {
+                return humanizeDuration(this.delta());
             }
-            return dates;
         },
-        hasTaskLog() {
-            return (
-                this.task &&
-                this.task.attempts &&
-                this.task.attempts.length &&
-                this.task.attempts[0].logs &&
-                this.task.attempts[0].logs.length
-            );
-        },
-        start() {
-            return ts(this.execution.state.histories[0].date);
-        }
-    },
-    methods: {
-        delta() {
-            return this.stop() - this.start;
-        },
-        stop() {
-            if (this.execution.state.current === "RUNNING") {
-                return +new Date();
-            }
-            const lastIndex = this.execution.state.histories.length - 1;
-            return ts(this.execution.state.histories[lastIndex].date);
-        },
-        computeSeries() {
-            if (!this.execution) {
-                return;
-            }
-            if (
-                !["RUNNING", "CREATED"].includes(this.execution.state.current)
-            ) {
-                this.stopRealTime();
-            }
-            const series = [];
-            const executionDelta = this.delta(); //caching this value matters
-            for (let task of this.execution.taskRunList || []) {
-                const lastIndex = task.state.histories.length - 1;
-                const startTs = ts(task.state.histories[0].date);
-                const stopTs = ts(task.state.histories[lastIndex].date);
-
-                const start = startTs - this.start;
-                let stop = stopTs - this.start - start;
-
-                const delta = stopTs - startTs;
-                const duration = this.$moment.duration(delta);
-                const humanDuration = humanizeDuration(duration);
-                let width = (stop / executionDelta) * 100
-                if (['CREATED', 'RUNNING'].includes(task.state.current)) {
-                    width = ((this.stop() - startTs) / executionDelta) * 100 //(stop / executionDelta) * 100
+        methods: {
+            delta() {
+                return this.stop() - this.start;
+            },
+            stop() {
+                if (State.isRunning(this.execution.state.current)) {
+                    return +new Date();
                 }
-                if (width < 0.5) {
-                    width = 0.5
+
+                return Math.max(...this.execution.taskRunList.map(r => {
+                    let lastIndex = r.state.histories.length - 1
+                    return ts(r.state.histories[lastIndex].date)
+                }));
+            },
+            computeSeries() {
+                if (!this.execution) {
+                    return;
                 }
-                series.push({
-                    id: task.id,
-                    name: task.taskId,
-                    start: (start / executionDelta) * 100,
-                    width,
-                    tooltip: `${this.$t("duration")} : ${humanDuration}`,
-                    color: this.colors[task.state.current],
-                    task
-                });
+
+                if (!State.isRunning(this.execution.state.current)) {
+                    this.stopRealTime();
+                }
+
+                const series = [];
+                const executionDelta = this.delta(); //caching this value matters
+                for (let task of this.execution.taskRunList || []) {
+                    let stopTs;
+
+                    if (State.isRunning(task.state.current)) {
+                        stopTs = ts(new Date());
+                    } else {
+                        const lastIndex = task.state.histories.length - 1;
+                        stopTs = ts(task.state.histories[lastIndex].date);
+                    }
+
+                    const startTs = ts(task.state.histories[0].date);
+
+                    const runningState = task.state.histories.filter(r => r.state === State.RUNNING);
+                    const left = runningState.length > 0 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100) : 0;
+
+                    const start = startTs - this.start;
+                    let stop = stopTs - this.start - start;
+
+                    const delta = stopTs - startTs;
+                    const duration = this.$moment.duration(delta);
+
+                    let tooltip = `${this.$t("duration")} : ${humanizeDuration(duration)}`
+
+                    if (runningState.length > 0) {
+                        tooltip += `<br />${this.$t("queued duration")} : ${humanizeDuration(ts(runningState[0].date) - startTs)}`;
+                        tooltip += `<br />${this.$t("running duration")} : ${humanizeDuration(stopTs - ts(runningState[0].date))}`;
+                    }
+
+                    let width = (stop / executionDelta) * 100
+                    if (State.isRunning(task.state.current)) {
+                        width = ((this.stop() - startTs) / executionDelta) * 100 //(stop / executionDelta) * 100
+                    }
+
+                    series.push({
+                        id: task.id,
+                        name: task.taskId,
+                        start: (start / executionDelta) * 100,
+                        width,
+                        left: left,
+                        tooltip,
+                        color: this.colors[task.state.current],
+                        running: State.isRunning(task.state.current),
+                        task
+                    });
+                }
+                this.series = series;
+            },
+            onTaskSelect(task) {
+                task = this.task && this.task.id === task.id ? undefined : task;
+                this.$store.commit("execution/setTask", task);
+            },
+            stopRealTime() {
+                if (this.intervalHandler) {
+                    clearInterval(this.intervalHandler);
+                }
             }
-            this.series = series;
         },
-        onTaskSelect(task) {
-            task = this.task && this.task.id === task.id ? undefined : task;
-            this.$store.commit("execution/setTask", task);
-        },
-        stopRealTime() {
-            if (this.intervalHandler) {
-                clearInterval(this.intervalHandler);
-            }
+        destroyed() {
+            this.stopRealTime();
         }
-    },
-    destroyed() {
-        this.stopRealTime();
-    }
-};
+    };
 </script>
 <style lang="scss" scoped>
 @import "../../styles/_variable.scss";
 
-.task-content {
-    margin-left: 45%;
-    font-size: 0.8em;
-    bottom: 10px;
-}
-.task-id {
-    font-family: monospace;
-    height: 30px;
-}
-.task-progress {
-    border-radius: 4px;
+table {
+    & th, td {
+        border-color: $table-border-color;
+    }
+
+    thead th, thead td {
+        text-align: right;
+    }
+
+    tbody {
+        border-top: 0;
+    }
+
+    thead {
+        font-size: $font-size-sm;
+
+        th {
+            width: 150px;
+        }
+    }
+    th {
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    tbody {
+        th {
+            code {
+                font-weight: normal;
+            }
+        }
+
+        td {
+            position: relative;
+
+            .task-progress {
+                position: absolute;
+                transition: all 0.3s;
+                min-width: 5px;
+
+                .progress {
+                    height: 21px;
+                    border-radius: 2px;
+                    position: relative;
+                    cursor: pointer;
+
+                    .progress-bar {
+                        position: absolute;
+                        height: 21px;
+                        transition: none;
+                    }
+                }
+            }
+        }
+    }
 }
 
-.time-tick,
-.date {
-    border-left: 1px solid $gray-500;
-    font-size: $font-size-xs;
-    padding: 0.2rem 0.4rem;
-    margin-bottom: 0.2rem;
+/deep/ .log-wrapper .attempt-wrapper {
+    margin-bottom: 0;
 }
 
-.date {
-    border: 0;
-
-}
 </style>

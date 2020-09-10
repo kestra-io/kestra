@@ -38,3 +38,13 @@ export default {
     }
 };
 </script>
+
+
+<style lang="scss" scoped>
+@import "../../styles/_variable.scss";
+@include media-breakpoint-up(md) {
+    .ns-selector {
+        width:550px;
+    }
+}
+</style>

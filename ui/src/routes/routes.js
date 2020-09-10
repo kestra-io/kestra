@@ -8,7 +8,8 @@ import Plugin from '../components/plugins/Plugin.vue'
 
 export default {
     mode: 'history',
-    base: '/ui/',
+    // eslint-disable-next-line no-undef
+    base: KESTRA_UI_PATH,
     routes: [
         //Flows
         { name: 'home', path: '/', component: Flows },
@@ -17,7 +18,6 @@ export default {
         { name: 'flowEdit', path: '/flows/edit/:namespace/:id', component: FlowRoot },
 
         //Executions
-        { name: 'executionsByFlow', path: '/executions/:namespace/:flowId', component: Executions },
         { name: 'executionsList', path: '/executions', component: Executions },
         { name: 'executionEdit', path: '/executions/:namespace/:flowId/:id', component: ExecutionRoot },
 

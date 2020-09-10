@@ -56,7 +56,7 @@
                         v-if="hasOutputs"
                         class="btn-secondary"
                         :title="$t('show task outputs')"
-                        :to="{name:'executionEdit', params: $route.params, query: {tab:'execution-output', search: task.id + (value ? ` - ${value}` : '')}}"
+                        :to="{name:'executionEdit', params: $route.params, query: {tab:'execution-output', search: taskRunOutputToken(n.taskRun)}}"
                     >
                         <location-exit title />
                     </router-link>
@@ -88,6 +88,7 @@ import CurrentAc from "vue-material-design-icons/CurrentAc";
 import { mapState } from "vuex";
 import Status from "../Status";
 import Yaml from "yaml";
+import md5 from "md5";
 
 export default {
     components: {
@@ -110,6 +111,9 @@ export default {
         }
     },
     methods: {
+        taskRunOutputToken(taskRun) {
+            return md5(taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ''));
+        },
         onFilterGroup() {
             this.$emit("onFilterGroup", this.task.id);
         },

@@ -1,21 +1,20 @@
 <template>
     <div v-if="execution && outputs">
-        <b-row>
-            <b-col md="6">
-                <b-form-group
-                    :label="$t('display output for specific task')"
-                    label-for="input-for-output"
-                >
+        <b-navbar toggleable="lg" type="light" variant="light">
+            <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+            <b-collapse id="nav-collapse" is-nav>
+                <b-nav-form>
                     <v-select
                         v-model="filter"
-                        :reduce="option => option.label"
+                        :reduce="option => option.value"
                         @input="onSearch"
                         :options="selectOptions"
-                        :placeholder="$t('search') + '...'"
+                        :placeholder="$t('display output for specific task') + '...'"
                     ></v-select>
-                </b-form-group>
-            </b-col>
-        </b-row>
+                </b-nav-form>
+            </b-collapse>
+        </b-navbar>
+
         <b-table
             responsive="xl"
             striped
@@ -25,23 +24,30 @@
             :items="outputs"
             class="mb-0"
         >
+            <template v-slot:cell(key)="row">
+                <code>{{ row.item.key }}</code>
+            </template>
+
             <template v-slot:cell(value)="row">
-                <b-link
-                    class="btn btn-primary"
-                    v-if="row.item.download"
-                    target="_blank"
-                    :href="itemUrl({uri: row.item.value})"
-                >{{$t('download')}}</b-link>
-                <span v-else>{{row.item.value}}</span>
+                <var>{{ row.item.value }}</var>
+            </template>
+
+            <template v-slot:cell(output)="row">
+                <var-value :execution="execution" :value="row.item.output" />
             </template>
         </b-table>
     </div>
 </template>
 <script>
 import { mapState } from "vuex";
-import { apiRoot } from "../../http";
+import md5 from "md5";
+import VarValue from "./VarValue";
+import Utils from "../../utils/utils";
 
 export default {
+    components: {
+        VarValue,
+    },
     data() {
         return {
             filter: ""
@@ -60,37 +66,32 @@ export default {
         }
     },
     methods: {
-        itemUrl(value) {
-            return `${apiRoot}executions/${this.execution.id}/file?path=${value.uri}`;
-        },
         onSearch() {
             if (this.filter && this.$route.query.search !== this.filter) {
                 const newRoute = { query: { ...this.$route.query } };
                 newRoute.query.search = this.filter;
                 this.$router.push(newRoute);
             }
+        },
+        taskRunOutputToken(taskRun) {
+            return md5(taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ''));
         }
     },
     computed: {
         ...mapState("execution", ["execution"]),
         selectOptions() {
-            const options = [];
-            for (const task of this.execution.taskRunList || []) {
-                for (const key in task.outputs) {
-                    options.push({
-                        label: task.taskId + (task.value ? ` - ${task.value}`: ''),
-                        value: task.outputs[key]
-                    });
+            const options = {};
+            for (const taskRun of this.execution.taskRunList || []) {
+                options[this.taskRunOutputToken(taskRun)] = {
+                    label: taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ''),
+                    value: this.taskRunOutputToken(taskRun)
                 }
             }
-            return options;
+
+            return Object.values(options);
         },
         fields() {
             return [
-                {
-                    key: "key",
-                    label: this.$t("name")
-                },
                 {
                     key: "task",
                     label: this.$t("task")
@@ -98,28 +99,32 @@ export default {
                 {
                     key: "value",
                     label: this.$t("value")
+                },
+                {
+                    key: "key",
+                    label: this.$t("name")
+                },
+                {
+                    key: "output",
+                    label: this.$t("output")
                 }
             ];
         },
         outputs() {
             const outputs = [];
-            for (const task of this.execution.taskRunList || []) {
-                const token = task.taskId + (task.value ? ` - ${task.value}`: '')
+            for (const taskRun of this.execution.taskRunList || []) {
+                const token = this.taskRunOutputToken(taskRun)
                 if (!this.filter || token === this.filter) {
-                    for (const key in task.outputs) {
+                    Utils.executionVars(taskRun.outputs).forEach(output => {
                         const item = {
-                            key: token,
-                            value: task.outputs[key],
-                            task: task.id
+                            key: output.key,
+                            output: output.value,
+                            task: taskRun.taskId,
+                            value: taskRun.value
                         };
-                        if (
-                            typeof task.outputs[key] === "string" &&
-                            task.outputs[key].startsWith("kestra:///")
-                        ) {
-                            item.download = true;
-                        }
+
                         outputs.push(item);
-                    }
+                    })
                 }
             }
             return outputs;

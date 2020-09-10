@@ -1,13 +1,22 @@
 <template>
     <div v-if="ready">
-        <data-table @onPageChanged="loadData" ref="dataTable" :total="total">
+        <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total">
             <template v-slot:navbar>
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
-                <namespace-selector @onNamespaceSelect="onNamespaceSelect" />
+                <namespace-select v-if="$route.name !== 'flowEdit'"  @onNamespaceSelect="onNamespaceSelect" />
                 <status-filter-buttons @onRefresh="loadData"/>
                 <date-range @onDate="onSearch" />
                 <refresh-button class="float-right" @onRefresh="loadData"/>
             </template>
+
+            <template v-slot:top>
+                <state-global-chart
+                    v-if="daily"
+                    :ready="dailyReady"
+                    :data="daily"
+                />
+            </template>
+
             <template v-slot:table>
                 <b-table
                     :no-local-sorting="true"
@@ -27,12 +36,12 @@
                     </template>
                     <template
                         v-slot:cell(state.startDate)="row"
-                    >{{row.item.state.startDate | date('YYYY/MM/DD HH:mm:ss')}}</template>
+                    >{{row.item.state.startDate | date('LLLL')}}</template>
                     <template
                         v-slot:cell(state.endDate)="row"
                     >
                     <span v-if="!['RUNNING', 'CREATED'].includes(row.item.state.current)">
-                        {{row.item.state.endDate | date('YYYY/MM/DD HH:mm:ss')}}
+                        {{row.item.state.endDate | date('LLLL')}}
                     </span>
                     </template>
                     <template v-slot:cell(state.current)="row">
@@ -44,8 +53,8 @@
                         />
                     </template>
                      <template v-slot:cell(state.duration)="row">
-                        <p v-if="['RUNNING', 'CREATED'].includes(row.item.state.current)">{{durationFrom(row.item) | humanizeDuration}}</p>
-                        <p v-else>{{row.item.state.duration | humanizeDuration}}</p>
+                        <span v-if="['RUNNING', 'CREATED'].includes(row.item.state.current)">{{durationFrom(row.item) | humanizeDuration}}</span>
+                        <span v-else>{{row.item.state.duration | humanizeDuration}}</span>
                     </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link
@@ -69,10 +78,11 @@ import Status from "../Status";
 import RouteContext from "../../mixins/routeContext";
 import DataTableActions from "../../mixins/dataTableActions";
 import SearchField from "../layout/SearchField";
-import NamespaceSelector from "../namespace/Selector";
+import NamespaceSelect from "../namespace/NamespaceSelect";
 import DateRange from "../layout/DateRange";
 import RefreshButton from '../layout/RefreshButton'
 import StatusFilterButtons from '../layout/StatusFilterButtons'
+import StateGlobalChart from "../../components/stats/StateGlobalChart";
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -81,24 +91,33 @@ export default {
         Eye,
         DataTable,
         SearchField,
-        NamespaceSelector,
+        NamespaceSelect,
         DateRange,
         RefreshButton,
-        StatusFilterButtons
+        StatusFilterButtons,
+        StateGlobalChart
     },
     data() {
         return {
             dataType: "execution",
+            dailyReady: false,
         };
     },
     beforeCreate () {
-        const params = JSON.parse(localStorage.getItem('executionQueries') || '{}')
-        params.sort = 'state.startDate:desc'
-        params.status = this.$route.query.status || params.status || 'ALL'
-        localStorage.setItem('executionQueries', JSON.stringify(params))
+        const queries = JSON.parse(localStorage.getItem('executionQueries') || '{}')
+        queries.sort = queries.sort ? queries.sort :  'state.startDate:desc'
+        queries.status = this.$route.query.status || queries.status || 'ALL'
+        if (!this.$route.query.sort) {
+            this.$router.push({
+                name: this.$route.name,
+                query: {...this.$route.query, ...queries}
+            });
+        }
+        localStorage.setItem('executionQueries', JSON.stringify(queries))
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
+        ...mapState("stat", ["daily"]),
         fields() {
             const title = title => {
                 return this.$t(title);
@@ -147,14 +166,21 @@ export default {
             ];
         },
         executionQuery() {
+            let filter;
+
             if (this.$route.name === "flowEdit") {
-                const filter = `namespace:${this.$route.params.namespace} AND flowId:${this.$route.params.id}`;
-                return this.query === "*"
-                    ? filter
-                    : `${this.query} AND ${filter}`;
-            } else {
-                return this.query;
+                filter = `namespace:${this.$route.params.namespace} AND flowId:${this.$route.params.id}`;
             }
+
+            return this.query + (filter ? " " + filter : "");
+        },
+        endDate() {
+            return new Date();
+        },
+        startDate() {
+            return this.$moment(this.endDate)
+                .add(-30, "days")
+                .toDate();
         }
     },
     methods: {
@@ -175,10 +201,22 @@ export default {
                     return response.data
                 })
                 .then((execution) => {
-                    this.$toast().success({type: 'triggered', name: execution.id});
+                    this.$toast().success(this.$t('triggered done', {name: execution.id}));
                 })
         },
         loadData(callback) {
+            this.dailyReady = false;
+            this.$store
+                .dispatch("stat/daily", {
+                    q: this.executionQuery,
+                    startDate: this.$moment(this.startDate).format('YYYY-MM-DD'),
+                    endDate: this.$moment(this.endDate).format('YYYY-MM-DD')
+                })
+                .then(() => {
+                    this.dailyReady = true;
+                });
+
+
             this.$store.dispatch("execution/findExecutions", {
                 size: parseInt(this.$route.query.size || 25),
                 page: parseInt(this.$route.query.page || 1),
@@ -189,7 +227,7 @@ export default {
         },
         durationFrom(item) {
             return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
-        }
+        },
     }
 };
 </script>

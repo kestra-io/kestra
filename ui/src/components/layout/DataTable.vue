@@ -9,19 +9,21 @@
             </b-collapse>
         </b-navbar>
 
+        <slot name="top"></slot>
+
         <slot name="table"></slot>
         <div class="d-flex">
             <div class="flex-grow-1">
                 <b-form-select
                     v-model="size"
-                    @change="perPageChange"
+                    @change="pageSizeChange"
                     size="sm"
                     :options="pageOptions"
                 ></b-form-select>
             </div>
             <div>
                 <b-pagination
-                    @change="changed"
+                    @change="pageChanged"
                     v-model="page"
                     :total-rows="total"
                     hide-ellipsis
@@ -41,11 +43,12 @@ export default {
     data() {
         return {
             size: parseInt(this.$route.query.size || 25),
-            page: parseInt(this.$route.query.size || 1),
+            page: parseInt(this.$route.query.page || 1),
             pageOptions: [
-                { value: 25, text: `25 ${this.$t("Per page")}` },
-                { value: 50, text: `50 ${this.$t("Per page")}` },
-                { value: 100, text: `100 ${this.$t("Per page")}` }
+                {value: 10, text: `10 ${this.$t("Per page")}`},
+                {value: 25, text: `25 ${this.$t("Per page")}`},
+                {value: 50, text: `50 ${this.$t("Per page")}`},
+                {value: 100, text: `100 ${this.$t("Per page")}`}
             ]
         };
     },
@@ -58,23 +61,17 @@ export default {
         total: { type: Number, required: true }
     },
     methods: {
-        perPageChange() {
-            this.$router.push({
-                query: {
-                    ...this.$route.query,
-                    size: this.size
-                }
+        pageSizeChange() {
+            this.$emit("onPageChanged", {
+                page: 1,
+                size: this.size
             });
-            this.$emit("onPageChanged");
         },
-        changed(page) {
-            this.$router.push({
-                query: {
-                    ...this.$route.query,
-                    page: page
-                }
+        pageChanged(page) {
+            this.$emit("onPageChanged", {
+                page: page,
+                size: this.size
             });
-            this.$emit("onPageChanged");
         }
     }
 };

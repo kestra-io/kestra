@@ -1,7 +1,7 @@
 <template>
-    <div class="line" v-if="filtered">
+    <div class="line text-monospace" v-if="filtered">
         <span :class="levelClass" class="badge">{{log.level.padEnd(9)}}</span>
-        <span class="badge bg-light text-dark">{{log.timestamp  | date('YYYY/MM/DD HH:mm:ss') }}</span>
+        <span class="badge bg-light text-dark">{{log.timestamp  | date('LLLL') }}</span>
         <span class="message">{{log.message}}</span>
     </div>
 </template>
@@ -44,9 +44,11 @@ export default {
 div {
     white-space: pre-wrap;
     word-break: break-all;
+    padding: 0 $spacer/2;
 
     .badge {
         font-size: 100%;
+        margin-left: -$spacer/2;
         white-space: pre-wrap;
         font-weight: $font-weight-base;
     }

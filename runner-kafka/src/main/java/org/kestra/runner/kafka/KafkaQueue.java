@@ -12,6 +12,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueException;
@@ -81,16 +82,24 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             return null;
         } else if (this.cls == Flow.class) {
             return ((Flow) object).uid();
+        } else if (this.cls == ExecutionKilled.class) {
+            return ((ExecutionKilled) object).getExecutionId();
         } else {
             throw new IllegalArgumentException("Unknown type '" + this.cls.getName() + "'");
         }
     }
 
+    private void log(T object, String message) {
+        if (log.isTraceEnabled()) {
+            log.trace("{} on  topic '{}', value {}", message, topicsConfig.getName(), object);
+        } else if (log.isDebugEnabled()) {
+            log.trace("{} on topic '{}', key {}", message, topicsConfig.getName(), this.key(object));
+        }
+    }
+
     @Override
     public void emit(T message) throws QueueException {
-        if (log.isTraceEnabled()) {
-            log.trace("New message: topic '{}', value {}", topicsConfig.getName(), message);
-        }
+        this.log(message, "Outgoing messsage");
 
         try {
             kafkaProducer
@@ -136,6 +145,8 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
                 ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofSeconds(1));
 
                 records.forEach(record -> {
+                    this.log(record.value(), "Incoming messsage");
+
                     consumer.accept(record.value());
 
                     if (consumerGroup != null) {

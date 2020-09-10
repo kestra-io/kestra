@@ -60,6 +60,12 @@ kestra:
         properties:
           cleanup.policy: "delete,compact"
 
+      killed:
+        name: "kestra_executor_killed"
+        cls: org.kestra.core.models.executions.ExecutionKilled
+        properties:
+          cleanup.policy: "delete,compact"
+
       workertask:
         name: "kestra_workertask"
         cls: org.kestra.core.runners.WorkerTask

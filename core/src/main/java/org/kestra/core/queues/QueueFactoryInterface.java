@@ -1,6 +1,7 @@
 package org.kestra.core.queues;
 
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.runners.WorkerTask;
@@ -12,6 +13,7 @@ public interface QueueFactoryInterface {
     String WORKERTASKRESULT_NAMED = "workerTaskResultQueue";
     String FLOW_NAMED = "flowQueue";
     String WORKERTASKLOG_NAMED = "workerTaskLogQueue";
+    String KILL_NAMED = "executionKilled";
 
     QueueInterface<Execution> execution();
 
@@ -22,4 +24,6 @@ public interface QueueFactoryInterface {
     QueueInterface<LogEntry> logEntry();
 
     QueueInterface<Flow> flow();
+
+    QueueInterface<ExecutionKilled> kill();
 }

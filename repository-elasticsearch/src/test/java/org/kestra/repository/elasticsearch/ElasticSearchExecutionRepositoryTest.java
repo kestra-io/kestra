@@ -99,14 +99,14 @@ class ElasticSearchExecutionRepositoryTest {
         DailyExecutionStatistics second = result.get("org.kestra.unittest").get("second").get(10);
 
         assertThat(full.getDuration().getAvg().getSeconds(), greaterThan(0L));
-        assertThat(full.getExecutionCounts().size(), is(4));
+        assertThat(full.getExecutionCounts().size(), is(7));
         assertThat(full.getExecutionCounts().get(State.Type.FAILED), is(3L));
         assertThat(full.getExecutionCounts().get(State.Type.RUNNING), is(5L));
         assertThat(full.getExecutionCounts().get(State.Type.SUCCESS), is(7L));
         assertThat(full.getExecutionCounts().get(State.Type.CREATED), is(0L));
 
         assertThat(second.getDuration().getAvg().getSeconds(), greaterThan(0L));
-        assertThat(second.getExecutionCounts().size(), is(4));
+        assertThat(second.getExecutionCounts().size(), is(7));
         assertThat(second.getExecutionCounts().get(State.Type.SUCCESS), is(13L));
         assertThat(second.getExecutionCounts().get(State.Type.CREATED), is(0L));
     }
@@ -127,7 +127,7 @@ class ElasticSearchExecutionRepositoryTest {
         );
 
         assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().size(), is(4));
+        assertThat(result.get(10).getExecutionCounts().size(), is(7));
         assertThat(result.get(10).getDuration().getAvg().getSeconds(), greaterThan(0L));
 
         assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED), is(3L));

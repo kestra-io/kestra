@@ -15,9 +15,11 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
@@ -90,6 +92,8 @@ public class KafkaExecutor extends AbstractExecutor {
 
         KTable<String, Execution> executionKTable = this.executionKTable(builder);
 
+        KTable<String, Execution> executionNotKilledKTable = this.joinExecutionKilled(builder, executionKTable);
+
         // logs
         logIfEnabled(
             executionKTable.toStream(Named.as("execution-toStream")),
@@ -103,11 +107,10 @@ public class KafkaExecutor extends AbstractExecutor {
         );
 
         // join with worker result
-        KStream<String, Execution> executionKStream = this.joinWorkerResult(builder, executionKTable);
+        KStream<String, Execution> executionKStream = this.joinWorkerResult(builder, executionNotKilledKTable);
 
         // handle state on execution
-        KStream<String, ExecutionWithFlow> stream = this.withFlow(
-            executionKStream);
+        KStream<String, ExecutionWithFlow> stream = this.withFlow(executionKStream, "withFlow");
 
         this.handleMain(stream);
         this.handleNexts(stream);
@@ -163,6 +166,52 @@ public class KafkaExecutor extends AbstractExecutor {
             );
     }
 
+    private KTable<String, ExecutionKilled> executionKilledKTable(StreamsBuilder builder) {
+        return builder
+            .table(
+                kafkaAdminService.getTopicName(ExecutionKilled.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(ExecutionKilled.class)),
+                Materialized.<String, ExecutionKilled, KeyValueStore<Bytes, byte[]>>as("execution_killed")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(JsonSerde.of(ExecutionKilled.class))
+            );
+    }
+
+    private KTable<String, Execution> joinExecutionKilled(StreamsBuilder builder, KTable<String, Execution> executionKTable) {
+        KTable<String, HasKilledJoin> table = executionKTable
+            .leftJoin(
+                this.executionKilledKTable(builder),
+                (execution, executionKilled) -> {
+                    if (executionKilled != null &&
+                        execution.getState().getCurrent() != State.Type.KILLING &&
+                        !execution.getState().isTerninated()
+                    ) {
+                        Execution newExecution = execution.withState(State.Type.KILLING);
+
+                        if (log.isDebugEnabled()) {
+                            log.debug("Killed in: {}", newExecution.toStringState());
+                        }
+
+                        return new HasKilledJoin(newExecution, true);
+                    }
+
+                    return new HasKilledJoin(execution, false);
+                },
+                Named.as("executionKilled-leftJoin")
+            );
+
+        KStream<String, Execution> join = table
+            .filter((key, value) -> value.isJoined(), Named.as("executionKilled-isJoined-filter"))
+            .mapValues((readOnlyKey, value) -> value.getExecution(), Named.as("executionKilled-isJoined-map"))
+            .toStream();
+
+        toExecution(join, "executionKilled");
+
+        return table
+            .filter((key, value) -> !value.isJoined(), Named.as("executionKilled-isNotJoined-filter"))
+            .mapValues((readOnlyKey, value) -> value.getExecution(), Named.as("executionKilled-isNotJoined-map"));
+    }
+
     private KTable<String, WorkerTaskResultState> workerTaskResultKTable(StreamsBuilder builder) {
         return builder
             .stream(
@@ -196,17 +245,16 @@ public class KafkaExecutor extends AbstractExecutor {
                 Materialized.<String, WorkerTaskResultState, KeyValueStore<Bytes, byte[]>>as("workertaskresult")
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(WorkerTaskResultState.class))
-
             );
     }
 
     private KStream<String, Execution> joinWorkerResult(StreamsBuilder builder, KTable<String, Execution> executionKTable) {
-        KStream<String, Either<WithException, HasJoin>> eitherKStream = executionKTable
+        KStream<String, Either<WithException, HasWorkerResultJoin>> eitherKStream = executionKTable
             .leftJoin(
                 this.workerTaskResultKTable(builder),
                 (execution, workerTaskResultState) -> {
                     if (workerTaskResultState == null) {
-                        return Either.<WithException, HasJoin>right(new HasJoin(execution, false));
+                        return Either.<WithException, HasWorkerResultJoin>right(new HasWorkerResultJoin(execution, false));
                     }
 
                     return workerTaskResultState
@@ -229,26 +277,26 @@ public class KafkaExecutor extends AbstractExecutor {
                                 .record(workerTaskResult.getTaskRun().getState().getDuration());
 
                             try {
-                                return Either.<WithException, HasJoin>right(new HasJoin(
+                                return Either.<WithException, HasWorkerResultJoin>right(new HasWorkerResultJoin(
                                     execution.withTaskRun(workerTaskResult.getTaskRun()),
                                     true
                                 ));
                             } catch (Exception e) {
-                                return Either.<WithException, HasJoin>left(new WithException(new HasJoin(execution, false), e));
+                                return Either.<WithException, HasWorkerResultJoin>left(new WithException(new HasWorkerResultJoin(execution, false), e));
                             }
                         })
-                        .orElseGet(() -> Either.<WithException, HasJoin>right(new HasJoin(execution, false)));
+                        .orElseGet(() -> Either.<WithException, HasWorkerResultJoin>right(new HasWorkerResultJoin(execution, false)));
                 },
                 Named.as("join-leftJoin")
             )
             .toStream(Named.as("join-toStream"));
 
-        KStream<String, HasJoin> join = branchException(eitherKStream, "join");
+        KStream<String, HasWorkerResultJoin> join = branchException(eitherKStream, "join");
 
         return toExecutionJoin(join);
     }
 
-    private KStream<String, ExecutionWithFlow> withFlow(KStream<String, Execution> executionKStream) {
+    private KStream<String, ExecutionWithFlow> withFlow(KStream<String, Execution> executionKStream, String name) {
         return executionKStream
             .mapValues(
                 (readOnlyKey, execution) -> {
@@ -256,7 +304,7 @@ public class KafkaExecutor extends AbstractExecutor {
 
                     return new ExecutionWithFlow(flow, execution);
                 },
-                Named.as("withFlow-map")
+                Named.as(name + "-map")
             );
     }
 
@@ -290,11 +338,20 @@ public class KafkaExecutor extends AbstractExecutor {
     }
 
     private void purgeExecutor(KStream<String, ExecutionWithFlow> stream) {
-        KStream<String, ExecutionWithFlow> terminated = stream
+        KStream<String, ExecutionWithFlow> terminatedWithKilled = stream
             .filter(
                 (key, value) -> value.getExecution().isTerminatedWithListeners(value.getFlow()),
                 Named.as("purgeExecutor-terminated-filter")
             );
+
+        // we don't purge killed execution in order to have feedback about child running tasks
+        // this can be killed lately (after the executor kill the execution), but we want to keep
+        // feedback about the actual state (killed or not)
+        // @TODO: this can lead to infinite state store for most executor topic
+        KStream<String, ExecutionWithFlow> terminated = terminatedWithKilled.filter(
+            (key, value) -> value.getExecution().getState().getCurrent() != State.Type.KILLED,
+            Named.as("purgeExecutor-notkilled-filter")
+        );
 
         // clean up executor
         terminated
@@ -349,6 +406,17 @@ public class KafkaExecutor extends AbstractExecutor {
                 ),
                 Named.as("executionNexts-nextsPurge-transform"),
                 NEXTS_DEDUPLICATION_STATE_STORE_NAME
+            );
+
+        // clean up killed
+        terminatedWithKilled
+            .mapValues(
+                (readOnlyKey, value) -> (ExecutionKilled) null,
+                Named.as("purgeExecutor-killedPurge-map")
+            )
+            .to(
+                kafkaAdminService.getTopicName(ExecutionKilled.class),
+                Produced.with(Serdes.String(), JsonSerde.of(ExecutionKilled.class))
             );
     }
 
@@ -505,7 +573,7 @@ public class KafkaExecutor extends AbstractExecutor {
             .filter((key, value) -> value != null, Named.as(methodName + "-isRight-notNull-filter"));
     }
 
-    private KStream<String, Execution> toExecutionJoin(KStream<String, HasJoin> stream) {
+    private KStream<String, Execution> toExecutionJoin(KStream<String, HasWorkerResultJoin> stream) {
         KStream<String, Execution> result = stream
             .filter((key, value) -> value != null, Named.as("join-isJoinedNull-filter"))
             .filter((key, value) -> value.isJoined(), Named.as("join-isJoined-filter"))
@@ -565,10 +633,18 @@ public class KafkaExecutor extends AbstractExecutor {
 
     @AllArgsConstructor
     @Getter
-    public static class HasJoin implements ExecutionInterface {
+    public static class HasWorkerResultJoin implements ExecutionInterface {
         Execution execution;
         boolean joined;
     }
+
+    @AllArgsConstructor
+    @Getter
+    public static class HasKilledJoin implements ExecutionInterface {
+        Execution execution;
+        boolean joined;
+    }
+
 
     @AllArgsConstructor
     @Getter
@@ -604,6 +680,7 @@ public class KafkaExecutor extends AbstractExecutor {
         kafkaAdminService.createIfNotExist(Execution.class);
         kafkaAdminService.createIfNotExist(Flow.class);
         kafkaAdminService.createIfNotExist(TOPIC_EXECUTOR);
+        kafkaAdminService.createIfNotExist(ExecutionKilled.class);
 
         KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology());
         resultStream.start();

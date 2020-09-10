@@ -26,13 +26,11 @@ public class RunContextFactory {
     }
 
     @VisibleForTesting
-    @Deprecated
     public RunContext of(Map<String, Object> variables) {
         return new RunContext(applicationContext, variables);
     }
 
     @VisibleForTesting
-    @Deprecated
     public RunContext of() {
         return new RunContext(applicationContext, ImmutableMap.of());
     }

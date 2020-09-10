@@ -11,7 +11,10 @@ import org.apache.kafka.streams.StreamsConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
@@ -32,8 +35,7 @@ import java.util.Properties;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @MicronautTest
 @Slf4j
@@ -123,6 +125,138 @@ class KafkaExecutorTest {
     }
 
     @Test
+    void killed() {
+        Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
+        // this.flowInput().add(flow.uid(), flow);
+
+        createExecution(flow);
+
+        // task
+        Execution execution = runningAndSuccessSequential(flow, 0);
+
+        // multiple killed should have no impact
+        createKilled(execution);
+        createKilled(execution);
+        createKilled(execution);
+
+        // next
+        ProducerRecord<String, Execution> executionRecord = executionOutput().readOneRecord();
+        executionRecord = executionOutput().readOneRecord();
+        assertThat(executionRecord.value().getTaskRunList(), hasSize(2));
+        assertThat(executionRecord.value().getState().getCurrent(), is(State.Type.KILLING));
+
+        Task task = flow.getTasks().get(1);
+        TaskRun taskRun = executionRecord.value().getTaskRunList().get(1);
+
+        // late arrival from worker
+        this.changeStatus(task, taskRun, State.Type.RUNNING);
+        this.changeStatus(task, taskRun, State.Type.SUCCESS);
+
+        executionRecord = executionOutput().readOneRecord();
+        executionRecord = executionOutput().readOneRecord();
+
+        assertThat(executionRecord.value().getTaskRunList(), hasSize(2));
+        assertThat(executionRecord.value().getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
+
+        assertThat(executionOutput().readOneRecord().value().getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(executionOutput().readOneRecord(), is(nullValue()));
+    }
+
+    @Test
+    void killedAlreadyFinished() {
+        Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
+        // this.flowInput().add(flow.uid(), flow);
+
+        createExecution(flow);
+
+        // task
+        runningAndSuccessSequential(flow, 0);
+        runningAndSuccessSequential(flow, 1);
+        Execution execution = runningAndSuccessSequential(flow, 2);
+
+        createKilled(execution);
+
+        // next
+        ProducerRecord<String, Execution> executionRecord = executionOutput().readOneRecord();
+        assertThat(executionRecord.value().getTaskRunList(), hasSize(3));
+        assertThat(executionRecord.value().getState().getCurrent(), is(State.Type.SUCCESS));
+
+        assertThat(executionOutput().readOneRecord(), is(nullValue()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void killedParallel(boolean killed) {
+        Flow flow = flowRepository.findById("org.kestra.tests", "parallel").orElseThrow();
+        // this.flowInput().add(flow.uid(), flow);
+
+        createExecution(flow);
+        Parallel parent = (Parallel) flow.getTasks().get(0);
+        Task firstChild = parent.getTasks().get(0);
+        Task secondChild = parent.getTasks().get(1);
+
+        // parent > worker > RUNNING
+        Execution executionRecord = executionOutput().readOneRecord().value();
+        assertThat(executionRecord.getTaskRunList(), hasSize(1));
+        this.changeStatus(parent, executionRecord.getTaskRunList().get(0), State.Type.RUNNING);
+
+        // parent > execution RUNNING
+        executionRecord = executionOutput().readOneRecord().value();
+        assertThat(executionRecord.getTaskRunList(), hasSize(1));
+        assertThat(executionRecord.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
+
+
+        // first child > RUNNING
+        executionRecord = executionOutput().readOneRecord().value();
+        assertThat(executionRecord.getTaskRunList(), hasSize(2));
+        assertThat(executionRecord.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.CREATED));
+
+        this.changeStatus(firstChild, executionRecord.getTaskRunList().get(1), State.Type.RUNNING);
+        executionRecord = executionOutput().readOneRecord().value();
+        assertThat(executionRecord.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.RUNNING));
+
+        // second child > CREATED
+        executionRecord = executionOutput().readOneRecord().value();
+        assertThat(executionRecord.getTaskRunList(), hasSize(3));
+        assertThat(executionRecord.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.CREATED));
+
+        // killed execution
+        createKilled(executionRecord);
+        executionRecord = executionOutput().readOneRecord().value();
+        executionRecord = executionOutput().readOneRecord().value();
+        assertThat(executionRecord.getState().getCurrent(), is(State.Type.KILLING));
+        assertThat(executionRecord.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLING));
+
+        // change second child to RUNNING
+        this.changeStatus(secondChild, executionRecord.getTaskRunList().get(2), State.Type.RUNNING);
+        executionRecord = executionOutput().readOneRecord().value();
+        assertThat(executionRecord.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.RUNNING));
+
+        // kill the first & second child
+        if (killed) {
+            this.changeStatus(firstChild, executionRecord.getTaskRunList().get(1), State.Type.KILLED);
+            this.changeStatus(secondChild, executionRecord.getTaskRunList().get(2), State.Type.KILLED);
+        } else {
+            this.changeStatus(firstChild, executionRecord.getTaskRunList().get(1), State.Type.SUCCESS);
+            this.changeStatus(secondChild, executionRecord.getTaskRunList().get(2), State.Type.SUCCESS);
+        }
+
+        // killing state
+        executionRecord = executionOutput().readOneRecord().value();
+        executionRecord = executionOutput().readOneRecord().value();
+        executionRecord = executionOutput().readOneRecord().value();
+        executionRecord = executionOutput().readOneRecord().value();
+
+        // control
+        assertThat(executionRecord.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(executionRecord.getTaskRunList().get(1).getState().getCurrent(), is(killed ? State.Type.KILLED : State.Type.SUCCESS));
+        assertThat(executionRecord.getTaskRunList().get(2).getState().getCurrent(), is(killed ? State.Type.KILLED : State.Type.SUCCESS));
+        assertThat(executionRecord.getState().getCurrent(), is(State.Type.KILLED));
+
+        assertThat(executionOutput().readOneRecord(), is(nullValue()));
+    }
+
+    @Test
     void parallel() {
         Flow flow = flowRepository.findById("org.kestra.tests", "parallel").orElseThrow();
         // this.flowInput().add(flow.uid(), flow);
@@ -206,7 +340,15 @@ class KafkaExecutorTest {
         this.executionInput().add("unittest", execution);
     }
 
-    private void runningAndSuccessSequential(Flow flow, int index) {
+    private void createKilled(Execution execution) {
+        ExecutionKilled executionKilled = ExecutionKilled.builder()
+            .executionId(execution.getId())
+            .build();
+
+        this.executionKilledInput().add("unittest", executionKilled);
+    }
+
+    private Execution runningAndSuccessSequential(Flow flow, int index) {
         ProducerRecord<String, Execution> executionRecord;
         Task task = flow.getTasks().get(index);
 
@@ -230,6 +372,8 @@ class KafkaExecutorTest {
         executionRecord = executionOutput().readOneRecord();
         assertThat(executionRecord.value().getTaskRunList(), hasSize(index + 1));
         assertThat(executionRecord.value().getTaskRunList().get(index).getState().getCurrent(), is(State.Type.SUCCESS));
+
+        return executionRecord.value();
     }
 
     private void changeStatus(Task task, TaskRun taskRun, State.Type state) {
@@ -252,6 +396,12 @@ class KafkaExecutorTest {
         return this.testTopology
             .input(kafkaAdminService.getTopicName(Execution.class))
             .withSerde(Serdes.String(), JsonSerde.of(Execution.class));
+    }
+
+    private TestInput<String, ExecutionKilled> executionKilledInput() {
+        return this.testTopology
+            .input(kafkaAdminService.getTopicName(ExecutionKilled.class))
+            .withSerde(Serdes.String(), JsonSerde.of(ExecutionKilled.class));
     }
 
     private TestInput<String, WorkerTaskResult> workerTaskResultInput() {

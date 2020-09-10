@@ -70,7 +70,6 @@ public class RunContext {
      * @param variables The variable to inject
      */
     @VisibleForTesting
-    @Deprecated
     public RunContext(ApplicationContext applicationContext, Map<String, Object> variables) {
         this.initBean(applicationContext);
 

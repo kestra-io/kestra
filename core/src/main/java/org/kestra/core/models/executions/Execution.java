@@ -209,11 +209,31 @@ public class Execution implements DeletedInterface {
             .findFirst();
     }
 
+
+    public Optional<TaskRun> findFirstRunning() {
+        if (this.taskRunList == null) {
+            return Optional.empty();
+        }
+
+        return this.taskRunList
+            .stream()
+            .filter(t -> t.getState().isRunning())
+            .findFirst();
+    }
+
     @SuppressWarnings("UnstableApiUsage")
     public Optional<TaskRun> findLastByState(List<ResolvedTask> resolvedTasks, State.Type state, TaskRun taskRun) {
         return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
             .stream()
             .filter(t -> t.getState().getCurrent() == state)
+        );
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    public Optional<TaskRun> findLastRunning(List<ResolvedTask> resolvedTasks, TaskRun taskRun) {
+        return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
+            .stream()
+            .filter(t -> t.getState().isRunning())
         );
     }
 
@@ -265,6 +285,30 @@ public class Execution implements DeletedInterface {
         return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             .anyMatch(taskRun -> taskRun.getState().isFailed());
+    }
+
+    public boolean hasRunning(List<ResolvedTask> resolvedTasks) {
+        return this.hasRunning(resolvedTasks, null);
+    }
+
+    public boolean hasRunning(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
+        return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
+            .stream()
+            .anyMatch(taskRun -> taskRun.getState().isRunning());
+    }
+
+    public State.Type guessFinalState() {
+        return this
+            .findFirstByState(State.Type.KILLED)
+            .map(taskRun -> taskRun.getState().getCurrent())
+            .orElse(this.hasFailed() ? State.Type.FAILED : State.Type.SUCCESS);
+    }
+
+    public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun) {
+        return this
+            .findLastByState(currentTasks, State.Type.KILLED, parentTaskRun)
+            .map(taskRun -> taskRun.getState().getCurrent())
+            .orElse(this.hasFailed(currentTasks) ? State.Type.FAILED : State.Type.SUCCESS);
     }
 
     @JsonIgnore
@@ -332,7 +376,7 @@ public class Execution implements DeletedInterface {
      */
     public FailedExecutionWithLog failedExecutionFromExecutor(Exception e) {
         return this
-            .findFirstByState(State.Type.RUNNING)
+            .findFirstRunning()
             .map(taskRun -> {
                 TaskRunAttempt lastAttempt = taskRun.lastAttempt();
                 if (lastAttempt == null) {
@@ -358,7 +402,6 @@ public class Execution implements DeletedInterface {
             )
         );
     }
-
 
     /**
      * Create a new attemps for failed worker execution

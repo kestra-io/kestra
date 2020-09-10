@@ -3,6 +3,8 @@ package org.kestra.core.tasks.scripts;
 import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.io.FileUtils;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.InputProperty;
@@ -16,6 +18,7 @@ import org.slf4j.Logger;
 import java.io.*;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 
@@ -111,8 +114,22 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
     )
     protected List<String> outputs;
 
+    @InputProperty(
+        description = "Input files are extra files supplied by user that make it simpler organize code.",
+        body = {
+            "Describe a files map that will be written and usable in execution context. In python execution context is in a temp folder, for bash scripts, you can reach files using a scriptFolder variable like 'source {{scriptFolder}}/myfile.sh' "
+        },
+        dynamic = true
+    )
+    protected HashMap<String, String> inputFiles;
+
+    protected volatile List<File> cleanupDirectory;
+    protected volatile String tmpFolder;
+
+
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
+        tmpFolder = "/tmp/" + UUID.randomUUID();
         return run(runContext, throwFunction((tempFiles) -> {
             // final command
             List<String> renderer = new ArrayList<>();
@@ -125,7 +142,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             for (String command : this.commands) {
                 renderer.add(runContext.render(
                     command,
-                    tempFiles.size() > 0 ? ImmutableMap.of("temp", tempFiles) : ImmutableMap.of()
+                    tempFiles.size() > 0 ? ImmutableMap.of("temp", tempFiles, "scriptFolder", tmpFilesFolder()) : ImmutableMap.of("scriptFolder", tmpFilesFolder())
                 ));
             }
 
@@ -133,11 +150,36 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         }));
     }
 
+    protected void handleInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException {
+        if (inputFiles != null && inputFiles.size() > 0) {
+            File tmpFileFolderHandler = new File(tmpFilesFolder());
+            if (tmpFileFolderHandler.exists()) {
+                FileUtils.deleteDirectory(tmpFileFolderHandler);
+            }
+            Files.createDirectories(Paths.get(tmpFilesFolder()));
+
+            cleanupDirectory.add(tmpFileFolderHandler);
+            cleanupDirectory.add(new File(tmpFolder));
+
+            for (String fileName : inputFiles.keySet()) {
+                String subFolder = tmpFilesFolder() + "/" + new File(fileName).getParent();
+                if (!new File(subFolder).exists()) {
+                    Files.createDirectories(Paths.get(subFolder));
+                }
+                String filePath = tmpFilesFolder() + "/" + fileName;
+                BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+                writer.write(runContext.render(inputFiles.get(fileName)));
+                writer.close();
+            }
+        }
+    }
+
     protected Bash.Output run(RunContext runContext, Function<Map<String, String>, String> function) throws Exception {
         Logger logger = runContext.logger();
 
         // final command
         List<String> renderer = new ArrayList<>();
+        cleanupDirectory = new ArrayList<File>();
 
         if (this.exitOnFailed) {
             renderer.add("set -o errexit");
@@ -153,14 +195,16 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             outputs.addAll(files);
         }
 
+        this.handleInputFiles(runContext);
+
         // temporary files
         Map<String, String> tempFiles = new HashMap<>();
-            outputs
-                .forEach(throwConsumer(s -> {
-                    File tempFile = File.createTempFile(s + "_", ".tmp");
+        outputs
+            .forEach(throwConsumer(s -> {
+                File tempFile = File.createTempFile(s + "_", ".tmp");
 
-                    tempFiles.put(s, tempFile.getAbsolutePath());
-                }));
+                tempFiles.put(s, tempFile.getAbsolutePath());
+            }));
 
         String commandAsString = function.apply(tempFiles);
 
@@ -226,10 +270,16 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
     }
 
     protected void cleanup() throws IOException {
-
+        for (File folder : cleanupDirectory) {
+            FileUtils.deleteDirectory(folder);
+        }
     }
 
-    private LogThread readInput(Logger logger, InputStream inputStream, boolean isStdErr) {
+    protected String tmpFilesFolder() {
+        return tmpFolder + "-files";
+    }
+
+    protected LogThread readInput(Logger logger, InputStream inputStream, boolean isStdErr) {
         LogThread thread = new LogThread(logger, inputStream, isStdErr);
         thread.setName("bash-log");
         thread.start();

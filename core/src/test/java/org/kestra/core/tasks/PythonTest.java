@@ -46,9 +46,8 @@ class PythonTest {
         Bash.Output run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().size(), is(2));
-        assertThat(run.getStdOut().get(0), is("no requirements"));
-        assertThat(run.getStdOut().get(1), is("hello world"));
+        assertThat(run.getStdOut().size(), is(1));
+        assertThat(run.getStdOut().get(0), is("hello world"));
         assertThat(run.getStdErr().size(), equalTo(0));
     }
 
@@ -69,7 +68,7 @@ class PythonTest {
         });
 
         assertThat(pythonException.getExitCode(), is(1));
-        assertThat(pythonException.getStdOut().size(), is(1));
+        assertThat(pythonException.getStdOut().size(), is(0));
         assertThat(pythonException.getStdErr().size(), equalTo(0));
     }
 
@@ -108,7 +107,7 @@ class PythonTest {
         Bash.Output run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(1), is("success"));
+        assertThat(run.getStdOut().get(0), is("success"));
     }
 
     @Test
@@ -127,7 +126,7 @@ class PythonTest {
         Bash.Output run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(3), is("#it worked !"));
+        assertThat(run.getStdOut().get(2), is("#it worked !"));
     }
 
     @Test
@@ -147,7 +146,7 @@ class PythonTest {
         Bash.Output run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(1), is("OK"));
+        assertThat(run.getStdOut().get(0), is("OK"));
     }
 
 }

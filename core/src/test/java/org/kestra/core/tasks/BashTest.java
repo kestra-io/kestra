@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -148,5 +149,27 @@ class BashTest {
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOut().size(), is(2));
         assertThat(run.getStdErr().size() > 0, is(false));
+    }
+
+    @Test
+    void useInputFiles() throws Exception {
+        RunContext runContext = runContextFactory.of();
+
+        HashMap<String, String> files = new HashMap<String, String>();
+        files.put("test.sh","tst() { echo 'testbash' ; }");
+
+        List<String> commands = new ArrayList<>();
+        commands.add("source {{scriptFolder}}/test.sh && tst");
+
+        Bash bash = Bash.builder()
+            .interpreter("/bin/bash")
+            .commands(commands.toArray(String[]::new))
+            .inputFiles(files)
+            .build();
+
+        Bash.Output run = bash.run(runContext);
+
+        assertThat(run.getExitCode(), is(0));
+        assertThat(run.getStdOut().get(0), is("testbash"));
     }
 }

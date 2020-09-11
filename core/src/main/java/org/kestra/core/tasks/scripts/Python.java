@@ -72,7 +72,7 @@ public class Python extends Bash implements RunnableTask<Bash.Output> {
 
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
-        tmpFolder = "/tmp/" + UUID.randomUUID();
+        tmpFolder = Files.createTempDirectory("/tmp/").toString();
         return run(runContext, throwFunction((tempFiles) -> {
             // final command
             List<String> renderer = new ArrayList<>();

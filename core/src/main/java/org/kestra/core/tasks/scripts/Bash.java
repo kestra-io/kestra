@@ -12,7 +12,6 @@ import org.kestra.core.models.annotations.OutputProperty;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.runners.RunContext;
-import org.kestra.core.tasks.debugs.Return;
 import org.slf4j.Logger;
 
 import java.io.*;
@@ -112,7 +111,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         },
         dynamic = true
     )
-    protected List<String> outputs;
+    protected List<String> outputsFiles;
 
     @InputProperty(
         description = "Input files are extra files supplied by user that make it simpler organize code.",
@@ -121,7 +120,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         },
         dynamic = true
     )
-    protected HashMap<String, String> inputFiles;
+    protected Map<String, String> inputFiles;
 
     protected volatile List<File> cleanupDirectory;
     protected volatile String tmpFolder;
@@ -129,7 +128,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
 
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
-        tmpFolder = "/tmp/" + UUID.randomUUID();
+        tmpFolder = Files.createTempDirectory("/tmp/").toString();
         return run(runContext, throwFunction((tempFiles) -> {
             // final command
             List<String> renderer = new ArrayList<>();
@@ -153,9 +152,6 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
     protected void handleInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException {
         if (inputFiles != null && inputFiles.size() > 0) {
             File tmpFileFolderHandler = new File(tmpFilesFolder());
-            if (tmpFileFolderHandler.exists()) {
-                FileUtils.deleteDirectory(tmpFileFolderHandler);
-            }
             Files.createDirectories(Paths.get(tmpFilesFolder()));
 
             cleanupDirectory.add(tmpFileFolderHandler);
@@ -187,8 +183,8 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
 
         List<String> outputs = new ArrayList<>();
 
-        if (this.outputs != null && this.outputs.size() > 0) {
-            outputs.addAll(this.outputs);
+        if (this.outputsFiles != null && this.outputsFiles.size() > 0) {
+            outputs.addAll(this.outputsFiles);
         }
 
         if (files != null && files.size() > 0) {

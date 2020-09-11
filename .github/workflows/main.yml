@@ -29,7 +29,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
       # Services
       - name: Build the docker-compose stack
         run: docker-compose -f docker-compose-ci.yml up -d
@@ -75,6 +78,7 @@ jobs:
         env:
           GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
         run: |
+          /usr/bin/python3 -m pip install virtualenv
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
           ./gradlew classes testClasses --parallel --no-daemon

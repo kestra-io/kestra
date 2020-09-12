@@ -9,17 +9,13 @@ import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
-import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.DeletedInterface;
 import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.listeners.Listener;
-import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.models.validations.ManualConstraintViolation;
-import org.kestra.core.runners.RunContext;
 import org.kestra.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +27,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-
-import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @Value
 @Builder

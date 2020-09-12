@@ -13,6 +13,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.StringContains.containsString;
 
 public class EachSequentialTest extends AbstractMemoryRunnerTest {
@@ -50,5 +51,18 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
         Execution execution = runnerUtils.runOne("org.kestra.tests", "each-empty");
 
         assertThat(execution.getTaskRunList(), hasSize(2));
+    }
+
+    @Test
+    void eachSwitch() throws TimeoutException, InternalException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "each-switch");
+
+        assertThat(execution.getTaskRunList(), hasSize(12));
+
+        TaskRun switchNumber1 = execution.findTaskRunByTaskIdAndValue("2-1-1_switch-number-1", Arrays.asList("b", "1"));
+        assertThat((String) switchNumber1.getOutputs().get("value"), is("1"));
+
+        TaskRun switchNumber2 = execution.findTaskRunByTaskIdAndValue("2-1-1_switch-number-2", Arrays.asList("b", "2"));
+        assertThat((String) switchNumber2.getOutputs().get("value"), is("2 b"));
     }
 }

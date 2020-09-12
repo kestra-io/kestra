@@ -39,21 +39,6 @@ public class RunContext {
     private RunContextLogger runContextLogger;
 
     /**
-     * Used by {@link AbstractExecutor} only on {@link FlowableTask}
-     *
-     * @param applicationContext the current {@link ApplicationContext}
-     * @param flow the current {@link Flow}
-     * @param execution the current {@link Execution}
-     */
-    public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
-        this.initBean(applicationContext);
-        this.initContext(flow, null, execution, null);
-        this.runContextLogger = new RunContextLogger();
-    }
-
-    /**
-     * Used by {@link AbstractExecutor} only before submit to {@link WorkerTask}
-     *
      * @param applicationContext the current {@link ApplicationContext}
      * @param flow the current {@link Flow}
      * @param task the current {@link org.kestra.core.models.tasks.Task}
@@ -145,20 +130,19 @@ public class RunContext {
                 ));
         }
 
-        if (task != null) {
-            builder
-                .put("task", ImmutableMap.of(
-                    "id", task.getId(),
-                    "type", task.getType()
-                ));
-        }
+        builder
+            .put("task", ImmutableMap.of(
+                "id", task.getId(),
+                "type", task.getType()
+            ));
 
-        if (taskRun != null) {
-            builder.put("taskrun", this.variables(taskRun));
-        }
+        builder.put("taskrun", this.variables(taskRun));
+        builder.put("parents", execution.parents(taskRun));
+
 
         if (execution.getTaskRunList() != null) {
             builder.put("outputs", execution.outputs());
+
         }
 
         if (execution.getInputs() != null) {

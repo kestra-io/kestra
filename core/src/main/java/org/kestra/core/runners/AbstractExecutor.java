@@ -79,11 +79,12 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException, InternalException {
-        RunContext runContext = runContextFactory.of(flow, execution);
         Task parent = flow.findTaskByTaskId(parentTaskRun.getTaskId());
 
         if (parent instanceof FlowableTask) {
             FlowableTask<?> flowableParent = (FlowableTask<?>) parent;
+
+            RunContext runContext = runContextFactory.of(flow, parent, execution, parentTaskRun);
 
             // first find the normal ended child tasks and send result
             Optional<WorkerTaskResult> endedTask = childWorkerTaskTypeToWorkerTask(
@@ -173,7 +174,16 @@ public abstract class AbstractExecutor implements Runnable {
 
         if (parent instanceof FlowableTask) {
             FlowableTask<?> flowableParent = (FlowableTask<?>) parent;
-            List<TaskRun> nexts = flowableParent.resolveNexts(runContextFactory.of(flow, execution), execution, taskRun);
+            List<TaskRun> nexts = flowableParent.resolveNexts(
+                runContextFactory.of(
+                    flow,
+                    parent,
+                    execution,
+                    taskRun
+                ),
+                execution,
+                taskRun
+            );
 
             if (nexts.size() > 0) {
                 return Optional.of(nexts);
@@ -371,7 +381,7 @@ public abstract class AbstractExecutor implements Runnable {
             .map(throwFunction(taskRun -> {
                 Task task = flow.findTaskByTaskId(taskRun.getTaskId());
 
-                return  WorkerTask.builder()
+                return WorkerTask.builder()
                     .runContext(runContextFactory.of(flow, task, execution, taskRun))
                     .taskRun(taskRun)
                     .task(task)

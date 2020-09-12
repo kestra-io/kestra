@@ -17,10 +17,6 @@ public class RunContextFactory {
     @Inject
     private ApplicationContext applicationContext;
 
-    public RunContext of(Flow flow, Execution execution) {
-        return new RunContext(applicationContext, flow, execution);
-    }
-
     public RunContext of(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         return new RunContext(applicationContext, flow, task, execution, taskRun);
     }

@@ -544,6 +544,34 @@ public class Execution implements DeletedInterface {
         return Map.of(taskRun.getTaskId(), result);
     }
 
+
+    public List<Map<String, Object>> parents(TaskRun taskRun) {
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        List<TaskRun> childs = findChilds(taskRun);
+        Collections.reverse(childs);
+
+        for (int i = 0; i < childs.size() ; i++) {
+            TaskRun childTaskRun = childs.get(i);
+
+            HashMap<String, Object> current = new HashMap<>();
+
+            if (childTaskRun.getValue() != null) {
+                current.put("taskrun", Map.of("value", childTaskRun.getValue()));
+            }
+
+            if (childTaskRun.getOutputs() != null) {
+                current.put("outputs", childTaskRun.getOutputs());
+            }
+
+            if (current.size() > 0) {
+                result.add(current);
+            }
+        }
+
+        return result;
+    }
+
     /**
      * Find all childs from this {@link TaskRun}. The list is starting from deeper child and end on closest child, so
      * first element is the task that start first.

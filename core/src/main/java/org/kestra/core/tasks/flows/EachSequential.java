@@ -18,6 +18,7 @@ import org.kestra.core.models.hierarchies.TaskTree;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
+import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.tasks.VoidOutput;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
@@ -29,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import javax.validation.Valid;
 
 @SuperBuilder
 @ToString
@@ -54,6 +56,9 @@ import java.util.stream.Collectors;
 )
 public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
     private String value;
+
+    @Valid
+    protected List<Task> errors;
 
     @Override
     public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {

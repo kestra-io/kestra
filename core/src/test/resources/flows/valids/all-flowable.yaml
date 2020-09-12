@@ -19,15 +19,10 @@ tasks:
             format: "{{task.id}} > {{taskrun.value}}"
 
 
-  # Local Errors
-  - id: 2-local-errors
+  # Simple task
+  - id: 2-simple-task
     type: org.kestra.core.tasks.debugs.Return
     format: "{{task.id}}"
-# @TODO: not working, local errrors only works on FlowableTask
-#    errors:
-#      - id: 2-local-errors-1
-#        type: org.kestra.core.tasks.debugs.Return
-#        format: "{{task.id}}"
 
   # Sequential
   - id: 3-sequential

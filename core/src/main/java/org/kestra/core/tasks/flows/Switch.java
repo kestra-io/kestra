@@ -42,6 +42,9 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @Valid
     private List<Task> defaults;
 
+    @Valid
+    protected List<Task> errors;
+
     private String rendererValue(RunContext runContext) throws IllegalVariableEvaluationException {
         return runContext.render(this.value);
     }

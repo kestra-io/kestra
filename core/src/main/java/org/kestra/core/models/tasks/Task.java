@@ -43,9 +43,6 @@ abstract public class Task {
     @Min(0)
     protected Integer timeout;
 
-    @Valid
-    protected List<Task> errors;
-
     public Optional<Task> findById(String id, RunContext runContext, TaskRun taskRun) throws IllegalVariableEvaluationException {
         if (this.getId().equals(id)) {
             return Optional.of(this);
@@ -62,13 +59,6 @@ abstract public class Task {
             if (childs.isPresent()) {
                 return childs;
             }
-        }
-
-        if (this.errors != null) {
-            return this.errors
-                .stream()
-                .flatMap(throwFunction(task -> task.findById(id, runContext, taskRun).stream()))
-                .findFirst();
         }
 
         if (this.isFlowable() && ((FlowableTask<?>) this).getErrors() != null) {

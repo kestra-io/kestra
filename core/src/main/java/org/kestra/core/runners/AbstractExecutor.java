@@ -11,6 +11,7 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
+import org.kestra.core.models.tasks.Task;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -79,10 +80,10 @@ public abstract class AbstractExecutor implements Runnable {
 
     private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException, InternalException {
         RunContext runContext = runContextFactory.of(flow, execution);
-        ResolvedTask parent = flow.findTaskByTaskRun(parentTaskRun, runContext);
+        Task parent = flow.findTaskByTaskId(parentTaskRun.getTaskId());
 
-        if (parent.getTask() instanceof FlowableTask) {
-            FlowableTask<?> flowableParent = (FlowableTask<?>) parent.getTask();
+        if (parent instanceof FlowableTask) {
+            FlowableTask<?> flowableParent = (FlowableTask<?>) parent;
 
             // first find the normal ended child tasks and send result
             Optional<WorkerTaskResult> endedTask = childWorkerTaskTypeToWorkerTask(
@@ -136,12 +137,12 @@ public abstract class AbstractExecutor implements Runnable {
 
     private Optional<WorkerTaskResult> childWorkerTaskTypeToWorkerTask(
         Optional<State.Type> findState,
-        ResolvedTask parentTask,
+        Task parentTask,
         TaskRun parentTaskRun,
         RunContext runContext,
         Execution execution
     ) throws IllegalVariableEvaluationException {
-        FlowableTask<?> flowableParent = (FlowableTask<?>) parentTask.getTask();
+        FlowableTask<?> flowableParent = (FlowableTask<?>) parentTask;
 
         return findState
             .map(throwFunction(type -> new WorkerTaskResult(
@@ -152,7 +153,7 @@ public abstract class AbstractExecutor implements Runnable {
                             flowableParent.outputs(runContext, execution, parentTaskRun).toMap() :
                             ImmutableMap.of()
                     ),
-                parentTask.getTask()
+                parentTask
             )))
             .stream()
             .peek(workerTaskResult -> {
@@ -168,10 +169,10 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     private Optional<List<TaskRun>> childNextsTaskRun(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
-        ResolvedTask parent = flow.findTaskByTaskRun(taskRun, runContextFactory.of(flow, execution));
+        Task parent = flow.findTaskByTaskId(taskRun.getTaskId());
 
-        if (parent.getTask() instanceof FlowableTask) {
-            FlowableTask<?> flowableParent = (FlowableTask<?>) parent.getTask();
+        if (parent instanceof FlowableTask) {
+            FlowableTask<?> flowableParent = (FlowableTask<?>) parent;
             List<TaskRun> nexts = flowableParent.resolveNexts(runContextFactory.of(flow, execution), execution, taskRun);
 
             if (nexts.size() > 0) {
@@ -368,15 +369,12 @@ public abstract class AbstractExecutor implements Runnable {
             .stream()
             .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.CREATED)
             .map(throwFunction(taskRun -> {
-                ResolvedTask resolvedTask = flow.findTaskByTaskRun(
-                    taskRun,
-                    runContextFactory.of(flow, execution)
-                );
+                Task task = flow.findTaskByTaskId(taskRun.getTaskId());
 
                 return  WorkerTask.builder()
-                    .runContext(runContextFactory.of(flow, resolvedTask, execution, taskRun))
+                    .runContext(runContextFactory.of(flow, task, execution, taskRun))
                     .taskRun(taskRun)
-                    .task(resolvedTask.getTask())
+                    .task(task)
                     .build();
                 }))
             .collect(Collectors.toList());

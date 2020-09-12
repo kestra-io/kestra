@@ -6,7 +6,7 @@ import io.micronaut.context.ApplicationContext;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
-import org.kestra.core.models.tasks.ResolvedTask;
+import org.kestra.core.models.tasks.Task;
 
 import java.util.Map;
 import javax.inject.Inject;
@@ -21,7 +21,7 @@ public class RunContextFactory {
         return new RunContext(applicationContext, flow, execution);
     }
 
-    public RunContext of(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
+    public RunContext of(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         return new RunContext(applicationContext, flow, task, execution, taskRun);
     }
 

@@ -102,6 +102,6 @@ abstract public class TestsUtils {
         Execution execution = TestsUtils.mockExecution(caller, flow, inputs);
         TaskRun taskRun = TestsUtils.mockTaskRun(caller, execution, task);
 
-        return runContextFactory.of(flow, ResolvedTask.of(task), execution, taskRun);
+        return runContextFactory.of(flow, task, execution, taskRun);
     }
 }

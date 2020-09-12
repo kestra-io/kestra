@@ -103,30 +103,27 @@ public class Flow implements DeletedInterface {
         ));
     }
 
-    public ResolvedTask findTaskByTaskRun(TaskRun taskRun, RunContext runContext) throws IllegalVariableEvaluationException, InternalException {
+    public Task findTaskByTaskId(String taskId) throws InternalException {
         return Stream.of(
-            this.tasks,
-            this.errors,
+            this.tasks != null ? this.tasks : new ArrayList<Task>(),
+            this.errors != null ? this.errors : new ArrayList<Task>(),
             this.listenersTasks()
         )
-            .flatMap(throwFunction(tasks -> this.findTaskByTaskId(tasks, taskRun.getTaskId(), runContext, taskRun).stream()))
-            .map(task -> ResolvedTask.builder()
-                .task(task)
-                .parentId(taskRun.getParentTaskRunId())
-                .value(taskRun.getValue())
-                .build()
-            )
+            .flatMap(Collection::stream)
+            .flatMap(t -> t.findById(taskId).stream())
             .findFirst()
             .orElseThrow(() -> new InternalException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
     }
 
-    public List<Task> listenersTasks() {
-        return this.getListeners() != null ?
-            this.getListeners()
-                .stream()
-                .flatMap(listener -> listener.getTasks().stream())
-                .collect(Collectors.toList()) :
-            new ArrayList<>();
+    private List<Task> listenersTasks() {
+        if (this.getListeners() == null) {
+            return new ArrayList<>();
+        }
+
+        return this.getListeners()
+            .stream()
+            .flatMap(listener -> listener.getTasks().stream())
+            .collect(Collectors.toList());
     }
 
     public boolean isListenerTask(String id) {
@@ -135,27 +132,12 @@ public class Flow implements DeletedInterface {
             .anyMatch(task -> task.getId().equals(id));
     }
 
-    private Optional<Task> findTaskByTaskId(List<Task> tasks, String id, RunContext runContext, TaskRun taskRun) throws IllegalVariableEvaluationException {
-        if (tasks == null) {
-            return Optional.empty();
-        }
-
-        return tasks
-            .stream()
-            .flatMap(throwFunction(task -> task.findById(id, runContext, taskRun).stream()))
-            .findFirst();
-    }
-
     public boolean equalsWithoutRevision(Flow o) {
         try {
             return jsonMapper.writeValueAsString(this).equals(jsonMapper.writeValueAsString(o));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static String uniqueIdWithoutRevision(String namespace, String flowId) {
-        return namespace + flowId;
     }
 
     public Optional<ConstraintViolationException> validateUpdate(Flow updated) {

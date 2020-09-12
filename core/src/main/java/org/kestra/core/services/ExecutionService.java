@@ -244,7 +244,7 @@ public class ExecutionService {
         final Predicate<TaskRun> notLastFailed = throwPredicate(taskRun -> {
             boolean isFailed = taskRun.getState().getCurrent().equals(State.Type.FAILED);
             boolean isFlowable = Optional.of(flow)
-                .map(throwFunction(f -> f.findTaskByTaskRun(taskRun, runContextFactory.of(flow, execution)).getTask().isFlowable()))
+                .map(throwFunction(f -> f.findTaskByTaskId(taskRun.getTaskId()).isFlowable()))
                 .orElse(false);
 
             return !isFailed || isFlowable;

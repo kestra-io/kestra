@@ -43,6 +43,27 @@ abstract public class Task {
     @Min(0)
     protected Integer timeout;
 
+    public Optional<Task> findById(String id) {
+        if (this.getId().equals(id)) {
+            return Optional.of(this);
+        }
+
+        if (this.isFlowable()) {
+            Optional<Task> childs = ((FlowableTask<?>) this).allChildTasks()
+                .stream()
+                .map(t -> t.findById(id))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+
+            if (childs.isPresent()) {
+                return childs;
+            }
+        }
+
+        return Optional.empty();
+    }
+
     public Optional<Task> findById(String id, RunContext runContext, TaskRun taskRun) throws IllegalVariableEvaluationException {
         if (this.getId().equals(id)) {
             return Optional.of(this);

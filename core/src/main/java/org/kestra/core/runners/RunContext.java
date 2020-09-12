@@ -14,7 +14,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.FlowableTask;
-import org.kestra.core.models.tasks.ResolvedTask;
+import org.kestra.core.models.tasks.Task;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
@@ -60,7 +60,7 @@ public class RunContext {
      * @param execution the current {@link Execution}
      * @param taskRun the current {@link TaskRun}
      */
-    public RunContext(ApplicationContext applicationContext, Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
+    public RunContext(ApplicationContext applicationContext, Flow flow, Task task, Execution execution, TaskRun taskRun) {
         this.initBean(applicationContext);
         this.initContext(flow, task, execution, taskRun);
         this.runContextLogger = new RunContextLogger();
@@ -88,7 +88,7 @@ public class RunContext {
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
     }
 
-    private void initContext(Flow flow, ResolvedTask task, Execution execution, TaskRun taskRun) {
+    private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         this.variables = this.variables(flow, task, execution, taskRun);
         if (taskRun != null) {
             this.storageOutputPrefix = StorageInterface.outputPrefix(flow, task, execution, taskRun);
@@ -120,7 +120,7 @@ public class RunContext {
         return applicationContext;
     }
 
-    protected Map<String, Object> variables(Flow flow, ResolvedTask resolvedTask, Execution execution, TaskRun taskRun) {
+    protected Map<String, Object> variables(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("envs", envVariables());
 
@@ -128,7 +128,7 @@ public class RunContext {
             builder.put("globals", applicationContext.getProperties("kestra.variables.globals"));
         }
 
-        if (resolvedTask != null && flow.isListenerTask(resolvedTask.getTask().getId())) {
+        if (task != null && flow.isListenerTask(task.getId())) {
             builder
                 .put("flow", JacksonMapper.toMap(flow))
                 .put("execution", JacksonMapper.toMap(execution));
@@ -145,11 +145,11 @@ public class RunContext {
                 ));
         }
 
-        if (resolvedTask != null) {
+        if (task != null) {
             builder
                 .put("task", ImmutableMap.of(
-                    "id", resolvedTask.getTask().getId(),
-                    "type", resolvedTask.getTask().getType()
+                    "id", task.getId(),
+                    "type", task.getType()
                 ));
         }
 

@@ -33,5 +33,4 @@
 
     <!-- Helper '{}' has been replaced by '{}' -->
     <logger name="com.github.jknack.handlebars.helper" level="ERROR" />
-
 </configuration>

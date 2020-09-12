@@ -3,6 +3,7 @@ package org.kestra.core.tasks.debugs;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.annotations.Documentation;
+import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.InputProperty;
 import org.kestra.core.models.annotations.OutputProperty;
 import org.kestra.core.models.executions.metrics.Counter;
@@ -20,11 +21,15 @@ import java.time.Duration;
 @Getter
 @NoArgsConstructor
 @Documentation(
-    description = "Simple debugging task that return a renderer ",
-    body = {"This task is mostly useful for debugging purpose.",
+    description = "Simple debugging task that return a renderer value.",
+    body = {
+        "This task is mostly useful for debugging purpose.",
         "",
         "This one allow you to see inputs or outputs variables for example, or to debug some templated functions."
     }
+)
+@Example(
+    code = "format: \"{{task.id}} > {{taskrun.startDate}}\""
 )
 public class Return extends Task implements RunnableTask<Return.Output> {
     @InputProperty(

@@ -88,6 +88,8 @@ allprojects {
         // logs
         runtime "ch.qos.logback:logback-classic:1.2.3"
         runtime group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.12.1'
+        runtime group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.30'
+
 
         // jackson
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'

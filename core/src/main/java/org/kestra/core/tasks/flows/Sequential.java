@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
+import org.kestra.core.models.annotations.Documentation;
+import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
@@ -29,6 +31,31 @@ import java.util.stream.Stream;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@Documentation(
+    description = "Process tasks ones after others sequentially",
+    body = "Mostly use in order to group tasks."
+)
+@Example(
+    full = true,
+    code = {
+        "id: sequential",
+        "namespace: org.kestra.tests",
+        "",
+        "tasks:",
+        "  - id: sequential",
+        "    type: org.kestra.core.tasks.flows.Sequential",
+        "    tasks:",
+        "      - id: 1st",
+        "        type: org.kestra.core.tasks.debugs.Return",
+        "        format: \"{{task.id}} > {{taskrun.startDate}}\"",
+        "      - id: 2nd",
+        "        type: org.kestra.core.tasks.debugs.Return",
+        "        format: \"{{task.id}} > {{taskrun.id}}\"",
+        "  - id: last",
+        "    type: org.kestra.core.tasks.debugs.Return",
+        "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+    }
+)
 public class Sequential extends Task implements FlowableTask<VoidOutput> {
     @Valid
     protected List<Task> errors;

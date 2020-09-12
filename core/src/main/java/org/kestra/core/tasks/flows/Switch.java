@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
+import org.kestra.core.models.annotations.Documentation;
+import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
@@ -30,6 +32,44 @@ import static org.kestra.core.utils.Rethrow.throwPredicate;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@Documentation(
+    description = "Process some tasks conditionnaly depending on a contextual value",
+    body = "Allow some workflow based on context variables, allow you to branch your based on previous task."
+)
+@Example(
+    full = true,
+    code = {
+        "id: switch",
+            "namespace: org.kestra.tests",
+            "",
+            "inputs:",
+            "  - name: string",
+            "    type: STRING",
+            "    required: true",
+            "",
+            "tasks:",
+            "  - id: switch",
+            "    type: org.kestra.core.tasks.flows.Switch",
+            "    value: \"{{inputs.string}}\"",
+            "    cases:",
+            "      FIRST:",
+            "        - id: 1st",
+            "          type: org.kestra.core.tasks.debugs.Return",
+            "          format: \"{{task.id}} > {{taskrun.startDate}}\"",
+            "      SECOND:",
+            "        - id: 2nd",
+            "          type: org.kestra.core.tasks.debugs.Return",
+            "          format: \"{{task.id}} > {{taskrun.startDate}}\"",
+            "      THIRD:",
+            "        - id: 3th",
+            "          type: org.kestra.core.tasks.debugs.Return",
+            "          format: \"{{task.id}} > {{taskrun.startDate}}\"",
+            "    defaults:",
+            "      - id: default",
+            "        type: org.kestra.core.tasks.debugs.Return",
+            "        format: \"{{task.id}} > {{taskrun.startDate}}\""
+    }
+)
 public class Switch extends Task implements FlowableTask<Switch.Output> {
     private String value;
 

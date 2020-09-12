@@ -3,6 +3,8 @@ package org.kestra.core.tasks.flows;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.models.annotations.Documentation;
+import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.InputProperty;
 import org.kestra.core.models.annotations.OutputProperty;
 import org.kestra.core.models.executions.Execution;
@@ -16,16 +18,30 @@ import org.kestra.core.runners.RunContext;
 import org.kestra.core.runners.RunnerUtils;
 import org.slf4j.Logger;
 
-import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@Documentation(
+    description = "Trigger another flow"
+)
+@Example(
+    title = "Trigger another flow, passing some file and arguments",
+    code = {
+        "namespace: org.kestra.tests",
+        "flowId: my-sub-flows",
+        "inputs:",
+        "  file: \"{{ outputs.my-task.files.resolver' }}\"",
+        "  store: 12",
+        "wait: false"
+    }
+)
 public class Flow extends Task implements RunnableTask<Flow.Output> {
     @NotNull
     @InputProperty(

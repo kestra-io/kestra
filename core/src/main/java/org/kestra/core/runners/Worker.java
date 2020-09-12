@@ -74,14 +74,19 @@ public class Worker implements Runnable {
             .increment();
 
         workerTask.logger().info(
-            "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] Type {} started",
+            "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] [value: {}] Type {} started",
             workerTask.getTaskRun().getNamespace(),
             workerTask.getTaskRun().getFlowId(),
             workerTask.getTaskRun().getTaskId(),
             workerTask.getTaskRun().getExecutionId(),
             workerTask.getTaskRun().getId(),
+            workerTask.getTaskRun().getValue(),
             workerTask.getTask().getClass().getSimpleName()
         );
+
+        if (workerTask.logger().isDebugEnabled()) {
+            workerTask.logger().debug("Variables\n{}", JacksonMapper.log(workerTask.getRunContext().getVariables()));
+        }
 
         workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING));
         this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
@@ -165,12 +170,13 @@ public class Worker implements Runnable {
             .record(workerTask.getTaskRun().getState().getDuration());
 
         workerTask.logger().info(
-            "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] Type {} with state {} completed in {}",
+            "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] [value: {}] Type {} with state {} completed in {}",
             workerTask.getTaskRun().getNamespace(),
             workerTask.getTaskRun().getFlowId(),
             workerTask.getTaskRun().getTaskId(),
             workerTask.getTaskRun().getExecutionId(),
             workerTask.getTaskRun().getId(),
+            workerTask.getTaskRun().getValue(),
             workerTask.getTask().getClass().getSimpleName(),
             workerTask.getTaskRun().getState().getCurrent(),
             workerTask.getTaskRun().getState().humanDuration()

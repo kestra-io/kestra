@@ -17,10 +17,7 @@ import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.services.TreeService;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.Valid;
@@ -47,6 +44,19 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
 
     private String rendererValue(RunContext runContext) throws IllegalVariableEvaluationException {
         return runContext.render(this.value);
+    }
+
+    @Override
+    public List<Task> allChildTasks() {
+        return Stream
+            .concat(
+                this.defaults != null ? this.defaults.stream() : Stream.empty(),
+                Stream.concat(
+                    this.cases != null ? this.cases.values().stream().flatMap(Collection::stream) : Stream.empty(),
+                    this.errors != null ? this.errors.stream() : Stream.empty()
+                )
+            )
+            .collect(Collectors.toList());
     }
 
     @Override

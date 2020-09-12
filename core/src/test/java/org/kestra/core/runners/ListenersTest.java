@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.is;
 public class ListenersTest extends AbstractMemoryRunnerTest {
     @BeforeEach
     private void initListeners() throws IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners.yaml")));
     }
 
     @Test

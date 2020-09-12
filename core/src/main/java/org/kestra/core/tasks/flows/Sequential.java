@@ -21,6 +21,8 @@ import org.kestra.core.services.TreeService;
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuperBuilder
 @ToString
@@ -46,6 +48,16 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
             execution,
             groups
         );
+    }
+
+    @Override
+    public List<Task> allChildTasks() {
+        return Stream
+            .concat(
+                this.tasks != null ? this.tasks.stream() : Stream.empty(),
+                this.errors != null ? this.errors.stream() : Stream.empty()
+            )
+            .collect(Collectors.toList());
     }
 
     @Override

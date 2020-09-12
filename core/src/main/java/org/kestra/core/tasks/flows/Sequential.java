@@ -29,6 +29,9 @@ import java.util.List;
 @NoArgsConstructor
 public class Sequential extends Task implements FlowableTask<VoidOutput> {
     @Valid
+    protected List<Task> errors;
+
+    @Valid
     private List<Task> tasks;
 
     @Override

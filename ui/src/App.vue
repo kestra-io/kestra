@@ -39,11 +39,18 @@ export default {
         if (this.$route.path === "/") {
             this.$router.push({ name: "flowsList" });
         }
+
+        this.displayApp()
+
         this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
     },
     methods: {
         onMenuCollapse(collapse) {
             this.menuCollapsed = collapse ? "menu-collapsed" : "menu-not-collapsed";
+        },
+        displayApp() {
+            document.getElementById("loader-wrapper").style.display = "none";
+            document.getElementById("app-container").style.display = "block";
         }
     }
 };

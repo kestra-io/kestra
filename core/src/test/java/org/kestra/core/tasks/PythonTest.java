@@ -75,7 +75,7 @@ class PythonTest {
     @Test
     void requirements() throws Exception {
         RunContext runContext = runContextFactory.of();
-        HashMap<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<String, String>();
         files.put("main.py","import requests; print(requests.get('http://google.com').status_code)");
 
         Python python = Python.builder()

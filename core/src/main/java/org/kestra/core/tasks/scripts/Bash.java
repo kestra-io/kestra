@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -128,7 +129,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
 
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
-        tmpFolder = Files.createTempDirectory("/tmp/").toString();
+        tmpFolder = Files.createTempDirectory("python-venv").toString();
         return run(runContext, throwFunction((tempFiles) -> {
             // final command
             List<String> renderer = new ArrayList<>();
@@ -149,7 +150,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         }));
     }
 
-    protected void handleInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException {
+    protected void handleInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
         if (inputFiles != null && inputFiles.size() > 0) {
             File tmpFileFolderHandler = new File(tmpFilesFolder());
             Files.createDirectories(Paths.get(tmpFilesFolder()));
@@ -163,9 +164,24 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
                     Files.createDirectories(Paths.get(subFolder));
                 }
                 String filePath = tmpFilesFolder() + "/" + fileName;
-                BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
-                writer.write(runContext.render(inputFiles.get(fileName)));
-                writer.close();
+                String render = runContext.render(inputFiles.get(fileName));
+
+                if (render.startsWith("kestra://")) {
+                    InputStream inputStream = runContext.uriToInputStream(new URI(render));
+                    OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(filePath));
+                    int byteRead;
+                    while ((byteRead = inputStream.read()) != -1) {
+                        outputStream.write(byteRead);
+                    }
+                    outputStream.flush();
+                    inputStream.close();
+                    outputStream.close();
+                } else {
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+                    writer.write(render);
+                    writer.close();
+                }
+
             }
         }
     }
@@ -234,6 +250,9 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         this.cleanup();
 
         if (exitCode != 0) {
+            stdOut.join();
+            stdErr.join();
+
             throw new BashException(
                 exitCode,
                 stdOut.getLogs(),
@@ -297,25 +316,29 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
 
         @Override
         public void run() {
-            try {
-                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    this.logs.add(line);
-                    if (isStdErr) {
-                        logger.warn(line);
-                    } else {
-                        logger.info(line);
+            synchronized (this) {
+                try {
+                    InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        this.logs.add(line);
+                        if (isStdErr) {
+                            logger.warn(line);
+                        } else {
+                            logger.info(line);
+                        }
                     }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
         }
 
         public List<String> getLogs() {
-            return logs;
+            synchronized (this) {
+                return logs;
+            }
         }
     }
 

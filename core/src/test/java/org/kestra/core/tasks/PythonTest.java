@@ -1,10 +1,7 @@
 package org.kestra.core.tasks;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.CharStreams;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.storages.StorageInterface;
@@ -12,15 +9,12 @@ import org.kestra.core.tasks.scripts.Bash;
 import org.kestra.core.tasks.scripts.Python;
 
 import javax.inject.Inject;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest

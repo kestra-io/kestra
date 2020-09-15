@@ -1,25 +1,22 @@
 package org.kestra.core.tasks.scripts;
 
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.apache.avro.generic.GenericData;
-import org.apache.commons.io.FileUtils;
 import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.InputProperty;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.runners.RunContext;
-import org.kestra.core.tasks.debugs.Return;
-import org.slf4j.Logger;
 
-import java.io.*;
-import java.net.URI;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import static org.kestra.core.utils.Rethrow.*;
+import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
@@ -32,18 +29,19 @@ import static org.kestra.core.utils.Rethrow.*;
 @Example(
     title = "Single python command",
     code = {
-        "inputFiles:",
-        "    main.py: |",
-        "        import json",
-        "        import requests",
-        "        result = json.loads(open('data.json').read())",
-        "        print(f\"python script {result['status']}\")",
-        "        print(requests.get('http://google.com').status_code)",
-        "    data.json: |",
-        "       {\"status\": \"OK\"}",
-        "    pip.conf: |",
-        "       # some specific pip repository configuration",
-        "requirements:",
+        "inputFiles:\n",
+        "    main.py: |\n",
+        "        import json\n",
+        "        import requests\n",
+        "        result = json.loads(open('data.json').read())\n",
+        "        print(f\"python script {result['status']}\")\n",
+        "        print(requests.get('http://google.com').status_code)\n",
+        "    data.json: |\n",
+        "       {\"status\": \"OK\"}\n",
+        "    data.csv: {{ outputs.download.uri }}\n",
+        "    pip.conf: |\n",
+        "       # some specific pip repository configuration\n",
+        "requirements:\n",
         "    - requests"
     }
 )
@@ -72,7 +70,7 @@ public class Python extends Bash implements RunnableTask<Bash.Output> {
 
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
-        tmpFolder = Files.createTempDirectory("/tmp/").toString();
+        tmpFolder = Files.createTempDirectory("python-venv").toString();
         return run(runContext, throwFunction((tempFiles) -> {
             // final command
             List<String> renderer = new ArrayList<>();

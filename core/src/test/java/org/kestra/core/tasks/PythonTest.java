@@ -94,7 +94,7 @@ class PythonTest {
     @Test
     void manyFiles() throws Exception {
         RunContext runContext = runContextFactory.of();
-        HashMap<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<String, String>();
         files.put("main.py","import otherfile; otherfile.test()");
         files.put("otherfile.py","def test(): print('success')");
 

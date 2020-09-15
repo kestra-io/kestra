@@ -37,7 +37,7 @@ class DeleteTest {
 
 
         Delete bash = Delete.builder()
-            .uri(put)
+            .uri(put.toString())
             .build();
 
         Delete.Output run = bash.run(runContext);
@@ -48,7 +48,7 @@ class DeleteTest {
 
         assertThrows(NoSuchElementException.class, () -> {
             Delete error = Delete.builder()
-                .uri(put)
+                .uri(put.toString())
                 .errorOnMissing(true)
                 .build();
 

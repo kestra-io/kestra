@@ -54,7 +54,7 @@ class PythonTest {
     @Test
     void failed() throws Exception {
         RunContext runContext = runContextFactory.of();
-        HashMap<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<String, String>();
         files.put("main.py","import sys; sys.exit(1)");
 
         Python python = Python.builder()

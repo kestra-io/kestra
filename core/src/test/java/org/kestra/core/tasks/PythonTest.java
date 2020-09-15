@@ -1,5 +1,6 @@
 package org.kestra.core.tasks;
 
+import com.google.common.collect.ImmutableMap;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.runners.RunContext;
@@ -9,6 +10,7 @@ import org.kestra.core.tasks.scripts.Bash;
 import org.kestra.core.tasks.scripts.Python;
 
 import javax.inject.Inject;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -142,5 +144,24 @@ class PythonTest {
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOut().get(0), is("OK"));
     }
+
+    @Test
+    void args() throws Exception {
+        RunContext runContext = runContextFactory.of(ImmutableMap.of("test", "value"));
+        Map<String, String> files = new HashMap<String, String>();
+        files.put("main.py","import sys; print(' '.join(sys.argv))");
+
+        Python python = Python.builder()
+            .id("test-python-task")
+            .pythonPath("/usr/bin/python3")
+            .inputFiles(files)
+            .args(Arrays.asList("test", "param", "{{test}}"))
+            .build();
+
+        Bash.Output run = python.run(runContext);
+
+        assertThat(run.getStdOut().get(0), is("main.py test param value"));
+    }
+
 
 }

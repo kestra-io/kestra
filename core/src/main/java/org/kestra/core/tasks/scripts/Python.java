@@ -33,7 +33,8 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
         "    main.py: |\n",
         "        import json\n",
         "        import requests\n",
-        "        result = json.loads(open('data.json').read())\n",
+        "        import sys\n",
+        "        result = json.loads(open(sys.argv[1]).read())\n",
         "        print(f\"python script {result['status']}\")\n",
         "        print(requests.get('http://google.com').status_code)\n",
         "    data.json: |\n",
@@ -41,6 +42,8 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
         "    data.csv: {{ outputs.download.uri }}\n",
         "    pip.conf: |\n",
         "       # some specific pip repository configuration\n",
+        "args:\n",
+        "    - data.json\n",
         "requirements:\n",
         "    - requests"
     }
@@ -58,6 +61,16 @@ public class Python extends Bash implements RunnableTask<Bash.Output> {
         dynamic = true
     )
     private String pythonPath = "/usr/bin/python3";
+
+    @InputProperty(
+        description = "Python command args",
+        body = {
+            "Args list to give to python"
+        },
+        dynamic = true
+    )
+    private List<String> args;
+
 
     @InputProperty(
         description = "Requirements are python dependencies to add to the python execution process",
@@ -84,11 +97,13 @@ public class Python extends Bash implements RunnableTask<Bash.Output> {
                 requirementsAsString = "./bin/pip install " + runContext.render(String.join(" ", requirements)) + " > /dev/null";
             }
 
-            if(!inputFiles.containsKey("main.py")) {
+            if (!inputFiles.containsKey("main.py")) {
                 throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.py key with python code value.");
             } else {
                 this.handleInputFiles(runContext);
             }
+
+            String args = getArgs() == null ? "" : " " + runContext.render(String.join(" ", getArgs()));
 
             renderer.addAll(Arrays.asList(
                 "rm -rf " + tmpFolder,
@@ -97,7 +112,7 @@ public class Python extends Bash implements RunnableTask<Bash.Output> {
                 "cd " + tmpFolder,
                 "./bin/pip install pip --upgrade > /dev/null",
                 requirementsAsString,
-                "./bin/python main.py"
+                "./bin/python main.py" + args
             ));
 
             return String.join("\n", renderer);

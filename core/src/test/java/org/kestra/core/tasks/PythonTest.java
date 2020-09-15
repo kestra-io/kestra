@@ -113,7 +113,7 @@ class PythonTest {
     @Test
     void pipConf() throws Exception {
         RunContext runContext = runContextFactory.of();
-        HashMap<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<String, String>();
         files.put("main.py","print(open('pip.conf').read())");
         files.put("pip.conf","[global]\nno-cache-dir = false\n#it worked !");
 

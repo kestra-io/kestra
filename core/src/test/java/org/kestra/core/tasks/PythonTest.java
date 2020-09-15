@@ -132,7 +132,7 @@ class PythonTest {
     @Test
     void fileInSubFolders() throws Exception {
         RunContext runContext = runContextFactory.of();
-        HashMap<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<String, String>();
         files.put("main.py","print(open('sub/folder/file/test.txt').read())");
         files.put("sub/folder/file/test.txt","OK");
         files.put("sub/folder/file/test1.txt","OK");

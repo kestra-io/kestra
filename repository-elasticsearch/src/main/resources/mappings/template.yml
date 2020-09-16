@@ -1,0 +1,9 @@
+dynamic: false
+properties:
+  tasks:
+    type: nested
+    properties:
+      id:
+        type: keyword
+      type:
+        type: keyword

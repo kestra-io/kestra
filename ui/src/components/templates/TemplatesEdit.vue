@@ -21,17 +21,17 @@
 
 <script>
 import fileEdit from "../../mixins/fileEdit";
-import { mapGetters } from "vuex";
+import { mapState } from "vuex";
 
 export default {
     mixins: [fileEdit],
     data() {
         return {
-            dataType: "flow",
+            dataType: "template",
         };
     },
     computed: {
-        ...mapGetters("flow", ["flow"]),
+        ...mapState("template", ["template"]),
     },
 };
 </script>

@@ -28,11 +28,13 @@ import Graph from "vue-material-design-icons/Graph";
 import Cog from "vue-material-design-icons/Cog";
 import TimelineClock from "vue-material-design-icons/TimelineClock";
 import BookOpen from "vue-material-design-icons/BookOpen";
+import CardText from "vue-material-design-icons/CardText";
 
 Vue.component("graph", Graph);
 Vue.component("settings", Cog);
 Vue.component("timelineclock", TimelineClock);
 Vue.component("bookopen", BookOpen);
+Vue.component("cardtext", CardText);
 
 export default {
   components: {
@@ -74,6 +76,17 @@ export default {
           title: this.$t("executions"),
           icon: {
             element: "timelineclock",
+            class: "menu-icon"
+          }
+        },
+        {
+          href: "/templates",
+          alias: [
+            "/templates*"
+          ],
+          title: this.$t("templates"),
+          icon: {
+            element: "cardtext",
             class: "menu-icon"
           }
         },

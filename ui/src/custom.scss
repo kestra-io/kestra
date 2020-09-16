@@ -37,9 +37,15 @@ $vs-state-active-bg: $primary;
         .vs__selected {
             max-width: 100%;
             white-space: nowrap;
+            line-height: $input-line-height;
+            color: $input-color;
             overflow: hidden;
             text-overflow: ellipsis;
         }
+    }
+
+    .vs__dropdown-toggle {
+        padding: 1px 0 5px 0;
     }
 
     .vs__dropdown-option {
@@ -94,4 +100,20 @@ select {
 pre[class*="language-"] {
     font-family: $font-family-monospace;
     font-size: $font-size-sm;
+}
+
+.form-group {
+    .input-group {
+        > * {
+            padding-left: 0;
+        }
+
+        > .input-group-append {
+            margin-right: 0;
+        }
+
+        > .v-select {
+            flex: 1;
+        }
+    }
 }

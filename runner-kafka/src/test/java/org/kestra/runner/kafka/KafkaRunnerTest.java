@@ -108,7 +108,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
         char[] chars = new char[11000000];
         Arrays.fill(chars, 'a');
 
-        HashMap<String, String> inputs = new HashMap<>(InputsTest.inputs);
+        Map<String, String> inputs = new HashMap<>(InputsTest.inputs);
         inputs.put("string", new String(chars));
 
         RuntimeException e = assertThrows(RuntimeException.class, () -> {
@@ -133,7 +133,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
         char[] chars = new char[600000];
         Arrays.fill(chars, 'a');
 
-        HashMap<String, String> inputs = new HashMap<>(InputsTest.inputs);
+        Map<String, String> inputs = new HashMap<>(InputsTest.inputs);
         inputs.put("string", new String(chars));
 
         Execution execution = runnerUtils.runOne(

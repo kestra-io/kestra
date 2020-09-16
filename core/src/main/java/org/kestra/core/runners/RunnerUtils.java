@@ -76,7 +76,7 @@ public class RunnerUtils {
             .toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)
             .blockingGet();
 
-        HashMap<String, String> merged = new HashMap<>();
+        Map<String, String> merged = new HashMap<>();
         if (in != null) {
             merged.putAll(in);
         }

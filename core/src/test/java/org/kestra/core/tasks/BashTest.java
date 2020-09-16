@@ -10,12 +10,16 @@ import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.tasks.scripts.Bash;
 
+import javax.inject.Inject;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import javax.inject.Inject;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -32,7 +36,7 @@ class BashTest {
     @Test
     void run() throws Exception {
         RunContext runContext = runContextFactory.of(ImmutableMap.of(
-                "input", ImmutableMap.of("url", "www.google.fr")
+            "input", ImmutableMap.of("url", "www.google.fr")
             )
         );
 
@@ -53,13 +57,17 @@ class BashTest {
 
         Bash bash = Bash.builder()
             .files(Arrays.asList("xml", "csv"))
-            .commands(new String[]{"echo 1 >> {{ temp.xml }}", "echo 2 >> {{ temp.csv }}", "echo 3 >> {{ temp.xml }}"})
+            .inputFiles(ImmutableMap.of("files/in/in.txt", "I'm here"))
+            .commands(new String[]{"cat files/in/in.txt", "echo 1 >> {{ outputFiles.xml }}", "echo 2 >> {{ outputFiles.csv }}", "echo 3 >> {{ outputFiles.xml }}"})
             .build();
 
         Bash.Output run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdErr().size(), is(0));
+
+        assertThat(run.getStdOut().size(), is(1));
+        assertThat(run.getStdOut().get(0), is("I'm here"));
 
         InputStream get = storageInterface.get(run.getFiles().get("xml"));
 
@@ -148,5 +156,59 @@ class BashTest {
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOut().size(), is(2));
         assertThat(run.getStdErr().size() > 0, is(false));
+    }
+
+    @Test
+    void useInputFiles() throws Exception {
+        RunContext runContext = runContextFactory.of();
+
+        Map<String, String> files = new HashMap<>();
+        files.put("test.sh", "tst() { echo 'testbash' ; }");
+
+        List<String> commands = new ArrayList<>();
+        commands.add("source {{workingDir}}/test.sh && tst");
+
+        Bash bash = Bash.builder()
+            .interpreter("/bin/bash")
+            .commands(commands.toArray(String[]::new))
+            .inputFiles(files)
+            .build();
+
+        Bash.Output run = bash.run(runContext);
+
+        assertThat(run.getExitCode(), is(0));
+        assertThat(run.getStdOut().get(0), is("testbash"));
+    }
+
+    @Test
+    void useInputFilesFromKestraFs() throws Exception {
+        RunContext runContext = runContextFactory.of();
+
+        URL resource = BashTest.class.getClassLoader().getResource("application.yml");
+
+        URI put = storageInterface.put(
+            new URI("/file/storage/get.yml"),
+            new FileInputStream(Objects.requireNonNull(resource).getFile())
+        );
+
+        Map<String, String> files = new HashMap<>();
+        files.put("test.sh", "cat fscontent.txt");
+        files.put("fscontent.txt", put.toString());
+
+        List<String> commands = new ArrayList<>();
+        commands.add("cat fscontent.txt");
+
+        Bash bash = Bash.builder()
+            .interpreter("/bin/bash")
+            .commands(commands.toArray(String[]::new))
+            .inputFiles(files)
+            .build();
+
+        Bash.Output run = bash.run(runContext);
+
+        assertThat(run.getExitCode(), is(0));
+        String outputContent = String.join("\n", run.getStdOut());
+        String fileContent = String.join("\n", Files.readAllLines(new File(resource.getPath()).toPath(), StandardCharsets.UTF_8));
+        assertThat(outputContent, is(fileContent));
     }
 }

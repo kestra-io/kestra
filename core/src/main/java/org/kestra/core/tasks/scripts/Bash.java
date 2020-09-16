@@ -129,7 +129,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
 
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
-        tmpFolder = Files.createTempDirectory("python-venv").toString();
+        tmpFolder = Files.createTempDirectory("tmp-run-script").toString();
         return run(runContext, throwFunction((tempFiles) -> {
             // final command
             List<String> renderer = new ArrayList<>();

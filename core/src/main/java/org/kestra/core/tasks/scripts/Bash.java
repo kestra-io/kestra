@@ -1,6 +1,5 @@
 package org.kestra.core.tasks.scripts;
 
-import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.io.FileUtils;
@@ -18,6 +17,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
@@ -39,16 +39,15 @@ import static org.kestra.core.utils.Rethrow.*;
         "- echo \"The current execution is : {{execution.id}}\""
     }
 )
-
 @Example(
     title = "Bash command that generate file in storage accessible through outputs",
     code = {
-        "files:",
+        "outputsFiles:",
         "- first",
         "- second",
         "commands:",
-        "- echo \"1\" >> {{ temp.first }}",
-        "- echo \"2\" >> {{ temp.second }}"
+        "- echo \"1\" >> {{ outputFiles.first }}",
+        "- echo \"2\" >> {{ outputFiles.second }}"
     }
 )
 public class Bash extends Task implements RunnableTask<Bash.Output> {
@@ -96,7 +95,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
     @InputProperty(
         description = "The list of files that will be uploaded to internal storage, ",
         body = {
-            "/!\\legacy property, use 'outputs' property instead"
+            "/!\\deprecated property, use `outputsFiles` property instead"
         },
         dynamic = true
     )
@@ -106,8 +105,8 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         description = "Output file list that will be uploaded to internal storage",
         body = {
             "List of key that will generate temporary files.",
-            "On the command, just can use with special variable named `temp.key`.",
-            "If you add a files with `[\"first\"]`, you can use the special vars `echo 1 >> {[ temp.first }}`" +
+            "On the command, just can use with special variable named `outputFiles.key`.",
+            "If you add a files with `[\"first\"]`, you can use the special vars `echo 1 >> {[ outputFiles.first }}`" +
                 " and you used on others tasks using `{{ outputs.task-id.files.first }}`"
         },
         dynamic = true
@@ -117,86 +116,39 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
     @InputProperty(
         description = "Input files are extra files supplied by user that make it simpler organize code.",
         body = {
-            "Describe a files map that will be written and usable in execution context. In python execution context is in a temp folder, for bash scripts, you can reach files using a scriptFolder variable like 'source {{scriptFolder}}/myfile.sh' "
+            "Describe a files map that will be written and usable in execution context. In python execution context is in a temp folder, for bash scripts, you can reach files using a inputsDirectory variable like 'source {{inputsDirectory}}/myfile.sh' "
         },
         dynamic = true
     )
     protected Map<String, String> inputFiles;
 
-    protected volatile List<File> cleanupDirectory;
-    protected volatile String tmpFolder;
-
+    @Builder.Default
+    protected transient List<File> cleanupDirectory = new ArrayList<>();
+    protected transient Path workingDirectory;
 
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
-        tmpFolder = Files.createTempDirectory("tmp-run-script").toString();
-        return run(runContext, throwFunction((tempFiles) -> {
+        return run(runContext, throwFunction((additionalVars) -> {
             // final command
             List<String> renderer = new ArrayList<>();
 
             if (this.exitOnFailed) {
                 renderer.add("set -o errexit");
+                if (this.workingDirectory != null) {
+                    renderer.add("cd " + this.workingDirectory.toAbsolutePath().toString());
+                }
             }
 
             // renderer command
             for (String command : this.commands) {
-                renderer.add(runContext.render(
-                    command,
-                    tempFiles.size() > 0 ? ImmutableMap.of("temp", tempFiles, "scriptFolder", tmpFilesFolder()) : ImmutableMap.of("scriptFolder", tmpFilesFolder())
-                ));
+                renderer.add(runContext.render(command, additionalVars));
             }
 
             return String.join("\n", renderer);
         }));
     }
 
-    protected void handleInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
-        if (inputFiles != null && inputFiles.size() > 0) {
-            File tmpFileFolderHandler = new File(tmpFilesFolder());
-            Files.createDirectories(Paths.get(tmpFilesFolder()));
-
-            cleanupDirectory.add(tmpFileFolderHandler);
-            cleanupDirectory.add(new File(tmpFolder));
-
-            for (String fileName : inputFiles.keySet()) {
-                String subFolder = tmpFilesFolder() + "/" + new File(fileName).getParent();
-                if (!new File(subFolder).exists()) {
-                    Files.createDirectories(Paths.get(subFolder));
-                }
-                String filePath = tmpFilesFolder() + "/" + fileName;
-                String render = runContext.render(inputFiles.get(fileName));
-
-                if (render.startsWith("kestra://")) {
-                    InputStream inputStream = runContext.uriToInputStream(new URI(render));
-                    OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(filePath));
-                    int byteRead;
-                    while ((byteRead = inputStream.read()) != -1) {
-                        outputStream.write(byteRead);
-                    }
-                    outputStream.flush();
-                    inputStream.close();
-                    outputStream.close();
-                } else {
-                    BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
-                    writer.write(render);
-                    writer.close();
-                }
-
-            }
-        }
-    }
-
-    protected Bash.Output run(RunContext runContext, Function<Map<String, String>, String> function) throws Exception {
-        Logger logger = runContext.logger();
-
-        // final command
-        List<String> renderer = new ArrayList<>();
-        cleanupDirectory = new ArrayList<File>();
-
-        if (this.exitOnFailed) {
-            renderer.add("set -o errexit");
-        }
-
+    protected Map<String, String> handleOutputFiles(Map<String, Object> additionalVars) throws IOException {
         List<String> outputs = new ArrayList<>();
 
         if (this.outputsFiles != null && this.outputsFiles.size() > 0) {
@@ -207,18 +159,70 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             outputs.addAll(files);
         }
 
-        this.handleInputFiles(runContext);
+        Map<String, String> outputFiles = new HashMap<>();
+        if (outputs.size() > 0) {
+            outputs
+                .forEach(throwConsumer(s -> {
+                    File tempFile = File.createTempFile(s + "_", ".tmp");
 
-        // temporary files
-        Map<String, String> tempFiles = new HashMap<>();
-        outputs
-            .forEach(throwConsumer(s -> {
-                File tempFile = File.createTempFile(s + "_", ".tmp");
+                    outputFiles.put(s, tempFile.getAbsolutePath());
+                }));
 
-                tempFiles.put(s, tempFile.getAbsolutePath());
-            }));
+            additionalVars.put("temp", outputFiles);
+            additionalVars.put("outputFiles", outputFiles);
+        }
 
-        String commandAsString = function.apply(tempFiles);
+        return outputFiles;
+    }
+
+    protected void handleInputFiles(Map<String, Object> additionalVars, RunContext runContext) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+        if (inputFiles != null && inputFiles.size() > 0) {
+            for (String fileName : inputFiles.keySet()) {
+                File file = new File(fileName);
+
+                // path with "/", create the subfolders
+                if (file.getParent() != null) {
+                    Path subFolder = Paths.get(
+                        tmpWorkingDirectory(additionalVars).toAbsolutePath().toString(),
+                        new File(fileName).getParent()
+                    );
+
+                    if (!subFolder.toFile().exists()) {
+                        Files.createDirectories(subFolder);
+                    }
+                }
+
+                String filePath = tmpWorkingDirectory(additionalVars) + "/" + fileName;
+                String render = runContext.render(inputFiles.get(fileName));
+
+                if (render.startsWith("kestra://")) {
+                    try (
+                        InputStream inputStream = runContext.uriToInputStream(new URI(render));
+                        OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(filePath))
+                    ) {
+                        int byteRead;
+                        while ((byteRead = inputStream.read()) != -1) {
+                            outputStream.write(byteRead);
+                        }
+                        outputStream.flush();
+                    }
+                } else {
+                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+                        writer.write(render);
+                    }
+                }
+            }
+        }
+    }
+
+    protected Bash.Output run(RunContext runContext, Function<Map<String, Object>, String> function) throws Exception {
+        Logger logger = runContext.logger();
+        Map<String, Object> additionalVars = new HashMap<>();
+
+        Map<String, String> outputFiles = this.handleOutputFiles(additionalVars);
+        this.handleInputFiles(additionalVars, runContext);
+
+        String commandAsString = function.apply(additionalVars);
 
         File bashTempFiles = null;
         // https://www.in-ulm.de/~mascheck/various/argmax/ MAX_ARG_STRLEN (131072)
@@ -262,16 +266,17 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             logger.debug("Command succeed with code " + exitCode);
         }
 
-        // upload generate files
+        // upload output files
         Map<String, URI> uploaded = new HashMap<>();
 
-        tempFiles.
+        outputFiles.
             forEach(throwBiConsumer((k, v) -> {
                 uploaded.put(k, runContext.putTempFile(new File(v)));
             }));
 
         // bash temp files
         if (bashTempFiles != null) {
+            //noinspection ResultOfMethodCallIgnored
             bashTempFiles.delete();
         }
 
@@ -290,8 +295,14 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         }
     }
 
-    protected String tmpFilesFolder() {
-        return tmpFolder + "-files";
+    protected Path tmpWorkingDirectory(Map<String, Object> additionalVars) throws IOException {
+        if (this.workingDirectory == null) {
+            this.workingDirectory = Files.createTempDirectory("working-dir");
+            this.cleanupDirectory.add(workingDirectory.toFile());
+            additionalVars.put("workingDir", workingDirectory.toAbsolutePath().toString());
+        }
+
+        return this.workingDirectory;
     }
 
     protected LogThread readInput(Logger logger, InputStream inputStream, boolean isStdErr) {
@@ -302,11 +313,11 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         return thread;
     }
 
-    protected class LogThread extends Thread {
-        private Logger logger;
-        private InputStream inputStream;
-        private boolean isStdErr;
-        private List<String> logs = new ArrayList<>();
+    protected static class LogThread extends Thread {
+        private final Logger logger;
+        private final InputStream inputStream;
+        private final boolean isStdErr;
+        private final List<String> logs = new ArrayList<>();
 
         protected LogThread(Logger logger, InputStream inputStream, boolean isStdErr) {
             this.logger = logger;
@@ -319,14 +330,15 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
             synchronized (this) {
                 try {
                     InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-                    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                    String line;
-                    while ((line = bufferedReader.readLine()) != null) {
-                        this.logs.add(line);
-                        if (isStdErr) {
-                            logger.warn(line);
-                        } else {
-                            logger.info(line);
+                    try (BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
+                        String line;
+                        while ((line = bufferedReader.readLine()) != null) {
+                            this.logs.add(line);
+                            if (isStdErr) {
+                                logger.warn(line);
+                            } else {
+                                logger.info(line);
+                            }
                         }
                     }
                 } catch (IOException e) {

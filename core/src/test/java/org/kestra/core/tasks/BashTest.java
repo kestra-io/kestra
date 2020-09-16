@@ -57,13 +57,17 @@ class BashTest {
 
         Bash bash = Bash.builder()
             .files(Arrays.asList("xml", "csv"))
-            .commands(new String[]{"echo 1 >> {{ temp.xml }}", "echo 2 >> {{ temp.csv }}", "echo 3 >> {{ temp.xml }}"})
+            .inputFiles(ImmutableMap.of("files/in/in.txt", "I'm here"))
+            .commands(new String[]{"cat files/in/in.txt", "echo 1 >> {{ outputFiles.xml }}", "echo 2 >> {{ outputFiles.csv }}", "echo 3 >> {{ outputFiles.xml }}"})
             .build();
 
         Bash.Output run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdErr().size(), is(0));
+
+        assertThat(run.getStdOut().size(), is(1));
+        assertThat(run.getStdOut().get(0), is("I'm here"));
 
         InputStream get = storageInterface.get(run.getFiles().get("xml"));
 
@@ -158,11 +162,11 @@ class BashTest {
     void useInputFiles() throws Exception {
         RunContext runContext = runContextFactory.of();
 
-        HashMap<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         files.put("test.sh", "tst() { echo 'testbash' ; }");
 
         List<String> commands = new ArrayList<>();
-        commands.add("source {{scriptFolder}}/test.sh && tst");
+        commands.add("source {{workingDir}}/test.sh && tst");
 
         Bash bash = Bash.builder()
             .interpreter("/bin/bash")
@@ -187,12 +191,12 @@ class BashTest {
             new FileInputStream(Objects.requireNonNull(resource).getFile())
         );
 
-        HashMap<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         files.put("test.sh", "cat fscontent.txt");
         files.put("fscontent.txt", put.toString());
 
         List<String> commands = new ArrayList<>();
-        commands.add("cat {{scriptFolder}}/fscontent.txt");
+        commands.add("cat fscontent.txt");
 
         Bash bash = Bash.builder()
             .interpreter("/bin/bash")

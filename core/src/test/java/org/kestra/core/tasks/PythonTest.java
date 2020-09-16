@@ -30,7 +30,7 @@ class PythonTest {
     @Test
     void run() throws Exception {
         RunContext runContext = runContextFactory.of();
-        HashMap<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         files.put("main.py","print('hello world')");
 
         Python python = Python.builder()
@@ -50,7 +50,7 @@ class PythonTest {
     @Test
     void failed() throws Exception {
         RunContext runContext = runContextFactory.of();
-        Map<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         files.put("main.py","import sys; sys.exit(1)");
 
         Python python = Python.builder()
@@ -71,7 +71,7 @@ class PythonTest {
     @Test
     void requirements() throws Exception {
         RunContext runContext = runContextFactory.of();
-        Map<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         files.put("main.py","import requests; print(requests.get('http://google.com').status_code)");
 
         Python python = Python.builder()
@@ -90,7 +90,7 @@ class PythonTest {
     @Test
     void manyFiles() throws Exception {
         RunContext runContext = runContextFactory.of();
-        Map<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         files.put("main.py","import otherfile; otherfile.test()");
         files.put("otherfile.py","def test(): print('success')");
 
@@ -109,7 +109,7 @@ class PythonTest {
     @Test
     void pipConf() throws Exception {
         RunContext runContext = runContextFactory.of();
-        Map<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         files.put("main.py","print(open('pip.conf').read())");
         files.put("pip.conf","[global]\nno-cache-dir = false\n#it worked !");
 
@@ -128,7 +128,7 @@ class PythonTest {
     @Test
     void fileInSubFolders() throws Exception {
         RunContext runContext = runContextFactory.of();
-        Map<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         files.put("main.py","print(open('sub/folder/file/test.txt').read())");
         files.put("sub/folder/file/test.txt","OK");
         files.put("sub/folder/file/test1.txt","OK");
@@ -148,7 +148,7 @@ class PythonTest {
     @Test
     void args() throws Exception {
         RunContext runContext = runContextFactory.of(ImmutableMap.of("test", "value"));
-        Map<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         files.put("main.py","import sys; print(' '.join(sys.argv))");
 
         Python python = Python.builder()
@@ -162,6 +162,4 @@ class PythonTest {
 
         assertThat(run.getStdOut().get(0), is("main.py test param value"));
     }
-
-
 }

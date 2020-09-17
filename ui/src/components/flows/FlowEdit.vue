@@ -33,5 +33,8 @@ export default {
     computed: {
         ...mapGetters("flow", ["flow"]),
     },
+    created() {
+        this.loadFile();
+    },
 };
 </script>

@@ -26,8 +26,7 @@ import java.util.List;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TemplateControllerTest extends AbstractMemoryRunnerTest {
@@ -42,6 +41,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format("test").build();
         return Template.builder()
             .id(FriendlyId.createFriendlyId())
+            .namespace("kestra.test")
             .tasks(Arrays.asList(t1, t2)).build();
     }
 
@@ -54,7 +54,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
 
         Template result = client.toBlocking().retrieve(POST("/api/v1/templates", template), Template.class);
-        Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getId()), Template.class);
+        Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
         assertThat(createdTemplate.getId(), is(template.getId()));
     }
 
@@ -76,19 +76,18 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         assertThat(size1, is(size2 - 1));
     }
 
-
     @Test
     void deleteTemplate() {
         Template template = createTemplate();
         client.toBlocking().retrieve(POST("/api/v1/templates", template), Template.class);
-        Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getId()), Template.class);
+        Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
         assertThat(createdTemplate.getId(), is(template.getId()));
         HttpResponse<Void> deleteResult = client.toBlocking().exchange(
-            DELETE("/api/v1/templates/" + template.getId())
+            DELETE("/api/v1/templates/" + template.getNamespace() + "/" + template.getId())
         );
         assertThat(deleteResult.getStatus(), is(NO_CONTENT));
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getId()));
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()));
         });
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
     }
@@ -97,14 +96,33 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
     void updateTemplate() {
         Template template = createTemplate();
         client.toBlocking().retrieve(POST("/api/v1/templates", template), Template.class);
-        Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getId()), Template.class);
+        Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
         assertThat(template.getTasks().size(), is(2));
         Task t3 = Return.builder().id("task-3").type(Return.class.getName()).format("test").build();
-        Template updateTemplate = Template.builder().id(template.getId()).tasks(Arrays.asList(t3)).build();
-        client.toBlocking().retrieve(PUT("/api/v1/templates/" + template.getId(), updateTemplate), Template.class);
-        Template updatedTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getId()), Template.class);
+        Template updateTemplate = Template.builder().id(template.getId()).namespace(template.getNamespace()).tasks(Arrays.asList(t3)).build();
+        client.toBlocking().retrieve(PUT("/api/v1/templates/" + template.getNamespace() + "/" + template.getId(), updateTemplate), Template.class);
+        Template updatedTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
         assertThat(updatedTemplate.getTasks().size(), is(1));
         assertThat(updatedTemplate.getTasks().get(0).getId(), is("task-3"));
+    }
+
+    @Test
+    void listDistinctNamespace() {
+        List<String> namespaces = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/templates/distinct-namespaces"), Argument.listOf(String.class));
+        assertThat(namespaces.size(), is(0));
+            Template t1 = Template.builder()
+            .id(FriendlyId.createFriendlyId())
+            .namespace("kestra.template.custom")
+            .tasks(Arrays.asList(Return.builder().id("task").type(Return.class.getName()).format("test").build()))
+            .build();
+        client.toBlocking().retrieve(POST("/api/v1/templates", t1), Template.class);
+        client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+        client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+        namespaces = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/templates/distinct-namespaces"), Argument.listOf(String.class));
+
+        assertThat(namespaces.size(), is(2));
     }
 
 }

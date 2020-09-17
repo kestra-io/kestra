@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchTemplateRepository extends AbstractElasticSearchRepository<Template> implements TemplateRepositoryInterface {
     private static final String INDEX_NAME = "templates";
-    protected static final String REVISIONS_NAME = "templates-revisions";
 
     private final QueueInterface<Template> templateQueue;
 
@@ -59,8 +58,9 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     }
 
     @Override
-    public Optional<Template> findById(String id) {
+    public Optional<Template> findById(String namespace, String id) {
         BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.termQuery("namespace", namespace))
             .must(QueryBuilders.termQuery("id", id));
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
@@ -85,31 +85,37 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
         return super.findQueryString(INDEX_NAME, query.get(), pageable);
     }
 
+    @Override
+    public List<Template> findByNamespace(String namespace) {
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.termQuery("namespace", namespace));
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool);
+
+        return this.scroll(INDEX_NAME, sourceBuilder);
+    }
+
     public Template create(Template template) throws ConstraintViolationException {
         return this.save(template);
     }
 
-    public Template update(Template template, Template previous) throws ConstraintViolationException {
-        // How to do better than assert, I don't get the Template model to be throwable ?
-        assert this.findById(previous.getId()).isPresent();
-        return this.save(template);
-    }
 
-    public Template save(Template template) throws ConstraintViolationException {
-        modelValidator
-            .isValid(template)
+    public Template update(Template template, Template previous) throws ConstraintViolationException {
+        this
+            .findById(previous.getNamespace(), previous.getId())
+            .map(current -> current.validateUpdate(template))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             .ifPresent(s -> {
                 throw s;
             });
 
-        Optional<Template> exists = this.findById(template.getId());
-        if (exists.isPresent()) {
-            return exists.get();
-        }
+        return this.save(template);
+    }
 
-        Optional<Template> current = this.findById(template.getId());
-
-        this.putRequest(INDEX_NAME, templateId(template), template);
+    public Template save(Template template) {
+        this.putRequest(INDEX_NAME, template.getId(), template);
 
         return template;
     }
@@ -117,6 +123,10 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     @Override
     public void delete(Template template) {
         this.deleteRequest(INDEX_NAME, templateId(template));
+    }
+
+    public List<String> findDistinctNamespace() {
+        return findDistinctNamespace(INDEX_NAME);
     }
 
 }

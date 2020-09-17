@@ -33,5 +33,26 @@ export default {
     computed: {
         ...mapState("template", ["template"]),
     },
+    watch: {
+        '$route.params'() {
+            this.reload()
+        },
+    },
+    created() {
+        this.reload()
+    },
+    destroyed() {
+        this.$store.commit("template/setTemplate", undefined);
+    },
+    methods: {
+        reload() {
+            if (this.$route.name === "templateEdit") {
+                this.$store
+                    .dispatch("template/loadTemplate", this.$route.params)
+                    .then(this.loadFile);
+            }
+        }
+    }
+
 };
 </script>

@@ -30,6 +30,7 @@ export default {
         //Templates
         { name: 'templatesList', path: '/templates', component: Templates },
         { name: 'templatesAdd', path: '/templates/new', component: TemplatesEdit },
+        { name: 'templateEdit', path: '/templates/edit/:namespace/:id', component: TemplatesEdit },
 
 
         //Settings

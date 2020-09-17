@@ -24,7 +24,7 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     private final Map<String, Template> templates = new HashMap<>();
 
     @Override
-    public Optional<Template> findById(String id) {
+    public Optional<Template> findById(String namespace, String id) {
         return templates.values().stream()
             .filter(template -> template.getId().equals(id)).findFirst();
     }
@@ -50,19 +50,32 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     }
 
     @Override
+    public List<Template> findByNamespace(String namespace) {
+        return templates.values()
+            .stream()
+            .filter(template -> template.getNamespace().equals(namespace))
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public Template create(Template template) {
-         templates.put(template.getId(), template);
-         return template;
+        templates.put(template.getId(), template);
+        return template;
     }
 
     @Override
     public Template update(Template template, Template previous) {
-        if (templates.containsKey(template.getId())) {
-            templates.put(template.getId(), template);
-            return template;
-        } else {
-            throw new IllegalStateException("Template " + template.getId() + " doesn't exists");
-        }
+        this
+            .findById(previous.getNamespace(), previous.getId())
+            .map(current -> current.validateUpdate(template))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        templates.put(template.getId(), template);
+        return template;
     }
 
     @Override
@@ -72,5 +85,17 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
         } else {
             throw new IllegalStateException("Template " + template.getId() + " doesn't exists");
         }
+    }
+
+    @Override
+    public List<String> findDistinctNamespace() {
+        HashSet<String> namespaces = new HashSet<>();
+        for (Template t : this.findAll()) {
+            namespaces.add(t.getNamespace());
+        }
+
+        ArrayList<String> namespacesList = new ArrayList<>(namespaces);
+        Collections.sort(namespacesList);
+        return new ArrayList<>(namespacesList);
     }
 }

@@ -26,9 +26,6 @@ export default {
             action: action
         };
     },
-    created() {
-        this.loadFile();
-    },
     computed: {
         ...mapState("auth", ["user"]),
         ...mapGetters("flow", ["flow"]),
@@ -84,7 +81,7 @@ export default {
                 this.$toast()
                     .confirm(this.$t("delete confirm", {name: file.id}), () => {
                         return this.$store
-                            .dispatch("file/delete" + this.dataType.capitalize(), file)
+                            .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, file)
                             .then(() => {
                                 return this.$router.push({
                                     name: this.dataType + "List"
@@ -104,7 +101,7 @@ export default {
                 } catch (err) {
                     this.$toast().warning(
                         this.$t("check your the yaml is valid"),
-                        this.$t("invalid template")
+                        this.$t("invalid") + " " + this.$t(this.dataType)
                     );
 
                     return;
@@ -126,20 +123,16 @@ export default {
             } else {
                 const file = Yaml.parse(this.content);
                 this.$store
-                    .dispatch("template/createFile", {
-                        file: file
-                    })
+                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, { [this.dataType]: file})
                     .then(() => {
                         this.$router.push({
-                            name: "templateEdit",
+                            name: `${this.dataType}Edit`,
                             params: file,
                             query: { tab: "data-source" }
                         });
                     })
                     .then(() => {
-                        this.$toast().success({
-                            name: file.id
-                        })
+                        this.$toast().success(file.id)
                     })
             }
         }

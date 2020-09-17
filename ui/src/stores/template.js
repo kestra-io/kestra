@@ -21,12 +21,12 @@ export default {
             })
         },
         loadTemplate({ commit }, options) {
-            return Vue.axios.get(`/api/v1/templates/${options.id}`).then(response => {
+            return Vue.axios.get(`/api/v1/templates/${options.namespace}/${options.id}`).then(response => {
                 commit('setTemplate', response.data)
             })
         },
         saveTemplate({ commit }, options) {
-            return Vue.axios.put(`/api/v1/templates/${options.template.id}`, options.template).then(response => {
+            return Vue.axios.put(`/api/v1/templates/${options.template.namespace}/${options.template.id}`, options.template).then(response => {
                 if (response.status >= 300) {
                     return Promise.reject(new Error("Server error on template save"))
                 } else {
@@ -40,7 +40,7 @@ export default {
             })
         },
         deleteTemplate({ commit }, template) {
-            return Vue.axios.delete(`/api/v1/templates/${template.id}`).then(() => {
+            return Vue.axios.delete(`/api/v1/templates/${template.namespace}/${template.id}`).then(() => {
                 commit('setTemplate', null)
             })
         },

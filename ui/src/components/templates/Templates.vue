@@ -11,8 +11,8 @@
             >
                 <template v-slot:navbar>
                     <search-field @onSearch="onSearch" :fields="searchableFields" />
+                    <namespace-select :data-type="dataType" @onNamespaceSelect="onNamespaceSelect" />
                 </template>
-
 
                 <template v-slot:table>
                     <b-table
@@ -23,7 +23,7 @@
                         striped
                         bordered
                         hover
-                        :items="flows"
+                        :items="templates"
                         :fields="fields"
                         ref="table"
                     >
@@ -35,17 +35,17 @@
 
                         <template v-slot:cell(id)="row">
                             <router-link
-                                :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
+                                :to="{name: `${dataType}Edit`, params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
                             >{{row.item.id}}</router-link>
                         </template>
                     </b-table>
                 </template>
             </data-table>
         </div>
-        <bottom-line v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
+        <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <router-link :to="{name: 'flowsAdd'}">
+                    <router-link :to="{name: 'templatesAdd'}">
                         <b-button variant="primary">
                             <plus />
                             {{$t('create')}}
@@ -61,6 +61,7 @@
 import { mapState } from "vuex";
 import permission from "../../models/permission";
 import action from "../../models/action";
+import NamespaceSelect from "../namespace/NamespaceSelect";
 import Plus from "vue-material-design-icons/Plus";
 import Eye from "vue-material-design-icons/Eye";
 import BottomLine from "../layout/BottomLine";
@@ -77,6 +78,7 @@ export default {
         Eye,
         DataTable,
         SearchField,
+        NamespaceSelect,
     },
     data() {
         return {
@@ -86,40 +88,40 @@ export default {
         };
     },
     computed: {
-        ...mapState("flow", ["flows", "total"]),
+        ...mapState("template", ["templates", "total"]),
         ...mapState("stat", ["dailyGroupByFlow", "daily"]),
         ...mapState("auth", ["user"]),
         fields() {
-            const title = title => {
+            const title = (title) => {
                 return this.$t(title);
             };
             return [
                 {
                     key: "id",
                     label: title("template"),
-                    sortable: true
+                    sortable: true,
                 },
                 {
                     key: "actions",
                     label: "",
-                    class: "row-action"
-                }
+                    class: "row-action",
+                },
             ];
         },
     },
     methods: {
         loadData(callback) {
             this.$store
-                .dispatch("templates/findTemplates", {
-                    q: "",
+                .dispatch("template/findTemplates", {
+                    q: this.query,
                     size: parseInt(this.$route.query.size || 25),
                     page: parseInt(this.$route.query.page || 1),
-                    sort: this.$route.query.sort
+                    sort: this.$route.query.sort,
                 })
                 .then(() => {
                     callback();
-                })
-        }
-    }
+                });
+        },
+    },
 };
 </script>

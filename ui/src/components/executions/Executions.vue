@@ -3,7 +3,7 @@
         <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total">
             <template v-slot:navbar>
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
-                <namespace-select v-if="$route.name !== 'flowEdit'"  @onNamespaceSelect="onNamespaceSelect" />
+                <namespace-select data-type="flow" v-if="$route.name !== 'flowEdit'"  @onNamespaceSelect="onNamespaceSelect" />
                 <status-filter-buttons @onRefresh="loadData"/>
                 <date-range @onDate="onSearch" />
                 <refresh-button class="float-right" @onRefresh="loadData"/>

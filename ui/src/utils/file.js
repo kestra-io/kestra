@@ -14,9 +14,7 @@ export function canSaveFile(isEdit, user, file, dataType) {
 
 export function saveFile(self, file, dataType) {
     return self.$store
-        .dispatch(`${dataType}/${dataType.toUpperCase()}`, {
-            file
-        })
+        .dispatch(`${dataType}/save${dataType.capitalize()}`, { [dataType]: file })
         .then(() => {
             self.$toast().success(self.$t(dataType) + ' ' + self.$t("update ok"));
         })

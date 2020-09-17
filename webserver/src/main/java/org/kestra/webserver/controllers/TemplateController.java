@@ -15,6 +15,8 @@ import org.kestra.webserver.utils.PageableUtils;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -29,10 +31,10 @@ public class TemplateController {
      * @param id The template id
      * @return template found
      */
-    @Get(uri = "{id}", produces = MediaType.TEXT_JSON)
-    public Template index(String id) {
+    @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
+    public Template index(String namespace, String id) {
         return templateRepository
-            .findById(id)
+            .findById(namespace, id)
             .orElse(null);
     }
 
@@ -57,8 +59,8 @@ public class TemplateController {
      * @return template created
      */
     @Post(produces = MediaType.TEXT_JSON)
-    public HttpResponse<Template> create(@Body Template template) throws ConstraintViolationException {
-        if (templateRepository.findById(template.getId()).isPresent()) {
+    public HttpResponse<Template> create(@Valid @Body Template template) throws ConstraintViolationException {
+        if (templateRepository.findById(template.getNamespace(), template.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
                 "Template id already exists",
                 template,
@@ -75,9 +77,9 @@ public class TemplateController {
      * @param id template id to update
      * @return template updated
      */
-    @Put(uri = "{id}", produces = MediaType.TEXT_JSON)
-    public HttpResponse<Template> update(String id, @Body Template template) throws ConstraintViolationException {
-        Optional<Template> existingTemplate = templateRepository.findById(id);
+    @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
+    public HttpResponse<Template> update(String namespace, String id, @Body Template template) throws ConstraintViolationException {
+        Optional<Template> existingTemplate = templateRepository.findById(namespace, id);
 
         if (existingTemplate.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
@@ -90,9 +92,9 @@ public class TemplateController {
      * @param id        template id to delete
      * @return Http 204 on delete or Http 404 when not found
      */
-    @Delete(uri = "{id}", produces = MediaType.TEXT_JSON)
-    public HttpResponse<Void> delete(String id) {
-        Optional<Template> template = templateRepository.findById(id);
+    @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
+    public HttpResponse<Void> delete(String namespace, String id) {
+        Optional<Template> template = templateRepository.findById(namespace, id);
         if (template.isPresent()) {
             templateRepository.delete(template.get());
             return HttpResponse.status(HttpStatus.NO_CONTENT);
@@ -101,4 +103,11 @@ public class TemplateController {
         }
     }
 
+    /**
+     * @return The flow's namespaces set
+     */
+    @Get(uri = "distinct-namespaces", produces = MediaType.TEXT_JSON)
+    public List<String> listDistinctNamespace() {
+        return templateRepository.findDistinctNamespace();
+    }
 }

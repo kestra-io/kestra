@@ -9,11 +9,11 @@ import org.kestra.core.tasks.debugs.Return;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @MicronautTest
 public class MemoryTemplateRepositoryTest {
@@ -23,6 +23,7 @@ public class MemoryTemplateRepositoryTest {
     private static Template.TemplateBuilder builder() {
         return Template.builder()
             .id(FriendlyId.createFriendlyId())
+            .namespace("kestra.test")
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()));
     }
 
@@ -31,12 +32,28 @@ public class MemoryTemplateRepositoryTest {
         Template template = builder().build();
         templateRepository.create(template);
 
-        Optional<Template> full = templateRepository.findById(template.getId());
+        Optional<Template> full = templateRepository.findById(template.getNamespace(), template.getId());
         assertThat(full.isPresent(), is(true));
 
         full.ifPresent(current -> {
             assertThat(full.get().getId(), is(template.getId()));
         });
+    }
+
+    @Test
+    void findByNamespace() {
+        Template template1 = builder().build();
+        Template template2 = Template.builder()
+            .id(FriendlyId.createFriendlyId())
+            .namespace("kestra.test.template").build();
+
+        templateRepository.create(template1);
+        templateRepository.create(template2);
+
+        List<Template> templates = templateRepository.findByNamespace(template1.getNamespace());
+        assertThat(templates.size(), greaterThanOrEqualTo(1));
+        templates = templateRepository.findByNamespace(template2.getNamespace());
+        assertThat(templates.size(), is(1));
     }
 
     @Test
@@ -65,6 +82,6 @@ public class MemoryTemplateRepositoryTest {
         Template save = templateRepository.create(template);
         templateRepository.delete(save);
 
-        assertThat(templateRepository.findById(template.getId()).isPresent(), is(false));
+        assertThat(templateRepository.findById(template.getNamespace(), template.getId()).isPresent(), is(false));
     }
 }

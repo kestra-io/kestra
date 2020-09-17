@@ -3,6 +3,7 @@ package org.kestra.core.models.listeners;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Value;
+import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.tasks.Task;
 
 import javax.validation.Valid;

@@ -11,7 +11,11 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
-import org.kestra.core.runners.*;
+import org.kestra.core.runners.AbstractExecutor;
+import org.kestra.core.runners.RunContextFactory;
+import org.kestra.core.runners.WorkerTask;
+import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.services.FlowService;
 
 import java.util.Collection;
 import java.util.List;
@@ -30,7 +34,10 @@ public class MemoryExecutor extends AbstractExecutor {
     private final QueueInterface<WorkerTask> workerTaskQueue;
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private final QueueInterface<LogEntry> logQueue;
+    private final FlowService flowService;
+    
     private static final ConcurrentHashMap<String, ExecutionState> executions = new ConcurrentHashMap<>();
+    private List<Flow> allFlows;
 
     public MemoryExecutor(
         RunContextFactory runContextFactory,
@@ -39,7 +46,8 @@ public class MemoryExecutor extends AbstractExecutor {
         @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
         @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue,
         @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
-        MetricRegistry metricRegistry
+        MetricRegistry metricRegistry,
+        FlowService flowService
     ) {
         super(runContextFactory, metricRegistry);
         this.flowRepository = flowRepository;
@@ -47,10 +55,12 @@ public class MemoryExecutor extends AbstractExecutor {
         this.workerTaskQueue = workerTaskQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
         this.logQueue = logQueue;
+        this.flowService = flowService;
     }
 
     @Override
     public void run() {
+        this.allFlows = this.flowRepository.findAll();
         this.executionQueue.receive(MemoryExecutor.class, this::executionQueue);
         this.workerTaskResultQueue.receive(MemoryExecutor.class, this::workerTaskResultQueue);
     }
@@ -110,6 +120,13 @@ public class MemoryExecutor extends AbstractExecutor {
             // Listeners need the last emit
             if (execution.isTerminatedWithListeners(flow)) {
                 this.executionQueue.emit(execution);
+            }
+
+            // Flow Trigger
+            if (execution.isTerminatedWithListeners(flow)) {
+                flowService
+                    .flowTriggerExecution(allFlows.stream(), execution)
+                    .forEach(this.executionQueue::emit);
             }
         }
     }
@@ -176,7 +193,7 @@ public class MemoryExecutor extends AbstractExecutor {
             // save WorkerTaskResult on current QueuedExecution
             executions.compute(message.getTaskRun().getExecutionId(), (s, executionState) -> {
                 if (executionState == null) {
-                    throw new IllegalStateException("Invalid null QueuedExecution");
+                    throw new IllegalStateException("Execution state don't exist for " + s + ", receive " + message);
                 }
 
                 if (executionState.execution.hasTaskRunJoinable(message.getTaskRun())) {
@@ -188,6 +205,11 @@ public class MemoryExecutor extends AbstractExecutor {
 
             this.toExecution(executions.get(message.getTaskRun().getExecutionId()).execution);
         }
+    }
+
+    private void handleFlowTrigger(Execution execution) {
+
+
     }
 
     private boolean deduplicateWorkerTask(Execution execution, TaskRun taskRun) {

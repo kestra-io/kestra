@@ -9,9 +9,10 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.runners.FlowTriggerCaseTest;
 import org.kestra.core.runners.InputsTest;
 import org.kestra.core.runners.ListenersTest;
-import org.kestra.core.runners.RunnerCaseTest;
+import org.kestra.core.runners.RestartCaseTest;
 import org.kestra.core.utils.TestsUtils;
 
 import java.io.IOException;
@@ -31,7 +32,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Inject
-    private RunnerCaseTest runnerCaseTest;
+    private RestartCaseTest restartCaseTest;
+
+    @Inject
+    private FlowTriggerCaseTest flowTriggerCaseTest;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -165,6 +169,11 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void restart() throws Exception {
-        runnerCaseTest.restart();
+        restartCaseTest.restart();
+    }
+
+    @Test
+    void flowTrigger() throws Exception {
+        flowTriggerCaseTest.trigger();
     }
 }

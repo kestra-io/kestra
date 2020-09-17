@@ -1,0 +1,24 @@
+id: trigger-flow-listener
+namespace: org.kestra.tests
+
+inputs:
+  - name: from-parent
+    type: STRING
+
+tasks:
+  - id: only-listener
+    type: org.kestra.core.tasks.debugs.Return
+    format: "childs: {{inputs.from-parent}}"
+
+triggers:
+  - id: listen-flow
+    type: org.kestra.core.models.triggers.types.Flow
+    inputs:
+      from-parent: '{{ outputs.only.value }}'
+    conditions:
+      - type: org.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - SUCCESS
+      - type: org.kestra.core.models.conditions.types.FlowCondition
+        namespace: org.kestra.tests
+        flowId: trigger-flow

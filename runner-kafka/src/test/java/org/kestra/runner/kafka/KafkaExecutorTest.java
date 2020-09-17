@@ -79,7 +79,7 @@ class KafkaExecutorTest {
     @Test
     void standard() {
         Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
-        // this.flowInput().add(flow.uid(), flow);
+        this.flowInput().add(flow.uid(), flow);
 
         createExecution(flow);
 
@@ -96,7 +96,7 @@ class KafkaExecutorTest {
     @Test
     void concurrent() {
         Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
-        // this.flowInput().add(flow.uid(), flow);
+        this.flowInput().add(flow.uid(), flow);
 
         createExecution(flow);
 
@@ -127,7 +127,7 @@ class KafkaExecutorTest {
     @Test
     void killed() {
         Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
-        // this.flowInput().add(flow.uid(), flow);
+        this.flowInput().add(flow.uid(), flow);
 
         createExecution(flow);
 
@@ -165,7 +165,7 @@ class KafkaExecutorTest {
     @Test
     void killedAlreadyFinished() {
         Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
-        // this.flowInput().add(flow.uid(), flow);
+        this.flowInput().add(flow.uid(), flow);
 
         createExecution(flow);
 
@@ -188,7 +188,7 @@ class KafkaExecutorTest {
     @ValueSource(booleans = {true, false})
     void killedParallel(boolean killed) {
         Flow flow = flowRepository.findById("org.kestra.tests", "parallel").orElseThrow();
-        // this.flowInput().add(flow.uid(), flow);
+        this.flowInput().add(flow.uid(), flow);
 
         createExecution(flow);
         Parallel parent = (Parallel) flow.getTasks().get(0);
@@ -259,7 +259,7 @@ class KafkaExecutorTest {
     @Test
     void parallel() {
         Flow flow = flowRepository.findById("org.kestra.tests", "parallel").orElseThrow();
-        // this.flowInput().add(flow.uid(), flow);
+        this.flowInput().add(flow.uid(), flow);
 
         createExecution(flow);
         Parallel parent = (Parallel) flow.getTasks().get(0);
@@ -326,6 +326,35 @@ class KafkaExecutorTest {
         // ok
         executionRecord = executionOutput().readOneRecord();
         assertThat(executionRecord.value().getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+    @Test
+    void flowTrigger() {
+        Flow triggerFlow = flowRepository.findById("org.kestra.tests", "trigger-flow-listener-no-inputs").orElseThrow();
+        this.flowInput().add(triggerFlow.uid(), triggerFlow);
+
+        // we add 2 version of the same triggering flow to be sure to have only the last one triggered
+        Flow updateTriggerFlow = triggerFlow.withRevision(2);
+        this.flowInput().add(updateTriggerFlow.uid(), updateTriggerFlow.withRevision(2));
+
+        Flow firstFlow = flowRepository.findById("org.kestra.tests", "trigger-flow").orElseThrow();
+        this.flowInput().add(firstFlow.uid(), firstFlow);
+
+        createExecution(firstFlow);
+
+        // task
+        runningAndSuccessSequential(firstFlow, 0);
+
+        ProducerRecord<String, Execution> firstExecution = executionOutput().readOneRecord();
+        assertThat(firstExecution.value().getState().getCurrent(), is(State.Type.SUCCESS));
+
+        ProducerRecord<String, Execution> triggerExecution = executionOutput().readOneRecord();
+        assertThat(triggerExecution.value().getState().getCurrent(), is(State.Type.CREATED));
+
+        runningAndSuccessSequential(triggerFlow, 0);
+
+        triggerExecution = executionOutput().readOneRecord();
+        assertThat(triggerExecution.value().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     private void createExecution(Flow flow) {

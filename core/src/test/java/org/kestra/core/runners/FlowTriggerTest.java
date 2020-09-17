@@ -4,12 +4,12 @@ import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
 
-public class RestartTest extends AbstractMemoryRunnerTest {
+public class FlowTriggerTest extends AbstractMemoryRunnerTest {
     @Inject
-    private RestartCaseTest restartCaseTest;
+    private FlowTriggerCaseTest runnerCaseTest;
 
     @Test
     void restart() throws Exception {
-        restartCaseTest.restart();
+        runnerCaseTest.trigger();
     }
 }

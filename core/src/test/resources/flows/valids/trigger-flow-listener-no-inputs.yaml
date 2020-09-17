@@ -1,0 +1,19 @@
+id: trigger-flow-listener-no-inputs
+namespace: org.kestra.tests
+revision: 1
+
+tasks:
+  - id: only-no-input
+    type: org.kestra.core.tasks.debugs.Return
+    format: "v1: {{trigger.executionId}}"
+
+triggers:
+  - id: listen-flow
+    type: org.kestra.core.models.triggers.types.Flow
+    conditions:
+      - type: org.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - SUCCESS
+      - type: org.kestra.core.models.conditions.types.FlowCondition
+        namespace: org.kestra.tests
+        flowId: trigger-flow

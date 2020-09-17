@@ -16,7 +16,7 @@ import static org.hamcrest.Matchers.*;
 import static org.kestra.core.utils.Rethrow.throwRunnable;
 
 @Singleton
-public class RunnerCaseTest {
+public class RestartCaseTest {
     @Inject
     private FlowRepositoryInterface flowRepository;
 

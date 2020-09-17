@@ -17,6 +17,7 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContextLogger;
+import org.kestra.core.services.ConditionService;
 import org.kestra.core.utils.MapUtils;
 
 import java.time.Instant;
@@ -369,7 +370,7 @@ public class Execution implements DeletedInterface {
      * {@code RUNNING} taskRun, on the lastAttempts.
      * If no Attempt is found, we create one (must be nominal case).
      * The executor will catch the {@code FAILED} taskRun emitted and will failed the execution.
-     * In the worst case, we FAILED the execution (must not exists).
+     * In the worst case, we FAILED the execution (only from {@link org.kestra.core.models.triggers.types.Flow}).
      *
      * @param e the exception throw from {@link org.kestra.core.runners.AbstractExecutor}
      * @return a new execution with taskrun failed if possible or execution failed is other case
@@ -487,9 +488,8 @@ public class Execution implements DeletedInterface {
         return flow
             .getListeners()
             .stream()
-            .filter(listener -> listener.getConditions() == null || listener.getConditions()
-                .stream()
-                .allMatch(condition -> condition.test(flow, this))
+            .filter(listener -> listener.getConditions() == null ||
+                ConditionService.valid(listener.getConditions(), flow, this)
             )
             .flatMap(listener -> listener.getTasks().stream())
             .map(ResolvedTask::of)

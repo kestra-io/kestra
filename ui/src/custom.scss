@@ -37,7 +37,6 @@ $vs-state-active-bg: $primary;
         .vs__selected {
             max-width: 100%;
             white-space: nowrap;
-            line-height: $input-line-height;
             color: $input-color;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -45,7 +44,7 @@ $vs-state-active-bg: $primary;
     }
 
     .vs__dropdown-toggle {
-        padding: 1px 0 5px 0;
+        padding: 2px 0 5px 0;
     }
 
     .vs__dropdown-option {
@@ -104,7 +103,7 @@ pre[class*="language-"] {
 
 .form-group {
     .input-group {
-        > * {
+        > div.v-select {
             padding-left: 0;
         }
 

@@ -35,6 +35,10 @@ jobs:
         with:
           python-version: '3.x'
           architecture: 'x64'
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12'
+          check-latest: true
       # Services
       - name: Build the docker-compose stack
         run: docker-compose -f docker-compose-ci.yml up -d

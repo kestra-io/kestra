@@ -7,9 +7,6 @@ inputs:
   - name: with-optional
     type: STRING
     required: false
-  - name: with-file
-    type: FILE
-
 
 variables:
   var-1: var-1
@@ -26,8 +23,8 @@ tasks:
       - id: 1-2
         type: org.kestra.core.tasks.flows.Template
         namespace: org.kestra.tests
-        flowId: template
+        templateId: template
 
-  - id: 2.end
+  - id: 2-end
     type: org.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

@@ -1,6 +1,7 @@
 package org.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.context.ApplicationContext;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;

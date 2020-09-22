@@ -1,4 +1,4 @@
-package org.kestra.core.models.listeners;
+package org.kestra.core.models.conditions;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
@@ -9,9 +9,9 @@ import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 
+import java.util.function.BiPredicate;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.util.function.BiPredicate;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @SuperBuilder

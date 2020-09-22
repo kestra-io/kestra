@@ -7,7 +7,7 @@ inputs:
 
 listeners:
   - conditions:
-      - type: org.kestra.core.models.listeners.types.ExecutionStatusCondition
+      - type: org.kestra.core.models.conditions.types.ExecutionStatusCondition
         in:
           - FAILED
     tasks:
@@ -17,7 +17,7 @@ listeners:
           - 'sleep 1'
 
   - conditions:
-      - type: org.kestra.core.models.listeners.types.ExecutionStatusCondition
+      - type: org.kestra.core.models.conditions.types.ExecutionStatusCondition
         in:
           - SUCCESS
     tasks:

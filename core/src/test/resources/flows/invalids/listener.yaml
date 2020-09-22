@@ -3,7 +3,7 @@ namespace: org.kestra.tests
 
 listeners:
   - conditions:
-      - type: org.kestra.core.models.listeners.types.ExecutionStatusCondition
+      - type: org.kestra.core.models.conditions.types.ExecutionStatusCondition
         in:
           -
     tasks: []

@@ -11,6 +11,7 @@ import org.kestra.core.serializers.helpers.HandleBarDeserializer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.ConstraintViolationException;
@@ -40,7 +41,13 @@ public class YamlFlowParser {
                 .isValid(flow)
                 .ifPresent(e -> {
                     throw new ConstraintViolationException(
-                        "Invalid flow '" + flow.getNamespace() + "." + flow.getId() + "', error: " + e.getConstraintViolations().toString(),
+                        "Invalid flow '" + flow.getNamespace() + "." + flow.getId() + "', error: " +
+                            e.getConstraintViolations()
+                                .stream()
+                                .map(r -> {
+                                    return r.getPropertyPath() + ":" + r.getMessage();
+                                })
+                                .collect(Collectors.joining("\n -")),
                         e.getConstraintViolations()
                     );
                 });

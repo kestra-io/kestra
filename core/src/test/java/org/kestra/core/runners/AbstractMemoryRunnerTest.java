@@ -24,8 +24,8 @@ abstract public class AbstractMemoryRunnerTest {
     @BeforeEach
     protected void init() throws IOException, URISyntaxException {
         if (!runner.isRunning()) {
-            runner.run();
             TestsUtils.loads(repositoryLoader);
+            runner.run();
         }
     }
 }

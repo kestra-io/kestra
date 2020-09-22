@@ -6,7 +6,7 @@ import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.http.annotation.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.kestra.core.models.listeners.Condition;
+import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.storages.StorageInterface;
 

@@ -22,11 +22,11 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
-import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.AbstractExecutor;
 import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.services.FlowService;
 import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -34,11 +34,13 @@ import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.streams.DeduplicationPurgeTransformer;
 import org.kestra.runner.kafka.streams.DeduplicationTransformer;
 import org.kestra.runner.kafka.streams.ExecutionNextsDeduplicationTransformer;
+import org.kestra.runner.kafka.streams.FlowTriggerTransformer;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @KafkaQueueEnabled
@@ -46,28 +48,30 @@ import javax.inject.Inject;
 @Slf4j
 public class KafkaExecutor extends AbstractExecutor {
     private static final String WORKERTASK_DEDUPLICATION_STATE_STORE_NAME = "workertask_deduplication";
+    private static final String TRIGGER_DEDUPLICATION_STATE_STORE_NAME = "trigger_deduplication";
     private static final String NEXTS_DEDUPLICATION_STATE_STORE_NAME = "next_deduplication";
     private static final String TOPIC_EXECUTOR = "executor";
 
     KafkaStreamService kafkaStreamService;
     KafkaAdminService kafkaAdminService;
-    FlowRepositoryInterface flowRepository;
     QueueInterface<LogEntry> logQueue;
+    FlowService flowService;
 
     @Inject
     public KafkaExecutor(
         RunContextFactory runContextFactory,
-        FlowRepositoryInterface flowRepository,
         KafkaStreamService kafkaStreamService,
         KafkaAdminService kafkaAdminService,
         @javax.inject.Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
-        MetricRegistry metricRegistry
+        MetricRegistry metricRegistry,
+        FlowService flowService
     ) {
         super(runContextFactory, metricRegistry);
-        this.flowRepository = flowRepository;
+
         this.kafkaStreamService = kafkaStreamService;
         this.kafkaAdminService = kafkaAdminService;
         this.logQueue = logQueue;
+        this.flowService = flowService;
     }
 
     public Topology topology() {
@@ -90,6 +94,14 @@ public class KafkaExecutor extends AbstractExecutor {
             JsonSerde.of(ExecutionNextsDeduplicationTransformer.Store.class)
         ));
 
+
+        // trigger deduplication
+        builder.addStateStore(Stores.keyValueStoreBuilder(
+            Stores.persistentKeyValueStore(TRIGGER_DEDUPLICATION_STATE_STORE_NAME),
+            Serdes.String(),
+            Serdes.String()
+        ));
+
         KTable<String, Execution> executionKTable = this.executionKTable(builder);
 
         KTable<String, Execution> executionNotKilledKTable = this.joinExecutionKilled(builder, executionKTable);
@@ -109,8 +121,10 @@ public class KafkaExecutor extends AbstractExecutor {
         // join with worker result
         KStream<String, Execution> executionKStream = this.joinWorkerResult(builder, executionNotKilledKTable);
 
+        GlobalKTable<String, Flow> flowKTable = this.flowKTable(builder);
+
         // handle state on execution
-        KStream<String, ExecutionWithFlow> stream = this.withFlow(executionKStream, "withFlow");
+        KStream<String, ExecutionWithFlow> stream = this.withFlow(flowKTable, executionKStream);
 
         this.handleMain(stream);
         this.handleNexts(stream);
@@ -118,7 +132,10 @@ public class KafkaExecutor extends AbstractExecutor {
         this.handleWorkerTask(stream);
         this.handleWorkerTaskResult(stream);
 
+        this.handleFlowTrigger(stream);
+
         this.purgeExecutor(stream);
+
 
         // build
         Topology topology = builder.build();
@@ -151,7 +168,10 @@ public class KafkaExecutor extends AbstractExecutor {
         return builder
             .globalTable(
                 kafkaAdminService.getTopicName(Flow.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Flow.class))
+                Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)),
+                Materialized.<String, Flow, KeyValueStore<Bytes, byte[]>>as("flow")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(JsonSerde.of(Flow.class))
             );
     }
     
@@ -296,27 +316,10 @@ public class KafkaExecutor extends AbstractExecutor {
         return toExecutionJoin(join);
     }
 
-    private KStream<String, ExecutionWithFlow> withFlow(KStream<String, Execution> executionKStream, String name) {
-        return executionKStream
-            .mapValues(
-                (readOnlyKey, execution) -> {
-                    Flow flow = this.flowRepository.findByExecution(execution);
-
-                    return new ExecutionWithFlow(flow, execution);
-                },
-                Named.as(name + "-map")
-            );
-    }
-
-    /**
-     * Remove due to inconsistency on runner.
-     * Seems that the executor can miss some execution on this case, the execution is keep on RUNNING state without
-     * any further action
-     */
-    private KStream<String, ExecutionWithFlow> withFlow(StreamsBuilder builder, KStream<String, Execution> executionKStream) {
+    private KStream<String, ExecutionWithFlow> withFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, Execution> executionKStream) {
         return executionKStream
             .join(
-                this.flowKTable(builder),
+                flowGlobalKTable,
                 (key, value) -> Flow.uid(value),
                 (execution, flow) -> new ExecutionWithFlow(flow, execution),
                 Named.as("withFlow-join")
@@ -364,12 +367,19 @@ public class KafkaExecutor extends AbstractExecutor {
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
             );
 
-        // clean up workerTaskResult
-        terminated
+        // flatMap taskRun
+        KStream<String, TaskRun> taskRunKStream = terminated
+            .filter(
+                (key, value) -> value.getExecution().getTaskRunList() != null,
+                Named.as("purgeExecutor-nullValue-filter")
+            )
             .flatMapValues(
                 (readOnlyKey, value) -> value.getExecution().getTaskRunList(),
                 Named.as("purgeExecutor-toTaskRun-flatmap")
-            )
+            );
+
+        // clean up workerTaskResult
+        taskRunKStream
             .map(
                 (readOnlyKey, value) -> new KeyValue<>(
                     value.getId(),
@@ -383,11 +393,7 @@ public class KafkaExecutor extends AbstractExecutor {
             );
 
         // clean up WorkerTask deduplication state
-        terminated
-            .flatMapValues(
-                (readOnlyKey, value) -> value.getExecution().getTaskRunList(),
-                Named.as("purgeExecutor-toTaskRun-flapMap")
-            )
+        taskRunKStream
             .transformValues(
                 () -> new DeduplicationPurgeTransformer<>(
                     WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
@@ -417,6 +423,39 @@ public class KafkaExecutor extends AbstractExecutor {
             .to(
                 kafkaAdminService.getTopicName(ExecutionKilled.class),
                 Produced.with(Serdes.String(), JsonSerde.of(ExecutionKilled.class))
+            );
+    }
+
+    private void handleFlowTrigger(KStream<String, ExecutionWithFlow> stream) {
+        stream
+            .filter(
+                (key, value) -> value.getExecution().isTerminatedWithListeners(value.getFlow()),
+                Named.as("handleFlowTrigger-terminated-filter")
+            )
+            .transformValues(
+                () -> new DeduplicationTransformer<>(
+                    TRIGGER_DEDUPLICATION_STATE_STORE_NAME,
+                    (key, value) -> value.getExecution().getId(),
+                    (key, value) -> value.getExecution().getId()
+                ),
+                Named.as("handleFlowTrigger-deduplication-transform"),
+                TRIGGER_DEDUPLICATION_STATE_STORE_NAME
+            )
+            .filter((key, value) -> value != null, Named.as("handleFlowTrigger-dedupNull-filter"))
+            .transformValues(
+                () -> new FlowTriggerTransformer(flowService),
+                Named.as("handleFlowTrigger-trigger-transform")
+            )
+            .flatMap(
+                (key, value) -> value
+                    .stream()
+                .map(execution -> new KeyValue<>(execution.getId(), execution))
+                .collect(Collectors.toList()),
+                Named.as("handleFlowTrigger-execution-flapMap")
+            )
+            .to(
+                kafkaAdminService.getTopicName(Execution.class),
+                Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
             );
     }
 

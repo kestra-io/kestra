@@ -1,0 +1,7 @@
+id: trigger-flow
+namespace: org.kestra.tests
+
+tasks:
+  - id: only
+    type: org.kestra.core.tasks.debugs.Return
+    format: "from parents: {{execution.id}}"

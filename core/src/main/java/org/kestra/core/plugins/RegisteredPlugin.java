@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.kestra.core.models.listeners.Condition;
+import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.storages.StorageInterface;
 

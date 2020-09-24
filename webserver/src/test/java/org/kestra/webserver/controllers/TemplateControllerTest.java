@@ -1,7 +1,6 @@
 package org.kestra.webserver.controllers;
 
 import com.devskiller.friendly_id.FriendlyId;
-import com.google.common.collect.ImmutableList;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -9,24 +8,21 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.RxHttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.hateoas.JsonError;
 import org.junit.jupiter.api.Test;
-import org.kestra.core.Helpers;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.tasks.debugs.Return;
 import org.kestra.webserver.responses.PagedResults;
 
-import javax.inject.Inject;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import javax.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.*;
-import static io.micronaut.http.HttpStatus.*;
+import static io.micronaut.http.HttpStatus.NO_CONTENT;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TemplateControllerTest extends AbstractMemoryRunnerTest {
@@ -124,5 +120,4 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(namespaces.size(), is(2));
     }
-
 }

@@ -15,6 +15,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.WorkerTask;
@@ -82,6 +83,8 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             return null;
         } else if (this.cls == Flow.class) {
             return ((Flow) object).uid();
+        } else if (this.cls == Template.class) {
+            return ((Template) object).uid();
         } else if (this.cls == ExecutionKilled.class) {
             return ((ExecutionKilled) object).getExecutionId();
         } else {

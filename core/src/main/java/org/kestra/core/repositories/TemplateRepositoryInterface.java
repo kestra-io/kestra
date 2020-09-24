@@ -1,11 +1,8 @@
 package org.kestra.core.repositories;
 
 import io.micronaut.data.model.Pageable;
-import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.templates.Template;
 
-import javax.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,7 +11,7 @@ public interface TemplateRepositoryInterface {
 
     List<Template> findAll();
 
-    ArrayListTotal<Template> find(Optional<String> query, Pageable pageable);
+    ArrayListTotal<Template> find(String query, Pageable pageable);
 
     List<Template> findByNamespace(String namespace);
 
@@ -25,5 +22,4 @@ public interface TemplateRepositoryInterface {
     void delete(Template template);
 
     List<String> findDistinctNamespace();
-
 }

@@ -69,6 +69,17 @@ export default {
           }
         },
         {
+            href: "/templates",
+            alias: [
+                "/templates*"
+            ],
+            title: this.$t("templates"),
+            icon: {
+                element: "cardtext",
+                class: "menu-icon"
+            }
+        },
+        {
           href: "/executions",
           alias: [
             "/executions*"
@@ -79,17 +90,7 @@ export default {
             class: "menu-icon"
           }
         },
-        {
-          href: "/templates",
-          alias: [
-            "/templates*"
-          ],
-          title: this.$t("templates"),
-          icon: {
-            element: "cardtext",
-            class: "menu-icon"
-          }
-        },
+
         {
           href: "/plugins",
           alias: [

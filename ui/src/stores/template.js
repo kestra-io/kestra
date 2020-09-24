@@ -23,6 +23,8 @@ export default {
         loadTemplate({ commit }, options) {
             return Vue.axios.get(`/api/v1/templates/${options.namespace}/${options.id}`).then(response => {
                 commit('setTemplate', response.data)
+
+                return response.data;
             })
         },
         saveTemplate({ commit }, options) {
@@ -31,12 +33,16 @@ export default {
                     return Promise.reject(new Error("Server error on template save"))
                 } else {
                     commit('setTemplate', response.data)
+
+                    return response.data;
                 }
             })
         },
         createTemplate({ commit }, options) {
             return Vue.axios.post('/api/v1/templates', options.template).then(response => {
-                commit('setTemplate', response.data.template)
+                commit('setTemplate', response.data)
+
+                return response.data;
             })
         },
         deleteTemplate({ commit }, template) {

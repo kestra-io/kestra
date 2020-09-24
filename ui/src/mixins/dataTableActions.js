@@ -41,7 +41,6 @@ export default {
     },
     methods: {
         onSearch() {
-            console.log('on search', this.$route)
             this.query = queryBuilder(this.$route, this.fields);
             this.loadData(this.onDataLoaded);
         },

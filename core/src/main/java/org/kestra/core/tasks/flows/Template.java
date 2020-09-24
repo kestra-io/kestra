@@ -3,13 +3,9 @@ package org.kestra.core.tasks.flows;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
-import org.kestra.core.exceptions.InvalidFlowStateException;
 import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.executions.Execution;
@@ -25,14 +21,13 @@ import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.services.TreeService;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.validation.Valid;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.validation.Valid;
 
 
 @SuperBuilder
@@ -97,14 +92,18 @@ public class Template extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public List<Task> allChildTasks() {
-        org.kestra.core.models.templates.Template template = this.findTemplate(ContextHelper.context());
+        try {
+            org.kestra.core.models.templates.Template template = this.findTemplate(ContextHelper.context());
 
-        return Stream
-            .concat(
-                template.getTasks() != null ? template.getTasks().stream() : Stream.empty(),
-                template.getErrors() != null ? template.getErrors().stream() : Stream.empty()
-            )
-            .collect(Collectors.toList());
+            return Stream
+                .concat(
+                    template.getTasks() != null ? template.getTasks().stream() : Stream.empty(),
+                    template.getErrors() != null ? template.getErrors().stream() : Stream.empty()
+                )
+                .collect(Collectors.toList());
+        } catch (IllegalVariableEvaluationException e) {
+            return Collections.emptyList();
+        }
     }
 
     @Override
@@ -126,17 +125,21 @@ public class Template extends Task implements FlowableTask<VoidOutput> {
         );
     }
 
-    private org.kestra.core.models.templates.Template findTemplate(ApplicationContext applicationContext) {
-        TemplateRepositoryInterface templateRepository = applicationContext.getBean(TemplateRepositoryInterface.class);
+    private org.kestra.core.models.templates.Template findTemplate(ApplicationContext applicationContext) throws IllegalVariableEvaluationException {
+        TemplateExecutorInterface templateExecutor = applicationContext.getBean(TemplateExecutorInterface.class);
 
-        return templateRepository
-            .findById(
-                this.namespace,
-                this.templateId
-            )
-            .orElseThrow(() -> new InvalidFlowStateException("Can't find flow template '" + this.namespace + "." + this.templateId + "'"));
+        org.kestra.core.models.templates.Template template = templateExecutor.findById(this.namespace, this.templateId);
+        if (template == null) {
+            throw new IllegalVariableEvaluationException("Can't find flow template '" + this.namespace + "." + this.templateId + "'");
+        }
+
+        return template;
     }
 
+    /**
+     * Ugly hack to provide the ApplicationContext on {{@link Template#allChildTasks }} & {{@link Template#tasksTree }}
+     * We need to inject a way to fetch Template ...
+     */
     @Singleton
     public static class ContextHelper {
         @Inject
@@ -149,8 +152,12 @@ public class Template extends Task implements FlowableTask<VoidOutput> {
         }
 
         @EventListener
-        void onStartup(final StartupEvent event) throws IOException {
+        void onStartup(final StartupEvent event) {
             ContextHelper.context = this.applicationContext;
         }
+    }
+
+    public interface TemplateExecutorInterface {
+        org.kestra.core.models.templates.Template findById(String namespace, String templateId);
     }
 }

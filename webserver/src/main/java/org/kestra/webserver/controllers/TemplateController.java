@@ -12,14 +12,13 @@ import org.kestra.core.repositories.TemplateRepositoryInterface;
 import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 @Validated
 @Controller("/api/v1/templates")
@@ -40,8 +39,8 @@ public class TemplateController {
 
     /**
      * @param query The template query that is a lucen string
-     * @param page  Page in template pagination
-     * @param size  Element count in pagination selection
+     * @param page Page in template pagination
+     * @param size Element count in pagination selection
      * @return template list
      */
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
@@ -51,7 +50,7 @@ public class TemplateController {
         @QueryValue(value = "size", defaultValue = "10") int size,
         @Nullable @QueryValue(value = "sort") List<String> sort
     ) throws HttpStatusException {
-        return PagedResults.of(templateRepository.find(Optional.of(query), PageableUtils.from(page, size, sort)));
+        return PagedResults.of(templateRepository.find(query, PageableUtils.from(page, size, sort)));
     }
 
     /**
@@ -78,7 +77,7 @@ public class TemplateController {
      * @return template updated
      */
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
-    public HttpResponse<Template> update(String namespace, String id, @Body Template template) throws ConstraintViolationException {
+    public HttpResponse<Template> update(String namespace, String id, @Valid @Body Template template) throws ConstraintViolationException {
         Optional<Template> existingTemplate = templateRepository.findById(namespace, id);
 
         if (existingTemplate.isEmpty()) {
@@ -89,7 +88,7 @@ public class TemplateController {
     }
 
     /**
-     * @param id        template id to delete
+     * @param id template id to delete
      * @return Http 204 on delete or Http 404 when not found
      */
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
@@ -104,7 +103,7 @@ public class TemplateController {
     }
 
     /**
-     * @return The flow's namespaces set
+     * @return The template's namespaces set
      */
     @Get(uri = "distinct-namespaces", produces = MediaType.TEXT_JSON)
     public List<String> listDistinctNamespace() {

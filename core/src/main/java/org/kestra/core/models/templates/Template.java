@@ -1,6 +1,6 @@
 package org.kestra.core.models.templates;
 
-import io.micronaut.context.annotation.Value;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,6 +8,7 @@ import org.kestra.core.models.DeletedInterface;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.validations.ManualConstraintViolation;
 
+import java.util.*;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
@@ -15,10 +16,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 @Builder
 @Introspected
@@ -27,32 +24,48 @@ public class Template implements DeletedInterface {
     @NotNull
     @NotBlank
     @Pattern(regexp = "[a-zA-Z0-9_-]+")
-    private String id;
+    private final String id;
 
     @NotNull
     @Pattern(regexp="[a-z0-9.]+")
-    private String namespace;
+    private final String namespace;
 
     @Valid
     @NotEmpty
-    private List<Task> tasks;
+    private final List<Task> tasks;
 
     @Valid
-    private List<Task> errors;
+    private final List<Task> errors;
 
     @Builder.Default
     @NotNull
-    private boolean deleted = false;
+    private final boolean deleted = false;
+
+    @JsonIgnore
+    public String uid() {
+        return Template.uid(
+            this.getNamespace(),
+            this.getId()
+        );
+    }
+
+    @JsonIgnore
+    public static String uid(String namespace, String id) {
+        return String.join("_", Arrays.asList(
+            namespace,
+            id
+        ));
+    }
 
     public Optional<ConstraintViolationException> validateUpdate(Template updated) {
         Set<ConstraintViolation<?>> violations = new HashSet<>();
 
         if (!updated.getId().equals(this.getId())) {
             violations.add(ManualConstraintViolation.of(
-                "Illegal flow id update",
+                "Illegal template id update",
                 updated,
                 Template.class,
-                "flow.id",
+                "template.id",
                 updated.getId()
             ));
         }
@@ -62,7 +75,7 @@ public class Template implements DeletedInterface {
                 "Illegal namespace update",
                 updated,
                 Template.class,
-                "flow.namespace",
+                "template.namespace",
                 updated.getNamespace()
             ));
         }
@@ -74,4 +87,13 @@ public class Template implements DeletedInterface {
         }
     }
 
+    public Template toDeleted() {
+        return new Template(
+            this.id,
+            this.namespace,
+            this.tasks,
+            this.errors,
+            true
+        );
+    }
 }

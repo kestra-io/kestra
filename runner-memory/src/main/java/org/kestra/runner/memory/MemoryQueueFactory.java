@@ -6,6 +6,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.*;
@@ -60,5 +61,12 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.KILL_NAMED)
     public QueueInterface<ExecutionKilled> kill() {
         return new MemoryQueue<>(ExecutionKilled.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.TEMPLATE_NAMED)
+    public QueueInterface<Template> template() {
+        return new MemoryQueue<>(Template.class, applicationContext);
     }
 }

@@ -1,6 +1,5 @@
 package org.kestra.core.models.tasks;
 
-import io.micronaut.context.ApplicationContext;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;

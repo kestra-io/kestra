@@ -20,11 +20,11 @@
 </template>
 
 <script>
-import fileEdit from "../../mixins/fileEdit";
+import flowTemplateEdit from "../../mixins/flowTemplateEdit";
 import { mapGetters } from "vuex";
 
 export default {
-    mixins: [fileEdit],
+    mixins: [flowTemplateEdit],
     data() {
         return {
             dataType: "flow",

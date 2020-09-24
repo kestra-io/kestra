@@ -1,19 +1,10 @@
 package org.kestra.repository.elasticsearch;
 
 import io.micronaut.data.model.Pageable;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.BucketOrder;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortOrder;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.queues.QueueFactoryInterface;
@@ -23,21 +14,17 @@ import org.kestra.core.repositories.TemplateRepositoryInterface;
 import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
+import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.validation.ConstraintViolationException;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchTemplateRepository extends AbstractElasticSearchRepository<Template> implements TemplateRepositoryInterface {
     private static final String INDEX_NAME = "templates";
-
     private final QueueInterface<Template> templateQueue;
 
     @Inject
@@ -46,7 +33,7 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
         List<IndicesConfig> indicesConfigs,
         ModelValidator modelValidator,
         ThreadMainFactoryBuilder threadFactoryBuilder,
-        @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Template> templateQueue
+        @Named(QueueFactoryInterface.TEMPLATE_NAMED) QueueInterface<Template> templateQueue
     ) {
         super(client, indicesConfigs, modelValidator, threadFactoryBuilder, Template.class);
 
@@ -81,8 +68,8 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     }
 
     @Override
-    public ArrayListTotal<Template> find(Optional<String> query, Pageable pageable) {
-        return super.findQueryString(INDEX_NAME, query.get(), pageable);
+    public ArrayListTotal<Template> find(String query, Pageable pageable) {
+        return super.findQueryString(INDEX_NAME, query, pageable);
     }
 
     @Override
@@ -100,7 +87,6 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
         return this.save(template);
     }
 
-
     public Template update(Template template, Template previous) throws ConstraintViolationException {
         this
             .findById(previous.getNamespace(), previous.getId())
@@ -117,6 +103,8 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     public Template save(Template template) {
         this.putRequest(INDEX_NAME, template.getId(), template);
 
+        templateQueue.emit(template);
+
         return template;
     }
 
@@ -128,5 +116,4 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     public List<String> findDistinctNamespace() {
         return findDistinctNamespace(INDEX_NAME);
     }
-
 }

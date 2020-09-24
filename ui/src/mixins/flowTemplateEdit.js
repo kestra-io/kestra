@@ -1,4 +1,4 @@
-import { canSaveFile, saveFile } from "../utils/file";
+import { canSaveFlowTemplate, saveFlowTemplate } from "../utils/flowTemplate";
 import { mapGetters, mapState } from "vuex";
 
 import BottomLine from "../components/layout/BottomLine";
@@ -36,7 +36,7 @@ export default {
             );
         },
         canSave() {
-            return canSaveFile(true, this.user, this.content, this.dataType);
+            return canSaveFlowTemplate(true, this.user, this.content, this.dataType);
         },
         routeInfo() {
             return {
@@ -51,7 +51,7 @@ export default {
                 ]
             };
         },
-        file() {
+        item() {
             return this[this.dataType]
         },
         canDelete() {
@@ -68,36 +68,36 @@ export default {
     },
     methods: {
         loadFile() {
-            this.content = Yaml.stringify(this.file);
+            this.content = Yaml.stringify(this.item);
             if (this.isEdit) {
                 this.readOnlyEditFields = {
-                    id: this.file.id,
+                    id: this.item.id,
                 };
             }
         },
         deleteFile() {
-            if (this.file) {
-                const file = this.file;
+            if (this.item) {
+                const item = this.item;
                 this.$toast()
-                    .confirm(this.$t("delete confirm", {name: file.id}), () => {
+                    .confirm(this.$t("delete confirm", {name: item.id}), () => {
                         return this.$store
-                            .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, file)
+                            .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item)
                             .then(() => {
                                 return this.$router.push({
                                     name: this.dataType + "List"
                                 });
                             })
                             .then(() => {
-                                this.$toast().deleted(file.id);
+                                this.$toast().deleted(item.id);
                             })
                     });
             }
         },
         save() {
-            if (this.file) {
-                let file;
+            if (this.item) {
+                let item;
                 try {
-                    file = Yaml.parse(this.content);
+                    item = Yaml.parse(this.content);
                 } catch (err) {
                     this.$toast().warning(
                         this.$t("check your the yaml is valid"),
@@ -108,7 +108,7 @@ export default {
                 }
                 if (this.isEdit) {
                     for (const key in this.readOnlyEditFields) {
-                        if (file[key] !== this.readOnlyEditFields[key]) {
+                        if (item[key] !== this.readOnlyEditFields[key]) {
                             this.$toast().warning(this.$t("read only fields have changed (id, namespace...)"))
 
                             return;
@@ -116,23 +116,23 @@ export default {
                     }
                 }
 
-                saveFile(this, file, this.dataType)
+                saveFlowTemplate(this, item, this.dataType)
                     .then(() => {
                         this.loadFile();
                     });
             } else {
-                const file = Yaml.parse(this.content);
+                const item = Yaml.parse(this.content);
                 this.$store
-                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, { [this.dataType]: file})
+                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, { [this.dataType]: item})
                     .then(() => {
                         this.$router.push({
                             name: `${this.dataType}Edit`,
-                            params: file,
+                            params: item,
                             query: { tab: "data-source" }
                         });
                     })
                     .then(() => {
-                        this.$toast().success(file.id)
+                        this.$toast().saved(item.id)
                     })
             }
         }

@@ -50,6 +50,16 @@ import static org.kestra.core.utils.Rethrow.*;
         "- echo \"2\" >> {{ outputFiles.second }}"
     }
 )
+@Example(
+    title = "Bash with some inputs files",
+    code = {
+        "inputsFiles:",
+        "  script.sh: |",
+        "    echo {{ workingDir }}",
+        "commands:",
+        "- /bin/bash script.sh",
+    }
+)
 public class Bash extends Task implements RunnableTask<Bash.Output> {
     @InputProperty(
         description = "The commands to run",
@@ -193,7 +203,7 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
                 }
 
                 String filePath = tmpWorkingDirectory(additionalVars) + "/" + fileName;
-                String render = runContext.render(inputFiles.get(fileName));
+                String render = runContext.render(inputFiles.get(fileName), additionalVars);
 
                 if (render.startsWith("kestra://")) {
                     try (

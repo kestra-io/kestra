@@ -163,7 +163,7 @@ class BashTest {
         RunContext runContext = runContextFactory.of();
 
         Map<String, String> files = new HashMap<>();
-        files.put("test.sh", "tst() { echo 'testbash' ; }");
+        files.put("test.sh", "tst() { echo 'testbash' ; echo '{{workingDir}}'; }");
 
         List<String> commands = new ArrayList<>();
         commands.add("source {{workingDir}}/test.sh && tst");

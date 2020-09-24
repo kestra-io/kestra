@@ -9,6 +9,7 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.queues.WorkerTaskQueueInterface;
 import org.kestra.core.runners.*;
 
 import javax.inject.Inject;
@@ -68,5 +69,25 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.TEMPLATE_NAMED)
     public QueueInterface<Template> template() {
         return new MemoryQueue<>(Template.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.WORKERINSTANCE_NAMED)
+    public QueueInterface<WorkerInstance> workerInstance() {
+        return new MemoryQueue<>(WorkerInstance.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.WORKERTASKRUNNING_NAMED)
+    public QueueInterface<WorkerTaskRunning> workerTaskRunning() {
+        return new MemoryQueue<>(WorkerTaskRunning.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    public WorkerTaskQueueInterface workerTaskQueue() {
+        return new MemoryWorkerTaskQueue(applicationContext);
     }
 }

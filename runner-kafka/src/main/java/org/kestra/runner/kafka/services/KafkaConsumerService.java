@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Properties;
 
 @Singleton
@@ -34,33 +35,45 @@ public class KafkaConsumerService {
     @Inject
     private MetricRegistry metricRegistry;
 
+
     public <V> Consumer<V> of(Class<?> group, Serde<V> serde) {
-        Properties properties = new Properties();
-        properties.putAll(clientConfig.getProperties());
+        return of(group, serde, null, null);
+    }
+
+    public <V> Consumer<V> of(Class<?> group, Serde<V> serde, Map<String, String> properties, ConsumerRebalanceListener consumerRebalanceListener) {
+        Properties props = new Properties();
+        props.putAll(clientConfig.getProperties());
 
         if (this.consumerConfig.getProperties() != null) {
-            properties.putAll(consumerConfig.getProperties());
+            props.putAll(consumerConfig.getProperties());
         }
 
         if (group != null) {
-            properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
-            properties.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
+            props.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
+            props.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
         } else {
-            properties.remove(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG);
+            props.remove(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG);
         }
 
-        return new Consumer<>(properties, serde, metricRegistry);
+        if (properties != null) {
+            props.putAll(properties);
+        }
+
+        return new Consumer<>(props, serde, metricRegistry, consumerRebalanceListener);
     }
 
     public static class Consumer<V> extends KafkaConsumer<String, V> {
         protected Logger logger = LoggerFactory.getLogger(KafkaConsumerService.class);
         private final KafkaClientMetrics metrics;
+        private final ConsumerRebalanceListener consumerRebalanceListener;
 
-        private Consumer(Properties properties, Serde<V> valueSerde, MetricRegistry meterRegistry) {
+        private Consumer(Properties properties, Serde<V> valueSerde, MetricRegistry meterRegistry, ConsumerRebalanceListener consumerRebalanceListener) {
             super(properties, new StringDeserializer(), valueSerde.deserializer());
 
             metrics = new KafkaClientMetrics(this);
             meterRegistry.bind(metrics);
+
+            this.consumerRebalanceListener = consumerRebalanceListener;
         }
 
         @Override
@@ -68,6 +81,10 @@ public class KafkaConsumerService {
             super.subscribe(topics, new ConsumerRebalanceListener() {
                 @Override
                 public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+                    if (consumerRebalanceListener != null) {
+                        consumerRebalanceListener.onPartitionsRevoked(partitions);
+                    }
+
                     if (log.isTraceEnabled()) {
                         partitions.forEach(topicPartition -> logger.trace(
                             "Revoke partitions for topic {}, partition {}",
@@ -79,6 +96,10 @@ public class KafkaConsumerService {
 
                 @Override
                 public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+                    if (consumerRebalanceListener != null) {
+                        consumerRebalanceListener.onPartitionsAssigned(partitions);
+                    }
+
                     if (log.isTraceEnabled()) {
                         partitions.forEach(topicPartition -> logger.trace(
                             "Switching partitions for topic {}, partition {}",

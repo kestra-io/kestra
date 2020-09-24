@@ -6,6 +6,7 @@ import com.bakdata.fluent_kafka_streams_tests.TestTopology;
 import io.micronaut.test.annotation.MicronautTest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsConfig;
 import org.junit.jupiter.api.AfterEach;
@@ -21,7 +22,7 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
-import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.runners.*;
 import org.kestra.core.tasks.flows.Parallel;
 import org.kestra.core.utils.TestsUtils;
 import org.kestra.runner.kafka.configs.ClientConfig;
@@ -29,9 +30,13 @@ import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.ListIterator;
 import java.util.Properties;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -56,6 +61,8 @@ class KafkaExecutorTest {
     FlowRepositoryInterface flowRepository;
     
     TestTopology<String, String> testTopology;
+
+    static WorkerInstance workerInstance = workerInstance();
     
     @BeforeEach
     void init() throws IOException, URISyntaxException {
@@ -91,6 +98,12 @@ class KafkaExecutorTest {
         ProducerRecord<String, Execution> executionRecord = executionOutput().readOneRecord();
 
         assertThat(executionRecord.value().getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // running most be deleted at the end
+        assertThat(workerTaskRunningOutput().readOneRecord().value(), is(nullValue()));
+        assertThat(workerTaskRunningOutput().readOneRecord().value(), is(nullValue()));
+        assertThat(workerTaskRunningOutput().readOneRecord().value(), is(nullValue()));
+        assertThat(workerTaskRunningOutput().readOneRecord(), is(nullValue()));
     }
 
     @Test
@@ -357,6 +370,26 @@ class KafkaExecutorTest {
         assertThat(triggerExecution.value().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
+    @Test
+    void workerRebalanced() {
+        Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
+        this.flowInput().add(flow.uid(), flow);
+        this.workerInstanceInput().add(workerInstance.getWorkerUuid().toString(), workerInstance);
+
+        createExecution(flow);
+
+        Execution execution = runningAndSuccessSequential(flow, 0, State.Type.RUNNING);
+        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(this.workerTaskOutput().readOneRecord().value().getTaskRun().getState().getCurrent(), is(State.Type.CREATED));
+
+        // declare a new worker instance
+        WorkerInstance newInstance = workerInstance();
+        this.workerInstanceInput().add(newInstance.getWorkerUuid().toString(), newInstance);
+
+        // receive a new WorkTask meaning that the resend is done
+        assertThat(this.workerTaskOutput().readOneRecord().value().getTaskRun().getState().getCurrent(), is(State.Type.CREATED));
+    }
+
     private void createExecution(Flow flow) {
         Execution execution = Execution.builder()
             .id("unittest")
@@ -377,7 +410,20 @@ class KafkaExecutorTest {
         this.executionKilledInput().add("unittest", executionKilled);
     }
 
+    private static WorkerInstance workerInstance() {
+        return WorkerInstance
+            .builder()
+            .partitions(Collections.singletonList(0))
+            .workerUuid(UUID.randomUUID())
+            .hostname("unit-test")
+            .build();
+    }
+
     private Execution runningAndSuccessSequential(Flow flow, int index) {
+        return runningAndSuccessSequential(flow, index, State.Type.SUCCESS);
+    }
+
+    private Execution runningAndSuccessSequential(Flow flow, int index, State.Type lastState) {
         ProducerRecord<String, Execution> executionRecord;
         Task task = flow.getTasks().get(index);
 
@@ -387,6 +433,22 @@ class KafkaExecutorTest {
         assertThat(executionRecord.value().getTaskRunList(), hasSize(index + 1));
         assertThat(executionRecord.value().getTaskRunList().get(index).getState().getCurrent(), is(State.Type.CREATED));
 
+        // add to running queue
+        TaskRun taskRun = executionRecord.value().getTaskRunList().get(index);
+        WorkerTaskRunning workerTaskRunning = WorkerTaskRunning.of(
+            WorkerTask.builder()
+                .taskRun(taskRun)
+                .task(task)
+                .runContext(new RunContext())
+                .build(),
+            workerInstance,
+            0
+        );
+        this.workerTaskRunningInput().add(taskRun.getId(), workerTaskRunning);
+
+        if (lastState == State.Type.CREATED) {
+            return executionRecord.value();
+        }
 
         // RUNNING
         this.changeStatus(task, executionRecord.value().getTaskRunList().get(index), State.Type.RUNNING);
@@ -394,6 +456,10 @@ class KafkaExecutorTest {
         executionRecord = executionOutput().readOneRecord();
         assertThat(executionRecord.value().getTaskRunList(), hasSize(index + 1));
         assertThat(executionRecord.value().getTaskRunList().get(index).getState().getCurrent(), is(State.Type.RUNNING));
+
+        if (lastState == State.Type.RUNNING) {
+            return executionRecord.value();
+        }
 
         // SUCCESS
         this.changeStatus(task, executionRecord.value().getTaskRunList().get(index), State.Type.SUCCESS);
@@ -439,9 +505,33 @@ class KafkaExecutorTest {
             .withSerde(Serdes.String(), JsonSerde.of(WorkerTaskResult.class));
     }
 
+    private TestInput<String, WorkerTaskRunning> workerTaskRunningInput() {
+        return this.testTopology
+            .input(kafkaAdminService.getTopicName(WorkerTaskRunning.class))
+            .withSerde(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class));
+    }
+
+    private TestInput<String, WorkerInstance> workerInstanceInput() {
+        return this.testTopology
+            .input(kafkaAdminService.getTopicName(WorkerInstance.class))
+            .withSerde(Serdes.String(), JsonSerde.of(WorkerInstance.class));
+    }
+
     private TestOutput<String, Execution> executionOutput() {
         return this.testTopology
             .streamOutput(kafkaAdminService.getTopicName(Execution.class))
             .withSerde(Serdes.String(), JsonSerde.of(Execution.class));
+    }
+
+    private TestOutput<String, WorkerTaskRunning> workerTaskRunningOutput() {
+        return this.testTopology
+            .streamOutput(kafkaAdminService.getTopicName(WorkerTaskRunning.class))
+            .withSerde(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class));
+    }
+
+    private TestOutput<String, WorkerTask> workerTaskOutput() {
+        return this.testTopology
+            .streamOutput(kafkaAdminService.getTopicName(WorkerTask.class))
+            .withSerde(Serdes.String(), JsonSerde.of(WorkerTask.class));
     }
 }

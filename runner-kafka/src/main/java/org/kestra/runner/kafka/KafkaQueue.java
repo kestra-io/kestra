@@ -3,23 +3,29 @@ package org.kestra.runner.kafka;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.TopicConfig;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueException;
+import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.runners.WorkerInstance;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.runners.WorkerTaskRunning;
 import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
@@ -28,13 +34,12 @@ import org.kestra.runner.kafka.services.KafkaConsumerService;
 import org.kestra.runner.kafka.services.KafkaProducerService;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
@@ -62,53 +67,52 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         this.adminClient = kafkaAdminService.of();
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
         this.kafkaProducer = applicationContext.getBean(KafkaProducerService.class).of(cls, JsonSerde.of(cls));
-        this.topicsConfig = applicationContext
-            .getBeansOfType(TopicsConfig.class)
-            .stream()
-            .filter(r -> r.getCls() == this.cls)
-            .findFirst()
-            .orElseThrow();
+        this.topicsConfig = topicsConfig(applicationContext, this.cls);
 
         kafkaAdminService.createIfNotExist(this.cls);
     }
 
-    private String key(Object object) {
-        if (this.cls == Execution.class) {
+    static String key(Object object) {
+        if (object.getClass() == Execution.class) {
             return ((Execution) object).getId();
-        } else if (this.cls == WorkerTask.class) {
+        } else if (object.getClass() == WorkerTask.class) {
             return ((WorkerTask) object).getTaskRun().getId();
-        } else if (this.cls == WorkerTaskResult.class) {
+        } else if (object.getClass() == WorkerTaskRunning.class) {
+            return ((WorkerTaskRunning) object).getTaskRun().getId();
+        } else if (object.getClass() == WorkerInstance.class) {
+            return ((WorkerInstance) object).getWorkerUuid().toString();
+        } else if (object.getClass() == WorkerTaskResult.class) {
             return ((WorkerTaskResult) object).getTaskRun().getId();
-        } else if (this.cls == LogEntry.class) {
+        } else if (object.getClass() == LogEntry.class) {
             return null;
-        } else if (this.cls == Flow.class) {
+        } else if (object.getClass() == Flow.class) {
             return ((Flow) object).uid();
-        } else if (this.cls == Template.class) {
+        } else if (object.getClass() == Template.class) {
             return ((Template) object).uid();
-        } else if (this.cls == ExecutionKilled.class) {
+        } else if (object.getClass() == ExecutionKilled.class) {
             return ((ExecutionKilled) object).getExecutionId();
         } else {
-            throw new IllegalArgumentException("Unknown type '" + this.cls.getName() + "'");
+            throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }
     }
 
-    private void log(T object, String message) {
+    static <T> void log(TopicsConfig topicsConfig, T object, String message) {
         if (log.isTraceEnabled()) {
             log.trace("{} on  topic '{}', value {}", message, topicsConfig.getName(), object);
         } else if (log.isDebugEnabled()) {
-            log.trace("{} on topic '{}', key {}", message, topicsConfig.getName(), this.key(object));
+            log.trace("{} on topic '{}', key {}", message, topicsConfig.getName(), key(object));
         }
     }
 
     @Override
     public void emit(T message) throws QueueException {
-        this.log(message, "Outgoing messsage");
+        KafkaQueue.log(topicsConfig, message, "Outgoing messsage");
 
         try {
             kafkaProducer
                 .send(new ProducerRecord<>(
                     topicsConfig.getName(),
-                    this.key(message), message),
+                    key(message), message),
                     (metadata, e) -> {
                         if (e != null) {
                             log.error("Failed to produce '{}' with metadata '{}'", e, metadata);
@@ -148,7 +152,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
                 ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofSeconds(1));
 
                 records.forEach(record -> {
-                    this.log(record.value(), "Incoming messsage");
+                    KafkaQueue.log(topicsConfig, record.value(), "Incoming messsage");
 
                     consumer.accept(record.value());
 
@@ -170,6 +174,15 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         return () -> {
             running.set(false);
         };
+    }
+
+    static TopicsConfig topicsConfig(ApplicationContext applicationContext, Class<?> cls) {
+        return applicationContext
+            .getBeansOfType(TopicsConfig.class)
+            .stream()
+            .filter(r -> r.getCls() == cls)
+            .findFirst()
+            .orElseThrow();
     }
 
     private List<TopicPartition> getTopicPartition() {

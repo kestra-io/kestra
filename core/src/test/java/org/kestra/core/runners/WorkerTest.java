@@ -2,6 +2,7 @@ package org.kestra.core.runners;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
@@ -30,7 +31,7 @@ import static org.hamcrest.Matchers.is;
 @MicronautTest
 class WorkerTest {
     @Inject
-    Worker worker;
+    ApplicationContext applicationContext;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASK_NAMED)
@@ -49,6 +50,7 @@ class WorkerTest {
 
     @Test
     void success() throws TimeoutException {
+        Worker worker = new Worker(applicationContext, 8);
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
@@ -67,6 +69,7 @@ class WorkerTest {
 
     @Test
     void killed() throws InterruptedException, TimeoutException {
+        Worker worker = new Worker(applicationContext, 8);
         worker.run();
 
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);

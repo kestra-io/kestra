@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
 import lombok.Synchronized;
 import net.jodah.failsafe.Failsafe;
@@ -16,38 +17,47 @@ import org.kestra.core.models.tasks.Output;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.kestra.core.queues.QueueException;
+import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.queues.WorkerTaskQueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
+import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.slf4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.inject.Named;
 
 public class Worker implements Runnable {
     private final ApplicationContext applicationContext;
-    private final QueueInterface<WorkerTask> workerTaskQueue;
+    private final WorkerTaskQueueInterface workerTaskQueue;
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     private final MetricRegistry metricRegistry;
 
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
-    private AtomicReference<WorkerThread> workerThreadReference = new AtomicReference<>();
+    private final AtomicReference<WorkerThread> workerThreadReference = new AtomicReference<>();
+    private final ThreadPoolExecutor executors;
 
-    public Worker(
-        ApplicationContext applicationContext,
-        QueueInterface<WorkerTask> workerTaskQueue,
-        QueueInterface<WorkerTaskResult> workerTaskResultQueue,
-        QueueInterface<ExecutionKilled> executionKilledQueue,
-        MetricRegistry metricRegistry
-    ) {
+    @SuppressWarnings("unchecked")
+    public Worker(ApplicationContext applicationContext, int thread) {
         this.applicationContext = applicationContext;
-        this.workerTaskQueue = workerTaskQueue;
-        this.workerTaskResultQueue = workerTaskResultQueue;
-        this.executionKilledQueue = executionKilledQueue;
-        this.metricRegistry = metricRegistry;
+        this.workerTaskQueue = applicationContext.getBean(WorkerTaskQueueInterface.class);
+        this.workerTaskResultQueue = (QueueInterface<WorkerTaskResult>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
+        );
+        this.executionKilledQueue = (QueueInterface<ExecutionKilled>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.KILL_NAMED)
+        );
+        this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
+
+        ThreadMainFactoryBuilder threadFactoryBuilder = applicationContext.getBean(ThreadMainFactoryBuilder.class);
+        this.executors = (ThreadPoolExecutor) Executors.newFixedThreadPool(thread, threadFactoryBuilder.build("worker-%d"));
     }
 
     @Override
@@ -65,7 +75,12 @@ public class Worker implements Runnable {
             }
         });
 
-        this.workerTaskQueue.receive(Worker.class, this::run);
+        this.workerTaskQueue.receive(
+            Worker.class,
+            workerTask -> {
+                executors.execute(() -> this.run(workerTask));
+            }
+        );
     }
 
     private void run(WorkerTask workerTask) throws QueueException {

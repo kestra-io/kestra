@@ -9,8 +9,11 @@ import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.queues.WorkerTaskQueueInterface;
+import org.kestra.core.runners.WorkerInstance;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.runners.WorkerTaskRunning;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -69,5 +72,25 @@ public class KafkaQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.TEMPLATE_NAMED)
     public QueueInterface<Template> template() {
         return new KafkaQueue<>(Template.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.WORKERINSTANCE_NAMED)
+    public QueueInterface<WorkerInstance> workerInstance() {
+        return new KafkaQueue<>(WorkerInstance.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.WORKERTASKRUNNING_NAMED)
+    public QueueInterface<WorkerTaskRunning> workerTaskRunning() {
+        return new KafkaQueue<>(WorkerTaskRunning.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    public WorkerTaskQueueInterface workerTaskQueue() {
+        return new KafkaWorkerTaskQueue(applicationContext);
     }
 }

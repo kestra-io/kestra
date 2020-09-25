@@ -44,7 +44,6 @@ kestra:
           isolation.level: "read_committed"
           auto.offset.reset: "earliest"
           enable.auto.commit: "false"
-          max.poll.interval.ms: 3600000 # max duration of tasks
 
       producer:
         properties:
@@ -105,6 +104,18 @@ kestra:
       workertaskresult:
         name: "kestra_workertaskresult"
         cls: org.kestra.core.runners.WorkerTaskResult
+        properties:
+          cleanup.policy: "delete,compact"
+
+      workerinstance:
+        cls: org.kestra.core.runners.WorkerInstance
+        name: "kestra_workerinstance"
+        properties:
+          cleanup.policy: "compact"
+
+      workertaskrunning:
+        cls: org.kestra.core.runners.WorkerTaskRunning
+        name: "kestra_workertaskrunning"
         properties:
           cleanup.policy: "delete,compact"
 

@@ -86,6 +86,19 @@ kestra:
         properties:
           cleanup.policy: "delete,compact"
 
+      workerinstance:
+        cls: org.kestra.core.runners.WorkerInstance
+        name: "kestra_workerinstance"
+        properties:
+          cleanup.policy: "compact"
+
+      workertaskrunning:
+        cls: org.kestra.core.runners.WorkerTaskRunning
+        name: "kestra_workertaskrunning"
+        properties:
+          cleanup.policy: "delete,compact"
+
       logentry:
         cls: org.kestra.core.models.executions.LogEntry
         name: "kestra_logs"
+

@@ -3,10 +3,12 @@ package org.kestra.core.queues;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
+import org.kestra.core.runners.WorkerInstance;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.runners.WorkerTaskRunning;
 
 public interface QueueFactoryInterface {
     String EXECUTION_NAMED = "executionQueue";
@@ -15,7 +17,9 @@ public interface QueueFactoryInterface {
     String FLOW_NAMED = "flowQueue";
     String TEMPLATE_NAMED = "templateQueue";
     String WORKERTASKLOG_NAMED = "workerTaskLogQueue";
-    String KILL_NAMED = "executionKilled";
+    String KILL_NAMED = "executionKilledQueue";
+    String WORKERINSTANCE_NAMED = "workerInstanceQueue";
+    String WORKERTASKRUNNING_NAMED = "workerTaskRuninngQueue";
 
     QueueInterface<Execution> execution();
 
@@ -30,4 +34,10 @@ public interface QueueFactoryInterface {
     QueueInterface<ExecutionKilled> kill();
 
     QueueInterface<Template> template();
+
+    QueueInterface<WorkerInstance> workerInstance();
+
+    QueueInterface<WorkerTaskRunning> workerTaskRunning();
+
+    WorkerTaskQueueInterface workerTaskQueue();
 }

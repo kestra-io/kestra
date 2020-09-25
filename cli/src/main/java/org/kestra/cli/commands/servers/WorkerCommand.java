@@ -45,11 +45,8 @@ public class WorkerCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        ExecutorService poolExecutor = Executors.newCachedThreadPool(threadFactoryBuilder.build("worker-%d"));
-
-        for (int i = 0; i < thread; i++) {
-            poolExecutor.execute(applicationContext.getBean(Worker.class));
-        }
+        Worker worker = new Worker(applicationContext, this.thread);
+        worker.run();
 
         log.info("Workers started with {} thread(s)", this.thread);
 

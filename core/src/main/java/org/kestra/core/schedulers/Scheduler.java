@@ -92,60 +92,62 @@ public class Scheduler implements Runnable, AutoCloseable {
         thread.start();
     }
 
-    private synchronized void handle() {
-        List<FlowWithTrigger> schedulable = this.flowListenersService
-            .getFlows()
-            .stream()
-            .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
-            .flatMap(flow -> flow.getTriggers().stream().map(trigger -> new FlowWithTrigger(flow, trigger)))
-            .filter(flowWithTrigger -> flowWithTrigger.getTrigger() instanceof PollingTriggerInterface)
-            .collect(Collectors.toList());
+    private void handle() {
+        synchronized (this) {
+            List<FlowWithTrigger> schedulable = this.flowListenersService
+                .getFlows()
+                .stream()
+                .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
+                .flatMap(flow -> flow.getTriggers().stream().map(trigger -> new FlowWithTrigger(flow, trigger)))
+                .filter(flowWithTrigger -> flowWithTrigger.getTrigger() instanceof PollingTriggerInterface)
+                .collect(Collectors.toList());
 
-        if (log.isTraceEnabled()) {
-            log.trace(
-                "Scheduler next iteration with {} schedulables of {} flows",
-                schedulable.size(),
-                this.flowListenersService.getFlows().size()
-            );
-        }
+            if (log.isTraceEnabled()) {
+                log.trace(
+                    "Scheduler next iteration with {} schedulables of {} flows",
+                    schedulable.size(),
+                    this.flowListenersService.getFlows().size()
+                );
+            }
 
-        schedulable
-            .stream()
-            .map(flowWithTrigger -> FlowWithPollingTrigger.builder()
-                .flow(flowWithTrigger.getFlow())
-                .trigger((PollingTriggerInterface) flowWithTrigger.getTrigger())
-                .triggerContext(TriggerContext
-                    .builder()
-                    .namespace(flowWithTrigger.getFlow().getNamespace())
-                    .flowId(flowWithTrigger.getFlow().getId())
-                    .flowRevision(flowWithTrigger.getFlow().getRevision())
-                    .triggerId(flowWithTrigger.getTrigger().getId())
-                    .date(now())
+            schedulable
+                .stream()
+                .map(flowWithTrigger -> FlowWithPollingTrigger.builder()
+                    .flow(flowWithTrigger.getFlow())
+                    .trigger((PollingTriggerInterface) flowWithTrigger.getTrigger())
+                    .triggerContext(TriggerContext
+                        .builder()
+                        .namespace(flowWithTrigger.getFlow().getNamespace())
+                        .flowId(flowWithTrigger.getFlow().getId())
+                        .flowRevision(flowWithTrigger.getFlow().getRevision())
+                        .triggerId(flowWithTrigger.getTrigger().getId())
+                        .date(now())
+                        .build()
+                    )
                     .build()
                 )
-                .build()
-            )
-            .peek(this::getLastTrigger)
-            .filter(this::isExecutionNotRunning)
-            .map(f -> {
-                synchronized (this) {
-                    if (!lastTriggers.containsKey(f.getTriggerContext().uid())) {
-                        return null;
-                    }
+                .peek(this::getLastTrigger)
+                .filter(this::isExecutionNotRunning)
+                .map(f -> {
+                    synchronized (this) {
+                        if (!lastTriggers.containsKey(f.getTriggerContext().uid())) {
+                            return null;
+                        }
 
-                    return FlowWithPollingTriggerNextDate.of(
-                        f,
-                        f.getTrigger().nextDate(Optional.of(lastTriggers.get(f.getTriggerContext().uid())))
-                    );
-                }
-            })
-            .filter(Objects::nonNull)
-            .map(this::evaluatePollingTrigger)
-            .filter(Objects::nonNull)
-            .peek(this::log)
-            .peek(this::saveLastTrigger)
-            .map(ExecutionWithTrigger::getExecution)
-            .forEach(executionQueue::emit);
+                        return FlowWithPollingTriggerNextDate.of(
+                            f,
+                            f.getTrigger().nextDate(Optional.of(lastTriggers.get(f.getTriggerContext().uid())))
+                        );
+                    }
+                })
+                .filter(Objects::nonNull)
+                .map(this::evaluatePollingTrigger)
+                .filter(Objects::nonNull)
+                .peek(this::log)
+                .peek(this::saveLastTrigger)
+                .map(ExecutionWithTrigger::getExecution)
+                .forEach(executionQueue::emit);
+        }
     }
 
     private boolean isExecutionNotRunning(FlowWithPollingTrigger f) {

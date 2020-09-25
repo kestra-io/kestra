@@ -160,4 +160,14 @@ public class Template extends Task implements FlowableTask<VoidOutput> {
     public interface TemplateExecutorInterface {
         org.kestra.core.models.templates.Template findById(String namespace, String templateId);
     }
+
+    public static class MemoryTemplateExecutor implements org.kestra.core.tasks.flows.Template.TemplateExecutorInterface {
+        @Inject
+        private TemplateRepositoryInterface templateRepository;
+
+        public org.kestra.core.models.templates.Template findById(String namespace, String templateId) {
+            return this.templateRepository.findById(namespace, templateId).orElse(null);
+        }
+    }
+
 }

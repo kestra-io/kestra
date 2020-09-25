@@ -1,0 +1,20 @@
+dynamic: false
+properties:
+  id:
+    type: keyword
+  namespace:
+    type: keyword
+  tasks:
+    properties:
+      id:
+        type: keyword
+      type:
+        type: keyword
+  errors:
+    properties:
+      id:
+        type: keyword
+      type:
+        type: keyword
+  deleted:
+    type: boolean

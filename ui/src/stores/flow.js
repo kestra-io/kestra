@@ -25,6 +25,8 @@ export default {
         loadFlow({ commit }, options) {
             return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}`).then(response => {
                 commit('setFlow', response.data)
+
+                return response.data;
             })
         },
         saveFlow({ commit }, options) {
@@ -33,12 +35,16 @@ export default {
                     return Promise.reject(new Error("Server error on flow save"))
                 } else {
                     commit('setFlow', response.data)
+
+                    return response.data;
                 }
             })
         },
         createFlow({ commit }, options) {
             return Vue.axios.post('/api/v1/flows', options.flow).then(response => {
-                commit('setFlow', response.data.flow)
+                commit('setFlow', response.data)
+
+                return response.data;
             })
         },
         deleteFlow({ commit }, flow) {
@@ -49,11 +55,15 @@ export default {
         loadTree({ commit }, flow) {
             return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/tree`).then(response => {
                 commit('setDataTree', response.data.tasks)
+
+                return response.data.tasks;
             })
         },
         loadRevisions({ commit }, options) {
             return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}/revisions`).then(response => {
                 commit('setRevisions', response.data)
+
+                return response.data;
             })
         },
     },

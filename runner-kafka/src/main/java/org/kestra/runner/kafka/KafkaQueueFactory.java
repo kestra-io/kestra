@@ -6,6 +6,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.executions.LogEntry;
+import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.WorkerTask;
@@ -61,5 +62,12 @@ public class KafkaQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.KILL_NAMED)
     public QueueInterface<ExecutionKilled> kill() {
         return new KafkaQueue<>(ExecutionKilled.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.TEMPLATE_NAMED)
+    public QueueInterface<Template> template() {
+        return new KafkaQueue<>(Template.class, applicationContext);
     }
 }

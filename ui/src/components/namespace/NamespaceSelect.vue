@@ -2,7 +2,6 @@
     <b-form-group>
         <v-select
             v-model="selectedNamespace"
-
             @input="onNamespaceSelect"
             :placeholder="$t('Select namespace')"
             :options="namespaces"
@@ -13,8 +12,14 @@
 <script>
 import { mapState } from "vuex";
 export default {
+    props: {
+        dataType: {
+            type: String,
+            required: true
+        }
+    },
     created() {
-        this.$store.dispatch("namespace/loadNamespaces");
+        this.$store.dispatch("namespace/loadNamespaces", {dataType: this.dataType});
         this.selectedNamespace = this.$route.query.namespace || "";
     },
     computed: {

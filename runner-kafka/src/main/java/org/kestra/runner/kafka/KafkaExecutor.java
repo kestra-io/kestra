@@ -1,5 +1,6 @@
 package org.kestra.runner.kafka;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,6 +13,8 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
@@ -20,6 +23,7 @@ import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.AbstractExecutor;
@@ -52,6 +56,7 @@ public class KafkaExecutor extends AbstractExecutor {
     private static final String NEXTS_DEDUPLICATION_STATE_STORE_NAME = "next_deduplication";
     private static final String TOPIC_EXECUTOR = "executor";
 
+    ApplicationContext applicationContext;
     KafkaStreamService kafkaStreamService;
     KafkaAdminService kafkaAdminService;
     QueueInterface<LogEntry> logQueue;
@@ -59,6 +64,7 @@ public class KafkaExecutor extends AbstractExecutor {
 
     @Inject
     public KafkaExecutor(
+        ApplicationContext applicationContext,
         RunContextFactory runContextFactory,
         KafkaStreamService kafkaStreamService,
         KafkaAdminService kafkaAdminService,
@@ -68,6 +74,7 @@ public class KafkaExecutor extends AbstractExecutor {
     ) {
         super(runContextFactory, metricRegistry);
 
+        this.applicationContext = applicationContext;
         this.kafkaStreamService = kafkaStreamService;
         this.kafkaAdminService = kafkaAdminService;
         this.logQueue = logQueue;
@@ -103,6 +110,7 @@ public class KafkaExecutor extends AbstractExecutor {
         ));
 
         KTable<String, Execution> executionKTable = this.executionKTable(builder);
+        this.templateKTable(builder);
 
         KTable<String, Execution> executionNotKilledKTable = this.joinExecutionKilled(builder, executionKTable);
 
@@ -172,6 +180,17 @@ public class KafkaExecutor extends AbstractExecutor {
                 Materialized.<String, Flow, KeyValueStore<Bytes, byte[]>>as("flow")
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(Flow.class))
+            );
+    }
+
+    private GlobalKTable<String, Template> templateKTable(StreamsBuilder builder) {
+        return builder
+            .globalTable(
+                kafkaAdminService.getTopicName(Template.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(Template.class)),
+                Materialized.<String, Template, KeyValueStore<Bytes, byte[]>>as("template")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(JsonSerde.of(Template.class))
             );
     }
     
@@ -684,7 +703,6 @@ public class KafkaExecutor extends AbstractExecutor {
         boolean joined;
     }
 
-
     @AllArgsConstructor
     @Getter
     public static class ExecutionWithFlow implements ExecutionInterface {
@@ -723,5 +741,9 @@ public class KafkaExecutor extends AbstractExecutor {
 
         KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology());
         resultStream.start();
+
+        applicationContext.registerSingleton(new KafkaTemplateExecutor(
+            resultStream.store("template", QueryableStoreTypes.keyValueStore())
+        ));
     }
 }

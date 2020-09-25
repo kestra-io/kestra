@@ -9,8 +9,8 @@
         "settings": "Settings",
         "flows": "Flows",
         "flow": "Flow",
-        "flow update ok": "Flow is updated",
-        "flow delete ok": "Flow is deleted",
+        "update ok": "is updated",
+        "delete ok": "is deleted",
         "Default page": "Default page",
         "confirmation": "Confirmation",
         "delete confirm": "Are you sure to delete <code>{name}</code> ?",
@@ -105,7 +105,7 @@
         "neutral trend": "Stable",
         "up trend": "Increasing",
         "down trend": "Decreasing",
-        "flow update aborted": "Flow update aborted",
+        "update aborted": "update aborted",
         "invalid flow": "Invalid flow",
         "add schedule": "Add a schedule",
         "schedule": "Schedule",
@@ -128,7 +128,10 @@
         },
         "last 30 days executions": "Last 30 days executions",
         "revisions": "Revisions",
-        "no revisions found": "Only one revision exist for this flow"
+        "no revisions found": "Only one revision exist for this flow",
+        "template": "Template",
+        "template creation": "Template creation",
+        "templates": "Templates"
     },
     "fr": {
         "id": "Identifiant",
@@ -140,8 +143,8 @@
         "settings": "Paramètres",
         "flows": "Flows",
         "flow": "Flow",
-        "flow update ok": "Le flow est mise à jour",
-        "flow delete ok": "Le flow est effacé",
+        "update ok": "est mis à jour",
+        "delete ok": "est effacé",
         "Default page": "Page par défaut",
         "confirmation": "Confirmation",
         "delete confirm": "Êtes-vous sur de vouloir effacer <code>{name}</code> ?",
@@ -237,7 +240,7 @@
         "neutral trend": "Stable",
         "up trend": "En augmentation",
         "down trend": "En baisse",
-        "flow update aborted": "Mise à jour du flow annulée",
+        "update aborted": "Mise à jour annulée",
         "invalid flow": "Flow invalide",
         "add schedule": "Ajouter un plannificationS",
         "schedule": "Tâche plannifié",
@@ -260,6 +263,9 @@
         },
         "last 30 days executions": "Execution des 30 derniers jours",
         "revisions": "Révisions",
-        "no revisions found": "Une seule révision existe pour ce flow"
+        "no revisions found": "Une seule révision existe pour ce flow",
+        "template": "Template",
+        "template creation": "Création de template",
+        "templates": "Templates"
     }
 }

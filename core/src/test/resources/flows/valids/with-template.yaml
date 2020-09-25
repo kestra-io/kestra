@@ -1,0 +1,25 @@
+id: with-template
+namespace: org.kestra.tests
+
+inputs:
+  - name: with-string
+    type: STRING
+  - name: with-optional
+    type: STRING
+    required: false
+
+variables:
+  var-1: var-1
+  var-2: '{{ var-1 }}'
+
+tasks:
+  - id: 1-return
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"
+  - id: 2-template
+    type: org.kestra.core.tasks.flows.Template
+    namespace: org.kestra.tests
+    templateId: template
+  - id: 3-end
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

@@ -7,7 +7,7 @@ export default {
 
     actions: {
         loadNamespaces({ commit }, options) {
-            return Vue.axios.get(`/api/v1/flows/distinct-namespaces`, { params: options }).then(response => {
+            return Vue.axios.get(`/api/v1/${options.dataType}s/distinct-namespaces`).then(response => {
                 commit('setNamespaces', response.data)
             })
         },

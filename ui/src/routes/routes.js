@@ -1,10 +1,12 @@
-import Settings from '../components/settings/Settings.vue'
-import Flows from '../components/flows/Flows.vue'
-import FlowRoot from '../components/flows/FlowRoot.vue'
-import FlowEdit from '../components/flows/FlowEdit.vue'
-import Executions from '../components/executions/Executions.vue'
 import ExecutionRoot from '../components/executions/ExecutionRoot.vue'
+import Executions from '../components/executions/Executions.vue'
+import FlowEdit from '../components/flows/FlowEdit.vue'
+import FlowRoot from '../components/flows/FlowRoot.vue'
+import Flows from '../components/flows/Flows.vue'
 import Plugin from '../components/plugins/Plugin.vue'
+import Settings from '../components/settings/Settings.vue'
+import Templates from '../components/templates/Templates.vue'
+import TemplatesEdit from '../components/templates/TemplatesEdit.vue'
 
 export default {
     mode: 'history',
@@ -24,6 +26,12 @@ export default {
         //Executions
         { name: 'plugin', path: '/plugins', component: Plugin },
         { name: 'pluginView', path: '/plugins/:cls', component: Plugin },
+
+        //Templates
+        { name: 'templatesList', path: '/templates', component: Templates },
+        { name: 'templatesAdd', path: '/templates/new', component: TemplatesEdit },
+        { name: 'templateEdit', path: '/templates/edit/:namespace/:id', component: TemplatesEdit },
+
 
         //Settings
         { name: 'settings', path: '/settings', component: Settings },

@@ -11,7 +11,7 @@
             >
                 <template v-slot:navbar>
                     <search-field @onSearch="onSearch" :fields="searchableFields" />
-                    <namespace-select @onNamespaceSelect="onNamespaceSelect" />
+                    <namespace-select :data-type="dataType" @onNamespaceSelect="onNamespaceSelect" />
                 </template>
 
                 <template v-slot:top>

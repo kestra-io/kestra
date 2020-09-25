@@ -76,6 +76,14 @@ kestra:
           retention.ms: "-1"
           segment.bytes: "10485760"
 
+      template:
+        name: "kestra_template"
+        cls: org.kestra.core.models.templates.Template
+        properties:
+          cleanup.policy: "compact"
+          retention.ms: "-1"
+          segment.bytes: "10485760"
+
       executor:
         name: "kestra_executor"
         properties:
@@ -118,6 +126,10 @@ kestra:
         index: "kestra_executions"
         cls: org.kestra.core.models.executions.Execution
         mapping-file: execution
+      templates:
+        index: "kestra_templates"
+        cls: org.kestra.core.models.templates.Template
+        mapping-file: template
       triggers:
         index: "kestra_triggers"
         cls: org.kestra.core.models.triggers.Trigger

@@ -169,40 +169,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         this.deleteRequest(INDEX_NAME, flowId(flow));
     }
 
-    @Override
     public List<String> findDistinctNamespace() {
-        BoolQueryBuilder query = this.defaultFilter();
-
-        // We want to keep only "distinct" values of field "namespace"
-        // @TODO: use includeExclude(new IncludeExclude(0, 10)) to partition results
-        TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders
-            .terms("distinct_namespace")
-            .field("namespace")
-            .size(10000)
-            .order(BucketOrder.key(true));
-
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(query)
-            .aggregation(termsAggregationBuilder);
-
-        SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
-
-        try {
-            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-
-            Terms namespaces = searchResponse.getAggregations().get("distinct_namespace");
-
-            return new ArrayListTotal<>(
-                namespaces.getBuckets()
-                    .stream()
-                    .map(o -> {
-                        return o.getKey().toString();
-                    })
-                    .collect(Collectors.toList()),
-                namespaces.getBuckets().size()
-            );
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return findDistinctNamespace(INDEX_NAME);
     }
 }

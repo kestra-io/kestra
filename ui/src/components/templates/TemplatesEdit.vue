@@ -21,20 +21,38 @@
 
 <script>
 import flowTemplateEdit from "../../mixins/flowTemplateEdit";
-import { mapGetters } from "vuex";
+import { mapState } from "vuex";
 
 export default {
     mixins: [flowTemplateEdit],
     data() {
         return {
-            dataType: "flow",
+            dataType: "template",
         };
     },
     computed: {
-        ...mapGetters("flow", ["flow"]),
+        ...mapState("template", ["template"]),
+    },
+    watch: {
+        '$route.params'() {
+            this.reload()
+        },
     },
     created() {
-        this.loadFile();
+        this.reload()
     },
+    destroyed() {
+        this.$store.commit("template/setTemplate", undefined);
+    },
+    methods: {
+        reload() {
+            if (this.$route.name === "templateEdit") {
+                this.$store
+                    .dispatch("template/loadTemplate", this.$route.params)
+                    .then(this.loadFile);
+            }
+        }
+    }
+
 };
 </script>

@@ -33,7 +33,7 @@ import ContentSave from "vue-material-design-icons/ContentSave";
 import Plus from "vue-material-design-icons/Plus";
 import ScheduleItem from "./ScheduleItem";
 import BottomLine from "../layout/BottomLine";
-import { canSaveFlow, saveFlow } from "../../utils/flow";
+import { canSaveFlowTemplate, saveFlowTemplate } from "../../utils/flowTemplate";
 
 export default {
     components: {
@@ -46,12 +46,12 @@ export default {
         ...mapState("flow", ["flow"]),
         ...mapState("auth", ["user"]),
         canSave() {
-            return canSaveFlow(true, this.user, this.flow);
+            return canSaveFlowTemplate(true, this.user, this.flow, "flow");
         }
     },
     methods: {
         save() {
-            saveFlow(this, this.flow);
+            saveFlowTemplate(this, this.flow);
         },
         set(index, schedule) {
             this.$store.commit("flow/setTrigger", {index, trigger: schedule});

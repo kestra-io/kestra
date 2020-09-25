@@ -55,6 +55,14 @@ kestra:
           retention.ms: "-1"
           segment.bytes: "10485760"
 
+      template:
+        name: "kestra_template"
+        cls: org.kestra.core.models.templates.Template
+        properties:
+          cleanup.policy: "compact"
+          retention.ms: "-1"
+          segment.bytes: "10485760"
+
       executor:
         name: "kestra_executor"
         properties:

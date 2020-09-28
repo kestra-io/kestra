@@ -847,6 +847,7 @@ public class KafkaExecutor extends AbstractExecutor {
         kafkaAdminService.createIfNotExist(ExecutionKilled.class);
         kafkaAdminService.createIfNotExist(WorkerTaskRunning.class);
         kafkaAdminService.createIfNotExist(WorkerInstance.class);
+        kafkaAdminService.createIfNotExist(Template.class);
 
         KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology());
         resultStream.start();

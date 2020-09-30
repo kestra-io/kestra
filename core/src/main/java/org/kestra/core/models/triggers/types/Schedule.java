@@ -65,17 +65,17 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         }
 
         // we try at the exact time / standard behaviour
-        boolean isReady = next.get().toEpochSecond() == context.getDate().toEpochSecond();
+        boolean isReady = next.get().compareTo(context.getDate()) == 0;
 
         // in case on cron expression changed, the next date will never match so we allow past operation to start
-        boolean isLate = next.get().toEpochSecond() < ZonedDateTime.now(ZoneId.systemDefault()).minus(Duration.ofMinutes(1)).toEpochSecond();
+        boolean isLate = next.get().compareTo(ZonedDateTime.now(ZoneId.systemDefault()).minus(Duration.ofMinutes(1))) < 0;
 
         if (!isReady && !isLate) {
             return Optional.empty();
         }
 
         // we are in the future don't allow
-        if (next.get().toEpochSecond() > ZonedDateTime.now(ZoneId.systemDefault()).plus(Duration.ofSeconds(1)).toEpochSecond()) {
+        if (next.get().compareTo(ZonedDateTime.now(ZoneId.systemDefault()).plus(Duration.ofSeconds(1))) > 0) {
             return Optional.empty();
         }
 

@@ -3,6 +3,7 @@ package org.kestra.repository.memory;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
@@ -20,6 +21,11 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
 
     @Override
     public ArrayListTotal<Execution> find(String query, Pageable pageable, State.Type state) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, State.Type state) {
         throw new UnsupportedOperationException();
     }
 

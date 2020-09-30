@@ -1,11 +1,13 @@
 package org.kestra.repository.elasticsearch;
 
 import io.micronaut.data.model.Pageable;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.InnerHitBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
@@ -17,6 +19,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilde
 import org.elasticsearch.search.aggregations.metrics.ParsedStats;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.validations.ModelValidator;
@@ -30,6 +33,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -275,6 +279,41 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
 
         return this.query(INDEX_NAME, sourceBuilder);
+    }
+
+    @Override
+    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, @Nullable State.Type state) {
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(
+                QueryBuilders.nestedQuery("taskRunList", QueryBuilders.matchAllQuery(), ScoreMode.Total)
+                    .innerHit(new InnerHitBuilder())
+            );
+
+        if (state != null) {
+            bool = bool.must(QueryBuilders.termQuery("state.current", state.name()));
+        }
+        SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable)
+            .fetchSource(false);
+
+        SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
+
+        try {
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+            List<TaskRun> collect = Arrays.stream(searchResponse.getHits().getHits())
+                .flatMap(r -> Arrays.stream(r.getInnerHits().get("taskRunList").getHits().clone()))
+                .map(documentFields -> {
+                    try {
+                        return mapper.readValue(documentFields.getSourceAsString(), TaskRun.class);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+
+            return new ArrayListTotal<>(collect, searchResponse.getHits().getTotalHits().value);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

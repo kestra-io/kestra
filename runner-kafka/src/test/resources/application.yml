@@ -35,7 +35,7 @@ kestra:
         properties:
           processing.guarantee: "exactly_once"
           acks: "all"
-          state.dir: "/tmp/kafka-stream-unit-test"
+          state.dir: "/tmp/kafka-stream-unit/${random.shortuuid}"
           compression.type: "lz4"
           max.request.size: "10485760"
 

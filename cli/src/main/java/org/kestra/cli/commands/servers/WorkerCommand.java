@@ -7,12 +7,9 @@ import org.kestra.cli.AbstractCommand;
 import org.kestra.core.models.ServerType;
 import org.kestra.core.runners.Worker;
 import org.kestra.core.utils.Await;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import picocli.CommandLine;
 
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.inject.Inject;
 
 @CommandLine.Command(
@@ -21,9 +18,6 @@ import javax.inject.Inject;
 )
 @Slf4j
 public class WorkerCommand extends AbstractCommand {
-    @Inject
-    private ThreadMainFactoryBuilder threadFactoryBuilder;
-
     @Inject
     private ApplicationContext applicationContext;
 

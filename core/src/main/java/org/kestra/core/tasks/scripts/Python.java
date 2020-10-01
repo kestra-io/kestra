@@ -101,10 +101,10 @@ public class Python extends Bash implements RunnableTask<Bash.Output> {
 
             String requirementsAsString = "";
             if (requirements != null) {
-                requirementsAsString = "./bin/pip install " + runContext.render(String.join(" ", requirements)) + " > /dev/null";
+                requirementsAsString = "./bin/pip install " + runContext.render(String.join(" ", requirements), additionalVars) + " > /dev/null";
             }
 
-            String args = getArgs() == null ? "" : " " + runContext.render(String.join(" ", getArgs()));
+            String args = getArgs() == null ? "" : " " + runContext.render(String.join(" ", getArgs()), additionalVars);
 
             renderer.addAll(Arrays.asList(
                 pythonPath + " -m virtualenv " + workingDirectory + " > /dev/null",

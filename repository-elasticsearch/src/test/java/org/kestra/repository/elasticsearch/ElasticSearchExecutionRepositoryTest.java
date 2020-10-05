@@ -1,6 +1,5 @@
 package org.kestra.repository.elasticsearch;
 
-import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.AfterEach;
@@ -9,6 +8,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
+import org.kestra.core.utils.IdUtils;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -48,7 +48,7 @@ class ElasticSearchExecutionRepositoryTest {
             .getDuration();
 
         return Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace(NAMESPACE)
             .flowId(flowId == null ? FLOW : flowId)
             .flowRevision(1)

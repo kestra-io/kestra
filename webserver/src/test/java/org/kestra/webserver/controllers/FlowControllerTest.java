@@ -1,6 +1,5 @@
 package org.kestra.webserver.controllers;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableList;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -17,6 +16,7 @@ import org.kestra.core.models.flows.Input;
 import org.kestra.core.models.hierarchies.FlowTree;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.tasks.debugs.Return;
+import org.kestra.core.utils.IdUtils;
 import org.kestra.webserver.responses.PagedResults;
 
 import java.util.Arrays;
@@ -27,7 +27,8 @@ import javax.inject.Inject;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FlowControllerTest extends AbstractMemoryRunnerTest {
@@ -174,7 +175,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void updateFlow() {
-        String flowId = FriendlyId.createFriendlyId();
+        String flowId = IdUtils.create();
 
         Flow flow = generateFlow(flowId, "org.kestra.unittest", "a");
 
@@ -196,7 +197,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         Flow finalFlow = flow;
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             HttpResponse<Void> response = client.toBlocking().exchange(
-                PUT("/api/v1/flows/" + finalFlow.getNamespace() + "/" + FriendlyId.createFriendlyId(), finalFlow)
+                PUT("/api/v1/flows/" + finalFlow.getNamespace() + "/" + IdUtils.create(), finalFlow)
             );
         });
         assertThat(e.getStatus(), is(NOT_FOUND));
@@ -205,14 +206,14 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     void invalidUpdateFlow() {
-        String flowId = FriendlyId.createFriendlyId();
+        String flowId = IdUtils.create();
 
         Flow flow = generateFlow(flowId, "org.kestra.unittest", "a");
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
 
         assertThat(result.getId(), is(flow.getId()));
 
-        Flow finalFlow = generateFlow(FriendlyId.createFriendlyId(), "org.kestra.unittest2", "b");;
+        Flow finalFlow = generateFlow(IdUtils.create(), "org.kestra.unittest2", "b");;
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().exchange(
@@ -238,7 +239,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     private Flow generateFlow(String namespace, String inputName) {
-        return generateFlow(FriendlyId.createFriendlyId(), namespace, inputName);
+        return generateFlow(IdUtils.create(), namespace, inputName);
     }
 
     private Flow generateFlow(String friendlyId, String namespace, String inputName) {

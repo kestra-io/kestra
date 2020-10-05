@@ -1,15 +1,15 @@
 package org.kestra.core.models.executions;
 
-import com.devskiller.friendly_id.FriendlyId;
 import lombok.Builder;
 import lombok.Value;
 import lombok.With;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
+import org.kestra.core.utils.IdUtils;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 @Value
 @Builder
@@ -74,7 +74,7 @@ public class TaskRun {
 
     public static TaskRun of(Execution execution, ResolvedTask resolvedTask) {
         return TaskRun.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .executionId(execution.getId())
             .namespace(execution.getNamespace())
             .flowId(execution.getFlowId())

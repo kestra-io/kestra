@@ -1,6 +1,5 @@
 package org.kestra.cli.commands.sys;
 
-import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -13,6 +12,7 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.tasks.debugs.Return;
+import org.kestra.core.utils.IdUtils;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
@@ -31,7 +31,7 @@ class RestoreFlowQueueCommandTest {
 
     private static Flow create() {
         return Flow.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace("org.kestra.unittest")
             .revision(1)
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))

@@ -1,9 +1,9 @@
 package org.kestra.core.repositories;
 
-import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.triggers.Trigger;
+import org.kestra.core.utils.IdUtils;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -19,11 +19,11 @@ public abstract class AbstractTriggerRepositoryTest {
 
     private static Trigger.TriggerBuilder<?, ?> trigger() {
         return Trigger.builder()
-            .flowId(FriendlyId.createFriendlyId())
+            .flowId(IdUtils.create())
             .namespace("org.kestra.unittest")
             .flowRevision(1)
-            .triggerId(FriendlyId.createFriendlyId())
-            .executionId(FriendlyId.createFriendlyId())
+            .triggerId(IdUtils.create())
+            .executionId(IdUtils.create())
             .date(ZonedDateTime.now());
     }
 
@@ -41,7 +41,7 @@ public abstract class AbstractTriggerRepositoryTest {
         assertThat(find.isPresent(), is(true));
         assertThat(find.get().getExecutionId(), is(save.getExecutionId()));
 
-        save = triggerRepository.save(builder.executionId(FriendlyId.createFriendlyId()).build());
+        save = triggerRepository.save(builder.executionId(IdUtils.create()).build());
 
         find = triggerRepository.findLast(save);
 

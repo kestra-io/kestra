@@ -1,6 +1,5 @@
 package org.kestra.core.runners;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MicronautTest;
@@ -15,13 +14,13 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.tasks.scripts.Bash;
 import org.kestra.core.utils.Await;
+import org.kestra.core.utils.IdUtils;
 import org.kestra.core.utils.TestsUtils;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -100,7 +99,7 @@ class WorkerTest {
             .build();
 
         Flow flow = Flow.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace("org.kestra.unit-test")
             .tasks(Collections.singletonList(bash))
             .build();

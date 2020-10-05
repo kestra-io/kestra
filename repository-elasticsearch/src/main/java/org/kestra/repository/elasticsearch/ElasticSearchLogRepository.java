@@ -1,6 +1,5 @@
 package org.kestra.repository.elasticsearch;
 
-import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.data.model.Pageable;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -12,6 +11,7 @@ import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.LogRepositoryInterface;
+import org.kestra.core.utils.IdUtils;
 import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import org.slf4j.event.Level;
@@ -75,7 +75,7 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
 
     @Override
     public LogEntry save(LogEntry log) {
-        this.putRequest(INDEX_NAME, FriendlyId.createFriendlyId(), log);
+        this.putRequest(INDEX_NAME, IdUtils.create(), log);
 
         return log;
     }

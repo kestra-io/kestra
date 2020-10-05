@@ -1,6 +1,5 @@
 package org.kestra.core.models.triggers.types;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -14,6 +13,7 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.services.ConditionService;
+import org.kestra.core.utils.IdUtils;
 
 import java.util.*;
 import javax.annotation.Nullable;
@@ -40,7 +40,7 @@ public class Flow extends AbstractTrigger {
         }
 
         Execution.ExecutionBuilder builder = Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())

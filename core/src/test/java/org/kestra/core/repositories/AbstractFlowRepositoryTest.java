@@ -1,6 +1,5 @@
 package org.kestra.core.repositories;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
 import io.micronaut.test.annotation.MicronautTest;
@@ -12,6 +11,7 @@ import org.kestra.core.models.flows.Input;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.tasks.debugs.Return;
 import org.kestra.core.tasks.scripts.Bash;
+import org.kestra.core.utils.IdUtils;
 import org.kestra.core.utils.TestsUtils;
 
 import java.io.IOException;
@@ -23,7 +23,6 @@ import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -42,7 +41,7 @@ public abstract class AbstractFlowRepositoryTest {
 
     private static Flow.FlowBuilder builder() {
         return Flow.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace("org.kestra.unittest")
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()));
     }
@@ -176,7 +175,7 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     void updateConflict() {
-        String flowId = FriendlyId.createFriendlyId();
+        String flowId = IdUtils.create();
 
         Flow flow = Flow.builder()
             .id(flowId)
@@ -190,7 +189,7 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
 
         Flow update = Flow.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace("org.kestra.unittest2")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))

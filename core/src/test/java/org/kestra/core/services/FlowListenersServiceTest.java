@@ -1,14 +1,12 @@
 package org.kestra.core.services;
 
-import com.devskiller.friendly_id.FriendlyId;
-import com.google.common.collect.ImmutableList;
 import io.micronaut.test.annotation.MicronautTest;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.flows.Flow;
-import org.kestra.core.models.flows.Input;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.tasks.debugs.Return;
+import org.kestra.core.utils.IdUtils;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
@@ -50,7 +48,7 @@ class FlowListenersServiceTest {
             assertThat(flowListenersService.getFlows().size(), is(0));
         });
 
-        Flow first = create(FriendlyId.createFriendlyId(), "test");
+        Flow first = create(IdUtils.create(), "test");
 
         flowRepository.create(first);
         wait(ref, () -> {
@@ -78,7 +76,7 @@ class FlowListenersServiceTest {
             assertThat(flowListenersService.getFlows().size(), is(1));
         });
 
-        flowRepository.create(create(FriendlyId.createFriendlyId(), "test"));
+        flowRepository.create(create(IdUtils.create(), "test"));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
             assertThat(flowListenersService.getFlows().size(), is(2));

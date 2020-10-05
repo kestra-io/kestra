@@ -1,6 +1,5 @@
 package org.kestra.core.utils;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -9,7 +8,6 @@ import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.RunContext;
@@ -70,7 +68,7 @@ abstract public class TestsUtils {
 
     private static Execution mockExecution(StackTraceElement caller, Flow flow, Map<String, Object> inputs) {
         return Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .inputs(inputs)
@@ -85,7 +83,7 @@ abstract public class TestsUtils {
 
     private static TaskRun mockTaskRun(StackTraceElement caller, Execution execution, Task task) {
         return TaskRun.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .executionId(execution.getId())
             .namespace(execution.getNamespace())
             .flowId(execution.getFlowId())

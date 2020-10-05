@@ -1,6 +1,5 @@
 package org.kestra.webserver.controllers;
 
-import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -13,6 +12,7 @@ import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.tasks.debugs.Return;
+import org.kestra.core.utils.IdUtils;
 import org.kestra.webserver.responses.PagedResults;
 
 import java.util.Arrays;
@@ -36,7 +36,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format("test").build();
         Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format("test").build();
         return Template.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace("kestra.test")
             .tasks(Arrays.asList(t1, t2)).build();
     }
@@ -108,7 +108,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
             HttpRequest.GET("/api/v1/templates/distinct-namespaces"), Argument.listOf(String.class));
         assertThat(namespaces.size(), is(0));
             Template t1 = Template.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace("kestra.template.custom")
             .tasks(Arrays.asList(Return.builder().id("task").type(Return.class.getName()).format("test").build()))
             .build();

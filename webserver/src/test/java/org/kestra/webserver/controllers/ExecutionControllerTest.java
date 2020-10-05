@@ -1,6 +1,5 @@
 package org.kestra.webserver.controllers;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -25,6 +24,7 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.runners.InputsTest;
+import org.kestra.core.utils.IdUtils;
 import org.kestra.webserver.responses.PagedResults;
 
 import java.io.File;
@@ -398,7 +398,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path.replace(execution.getId(),
-                    FriendlyId.createFriendlyId()
+                    IdUtils.create()
                 )),
                 String.class
             );

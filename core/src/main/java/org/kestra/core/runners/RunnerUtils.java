@@ -1,6 +1,5 @@
 package org.kestra.core.runners;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.reactivex.Flowable;
@@ -16,6 +15,7 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.utils.Await;
+import org.kestra.core.utils.IdUtils;
 import org.reactivestreams.Publisher;
 
 import java.io.File;
@@ -235,7 +235,7 @@ public class RunnerUtils {
 
     public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) {
         Execution execution = Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())

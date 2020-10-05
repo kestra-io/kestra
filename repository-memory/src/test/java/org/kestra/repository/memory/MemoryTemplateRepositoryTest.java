@@ -1,11 +1,11 @@
 package org.kestra.repository.memory;
 
-import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.repositories.TemplateRepositoryInterface;
 import org.kestra.core.tasks.debugs.Return;
+import org.kestra.core.utils.IdUtils;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -22,7 +22,7 @@ public class MemoryTemplateRepositoryTest {
 
     private static Template.TemplateBuilder builder() {
         return Template.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace("kestra.test")
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()));
     }
@@ -44,7 +44,7 @@ public class MemoryTemplateRepositoryTest {
     void findByNamespace() {
         Template template1 = builder().build();
         Template template2 = Template.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace("kestra.test.template").build();
 
         templateRepository.create(template1);

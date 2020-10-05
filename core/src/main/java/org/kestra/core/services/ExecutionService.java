@@ -1,6 +1,5 @@
 package org.kestra.core.services;
 
-import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.util.StringUtils;
 import org.kestra.core.models.executions.Execution;
@@ -11,6 +10,7 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.RunContextFactory;
+import org.kestra.core.utils.IdUtils;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -193,7 +193,7 @@ public class ExecutionService {
             throw new IllegalArgumentException("Task [" + referenceTaskId + "] does not exist !");
         }
 
-        final String newExecutionId = FriendlyId.createFriendlyId();
+        final String newExecutionId = IdUtils.create();
 
         // This map will be used to map old ids to new ids
         final Map<String, String> oldToNewIdsMap = new HashMap<>();
@@ -207,7 +207,7 @@ public class ExecutionService {
 
                 final State state = getRestartState(execution, currentIndex, (int) refTaskRunIndex, refTaskRunAncestors);
 
-                final String newTaskRunId = FriendlyId.createFriendlyId();
+                final String newTaskRunId = IdUtils.create();
 
                 // Map old taskRun id to new taskRun id
                 oldToNewIdsMap.put(originalTaskRun.getId(), newTaskRunId);

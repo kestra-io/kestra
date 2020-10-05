@@ -1,22 +1,20 @@
 package org.kestra.repository.elasticsearch;
 
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.executions.TaskRunAttempt;
 import org.kestra.core.models.executions.metrics.Counter;
 import org.kestra.core.models.executions.metrics.Timer;
 import org.kestra.core.models.flows.State;
-import org.slf4j.event.Level;
+import org.kestra.core.utils.IdUtils;
 
 import java.time.Duration;
 import java.util.Collections;
 
 class ExecutionFixture {
     public static final Execution EXECUTION_1 = Execution.builder()
-        .id(FriendlyId.createFriendlyId())
+        .id(IdUtils.create())
         .namespace("org.kestra.unittest")
         .flowId("full")
         .flowRevision(1)
@@ -24,7 +22,7 @@ class ExecutionFixture {
         .inputs(ImmutableMap.of("test", "value"))
         .taskRunList(Collections.singletonList(
             TaskRun.builder()
-                .id(FriendlyId.createFriendlyId())
+                .id(IdUtils.create())
                 .namespace("org.kestra.unittest")
                 .flowId("full")
                 .state(new State())
@@ -41,7 +39,7 @@ class ExecutionFixture {
         .build();
 
     public static final Execution EXECUTION_2 = Execution.builder()
-        .id(FriendlyId.createFriendlyId())
+        .id(IdUtils.create())
         .namespace("org.kestra.unittest")
         .flowId("full")
         .flowRevision(1)
@@ -49,7 +47,7 @@ class ExecutionFixture {
         .inputs(ImmutableMap.of("test", 1))
         .taskRunList(Collections.singletonList(
             TaskRun.builder()
-                .id(FriendlyId.createFriendlyId())
+                .id(IdUtils.create())
                 .namespace("org.kestra.unittest")
                 .flowId("full")
                 .state(new State())

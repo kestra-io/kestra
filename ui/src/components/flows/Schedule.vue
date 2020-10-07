@@ -51,7 +51,7 @@ export default {
     },
     methods: {
         save() {
-            saveFlowTemplate(this, this.flow);
+            saveFlowTemplate(this, this.flow, "flow");
         },
         set(index, schedule) {
             this.$store.commit("flow/setTrigger", {index, trigger: schedule});

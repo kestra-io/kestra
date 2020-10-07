@@ -5,22 +5,19 @@ import com.cronutils.model.CronType;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
-import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.models.triggers.PollingTriggerInterface;
 import org.kestra.core.models.triggers.TriggerContext;
+import org.kestra.core.runners.RunContext;
 import org.kestra.core.schedulers.validations.CronExpression;
+import org.kestra.core.utils.IdUtils;
 
 import java.time.Duration;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -40,7 +37,8 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
     private ScheduleBackfill backfill;
 
-    private Duration interval;
+    @Builder.Default
+    private final Duration interval = Duration.ofSeconds(1);
 
     public ZonedDateTime nextDate(Optional<? extends TriggerContext> last) {
         if (last.isPresent()) {
@@ -50,11 +48,11 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
                 return backfill.getStart();
             }
 
-            return computeNextDate(ZonedDateTime.now(ZoneId.systemDefault())).orElse(null);
+            return computeNextDate(ZonedDateTime.now()).orElse(null);
         }
     }
 
-    public Optional<Execution> evaluate(TriggerContext context) {
+    public Optional<Execution> evaluate(RunContext runContext, TriggerContext context) throws Exception {
         Cron parse = CRON_PARSER.parse(this.cron);
 
         ExecutionTime executionTime = ExecutionTime.forCron(parse);
@@ -68,14 +66,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         boolean isReady = next.get().compareTo(context.getDate()) == 0;
 
         // in case on cron expression changed, the next date will never match so we allow past operation to start
-        boolean isLate = next.get().compareTo(ZonedDateTime.now(ZoneId.systemDefault()).minus(Duration.ofMinutes(1))) < 0;
+        boolean isLate = next.get().compareTo(ZonedDateTime.now().minus(Duration.ofMinutes(1))) < 0;
 
         if (!isReady && !isLate) {
             return Optional.empty();
         }
 
         // we are in the future don't allow
-        if (next.get().compareTo(ZonedDateTime.now(ZoneId.systemDefault()).plus(Duration.ofSeconds(1))) > 0) {
+        if (next.get().compareTo(ZonedDateTime.now().plus(Duration.ofSeconds(1))) > 0) {
             return Optional.empty();
         }
 
@@ -89,7 +87,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .ifPresent(zonedDateTime -> vars.put("previous", zonedDateTime));
 
         Execution execution = Execution.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace(context.getNamespace())
             .flowId(context.getFlowId())
             .flowRevision(context.getFlowRevision())

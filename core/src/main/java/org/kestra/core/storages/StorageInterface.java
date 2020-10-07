@@ -21,7 +21,7 @@ public interface StorageInterface {
 
     boolean delete(URI uri) throws IOException;
 
-    default String executionPrefix(Flow flow, Execution execution) throws  URISyntaxException {
+    default String executionPrefix(Flow flow, Execution execution) {
         return String.join(
             "/",
             Arrays.asList(
@@ -60,7 +60,21 @@ public interface StorageInterface {
         return this.from(flow, execution, input.getName(), file);
     }
 
-    static URI outputPrefix(Flow flow, Task task, Execution execution, TaskRun taskRun)  {
+    default URI outputPrefix(Flow flow)  {
+        try {
+            return new URI("/" + String.join(
+                "/",
+                Arrays.asList(
+                    flow.getNamespace().replace(".", "/"),
+                    Slugify.of(flow.getId())
+                )
+            ));
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    default URI outputPrefix(Flow flow, Task task, Execution execution, TaskRun taskRun)  {
         try {
             return new URI("/" + String.join(
                 "/",

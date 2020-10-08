@@ -211,7 +211,7 @@ public class Scheduler implements Runnable, AutoCloseable {
                     ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
 
                     return Trigger.builder()
-                            .date(nextDate.toEpochSecond() < now.toEpochSecond() ? nextDate : now)
+                            .date(nextDate.compareTo(now) < 0 ? nextDate : now)
                             .flowId(f.getFlow().getId())
                             .flowRevision(f.getFlow().getRevision())
                             .namespace(f.getFlow().getNamespace())

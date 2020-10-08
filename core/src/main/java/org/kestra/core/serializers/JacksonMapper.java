@@ -14,17 +14,18 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 
 import java.util.Map;
+import java.util.TimeZone;
 
 abstract public class JacksonMapper {
-    private static ObjectMapper mapper = JacksonMapper.configure(
+    private static final ObjectMapper MAPPER = JacksonMapper.configure(
         new ObjectMapper()
     );
 
     public static ObjectMapper ofJson() {
-        return mapper;
+        return MAPPER;
     }
 
-    private static ObjectMapper yamlMapper = JacksonMapper.configure(
+    private static final ObjectMapper YAML_MAPPER = JacksonMapper.configure(
         new ObjectMapper(
             new YAMLFactory()
                 .configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
@@ -34,22 +35,22 @@ abstract public class JacksonMapper {
     );
 
     public static ObjectMapper ofYaml() {
-        return yamlMapper;
+        return YAML_MAPPER;
     }
 
-    private static TypeReference<Map<String, Object>> typeReference = new TypeReference<>() {};
+    private static final TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {};
 
     public static Map<String, Object> toMap(Object object) {
-        return mapper.convertValue(object, typeReference);
+        return MAPPER.convertValue(object, TYPE_REFERENCE);
     }
 
     public static <T> T toMap(Map<String, Object> map, Class<T> cls) {
-        return mapper.convertValue(map, cls);
+        return MAPPER.convertValue(map, cls);
     }
 
     public static <T> String log(T Object) {
         try {
-            return yamlMapper.writeValueAsString(Object);
+            return YAML_MAPPER.writeValueAsString(Object);
         } catch (JsonProcessingException ignored) {
             return "Failed to log " + Object.getClass();
         }
@@ -63,6 +64,7 @@ abstract public class JacksonMapper {
             .registerModule(new JavaTimeModule())
             .registerModule(new Jdk8Module())
             .registerModule(new ParameterNamesModule())
-            .registerModules(new GuavaModule());
+            .registerModules(new GuavaModule())
+            .setTimeZone(TimeZone.getDefault());
     }
 }

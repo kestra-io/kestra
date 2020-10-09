@@ -137,7 +137,7 @@ public class Template extends Task implements FlowableTask<VoidOutput> {
     }
 
     /**
-     * Ugly hack to provide the ApplicationContext on {{@link Template#allChildTasks }} & {{@link Template#tasksTree }}
+     * Ugly hack to provide the ApplicationContext on {{@link Template#allChildTasks }} &amp; {{@link Template#tasksTree }}
      * We need to inject a way to fetch Template ...
      */
     @Singleton

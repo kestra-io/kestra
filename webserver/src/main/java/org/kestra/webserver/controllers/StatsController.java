@@ -38,7 +38,7 @@ public class StatsController {
     }
 
     /**
-     * Return daily statistics for all executions filter optionnaly by a lucene query group by namespace & flow
+     * Return daily statistics for all executions filter optionnaly by a lucene query group by namespace &amp; flow
      *
      * @param q Lucene string to filter execution
      * @param startDate default to now - 30 days

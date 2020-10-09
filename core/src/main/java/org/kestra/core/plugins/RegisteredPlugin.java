@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.tasks.Task;
+import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.storages.StorageInterface;
 
 import java.util.ArrayList;
@@ -24,12 +25,13 @@ public class RegisteredPlugin {
     private Manifest manifest;
     private ClassLoader classLoader;
     private List<Class<? extends Task>> tasks;
+    private List<Class<? extends AbstractTrigger>> triggers;
     private List<Class<? extends Condition>> conditions;
     private List<Class<?>> controllers;
     private List<Class<? extends StorageInterface>> storages;
 
     public boolean isValid() {
-        return tasks.size() > 0 || conditions.size() > 0 || controllers.size() > 0 || storages.size() > 0;
+        return tasks.size() > 0 || triggers.size() > 0 || conditions.size() > 0 || controllers.size() > 0 || storages.size() > 0;
     }
 
     public boolean hasClass(String cls) {
@@ -50,6 +52,7 @@ public class RegisteredPlugin {
         List<Class> result = new ArrayList<>();
 
         result.addAll(Arrays.asList(this.getTasks().toArray(Class[]::new)));
+        result.addAll(Arrays.asList(this.getTriggers().toArray(Class[]::new)));
         result.addAll(Arrays.asList(this.getConditions().toArray(Class[]::new)));
         result.addAll(Arrays.asList(this.getControllers().toArray(Class[]::new)));
         result.addAll(Arrays.asList(this.getStorages().toArray(Class[]::new)));
@@ -73,6 +76,12 @@ public class RegisteredPlugin {
             b.append("] ");
         }
 
+        if (!this.getTriggers().isEmpty()) {
+            b.append("[Triggers: ");
+            b.append(this.getTriggers().stream().map(Class::getName).collect(Collectors.joining(", ")));
+            b.append("] ");
+        }
+        
         if (!this.getConditions().isEmpty()) {
             b.append("[Conditions: ");
             b.append(this.getConditions().stream().map(Class::getName).collect(Collectors.joining(", ")));

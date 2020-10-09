@@ -85,6 +85,7 @@ public class PluginController {
     public static class Plugin {
         private Map<String, String> manifest;
         private List<String> tasks;
+        private List<String> triggers;
         private List<String> conditions;
         private List<String> controllers;
         private List<String> storages;
@@ -104,6 +105,7 @@ public class PluginController {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             plugin.tasks = className(registeredPlugin.getTasks().toArray(Class[]::new));
+            plugin.triggers = className(registeredPlugin.getTriggers().toArray(Class[]::new));
             plugin.conditions = className(registeredPlugin.getConditions().toArray(Class[]::new));
             plugin.controllers = className(registeredPlugin.getControllers().toArray(Class[]::new));
             plugin.storages = className(registeredPlugin.getStorages().toArray(Class[]::new));

@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.tasks.Task;
+import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.storages.StorageInterface;
 
 import java.io.IOException;
@@ -81,6 +82,7 @@ public class PluginScanner {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private RegisteredPlugin scanClassLoader(final ClassLoader classLoader, ExternalPlugin externalPlugin, Manifest manifest) {
         List<Class<? extends Task>> tasks = new ArrayList<>();
+        List<Class<? extends AbstractTrigger>> triggers = new ArrayList<>();
         List<Class<? extends Condition>> conditions = new ArrayList<>();
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<?>> controllers = new ArrayList<>();
@@ -107,6 +109,10 @@ public class PluginScanner {
                     tasks.add(beanType);
                 }
 
+                if (AbstractTrigger.class.isAssignableFrom(beanType)) {
+                    triggers.add(beanType);
+                }
+                
                 if (Condition.class.isAssignableFrom(beanType)) {
                     conditions.add(beanType);
                 }
@@ -126,6 +132,7 @@ public class PluginScanner {
             .manifest(manifest)
             .classLoader(classLoader)
             .tasks(tasks)
+            .triggers(triggers)
             .conditions(conditions)
             .controllers(controllers)
             .storages(storages)

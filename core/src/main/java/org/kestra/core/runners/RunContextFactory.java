@@ -7,6 +7,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.Task;
+import org.kestra.core.models.triggers.AbstractTrigger;
 
 import java.util.Map;
 import javax.inject.Inject;
@@ -23,6 +24,10 @@ public class RunContextFactory {
 
     public RunContext of(Flow flow, Task task, Execution execution, TaskRun taskRun) {
         return new RunContext(applicationContext, flow, task, execution, taskRun);
+    }
+
+    public RunContext of(Flow flow, AbstractTrigger trigger) {
+        return new RunContext(applicationContext, flow, trigger);
     }
 
     @VisibleForTesting

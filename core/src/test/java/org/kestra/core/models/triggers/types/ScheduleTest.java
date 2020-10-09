@@ -1,14 +1,15 @@
 package org.kestra.core.models.triggers.types;
 
-import com.devskiller.friendly_id.FriendlyId;
+import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.TriggerContext;
+import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.tasks.debugs.Return;
+import org.kestra.core.utils.IdUtils;
 
 import java.time.Duration;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -16,17 +17,25 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.inject.Inject;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+@MicronautTest
 class ScheduleTest {
+    @Inject
+    RunContextFactory runContextFactory;
+
     @Test
-    void failed() {
+    void failed() throws Exception {
         Schedule trigger = Schedule.builder().cron("1 1 1 1 1").build();
 
-        Optional<Execution> evaluate = trigger.evaluate(TriggerContext.builder()
-            .date(ZonedDateTime.now().withSecond(2))
-            .build()
+        Optional<Execution> evaluate = trigger.evaluate(
+            runContextFactory.of(),
+            TriggerContext.builder()
+                .date(ZonedDateTime.now().withSecond(2))
+                .build()
         );
 
         assertThat(evaluate.isPresent(), is(false));
@@ -34,7 +43,7 @@ class ScheduleTest {
 
     private static TriggerContext context(ZonedDateTime date, Schedule schedule) {
         Flow flow = Flow.builder()
-            .id(FriendlyId.createFriendlyId())
+            .id(IdUtils.create())
             .namespace("org.kestra.unittest")
             .revision(1)
             .tasks(Collections.singletonList(Return.builder()
@@ -55,7 +64,7 @@ class ScheduleTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void success() {
+    void success() throws Exception {
         Schedule trigger = Schedule.builder().cron("0 0 1 * *").build();
 
         ZonedDateTime date = ZonedDateTime.now()
@@ -66,7 +75,7 @@ class ScheduleTest {
             .withSecond(0)
             .truncatedTo(ChronoUnit.SECONDS);
 
-        Optional<Execution> evaluate = trigger.evaluate(context(date, trigger));
+        Optional<Execution> evaluate = trigger.evaluate(runContextFactory.of(), context(date, trigger));
 
         assertThat(evaluate.isPresent(), is(true));
 
@@ -78,7 +87,7 @@ class ScheduleTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void everyMinute() {
+    void everyMinute() throws Exception {
         Schedule trigger = Schedule.builder().cron("* * * * *").build();
 
         ZonedDateTime date = ZonedDateTime.now()
@@ -87,7 +96,7 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .plus(Duration.ofMinutes(1));
 
-        Optional<Execution> evaluate = trigger.evaluate(context(date, trigger));
+        Optional<Execution> evaluate = trigger.evaluate(runContextFactory.of(), context(date, trigger));
 
         assertThat(evaluate.isPresent(), is(true));
 
@@ -102,7 +111,7 @@ class ScheduleTest {
         Schedule trigger = Schedule.builder().cron("0 0 * * *").build();
         ZonedDateTime next = trigger.nextDate(Optional.empty());
 
-        assertThat(next.getDayOfMonth(), is(ZonedDateTime.now(ZoneId.systemDefault()).plusDays(1).getDayOfMonth()));
+        assertThat(next.getDayOfMonth(), is(ZonedDateTime.now().plusDays(1).getDayOfMonth()));
     }
 
     @Test
@@ -144,12 +153,12 @@ class ScheduleTest {
         Schedule trigger = Schedule.builder().cron("0 0 * * *").backfill(ScheduleBackfill.builder().build()).build();
         ZonedDateTime next = trigger.nextDate(Optional.empty());
 
-        assertThat(next.getDayOfMonth(), is(ZonedDateTime.now(ZoneId.systemDefault()).plusDays(1).getDayOfMonth()));
+        assertThat(next.getDayOfMonth(), is(ZonedDateTime.now().plusDays(1).getDayOfMonth()));
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void backfillChangedFromCronExpression() {
+    void backfillChangedFromCronExpression() throws Exception {
         Schedule trigger = Schedule.builder().cron("30 0 1 * *").build();
 
         ZonedDateTime date = ZonedDateTime.now()
@@ -163,7 +172,7 @@ class ScheduleTest {
         ZonedDateTime expexted = date.withMinute(30)
             .withMonth(date.getMonthValue() + 1);
 
-        Optional<Execution> evaluate = trigger.evaluate(context(date, trigger));
+        Optional<Execution> evaluate = trigger.evaluate(runContextFactory.of(), context(date, trigger));
 
         assertThat(evaluate.isPresent(), is(true));
 

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
@@ -54,6 +55,14 @@ abstract public class JacksonMapper {
         } catch (JsonProcessingException ignored) {
             return "Failed to log " + Object.getClass();
         }
+    }
+
+    private static final ObjectMapper ION_MAPPER = JacksonMapper.configure(
+        new IonObjectMapper()
+    );
+
+    public static ObjectMapper ofIon() {
+        return ION_MAPPER;
     }
 
     private static ObjectMapper configure(ObjectMapper mapper) {

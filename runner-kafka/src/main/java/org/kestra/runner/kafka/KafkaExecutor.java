@@ -840,6 +840,7 @@ public class KafkaExecutor extends AbstractExecutor {
 
     @Override
     public void run() {
+        kafkaAdminService.createIfNotExist(WorkerTask.class);
         kafkaAdminService.createIfNotExist(WorkerTaskResult.class);
         kafkaAdminService.createIfNotExist(Execution.class);
         kafkaAdminService.createIfNotExist(Flow.class);
@@ -848,6 +849,7 @@ public class KafkaExecutor extends AbstractExecutor {
         kafkaAdminService.createIfNotExist(WorkerTaskRunning.class);
         kafkaAdminService.createIfNotExist(WorkerInstance.class);
         kafkaAdminService.createIfNotExist(Template.class);
+        kafkaAdminService.createIfNotExist(LogEntry.class);
 
         KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology());
         resultStream.start();

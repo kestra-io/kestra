@@ -52,9 +52,18 @@ abstract public class DocumentationGenerator {
         .registerHelpers(DateHelper.class)
         .registerHelpers(JsonHelper.class);
 
-    public static List<Document> generate(RegisteredPlugin registeredPlugin) throws IOException {
-        return registeredPlugin
-            .getTasks()
+    public static List<Document> generate(RegisteredPlugin registeredPlugin) {
+        ArrayList<Document> result = new ArrayList<>();
+
+        result.addAll(DocumentationGenerator.generate(registeredPlugin, registeredPlugin.getTasks(), "tasks"));
+        result.addAll(DocumentationGenerator.generate(registeredPlugin, registeredPlugin.getTriggers(), "triggers"));
+        result.addAll(DocumentationGenerator.generate(registeredPlugin, registeredPlugin.getConditions(), "conditions"));
+
+        return result;
+    }
+
+    private static <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, String type) {
+        return cls
             .stream()
             .map(r -> PluginDocumentation.of(registeredPlugin, r))
             .map(pluginDocumentation -> {
@@ -66,7 +75,7 @@ abstract public class DocumentationGenerator {
                     );
 
                     return new Document(
-                        project + "/tasks/" +
+                        project + "/" + type + "/" +
                             (pluginDocumentation.getSubGroup() != null ? pluginDocumentation.getSubGroup() + "/" : "") +
                             pluginDocumentation.getCls() + ".md",
                         render(pluginDocumentation)

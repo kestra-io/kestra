@@ -31,6 +31,9 @@ public class PluginRegistry  {
                 plugin.getTasks()
                     .stream()
                     .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin)),
+                plugin.getTriggers()
+                    .stream()
+                    .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin)),
                 plugin.getConditions()
                     .stream()
                     .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), plugin)),

@@ -9,6 +9,8 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.Task;
+import org.kestra.core.models.triggers.AbstractTrigger;
+import org.kestra.core.models.triggers.TriggerContext;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.runners.RunContextFactory;
@@ -18,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.ZonedDateTime;
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -91,6 +95,24 @@ abstract public class TestsUtils {
             .state(new State())
             .build()
             .withState(State.Type.RUNNING);
+    }
+
+    public static Map.Entry<RunContext, TriggerContext> mockTrigger(RunContextFactory runContextFactory, AbstractTrigger trigger) {
+        StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
+        Flow flow = TestsUtils.mockFlow(caller);
+
+        TriggerContext triggerContext = TriggerContext.builder()
+            .triggerId(trigger.getId())
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .flowRevision(flow.getRevision())
+            .date(ZonedDateTime.now())
+            .build();
+
+        return new AbstractMap.SimpleEntry<>(
+            runContextFactory.of(flow, trigger),
+            triggerContext
+        );
     }
 
     public static RunContext mockRunContext(RunContextFactory runContextFactory, Task task, Map<String, Object> inputs) {

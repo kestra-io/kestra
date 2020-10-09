@@ -1,53 +1,27 @@
 package org.kestra.core.schedulers;
 
-import com.devskiller.friendly_id.FriendlyId;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.triggers.types.Schedule;
 import org.kestra.core.models.triggers.types.ScheduleBackfill;
-import org.kestra.core.queues.QueueFactoryInterface;
-import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
-import org.kestra.core.repositories.TriggerRepositoryInterface;
 import org.kestra.core.services.FlowListenersService;
-import org.kestra.core.tasks.debugs.Return;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import javax.inject.Inject;
-import javax.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@MicronautTest
-class SchedulerTest {
-    @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
-    private TriggerRepositoryInterface triggerContextRepository;
-
-    @Inject
-    private ExecutionRepositoryInterface executionRepository;
-
-    @Inject
-    private FlowListenersService flowListenersService;
-
-    @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    private QueueInterface<Execution> executionQueue;
-
-    private static Flow create() {
+class SchedulerScheduleTest extends AbstractSchedulerTest {
+    private static Flow createScheduleFlow() {
         Schedule schedule = Schedule.builder()
             .id("hourly")
             .type(Schedule.class.getName())
@@ -58,13 +32,7 @@ class SchedulerTest {
             )
             .build();
 
-        return Flow.builder()
-            .id(FriendlyId.createFriendlyId())
-            .namespace("org.kestra.unittest")
-            .revision(1)
-            .triggers(Collections.singletonList(schedule))
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .build();
+        return createFlow(Collections.singletonList(schedule));
     }
 
     private static ZonedDateTime date(int plus) {
@@ -74,13 +42,13 @@ class SchedulerTest {
     }
 
     @Test
-    void taskPoolTrigger() throws Exception {
+    void schedule() throws Exception {
         // mock flow listeners
         FlowListenersService flowListenersServiceSpy = spy(this.flowListenersService);
         ExecutionRepositoryInterface executionRepositorySpy = spy(this.executionRepository);
         CountDownLatch queueCount = new CountDownLatch(5);
 
-        Flow flow = create();
+        Flow flow = createScheduleFlow();
 
         doReturn(Collections.singletonList(flow))
             .when(flowListenersServiceSpy)
@@ -94,6 +62,7 @@ class SchedulerTest {
         // scheduler
         try (Scheduler scheduler = new Scheduler(
             applicationContext,
+            executorsUtils,
             executionQueue,
             flowListenersServiceSpy,
             executionRepositorySpy,
@@ -101,7 +70,7 @@ class SchedulerTest {
         )) {
 
             // wait for execution
-            executionQueue.receive(SchedulerTest.class, execution -> {
+            executionQueue.receive(SchedulerScheduleTest.class, execution -> {
                 queueCount.countDown();
                 assertThat(execution.getFlowId(), is(flow.getId()));
             });

@@ -22,7 +22,6 @@
             width: { type: String, default: "100%" },
             height: { type: String, default: "100%" },
         },
-
         components: {
             editor: require("vue2-ace-editor"),
         },
@@ -43,12 +42,15 @@
                     tabSize: 2,
                     wrap: false,
                     newLineMode: "unix",
+                    autoScrollEditorIntoView: true,
+                    enableBasicAutocompletion: true,
+                    enableLiveAutocompletion: true
                 });
             },
 
             onInput(value) {
                 this.$emit('input', value);
             }
-        }
+        },
     };
 </script>

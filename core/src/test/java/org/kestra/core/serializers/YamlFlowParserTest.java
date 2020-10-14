@@ -112,6 +112,16 @@ class YamlFlowParserTest {
     }
 
     @Test
+    void noDefault() throws IOException {
+        Flow flow = this.parse("flows/valids/parallel.yaml");
+
+        String s = mapper.writeValueAsString(flow);
+        assertThat(s, not(containsString("\"-c\"")));
+        assertThat(s, containsString("\"deleted\":false"));
+    }
+
+
+    @Test
     void include() throws IOException {
         Flow flow = parse("flows/helpers/include.yaml");
 

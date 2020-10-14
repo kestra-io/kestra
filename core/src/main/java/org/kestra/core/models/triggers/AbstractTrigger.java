@@ -1,5 +1,6 @@
 package org.kestra.core.models.triggers;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
@@ -11,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @SuperBuilder
 @Getter
 @NoArgsConstructor

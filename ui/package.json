@@ -19,6 +19,7 @@
     "d3": "^5.16.0",
     "dagre-d3": "^0.6.4",
     "humanize-duration": "^3.23.1",
+    "js-yaml": "^3.14.0",
     "lodash": "4.17.20",
     "markdown-it": "^11.0.0",
     "markdown-it-mark": "^3.0.0",
@@ -43,8 +44,7 @@
     "vue-sse": "^1.0.2",
     "vue2-ace-editor": "^0.0.15",
     "vue2-datepicker": "^3.6.2",
-    "vuex": "^3.5.1",
-    "yaml": "^1.10.0"
+    "vuex": "^3.5.1"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^4.5.4",

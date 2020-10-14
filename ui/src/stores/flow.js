@@ -80,9 +80,11 @@ export default {
             } else {
                 if (flow.triggers !== undefined) {
                     flow.triggers = flow.triggers.map(trigger => {
-                        if (trigger.backfill  === undefined) {
-                            trigger.backfill = {
-                                start: undefined
+                        if (trigger.type === "org.kestra.core.models.triggers.types.Schedule") {
+                            if (trigger.backfill  === undefined) {
+                                trigger.backfill = {
+                                    start: undefined
+                                }
                             }
                         }
 

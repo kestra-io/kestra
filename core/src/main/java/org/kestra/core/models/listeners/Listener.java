@@ -6,9 +6,9 @@ import lombok.Value;
 import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.tasks.Task;
 
+import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
-import java.util.List;
 
 @Value
 @Builder

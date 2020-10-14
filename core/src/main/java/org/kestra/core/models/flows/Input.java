@@ -1,5 +1,6 @@
 package org.kestra.core.models.flows;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Value;
@@ -12,6 +13,7 @@ import javax.validation.constraints.Pattern;
 @Value
 @Builder
 @Introspected
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class Input {
     @NotNull
     @NotBlank

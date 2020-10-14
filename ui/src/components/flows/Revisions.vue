@@ -29,7 +29,7 @@
 </template>
 <script>
 import { mapState } from "vuex";
-import Yaml from "yaml";
+import YamlUtils from "../../utils/yamlUtils";
 import CodeDiff from "vue-code-diff";
 
 export default {
@@ -87,13 +87,13 @@ export default {
             if (this.revisionLeft === undefined) {
                 return "";
             }
-            return Yaml.stringify(this.revisions[this.revisionLeft]);
+            return YamlUtils.stringify(this.revisions[this.revisionLeft]);
         },
         revisionRightText() {
             if (this.revisionRight === undefined) {
                 return "";
             }
-            return Yaml.stringify(this.revisions[this.revisionRight]);
+            return YamlUtils.stringify(this.revisions[this.revisionRight]);
         },
         diff() {
             const linesLeft = this.revisionLeftText.split("\n");

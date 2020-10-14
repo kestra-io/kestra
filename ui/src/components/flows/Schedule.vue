@@ -6,7 +6,7 @@
                 @set="set"
                 :schedule="schedule"
                 :index="x"
-                v-for="(schedule, x) in (flow.triggers || []) "
+                v-for="(schedule, x) in (flow.triggers || []).filter(r => r.type === 'org.kestra.core.models.triggers.types.Schedule')"
                 :key="x"
             />
         </b-list-group>

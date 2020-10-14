@@ -87,8 +87,8 @@ import LocationExit from "vue-material-design-icons/LocationExit";
 import CurrentAc from "vue-material-design-icons/CurrentAc";
 import { mapState } from "vuex";
 import Status from "../Status";
-import Yaml from "yaml";
 import md5 from "md5";
+import YamlUtils from "../../utils/yamlUtils";
 
 export default {
     components: {
@@ -150,7 +150,7 @@ export default {
             return this.task.tasks ? this.task.tasks.length : 0;
         },
         taskYaml() {
-            return Yaml.stringify(this.n);
+            return YamlUtils.stringify(this.n);
         },
         state() {
             return this.n.taskRun ? this.n.taskRun.state.current : "SUCCESS";

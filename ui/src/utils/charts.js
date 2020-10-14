@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _merge from "lodash/merge";
 
 export function tooltip(tooltipModel) {
     const titleLines = tooltipModel.title || [];
@@ -26,7 +26,7 @@ export function tooltip(tooltipModel) {
 }
 
 export function defaultConfig(overide) {
-    return _.merge({
+    return _merge({
         animation: false,
         responsive: true,
         maintainAspectRatio: false,

@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.AbstractTrigger;
@@ -26,10 +27,13 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Named;
+
+import static org.kestra.core.utils.Rethrow.throwSupplier;
 
 @Slf4j
 public class Scheduler implements Runnable, AutoCloseable {
@@ -39,12 +43,14 @@ public class Scheduler implements Runnable, AutoCloseable {
     private final TriggerRepositoryInterface triggerContextRepository;
     private final ExecutionRepositoryInterface executionRepository;
     private final RunContextFactory runContextFactory;
+    private final MetricRegistry metricRegistry;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
     private final ListeningExecutorService cachedExecutor;
     private Map<String, Trigger> lastTriggers = new ConcurrentHashMap<>();
     private final Map<String, ZonedDateTime> lastEvaluate = new ConcurrentHashMap<>();
-    private final List<String> evaluateRunning = new ArrayList<>();
+    private final Map<String, ZonedDateTime> evaluateRunning = new ConcurrentHashMap<>();
+    private final Map<String, AtomicInteger> evaluateRunningCount = new ConcurrentHashMap<>();
 
     @Inject
     public Scheduler(
@@ -61,6 +67,8 @@ public class Scheduler implements Runnable, AutoCloseable {
         this.triggerContextRepository = triggerContextRepository;
         this.executionRepository = executionRepository;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
+        this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
+
         this.cachedExecutor = MoreExecutors.listeningDecorator(executorsUtils.cachedThreadPool("scheduler_executor"));
     }
 
@@ -157,7 +165,7 @@ public class Scheduler implements Runnable, AutoCloseable {
             // submit ready one to cached thread pool
             readyForEvaluate
                 .forEach(f -> {
-                    this.evaluateRunning.add(f.getTriggerContext().uid());
+                    this.addToRunning(f.getTriggerContext());
 
                     ListenableFuture<SchedulerExecutionWithTrigger> result = cachedExecutor
                         .submit(() -> this.evaluatePollingTrigger(f));
@@ -182,7 +190,7 @@ public class Scheduler implements Runnable, AutoCloseable {
 
         @Override
         public void onSuccess(SchedulerExecutionWithTrigger result) {
-            scheduler.evaluateRunning.remove(flowWithPollingTriggerNextDate.getTriggerContext().uid());
+            scheduler.removeFromRunning(flowWithPollingTriggerNextDate.getTriggerContext());
 
             Stream.of(result)
                 .filter(Objects::nonNull)
@@ -194,7 +202,7 @@ public class Scheduler implements Runnable, AutoCloseable {
 
         @Override
         public void onFailure(Throwable e) {
-            scheduler.evaluateRunning.remove(flowWithPollingTriggerNextDate.getTriggerContext().uid());
+            scheduler.removeFromRunning(flowWithPollingTriggerNextDate.getTriggerContext());
 
             log.warn(
                 "Evaluate failed for flow '{}.{}' started at '{}' for trigger [{}] with error '{}",
@@ -205,6 +213,26 @@ public class Scheduler implements Runnable, AutoCloseable {
                 e.getMessage(),
                 e
             );
+        }
+    }
+
+    private void addToRunning(TriggerContext triggerContext) {
+        synchronized (this) {
+            this.evaluateRunningCount.computeIfAbsent(triggerContext.uid(), s -> metricRegistry
+                .gauge(MetricRegistry.SCHEDULER_EVALUATE_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(triggerContext)));
+
+            this.evaluateRunning.put(triggerContext.uid(), ZonedDateTime.now());
+            this.evaluateRunningCount.get(triggerContext.uid()).addAndGet(1);
+        }
+    }
+
+
+    private void removeFromRunning(TriggerContext triggerContext) {
+        synchronized (this) {
+            if (this.evaluateRunning.remove(triggerContext.uid()) == null) {
+                throw new IllegalStateException("Can't remove trigger '" + triggerContext.uid() + "' from running");
+            }
+            this.evaluateRunningCount.get(triggerContext.uid()).addAndGet(-1);
         }
     }
 
@@ -246,6 +274,10 @@ public class Scheduler implements Runnable, AutoCloseable {
     }
 
     private void log(SchedulerExecutionWithTrigger executionWithTrigger) {
+        metricRegistry
+            .counter(MetricRegistry.SCHEDULER_TRIGGER_COUNT, metricRegistry.tags(executionWithTrigger))
+            .increment();
+
         log.info(
             "Schedule execution '{}' for flow '{}.{}' started at '{}' for trigger [{}]",
             executionWithTrigger.getExecution().getId(),
@@ -284,7 +316,7 @@ public class Scheduler implements Runnable, AutoCloseable {
         String key = flowWithPollingTrigger.getTriggerContext().uid();
         ZonedDateTime now = ZonedDateTime.now();
 
-        if (this.evaluateRunning.contains(key)) {
+        if (this.evaluateRunning.containsKey(key)) {
             return false;
         }
 
@@ -319,10 +351,12 @@ public class Scheduler implements Runnable, AutoCloseable {
     }
 
     private SchedulerExecutionWithTrigger evaluatePollingTrigger(FlowWithPollingTrigger flowWithTrigger) throws Exception {
-        Optional<Execution> evaluate = flowWithTrigger.getPollingTrigger().evaluate(
-            runContextFactory.of(flowWithTrigger.getFlow(), flowWithTrigger.getTrigger()),
-            flowWithTrigger.getTriggerContext()
-        );
+        Optional<Execution> evaluate = this.metricRegistry
+            .timer(MetricRegistry.SCHEDULER_EVALUATE_DURATION, metricRegistry.tags(flowWithTrigger.getTriggerContext()))
+            .record(throwSupplier(() -> flowWithTrigger.getPollingTrigger().evaluate(
+                runContextFactory.of(flowWithTrigger.getFlow(), flowWithTrigger.getTrigger()),
+                flowWithTrigger.getTriggerContext()
+            )));
 
         if (log.isDebugEnabled() && evaluate.isEmpty()) {
             log.debug("Empty evaluation for flow '{}.{}' for date '{}, waiting !",

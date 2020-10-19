@@ -1,14 +1,15 @@
 package org.kestra.core.metrics;
 
-
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.Nullable;
 import org.apache.commons.lang3.ArrayUtils;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.tasks.Task;
+import org.kestra.core.models.triggers.TriggerContext;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.schedulers.SchedulerExecutionWithTrigger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -32,10 +33,15 @@ public class MetricRegistry {
     public final static String METRIC_INDEXER_COUNT = "indexer.count";
     public final static String METRIC_INDEXER_DURATION = "indexer.duration";
 
+    public final static String SCHEDULER_TRIGGER_COUNT = "scheduler.trigger.count";
+    public final static String SCHEDULER_EVALUATE_RUNNING_COUNT = "scheduler.evaluate.running.count";
+    public final static String SCHEDULER_EVALUATE_DURATION = "scheduler.evaluate.duration";
+
     public final static String TAG_TASK_ID = "task_id";
     public final static String TAG_TASK_TYPE = "task_type";
     public final static String TAG_FLOW_ID = "flow_id";
     public final static String TAG_NAMESPACE_ID = "namespace_id";
+    public final static String TAG_TRIGGER_ID = "trigger_id";
     public final static String TAG_STATE = "state";
     public final static String TAG_ATTEMPT_COUNT = "attempt_count";
     public final static String TAG_VALUE = "value";
@@ -165,6 +171,36 @@ public class MetricRegistry {
             TAG_NAMESPACE_ID, execution.getNamespace(),
             TAG_STATE, execution.getState().getCurrent().name(),
         };
+    }
+
+    /**
+     * Return tags for current {@link TriggerContext}
+     *
+     * @param triggerContext the current TriggerContext
+     * @return tags to applied to metrics
+     */
+    public String[] tags(TriggerContext triggerContext) {
+        return new String[]{
+            TAG_FLOW_ID, triggerContext.getFlowId(),
+            TAG_NAMESPACE_ID, triggerContext.getNamespace(),
+            TAG_TRIGGER_ID, triggerContext.getTriggerId(),
+        };
+    }
+
+    /**
+     * Return tags for current {@link SchedulerExecutionWithTrigger}.
+     *
+     * @param schedulerExecutionWithTrigger the current SchedulerExecutionWithTrigger
+     * @return tags to applied to metrics
+     */
+    public String[] tags(SchedulerExecutionWithTrigger schedulerExecutionWithTrigger, String... tags) {
+        return ArrayUtils.addAll(
+            ArrayUtils.addAll(
+                this.tags(schedulerExecutionWithTrigger.getExecution()),
+                tags
+            ),
+            TAG_TRIGGER_ID, schedulerExecutionWithTrigger.getTriggerContext().getTriggerId()
+        );
     }
 
     /**

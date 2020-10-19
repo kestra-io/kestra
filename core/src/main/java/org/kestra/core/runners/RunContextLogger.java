@@ -10,10 +10,10 @@ import ch.qos.logback.core.AppenderBase;
 import com.cronutils.utils.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.queues.QueueInterface;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -148,8 +148,9 @@ public class RunContextLogger {
         }
     }
 
-    @Slf4j
     public static class ForwardAppender extends AppenderBase<ILoggingEvent> {
+        private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger("flow");
+
         @Override
         public void start() {
             super.start();
@@ -162,9 +163,9 @@ public class RunContextLogger {
 
         @Override
         protected void append(ILoggingEvent e) {
-            var logger = ((ch.qos.logback.classic.Logger) log);
+            var logger = ((ch.qos.logback.classic.Logger) LOGGER);
             if (logger.isEnabledFor(e.getLevel())) {
-                ((ch.qos.logback.classic.Logger) log).callAppenders(e);
+                ((ch.qos.logback.classic.Logger) LOGGER).callAppenders(e);
             }
         }
     }

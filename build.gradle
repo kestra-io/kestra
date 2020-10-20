@@ -36,8 +36,8 @@ mainClassName = "org.kestra.cli.App"
 sourceCompatibility = 11
 
 dependencies {
-    compile project(":cli")
-    testCompile project(":cli")
+    implementation project(":cli")
+    testImplementation project(":cli")
 }
 
 /**********************************************************************************************************************\
@@ -106,6 +106,7 @@ allprojects {
         api group: 'com.google.guava', name: 'guava', version: '28.1-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.6'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+        api "io.swagger.core.v3:swagger-annotations"
     }
 }
 

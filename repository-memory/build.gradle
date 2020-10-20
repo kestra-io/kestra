@@ -1,6 +1,6 @@
 dependencies {
-    compile project(":core")
+    implementation project(":core")
 
-    testCompile project(':core').sourceSets.test.output
-    testCompile project(':runner-memory')
+    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':runner-memory')
 }

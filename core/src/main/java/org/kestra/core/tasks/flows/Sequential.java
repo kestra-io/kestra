@@ -1,13 +1,14 @@
 package org.kestra.core.tasks.flows;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
-import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
+import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
@@ -20,40 +21,45 @@ import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.services.TreeService;
 
-import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Documentation(
-    description = "Process tasks ones after others sequentially",
-    body = "Mostly use in order to group tasks."
+@Schema(
+    title = "Process tasks ones after others sequentially",
+    description = "Mostly use in order to group tasks."
 )
-@Example(
-    full = true,
-    code = {
-        "id: sequential",
-        "namespace: org.kestra.tests",
-        "",
-        "tasks:",
-        "  - id: sequential",
-        "    type: org.kestra.core.tasks.flows.Sequential",
-        "    tasks:",
-        "      - id: 1st",
-        "        type: org.kestra.core.tasks.debugs.Return",
-        "        format: \"{{task.id}} > {{taskrun.startDate}}\"",
-        "      - id: 2nd",
-        "        type: org.kestra.core.tasks.debugs.Return",
-        "        format: \"{{task.id}} > {{taskrun.id}}\"",
-        "  - id: last",
-        "    type: org.kestra.core.tasks.debugs.Return",
-        "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+@Plugin(
+    examples = {
+        @Example(
+            full = true,
+            code = {
+                "id: sequential",
+                "namespace: org.kestra.tests",
+                "",
+                "tasks:",
+                "  - id: sequential",
+                "    type: org.kestra.core.tasks.flows.Sequential",
+                "    tasks:",
+                "      - id: 1st",
+                "        type: org.kestra.core.tasks.debugs.Return",
+                "        format: \"{{task.id}} > {{taskrun.startDate}}\"",
+                "      - id: 2nd",
+                "        type: org.kestra.core.tasks.debugs.Return",
+                "        format: \"{{task.id}} > {{taskrun.id}}\"",
+                "  - id: last",
+                "    type: org.kestra.core.tasks.debugs.Return",
+                "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+            }
+        )
     }
 )
 public class Sequential extends Task implements FlowableTask<VoidOutput> {
@@ -61,6 +67,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
     protected List<Task> errors;
 
     @Valid
+    @NotEmpty
     private List<Task> tasks;
 
     @Override

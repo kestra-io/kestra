@@ -1,8 +1,8 @@
 dependencies {
-    compile project(":core")
+    implementation project(":core")
 
-    testCompile project(':core').sourceSets.test.output
-    testCompile project(':repository-memory')
-    testCompile project(':storage-local')
-    testCompile project(':runner-memory')
+    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':repository-memory')
+    testImplementation project(':storage-local')
+    testImplementation project(':runner-memory')
 }

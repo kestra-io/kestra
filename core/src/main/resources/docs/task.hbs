@@ -13,20 +13,73 @@ description: {{ description }}
     * {{current}}
     {{~/each~}}
 {{/if}}
-{{#if description}}
-> {{ description }}
+{{#if title}}
+> {{ title }}
 {{~/if}}
 
-{{#if body}}
-{{ body }}
+{{#if description}}
+{{ description }}
 {{~/if}}
 
 {{~/inline~}}
 
 {{~#*inline "fieldType" ~}}
-    =={{replace type "<" "&lt;" }}==
+    {{~#if $deprecated }}
+🔒 *Deprecated*
+    {{~/if}}
+
+* **Type:** =={{ type }}==
+    {{~#if items }}
+* **SubType:** =={{ items.type }}==
+    {{~/if~}}
+    {{~#if additionalProperties }}
+* **SubType:** =={{ additionalProperties.type }}==
+    {{~/if~}}
 {{~/inline~}}
 
+{{~#*inline "fieldDetail" ~}}
+{{~#if default ~}}
+    * **Default:** `{{ default }}`
+{{/if}}
+
+{{~#if pattern ~}}
+    * **Validation regExp:** `{{ pattern }}`
+{{/if~}}
+
+{{~#if minLength ~}}
+    * **Min length:** `{{ minLength }}`
+{{/if~}}
+
+{{~#if maxLength ~}}
+    * **Max length:** `{{ maxLength }}`
+{{/if~}}
+
+{{~#if minItems ~}}
+    * **Min items:** `{{ minItems }}`
+{{/if~}}
+
+{{~#if maxItems ~}}
+    * **Max items:** `{{ maxItems }}`
+{{/if~}}
+
+{{~#if minimum ~}}
+    * **Minimum:** `&gt;= {{ minimum }}`
+{{/if~}}
+
+{{~#if exclusiveMinimum ~}}
+    * **Minimum:** `&gt; {{ exclusiveMinimum }}`
+{{/if~}}
+
+{{~#if maximum ~}}
+    * **Maximum:** `&lt;= {{ maximum }}`
+{{/if~}}
+
+{{~#if exclusiveMaximum ~}}
+    * **Maximum:** `&lt; {{ exclusiveMaximum }}`
+{{/if~}}
+
+
+{{~/inline~}}
 {{!-- {{                 Main doc                 }} --}}
 # {{shortName}}
 
@@ -57,11 +110,12 @@ type: "{{cls}}"
 {{!-- {{                 Inputs                 }} --}}
 ## Inputs
 {{#if inputs}}
-{{#each inputs as | outputs fullName | ~}}
+{{#each inputs as | input fullName | ~}}
 ### `{{fullName}}`
-* **Type:** {{> fieldType }}
-* **Dynamic:** {{yesno dynamic yes="✔️" no="❌" maybe="❓"}}
-* **Required:** {{yesno required yes="✔️" no="❌" maybe="❓"}}
+{{> fieldType }}
+* **Dynamic:** {{yesno $dynamic yes="✔️" no="❌" maybe="❓"}}
+* **Required:** {{yesno $required yes="✔️" no="❌" maybe="❌"}}
+{{> fieldDetail }}
 {{> body }}
 {{/each ~}}
 {{/if}}
@@ -69,9 +123,10 @@ type: "{{cls}}"
 {{!-- {{                 Outputs                 }} --}}
 {{#if outputs}}
 ## Outputs
-{{#each outputs  as | outputs fullName | ~}}
+{{#each outputs  as | output fullName | ~}}
 ### `{{fullName}}`
-* **Type:** {{> fieldType }}
+{{> fieldType }}
+{{> fieldDetail }}
 {{> body }}
 {{/each}}
 {{/if}}

@@ -1,33 +1,33 @@
 dependencies {
     // micronaut
-    compile "info.picocli:picocli"
-    compile "io.micronaut.configuration:micronaut-picocli"
-    compile "io.micronaut:micronaut-management"
-    compile "io.micronaut:micronaut-http-server-netty"
+    implementation "info.picocli:picocli"
+    implementation "io.micronaut.configuration:micronaut-picocli"
+    implementation "io.micronaut:micronaut-management"
+    implementation "io.micronaut:micronaut-http-server-netty"
 
     // plugins
-    compile 'org.eclipse.aether:aether-api:1.1.0'
-    compile 'org.eclipse.aether:aether-spi:1.1.0'
-    compile 'org.eclipse.aether:aether-util:1.1.0'
-    compile 'org.eclipse.aether:aether-impl:1.1.0'
-    compile 'org.eclipse.aether:aether-connector-basic:1.1.0'
-    compile 'org.eclipse.aether:aether-transport-file:1.1.0'
-    compile 'org.eclipse.aether:aether-transport-http:1.1.0'
-    compile('org.apache.maven:maven-aether-provider:3.1.0') {
+    implementation 'org.eclipse.aether:aether-api:1.1.0'
+    implementation 'org.eclipse.aether:aether-spi:1.1.0'
+    implementation 'org.eclipse.aether:aether-util:1.1.0'
+    implementation 'org.eclipse.aether:aether-impl:1.1.0'
+    implementation 'org.eclipse.aether:aether-connector-basic:1.1.0'
+    implementation 'org.eclipse.aether:aether-transport-file:1.1.0'
+    implementation 'org.eclipse.aether:aether-transport-http:1.1.0'
+    implementation('org.apache.maven:maven-aether-provider:3.1.0') {
         // sisu dependency injector is not used
         exclude group: 'org.eclipse.sisu'
     }
 
     // modules
-    compile project(":core")
+    implementation project(":core")
 
-    compile project(":repository-memory")
-    compile project(":repository-elasticsearch")
+    implementation project(":repository-memory")
+    implementation project(":repository-elasticsearch")
 
-    compile project(":runner-memory")
-    compile project(":runner-kafka")
+    implementation project(":runner-memory")
+    implementation project(":runner-kafka")
 
-    compile project(":storage-local")
+    implementation project(":storage-local")
 
-    compile project(":webserver")
+    implementation project(":webserver")
 }

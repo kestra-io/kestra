@@ -1,13 +1,13 @@
 package org.kestra.core.models.listeners.types;
 
-import org.kestra.core.models.annotations.Documentation;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Keep to avoid BC
  */
 @Deprecated
-@Documentation(
-    description = "Deprecated, use `org.kestra.core.models.conditions.types.ExecutionStatusCondition`"
+@Schema(
+    title = "Deprecated, use `org.kestra.core.models.conditions.types.ExecutionStatusCondition`"
 )
 public class ExecutionStatusCondition extends org.kestra.core.models.conditions.types.ExecutionStatusCondition {
 

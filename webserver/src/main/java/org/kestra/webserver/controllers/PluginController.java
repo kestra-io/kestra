@@ -34,14 +34,17 @@ public class PluginController {
             .collect(Collectors.toList());
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Get(uri = "{cls}")
     public Doc pluginDocumentation(String cls) throws HttpStatusException, IOException {
         PluginDocumentation pluginDocumentation = pluginDocumentation(plugins(), cls);
 
         return new Doc(
-            pluginDocumentation,
-            DocumentationGenerator.render(pluginDocumentation)
+            DocumentationGenerator.render(pluginDocumentation),
+            new Schema(
+                pluginDocumentation.getPropertiesSchema(),
+                pluginDocumentation.getOutputsSchema()
+            )
         );
     }
 
@@ -65,7 +68,7 @@ public class PluginController {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private PluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className) throws IOException {
+    private PluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className)  {
         RegisteredPlugin registeredPlugin = plugins
             .stream()
             .filter(r -> r.hasClass(className))
@@ -76,8 +79,10 @@ public class PluginController {
             .findClass(className)
             .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
 
+        Class baseCls = registeredPlugin
+            .baseClass(className);
 
-        return PluginDocumentation.of(registeredPlugin, cls);
+        return PluginDocumentation.of(registeredPlugin, cls, baseCls);
     }
 
     @NoArgsConstructor
@@ -125,7 +130,15 @@ public class PluginController {
     @AllArgsConstructor
     @Data
     public static class Doc {
-        PluginDocumentation<?> details;
         String markdown;
+        Schema schema;
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Data
+    public static class Schema {
+        private Map<String, Object> properties;
+        private Map<String, Object> outputs;
     }
 }

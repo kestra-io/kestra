@@ -45,7 +45,7 @@ abstract public class JacksonMapper {
         return MAPPER.convertValue(object, TYPE_REFERENCE);
     }
 
-    public static <T> T toMap(Map<String, Object> map, Class<T> cls) {
+    public static <T> T toMap(Object map, Class<T> cls) {
         return MAPPER.convertValue(map, cls);
     }
 

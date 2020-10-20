@@ -10,6 +10,6 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class Document {
-    private String path;
-    private String body;
+    private final String path;
+    private final String body;
 }

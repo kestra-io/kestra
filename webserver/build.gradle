@@ -4,15 +4,15 @@ dependencies {
     annotationProcessor "io.micronaut.configuration:micronaut-openapi"
     compile "io.swagger.core.v3:swagger-annotations"
 
-    compile project(":core")
+    implementation project(":core")
 
-    compile "io.micronaut:micronaut-management"
-    compile "io.micronaut:micronaut-http-client"
-    compile "io.micronaut:micronaut-http-server-netty"
+    implementation "io.micronaut:micronaut-management"
+    implementation "io.micronaut:micronaut-http-client"
+    implementation "io.micronaut:micronaut-http-server-netty"
 
     // test
-    testCompile project(':core').sourceSets.test.output
-    testCompile project(':repository-memory')
-    testCompile project(':runner-memory')
-    testCompile project(':storage-local')
+    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':repository-memory')
+    testImplementation project(':runner-memory')
+    testImplementation project(':storage-local')
 }

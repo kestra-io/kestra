@@ -1,11 +1,11 @@
 package org.kestra.core.tasks.debugs;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
-import org.kestra.core.models.annotations.InputProperty;
-import org.kestra.core.models.annotations.OutputProperty;
+import org.kestra.core.models.annotations.Plugin;
+import org.kestra.core.models.annotations.PluginProperty;
 import org.kestra.core.models.executions.metrics.Counter;
 import org.kestra.core.models.executions.metrics.Timer;
 import org.kestra.core.models.tasks.RunnableTask;
@@ -20,22 +20,23 @@ import java.time.Duration;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Documentation(
-    description = "Simple debugging task that return a renderer value.",
-    body = {
-        "This task is mostly useful for debugging purpose.",
-        "",
+@Schema(
+    title = "Simple debugging task that return a renderer value.",
+    description = "This task is mostly useful for debugging purpose.\n\n" +
         "This one allow you to see inputs or outputs variables for example, or to debug some templated functions."
+)
+@Plugin(
+    examples = {
+        @Example(
+            code = "format: \"{{task.id}} > {{taskrun.startDate}}\""
+        )
     }
 )
-@Example(
-    code = "format: \"{{task.id}} > {{taskrun.startDate}}\""
-)
 public class Return extends Task implements RunnableTask<Return.Output> {
-    @InputProperty(
-        description = "The templatized string to render",
-        dynamic = true
+    @Schema(
+        title = "The templatized string to render"
     )
+    @PluginProperty(dynamic = true)
     private String format;
 
     @Override
@@ -61,8 +62,8 @@ public class Return extends Task implements RunnableTask<Return.Output> {
     @Builder
     @Getter
     public static class Output implements org.kestra.core.models.tasks.Output {
-        @OutputProperty(
-            description = "The generated string"
+        @Schema(
+            title = "The generated string"
         )
         private String value;
     }

@@ -5,15 +5,14 @@ repositories {
 }
 
 dependencies {
-    compile project(":core")
+    implementation project(":core")
 
-    compile group: "org.apache.kafka", name: "kafka-clients", version: kafkaVersion
-    compile group: "org.apache.kafka", name: 'kafka-streams', version: kafkaVersion
+    implementation group: "org.apache.kafka", name: "kafka-clients", version: kafkaVersion
+    implementation group: "org.apache.kafka", name: 'kafka-streams', version: kafkaVersion
 
-    testCompile project(':core').sourceSets.test.output
-    testCompile project(':repository-memory')
-    testCompile project(':storage-local')
+    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':repository-memory')
+    testImplementation project(':storage-local')
 
-
-    testCompile group: 'com.bakdata.fluent-kafka-streams-tests', name: 'fluent-kafka-streams-tests', version: "2.1.0"
+    testImplementation group: 'com.bakdata.fluent-kafka-streams-tests', name: 'fluent-kafka-streams-tests', version: "2.1.0"
 }

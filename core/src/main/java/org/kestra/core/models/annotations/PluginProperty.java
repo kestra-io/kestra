@@ -10,19 +10,14 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Retention(RUNTIME)
 @Target({ElementType.FIELD})
-public @interface InputProperty {
-    /**
-     * @return The short description of current element
-     */
-    String description() default "";
-
-    /**
-     * @return The body of current element
-     */
-    String[] body() default "";
-
+public @interface PluginProperty {
     /**
      * @return If the properties is renderer
      */
     boolean dynamic() default false;
+
+    /**
+     * @return the Class for a map
+     */
+    Class<?> additionalProperties() default Object.class;
 }

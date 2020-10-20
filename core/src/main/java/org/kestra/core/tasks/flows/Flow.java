@@ -1,12 +1,12 @@
 package org.kestra.core.tasks.flows;
 
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
-import org.kestra.core.models.annotations.InputProperty;
-import org.kestra.core.models.annotations.OutputProperty;
+import org.kestra.core.models.annotations.Plugin;
+import org.kestra.core.models.annotations.PluginProperty;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.RunnableTask;
@@ -28,54 +28,58 @@ import javax.validation.constraints.NotNull;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Documentation(
-    description = "Trigger another flow"
+@Schema(
+    title = "Trigger another flow"
 )
-@Example(
-    title = "Trigger another flow, passing some file and arguments",
-    code = {
-        "namespace: org.kestra.tests",
-        "flowId: my-sub-flows",
-        "inputs:",
-        "  file: \"{{ outputs.my-task.files.resolver' }}\"",
-        "  store: 12",
-        "wait: false"
+@Plugin(
+    examples = {
+        @Example(
+            title = "Trigger another flow, passing some file and arguments",
+            code = {
+                "namespace: org.kestra.tests",
+                "flowId: my-sub-flows",
+                "inputs:",
+                "  file: \"{{ outputs.my-task.files.resolver' }}\"",
+                "  store: 12",
+                "wait: false"
+            }
+        )
     }
 )
 public class Flow extends Task implements RunnableTask<Flow.Output> {
     @NotNull
-    @InputProperty(
-        description = "The namespace of the flow to trigger",
-        dynamic = true
+    @Schema(
+        title = "The namespace of the flow to trigger"
     )
+    @PluginProperty(dynamic = true)
     private String namespace;
 
     @NotNull
-    @InputProperty(
-        description = "The flowId to trigger",
-        dynamic = true
+    @Schema(
+        title = "The flowId to trigger"
     )
+    @PluginProperty(dynamic = true)
     private String flowId;
 
-    @InputProperty(
-        description = "The revision of the flow you want to trigger",
-        body = "By default, we trigger the last version.",
-        dynamic = false
+    @Schema(
+        title = "The revision of the flow you want to trigger",
+        description = "By default, we trigger the last version."
     )
+    @PluginProperty(dynamic = true)
     private Integer revision;
 
-    @InputProperty(
-        description = "The input to pass to the triggered flow",
-        dynamic = true
+    @Schema(
+        title = "The input to pass to the triggered flow"
     )
+    @PluginProperty(dynamic = true)
     private Map<String, String> inputs;
 
     @Builder.Default
-    @InputProperty(
-        description = "Wait the end of the execution.",
-        body = "By default, we don't wait till the end of the flow, if you set to true, we wait the end of the trigger flow before continue this one.",
-        dynamic = false
+    @Schema(
+        title = "Wait the end of the execution.",
+        description = "By default, we don't wait till the end of the flow, if you set to true, we wait the end of the trigger flow before continue this one."
     )
+    @PluginProperty(dynamic = true)
     private Boolean wait = false;
 
     @SuppressWarnings("unchecked")
@@ -138,14 +142,14 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     @Builder
     @Getter
     public static class Output implements org.kestra.core.models.tasks.Output {
-        @OutputProperty(
-            description = "The id of the execution trigger."
+        @Schema(
+            title = "The id of the execution trigger."
         )
         private String executionId;
 
-        @OutputProperty(
-            description = "The state of the execution trigger.",
-            body = "Only available if the execution is waited with `wait` options"
+        @Schema(
+            title = "The state of the execution trigger.",
+            description = "Only available if the execution is waited with `wait` options"
         )
         private State.Type state;
     }

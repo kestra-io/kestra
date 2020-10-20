@@ -1,13 +1,14 @@
 package org.kestra.core.tasks.flows;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
-import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
+import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
@@ -34,29 +35,33 @@ import javax.validation.Valid;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Documentation(
-    description = "Process task in parallel",
-    body = "This task processes tasks in parallel. It makes it convinient to process many tasks at once."
+@Schema(
+    title = "Process task in parallel",
+    description = "This task processes tasks in parallel. It makes it convinient to process many tasks at once."
 )
-@Example(
-    full = true,
-    code = {
-        "id: parallel",
-        "namespace: org.kestra.tests\n" +
-        "",
-        "tasks:\n" +
-        "  - id: parallel\n" +
-        "    type: org.kestra.core.tasks.flows.Parallel\n" +
-        "    tasks:\n" +
-        "      - id: 1st\n" +
-        "        type: org.kestra.core.tasks.debugs.Return\n" +
-        "        format: \"{{task.id}} > {{taskrun.startDate}}\"\n" +
-        "      - id: 2nd\n" +
-        "        type: org.kestra.core.tasks.debugs.Return\n" +
-        "        format: \"{{task.id}} > {{taskrun.id}}\"\n" +
-        "  - id: last\n" +
-        "    type: org.kestra.core.tasks.debugs.Return\n" +
-        "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+@Plugin(
+    examples = {
+        @Example(
+            full = true,
+            code = {
+                "id: parallel",
+                "namespace: org.kestra.tests\n" +
+                    "",
+                "tasks:\n" +
+                    "  - id: parallel\n" +
+                    "    type: org.kestra.core.tasks.flows.Parallel\n" +
+                    "    tasks:\n" +
+                    "      - id: 1st\n" +
+                    "        type: org.kestra.core.tasks.debugs.Return\n" +
+                    "        format: \"{{task.id}} > {{taskrun.startDate}}\"\n" +
+                    "      - id: 2nd\n" +
+                    "        type: org.kestra.core.tasks.debugs.Return\n" +
+                    "        format: \"{{task.id}} > {{taskrun.id}}\"\n" +
+                    "  - id: last\n" +
+                    "    type: org.kestra.core.tasks.debugs.Return\n" +
+                    "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+            }
+        )
     }
 )
 public class Parallel extends Task implements FlowableTask<VoidOutput> {

@@ -1,13 +1,13 @@
 package org.kestra.core.tasks.scripts;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.io.FileUtils;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
-import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
-import org.kestra.core.models.annotations.InputProperty;
-import org.kestra.core.models.annotations.OutputProperty;
+import org.kestra.core.models.annotations.Plugin;
+import org.kestra.core.models.annotations.PluginProperty;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.runners.RunContext;
@@ -21,6 +21,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 import static org.kestra.core.utils.Rethrow.*;
 
@@ -29,105 +31,104 @@ import static org.kestra.core.utils.Rethrow.*;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Documentation(
-    description = "Execute a Bash script, command or set of commands."
+@Schema(
+    title = "Execute a Bash script, command or set of commands."
 )
-@Example(
-    title = "Single bash command",
-    code = {
-        "commands:",
-        "- echo \"The current execution is : {{execution.id}}\""
-    }
-)
-@Example(
-    title = "Bash command that generate file in storage accessible through outputs",
-    code = {
-        "outputsFiles:",
-        "- first",
-        "- second",
-        "commands:",
-        "- echo \"1\" >> {{ outputFiles.first }}",
-        "- echo \"2\" >> {{ outputFiles.second }}"
-    }
-)
-@Example(
-    title = "Bash with some inputs files",
-    code = {
-        "inputsFiles:",
-        "  script.sh: |",
-        "    echo {{ workingDir }}",
-        "commands:",
-        "- /bin/bash script.sh",
+@Plugin(
+    examples = {
+        @Example(
+            title = "Single bash command",
+            code = {
+                "commands:",
+                "- echo \"The current execution is : {{execution.id}}\""
+            }
+        ),
+        @Example(
+            title = "Bash command that generate file in storage accessible through outputs",
+            code = {
+                "outputsFiles:",
+                "- first",
+                "- second",
+                "commands:",
+                "- echo \"1\" >> {{ outputFiles.first }}",
+                "- echo \"2\" >> {{ outputFiles.second }}"
+            }
+        ),
+        @Example(
+            title = "Bash with some inputs files",
+            code = {
+                "inputsFiles:",
+                "  script.sh: |",
+                "    echo {{ workingDir }}",
+                "commands:",
+                "- /bin/bash script.sh",
+            }
+        )
     }
 )
 public class Bash extends Task implements RunnableTask<Bash.Output> {
-    @InputProperty(
-        description = "The commands to run",
-        body = {
-            "Default command will be launched with `/bin/sh -c \"commands\"`"
-        },
-        dynamic = true
+    @Schema(
+        title = "The commands to run",
+        description = "Default command will be launched with `/bin/sh -c \"commands\"`"
     )
+    @PluginProperty(dynamic = false)
+    @NotNull
+    @NotEmpty
     protected String[] commands;
 
     @Builder.Default
-    @InputProperty(
-        description = "Interpreter to used",
-        body = {
-            "Default is `/bin/sh`"
-        },
-        dynamic = false
+    @Schema(
+        description = "Interpreter to used"
     )
+    @PluginProperty(dynamic = false)
+    @NotNull
+    @NotEmpty
     protected String interpreter = "/bin/sh";
 
     @Builder.Default
-    @InputProperty(
-        description = "Interpreter args used",
-        body = {
-            "Default is `{\"-c\"}`"
-        },
-        dynamic = false
+    @Schema(
+        title = "Interpreter args used"
     )
+    @PluginProperty(dynamic = false)
     protected String[] interpreterArgs = {"-c"};
 
     @Builder.Default
-    @InputProperty(
-        description = "Exit if any non true return value",
-        body = {
-            "This tells bash that it should exit the script if any statement returns a non-true return value.",
+    @Schema(
+        title = "Exit if any non true return value",
+        description = "This tells bash that it should exit the script if any statement returns a non-true return value. \n" +
             "The benefit of using -e is that it prevents errors snowballing into serious issues when they could " +
-                "have been caught earlier."
-        },
-        dynamic = true
+            "have been caught earlier."
     )
-    protected boolean exitOnFailed = true;
+    @PluginProperty(dynamic = false)
+    @NotNull
+    protected Boolean exitOnFailed = true;
 
-    @InputProperty(
-        description = "The list of files that will be uploaded to internal storage, ",
-        body = {
-            "/!\\deprecated property, use `outputsFiles` property instead"
-        },
-        dynamic = true
+    @Schema(
+        title = "The list of files that will be uploaded to internal storage, ",
+        description ="/!\\deprecated property, use `outputsFiles` property instead",
+        deprecated = true
     )
+    @PluginProperty(dynamic = true)
     protected List<String> files;
 
-    @InputProperty(
-        description = "Output file list that will be uploaded to internal storage",
-        body = {
-            "List of key that will generate temporary files.",
-            "On the command, just can use with special variable named `outputFiles.key`.",
+    @Schema(
+        title = "Output file list that will be uploaded to internal storage",
+        description = "List of key that will generate temporary files.\n" +
+            "On the command, just can use with special variable named `outputFiles.key`.\n" +
             "If you add a files with `[\"first\"]`, you can use the special vars `echo 1 >> {[ outputFiles.first }}`" +
-                " and you used on others tasks using `{{ outputs.task-id.files.first }}`"
-        },
-        dynamic = true
+            " and you used on others tasks using `{{ outputs.task-id.files.first }}`"
     )
+    @PluginProperty(dynamic = false)
     protected List<String> outputsFiles;
 
-    @InputProperty(
-        description = "Input files are extra files supplied by user that make it simpler organize code.",
-        body = {
-            "Describe a files map that will be written and usable in execution context. In python execution context is in a temp folder, for bash scripts, you can reach files using a inputsDirectory variable like 'source {{inputsDirectory}}/myfile.sh' "
-        },
+    @Schema(
+        title = "Input files are extra files supplied by user that make it simpler organize code.",
+        description = "Describe a files map that will be written and usable in execution context. In python execution " +
+            "context is in a temp folder, for bash scripts, you can reach files using a inputsDirectory variable " +
+            "like 'source {{inputsDirectory}}/myfile.sh' "
+    )
+    @PluginProperty(
+        additionalProperties = String.class,
         dynamic = true
     )
     protected Map<String, String> inputFiles;
@@ -367,22 +368,25 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
     @Builder
     @Getter
     public static class Output implements org.kestra.core.models.tasks.Output {
-        @OutputProperty(
-            description = "The standard output of the commands"
+        @Schema(
+            title = "The standard output of the commands"
         )
         private final List<String> stdOut;
 
-        @OutputProperty(
-            description = "The standard error of the commands"
+        @Schema(
+            title = "The standard error of the commands"
         )
         private final List<String> stdErr;
 
-        @OutputProperty(
-            description = "The exit code of the whole execution"
+        @Schema(
+            title = "The exit code of the whole execution"
         )
+        @NotNull
         private final int exitCode;
 
-
+        @Schema(
+            title = "The output files uri in Kestra internal storage"
+        )
         private final Map<String, URI> files;
     }
 
@@ -400,5 +404,4 @@ public class Bash extends Task implements RunnableTask<Bash.Output> {
         private final List<String> stdOut;
         private final List<String> stdErr;
     }
-
 }

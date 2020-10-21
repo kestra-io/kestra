@@ -6,7 +6,7 @@ import Flows from '../components/flows/Flows.vue'
 import Plugin from '../components/plugins/Plugin.vue'
 import Settings from '../components/settings/Settings.vue'
 import Templates from '../components/templates/Templates.vue'
-import TemplatesEdit from '../components/templates/TemplatesEdit.vue'
+import TemplateEdit from '../components/templates/TemplateEdit.vue'
 
 export default {
     mode: 'history',
@@ -28,9 +28,9 @@ export default {
         { name: 'pluginView', path: '/plugins/:cls', component: Plugin },
 
         //Templates
-        { name: 'templatesList', path: '/templates', component: Templates },
-        { name: 'templatesAdd', path: '/templates/new', component: TemplatesEdit },
-        { name: 'templateEdit', path: '/templates/edit/:namespace/:id', component: TemplatesEdit },
+        { name: 'templateList', path: '/templates', component: Templates },
+        { name: 'templateAdd', path: '/templates/new', component: TemplateEdit },
+        { name: 'templateEdit', path: '/templates/edit/:namespace/:id', component: TemplateEdit },
 
 
         //Settings

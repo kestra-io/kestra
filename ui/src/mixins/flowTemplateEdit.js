@@ -32,11 +32,11 @@ export default {
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}Edit` &&
-                this.$route.query.tab === "data-source"
+                (this.dataType === "template" || this.$route.query.tab === "data-source")
             );
         },
         canSave() {
-            return canSaveFlowTemplate(true, this.user, this.content, this.dataType);
+            return canSaveFlowTemplate(true, this.user, this.item, this.dataType);
         },
         routeInfo() {
             return {
@@ -56,12 +56,13 @@ export default {
         },
         canDelete() {
             return (
+                this.item &&
                 this.isEdit &&
                 this.user &&
                 this.user.isAllowed(
                     permission[this.dataType.toUpperCase()],
                     action.DELETE,
-                    this.content.namespace
+                    this.item.namespace
                 )
             );
         },

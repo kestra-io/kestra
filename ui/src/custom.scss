@@ -51,6 +51,16 @@ $vs-state-active-bg: $primary;
         display: inline-block;
         min-width: 100%;
     }
+
+    .content-wrapper .navbar .navbar-collapse & {
+        .vs__dropdown-toggle {
+            padding: 2px 0 2px 0;
+        }
+
+        .vs__actions {
+            padding-top: 0px;
+        }
+    }
 }
 @import '~vue-select/src/scss/vue-select.scss';
 

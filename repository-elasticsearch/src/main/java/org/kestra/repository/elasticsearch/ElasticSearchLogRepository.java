@@ -17,6 +17,7 @@ import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import org.slf4j.event.Level;
 
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -36,8 +37,18 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     }
 
     @Override
-    public ArrayListTotal<LogEntry> find(String query, Pageable pageable) {
-        return super.findQueryString(INDEX_NAME, query, pageable);
+    public ArrayListTotal<LogEntry> find(String query, Pageable pageable, Level minLevel) {
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.queryStringQuery(query));
+
+        if (minLevel != null) {
+            bool.must(minLevel(minLevel));
+        }
+
+        SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable)
+            .sort("timestamp", SortOrder.DESC);
+
+        return this.query(INDEX_NAME, sourceBuilder);
     }
 
     @Override

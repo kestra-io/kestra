@@ -11,7 +11,7 @@ public interface LogRepositoryInterface {
 
     List<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String TaskId, Level minLevel);
 
-    ArrayListTotal<LogEntry> find(String query, Pageable pageable);
+    ArrayListTotal<LogEntry> find(String query, Pageable pageable, Level minLevel);
 
     LogEntry save(LogEntry log);
 }

@@ -19,7 +19,7 @@
 <script>
 import Gantt from "./Gantt";
 import Overview from "./Overview";
-import Logs from "./Logs";
+import Logs from "../logs/Logs";
 import Topology from "./Topology";
 import ExecutionOutput from "./ExecutionOutput";
 import Trigger from "vue-material-design-icons/Cogs";

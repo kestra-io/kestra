@@ -1,8 +1,24 @@
 <template>
     <div class="line text-monospace" v-if="filtered">
-        <span :class="levelClass" class="badge">{{log.level.padEnd(9)}}</span>
-        <span class="badge bg-light text-dark">{{log.timestamp  | date('LLLL') }}</span>
-        <span class="message">{{log.message}}</span>
+        <span :class="levelClass" class="badge">{{ log.level.padEnd(9) }}</span>
+        <span class="badge bg-light text-dark">{{
+            log.timestamp | date("LLLL")
+        }}</span>
+        <b-row v-if="metas.length">
+            <b-col md="12">
+                <div class="meta-wrapper">
+                    <div
+                        class="meta-log float-left"
+                        v-for="(meta, x) in metaWithValue"
+                        :key="x"
+                    >
+                        <span class="left bg-primary">{{ meta.key }}</span>
+                        <span class="right bg-warning">{{ meta.value }}</span>
+                    </div>
+                </div>
+            </b-col>
+        </b-row>
+        <span class="message">{{ log.message }}</span>
     </div>
 </template>
 <script>
@@ -10,17 +26,31 @@ export default {
     props: {
         log: {
             type: Object,
-            required: true
+            required: true,
         },
         filter: {
             type: String,
-            default: ""
+            default: "",
         },
         level: {
             type: String,
-        }
+        },
+        metas: {
+            type: Array,
+            default: () => [],
+        },
     },
     computed: {
+        metaWithValue() {
+            const metaWithValue = [];
+            for (const key of this.metas) {
+                console.log("this.log[key]", key, this.log, this.log[key]);
+                if (this.log[key]) {
+                    metaWithValue.push({ key, value: this.log[key] });
+                }
+            }
+            return metaWithValue;
+        },
         levelClass() {
             return {
                 TRACE: "badge-info",
@@ -28,14 +58,16 @@ export default {
                 INFO: "badge-primary",
                 WARN: "badge-warning",
                 ERROR: "badge-danger",
-                CRITICAL: "badge-danger font-weight-bold"
+                CRITICAL: "badge-danger font-weight-bold",
             }[this.log.level];
         },
         filtered() {
-            return this.log.message &&
-                this.log.message.toLowerCase().includes(this.filter);
-        }
-    }
+            return (
+                this.log.message &&
+                this.log.message.toLowerCase().includes(this.filter)
+            );
+        },
+    },
 };
 </script>
 <style scoped lang="scss">
@@ -55,6 +87,22 @@ div {
 
     .message {
         padding: 0 $badge-padding-x;
+    }
+    .meta-wrapper {
+        line-height: 30px;
+        clear: both;
+        font-size: 0.7em;
+        .meta-log {
+            span {
+                padding: 5px 5px 3px 5px;
+            }
+            .left {
+                border-radius: 8px 0px 0px 8px;
+            }
+            .right {
+                border-radius: 0px 8px 8px 0px;
+            }
+        }
     }
 }
 </style>

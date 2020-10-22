@@ -3,6 +3,8 @@ package org.kestra.core.models.executions;
 import lombok.Builder;
 import lombok.Value;
 import org.kestra.core.models.DeletedInterface;
+import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.triggers.AbstractTrigger;
 import org.slf4j.event.Level;
 
 import java.time.Instant;
@@ -20,17 +22,15 @@ public class LogEntry implements DeletedInterface {
     @NotNull
     private String flowId;
 
-    @NotNull
     private String taskId;
 
-    @NotNull
     private String executionId;
 
-    @NotNull
     private String taskRunId;
 
-    @NotNull
-    private int attemptNumber;
+    private Integer attemptNumber;
+
+    private String triggerId;
 
     private Instant timestamp;
 
@@ -51,5 +51,24 @@ public class LogEntry implements DeletedInterface {
         return Arrays.stream(Level.values())
             .filter(level -> level.toInt() >= minLevel.toInt())
             .collect(Collectors.toList());
+    }
+
+    public static LogEntry of(TaskRun taskRun) {
+        return LogEntry.builder()
+            .namespace(taskRun.getNamespace())
+            .flowId(taskRun.getFlowId())
+            .taskId(taskRun.getTaskId())
+            .executionId(taskRun.getExecutionId())
+            .taskRunId(taskRun.getId())
+            .attemptNumber(taskRun.attemptNumber())
+            .build();
+    }
+
+    public static LogEntry of(Flow flow, AbstractTrigger abstractTrigger) {
+        return LogEntry.builder()
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .triggerId(abstractTrigger.getId())
+            .build();
     }
 }

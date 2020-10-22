@@ -25,6 +25,9 @@ public class FlowService {
     @Inject
     RunContextFactory runContextFactory;
 
+    @Inject
+    ConditionService conditionService;
+
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {
         return stream
             .collect(keepLastVersionCollector())
@@ -53,7 +56,13 @@ public class FlowService {
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
             .flatMap(flow -> flow.getTriggers()
                 .stream()
-                .map(trigger -> new FlowWithTrigger(flow, trigger)))
+                .map(trigger -> new FlowWithTrigger(flow, trigger))
+            )
+            .filter(f -> conditionService.isValid(
+                f.getTrigger(),
+                f.getFlow(),
+                execution
+            ))
             .filter(f -> f.getTrigger() instanceof org.kestra.core.models.triggers.types.Flow)
             .map(f -> new FlowWithFlowTrigger(
                     f.getFlow(),

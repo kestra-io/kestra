@@ -12,6 +12,7 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
+import org.kestra.core.services.ConditionService;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -25,10 +26,12 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 public abstract class AbstractExecutor implements Runnable {
     protected RunContextFactory runContextFactory;
     protected MetricRegistry metricRegistry;
+    protected ConditionService conditionService;
 
-    public AbstractExecutor(RunContextFactory runContextFactory, MetricRegistry metricRegistry) {
+    public AbstractExecutor(RunContextFactory runContextFactory, MetricRegistry metricRegistry, ConditionService conditionService) {
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
+        this.conditionService = conditionService;
     }
 
     protected Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
@@ -322,7 +325,7 @@ public abstract class AbstractExecutor implements Runnable {
             return new ArrayList<>();
         }
 
-        List<ResolvedTask> currentTasks = execution.findValidListeners(flow);
+        List<ResolvedTask> currentTasks = conditionService.findValidListeners(flow, execution);
 
         return FlowableUtils.resolveSequentialNexts(
             execution,

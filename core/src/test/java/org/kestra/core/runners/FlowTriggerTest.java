@@ -9,7 +9,7 @@ public class FlowTriggerTest extends AbstractMemoryRunnerTest {
     private FlowTriggerCaseTest runnerCaseTest;
 
     @Test
-    void restart() throws Exception {
+    void trigger() throws Exception {
         runnerCaseTest.trigger();
     }
 }

@@ -6,10 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.flows.Flow;
 
-import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
@@ -19,7 +17,7 @@ import javax.validation.constraints.Pattern;
 @NoArgsConstructor
 @AllArgsConstructor
 @Introspected
-public abstract class Condition implements BiPredicate<Flow, Execution> {
+public abstract class Condition implements Predicate<ConditionContext> {
     @NotNull
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     protected String type;

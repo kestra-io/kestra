@@ -11,6 +11,7 @@ import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.AbstractMetricEntry;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.Task;
@@ -64,7 +65,7 @@ public class RunContext {
     public RunContext(ApplicationContext applicationContext, Flow flow, Task task, Execution execution, TaskRun taskRun) {
         this.initBean(applicationContext);
         this.initContext(flow, task, execution, taskRun);
-        this.runContextLogger = new RunContextLogger();
+        this.initLogger(taskRun);
     }
 
     /**
@@ -77,7 +78,7 @@ public class RunContext {
 
         this.storageOutputPrefix = this.storageInterface.outputPrefix(flow);
         this.variables = this.variables(flow, null, null, null, trigger);
-        this.runContextLogger = new RunContextLogger();
+        this.initLogger(flow, trigger);
     }
 
     /**
@@ -120,7 +121,18 @@ public class RunContext {
                 QueueInterface.class,
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
-            taskRun
+            LogEntry.of(taskRun)
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initLogger(Flow flow, AbstractTrigger trigger) {
+        this.runContextLogger = new RunContextLogger(
+            applicationContext.findBean(
+                QueueInterface.class,
+                Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+            ).orElseThrow(),
+            LogEntry.of(flow, trigger)
         );
     }
 
@@ -197,6 +209,10 @@ public class RunContext {
 
             if (execution.getInputs() != null) {
                 builder.put("inputs", execution.getInputs());
+            }
+
+            if (execution.getTrigger() != null) {
+                builder.put("trigger", execution.getTrigger().getVariables());
             }
 
             if (execution.getVariables() != null) {
@@ -283,11 +299,6 @@ public class RunContext {
                     Map.Entry::getValue
                 ))
         );
-    }
-
-    @Deprecated
-    public org.slf4j.Logger logger(Class<?> cls) {
-        return runContextLogger.logger();
     }
 
     public org.slf4j.Logger logger() {

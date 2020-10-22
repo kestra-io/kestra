@@ -19,6 +19,7 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.repositories.TriggerRepositoryInterface;
 import org.kestra.core.runners.RunContextFactory;
+import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowListenersService;
 import org.kestra.core.utils.Await;
 import org.kestra.core.utils.ExecutorsUtils;
@@ -44,6 +45,7 @@ public class Scheduler implements Runnable, AutoCloseable {
     private final ExecutionRepositoryInterface executionRepository;
     private final RunContextFactory runContextFactory;
     private final MetricRegistry metricRegistry;
+    private final ConditionService conditionService;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
     private final ListeningExecutorService cachedExecutor;
@@ -68,6 +70,7 @@ public class Scheduler implements Runnable, AutoCloseable {
         this.executionRepository = executionRepository;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
+        this.conditionService = applicationContext.getBean(ConditionService.class);
 
         this.cachedExecutor = MoreExecutors.listeningDecorator(executorsUtils.cachedThreadPool("scheduler_executor"));
     }
@@ -129,6 +132,7 @@ public class Scheduler implements Runnable, AutoCloseable {
             // get all that is ready from evaluation
             List<FlowWithPollingTriggerNextDate> readyForEvaluate = schedulable
                 .stream()
+                .filter(f -> conditionService.isValid(f.getTrigger(), f.getFlow()))
                 .map(flowWithTrigger -> FlowWithPollingTrigger.builder()
                     .flow(flowWithTrigger.getFlow())
                     .trigger(flowWithTrigger.getTrigger())

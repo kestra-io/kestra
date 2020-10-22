@@ -24,6 +24,12 @@
                 </span>
             </template>
         </b-table>
+
+        <div v-if="execution.trigger" class="mt-4">
+            <h5>{{ $t('trigger') }}</h5>
+            <vars :execution="execution" :data="execution.trigger"/>
+        </div>
+
         <div v-if="execution.inputs" class="mt-4">
             <h5>{{ $t('inputs') }}</h5>
             <vars :execution="execution" :data="inputs"/>

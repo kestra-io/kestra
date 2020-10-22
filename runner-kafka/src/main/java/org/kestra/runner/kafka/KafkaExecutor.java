@@ -17,6 +17,7 @@ import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.kestra.core.metrics.MetricRegistry;
+import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
@@ -27,6 +28,7 @@ import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.*;
+import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowService;
 import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
@@ -65,9 +67,10 @@ public class KafkaExecutor extends AbstractExecutor {
         KafkaAdminService kafkaAdminService,
         @javax.inject.Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRegistry metricRegistry,
-        FlowService flowService
+        FlowService flowService,
+        ConditionService conditionService
     ) {
-        super(runContextFactory, metricRegistry);
+        super(runContextFactory, metricRegistry, conditionService);
 
         this.applicationContext = applicationContext;
         this.kafkaStreamService = kafkaStreamService;
@@ -392,7 +395,7 @@ public class KafkaExecutor extends AbstractExecutor {
     private void purgeExecutor(KStream<String, ExecutionWithFlow> stream) {
         KStream<String, ExecutionWithFlow> terminatedWithKilled = stream
             .filter(
-                (key, value) -> value.getExecution().isTerminatedWithListeners(value.getFlow()),
+                (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
                 Named.as("purgeExecutor-terminated-filter")
             );
 
@@ -478,7 +481,7 @@ public class KafkaExecutor extends AbstractExecutor {
     private void handleFlowTrigger(KStream<String, ExecutionWithFlow> stream) {
         stream
             .filter(
-                (key, value) -> value.getExecution().isTerminatedWithListeners(value.getFlow()),
+                (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
                 Named.as("handleFlowTrigger-terminated-filter")
             )
             .transformValues(

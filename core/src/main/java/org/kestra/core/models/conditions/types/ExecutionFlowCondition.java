@@ -7,22 +7,20 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.conditions.ConditionContext;
-import org.kestra.core.models.flows.State;
 
-import java.util.List;
-import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class ExecutionStatusCondition extends Condition {
-    @Valid
-    public List<State.Type> in;
+public class ExecutionFlowCondition extends Condition {
+    @NotNull
+    public String namespace;
 
-    @Valid
-    public List<State.Type> notIn;
+    @NotNull
+    public String flowId;
 
     @Override
     public boolean test(ConditionContext conditionContext) {
@@ -30,16 +28,6 @@ public class ExecutionStatusCondition extends Condition {
             throw new IllegalArgumentException("Invalid condition with execution null");
         }
 
-        boolean result = true;
-
-        if (this.in != null && !this.in.contains(conditionContext.getExecution().getState().getCurrent())) {
-            result = false;
-        }
-
-        if (this.notIn != null && this.notIn.contains(conditionContext.getExecution().getState().getCurrent())) {
-            result = false;
-        }
-
-        return result;
+        return conditionContext.getExecution().getNamespace().equals(this.namespace) && conditionContext.getExecution().getFlowId().equals(this.flowId);
     }
 }

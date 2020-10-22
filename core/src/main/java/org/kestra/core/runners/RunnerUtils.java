@@ -13,6 +13,7 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.services.ConditionService;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.utils.Await;
 import org.kestra.core.utils.IdUtils;
@@ -47,6 +48,9 @@ public class RunnerUtils {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @Inject
+    private ConditionService conditionService;
 
     public Map<String, Object> typedInputs(Flow flow, Execution execution, Map<String, String> in, Publisher<StreamingFileUpload> files) {
         if (files == null) {
@@ -226,11 +230,11 @@ public class RunnerUtils {
     }
 
     public Predicate<Execution> isTerminatedExecution(Execution execution, Flow flow) {
-        return e -> e.getId().equals(execution.getId()) && e.isTerminatedWithListeners(flow);
+        return e -> e.getId().equals(execution.getId()) && conditionService.isTerminatedWithListeners(flow, e);
     }
 
     private Predicate<Execution> isTerminatedChildExecution(Execution parentExecution, Flow flow) {
-        return e -> e.getParentId().equals(parentExecution.getId()) && e.isTerminatedWithListeners(flow);
+        return e -> e.getParentId().equals(parentExecution.getId()) && conditionService.isTerminatedWithListeners(flow, e);
     }
 
     public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) {

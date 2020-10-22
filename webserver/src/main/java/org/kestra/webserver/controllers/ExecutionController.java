@@ -23,6 +23,7 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.runners.RunnerUtils;
+import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.ExecutionService;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.utils.Await;
@@ -63,6 +64,9 @@ public class ExecutionController {
 
     @Inject
     private ExecutionService executionService;
+
+    @Inject
+    private ConditionService conditionService;
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
@@ -262,7 +266,7 @@ public class ExecutionController {
                 );
                 Flow flow = flowRepository.findByExecution(execution);
 
-                if (execution.isTerminatedWithListeners(flow)) {
+                if (conditionService.isTerminatedWithListeners(flow, execution)) {
                     emitter.onNext(Event.of(execution).id("end"));
                     emitter.onComplete();
                     return;
@@ -277,7 +281,7 @@ public class ExecutionController {
 
                         emitter.onNext(Event.of(current).id("progress"));
 
-                        if (current.isTerminatedWithListeners(flow)) {
+                        if (conditionService.isTerminatedWithListeners(flow, current)) {
                             emitter.onNext(Event.of(current).id("end"));
                             emitter.onComplete();
                         }

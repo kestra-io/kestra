@@ -12,20 +12,18 @@ import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.DeletedInterface;
-import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContextLogger;
-import org.kestra.core.services.ConditionService;
 import org.kestra.core.utils.MapUtils;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.constraints.NotNull;
 import java.util.zip.CRC32;
+import javax.validation.constraints.NotNull;
 
 @Value
 @Builder
@@ -57,6 +55,8 @@ public class Execution implements DeletedInterface {
 
     private String parentId;
 
+    private ExecutionTrigger trigger;
+
     @NotNull
     private boolean deleted = false;
 
@@ -70,7 +70,8 @@ public class Execution implements DeletedInterface {
             this.inputs,
             this.variables,
             this.state.withState(state),
-            this.parentId
+            this.parentId,
+            this.trigger
         );
     }
 
@@ -96,7 +97,8 @@ public class Execution implements DeletedInterface {
             this.inputs,
             this.variables,
             this.state,
-            this.parentId
+            this.parentId,
+            this.trigger
         );
     }
 
@@ -110,7 +112,8 @@ public class Execution implements DeletedInterface {
             this.inputs,
             this.variables,
             state,
-            this.id
+            this.id,
+            this.trigger
         );
     }
 
@@ -248,14 +251,6 @@ public class Execution implements DeletedInterface {
             .stream()
             .filter(t -> t.getState().isTerninated())
         );
-    }
-
-    public boolean isTerminatedWithListeners(Flow flow) {
-        if (!this.getState().isTerninated()) {
-            return false;
-        }
-
-        return this.isTerminated(this.findValidListeners(flow));
     }
 
     public boolean isTerminated(List<ResolvedTask> resolvedTasks) {
@@ -421,7 +416,7 @@ public class Execution implements DeletedInterface {
                         .withState(State.Type.FAILED))
                 )
                 .withState(State.Type.FAILED),
-            RunContextLogger.logEntries(loggingEventFromException(e), taskRun)
+            RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(taskRun))
         );
     }
 
@@ -446,7 +441,7 @@ public class Execution implements DeletedInterface {
                         .collect(Collectors.toList())
                 )
                 .withState(State.Type.FAILED),
-            RunContextLogger.logEntries(loggingEventFromException(e), taskRun)
+            RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(taskRun))
         );
     }
 
@@ -478,22 +473,6 @@ public class Execution implements DeletedInterface {
         loggingEvent.setLoggerName(Execution.class.getName());
 
         return loggingEvent;
-    }
-
-    public List<ResolvedTask> findValidListeners(Flow flow) {
-        if (flow.getListeners() == null) {
-            return new ArrayList<>();
-        }
-
-        return flow
-            .getListeners()
-            .stream()
-            .filter(listener -> listener.getConditions() == null ||
-                ConditionService.valid(listener.getConditions(), flow, this)
-            )
-            .flatMap(listener -> listener.getTasks().stream())
-            .map(ResolvedTask::of)
-            .collect(Collectors.toList());
     }
 
     public Map<String, Object> outputs() {
@@ -551,9 +530,7 @@ public class Execution implements DeletedInterface {
         List<TaskRun> childs = findChilds(taskRun);
         Collections.reverse(childs);
 
-        for (int i = 0; i < childs.size() ; i++) {
-            TaskRun childTaskRun = childs.get(i);
-
+        for (TaskRun childTaskRun : childs) {
             HashMap<String, Object> current = new HashMap<>();
 
             if (childTaskRun.getValue() != null) {

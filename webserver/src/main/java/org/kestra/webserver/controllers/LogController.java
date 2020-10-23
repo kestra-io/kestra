@@ -48,10 +48,11 @@ public class LogController {
         @QueryValue(value = "q") String query,
         @QueryValue(value = "page", defaultValue = "1") int page,
         @QueryValue(value = "size", defaultValue = "10") int size,
+        @Nullable @QueryValue(value = "minLevel") Level minLevel,
         @Nullable @QueryValue(value = "sort") List<String> sort
     ) {
         return PagedResults.of(
-            logRepository.find(query, PageableUtils.from(page, size, sort))
+            logRepository.find(query, PageableUtils.from(page, size, sort), minLevel)
         );
     }
 

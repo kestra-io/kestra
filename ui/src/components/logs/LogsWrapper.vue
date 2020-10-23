@@ -1,20 +1,20 @@
 <template>
-    <b-card header-bg-variant="warning" header-tag="header">
-        <template #header>
+    <div class="log-panel">
+        <div class="log-content">
             <main-log-filter @onChange="loadData" />
-        </template>
-        <template v-for="(log, i) in logs">
-            <log-line
-                level="TRACE"
-                filter=""
-                :log="log"
-                :key="`${log.taskRunId}-${i}`"
-                :metas="metas"
-            />
-        </template>
-        <br />
+            <div class="bg-dark text-white">
+                <template v-for="(log, i) in logs">
+                    <log-line
+                        level="TRACE"
+                        filter=""
+                        :log="log"
+                        :key="`${log.taskRunId}-${i}`"
+                    />
+                </template>
+            </div>
+        </div>
         <pagination :total="total" @onPageChanged="onPageChanged" />
-    </b-card>
+    </div>
 </template>
 
 <script>
@@ -31,16 +31,6 @@ export default {
     data() {
         return {
             task: undefined,
-            metas: [
-                "attemptNumber",
-                "executionId",
-                "flowId",
-                "level",
-                "namespace",
-                "taskId",
-                "taskRunId",
-                "thread",
-            ],
         };
     },
     created() {
@@ -63,12 +53,12 @@ export default {
         },
         loadData() {
             const q = qb.logQueryBuilder(this.$route);
-            console.log("logQueryBuilder", q, qb);
 
             this.$store.dispatch("log/findLogs", {
                 q,
                 page: this.$route.query.page,
                 size: this.$route.query.size,
+                minLevel: `${this.$route.query.level || "INFO"}`
             });
         },
     },
@@ -76,11 +66,20 @@ export default {
 </script>
 <style lang="scss" scoped>
 @import "../../styles/_variable.scss";
+.log-panel {
+    > div.log-content {
+        margin-bottom: $spacer;
+        .navbar {
+            border: 1px solid $table-border-color;
+        }
 
-.line:nth-child(odd) {
-    background-color: $gray-300;
+        .line:nth-child(odd) {
+            background-color: $gray-800;
+        }
+        .line:nth-child(even) {
+            background-color: lighten($gray-800, 5%);
+        }
+    }
 }
-.line:nth-child(even) {
-    background-color: lighten($gray-200, 5%);
-}
+
 </style>

@@ -28,7 +28,6 @@ export default {
         const end = q.end ? iso(q.end) : '*'
         return [
             `message:${q.q ? '*' + q.q + '*' : "*"}`,
-            `level:${q.level || "INFO"}`,
             `timestamp:[${start} TO ${end}]`,
             `namespace:${q.namespace || "*"}`,
         ].join(" AND ")

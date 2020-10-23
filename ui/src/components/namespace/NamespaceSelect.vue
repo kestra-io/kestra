@@ -1,13 +1,11 @@
 <template>
-    <b-form-group>
-        <v-select
-            v-model="selectedNamespace"
-            @input="onNamespaceSelect"
-            :placeholder="$t('Select namespace')"
-            :options="namespaces"
-            class="ns-selector"
-        ></v-select>
-    </b-form-group>
+    <v-select
+        v-model="selectedNamespace"
+        @input="onNamespaceSelect"
+        :placeholder="$t('Select namespace')"
+        :options="namespaces"
+        class="ns-selector"
+    ></v-select>
 </template>
 <script>
 import { mapState } from "vuex";

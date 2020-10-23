@@ -2,6 +2,8 @@
     <b-form-select
         id="input-level"
         v-model="level"
+        class="form-control"
+        size="sm"
         @input="onChange"
         :options="levelOptions"
     ></b-form-select>

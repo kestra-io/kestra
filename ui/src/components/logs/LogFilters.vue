@@ -9,6 +9,7 @@
                     id="input-1"
                     v-model="filter"
                     required
+                    size="sm"
                     @input="onChange"
                     :placeholder="$t('search') + '...'"
                 ></b-form-input>

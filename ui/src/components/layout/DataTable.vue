@@ -39,68 +39,6 @@ export default {
 <style scoped lang="scss">
 @import "../../styles/variable";
 
-/deep/ .navbar {
-    border: 1px solid $table-border-color;
-    border-bottom: 0;
-
-    .navbar-collapse {
-        input,
-        .v-select,
-        .btn-group,
-        select,
-        .date-range {
-            margin-right: $spacer / 2;
-        }
-
-        &.collapse.show {
-            padding-top: $spacer/2;
-
-            form.inline,
-            fieldset,
-            .date-range {
-                width: 100%;
-            }
-
-            .date-range {
-                display: table;
-                > div {
-                    display: table-cell;
-                    &:first-child {
-                        padding-right: $spacer / 2;
-                    }
-                }
-            }
-
-            li.form-inline {
-                width: 100%;
-                display: block;
-            }
-
-            input,
-            .v-select,
-            .btn-group,
-            select,
-            .date-range {
-                width: 100%;
-                margin-right: 0;
-            }
-
-            input,
-            .v-select,
-            .btn-group,
-            select {
-                display: block;
-                margin-bottom: $spacer/2;
-
-                & input {
-                    margin-bottom: 0;
-                    width: 0;
-                }
-            }
-        }
-    }
-}
-
 small {
     padding: $pagination-padding-y-sm $pagination-padding-x-sm;
     white-space: nowrap;

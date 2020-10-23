@@ -36,8 +36,19 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     }
 
     @Override
-    public ArrayListTotal<LogEntry> find(String query, Pageable pageable) {
-        return super.findQueryString(INDEX_NAME, query, pageable);
+    public ArrayListTotal<LogEntry> find(String query, Pageable pageable, Level minLevel) {
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.queryStringQuery(query));
+
+        if (minLevel != null) {
+            bool.must(minLevel(minLevel));
+        }
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool)
+            .sort("timestamp", SortOrder.DESC);
+
+        return this.query(INDEX_NAME, sourceBuilder);
     }
 
     @Override

@@ -92,7 +92,17 @@ export default {
             class: "menu-icon"
           }
         },
-
+        {
+          href: "/logs",
+          alias: [
+            "/logs*"
+          ],
+          title: this.$t("logs"),
+          icon: {
+            element: "hexagon-multiple",
+            class: "menu-icon"
+          }
+        },
         {
           href: "/plugins",
           alias: [
@@ -112,17 +122,6 @@ export default {
           title: this.$t("settings"),
           icon: {
             element: "settings",
-            class: "menu-icon"
-          }
-        },
-        {
-          href: "/logs",
-          alias: [
-            "/logs*"
-          ],
-          title: this.$t("logs"),
-          icon: {
-            element: "hexagon-multiple",
             class: "menu-icon"
           }
         }

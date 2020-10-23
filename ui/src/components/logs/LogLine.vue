@@ -1,31 +1,16 @@
 <template>
     <div class="line text-monospace" v-if="filtered">
-        <b-row>
-            <b-col md="12">
-                <div class="metas-wrapper">
-                    <div class="float-left meta-wrapper">
-                        <span :class="levelClass" class="badge">{{
-                            log.level.padEnd(9)
-                        }}</span>
-                        <span class="badge bg-light text-dark">{{
-                            log.timestamp | date("LLLL")
-                        }}</span>
-                    </div>
-                    <div
-                        class="float-left meta-wrapper"
-                        v-for="(meta, x) in metaWithValue"
-                        :key="x"
-                    >
-                        <span :class="levelClass" class="badge">{{
-                            meta.key
-                        }}</span>
-                        <span class="badge bg-light text-dark">{{
-                            meta.value
-                        }}</span>
-                    </div>
-                </div>
-            </b-col>
-        </b-row>
+        <span :class="levelClass" class="header-badge">{{ log.level.padEnd(9) }}</span>
+        <span class="header-badge bg-light text-dark">{{ log.timestamp | date("LLLL") }}</span>
+        <span
+            v-for="(meta, x) in metaWithValue"
+            :key="x"
+        >
+            <span class="header-badge bg-light text-dark property">
+                <span>{{ meta.key }}</span>
+                {{ meta.value }}
+            </span>
+        </span>
         <span class="message">{{ log.message }}</span>
     </div>
 </template>
@@ -43,16 +28,12 @@ export default {
         level: {
             type: String,
         },
-        metas: {
-            type: Array,
-            default: () => [],
-        },
     },
     computed: {
         metaWithValue() {
             const metaWithValue = [];
-            for (const key of this.metas) {
-                if (this.log[key]) {
+            for (const key of Object.keys(this.log)) {
+                if (this.log[key] && !["message", "timestamp", "thread", "taskRunId", "level"].includes(key)) {
                     metaWithValue.push({ key, value: this.log[key] });
                 }
             }
@@ -80,29 +61,36 @@ export default {
 <style scoped lang="scss">
 @import "../../styles/_variable.scss";
 
-div {
+div.line {
     white-space: pre-wrap;
     word-break: break-all;
     padding: 0 $spacer/2;
 
-    .badge {
-        font-size: 100%;
+    .header-badge {
+        display: inline-block;
+        font-size: 95%;
         margin-left: -$spacer/2;
-        white-space: pre-wrap;
+        padding: $badge-padding-y $badge-padding-x;
         font-weight: $font-weight-base;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        margin-right: 10px;
+
+        &.property {
+            padding: $badge-padding-y $badge-padding-x/2;
+
+            > span {
+                font-family: $font-family-sans-serif;
+                color: $gray-600;
+            }
+        }
     }
 
     .message {
         padding: 0 $badge-padding-x;
     }
-    .metas-wrapper {
-        padding-left: 0px;
-    }
-    .text-monospace {
-        padding-left: 0px;
-    }
-    .meta-wrapper {
-        padding-right: 0px;
-    }
+
 }
 </style>

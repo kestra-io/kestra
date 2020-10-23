@@ -1,10 +1,15 @@
 <template>
-    <b-nav>
-        <search-field ref="searchField" @onSearch="onChange" />
-        <namespace-select data-type="flow" @onNamespaceSelect="onChange" />
-        <date-range @onDate="onChange" />
-        <log-level-selector @onChange="onChange" />
-    </b-nav>
+    <b-navbar toggleable="lg" type="light" variant="light">
+        <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+        <b-collapse id="nav-collapse" is-nav>
+            <b-nav-form>
+                <search-field ref="searchField" @onSearch="onChange" />
+                <namespace-select data-type="flow" @onNamespaceSelect="onChange" />
+                <log-level-selector @onChange="onChange" />
+                <date-range @onDate="onChange" />
+            </b-nav-form>
+        </b-collapse>
+    </b-navbar>
 </template>
 <script>
 import NamespaceSelect from "../namespace/NamespaceSelect";

@@ -12,7 +12,7 @@ import Templates from '../components/templates/Templates.vue'
 export default {
     mode: 'history',
     // eslint-disable-next-line no-undef
-    base: window.KESTRA_UI_PATH,
+    base: KESTRA_UI_PATH,
     routes: [
         //Flows
         { name: 'home', path: '/', component: Flows },

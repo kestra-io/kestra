@@ -43,11 +43,11 @@ public class Flow implements DeletedInterface {
 
     @NotNull
     @NotBlank
-    @Pattern(regexp="[a-zA-Z0-9_-]+")
+    @Pattern(regexp="[a-zA-Z0-9._-]+")
     private String id;
 
     @NotNull
-    @Pattern(regexp="[a-z0-9.]+")
+    @Pattern(regexp="[a-z0-9._-]+")
     private String namespace;
 
     @With

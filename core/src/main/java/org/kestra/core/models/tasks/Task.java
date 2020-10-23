@@ -31,7 +31,7 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 abstract public class Task {
     @NotNull
     @NotBlank
-    @Pattern(regexp="[a-zA-Z0-9_-]+")
+    @Pattern(regexp="[a-zA-Z0-9._-]+")
     protected String id;
 
     @NotNull

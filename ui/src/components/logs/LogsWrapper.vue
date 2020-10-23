@@ -1,7 +1,8 @@
 <template>
-    <div>
-        <log-filters @onChange="loadData" />
-        <hr />
+    <b-card header-bg-variant="warning" header-tag="header">
+        <template #header>
+            <main-log-filter @onChange="loadData" />
+        </template>
         <template v-for="(log, i) in logs">
             <log-line
                 level="TRACE"
@@ -13,19 +14,20 @@
         </template>
         <br />
         <pagination :total="total" @onPageChanged="onPageChanged" />
-    </div>
+    </b-card>
 </template>
 
 <script>
 import LogLine from "../logs/LogLine";
-import LogFilters from "./LogFilters";
 import Pagination from "../layout/Pagination";
 import { mapState } from "vuex";
 import RouteContext from "../../mixins/routeContext";
-// import queryUtils from '../../utils/queryBuilder'
+import MainLogFilter from "./MainLogFilter";
+import qb from "../../utils/queryBuilder";
+
 export default {
     mixins: [RouteContext],
-    components: { LogLine, Pagination, LogFilters },
+    components: { LogLine, Pagination, MainLogFilter },
     data() {
         return {
             task: undefined,
@@ -38,7 +40,6 @@ export default {
                 "taskId",
                 "taskRunId",
                 "thread",
-                "timestamp",
             ],
         };
     },
@@ -61,13 +62,11 @@ export default {
             this.loadData();
         },
         loadData() {
-            const query = [
-                "message:" +
-                    (this.$route.query.q ? `*${this.$route.query.q}*` : "*"),
-                this.$route.query.level || "INFO", //TODO use minLevel serverside here
-            ];
+            const q = qb.logQueryBuilder(this.$route);
+            console.log("logQueryBuilder", q, qb);
+
             this.$store.dispatch("log/findLogs", {
-                q: query.join(" AND "),
+                q,
                 page: this.$route.query.page,
                 size: this.$route.query.size,
             });

@@ -1,4 +1,4 @@
-import queryBuilder from "../utils/queryBuilder";
+import qb from "../utils/queryBuilder";
 export default {
     created() {
         if (localStorage.getItem(this.storageName) && this.$route.name === 'executionsList') {
@@ -8,7 +8,7 @@ export default {
                 });
             }
         }
-        this.query = queryBuilder(this.$route, this.fields);
+        this.query = qb.executionQueryBuilder(this.$route, this.fields);
         this.loadData(this.onDataLoaded);
     },
     watch: {
@@ -41,7 +41,7 @@ export default {
     },
     methods: {
         onSearch() {
-            this.query = queryBuilder(this.$route, this.fields);
+            this.query = qb.executionQueryBuilder(this.$route, this.fields);
             this.loadData(this.onDataLoaded);
         },
         onSort(sortItem) {
@@ -67,7 +67,7 @@ export default {
             this.loadData(this.onDataLoaded);
         },
         onNamespaceSelect() {
-            this.query = queryBuilder(this.$route, this.fields);
+            this.query = qb.executionQueryBuilder(this.$route, this.fields);
             this.$router.push({query: {...this.$route.query, page: 1}})
             this.loadData(this.onDataLoaded);
         },

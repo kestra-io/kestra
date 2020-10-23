@@ -1,19 +1,27 @@
 <template>
     <div class="line text-monospace" v-if="filtered">
-        <span :class="levelClass" class="badge">{{ log.level.padEnd(9) }}</span>
-        <span class="badge bg-light text-dark">{{
-            log.timestamp | date("LLLL")
-        }}</span>
-        <b-row v-if="metas.length">
+        <b-row>
             <b-col md="12">
-                <div class="meta-wrapper">
+                <div class="metas-wrapper">
+                    <div class="float-left meta-wrapper">
+                        <span :class="levelClass" class="badge">{{
+                            log.level.padEnd(9)
+                        }}</span>
+                        <span class="badge bg-light text-dark">{{
+                            log.timestamp | date("LLLL")
+                        }}</span>
+                    </div>
                     <div
-                        class="meta-log float-left"
+                        class="float-left meta-wrapper"
                         v-for="(meta, x) in metaWithValue"
                         :key="x"
                     >
-                        <span class="left bg-primary">{{ meta.key }}</span>
-                        <span class="right bg-warning">{{ meta.value }}</span>
+                        <span :class="levelClass" class="badge">{{
+                            meta.key
+                        }}</span>
+                        <span class="badge bg-light text-dark">{{
+                            meta.value
+                        }}</span>
                     </div>
                 </div>
             </b-col>
@@ -44,7 +52,6 @@ export default {
         metaWithValue() {
             const metaWithValue = [];
             for (const key of this.metas) {
-                console.log("this.log[key]", key, this.log, this.log[key]);
                 if (this.log[key]) {
                     metaWithValue.push({ key, value: this.log[key] });
                 }
@@ -88,21 +95,14 @@ div {
     .message {
         padding: 0 $badge-padding-x;
     }
+    .metas-wrapper {
+        padding-left: 0px;
+    }
+    .text-monospace {
+        padding-left: 0px;
+    }
     .meta-wrapper {
-        line-height: 30px;
-        clear: both;
-        font-size: 0.7em;
-        .meta-log {
-            span {
-                padding: 5px 5px 3px 5px;
-            }
-            .left {
-                border-radius: 8px 0px 0px 8px;
-            }
-            .right {
-                border-radius: 0px 8px 8px 0px;
-            }
-        }
+        padding-right: 0px;
     }
 }
 </style>

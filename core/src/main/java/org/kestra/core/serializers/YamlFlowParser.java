@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.models.validations.ModelValidator;
@@ -12,6 +13,7 @@ import org.kestra.core.serializers.helpers.HandleBarDeserializer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -30,6 +32,10 @@ public class YamlFlowParser {
 
     @Inject
     private ModelValidator modelValidator;
+
+    public static boolean isValidExtension(Path path) {
+        return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
+    }
 
     public Flow parse(File file) throws ConstraintViolationException {
         Flow flow = readFile(file);

@@ -31,7 +31,7 @@ public class LocalFlowRepositoryLoader {
 
     public void load(File basePath) throws IOException {
         List<Path> list = Files.walk(basePath.toPath())
-            .filter(path -> getFileExtension(path.toString()).equals("yaml"))
+            .filter(YamlFlowParser::isValidExtension)
             .collect(Collectors.toList());
 
         for (Path file: list) {

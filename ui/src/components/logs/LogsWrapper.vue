@@ -2,12 +2,15 @@
     <div class="log-panel">
         <div class="log-content">
             <main-log-filter @onChange="loadData" />
+            <div v-if="logs === undefined">
+                <b-alert variant="light" show>{{$t('no result')}}</b-alert>
+            </div>
             <div class="bg-dark text-white">
                 <template v-for="(log, i) in logs">
                     <log-line
                         level="TRACE"
                         filter=""
-                        :extaExclude="isFlowEdit ? ['namespace', 'flowId'] : []"
+                        :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
                         :log="log"
                         :key="`${log.taskRunId}-${i}`"
                     />

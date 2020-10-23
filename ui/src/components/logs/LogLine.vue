@@ -29,7 +29,7 @@ export default {
         level: {
             type: String,
         },
-        extaExclude: {
+        excludeMetas: {
             type: Array,
             default: () => [],
         },
@@ -44,7 +44,7 @@ export default {
                 "taskRunId",
                 "level",
             ];
-            excludes.push.apply(excludes, this.extaExclude);
+            excludes.push.apply(excludes, this.excludeMetas);
             for (const key in this.log) {
                 if (this.log[key] && !excludes.includes(key)) {
                     metaWithValue.push({ key, value: this.log[key] });

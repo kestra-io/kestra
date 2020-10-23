@@ -7,14 +7,14 @@ dependencies {
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 
     // serializers
-    compile group: "org.apache.avro", name: "avro", version: '1.9.1'
+    compile group: "org.apache.avro", name: "avro", version: '1.10.0'
     compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: '2.11.3'
 
     // validations
     compile group: 'org.hibernate.validator', name: 'hibernate-validator', version: '6.1.0.Final'
 
     // utils
-    compile group: 'net.jodah', name: 'failsafe', version: '2.3.1'
+    compile group: 'net.jodah', name: 'failsafe', version: '2.4.0'
 
     // scheduler
     compile group: 'com.cronutils', name: 'cron-utils', version: '9.0.2'

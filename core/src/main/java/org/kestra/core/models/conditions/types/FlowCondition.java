@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.models.annotations.Documentation;
+import org.kestra.core.models.annotations.Example;
+import org.kestra.core.models.annotations.InputProperty;
 import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.conditions.ConditionContext;
 
@@ -15,11 +18,25 @@ import javax.validation.constraints.NotNull;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@Documentation(
+    description = "Condition for a specific flow"
+)
+@Example(
+    full = true,
+    code = {
+        "- conditions:",
+        "    - type: org.kestra.core.models.conditions.types.FlowCondition",
+        "      namespace: org.kestra.tests",
+        "      flowId: my-current-flow"
+    }
+)
 public class FlowCondition extends Condition {
     @NotNull
+    @InputProperty(description = "The namespace of the flow")
     public String namespace;
 
     @NotNull
+    @InputProperty(description = "The flow id")
     public String flowId;
 
     @Override

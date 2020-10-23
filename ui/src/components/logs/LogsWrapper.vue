@@ -7,6 +7,7 @@
                     <log-line
                         level="TRACE"
                         filter=""
+                        :extaExclude="isFlowEdit ? ['namespace', 'flowId'] : []"
                         :log="log"
                         :key="`${log.taskRunId}-${i}`"
                     />
@@ -43,6 +44,9 @@ export default {
                 title: this.$t("logs"),
             };
         },
+        isFlowEdit() {
+            return this.$route.name === 'flowEdit'
+        }
     },
     methods: {
         onPageChanged(pagination) {
@@ -52,7 +56,12 @@ export default {
             this.loadData();
         },
         loadData() {
-            const q = qb.logQueryBuilder(this.$route);
+
+            let q = qb.logQueryBuilder(this.$route);
+            if (this.isFlowEdit) {
+                q += ` AND namespace:${this.$route.params.namespace}`
+                q += ` AND flowId:${this.$route.params.id}`
+            }
 
             this.$store.dispatch("log/findLogs", {
                 q,

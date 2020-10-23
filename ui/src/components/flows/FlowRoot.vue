@@ -27,6 +27,7 @@ import Revisions from "./Revisions";
 import ExecutionConfiguration from "./ExecutionConfiguration";
 import BottomLine from "../layout/BottomLine";
 import FlowActions from "./FlowActions";
+import Logs from "../logs/LogsWrapper";
 import Executions from "../executions/Executions";
 import RouteContext from "../../mixins/routeContext";
 import { mapState } from "vuex";
@@ -43,7 +44,8 @@ export default {
         FlowActions,
         Executions,
         ExecutionConfiguration,
-        Revisions
+        Revisions,
+        Logs
     },
     created() {
         this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
@@ -136,6 +138,13 @@ export default {
                 tabs.push({
                     tab: "revisions",
                     title: title("revisions")
+                });
+            }
+
+            if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                tabs.push({
+                    tab: "logs",
+                    title: title("logs")
                 });
             }
 

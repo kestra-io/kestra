@@ -4,7 +4,7 @@
         <b-collapse id="nav-collapse" is-nav>
             <b-nav-form>
                 <search-field ref="searchField" @onSearch="onChange" />
-                <namespace-select data-type="flow" @onNamespaceSelect="onChange" />
+                <namespace-select v-if="$route.name !== 'flowEdit'" data-type="flow" @onNamespaceSelect="onChange" />
                 <log-level-selector @onChange="onChange" />
                 <date-range @onDate="onChange" />
             </b-nav-form>

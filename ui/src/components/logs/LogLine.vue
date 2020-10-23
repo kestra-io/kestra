@@ -1,11 +1,12 @@
 <template>
     <div class="line text-monospace" v-if="filtered">
-        <span :class="levelClass" class="header-badge">{{ log.level.padEnd(9) }}</span>
-        <span class="header-badge bg-light text-dark">{{ log.timestamp | date("LLLL") }}</span>
-        <span
-            v-for="(meta, x) in metaWithValue"
-            :key="x"
-        >
+        <span :class="levelClass" class="header-badge">{{
+            log.level.padEnd(9)
+        }}</span>
+        <span class="header-badge bg-light text-dark">{{
+            log.timestamp | date("LLLL")
+        }}</span>
+        <span v-for="(meta, x) in metaWithValue" :key="x">
             <span class="header-badge bg-light text-dark property">
                 <span>{{ meta.key }}</span>
                 {{ meta.value }}
@@ -28,12 +29,24 @@ export default {
         level: {
             type: String,
         },
+        extaExclude: {
+            type: Array,
+            default: () => [],
+        },
     },
     computed: {
         metaWithValue() {
             const metaWithValue = [];
-            for (const key of Object.keys(this.log)) {
-                if (this.log[key] && !["message", "timestamp", "thread", "taskRunId", "level"].includes(key)) {
+            const excludes = [
+                "message",
+                "timestamp",
+                "thread",
+                "taskRunId",
+                "level",
+            ];
+            excludes.push.apply(excludes, this.extaExclude);
+            for (const key in this.log) {
+                if (this.log[key] && !excludes.includes(key)) {
                     metaWithValue.push({ key, value: this.log[key] });
                 }
             }
@@ -91,6 +104,5 @@ div.line {
     .message {
         padding: 0 $badge-padding-x;
     }
-
 }
 </style>

@@ -17,26 +17,10 @@ import javax.inject.Named;
 @Slf4j
 public class StandAloneRunner implements RunnerInterface, Closeable {
     private ExecutorService poolExecutor;
-    protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
-    protected int executorThreads = Math.max(3, Runtime.getRuntime().availableProcessors());
-    protected int indexerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
-    protected int schedulerThread = 1; //TODO scale
-
-    public void setWorkerThread(int workerThread) {
-        this.workerThread = workerThread;
-    }
-
-    public void setExecutorThreads(int threads) {
-        this.executorThreads = threads;
-    }
-
-    public void setIndexerThread(int indexerThread) {
-        this.indexerThread = indexerThread;
-    }
-
-    public void setSchedulerThread(int schedulerThread) {
-        this.schedulerThread = schedulerThread;
-    }
+    protected final int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    protected final int executorThreads = 1;
+    protected final int indexerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    protected final int schedulerThread = 1; //TODO scale
 
     @Inject
     private ExecutorsUtils executorsUtils;

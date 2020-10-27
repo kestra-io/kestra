@@ -224,7 +224,7 @@ public class MemoryExecutor extends AbstractExecutor {
         State.Type current = executionState.workerTaskDeduplication.get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.warn("Duplicate WorkerTask on execution '{}' for taskRun '{}'", execution.getId(), taskRun.getId());
+            log.warn("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
             return false;
         } else {
             executionState.workerTaskDeduplication.put(deduplicationKey, taskRun.getState().getCurrent());

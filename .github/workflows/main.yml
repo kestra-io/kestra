@@ -38,20 +38,17 @@ jobs:
         run: docker-compose -f docker-compose-ci.yml up -d
 
       # Caches
+      # Caches
       - name: Gradle cache
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
-          path: ~/.gradle/caches
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      - name: Gradle wrapper cache
-        uses: actions/cache@v1
-        with:
-          path: ~/.gradle/wrapper
-          key: ${{ runner.os }}-wrapper-${{ hashFiles('**/*.gradle') }}
-          restore-keys: |
-            ${{ runner.os }}-wrapper-
+
       - name: Npm cache
         uses: actions/cache@v1
         with:
@@ -115,10 +112,12 @@ jobs:
 
       # Slack
       - name: Slack notification
-        uses: 8398a7/action-slack@v2
+        uses: 8398a7/action-slack@v3
         if: always()
         with:
           status: ${{ job.status }}
+          job_name: Check
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
           username: Github Actions
           icon_emoji: ':octocat:'
           channel: '#kestra'
@@ -151,10 +150,12 @@ jobs:
 
       # Slack
       - name: Slack notification
-        uses: 8398a7/action-slack@v2
+        uses: 8398a7/action-slack@v3
         if: failure()
         with:
           status: ${{ job.status }}
+          job_name: Publish docker
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
           username: Github Actions
           icon_emoji: ':octocat:'
           channel: '#kestra'

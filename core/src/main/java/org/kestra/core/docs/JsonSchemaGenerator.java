@@ -7,6 +7,7 @@ import com.github.victools.jsonschema.module.jackson.JacksonModule;
 import com.github.victools.jsonschema.module.javax.validation.JavaxValidationModule;
 import com.github.victools.jsonschema.module.javax.validation.JavaxValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
+import com.google.common.collect.ImmutableMap;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.annotations.PluginProperty;
@@ -48,9 +49,7 @@ public class JsonSchemaGenerator {
             .filter(Output.class::isAssignableFrom)
             .findFirst()
             .map(c -> this.generate(c, null))
-            .orElseThrow(() ->
-                new IllegalArgumentException("Unable to find output on class '" + cls.getName() + "'")
-            );
+            .orElse(ImmutableMap.of());
     }
 
     private <T> Map<String, Object> generate(Class<? extends T> cls, @Nullable Class<T> base) {

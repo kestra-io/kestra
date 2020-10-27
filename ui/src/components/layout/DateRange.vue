@@ -45,8 +45,8 @@ export default {
                 end: end ? end.toISOString() : null
             };
             const query = { ...this.$route.query };
-            query.start = start ? start.getTime() : null;
-            query.end = end ? end.getTime() : null;
+            query.start = start ? start.getTime() : undefined;
+            query.end = end ? end.getTime() : undefined;
             this.$router.push({ query });
             this.$emit("onDate", dateRange);
         }

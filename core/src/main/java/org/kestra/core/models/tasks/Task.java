@@ -1,6 +1,7 @@
 package org.kestra.core.models.tasks;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
@@ -11,7 +12,6 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.kestra.core.runners.RunContext;
 
-import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -22,6 +22,7 @@ import javax.validation.constraints.Pattern;
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @SuperBuilder
 @Getter
 @NoArgsConstructor

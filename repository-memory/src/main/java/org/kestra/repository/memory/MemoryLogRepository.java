@@ -26,7 +26,7 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<LogEntry> find(String query, Pageable pageable) {
+    public ArrayListTotal<LogEntry> find(String query, Pageable pageable, Level minLevel) {
         throw new UnsupportedOperationException();
     }
 

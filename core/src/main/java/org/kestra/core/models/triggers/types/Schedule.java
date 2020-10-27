@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.ExecutionTrigger;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.models.triggers.PollingTriggerInterface;
@@ -77,7 +78,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             return Optional.empty();
         }
 
-        ImmutableMap.Builder<Object, Object> vars = ImmutableMap.builder()
+        ImmutableMap.Builder<String, Object> vars = ImmutableMap.<String, Object>builder()
             .put("date", next.get());
 
         computeNextDate(next.get())
@@ -92,6 +93,13 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .flowId(context.getFlowId())
             .flowRevision(context.getFlowRevision())
             .state(new State())
+            .trigger(ExecutionTrigger.builder()
+                .id(this.id)
+                .type(this.type)
+                .variables(vars.build())
+                .build()
+            )
+            // keep to avoid breaking compatibility
             .variables(ImmutableMap.of(
                 "schedule", vars.build()
             ))

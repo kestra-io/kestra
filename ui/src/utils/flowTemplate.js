@@ -1,14 +1,19 @@
 import action from "../models/action";
 import permission from "../models/permission";
 
-export function canSaveFlowTemplate(isEdit, user, file, dataType) {
+export function canSaveFlowTemplate(isEdit, user, item, dataType) {
+    if (item === undefined) {
+        return  true;
+    }
+
     const typedPermission = permission[dataType.toUpperCase()]
+
     return (
         isEdit && user &&
-        user.isAllowed(typedPermission, action.UPDATE, file.namespace)
+        user.isAllowed(typedPermission, action.UPDATE, item.namespace)
     ) || (
         !isEdit && user &&
-        user.isAllowed(typedPermission, action.CREATE, file.namespace)
+        user.isAllowed(typedPermission, action.CREATE, item.namespace)
     );
 }
 

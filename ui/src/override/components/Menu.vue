@@ -29,12 +29,14 @@ import Cog from "vue-material-design-icons/Cog";
 import TimelineClock from "vue-material-design-icons/TimelineClock";
 import BookOpen from "vue-material-design-icons/BookOpen";
 import CardText from "vue-material-design-icons/CardText";
+import HexagonMultiple from "vue-material-design-icons/HexagonMultiple";
 
 Vue.component("graph", Graph);
 Vue.component("settings", Cog);
 Vue.component("timelineclock", TimelineClock);
 Vue.component("bookopen", BookOpen);
 Vue.component("cardtext", CardText);
+Vue.component("hexagon-multiple", HexagonMultiple);
 
 export default {
   components: {
@@ -90,7 +92,17 @@ export default {
             class: "menu-icon"
           }
         },
-
+        {
+          href: "/logs",
+          alias: [
+            "/logs*"
+          ],
+          title: this.$t("logs"),
+          icon: {
+            element: "hexagon-multiple",
+            class: "menu-icon"
+          }
+        },
         {
           href: "/plugins",
           alias: [

@@ -1,16 +1,21 @@
 package org.kestra.core.models.triggers;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.models.conditions.Condition;
 
+import java.util.List;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @SuperBuilder
 @Getter
 @NoArgsConstructor
@@ -25,4 +30,7 @@ abstract public class AbstractTrigger {
     @NotBlank
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     protected String type;
+
+    @Valid
+    private List<Condition> conditions;
 }

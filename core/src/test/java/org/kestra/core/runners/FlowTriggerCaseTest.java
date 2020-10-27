@@ -1,11 +1,13 @@
 package org.kestra.core.runners;
 
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
@@ -23,26 +25,34 @@ public class FlowTriggerCaseTest {
     protected QueueInterface<Execution> executionQueue;
 
     @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    private QueueInterface<LogEntry> logEntryQueue;
+
+    @Inject
     protected RunnerUtils runnerUtils;
 
     public void trigger() throws InterruptedException, TimeoutException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         AtomicReference<Execution> flowListener = new AtomicReference<>();
         AtomicReference<Execution> flowListenerNoInput = new AtomicReference<>();
-        AtomicReference<Execution> flowListenerFailed = new AtomicReference<>();
 
         executionQueue.receive(execution -> {
-            if (execution.getState().getCurrent() == State.Type.SUCCESS || execution.getState().getCurrent() == State.Type.FAILED) {
+            if (execution.getState().getCurrent() == State.Type.SUCCESS) {
                 if (flowListenerNoInput.get() == null && execution.getFlowId().equals("trigger-flow-listener-no-inputs")) {
                     flowListenerNoInput.set(execution);
                     countDownLatch.countDown();
                 } else if (flowListener.get() == null && execution.getFlowId().equals("trigger-flow-listener")) {
                     flowListener.set(execution);
                     countDownLatch.countDown();
-                } else if (flowListenerFailed.get() == null && execution.getFlowId().equals("trigger-flow-listener-invalid")) {
-                    flowListenerFailed.set(execution);
-                    countDownLatch.countDown();
                 }
+            }
+        });
+
+        logEntryQueue.receive(logEntry -> {
+            if (logEntry.getMessage().contains("Failed to trigger flow") &&
+                    logEntry.getTriggerId().equals("listen-flow-invalid")
+            ) {
+                countDownLatch.countDown();
             }
         });
 
@@ -51,7 +61,7 @@ public class FlowTriggerCaseTest {
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
-        countDownLatch.await();
+        countDownLatch.await(5, TimeUnit.SECONDS);
 
         assertThat(flowListener.get().getTaskRunList().size(), is(1));
         assertThat(flowListener.get().getState().getCurrent(), is(State.Type.SUCCESS));
@@ -59,8 +69,5 @@ public class FlowTriggerCaseTest {
 
         assertThat(flowListenerNoInput.get().getTaskRunList().size(), is(1));
         assertThat(flowListenerNoInput.get().getState().getCurrent(), is(State.Type.SUCCESS));
-
-        assertThat(flowListenerFailed.get().getTaskRunList(), is(nullValue()));
-        assertThat(flowListenerFailed.get().getState().getCurrent(), is(State.Type.FAILED));
     }
 }

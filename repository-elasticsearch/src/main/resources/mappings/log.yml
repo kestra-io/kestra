@@ -12,6 +12,8 @@ properties:
     type: keyword
   attemptNumber:
     type: integer
+  triggerId:
+    type: integer
   level:
     type: keyword
   message:

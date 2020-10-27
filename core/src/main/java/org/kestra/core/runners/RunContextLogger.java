@@ -10,10 +10,9 @@ import ch.qos.logback.core.AppenderBase;
 import com.cronutils.utils.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
-import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.LogEntry;
-import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.queues.QueueInterface;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -27,20 +26,24 @@ public class RunContextLogger {
     private final String loggerName;
     private Logger logger;
     private QueueInterface<LogEntry> logQueue;
-    private TaskRun taskRun;
+    private LogEntry logEntry;
 
     @VisibleForTesting
     public RunContextLogger() {
         this.loggerName = "unit-test";
     }
 
-    public RunContextLogger(QueueInterface<LogEntry> logQueue, TaskRun taskRun) {
-        this.loggerName = "flow." + taskRun.getFlowId() + "." + taskRun.getExecutionId() + "." + taskRun.getId();
+    public RunContextLogger(QueueInterface<LogEntry> logQueue, LogEntry logEntry) {
+        if (logEntry.getExecutionId() != null) {
+            this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getExecutionId() + "." + logEntry.getTaskRunId();
+        } else {
+            this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getTriggerId();
+        }
         this.logQueue = logQueue;
-        this.taskRun = taskRun;
+        this.logEntry = logEntry;
     }
 
-    private static List<LogEntry> logEntry(ILoggingEvent event, String message, org.slf4j.event.Level level, TaskRun taskRun) {
+    private static List<LogEntry> logEntry(ILoggingEvent event, String message, org.slf4j.event.Level level, LogEntry logEntry) {
         Iterable<String> split;
 
         if (message.length() > MAX_MESSAGE_LENGTH) {
@@ -51,12 +54,13 @@ public class RunContextLogger {
 
         return StreamSupport.stream(split.spliterator(), false)
             .map(s -> LogEntry.builder()
-                .namespace(taskRun.getNamespace())
-                .flowId(taskRun.getFlowId())
-                .taskId(taskRun.getTaskId())
-                .executionId(taskRun.getExecutionId())
-                .taskRunId(taskRun.getId())
-                .attemptNumber(taskRun.attemptNumber())
+                .namespace(logEntry.getNamespace())
+                .flowId(logEntry.getFlowId())
+                .taskId(logEntry.getTaskId())
+                .executionId(logEntry.getExecutionId())
+                .taskRunId(logEntry.getTaskRunId())
+                .attemptNumber(logEntry.getAttemptNumber())
+                .triggerId(logEntry.getTriggerId())
                 .level(level != null ? level : org.slf4j.event.Level.valueOf(event.getLevel().toString()))
                 .message(s)
                 .timestamp(Instant.ofEpochMilli(event.getTimeStamp()))
@@ -67,14 +71,14 @@ public class RunContextLogger {
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    public static List<LogEntry> logEntries(ILoggingEvent event, TaskRun taskRun) {
+    public static List<LogEntry> logEntries(ILoggingEvent event, LogEntry logEntry) {
         Throwable throwable = throwable(event);
 
         if (throwable == null) {
-            return logEntry(event, event.getFormattedMessage(), null, taskRun);
+            return logEntry(event, event.getFormattedMessage(), null, logEntry);
         }
 
-        List<LogEntry> result = new ArrayList<>(logEntry(event, event.getMessage(), null, taskRun));
+        List<LogEntry> result = new ArrayList<>(logEntry(event, event.getMessage(), null, logEntry));
 
         if (Throwables.getCausalChain(throwable).size() > 1) {
             result.addAll(logEntry(
@@ -86,11 +90,11 @@ public class RunContextLogger {
                     .map(Throwable::getMessage)
                     .collect(Collectors.joining("\n")),
                 null,
-                taskRun
+                logEntry
             ));
         }
 
-        result.addAll(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.TRACE, taskRun));
+        result.addAll(logEntry(event, Throwables.getStackTraceAsString(throwable), org.slf4j.event.Level.TRACE, logEntry));
 
         return result;
     }
@@ -112,8 +116,8 @@ public class RunContextLogger {
             this.logger = loggerContext.getLogger(this.loggerName);
 
             // unit test don't need the logqueue
-            if (this.logQueue != null && this.taskRun != null) {
-                ContextAppender contextAppender = new ContextAppender(this.logQueue, this.taskRun);
+            if (this.logQueue != null && this.logEntry != null) {
+                ContextAppender contextAppender = new ContextAppender(this.logQueue, this.logEntry);
                 contextAppender.setContext(loggerContext);
                 contextAppender.start();
 
@@ -134,22 +138,23 @@ public class RunContextLogger {
 
     public static class ContextAppender extends AppenderBase<ILoggingEvent> {
         private final QueueInterface<LogEntry> logQueue;
-        private final TaskRun taskRun;
+        private final LogEntry logEntry;
 
-        public ContextAppender(QueueInterface<LogEntry> logQueue, TaskRun taskRun) {
+        public ContextAppender(QueueInterface<LogEntry> logQueue, LogEntry logEntry) {
             this.logQueue = logQueue;
-            this.taskRun = taskRun;
+            this.logEntry = logEntry;
         }
 
         @Override
         protected void append(ILoggingEvent e) {
-            logEntries(e, taskRun)
+            logEntries(e, logEntry)
                 .forEach(logQueue::emit);
         }
     }
 
-    @Slf4j
     public static class ForwardAppender extends AppenderBase<ILoggingEvent> {
+        private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger("flow");
+
         @Override
         public void start() {
             super.start();
@@ -162,9 +167,9 @@ public class RunContextLogger {
 
         @Override
         protected void append(ILoggingEvent e) {
-            var logger = ((ch.qos.logback.classic.Logger) log);
+            var logger = ((ch.qos.logback.classic.Logger) LOGGER);
             if (logger.isEnabledFor(e.getLevel())) {
-                ((ch.qos.logback.classic.Logger) log).callAppenders(e);
+                ((ch.qos.logback.classic.Logger) LOGGER).callAppenders(e);
             }
         }
     }

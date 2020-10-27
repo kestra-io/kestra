@@ -31,7 +31,7 @@ class YamlFlowParserTest {
     private YamlFlowParser yamlFlowParser = new YamlFlowParser();
 
     @Test
-    void parse() throws IOException {
+    void parse() {
         Flow flow = parse("flows/valids/full.yaml");
 
         assertThat(flow.getId(), is("full"));
@@ -46,7 +46,7 @@ class YamlFlowParserTest {
     }
 
     @Test
-    void validation() throws IOException {
+    void validation() {
         assertThrows(ConstraintViolationException.class, () -> {
             this.parse("flows/invalids/invalid.yaml");
         });
@@ -83,8 +83,8 @@ class YamlFlowParserTest {
 
     @Test
     void inputsBadType() {
-        InvalidFormatException exception = assertThrows(
-            InvalidFormatException.class,
+        ConstraintViolationException exception = assertThrows(
+            ConstraintViolationException.class,
             () -> this.parse("flows/invalids/inputs-bad-type.yaml")
         );
 
@@ -112,7 +112,17 @@ class YamlFlowParserTest {
     }
 
     @Test
-    void include() throws IOException {
+    void noDefault() throws IOException {
+        Flow flow = this.parse("flows/valids/parallel.yaml");
+
+        String s = mapper.writeValueAsString(flow);
+        assertThat(s, not(containsString("\"-c\"")));
+        assertThat(s, containsString("\"deleted\":false"));
+    }
+
+
+    @Test
+    void include() {
         Flow flow = parse("flows/helpers/include.yaml");
 
         assertThat(flow.getId(), is("include"));
@@ -125,13 +135,13 @@ class YamlFlowParserTest {
     }
 
     @Test
-    void trigger() throws IOException {
+    void trigger() {
         Flow parse = this.parse("flows/tests/trigger.yaml");
         assertThat(((Schedule) parse.getTriggers().get(0)).getBackfill().getStart(), is(ZonedDateTime.parse("2020-01-01T00:00:00+02:00")));
     }
 
     @Test
-    void triggerEmpty() throws IOException {
+    void triggerEmpty() {
         Flow parse = this.parse("flows/tests/trigger-empty.yaml");
         assertThat(((Schedule) parse.getTriggers().get(0)).getBackfill().getStart(), nullValue());
     }
@@ -147,7 +157,7 @@ class YamlFlowParserTest {
         assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("File not found at location"));
     }
 
-    private Flow parse(String path) throws IOException {
+    private Flow parse(String path) {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;
 

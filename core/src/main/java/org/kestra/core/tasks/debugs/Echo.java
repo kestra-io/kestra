@@ -1,9 +1,10 @@
 package org.kestra.core.tasks.debugs;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
+import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.tasks.VoidOutput;
@@ -16,18 +17,19 @@ import org.slf4j.event.Level;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Documentation(
-    description = "Simple debugging task that log a renderer value.",
-    body = {
-        "This task is mostly useful for debugging purpose.",
-        "",
+@Schema(
+    title = "Simple debugging task that log a renderer value.",
+    description = "This task is mostly useful for debugging purpose.\n\n" +
         "This one allow you to logs inputs or outputs variables for example, or to debug some templated functions."
-    }
 )
-@Example(
-    code = {
-        "level: WARN",
-        "format: \"{{task.id}} > {{taskrun.startDate}}\""
+@Plugin(
+    examples = {
+        @Example(
+            code = {
+                "level: WARN",
+                "format: \"{{task.id}} > {{taskrun.startDate}}\""
+            }
+        )
     }
 )
 public class Echo extends Task implements RunnableTask<VoidOutput> {

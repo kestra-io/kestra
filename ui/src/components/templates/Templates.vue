@@ -35,7 +35,7 @@
 
                         <template v-slot:cell(id)="row">
                             <router-link
-                                :to="{name: `${dataType}Edit`, params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
+                                :to="{name: `${dataType}Edit`, params: {namespace: row.item.namespace, id: row.item.id}}"
                             >{{row.item.id}}</router-link>
                         </template>
                     </b-table>
@@ -45,7 +45,7 @@
         <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <router-link :to="{name: 'templatesAdd'}">
+                    <router-link :to="{name: 'templateAdd'}">
                         <b-button variant="primary">
                             <plus />
                             {{$t('create')}}
@@ -100,6 +100,11 @@ export default {
                     key: "id",
                     label: title("template"),
                     sortable: true,
+                },
+                {
+                    key: "namespace",
+                    label: title("namespace"),
+                    sortable: true
                 },
                 {
                     key: "actions",

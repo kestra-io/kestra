@@ -53,7 +53,7 @@
     </div>
 </template>
 <script>
-    import LogList from "./LogList";
+    import LogList from "../logs/LogList";
     import {mapState} from "vuex";
     import humanizeDuration from "humanize-duration";
     import State from "../../utils/state";

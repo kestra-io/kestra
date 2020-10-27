@@ -51,8 +51,8 @@ public class FlowNamespaceUpdateCommand extends AbstractApiCommand {
         try {
             List<Flow> flows = Files.walk(directory)
                 .filter(Files::isRegularFile)
-                .filter(path -> FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml"))
-                .map(throwFunction(path -> yamlFlowParser.parse(path.toFile())))
+                .filter(YamlFlowParser::isValidExtension)
+                .map(path -> yamlFlowParser.parse(path.toFile()))
                 .collect(Collectors.toList());
 
             if (flows.size() == 0) {

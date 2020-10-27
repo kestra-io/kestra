@@ -9,10 +9,7 @@ import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.storages.StorageInterface;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
@@ -21,14 +18,14 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode
 @Builder
 public class RegisteredPlugin {
-    private ExternalPlugin externalPlugin;
-    private Manifest manifest;
-    private ClassLoader classLoader;
-    private List<Class<? extends Task>> tasks;
-    private List<Class<? extends AbstractTrigger>> triggers;
-    private List<Class<? extends Condition>> conditions;
-    private List<Class<?>> controllers;
-    private List<Class<? extends StorageInterface>> storages;
+    private final ExternalPlugin externalPlugin;
+    private final Manifest manifest;
+    private final ClassLoader classLoader;
+    private final List<Class<? extends Task>> tasks;
+    private final List<Class<? extends AbstractTrigger>> triggers;
+    private final List<Class<? extends Condition>> conditions;
+    private final List<Class<?>> controllers;
+    private final List<Class<? extends StorageInterface>> storages;
 
     public boolean isValid() {
         return tasks.size() > 0 || triggers.size() > 0 || conditions.size() > 0 || controllers.size() > 0 || storages.size() > 0;
@@ -40,11 +37,37 @@ public class RegisteredPlugin {
             .anyMatch(r -> r.getName().equals(cls));
     }
 
+    @SuppressWarnings("rawtypes")
     public Optional<Class> findClass(String cls) {
         return allClass()
             .stream()
             .filter(r -> r.getName().equals(cls))
             .findFirst();
+    }
+
+    @SuppressWarnings("rawtypes")
+    public Class baseClass(String cls) {
+        if (this.getTasks().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return Task.class;
+        }
+
+        if (this.getTriggers().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return AbstractTrigger.class;
+        }
+
+        if (this.getConditions().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return Condition.class;
+        }
+
+        if (this.getStorages().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return StorageInterface.class;
+        }
+
+        if (this.getTasks().stream().anyMatch(r -> r.getName().equals(cls))) {
+            return Task.class;
+        }
+
+        throw new IllegalArgumentException("Unable to find base class from '" + cls + "'");
     }
 
     @SuppressWarnings("rawtypes")

@@ -1,15 +1,16 @@
 package org.kestra.core.utils;
 
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 public final class Rethrow {
-
     @FunctionalInterface
     public interface ConsumerChecked<T, E extends Exception> {
-        void accept(T t) throws E;
+        void accept(T t) throws Exception;
+    }
+
+    @FunctionalInterface
+    public interface SupplierChecked<T, E extends Exception> {
+        T get() throws Exception;
     }
 
     @FunctionalInterface
@@ -41,6 +42,17 @@ public final class Rethrow {
             }
         };
     }
+
+    public static <T, E extends Exception> Supplier<T> throwSupplier(SupplierChecked<T, E> supplier) throws E {
+        return () -> {
+            try {
+                return supplier.get();
+            } catch (Exception exception) {
+                throw throwException(exception);
+            }
+        };
+    }
+
 
     public static <K, V, E extends Exception> BiConsumer<K, V> throwBiConsumer(BiConsumerChecked<K, V, E> consumer) throws E {
         return (k, v) -> {

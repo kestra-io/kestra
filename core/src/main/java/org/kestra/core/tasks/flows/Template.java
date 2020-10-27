@@ -3,11 +3,15 @@ package org.kestra.core.tasks.flows;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
-import lombok.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
-import org.kestra.core.models.annotations.Documentation;
 import org.kestra.core.models.annotations.Example;
+import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
@@ -35,29 +39,33 @@ import javax.validation.Valid;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Documentation(
-    description = "Process tasks ones after others sequentially",
-    body = "Mostly use in order to group tasks."
+@Schema(
+    title = "Process tasks ones after others sequentially",
+    description = "Mostly use in order to group tasks."
 )
-@Example(
-    full = true,
-    code = {
-        "id: template",
-        "namespace: org.kestra.tests",
-        "",
-        "tasks:",
-        "  - id: template",
-        "    type: org.kestra.core.tasks.flows.Template",
-        "    tasks:",
-        "      - id: 1st",
-        "        type: org.kestra.core.tasks.debugs.Return",
-        "        format: \"{{task.id}} > {{taskrun.startDate}}\"",
-        "      - id: 2nd",
-        "        type: org.kestra.core.tasks.debugs.Return",
-        "        format: \"{{task.id}} > {{taskrun.id}}\"",
-        "  - id: last",
-        "    type: org.kestra.core.tasks.debugs.Return",
-        "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+@Plugin(
+    examples = {
+        @Example(
+            full = true,
+            code = {
+                "id: template",
+                "namespace: org.kestra.tests",
+                "",
+                "tasks:",
+                "  - id: template",
+                "    type: org.kestra.core.tasks.flows.Template",
+                "    tasks:",
+                "      - id: 1st",
+                "        type: org.kestra.core.tasks.debugs.Return",
+                "        format: \"{{task.id}} > {{taskrun.startDate}}\"",
+                "      - id: 2nd",
+                "        type: org.kestra.core.tasks.debugs.Return",
+                "        format: \"{{task.id}} > {{taskrun.id}}\"",
+                "  - id: last",
+                "    type: org.kestra.core.tasks.debugs.Return",
+                "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+            }
+        )
     }
 )
 public class Template extends Task implements FlowableTask<VoidOutput> {

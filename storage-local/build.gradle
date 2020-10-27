@@ -1,5 +1,5 @@
 dependencies {
-    compile project(":core")
+    implementation project(":core")
 
-    testCompile project(':core').sourceSets.test.output
+    testImplementation project(':core').sourceSets.test.output
 }

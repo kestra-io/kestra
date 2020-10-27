@@ -9,15 +9,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Documented
 @Retention(RUNTIME)
-@Target({ElementType.FIELD})
-public @interface OutputProperty {
-    /**
-     * @return The short description of current element
-     */
-    String description() default "";
-
-    /**
-     * @return The body of current element
-     */
-    String[] body() default "";
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+public @interface Plugin {
+    Example[] examples();
 }

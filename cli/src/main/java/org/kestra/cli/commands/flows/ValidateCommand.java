@@ -43,8 +43,6 @@ public class ValidateCommand extends AbstractCommand {
                     System.err.println("- " + constraintViolation.getMessage() + " with value '" + constraintViolation.getInvalidValue() + "'");
                 });
             return 1;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
 
         return 0;

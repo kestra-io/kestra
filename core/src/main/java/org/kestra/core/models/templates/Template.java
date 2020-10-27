@@ -23,11 +23,11 @@ import javax.validation.constraints.Pattern;
 public class Template implements DeletedInterface {
     @NotNull
     @NotBlank
-    @Pattern(regexp = "[a-zA-Z0-9_-]+")
+    @Pattern(regexp = "[a-zA-Z0-9._-]+")
     private final String id;
 
     @NotNull
-    @Pattern(regexp="[a-z0-9.]+")
+    @Pattern(regexp="[a-z0-9._-]+")
     private final String namespace;
 
     @Valid

@@ -11,11 +11,11 @@ tasks:
     format: "childs: {{inputs.from-parent}}"
 
 triggers:
-  - id: listen-flow
+  - id: listen-flow-invalid
     type: org.kestra.core.models.triggers.types.Flow
     inputs:
       from-parent: '{{ outputs.invalid.value }}'
     conditions:
-      - type: org.kestra.core.models.conditions.types.FlowCondition
+      - type: org.kestra.core.models.conditions.types.ExecutionFlowCondition
         namespace: org.kestra.tests
         flowId: trigger-flow

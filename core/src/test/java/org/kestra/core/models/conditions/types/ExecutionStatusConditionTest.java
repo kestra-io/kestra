@@ -6,14 +6,21 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.services.ConditionService;
 import org.kestra.core.utils.TestsUtils;
 
 import java.util.Collections;
 
+import javax.inject.Inject;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+@MicronautTest
 class ExecutionStatusConditionTest {
+    @Inject
+    ConditionService conditionService;
+
     @Test
     void in() {
         Flow flow = TestsUtils.mockFlow();
@@ -23,7 +30,7 @@ class ExecutionStatusConditionTest {
             .in(Collections.singletonList(State.Type.SUCCESS))
             .build();
 
-        boolean test = build.test(flow, execution);
+        boolean test = conditionService.isValid(build, flow, execution);
 
         assertThat(test, is(false));
     }
@@ -37,7 +44,7 @@ class ExecutionStatusConditionTest {
             .notIn(Collections.singletonList(State.Type.SUCCESS))
             .build();
 
-        boolean test = build.test(flow, execution);
+        boolean test = conditionService.isValid(build, flow, execution);
 
         assertThat(test, is(true));
     }
@@ -52,7 +59,7 @@ class ExecutionStatusConditionTest {
             .notIn(Collections.singletonList(State.Type.SUCCESS))
             .build();
 
-        boolean test = build.test(flow, execution);
+        boolean test = conditionService.isValid(build, flow, execution);
 
         assertThat(test, is(false));
     }

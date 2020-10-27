@@ -1,14 +1,15 @@
 package org.kestra.core.models.conditions.types;
 
-import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import org.kestra.core.models.annotations.Example;
+import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.conditions.Condition;
-import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.conditions.ConditionContext;
 import org.kestra.core.models.flows.State;
 
 import java.util.List;
@@ -19,23 +20,44 @@ import javax.validation.Valid;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Introspected
+@Schema(title = "Condition based on execution status")
+@Plugin(
+    examples = {
+        @Example(
+            full = true,
+            code = {
+                "- conditions:",
+                "    - type: org.kestra.core.models.conditions.types.ExecutionStatusCondition",
+                "      in:",
+                "        - SUCCESS",
+                "      notIn: ",
+                "        - FAILED"
+            }
+        )
+    }
+)
 public class ExecutionStatusCondition extends Condition {
     @Valid
+    @Schema(title = "List of state that are authorized")
     public List<State.Type> in;
 
     @Valid
+    @Schema(title = "List of state that aren't authorized")
     public List<State.Type> notIn;
 
     @Override
-    public boolean test(Flow flow, Execution execution) {
+    public boolean test(ConditionContext conditionContext) {
+        if (conditionContext.getExecution() == null) {
+            throw new IllegalArgumentException("Invalid condition with execution null");
+        }
+
         boolean result = true;
 
-        if (this.in != null && !this.in.contains(execution.getState().getCurrent())) {
+        if (this.in != null && !this.in.contains(conditionContext.getExecution().getState().getCurrent())) {
             result = false;
         }
 
-        if (this.notIn != null && this.notIn.contains(execution.getState().getCurrent())) {
+        if (this.notIn != null && this.notIn.contains(conditionContext.getExecution().getState().getCurrent())) {
             result = false;
         }
 

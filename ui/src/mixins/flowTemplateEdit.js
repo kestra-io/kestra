@@ -6,7 +6,7 @@ import ContentSave from "vue-material-design-icons/ContentSave";
 import Delete from "vue-material-design-icons/Delete";
 import Editor from "../components/inputs/Editor";
 import RouteContext from "./routeContext";
-import Yaml from "yaml";
+import YamlUtils from "../utils/yamlUtils";
 import action from "../models/action";
 import permission from "../models/permission";
 
@@ -32,11 +32,11 @@ export default {
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}Edit` &&
-                this.$route.query.tab === "data-source"
+                (this.dataType === "template" || this.$route.query.tab === "data-source")
             );
         },
         canSave() {
-            return canSaveFlowTemplate(true, this.user, this.content, this.dataType);
+            return canSaveFlowTemplate(true, this.user, this.item, this.dataType);
         },
         routeInfo() {
             return {
@@ -56,19 +56,20 @@ export default {
         },
         canDelete() {
             return (
+                this.item &&
                 this.isEdit &&
                 this.user &&
                 this.user.isAllowed(
                     permission[this.dataType.toUpperCase()],
                     action.DELETE,
-                    this.content.namespace
+                    this.item.namespace
                 )
             );
         },
     },
     methods: {
         loadFile() {
-            this.content = Yaml.stringify(this.item);
+            this.content = YamlUtils.stringify(this.item);
             if (this.isEdit) {
                 this.readOnlyEditFields = {
                     id: this.item.id,
@@ -97,7 +98,7 @@ export default {
             if (this.item) {
                 let item;
                 try {
-                    item = Yaml.parse(this.content);
+                    item = YamlUtils.parse(this.content);
                 } catch (err) {
                     this.$toast().warning(
                         this.$t("check your the yaml is valid"),
@@ -121,7 +122,7 @@ export default {
                         this.loadFile();
                     });
             } else {
-                const item = Yaml.parse(this.content);
+                const item = YamlUtils.parse(this.content);
                 this.$store
                     .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, { [this.dataType]: item})
                     .then(() => {

@@ -10,7 +10,7 @@
     </b-card>
 </template>
 <script>
-import Yaml from "yaml";
+import YamlUtils from "../../utils/yamlUtils";
 import { mapState } from "vuex";
 export default {
     computed: {
@@ -24,7 +24,7 @@ export default {
                 const v = this.task[property];
                 const value =
                     typeof v === "object"
-                        ? `<pre>${Yaml.stringify(v)}</pre>`
+                        ? `<pre>${YamlUtils.stringify(v)}</pre>`
                         : v;
                 items.push({ property, value });
             }

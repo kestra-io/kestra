@@ -97,8 +97,8 @@
     import {mapState} from "vuex";
     import humanizeDuration from "humanize-duration";
     import LogLine from "./LogLine";
-    import Restart from "./Restart";
-    import Vars from "./Vars";
+    import Restart from "../executions/Restart";
+    import Vars from "../executions/Vars";
     import Clock from "vue-material-design-icons/Clock";
     import LocationExit from "vue-material-design-icons/LocationExit";
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";

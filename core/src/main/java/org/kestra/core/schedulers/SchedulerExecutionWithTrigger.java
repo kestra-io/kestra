@@ -7,7 +7,7 @@ import org.kestra.core.models.triggers.TriggerContext;
 
 @AllArgsConstructor
 @Getter
-class SchedulerExecutionWithTrigger {
+public class SchedulerExecutionWithTrigger {
     private final Execution execution;
     private final TriggerContext triggerContext;
 }

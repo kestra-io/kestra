@@ -15,6 +15,7 @@ import org.kestra.core.runners.AbstractExecutor;
 import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
+import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowService;
 
 import java.util.Collection;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 import javax.inject.Named;
 
 @Slf4j
@@ -35,10 +37,11 @@ public class MemoryExecutor extends AbstractExecutor {
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private final QueueInterface<LogEntry> logQueue;
     private final FlowService flowService;
-    
+
     private static final ConcurrentHashMap<String, ExecutionState> executions = new ConcurrentHashMap<>();
     private List<Flow> allFlows;
 
+    @Inject
     public MemoryExecutor(
         RunContextFactory runContextFactory,
         FlowRepositoryInterface flowRepository,
@@ -47,15 +50,17 @@ public class MemoryExecutor extends AbstractExecutor {
         @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue,
         @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRegistry metricRegistry,
-        FlowService flowService
+        FlowService flowService,
+        ConditionService conditionService
     ) {
-        super(runContextFactory, metricRegistry);
+        super(runContextFactory, metricRegistry, conditionService);
         this.flowRepository = flowRepository;
         this.executionQueue = executionQueue;
         this.workerTaskQueue = workerTaskQueue;
         this.workerTaskResultQueue = workerTaskResultQueue;
         this.logQueue = logQueue;
         this.flowService = flowService;
+        this.conditionService = conditionService;
     }
 
     @Override
@@ -118,12 +123,12 @@ public class MemoryExecutor extends AbstractExecutor {
             }
 
             // Listeners need the last emit
-            if (execution.isTerminatedWithListeners(flow)) {
+            if (conditionService.isTerminatedWithListeners(flow, execution)) {
                 this.executionQueue.emit(execution);
             }
 
             // Flow Trigger
-            if (execution.isTerminatedWithListeners(flow)) {
+            if (conditionService.isTerminatedWithListeners(flow, execution)) {
                 flowService
                     .flowTriggerExecution(allFlows.stream(), execution)
                     .forEach(this.executionQueue::emit);
@@ -171,7 +176,7 @@ public class MemoryExecutor extends AbstractExecutor {
         this.handleExecution(saveExecution(execution));
 
         // delete if ended
-        if (execution.isTerminatedWithListeners(flow)) {
+        if (conditionService.isTerminatedWithListeners(flow, execution)) {
             executions.remove(execution.getId());
         }
     }

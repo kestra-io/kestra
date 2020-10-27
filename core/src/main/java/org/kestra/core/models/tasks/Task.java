@@ -12,7 +12,6 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.kestra.core.runners.RunContext;
 
-import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -31,7 +30,7 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 abstract public class Task {
     @NotNull
     @NotBlank
-    @Pattern(regexp="[a-zA-Z0-9._-]+")
+    @Pattern(regexp="[a-zA-Z0-9_-]+")
     protected String id;
 
     @NotNull

@@ -23,7 +23,7 @@ import javax.validation.constraints.Pattern;
 abstract public class AbstractTrigger {
     @NotNull
     @NotBlank
-    @Pattern(regexp="[a-zA-Z0-9._-]+")
+    @Pattern(regexp="[a-zA-Z0-9_-]+")
     protected String id;
 
     @NotNull

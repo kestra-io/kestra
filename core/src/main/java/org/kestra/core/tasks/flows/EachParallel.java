@@ -1,7 +1,5 @@
 package org.kestra.core.tasks.flows;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -25,11 +23,9 @@ import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.services.TreeService;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -40,10 +36,14 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a tasks for a list of value sequentially",
+    title = "Execute a tasks for a list of value in parallel.",
     description = "For each `value`, `tasks` will be executed\n" +
         "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` and must be a string\n" +
-        "The current value is available on vars `{{ taskrun.value }}`."
+        "The current value is available on vars `{{ taskrun.value }}`.\n" +
+        "The task list will be executed in parallel, for example if you have a 3 value with each one 2 tasks, all the " +
+        "6 tasks will be computed in parallel with out any garantee on the order.\n" +
+        "If you want to have each value in parallel, but no concurrent task for each value, you need to wrap the tasks " +
+        "with a `Sequential` tasks"
 )
 @Plugin(
     examples = {
@@ -55,10 +55,30 @@ import javax.validation.constraints.NotNull;
                 "    type: org.kestra.core.tasks.debugs.Return",
                 "    format: \"{{ task.id }} with current value '{{ taskrun.value }}'\"",
             }
+        ),
+        @Example(
+            title = "Handling each value in parralel but only 1 child task for each value at the same time.",
+            code = {
+                "value: '[\"value 1\", \"value 2\", \"value 3\"]'",
+                "tasks:",
+                "  - id: seq",
+                "    type: org.kestra.core.tasks.flows.Sequential",
+                "    tasks:",
+                "    - id: t1",
+                "      type: org.kestra.core.tasks.scripts.Bash",
+                "      commands:",
+                "        - 'echo \"{{task.id}} > {{ parents.0.taskrun.value }}",
+                "        - 'sleep 1'",
+                "    - id: t2",
+                "      type: org.kestra.core.tasks.scripts.Bash",
+                "      commands:",
+                "        - 'echo \"{{task.id}} > {{ parents.0.taskrun.value }}",
+                "        - 'sleep 1'"
+            }
         )
     }
 )
-public class EachSequential extends Sequential implements FlowableTask<VoidOutput> {
+public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotNull
     @NotBlank
     private String value;
@@ -68,7 +88,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
 
     @Override
     public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {
-        return TreeService.sequential(
+        return TreeService.parallel(
             this.getTasks(),
             this.errors,
             Collections.singletonList(ParentTaskTree.builder()
@@ -105,7 +125,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
 
     @Override
     public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveSequentialNexts(
+        return FlowableUtils.resolveParallelNexts(
             execution,
             FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.value),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),

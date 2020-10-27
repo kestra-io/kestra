@@ -1,20 +1,16 @@
 package org.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.hierarchies.ParentTaskTree;
-import org.kestra.core.models.hierarchies.RelationType;
-import org.kestra.core.models.hierarchies.TaskTree;
-import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -118,10 +114,79 @@ public class FlowableUtils {
             .collect(Collectors.toList());
     }
 
+
+    public static List<TaskRun> resolveParallelNexts(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        TaskRun parentTaskRun
+    ) {
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
+            tasks,
+            errors,
+            parentTaskRun
+        );
+
+        // all tasks run
+        List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
+
+        // find all not created tasks
+        List<ResolvedTask> notFinds = currentTasks
+            .stream()
+            .filter(resolvedTask -> taskRuns
+                .stream()
+                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
+            )
+            .collect(Collectors.toList());
+
+        // first created, leave
+        Optional<TaskRun> lastCreated = execution.findLastByState(currentTasks, State.Type.CREATED, parentTaskRun);
+
+        if (notFinds.size() > 0 && lastCreated.isEmpty()) {
+            return notFinds
+                .stream()
+                .map(resolvedTask -> resolvedTask.toTaskRun(execution))
+                .limit(1)
+                .collect(Collectors.toList());
+        }
+
+        return new ArrayList<>();
+    }
+
+    public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, String value) throws IllegalVariableEvaluationException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        String[] values;
+
+        String renderValue = runContext.render(value);
+        try {
+            values = mapper.readValue(renderValue, String[].class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalVariableEvaluationException(e);
+        }
+
+        return Arrays
+            .stream(values)
+            .distinct()
+            .flatMap(v -> tasks
+                .stream()
+                .map(task -> ResolvedTask.builder()
+                    .task(task)
+                    .value(v)
+                    .parentId(parentTaskRun.getId())
+                    .build()
+                )
+            )
+            .collect(Collectors.toList());
+    }
+
     public static boolean isTaskRunFor(ResolvedTask resolvedTask, TaskRun taskRun, TaskRun parentTaskRun) {
         return resolvedTask.getTask().getId().equals(taskRun.getTaskId()) &&
             (
                 parentTaskRun == null || parentTaskRun.getId().equals(taskRun.getParentTaskRunId())
+            ) &&
+            (
+                resolvedTask.getValue() == null || resolvedTask.getValue().equals(taskRun.getValue())
             );
     }
 }

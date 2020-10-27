@@ -89,10 +89,24 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     }
 
     @Test
-    void sequentialNested() throws TimeoutException {
+    void eachSequentialNested() throws TimeoutException {
         Execution execution = runnerUtils.runOne("org.kestra.tests", "each-sequential-nested", null, null, Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(23));
+    }
+
+    @Test
+    void eachParallel() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "each-parallel", null, null, Duration.ofSeconds(60));
+
+        assertThat(execution.getTaskRunList(), hasSize(8));
+    }
+
+    @Test
+    void eachParallelNested() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "each-parallel-nested", null, null, Duration.ofSeconds(60));
+
+        assertThat(execution.getTaskRunList(), hasSize(11));
     }
 
     @Test

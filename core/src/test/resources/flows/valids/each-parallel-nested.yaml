@@ -1,0 +1,24 @@
+id: each-parallel-nested
+namespace: org.kestra.tests
+
+tasks:
+  - id: 1_each
+    type: org.kestra.core.tasks.flows.EachParallel
+    value: '["value 1", "value 2", "value 3"]'
+    tasks:
+      - id: 2-1_seq
+        type: org.kestra.core.tasks.flows.Sequential
+        tasks:
+        - id: 2-1-1_t1
+          type: org.kestra.core.tasks.scripts.Bash
+          commands:
+            - 'echo "{{task.id}} > {{ parents.0.taskrun.value }} > $(date +"%T.%N")"'
+            - 'sleep 1'
+        - id: 2-1-2_t2
+          type: org.kestra.core.tasks.scripts.Bash
+          commands:
+            - 'echo "{{task.id}} > {{ parents.0.taskrun.value }} > $(date +"%T.%N")"'
+            - 'sleep 1'
+  - id: 2_end
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

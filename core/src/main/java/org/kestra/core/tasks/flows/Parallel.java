@@ -103,36 +103,12 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     }
 
     @Override
-    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException{
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
+    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        return FlowableUtils.resolveParallelNexts(
+            execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             parentTaskRun
         );
-
-        // all tasks run
-        List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
-
-        // find all not created tasks
-        List<ResolvedTask> notFinds = currentTasks
-            .stream()
-            .filter(resolvedTask -> taskRuns
-                .stream()
-                .noneMatch(taskRun -> FlowableUtils.isTaskRunFor(resolvedTask, taskRun, parentTaskRun))
-            )
-            .collect(Collectors.toList());
-
-        // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastByState(currentTasks, State.Type.CREATED, parentTaskRun);
-
-        if (notFinds.size() > 0 && lastCreated.isEmpty()) {
-            return notFinds
-                .stream()
-                .map(resolvedTask -> resolvedTask.toTaskRun(execution))
-                .limit(1)
-                .collect(Collectors.toList());
-        }
-
-        return new ArrayList<>();
     }
 }

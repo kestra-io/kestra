@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -36,35 +38,36 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
         @Example(
             title = "Execute a python script",
             code = {
-                "inputFiles:\n",
-                "  main.py: |\n",
-                "    import json\n",
-                "    import requests\n",
-                "    import sys\n",
-                "    result = json.loads(open(sys.argv[1]).read())\n",
-                "    print(f\"python script {result['status']}\")\n",
-                "    print(requests.get('http://google.com').status_code)\n",
-                "  data.json: |\n",
-                "    {\"status\": \"OK\"}\n",
-                "  data.csv: {{ outputs.download.uri }}\n",
-                "  pip.conf: |\n",
-                "    # some specific pip repository configuration\n",
-                "args:\n",
-                "  - data.json\n",
-                "requirements:\n",
+                "inputFiles:",
+                "  data.json: |",
+                "          {\"status\": \"OK\"}",
+                "  main.py: |",
+                "    import json",
+                "    import requests",
+                "    import sys",
+                "    result = json.loads(open(sys.argv[1]).read())",
+                "    print(f\"python script {result['status']}\")",
+                "    print(requests.get('http://google.com').status_code)",
+                "  pip.conf: |",
+                "    # some specific pip repository configuration",
+                "args:",
+                "  - data.json",
+                "requirements:",
                 "  - requests"
             }
         )
     }
 )
-public class Python extends Bash implements RunnableTask<Bash.Output> {
+public class Python extends AbstractBash implements RunnableTask<AbstractBash.Output> {
     @Builder.Default
     @Schema(
         title = "The python interpreter to use",
         description = "Set the python interpreter path to use"
     )
     @PluginProperty(dynamic = true)
-    private String pythonPath = "/usr/bin/python3";
+    @NotNull
+    @NotEmpty
+    private final String pythonPath = "/usr/bin/python3";
 
     @Schema(
         title = "Python command args",

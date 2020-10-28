@@ -3,30 +3,26 @@ package org.kestra.runner.kafka;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.config.TopicConfig;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueException;
-import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.WorkerInstance;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
 import org.kestra.core.runners.WorkerTaskRunning;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -34,12 +30,12 @@ import org.kestra.runner.kafka.services.KafkaConsumerService;
 import org.kestra.runner.kafka.services.KafkaProducerService;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
@@ -56,9 +52,8 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
         if (poolExecutor == null) {
-            poolExecutor = Executors.newCachedThreadPool(
-                applicationContext.getBean(ThreadMainFactoryBuilder.class).build("kakfa-queue-%d")
-            );
+            ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
+            poolExecutor = executorsUtils.cachedThreadPool("kakfa-queue");
         }
 
         KafkaAdminService kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);

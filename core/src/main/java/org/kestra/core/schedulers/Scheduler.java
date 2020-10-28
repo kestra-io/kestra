@@ -72,7 +72,7 @@ public class Scheduler implements Runnable, AutoCloseable {
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
         this.conditionService = applicationContext.getBean(ConditionService.class);
 
-        this.cachedExecutor = MoreExecutors.listeningDecorator(executorsUtils.cachedThreadPool("scheduler_executor"));
+        this.cachedExecutor = MoreExecutors.listeningDecorator(executorsUtils.cachedThreadPool("scheduler-polling"));
     }
 
     @Override

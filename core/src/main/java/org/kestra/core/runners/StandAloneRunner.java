@@ -3,15 +3,14 @@ package org.kestra.core.runners;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.Execution;
-import org.kestra.core.schedulers.Scheduler;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.schedulers.Scheduler;
+import org.kestra.core.utils.ExecutorsUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -40,7 +39,7 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
     }
 
     @Inject
-    private ThreadMainFactoryBuilder threadFactoryBuilder;
+    private ExecutorsUtils executorsUtils;
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
@@ -63,7 +62,7 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
     public void run() {
         this.running = true;
 
-        poolExecutor = Executors.newCachedThreadPool(threadFactoryBuilder.build("standalone-runner-%d"));
+        poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
 
         for (int i = 0; i < executorThreads; i++) {
             poolExecutor.execute(applicationContext.getBean(AbstractExecutor.class));

@@ -42,13 +42,12 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.serializers.JacksonMapper;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -75,10 +74,10 @@ abstract public class AbstractElasticSearchRepository<T> {
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
         ModelValidator modelValidator,
-        ThreadMainFactoryBuilder threadFactoryBuilder,
+        ExecutorsUtils executorsUtils,
         Class<T> cls
     ) {
-        this.startExecutor(threadFactoryBuilder);
+        this.startExecutor(executorsUtils);
 
         this.client = client;
         this.cls = cls;
@@ -91,9 +90,9 @@ abstract public class AbstractElasticSearchRepository<T> {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private synchronized void startExecutor(ThreadMainFactoryBuilder threadFactoryBuilder) {
+    private synchronized void startExecutor(ExecutorsUtils executorsUtils) {
         if (poolExecutor == null) {
-            poolExecutor = Executors.newCachedThreadPool(threadFactoryBuilder.build("elasticsearch-repository-%d"));
+            poolExecutor = executorsUtils.cachedThreadPool("elasticsearch-repository");
         }
     }
 

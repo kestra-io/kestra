@@ -1,16 +1,9 @@
 package org.kestra.repository.elasticsearch;
 
 import io.micronaut.data.model.Pageable;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.BucketOrder;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
@@ -20,14 +13,12 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.FlowRepositoryInterface;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -46,10 +37,10 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
         ModelValidator modelValidator,
-        ThreadMainFactoryBuilder threadFactoryBuilder,
+        ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue
     ) {
-        super(client, indicesConfigs, modelValidator, threadFactoryBuilder, Flow.class);
+        super(client, indicesConfigs, modelValidator, executorsUtils, Flow.class);
 
         this.flowQueue = flowQueue;
     }

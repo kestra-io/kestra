@@ -11,7 +11,7 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.TemplateRepositoryInterface;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
 import java.util.List;
@@ -32,10 +32,10 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
         ModelValidator modelValidator,
-        ThreadMainFactoryBuilder threadFactoryBuilder,
+        ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.TEMPLATE_NAMED) QueueInterface<Template> templateQueue
     ) {
-        super(client, indicesConfigs, modelValidator, threadFactoryBuilder, Template.class);
+        super(client, indicesConfigs, modelValidator, executorsUtils, Template.class);
 
         this.templateQueue = templateQueue;
     }

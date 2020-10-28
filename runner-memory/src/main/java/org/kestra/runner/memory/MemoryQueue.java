@@ -6,13 +6,12 @@ import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.utils.ExecutorsUtils;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -25,9 +24,8 @@ public class MemoryQueue<T> implements QueueInterface<T> {
 
     public MemoryQueue(Class<T> cls, ApplicationContext applicationContext) {
         if (poolExecutor == null) {
-            poolExecutor = Executors.newCachedThreadPool(
-                applicationContext.getBean(ThreadMainFactoryBuilder.class).build("memory-queue-%d")
-            );
+            ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
+            poolExecutor = executorsUtils.cachedThreadPool("memory-queue");
         }
 
         this.cls = cls;

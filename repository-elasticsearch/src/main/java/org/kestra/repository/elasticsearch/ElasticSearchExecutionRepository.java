@@ -22,7 +22,7 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
 import java.io.IOException;
@@ -51,9 +51,9 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
         ModelValidator modelValidator,
-        ThreadMainFactoryBuilder threadFactoryBuilder
+        ExecutorsUtils executorsUtils
     ) {
-        super(client, indicesConfigs, modelValidator, threadFactoryBuilder, Execution.class);
+        super(client, indicesConfigs, modelValidator, executorsUtils, Execution.class);
     }
 
     @Override

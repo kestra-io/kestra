@@ -15,27 +15,24 @@ import javax.inject.Singleton;
 @Singleton
 @Slf4j
 public class WorkerInstanceService {
-    public static WorkerInstance removeEvictedPartitions(Stream<WorkerInstance> stream, WorkerInstance incoming) {
+    public static List<WorkerInstance> removeEvictedPartitions(Stream<WorkerInstance> stream, WorkerInstance incoming) {
         // looking for WorkerInstance that of common partition
         List<WorkerInstance> changedInstance = stream
             .filter(r -> !r.getWorkerUuid().toString().equals(incoming.getWorkerUuid().toString()))
             .filter(r -> !Collections.disjoint(r.getPartitions(), incoming.getPartitions()))
             .collect(Collectors.toList());
 
-        // we received one WorkerInstance by one, we can't have multiple changed at the same time
-        if (changedInstance.size() > 1) {
-            throw new RuntimeException("Too many instance changed, got " + changedInstance.size() + ": " + changedInstance);
+        if (changedInstance.size() >= 1) {
+            return changedInstance
+                .stream()
+                .map(evictedInstance -> {
+                    evictedInstance.getPartitions().removeAll(incoming.getPartitions());
+
+                    return evictedInstance;
+                })
+                .collect(Collectors.toList());
         }
 
-        // found a WorkerInstance with partitions reassigned, we remove the partitions
-        if (changedInstance.size() == 1) {
-            WorkerInstance evictedInstance = changedInstance.get(0);
-
-            evictedInstance.getPartitions().removeAll(incoming.getPartitions());
-
-            return evictedInstance;
-        }
-
-        return null;
+        return Collections.emptyList();
     }
 }

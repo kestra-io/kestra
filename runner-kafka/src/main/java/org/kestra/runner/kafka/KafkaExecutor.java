@@ -655,8 +655,7 @@ public class KafkaExecutor extends AbstractExecutor {
                 Named.as("detectNewWorker-transformValues"),
                 WORKERINSTANCE_STATE_STORE_NAME
             )
-            .filter((key, value) -> value != null, Named.as("detectNewWorker-notNull-filter"));
-
+            .flatMapValues((readOnlyKey, value) -> value, Named.as("detectNewWorker-listToItem-flatMap"));
 
         // we resend the worker task from evicted worker
         KStream<String, WorkerTask> resultWorkerTask = stream

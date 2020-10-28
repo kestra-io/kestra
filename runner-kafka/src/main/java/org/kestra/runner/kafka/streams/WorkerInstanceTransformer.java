@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @SuppressWarnings("UnstableApiUsage")
-public class WorkerInstanceTransformer implements ValueTransformerWithKey<String, WorkerInstance, WorkerInstanceTransformer.Result> {
+public class WorkerInstanceTransformer implements ValueTransformerWithKey<String, WorkerInstance, List<WorkerInstanceTransformer.Result>> {
     private final String instanceStoreName;
 
     private KeyValueStore<String, WorkerInstance> instanceStore;
@@ -39,55 +39,56 @@ public class WorkerInstanceTransformer implements ValueTransformerWithKey<String
     }
 
     @Override
-    public Result transform(final String key, final WorkerInstance value) {
+    public List<Result> transform(final String key, final WorkerInstance value) {
         if (value == null) {
             this.instanceStore.delete(key);
 
-            return null;
+            return Collections.emptyList();
         }
 
         this.instanceStore.put(key, value);
 
         try (KeyValueIterator<String, WorkerInstance> all = this.instanceStore.all()) {
-            WorkerInstance updated = WorkerInstanceService.removeEvictedPartitions(
+            List<WorkerInstance> updatedInstances = WorkerInstanceService.removeEvictedPartitions(
                 Streams.stream(all).map(r -> r.value),
                 value
             );
 
-            if (updated != null) {
-                String finalInstanceKey = updated.getWorkerUuid().toString();
+            return updatedInstances
+                .stream()
+                .map(updated -> {
+                    String finalInstanceKey = updated.getWorkerUuid().toString();
 
-                if (updated.getPartitions().size() > 0) {
-                    return new Result(
-                        Collections.emptyList(),
-                        KeyValue.pair(finalInstanceKey, updated)
-                    );
-                } else {
-                    // no more partitions for this WorkerInstance, this one doesn't exist any more.
-                    // we delete this one and resend all the running tasks
-                    log.warn("Detected evicted worker: {}", updated);
+                    if (updated.getPartitions().size() > 0) {
+                        return new Result(
+                            Collections.emptyList(),
+                            KeyValue.pair(finalInstanceKey, updated)
+                        );
+                    } else {
+                        // no more partitions for this WorkerInstance, this one doesn't exist any more.
+                        // we delete this one and resend all the running tasks
+                        log.warn("Detected evicted worker: {}", updated);
 
-                    List<WorkerTask> workerTasks = this.listRunningForWorkerInstance(updated);
+                        List<WorkerTask> workerTasks = this.listRunningForWorkerInstance(updated);
 
-                    workerTasks.forEach(workerTask ->
-                        log.info(
-                            "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
-                            workerTask.getTaskRun().getNamespace(),
-                            workerTask.getTaskRun().getFlowId(),
-                            workerTask.getTaskRun().getId(),
-                            workerTask.getTaskRun().getExecutionId()
-                        )
-                    );
+                        workerTasks.forEach(workerTask ->
+                            log.info(
+                                "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
+                                workerTask.getTaskRun().getNamespace(),
+                                workerTask.getTaskRun().getFlowId(),
+                                workerTask.getTaskRun().getId(),
+                                workerTask.getTaskRun().getExecutionId()
+                            )
+                        );
 
-                    return new Result(
-                        workerTasks,
-                        KeyValue.pair(finalInstanceKey, null)
-                    );
-                }
-            }
+                        return new Result(
+                            workerTasks,
+                            KeyValue.pair(finalInstanceKey, null)
+                        );
+                    }
+                })
+                .collect(Collectors.toList());
         }
-
-        return null;
     }
 
     private List<WorkerTask> listRunningForWorkerInstance(WorkerInstance workerInstance) {

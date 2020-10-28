@@ -76,9 +76,11 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         }
 
         TermsAggregationBuilder agg = AggregationBuilders.terms(NAMESPACE_AGG)
+            .size(10000)
             .field("namespace")
             .subAggregation(
                 AggregationBuilders.terms(FLOW_AGG)
+                    .size(10000)
                     .field("flowId")
                     .subAggregation(dailyExecutionStatisticsFinalAgg(startDate, endDate))
             );
@@ -228,6 +230,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                 field("state.duration")
             )
             .subAggregation(AggregationBuilders.terms(COUNT_AGG)
+                .size(10000)
                 .field("state.current")
             );
     }

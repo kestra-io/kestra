@@ -70,7 +70,7 @@ export default {
                 q,
                 page: this.$route.query.page || 1,
                 size: this.$route.query.size  || 25,
-                minLevel: `${this.$route.query.level || "INFO"}`
+                minLevel: this.$route.query.level || "INFO"
             });
         },
     },

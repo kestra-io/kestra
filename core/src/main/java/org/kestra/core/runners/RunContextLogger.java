@@ -46,6 +46,10 @@ public class RunContextLogger {
     private static List<LogEntry> logEntry(ILoggingEvent event, String message, org.slf4j.event.Level level, LogEntry logEntry) {
         Iterable<String> split;
 
+        if (message == null) {
+            return new ArrayList<>();
+        }
+
         if (message.length() > MAX_MESSAGE_LENGTH) {
             split = Splitter.fixedLength(MAX_MESSAGE_LENGTH).split(message);
         } else {

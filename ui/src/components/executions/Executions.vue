@@ -117,16 +117,18 @@ export default {
         };
     },
     beforeCreate () {
-        const queries = JSON.parse(localStorage.getItem('executionQueries') || '{}')
-        queries.sort = queries.sort ? queries.sort :  'state.startDate:desc'
-        queries.status = this.$route.query.status || queries.status || 'ALL'
-        if (!this.$route.query.sort) {
-            this.$router.push({
-                name: this.$route.name,
-                query: {...this.$route.query, ...queries}
-            });
+        if (this.$route.name === 'executionsList') {
+            const queries = JSON.parse(localStorage.getItem('executionQueries') || '{}')
+            queries.sort = queries.sort ? queries.sort :  'state.startDate:desc'
+            queries.status = this.$route.query.status || queries.status || 'ALL'
+            if (!this.$route.query.sort) {
+                this.$router.push({
+                    name: this.$route.name,
+                    query: {...this.$route.query, ...queries}
+                });
+            }
+            localStorage.setItem('executionQueries', JSON.stringify(queries))
         }
-        localStorage.setItem('executionQueries', JSON.stringify(queries))
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
@@ -250,6 +252,21 @@ export default {
         durationFrom(item) {
             return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
         },
+    },
+    beforeDestroy() {
+        console.log('this.$route.name',this.$route.name)
+        if (this.$route.name !== 'executionsList') {
+            this.$router.push({
+                queries: {
+                    sort: undefined,
+                    status: undefined,
+                    start:undefined,
+                    end:undefined,
+                    q:undefined,
+                }
+            })
+        }
+
     }
 };
 </script>

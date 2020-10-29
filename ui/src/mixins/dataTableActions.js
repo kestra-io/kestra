@@ -1,23 +1,22 @@
 import qb from "../utils/queryBuilder";
 export default {
     created() {
-        if (localStorage.getItem(this.storageName) && this.$route.name === 'executionsList') {
-            if (localStorage.getItem(this.storageName) !== JSON.stringify(this.$route.query)) {
-                this.$router.push({
-                    query: JSON.parse(localStorage.getItem(this.storageName))
-                });
+        const query = this.$route.query
+        let change = false
+        if (this.isBasePage) {
+            const userPreferences = JSON.parse(localStorage.getItem(this.storageName) || '{}')
+            for (const key in query) {
+                if (query[key] !== userPreferences[key]) {
+                    query[key] = userPreferences[key]
+                    change = true
+                }
             }
+        }
+        if (change) {
+            this.$router.push({query});
         }
         this.query = qb.build(this.$route, this.fields);
         this.loadData(this.onDataLoaded);
-    },
-    watch: {
-        $route() {
-            localStorage.setItem(
-                this.storageName,
-                JSON.stringify(this.$route.query)
-            );
-        }
     },
     data() {
         return {
@@ -38,6 +37,9 @@ export default {
         searchableFields() {
             return this.fields.filter(f => f.sortable);
         },
+        isBasePage() {
+            return ['executionsList', 'flowsList'].includes(this.$route.name)
+        }
     },
     methods: {
         onSearch() {
@@ -73,6 +75,14 @@ export default {
         },
         onDataLoaded () {
             this.ready = true
+        }
+    },
+    beforeDestroy() {
+        if (this.isBasePage) {
+            localStorage.setItem(
+                this.storageName,
+                JSON.stringify(this.$route.query)
+            );
         }
     }
 }

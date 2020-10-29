@@ -11,7 +11,7 @@ import org.kestra.core.runners.WorkerTaskResult;
 import org.kestra.core.runners.WorkerTaskRunning;
 
 public abstract class AbstractQueue {
-    protected static String key(Object object) {
+    public static String key(Object object) {
         if (object.getClass() == Execution.class) {
             return ((Execution) object).getId();
         } else if (object.getClass() == WorkerTask.class) {

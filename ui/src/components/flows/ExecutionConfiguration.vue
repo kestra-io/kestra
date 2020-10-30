@@ -71,6 +71,19 @@
                 return this.$t("set a value for");
             }
         },
+        data () {
+            return {
+                submitOnKey: undefined
+            }
+        },
+        mounted() {
+            this.submitOnKey = (e) => {
+                if (e.ctrlKey && e.keyCode === 13) {
+                    this.onSubmit()
+                }
+            };
+            window.addEventListener("keydown", this.submitOnKey);
+        },
         methods: {
             onSubmit() {
                 const formData = new FormData();
@@ -106,6 +119,11 @@
                     .then((execution) => {
                         this.$toast().success(this.$t('triggered done', {name: execution.id}));
                     })
+            }
+        },
+        destroyed () {
+            if (this.submitOnKey) {
+                window.removeEventListener("keydown", this.submitOnKey)
             }
         }
     };

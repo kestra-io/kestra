@@ -46,6 +46,13 @@
                     enableBasicAutocompletion: true,
                     enableLiveAutocompletion: true
                 });
+                editor.commands.addCommand({
+                    name: "save",
+                    bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
+                    exec: (editor) => {
+                        this.$emit('onSave', editor.session.getValue())
+                    },
+                });
             },
 
             onInput(value) {

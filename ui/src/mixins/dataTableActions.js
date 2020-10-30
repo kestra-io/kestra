@@ -76,13 +76,12 @@ export default {
             }
         },
         loadFilters () {
-            const routeQuery = this.$route.query
-            const query = {...routeQuery}
+            const query = { ...this.$route.query}
             let change = false
             if (this.isBasePage) {
                 const userPreferences = JSON.parse(localStorage.getItem(this.storageName) || '{}')
                 for (const key in userPreferences) {
-                    if (query[key] !== userPreferences[key]) {
+                    if (!query[key] && userPreferences[key]) {
                         query[key] = userPreferences[key]
                         change = true
                     }

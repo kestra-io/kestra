@@ -116,6 +116,12 @@ export default {
             flowTriggerDetails: undefined
         };
     },
+    beforeCreate() {
+        const q = JSON.parse(localStorage.getItem('executionQueries') || '{}')
+        q.sort = q.sort ? q.sort :  'state.startDate:desc'
+        q.status = q.status ? q.status : 'ALL'
+        localStorage.setItem('executionQueries', JSON.stringify(q))
+    },
     computed: {
         ...mapState("execution", ["executions", "total"]),
         ...mapState("stat", ["daily"]),

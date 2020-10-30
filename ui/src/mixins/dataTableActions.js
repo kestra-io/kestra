@@ -92,6 +92,5 @@ export default {
                 this.$router.push({ query: query });
             }
         }
-    },
-
+    }
 }

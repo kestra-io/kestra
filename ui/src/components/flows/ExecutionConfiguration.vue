@@ -1,6 +1,6 @@
 <template>
     <div class="container" v-if="flow">
-        <b-form @submit.prevent="onSubmit">
+        <b-form v-hotkey="keymap" @submit.prevent="onSubmit">
             <b-form-group
                     v-for="input in flow.inputs"
                     :key="input.id"
@@ -69,20 +69,12 @@
             ...mapState("flow", ["flow"]),
             placeholder() {
                 return this.$t("set a value for");
-            }
-        },
-        data () {
-            return {
-                submitOnKey: undefined
-            }
-        },
-        mounted() {
-            this.submitOnKey = (e) => {
-                if (e.ctrlKey && e.keyCode === 13) {
-                    this.onSubmit()
+            },
+            keymap () {
+                return {
+                    'ctrl+enter': this.onSubmit,
                 }
-            };
-            window.addEventListener("keydown", this.submitOnKey);
+            }
         },
         methods: {
             onSubmit() {
@@ -119,11 +111,6 @@
                     .then((execution) => {
                         this.$toast().success(this.$t('triggered done', {name: execution.id}));
                     })
-            }
-        },
-        destroyed () {
-            if (this.submitOnKey) {
-                window.removeEventListener("keydown", this.submitOnKey)
             }
         }
     };

@@ -133,6 +133,9 @@
         "template creation": "Template creation",
         "templates": "Templates",
         "no result": "No result for current selection",
+        "triggers": "Triggers",
+        "trigger details": "Trigger details",
+        "conditions": "conditions",
         "taskruns":"Task Runs"
     },
     "fr": {
@@ -270,6 +273,9 @@
         "template creation": "Création de template",
         "templates": "Templates",
         "no result": "Aucun résultat pour la selection courante.",
+        "triggers": "Déclencheurs",
+        "trigger details": "Détails du déclencheur",
+        "conditions": "conditions",
         "taskruns":"Execution de tâches"
     }
 }

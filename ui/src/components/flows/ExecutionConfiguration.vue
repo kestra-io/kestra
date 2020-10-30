@@ -56,15 +56,20 @@
 
             </b-form-group>
         </b-form>
+        <br/>
+        <b-card :header="$t('triggers')">
+            <triggers/>
+        </b-card>
     </div>
 </template>
 <script>
     import {mapState} from "vuex";
     import DatePicker from "vue2-datepicker";
     import Trigger from "vue-material-design-icons/Cogs";
+    import Triggers from "./Triggers";
 
     export default {
-        components: {DatePicker, Trigger},
+        components: {DatePicker, Trigger, Triggers},
         computed: {
             ...mapState("flow", ["flow"]),
             placeholder() {

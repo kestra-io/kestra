@@ -1,20 +1,7 @@
 import qb from "../utils/queryBuilder";
 export default {
     created() {
-        const query = this.$route.query
-        let change = false
-        if (this.isBasePage) {
-            const userPreferences = JSON.parse(localStorage.getItem(this.storageName) || '{}')
-            for (const key in query) {
-                if (query[key] !== userPreferences[key]) {
-                    query[key] = userPreferences[key]
-                    change = true
-                }
-            }
-        }
-        if (change) {
-            this.$router.push({query});
-        }
+        this.loadFilters()
         this.query = qb.build(this.$route, this.fields);
         this.loadData(this.onDataLoaded);
     },
@@ -45,6 +32,7 @@ export default {
         onSearch() {
             this.query = qb.build(this.$route, this.fields);
             this.loadData(this.onDataLoaded);
+            this.saveFilters()
         },
         onSort(sortItem) {
             const sort = [
@@ -54,6 +42,7 @@ export default {
                 query: { ...this.$route.query, sort }
             });
             this.loadData(this.onDataLoaded);
+            this.saveFilters()
         },
         onRowDoubleClick(item) {
             this.$router.push({ name: this.dataType + "Edit", params: item });
@@ -67,22 +56,42 @@ export default {
                 }
             });
             this.loadData(this.onDataLoaded);
+            this.saveFilters()
         },
         onNamespaceSelect() {
             this.query = qb.build(this.$route, this.fields);
             this.$router.push({query: {...this.$route.query, page: 1}})
             this.loadData(this.onDataLoaded);
+            this.saveFilters()
         },
         onDataLoaded () {
             this.ready = true
+        },
+        saveFilters() {
+            if (this.isBasePage) {
+                localStorage.setItem(
+                    this.storageName,
+                    JSON.stringify(this.$route.query)
+                );
+            }
+        },
+        loadFilters () {
+            const routeQuery = this.$route.query
+            const query = {...routeQuery}
+            let change = false
+            if (this.isBasePage) {
+                const userPreferences = JSON.parse(localStorage.getItem(this.storageName) || '{}')
+                for (const key in userPreferences) {
+                    if (query[key] !== userPreferences[key]) {
+                        query[key] = userPreferences[key]
+                        change = true
+                    }
+                }
+            }
+            if (change) {
+                this.$router.push({ query: query });
+            }
         }
     },
-    beforeDestroy() {
-        if (this.isBasePage) {
-            localStorage.setItem(
-                this.storageName,
-                JSON.stringify(this.$route.query)
-            );
-        }
-    }
+
 }

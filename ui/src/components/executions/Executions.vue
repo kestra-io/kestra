@@ -4,7 +4,7 @@
             <template v-slot:navbar>
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <namespace-select data-type="flow" v-if="$route.name !== 'flowEdit'"  @onNamespaceSelect="onNamespaceSelect" />
-                <status-filter-buttons @onRefresh="loadData"/>
+                <status-filter-buttons @onRefresh="onStatusChange"/>
                 <date-range @onDate="onSearch" />
                 <refresh-button class="float-right" @onRefresh="loadData"/>
             </template>
@@ -116,20 +116,6 @@ export default {
             flowTriggerDetails: undefined
         };
     },
-    beforeCreate () {
-        if (this.$route.name === 'executionsList') {
-            const queries = JSON.parse(localStorage.getItem('executionQueries') || '{}')
-            queries.sort = queries.sort ? queries.sort :  'state.startDate:desc'
-            queries.status = this.$route.query.status || queries.status || 'ALL'
-            if (!this.$route.query.sort) {
-                this.$router.push({
-                    name: this.$route.name,
-                    query: {...this.$route.query, ...queries}
-                });
-            }
-            localStorage.setItem('executionQueries', JSON.stringify(queries))
-        }
-    },
     computed: {
         ...mapState("execution", ["executions", "total"]),
         ...mapState("stat", ["daily"]),
@@ -204,6 +190,10 @@ export default {
         }
     },
     methods: {
+        onStatusChange() {
+            this.saveFilters()
+            this.loadData()
+        },
         showTriggerDetails(trigger) {
             this.flowTriggerDetails = trigger
             this.$bvModal.show('modal-triggers-details')
@@ -252,21 +242,6 @@ export default {
         durationFrom(item) {
             return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
         },
-    },
-    beforeDestroy() {
-        console.log('this.$route.name',this.$route.name)
-        if (this.$route.name !== 'executionsList') {
-            this.$router.push({
-                queries: {
-                    sort: undefined,
-                    status: undefined,
-                    start:undefined,
-                    end:undefined,
-                    q:undefined,
-                }
-            })
-        }
-
     }
 };
 </script>

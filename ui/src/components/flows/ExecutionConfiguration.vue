@@ -1,6 +1,6 @@
 <template>
     <div class="container" v-if="flow">
-        <b-form @submit.prevent="onSubmit">
+        <b-form v-hotkey="keymap" @submit.prevent="onSubmit">
             <b-form-group
                     v-for="input in flow.inputs"
                     :key="input.id"
@@ -69,6 +69,11 @@
             ...mapState("flow", ["flow"]),
             placeholder() {
                 return this.$t("set a value for");
+            },
+            keymap () {
+                return {
+                    'ctrl+enter': this.onSubmit,
+                }
             }
         },
         methods: {

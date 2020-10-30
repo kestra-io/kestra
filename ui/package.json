@@ -29,6 +29,7 @@
     "moment-range": "4.0.2",
     "prismjs": "^1.22.0",
     "throttle-debounce": "^2.3.0",
+    "v-hotkey": "^0.8.0",
     "vue": "^2.6.12",
     "vue-analytics": "^5.22.1",
     "vue-axios": "^2.1.5",

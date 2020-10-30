@@ -26,6 +26,7 @@ import moment from 'moment'
 import routes from './routes/routes'
 import stores from './stores/store'
 import vSelect from 'vue-select'
+import VueHotkey from 'v-hotkey'
 
 let app = document.querySelector('#app');
 
@@ -57,6 +58,7 @@ if (app) {
     latencyThreshold: 50,
   })
 
+  Vue.use(VueHotkey)
   Vue.use(VueSSE);
   Vue.use(VueMoment, { moment: extendMoment(moment) });
   Vue.use(VueSidebarMenu);

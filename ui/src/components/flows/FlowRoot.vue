@@ -117,7 +117,7 @@ export default {
             if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
                 tabs.push({
                     tab: "execution-configuration",
-                    title: title("trigger")
+                    title: title("launch execution")
                 });
             }
 

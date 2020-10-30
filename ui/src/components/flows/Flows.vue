@@ -60,10 +60,18 @@
                                 :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
                             >{{row.item.id}}</router-link>
                         </template>
+
+                        <template v-slot:cell(triggers)="row">
+                            <trigger-avatar @showTriggerDetails="showTriggerDetails" :flow="row.item"/>
+                        </template>
+
                     </b-table>
                 </template>
             </data-table>
         </div>
+
+        <trigger-details-modal v-if="flowTriggerDetails" :trigger="flowTriggerDetails"/>
+
         <bottom-line v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
@@ -94,6 +102,8 @@ import SearchField from "../layout/SearchField";
 import StateChart from "../stats/StateChart";
 import DurationChart from "../stats/DurationChart";
 import StateGlobalChart from "../stats/StateGlobalChart";
+import TriggerDetailsModal from "./TriggerDetailsModal";
+import TriggerAvatar from "./TriggerAvatar";
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -107,6 +117,8 @@ export default {
         StateChart,
         DurationChart,
         StateGlobalChart,
+        TriggerDetailsModal,
+        TriggerAvatar
     },
     data() {
         return {
@@ -115,6 +127,7 @@ export default {
             action: action,
             dailyGroupByFlowReady: false,
             dailyReady: false,
+            flowTriggerDetails: undefined
         };
     },
     computed: {
@@ -149,6 +162,11 @@ export default {
                     class: "row-graph"
                 },
                 {
+                    key: "triggers",
+                    label: title("triggers"),
+                    class: "shrink"
+                },
+                {
                     key: "actions",
                     label: "",
                     class: "row-action"
@@ -165,6 +183,10 @@ export default {
         }
     },
     methods: {
+        showTriggerDetails(trigger) {
+            this.flowTriggerDetails = trigger
+            this.$bvModal.show('modal-triggers-details')
+        },
         chartData(row) {
             if (this.dailyGroupByFlow && this.dailyGroupByFlow[row.item.namespace] && this.dailyGroupByFlow[row.item.namespace][row.item.id]) {
                 return this.dailyGroupByFlow[row.item.namespace][row.item.id];

@@ -1,21 +1,31 @@
 package org.kestra.core.models.executions;
 
+import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Value;
-import lombok.extern.slf4j.Slf4j;
+import org.kestra.core.models.tasks.Output;
+import org.kestra.core.models.triggers.AbstractTrigger;
 
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 
 @Value
 @Builder
-@Slf4j
+@Introspected
 public class ExecutionTrigger {
     @NotNull
-    private String id;
+    String id;
 
     @NotNull
-    private String type;
+    String type;
 
-    private Map<String, Object> variables;
+    Map<String, Object> variables;
+
+    public static ExecutionTrigger of(AbstractTrigger abstractTrigger, Output output) {
+        return ExecutionTrigger.builder()
+            .id(abstractTrigger.getId())
+            .type(abstractTrigger.getType())
+            .variables(output.toMap())
+            .build();
+    }
 }

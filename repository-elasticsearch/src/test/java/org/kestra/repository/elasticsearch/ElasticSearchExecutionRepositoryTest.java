@@ -1,5 +1,6 @@
 package org.kestra.repository.elasticsearch;
 
+import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.AfterEach;
@@ -10,17 +11,13 @@ import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.repositories.ArrayListTotal;
-<<<<<<< HEAD
-import org.kestra.core.utils.IdUtils;
-=======
 import org.kestra.core.tasks.debugs.Return;
->>>>>>> wip
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.*;
-import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -49,15 +46,16 @@ class ElasticSearchExecutionRepositoryTest {
         doReturn(Duration.ofSeconds(rand.nextInt(150)))
             .when(finalState)
             .getDuration();
-        
-        return Execution.builder()
-            .id(IdUtils.create())
+
+        Execution.ExecutionBuilder execution = Execution.builder()
+            .id(FriendlyId.createFriendlyId())
             .namespace(NAMESPACE)
             .flowId(flowId == null ? FLOW : flowId)
             .flowRevision(1)
             .state(finalState);
 
-        return execution.taskRunList(Arrays.asList(
+
+        List<TaskRun> taskRuns = Arrays.asList(
             TaskRun.of(execution.build(), ResolvedTask.of(
                 Return.builder().id("first").type(Return.class.getName()).format("test").build())
             )
@@ -65,8 +63,16 @@ class ElasticSearchExecutionRepositoryTest {
             TaskRun.of(execution.build(), ResolvedTask.of(
                 Return.builder().id("second").type(Return.class.getName()).format("test").build())
             )
-                .withState(state)
-        ));
+                .withState(state),
+            TaskRun.of(execution.build(), ResolvedTask.of(
+                Return.builder().id("third").type(Return.class.getName()).format("test").build())).withState(state)
+        );
+
+        if (flowId == null) {
+            return execution.taskRunList(List.of(taskRuns.get(0), taskRuns.get(1), taskRuns.get(2)));
+        }
+
+        return execution.taskRunList(List.of(taskRuns.get(0), taskRuns.get(1)));
     }
 
     void inject() {
@@ -92,7 +98,7 @@ class ElasticSearchExecutionRepositoryTest {
         inject();
 
         ArrayListTotal<TaskRun> executions = executionRepository.findTaskRun("*", Pageable.from(1, 10), null);
-        assertThat(executions.getTotal(), is(28L));
+        assertThat(executions.getTotal(), is(71L));
         assertThat(executions.size(), is(10));
     }
 

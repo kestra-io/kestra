@@ -30,6 +30,7 @@ import TimelineClock from "vue-material-design-icons/TimelineClock";
 import BookOpen from "vue-material-design-icons/BookOpen";
 import CardText from "vue-material-design-icons/CardText";
 import HexagonMultiple from "vue-material-design-icons/HexagonMultiple";
+import ChartTimeline from "vue-material-design-icons/ChartTimeline";
 
 Vue.component("graph", Graph);
 Vue.component("settings", Cog);
@@ -37,12 +38,13 @@ Vue.component("timelineclock", TimelineClock);
 Vue.component("bookopen", BookOpen);
 Vue.component("cardtext", CardText);
 Vue.component("hexagon-multiple", HexagonMultiple);
+Vue.component("charttimeline", ChartTimeline);
 
 export default {
   components: {
     ChevronLeft,
     ChevronRight,
-    SidebarMenu,
+    SidebarMenu
   },
   methods: {
     onToggleCollapse(folded) {
@@ -61,9 +63,7 @@ export default {
       return [
         {
           href: "/flows",
-          alias: [
-            "/flows*"
-          ],
+          alias: ["/flows*"],
           title: this.$t("flows"),
           icon: {
             element: "graph",
@@ -71,24 +71,29 @@ export default {
           }
         },
         {
-            href: "/templates",
-            alias: [
-                "/templates*"
-            ],
-            title: this.$t("templates"),
-            icon: {
-                element: "cardtext",
-                class: "menu-icon"
-            }
+          href: "/templates",
+          alias: ["/templates*"],
+          title: this.$t("templates"),
+          icon: {
+            element: "cardtext",
+            class: "menu-icon"
+          }
         },
         {
           href: "/executions",
-          alias: [
-            "/executions*"
-          ],
+          alias: ["/executions*"],
           title: this.$t("executions"),
           icon: {
             element: "timelineclock",
+            class: "menu-icon"
+          }
+        },
+        {
+          href: "/taskruns",
+          alias: ["/taskruns*"],
+          title: this.$t("taskruns"),
+          icon: {
+            element: "charttimeline",
             class: "menu-icon"
           }
         },
@@ -105,9 +110,7 @@ export default {
         },
         {
           href: "/plugins",
-          alias: [
-            "/plugins*"
-          ],
+          alias: ["/plugins*"],
           title: this.$t("plugins.documentation"),
           icon: {
             element: "bookopen",
@@ -116,9 +119,7 @@ export default {
         },
         {
           href: "/settings",
-          alias: [
-            "/settings*"
-          ],
+          alias: ["/settings*"],
           title: this.$t("settings"),
           icon: {
             element: "settings",

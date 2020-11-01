@@ -8,7 +8,7 @@ properties:
     type: keyword
   inputs:
     type: object
-    properties: {}
+    properties: { }
   namespace:
     type: keyword
   parentId:
@@ -22,7 +22,7 @@ properties:
       endDate:
         type: date
       duration:
-        type: long
+        type: double
       histories:
         properties:
           date:
@@ -30,6 +30,7 @@ properties:
           state:
             type: keyword
   taskRunList:
+    type: nested
     properties:
       id:
         type: text
@@ -87,7 +88,7 @@ properties:
               endDate:
                 type: date
               duration:
-                type: long
+                type: double
               histories:
                 properties:
                   date:
@@ -105,10 +106,10 @@ properties:
               tags:
                 type: object
                 dynamic: true
-                properties: {}
+                properties: { }
       outputs:
         type: object
-        properties: {}
+        properties: { }
       state:
         properties:
           current:
@@ -118,7 +119,7 @@ properties:
           endDate:
             type: date
           duration:
-            type: long
+            type: double
           histories:
             properties:
               date:

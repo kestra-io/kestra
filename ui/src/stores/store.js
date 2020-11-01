@@ -10,6 +10,7 @@ import plugin from './plugins'
 import settings from './settings'
 import stat from './stat'
 import template from './template'
+import taskrun from './taskruns'
 
 export default {
     modules: {
@@ -24,6 +25,7 @@ export default {
         layout,
         auth,
         graph,
-        plugin
+        plugin,
+        taskrun
     }
 }

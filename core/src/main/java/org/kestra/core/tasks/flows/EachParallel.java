@@ -10,6 +10,7 @@ import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
@@ -124,7 +125,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     }
 
     @Override
-    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+    public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveParallelNexts(
             execution,
             FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.value),

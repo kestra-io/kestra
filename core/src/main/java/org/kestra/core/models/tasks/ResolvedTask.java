@@ -3,6 +3,7 @@ package org.kestra.core.models.tasks;
 import lombok.Builder;
 import lombok.Value;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 
 import java.util.List;
@@ -19,8 +20,11 @@ public class ResolvedTask {
 
     protected String parentId;
 
-    public TaskRun toTaskRun(Execution execution) {
-        return TaskRun.of(execution, this);
+    public NextTaskRun toNextTaskRun(Execution execution) {
+        return new NextTaskRun(
+            TaskRun.of(execution, this),
+            this.getTask()
+        );
     }
 
     public static ResolvedTask of(Task task) {

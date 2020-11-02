@@ -21,8 +21,7 @@
                 role="tabpanel"
             >
                 <b-card-body>
-                    <vars :execution="{}" :data="trigger.inputs"/>
-                    <vars v-for="(condition, x) in trigger.conditions" :key="x" :execution="{}" :data="condition"/>
+                    <vars :data="trigger"/>
                 </b-card-body>
             </b-collapse>
         </b-card>

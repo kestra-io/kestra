@@ -50,7 +50,7 @@
             },
             execution: {
                 type: Object,
-                required: true
+                required: false
             }
         },
         computed: {

@@ -1,31 +1,19 @@
 <template>
-    <div class="text-center" v-if="flow.triggers && flow.triggers.length">
-        <b-badge pill variant="info" :id="`popover-target-${flow.id}`">
-            <lightning-bolt />
-        </b-badge>
-        <b-popover
-            :target="`popover-target-${flow.id}`"
-            triggers="hover"
-            placement="left"
-        >
-            <h5>{{ $t("triggers") }}</h5>
-            <b-list-group>
-                <b-list-group-item
-                    class="pointer"
-                    @click="showTriggerDetails({ trigger, flow: flow })"
-                    v-for="trigger in flow.triggers"
-                    :key="trigger.id"
+    <div v-if="flow.triggers && flow.triggers.length">
+        <span v-for="trigger in flow.triggers" :key="uid(trigger)">
+            <b-avatar
+                size="sm"
+                variant="primary"
+                :text="name(trigger)"
+                button
+                @click="showTriggerDetails({ trigger, flow: flow })"
                 >
-                    <dots-vertical /> {{ trigger.id }}
-                </b-list-group-item>
-            </b-list-group>
-            <hr />
-        </b-popover>
+            </b-avatar>
+        </span>
     </div>
 </template>
 <script>
-import DotsVertical from "vue-material-design-icons/DotsVertical";
-import LightningBolt from "vue-material-design-icons/LightningBolt";
+
 export default {
     props: {
         flow: {
@@ -33,11 +21,28 @@ export default {
             required: true,
         },
     },
-    components: { DotsVertical, LightningBolt },
+    components: {},
     methods: {
         showTriggerDetails(details) {
             this.$emit("showTriggerDetails", details);
         },
+        uid(trigger) {
+            return this.flow.namespace + "-" + this.flow.id + '-' + trigger.id
+        },
+        name(trigger) {
+            let split = trigger.id.split(".");
+
+            return split[split.length - 1].substr(0, 1).toUpperCase();
+        },
     },
 };
 </script>
+
+<style lang="scss" scoped>
+@import "../../styles/_variable.scss";
+
+.b-avatar {
+    margin-right: $badge-pill-padding-x / 2;
+}
+
+</style>

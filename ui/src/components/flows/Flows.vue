@@ -163,6 +163,7 @@ export default {
                 {
                     key: "triggers",
                     label: title("triggers"),
+                    class: "shrink"
                 },
                 {
                     key: "actions",

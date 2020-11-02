@@ -152,7 +152,7 @@ abstract public class AbstractElasticSearchRepository<T> {
     protected static void handleWriteErrors(DocWriteResponse indexResponse) throws Exception {
         ReplicationResponse.ShardInfo shardInfo = indexResponse.getShardInfo();
         if (shardInfo.getTotal() != shardInfo.getSuccessful()) {
-            log.warn("Replication incomplete, expected " + shardInfo.getTotal() + ", got " + shardInfo.getSuccessful());
+            log.warn("Replication incomplete, expected " + shardInfo.getTotal() + ", got " + shardInfo.getSuccessful()) ;
         }
 
         if (shardInfo.getFailed() > 0) {

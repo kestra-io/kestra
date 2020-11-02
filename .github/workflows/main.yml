@@ -15,7 +15,7 @@ on:
       - develop
       - release
   repository_dispatch:
-    types: [ rebuild ]
+    types: [rebuild]
   workflow_dispatch:
 
 
@@ -27,7 +27,7 @@ jobs:
 
     strategy:
       matrix:
-        java: [ '11' ]
+        java: ['11']
 
     steps:
       - uses: actions/checkout@v2

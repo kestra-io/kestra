@@ -47,7 +47,7 @@
             <span
               v-if="['RUNNING', 'CREATED'].includes(row.item.state.current)"
             >{{durationFrom(row.item) | humanizeDuration}}</span>
-            <span v-else>{{row.item.state.duration}}</span>
+            <span v-else>{{row.item.state.duration | humanizeDuration }}</span>
           </template>
           <template v-slot:cell(flowId)="row">
             <router-link

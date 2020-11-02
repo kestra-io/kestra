@@ -44,7 +44,7 @@ export default {
   components: {
     ChevronLeft,
     ChevronRight,
-    SidebarMenu
+    SidebarMenu,
   },
   methods: {
     onToggleCollapse(folded) {
@@ -63,7 +63,9 @@ export default {
       return [
         {
           href: "/flows",
-          alias: ["/flows*"],
+          alias: [
+            "/flows*"
+          ],
           title: this.$t("flows"),
           icon: {
             element: "graph",
@@ -71,17 +73,21 @@ export default {
           }
         },
         {
-          href: "/templates",
-          alias: ["/templates*"],
-          title: this.$t("templates"),
-          icon: {
-            element: "cardtext",
-            class: "menu-icon"
-          }
+            href: "/templates",
+            alias: [
+                "/templates*"
+            ],
+            title: this.$t("templates"),
+            icon: {
+                element: "cardtext",
+                class: "menu-icon"
+            }
         },
         {
           href: "/executions",
-          alias: ["/executions*"],
+          alias: [
+            "/executions*"
+          ],
           title: this.$t("executions"),
           icon: {
             element: "timelineclock",
@@ -110,7 +116,9 @@ export default {
         },
         {
           href: "/plugins",
-          alias: ["/plugins*"],
+          alias: [
+            "/plugins*"
+          ],
           title: this.$t("plugins.documentation"),
           icon: {
             element: "bookopen",
@@ -119,7 +127,9 @@ export default {
         },
         {
           href: "/settings",
-          alias: ["/settings*"],
+          alias: [
+            "/settings*"
+          ],
           title: this.$t("settings"),
           icon: {
             element: "settings",

@@ -8,7 +8,7 @@ properties:
     type: keyword
   inputs:
     type: object
-    properties: { }
+    properties: {}
   namespace:
     type: keyword
   parentId:
@@ -106,10 +106,10 @@ properties:
               tags:
                 type: object
                 dynamic: true
-                properties: { }
+                properties: {}
       outputs:
         type: object
-        properties: { }
+        properties: {}
       state:
         properties:
           current:

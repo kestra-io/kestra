@@ -31,6 +31,8 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.script.ScriptType;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -38,21 +40,23 @@ import org.elasticsearch.search.aggregations.BucketOrder;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.sort.*;
+import org.kestra.core.models.flows.State;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
@@ -219,6 +223,70 @@ abstract public class AbstractElasticSearchRepository<T> {
         return searchRequest;
     }
 
+    protected Predicate<Sort.Order> isDurationSort() {
+        return order -> order != null
+            && order.getProperty() != null
+            && order.getProperty().contains("state.duration");
+    }
+
+    protected SortOrder toSortOrder(Sort.Order.Direction sortDirection) {
+        return sortDirection == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC;
+    }
+
+    protected SortBuilder<FieldSortBuilder> toFieldSortBuilder(Sort.Order order) {
+        return SortBuilders
+            .fieldSort(order.getProperty())
+            .order(toSortOrder(order.getDirection()));
+    }
+
+    public static final String DURATION_SORT_SCRIPT_CODE = "" +
+        " ZonedDateTime start = doc[params.fieldPrefix+'state.startDate'].value; \n" +
+        " ZonedDateTime end = ZonedDateTime.ofInstant(Instant.ofEpochMilli(params.now), ZoneId.of('Z'));\n" +
+        " \n" +
+        " if(!params.runningStates.contains(doc[params.fieldPrefix+'state.current'].value)){\n" +
+        "   end =  doc[params.fieldPrefix+'state.endDate'].value; \n" +
+        " }\n" +
+        " return ChronoUnit.MILLIS.between(start,end);";
+
+    protected SortBuilder<ScriptSortBuilder> createDurationSortScript(Sort.Order sortByDuration, boolean nested) {
+        return SortBuilders
+            .scriptSort(new Script(ScriptType.INLINE,
+                    Script.DEFAULT_SCRIPT_LANG,
+                    DURATION_SORT_SCRIPT_CODE,
+                    Collections.emptyMap(),
+                    Map.of("now", new Date().getTime(),
+                        "runningStates", Arrays.stream(State.runningTypes()).map(type -> type.name()).toArray(String[]::new),
+                        "fieldPrefix", nested ? "taskRunList." : ""
+                    )
+                ), ScriptSortBuilder.ScriptSortType.NUMBER
+            )
+            .order(toSortOrder(sortByDuration.getDirection()));
+    }
+
+    protected List<SortBuilder<?>> defaultSorts(Pageable pageable, boolean nested) {
+        List<SortBuilder<?>> sorts = new ArrayList<>();
+
+        // Use script sort for duration field
+        pageable
+            .getSort()
+            .getOrderBy()
+            .stream()
+            .filter(isDurationSort())
+            .findFirst()
+            .ifPresent(order -> sorts.add(createDurationSortScript(order, nested)));
+
+        // Use field sort for all other fields
+        sorts.addAll(pageable
+            .getSort()
+            .getOrderBy()
+            .stream()
+            .filter(Predicate.not(isDurationSort()))
+            .map(this::toFieldSortBuilder)
+            .collect(Collectors.toList()));
+
+        return sorts;
+    }
+
     protected SearchSourceBuilder searchSource(
         QueryBuilder query,
         Optional<List<AggregationBuilder>> aggregations,
@@ -232,11 +300,8 @@ abstract public class AbstractElasticSearchRepository<T> {
                 .size(pageable.getSize())
                 .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
 
-            for (Sort.Order order : pageable.getSort().getOrderBy()) {
-                sourceBuilder = sourceBuilder.sort(
-                    order.getProperty(),
-                    order.getDirection() == Sort.Order.Direction.ASC ? SortOrder.ASC : SortOrder.DESC
-                );
+            for (SortBuilder<?> s : defaultSorts(pageable, false)) {
+                sourceBuilder = sourceBuilder.sort(s);
             }
         } else {
             sourceBuilder.size(0);

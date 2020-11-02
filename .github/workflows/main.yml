@@ -77,7 +77,7 @@ jobs:
         env:
           GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
         run: |
-          /usr/bin/python3 -m pip install virtualenv
+          python3 -m pip install virtualenv
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
           ./gradlew classes testClasses --parallel --no-daemon

@@ -1,23 +1,23 @@
 package org.kestra.repository.elasticsearch;
 
+import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.repositories.ArrayListTotal;
-import org.kestra.core.utils.IdUtils;
+import org.kestra.core.tasks.debugs.Return;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import javax.inject.Inject;
+import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -36,7 +36,7 @@ class ElasticSearchExecutionRepositoryTest {
     @Inject
     ElasticSearchRepositoryTestUtils utils;
 
-    private static Execution.ExecutionBuilder builder(State.Type state, String flowId) {
+    static Execution.ExecutionBuilder builder(State.Type state, String flowId) {
         State finalState = new State();
 
         finalState = spy(finalState
@@ -47,13 +47,61 @@ class ElasticSearchExecutionRepositoryTest {
             .when(finalState)
             .getDuration();
 
-        return Execution.builder()
-            .id(IdUtils.create())
+        Execution.ExecutionBuilder execution = Execution.builder()
+            .id(FriendlyId.createFriendlyId())
             .namespace(NAMESPACE)
             .flowId(flowId == null ? FLOW : flowId)
             .flowRevision(1)
             .state(finalState);
+
+
+        List<TaskRun> taskRuns = Arrays.asList(
+            TaskRun.of(execution.build(), ResolvedTask.of(
+                Return.builder().id("first").type(Return.class.getName()).format("test").build())
+            )
+                .withState(State.Type.SUCCESS),
+            TaskRun.of(execution.build(), ResolvedTask.of(
+                Return.builder().id("second").type(Return.class.getName()).format("test").build())
+            )
+                .withState(state),
+            TaskRun.of(execution.build(), ResolvedTask.of(
+                Return.builder().id("third").type(Return.class.getName()).format("test").build())).withState(state)
+        );
+
+        if (flowId == null) {
+            return execution.taskRunList(List.of(taskRuns.get(0), taskRuns.get(1), taskRuns.get(2)));
+        }
+
+        return execution.taskRunList(List.of(taskRuns.get(0), taskRuns.get(1)));
     }
+
+    void inject() {
+        for (int i = 0; i < 28; i++) {
+            executionRepository.save(builder(
+                i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
+                i < 15 ? null : "second"
+            ).build());
+        }
+    }
+
+    @Test
+    void find() {
+        inject();
+
+        ArrayListTotal<Execution> executions = executionRepository.find("*", Pageable.from(1, 10), null);
+        assertThat(executions.getTotal(), is(28L));
+        assertThat(executions.size(), is(10));
+    }
+
+    @Test
+    void findTaskRun() {
+        inject();
+
+        ArrayListTotal<TaskRun> executions = executionRepository.findTaskRun("*", Pageable.from(1, 10), null);
+        assertThat(executions.getTotal(), is(71L));
+        assertThat(executions.size(), is(10));
+    }
+
 
     @Test
     void findById() {

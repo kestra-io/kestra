@@ -132,7 +132,8 @@
         "template": "Template",
         "template creation": "Template creation",
         "templates": "Templates",
-        "no result": "No result for current selection"
+        "no result": "No result for current selection",
+        "taskruns":"Task Runs"
     },
     "fr": {
         "id": "Identifiant",
@@ -268,6 +269,7 @@
         "template": "Template",
         "template creation": "Création de template",
         "templates": "Templates",
-        "no result": "Aucun résultat pour la selection courante."
+        "no result": "Aucun résultat pour la selection courante.",
+        "taskruns":"Execution de tâches"
     }
 }

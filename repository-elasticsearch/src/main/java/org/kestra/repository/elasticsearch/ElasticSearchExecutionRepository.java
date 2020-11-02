@@ -1,6 +1,7 @@
 package org.kestra.repository.elasticsearch;
 
 import io.micronaut.data.model.Pageable;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -8,15 +9,20 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.filter.Filter;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 import org.elasticsearch.search.aggregations.bucket.histogram.ParsedDateHistogram;
+import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.ParsedStats;
+import org.elasticsearch.search.aggregations.metrics.TopHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.validations.ModelValidator;
@@ -25,14 +31,15 @@ import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import java.util.stream.Collectors;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
@@ -85,7 +92,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                     .subAggregation(dailyExecutionStatisticsFinalAgg(startDate, endDate))
             );
 
-        SearchSourceBuilder sourceBuilder =  this.searchSource(
+        SearchSourceBuilder sourceBuilder = this.searchSource(
             this.dailyExecutionStatisticsBool(query, startDate, endDate),
             Optional.of(Collections.singletonList(
                 agg
@@ -159,7 +166,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             endDate = LocalDate.now();
         }
 
-        SearchSourceBuilder sourceBuilder =  this.searchSource(
+        SearchSourceBuilder sourceBuilder = this.searchSource(
             this.dailyExecutionStatisticsBool(query, startDate, endDate),
             Optional.of(Collections.singletonList(
                 dailyExecutionStatisticsFinalAgg(
@@ -275,6 +282,62 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
 
         return this.query(INDEX_NAME, sourceBuilder);
+    }
+
+    @Override
+    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, @Nullable State.Type state) {
+        BoolQueryBuilder filterAggQuery = QueryBuilders
+            .boolQuery()
+            .filter(QueryBuilders.queryStringQuery(query));
+
+        if (state != null) {
+            filterAggQuery = filterAggQuery.must(QueryBuilders.termQuery("taskRunList.state.current", state.name()));
+        }
+
+        NestedAggregationBuilder nestedAgg = AggregationBuilders
+            .nested("NESTED", "taskRunList")
+            .subAggregation(
+                AggregationBuilders.filter("FILTER", filterAggQuery)
+                    .subAggregation(
+                        AggregationBuilders
+                            .topHits("TOPHITS")
+                            .size(pageable.getSize())
+                            .sorts(defaultSorts(pageable, true))
+                            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()))
+                    )
+            );
+
+        BoolQueryBuilder mainQuery = this.defaultFilter()
+            .filter(
+                QueryBuilders.nestedQuery("taskRunList", QueryBuilders.queryStringQuery(query), ScoreMode.Total)
+            );
+        SearchSourceBuilder sourceBuilder = this.searchSource(mainQuery, Optional.of(List.of(nestedAgg)), null)
+            .fetchSource(false);
+
+        SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
+
+        try {
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
+            ParsedNested pn = searchResponse.getAggregations().get("NESTED");
+            Filter fa = pn.getAggregations().get("FILTER");
+            long docCount = fa.getDocCount();
+            TopHits th = fa.getAggregations().get("TOPHITS");
+
+            List<TaskRun> collect = Arrays.stream(th.getHits().getHits())
+                .map(documentFields -> {
+                    try {
+                        return mapper.readValue(documentFields.getSourceAsString(), TaskRun.class);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+
+            return new ArrayListTotal<>(collect, docCount);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

@@ -1,5 +1,6 @@
 import ExecutionRoot from '../components/executions/ExecutionRoot.vue'
 import Executions from '../components/executions/Executions.vue'
+import TaskRuns from '../components/taskruns/TaskRuns.vue'
 import FlowEdit from '../components/flows/FlowEdit.vue'
 import FlowRoot from '../components/flows/FlowRoot.vue'
 import Flows from '../components/flows/Flows.vue'
@@ -23,8 +24,11 @@ export default {
         //Executions
         { name: 'executionsList', path: '/executions', component: Executions },
         { name: 'executionEdit', path: '/executions/:namespace/:flowId/:id', component: ExecutionRoot },
+        
+        //TaskRuns
+        { name: 'taskRunList', path: '/taskruns', component: TaskRuns },
 
-        //Executions
+        //Documentation
         { name: 'plugin', path: '/plugins', component: Plugin },
         { name: 'pluginView', path: '/plugins/:cls', component: Plugin },
 

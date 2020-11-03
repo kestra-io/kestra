@@ -4,7 +4,7 @@
             <template v-slot:navbar>
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <namespace-select data-type="flow" v-if="$route.name !== 'flowEdit'"  @onNamespaceSelect="onNamespaceSelect" />
-                <status-filter-buttons @onRefresh="loadData"/>
+                <status-filter-buttons @onRefresh="onStatusChange"/>
                 <date-range @onDate="onSearch" />
                 <refresh-button class="float-right" @onRefresh="loadData"/>
             </template>
@@ -116,17 +116,11 @@ export default {
             flowTriggerDetails: undefined
         };
     },
-    beforeCreate () {
-        const queries = JSON.parse(localStorage.getItem('executionQueries') || '{}')
-        queries.sort = queries.sort ? queries.sort :  'state.startDate:desc'
-        queries.status = this.$route.query.status || queries.status || 'ALL'
-        if (!this.$route.query.sort) {
-            this.$router.push({
-                name: this.$route.name,
-                query: {...this.$route.query, ...queries}
-            });
-        }
-        localStorage.setItem('executionQueries', JSON.stringify(queries))
+    beforeCreate() {
+        const q = JSON.parse(localStorage.getItem('executionQueries') || '{}')
+        q.sort = q.sort ? q.sort :  'state.startDate:desc'
+        q.status = q.status ? q.status : 'ALL'
+        localStorage.setItem('executionQueries', JSON.stringify(q))
     },
     computed: {
         ...mapState("execution", ["executions", "total"]),
@@ -202,6 +196,10 @@ export default {
         }
     },
     methods: {
+        onStatusChange() {
+            this.saveFilters()
+            this.loadData()
+        },
         showTriggerDetails(trigger) {
             this.flowTriggerDetails = trigger
             this.$bvModal.show('modal-triggers-details')

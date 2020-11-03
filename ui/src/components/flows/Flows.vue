@@ -67,6 +67,9 @@
                         </template>
 
                     </b-table>
+                    <div v-if="flows === undefined">
+                        <b-alert variant="light" show>{{$t('no result')}}</b-alert>
+                    </div>
                 </template>
             </data-table>
         </div>

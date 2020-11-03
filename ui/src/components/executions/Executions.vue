@@ -70,6 +70,9 @@
                     </template>
 
                 </b-table>
+                <div v-if="executions === undefined">
+                    <b-alert variant="light" show>{{$t('no result')}}</b-alert>
+                </div>
             </template>
         </data-table>
 

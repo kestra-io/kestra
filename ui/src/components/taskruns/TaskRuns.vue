@@ -67,6 +67,9 @@
             <code>{{row.item.executionId | id}}</code>
           </template>
         </b-table>
+        <div v-if="taskruns === undefined">
+            <b-alert variant="light" show>{{$t('no result')}}</b-alert>
+        </div>
       </template>
     </data-table>
   </div>

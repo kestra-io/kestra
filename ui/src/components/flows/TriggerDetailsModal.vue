@@ -19,7 +19,7 @@ export default {
     props: {
         trigger: {
             type: Object,
-            required: true
+            default: () => undefined
         },
     },
     computed: {

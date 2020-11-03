@@ -76,7 +76,7 @@
             </data-table>
         </div>
 
-        <trigger-details-modal v-if="flowTriggerDetails" :trigger="flowTriggerDetails"/>
+        <trigger-details-modal :trigger="flowTriggerDetails"/>
 
         <bottom-line v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
             <ul class="navbar-nav ml-auto">

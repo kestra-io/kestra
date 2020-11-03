@@ -1,5 +1,5 @@
 <template>
-    <div v-if="triggers && triggers.length">
+    <div>
         <span v-for="trigger in triggers" :key="uid(trigger)">
             <b-avatar
                 size="sm"
@@ -41,7 +41,14 @@ export default {
     },
     computed: {
         triggers() {
-            return this.flow ? this.flow.triggers : [this.execution.trigger]
+            if (this.flow && this.flow.triggers) {
+                return this.flow.triggers
+            } else if (this.execution && this.execution.trigger) {
+                return [this.execution.trigger]
+            } else {
+                return []
+            }
+
         }
     }
 };

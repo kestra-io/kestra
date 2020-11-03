@@ -137,7 +137,9 @@
         "triggers": "Triggers",
         "trigger details": "Trigger details",
         "conditions": "conditions",
-        "taskruns":"Task Runs"
+        "taskruns":"Task Runs",
+        "Fold content lines": "Fold content lines",
+        "Unfold content lines": "Unfold content lines"
     },
     "fr": {
         "id": "Identifiant",
@@ -278,6 +280,8 @@
         "triggers": "Déclencheurs",
         "trigger details": "Détails du déclencheur",
         "conditions": "conditions",
-        "taskruns":"Execution de tâches"
+        "taskruns":"Execution de tâches",
+        "Fold content lines": "Replier le contenu des lignes",
+        "Unfold content lines": "Déplier le contenu des lignes"
     }
 }

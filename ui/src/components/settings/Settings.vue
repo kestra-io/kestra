@@ -3,6 +3,9 @@
         <b-form-group :label="$t('Language')">
             <b-form-select v-model="lang" :options="langOptions"></b-form-select>
         </b-form-group>
+        <b-form-group :label="$t('Text editor line count auto fold')">
+            <b-input v-model="autofoldTextEditor" type="number" step="1" min="1"/>
+        </b-form-group>
     </div>
 </template>
 
@@ -34,7 +37,16 @@ export default {
             get() {
                 return localStorage.getItem("lang") || "en";
             }
-        }
+        },
+        autofoldTextEditor: {
+            set(value) {
+                localStorage.setItem("autofoldTextEditor", value);
+            },
+            get() {
+                return parseInt(localStorage.getItem('autofoldTextEditor') || 3)
+            }
+        },
+
     }
 };
 </script>

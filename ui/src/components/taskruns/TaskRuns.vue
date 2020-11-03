@@ -25,6 +25,9 @@
           :fields="fields"
           @row-dblclicked="onRowDoubleClick"
         >
+          <template #empty>
+            <span class="text-black-50">{{$t('no result')}}</span>
+          </template>
           <template v-slot:cell(details)="row">
             <router-link :to="{name: 'executionEdit', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.executionId},query: {tab:'gantt'} }">
               <eye id="edit-action" />

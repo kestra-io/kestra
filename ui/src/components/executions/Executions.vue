@@ -50,7 +50,6 @@
                     </template>
                     <template v-slot:cell(state.current)="row">
                         <status
-                            @click.native="addStatusToQuery(row.item.state.current)"
                             class="status"
                             :status="row.item.state.current"
                             size="sm"
@@ -207,11 +206,6 @@ export default {
         showTriggerDetails(trigger) {
             this.flowTriggerDetails = trigger
             this.$bvModal.show('modal-triggers-details')
-        },
-        addStatusToQuery(status) {
-            const token = status.toUpperCase()
-            this.$refs.searchField.search = token;
-            this.$refs.searchField.onSearch();
         },
         triggerExecution() {
             this.$store

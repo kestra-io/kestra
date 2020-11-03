@@ -1,12 +1,12 @@
 <template>
-    <div v-if="flow.triggers && flow.triggers.length">
-        <span v-for="trigger in flow.triggers" :key="uid(trigger)">
+    <div v-if="triggers && triggers.length">
+        <span v-for="trigger in triggers" :key="uid(trigger)">
             <b-avatar
                 size="sm"
                 variant="primary"
                 :text="name(trigger)"
                 button
-                @click="showTriggerDetails({ trigger, flow: flow })"
+                @click="showTriggerDetails(trigger)"
                 >
             </b-avatar>
         </span>
@@ -18,16 +18,20 @@ export default {
     props: {
         flow: {
             type: Object,
-            required: true,
+            default: () => undefined,
+        },
+        execution: {
+            type: Object,
+            default: () => undefined,
         },
     },
     components: {},
     methods: {
-        showTriggerDetails(details) {
-            this.$emit("showTriggerDetails", details);
+        showTriggerDetails(trigger) {
+            this.$emit("showTriggerDetails", trigger);
         },
         uid(trigger) {
-            return this.flow.namespace + "-" + this.flow.id + '-' + trigger.id
+            return (this.flow ? this.flow.namespace + "-" + this.flow.id : this.execution.namespace + "-" + this.execution.flowId) + '-' + trigger.id
         },
         name(trigger) {
             let split = trigger.id.split(".");
@@ -35,6 +39,11 @@ export default {
             return split[split.length - 1].substr(0, 1).toUpperCase();
         },
     },
+    computed: {
+        triggers() {
+            return this.flow ? this.flow.triggers : [this.execution.trigger]
+        }
+    }
 };
 </script>
 

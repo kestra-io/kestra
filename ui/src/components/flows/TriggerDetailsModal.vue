@@ -2,11 +2,11 @@
     <b-modal
         size="lg"
         id="modal-triggers-details"
-        :title="`${$t('trigger details')}: ${trigger ? trigger.flow.id : ''}`"
+        :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`"
         hide-footer
     >
         <div v-if="trigger">
-            <vars :data="trigger.trigger" />
+            <vars :data="trigger" />
         </div>
     </b-modal>
 </template>
@@ -18,7 +18,7 @@ export default {
     props: {
         trigger: {
             type: Object,
-            default: () => undefined,
+            required: true
         },
     },
 };

@@ -60,8 +60,9 @@
                                 :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
                             >{{row.item.id}}</router-link>
                         </template>
+
                         <template v-slot:cell(triggers)="row">
-                                <flow-trigger-list-action @showTriggerDetails="showTriggerDetails" :flow="row.item"/>
+                            <trigger-avatar @showTriggerDetails="showTriggerDetails" :flow="row.item"/>
                         </template>
 
                     </b-table>
@@ -69,7 +70,7 @@
             </data-table>
         </div>
 
-        <flow-trigger-details-modal :trigger="flowTriggerDetails"/>
+        <trigger-details-modal v-if="flowTriggerDetails" :trigger="flowTriggerDetails"/>
 
         <bottom-line v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
             <ul class="navbar-nav ml-auto">
@@ -101,8 +102,8 @@ import SearchField from "../layout/SearchField";
 import StateChart from "../stats/StateChart";
 import DurationChart from "../stats/DurationChart";
 import StateGlobalChart from "../stats/StateGlobalChart";
-import FlowTriggerDetailsModal from "./FlowTriggerDetailsModal";
-import FlowTriggerListAction from "./FlowTriggerListAction";
+import TriggerDetailsModal from "./TriggerDetailsModal";
+import TriggerAvatar from "./TriggerAvatar";
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -116,8 +117,8 @@ export default {
         StateChart,
         DurationChart,
         StateGlobalChart,
-        FlowTriggerDetailsModal,
-        FlowTriggerListAction
+        TriggerDetailsModal,
+        TriggerAvatar
     },
     data() {
         return {
@@ -182,8 +183,8 @@ export default {
         }
     },
     methods: {
-        showTriggerDetails(flow) {
-            this.flowTriggerDetails = flow
+        showTriggerDetails(trigger) {
+            this.flowTriggerDetails = trigger
             this.$bvModal.show('modal-triggers-details')
         },
         chartData(row) {

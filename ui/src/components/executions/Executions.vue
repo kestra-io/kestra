@@ -64,9 +64,17 @@
                     <template v-slot:cell(id)="row">
                         <code>{{row.item.id | id}}</code>
                     </template>
+
+                    <template v-slot:cell(trigger)="row">
+                        <trigger-avatar @showTriggerDetails="showTriggerDetails" :execution="row.item"/>
+                    </template>
+
                 </b-table>
             </template>
         </data-table>
+
+        <flow-trigger-details-modal v-if="flowTriggerDetails" :trigger="flowTriggerDetails"/>
+
     </div>
 </template>
 
@@ -83,6 +91,8 @@ import DateRange from "../layout/DateRange";
 import RefreshButton from '../layout/RefreshButton'
 import StatusFilterButtons from '../layout/StatusFilterButtons'
 import StateGlobalChart from "../../components/stats/StateGlobalChart";
+import FlowTriggerDetailsModal from "@/components/flows/TriggerDetailsModal";
+import TriggerAvatar from "@/components/flows/TriggerAvatar";
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -95,12 +105,15 @@ export default {
         DateRange,
         RefreshButton,
         StatusFilterButtons,
-        StateGlobalChart
+        StateGlobalChart,
+        FlowTriggerDetailsModal,
+        TriggerAvatar
     },
     data() {
         return {
             dataType: "execution",
             dailyReady: false,
+            flowTriggerDetails: undefined
         };
     },
     beforeCreate () {
@@ -159,6 +172,11 @@ export default {
                     sortable: true
                 },
                 {
+                    key: "trigger",
+                    label: title("trigger"),
+                    class: "shrink"
+                },
+                {
                     key: "details",
                     label: "",
                     class: "row-action"
@@ -184,6 +202,10 @@ export default {
         }
     },
     methods: {
+        showTriggerDetails(trigger) {
+            this.flowTriggerDetails = trigger
+            this.$bvModal.show('modal-triggers-details')
+        },
         addStatusToQuery(status) {
             const token = status.toUpperCase()
             this.$refs.searchField.search = token;

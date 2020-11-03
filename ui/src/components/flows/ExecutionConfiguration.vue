@@ -1,6 +1,8 @@
 <template>
     <div class="container" v-if="flow">
         <b-form v-hotkey="keymap" @submit.prevent="onSubmit">
+            <b-alert v-if="flow.triggers" variant="warning" show>{{$t('warning flow with triggers')}}</b-alert>
+
             <b-form-group
                     v-for="input in flow.inputs"
                     :key="input.id"
@@ -50,18 +52,15 @@
             </b-form-group>
             <b-form-group class="text-right mb-0">
                 <b-button type="submit" variant="primary">
-                    {{$t('trigger execution')}}
+                    {{$t('launch execution')}}
                     <trigger title/>
                 </b-button>
 
             </b-form-group>
         </b-form>
         <br/>
-        <b-card :header="$t('triggers')">
-            <triggers v-if="flow && flow.triggers"/>
-            <p class="text-secondary" v-else>
-                {{$t('There is no trigger setup for this flow')}}
-            </p>
+        <b-card :header="$t('triggers')" v-if="flow && flow.triggers">
+            <triggers />
         </b-card>
     </div>
 </template>

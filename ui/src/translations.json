@@ -136,7 +136,8 @@
         "triggers": "Triggers",
         "trigger details": "Trigger details",
         "conditions": "conditions",
-        "taskruns":"Task Runs"
+        "taskruns":"Task Runs",
+        "There is no trigger setup for this flow": "There is no trigger setup for this flow"
     },
     "fr": {
         "id": "Identifiant",
@@ -276,6 +277,7 @@
         "triggers": "Déclencheurs",
         "trigger details": "Détails du déclencheur",
         "conditions": "conditions",
-        "taskruns":"Execution de tâches"
+        "taskruns":"Execution de tâches",
+        "There is no trigger setup for this flow": "Aucun déclencheur configuré pour ce flow"
     }
 }

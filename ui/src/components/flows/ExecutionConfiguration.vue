@@ -58,7 +58,10 @@
         </b-form>
         <br/>
         <b-card :header="$t('triggers')">
-            <triggers/>
+            <triggers v-if="flow && flow.triggers"/>
+            <p class="text-secondary" v-else>
+                {{$t('There is no trigger setup for this flow')}}
+            </p>
         </b-card>
     </div>
 </template>

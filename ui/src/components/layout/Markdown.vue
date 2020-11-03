@@ -20,11 +20,15 @@
                 type: String,
                 default: ``,
             },
+            permalink: {
+                type: Boolean,
+                default: false,
+            }
         },
 
         computed: {
             markdownRenderer() {
-                const outHtml = Markdown.render(this.source);
+                const outHtml = Markdown.render(this.source, {permalink: this.permalink});
 
                 this.$emit('rendered', outHtml)
 
@@ -38,3 +42,15 @@
 
     };
 </script>
+
+<style lang="scss" >
+@import "../../styles/_variable.scss";
+.markdown {
+    a.header-anchor {
+        color: $gray-600;
+        font-size: $font-size-base;
+        font-weight: normal;
+    }
+}
+
+</style>

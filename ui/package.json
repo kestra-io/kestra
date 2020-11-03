@@ -22,6 +22,7 @@
     "js-yaml": "^3.14.0",
     "lodash": "4.17.20",
     "markdown-it": "^11.0.1",
+    "markdown-it-anchor": "^6.0.0",
     "markdown-it-mark": "^3.0.0",
     "markdown-it-meta": "0.0.1",
     "md5": "^2.3.0",

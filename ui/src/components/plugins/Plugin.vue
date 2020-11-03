@@ -2,7 +2,7 @@
     <div>
         <b-row>
             <b-col md="9" class="markdown">
-                <markdown v-if="plugin" :source="plugin.markdown"></markdown>
+                <markdown v-if="plugin" :source="plugin.markdown" :permalink="true"></markdown>
                 <div v-else>
                     <b-alert variant="info" show>{{ $t('plugins.please') }}</b-alert>
                 </div>

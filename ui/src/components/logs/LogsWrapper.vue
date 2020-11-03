@@ -3,7 +3,6 @@
         <div class="log-content">
             <main-log-filter @onChange="loadData" />
             <div v-if="logs === undefined">
-                <br/>
                 <b-alert variant="light" show>{{$t('no result')}}</b-alert>
             </div>
             <div class="bg-dark text-white">

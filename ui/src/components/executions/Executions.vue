@@ -29,6 +29,10 @@
                     :fields="fields"
                     @row-dblclicked="onRowDoubleClick"
                 >
+                    <template #empty>
+                        <span class="text-black-50">{{$t('no result')}}</span>
+                    </template>
+
                     <template v-slot:cell(details)="row">
                         <router-link :to="{name: 'executionEdit', params: row.item}">
                             <eye id="edit-action" />
@@ -70,9 +74,6 @@
                     </template>
 
                 </b-table>
-                <div v-if="executions === undefined">
-                    <b-alert variant="light" show>{{$t('no result')}}</b-alert>
-                </div>
             </template>
         </data-table>
 

@@ -34,7 +34,12 @@
                         :items="flows"
                         :fields="fields"
                         ref="table"
+                        show-empty
                     >
+                        <template #empty>
+                            <span class="text-black-50">{{$t('no result')}}</span>
+                        </template>
+
                         <template v-slot:cell(actions)="row">
                             <router-link :to="{name: 'flowEdit', params : row.item}">
                                 <eye id="edit-action" />
@@ -67,9 +72,6 @@
                         </template>
 
                     </b-table>
-                    <div v-if="flows === undefined">
-                        <b-alert variant="light" show>{{$t('no result')}}</b-alert>
-                    </div>
                 </template>
             </data-table>
         </div>

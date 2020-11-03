@@ -38,6 +38,8 @@ abstract public class Task {
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     protected String type;
 
+    private String description;
+
     @Valid
     protected AbstractRetry retry;
 

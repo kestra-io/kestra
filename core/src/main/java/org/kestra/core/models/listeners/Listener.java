@@ -14,6 +14,8 @@ import javax.validation.constraints.NotEmpty;
 @Builder
 @Introspected
 public class Listener {
+    private String description;
+
     @Valid
     private List<Condition> conditions;
 

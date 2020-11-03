@@ -22,6 +22,14 @@
                     <current-ac title />
                 </div>
                 <b-button
+                    v-if="task.description"
+                    :title="`${$t('description')}`"
+                    class="node-action push"
+                >
+                    <markdown-tooltip :id="task.id" :description="task.description" />
+                </b-button>
+
+                <b-button
                     v-if="childrenCount"
                     :title="`${$t('display direct sub tasks count')} : ${childrenCount}`"
                     class="node-action push"
@@ -89,9 +97,11 @@ import { mapState } from "vuex";
 import Status from "../Status";
 import md5 from "md5";
 import YamlUtils from "../../utils/yamlUtils";
+import MarkdownTooltip from "@/components/layout/MarkdownTooltip";
 
 export default {
     components: {
+        MarkdownTooltip,
         Status,
         Console,
         Graph,

@@ -16,7 +16,7 @@
 
 <script>
     import RouteContext from "../../mixins/routeContext";
-    import Markdown from './Markdown.vue'
+    import Markdown from '../layout/Markdown.vue'
     import Toc from './Toc.vue'
     import { mapState } from "vuex";
 

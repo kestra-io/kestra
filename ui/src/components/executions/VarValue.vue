@@ -5,7 +5,7 @@
         :href="itemUrl(value)"
     ><download /> {{ $t('download') }}
     </b-link>
-    <span v-else>{{ value }}</span>
+    <span v-else v-html="value"></span>
 </template>
 
 <script>

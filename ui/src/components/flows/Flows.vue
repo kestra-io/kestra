@@ -59,6 +59,7 @@
                             <router-link
                                 :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
                             >{{row.item.id}}</router-link>
+                            &nbsp;<markdown-tooltip :id="row.item.namespace + '-' + row.item.id" :description="row.item.description" />
                         </template>
 
                         <template v-slot:cell(triggers)="row">
@@ -104,6 +105,7 @@ import DurationChart from "../stats/DurationChart";
 import StateGlobalChart from "../stats/StateGlobalChart";
 import TriggerDetailsModal from "./TriggerDetailsModal";
 import TriggerAvatar from "./TriggerAvatar";
+import MarkdownTooltip from "../layout/MarkdownTooltip"
 
 export default {
     mixins: [RouteContext, DataTableActions],
@@ -118,7 +120,8 @@ export default {
         DurationChart,
         StateGlobalChart,
         TriggerDetailsModal,
-        TriggerAvatar
+        TriggerAvatar,
+        MarkdownTooltip
     },
     data() {
         return {

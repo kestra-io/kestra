@@ -6,12 +6,13 @@
         hide-footer
     >
         <div v-if="trigger">
-            <vars :data="trigger" />
+            <vars :data="triggerData" />
         </div>
     </b-modal>
 </template>
 <script>
 import Vars from "../executions/Vars";
+import Markdown from "../../utils/markdown";
 
 export default {
     components: { Vars },
@@ -21,5 +22,14 @@ export default {
             required: true
         },
     },
+    computed: {
+        triggerData() {
+            if (this.trigger.description) {
+                return {...this.trigger, description: Markdown.render(this.trigger.description)}
+            }
+
+            return this.trigger
+        }
+    }
 };
 </script>

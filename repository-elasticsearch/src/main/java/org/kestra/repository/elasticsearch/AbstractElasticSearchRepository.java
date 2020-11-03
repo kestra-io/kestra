@@ -240,13 +240,13 @@ abstract public class AbstractElasticSearchRepository<T> {
     }
 
     public static final String DURATION_SORT_SCRIPT_CODE = "" +
-        " ZonedDateTime start = doc[params.fieldPrefix+'state.startDate'].value; \n" +
-        " ZonedDateTime end = ZonedDateTime.ofInstant(Instant.ofEpochMilli(params.now), ZoneId.of('Z'));\n" +
-        " \n" +
-        " if(!params.runningStates.contains(doc[params.fieldPrefix+'state.current'].value)){\n" +
-        "   end =  doc[params.fieldPrefix+'state.endDate'].value; \n" +
-        " }\n" +
-        " return ChronoUnit.MILLIS.between(start,end);";
+        "ZonedDateTime start = doc[params.fieldPrefix+'state.startDate'].value;\n" +
+        "ZonedDateTime end = ZonedDateTime.ofInstant(Instant.ofEpochMilli(params.now), ZoneId.of('Z'));\n" +
+        "\n" +
+        "if(!params.runningStates.contains(doc[params.fieldPrefix+'state.current'].value) && doc[params.fieldPrefix+'state.endDate'].size() > 0){\n" +
+        "  end =  doc[params.fieldPrefix+'state.endDate'].value; \n" +
+        "}\n" +
+        "return ChronoUnit.MILLIS.between(start,end);";
 
     protected SortBuilder<ScriptSortBuilder> createDurationSortScript(Sort.Order sortByDuration, boolean nested) {
         return SortBuilders

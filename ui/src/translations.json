@@ -138,6 +138,7 @@
         "trigger details": "Trigger details",
         "conditions": "conditions",
         "taskruns":"Task Runs",
+        "Fold auto": "Editor: automatic fold of multilines",
         "Fold content lines": "Fold content lines",
         "Unfold content lines": "Unfold content lines"
     },
@@ -281,6 +282,7 @@
         "trigger details": "Détails du déclencheur",
         "conditions": "conditions",
         "taskruns":"Execution de tâches",
+        "Fold auto": "Editeur : Replier automatiquement le contenu multi-lignes",
         "Fold content lines": "Replier le contenu des lignes",
         "Unfold content lines": "Déplier le contenu des lignes"
     }

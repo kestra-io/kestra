@@ -1,8 +1,15 @@
 <template>
     <div class="editor-wrapper">
-        <b-navbar toggleable="md" type="dark" variant="dark">
-            <b-button @click="autoFold" size="sm" variant="light" v-b-tooltip.hover.top="$t('Fold content lines')"><unfold-less-horizontal/></b-button>
-            <b-button @click="unfoldAll" size="sm" variant="light" v-b-tooltip.hover.top="$t('Unfold content lines')"><unfold-more-horizontal/></b-button>
+        <b-navbar type="dark" variant="dark">
+            <b-btn-group>
+                <b-button @click="autoFold(true)" size="sm" variant="light" v-b-tooltip.hover.top="$t('Fold content lines')">
+                    <unfold-less-horizontal/>
+                </b-button>
+                <b-button @click="unfoldAll" size="sm" variant="light"
+                          v-b-tooltip.hover.top="$t('Unfold content lines')">
+                    <unfold-more-horizontal/>
+                </b-button>
+            </b-btn-group>
         </b-navbar>
         <editor
             ref="aceEditor"
@@ -19,16 +26,17 @@
 </template>
 
 <script>
-import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal";
-import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal";
+    import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal";
+    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal";
 
-import YamlUtils from '../../utils/yamlUtils';
+    import YamlUtils from '../../utils/yamlUtils';
+
     export default {
         props: {
-            value: { type: String, required: true },
-            lang: { type: String, required: true },
-            width: { type: String, default: "100%" },
-            height: { type: String, default: "100%" },
+            value: {type: String, required: true},
+            lang: {type: String, required: true},
+            width: {type: String, default: "100%"},
+            height: {type: String, default: "100%"},
         },
         components: {
             editor: require("vue2-ace-editor"),
@@ -36,7 +44,7 @@ import YamlUtils from '../../utils/yamlUtils';
             UnfoldMoreHorizontal
         },
         computed: {
-            ed () {
+            ed() {
                 return this.$refs.aceEditor.editor
             }
         },
@@ -63,24 +71,24 @@ import YamlUtils from '../../utils/yamlUtils';
                 });
                 editor.commands.addCommand({
                     name: "save",
-                    bindKey: { win: "Ctrl-S", mac: "Cmd-S" },
+                    bindKey: {win: "Ctrl-S", mac: "Cmd-S"},
                     exec: (editor) => {
                         this.$emit('onSave', editor.session.getValue())
                     },
                 });
                 setTimeout(() => {
-                    this.autoFold()
+                    this.autoFold(localStorage.getItem('autofoldTextEditor') === "1")
                 })
             },
             trimContent(text) {
                 return text.split('\n').map(line => line.trim()).join('\n')
             },
-            autoFold() {
+            autoFold(autoFold) {
                 //we may add try in case content is not serializable a json
                 let trimmedContent = this.trimContent(this.value)
                 const foldableTokens = []
                 let lineDiff = 0
-                this.getFoldLines(YamlUtils.parse(this.value), foldableTokens)
+                this.getFoldLines(YamlUtils.parse(this.value), foldableTokens, autoFold)
                 for (const foldableToken of foldableTokens) {
                     const search = this.trimContent(foldableToken)
                     const index = trimmedContent.indexOf(search)
@@ -90,17 +98,17 @@ import YamlUtils from '../../utils/yamlUtils';
                     this.ed.getSession().$toggleFoldWidget(line - 2, {})
                 }
             },
-            getFoldLines(node, foldableTokens){
+            getFoldLines(node, foldableTokens, autoFold) {
                 if (Array.isArray(node)) {
                     for (const n of node) {
-                        this.getFoldLines(n, foldableTokens)
+                        this.getFoldLines(n, foldableTokens, autoFold)
                     }
-                } else if (typeof(node) === 'object') {
+                } else if (typeof (node) === 'object') {
                     for (const key in node) {
-                        this.getFoldLines(node[key], foldableTokens)
+                        this.getFoldLines(node[key], foldableTokens, autoFold)
                     }
-                } else if (typeof(node) === 'string') {
-                    if (node.split('\n').length > parseInt(localStorage.getItem('autofoldTextEditor') || 3)) {
+                } else if (typeof (node) === 'string') {
+                    if (node.split('\n').length > 1 && autoFold) {
                         foldableTokens.push(node)
                     }
                 }
@@ -115,7 +123,7 @@ import YamlUtils from '../../utils/yamlUtils';
     };
 </script>
 <style scoped>
-.editor-wrapper button {
-    margin-right: 10px;
+.navbar {
+    border: 0;
 }
 </style>

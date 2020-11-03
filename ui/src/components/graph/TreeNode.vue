@@ -81,7 +81,7 @@
             </div>
         </div>
 
-        <b-modal :hide-footer="true" :id="`modal-${hash}`" :title="`Task ${task.id}`">
+        <b-modal size="xl" :hide-footer="true" :id="`modal-${hash}`" :title="`Task ${task.id}`">
             <pre>{{taskYaml}}</pre>
         </b-modal>
     </div>

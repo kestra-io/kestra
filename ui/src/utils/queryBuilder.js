@@ -34,13 +34,13 @@ export default class QueryBuilder {
             query.push(QueryBuilder.toLucene(q.q));
         }
 
-        return query.join(" AND ") || '*'
+        return query.join(" AND ") || "*"
     }
 
     static logQueryBuilder(route) {
         const q = route.query
-        const start = q.start ? iso(q.start) : '*'
-        const end = q.end ? iso(q.end) : '*'
+        const start = q.start ? iso(q.start) : "*"
+        const end = q.end ? iso(q.end) : "*"
         return [
             `${q.q ? QueryBuilder.toLucene(q.q) : "*"}`,
             `timestamp:[${start} TO ${end}]`,

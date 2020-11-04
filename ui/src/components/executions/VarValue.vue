@@ -3,9 +3,10 @@
         v-if="isFile(value)"
         target="_blank"
         :href="itemUrl(value)"
-    ><download /> {{ $t('download') }}
+    >
+        <download /> {{ $t('download') }}
     </b-link>
-    <span v-else v-html="value"></span>
+    <span v-else v-html="value" />
 </template>
 
 <script>
@@ -26,11 +27,13 @@
         },
         props: {
             value: {
+                type: Object,
                 required: true
             },
             execution: {
                 type: Object,
-                required: false
+                required: false,
+                default: undefined
             }
         }
     };

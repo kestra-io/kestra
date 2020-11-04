@@ -2,15 +2,15 @@
     <div v-if="ready">
         <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
             <template v-slot:navbar>
-                <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields"/>
+                <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <namespace-select
                     data-type="flow"
                     v-if="$route.name !== 'flowEdit'"
                     @onNamespaceSelect="onNamespaceSelect"
                 />
-                <status-filter-buttons @onRefresh="loadData"/>
-                <date-range @onDate="onSearch"/>
-                <refresh-button class="float-right" @onRefresh="loadData"/>
+                <status-filter-buttons @onRefresh="loadData" />
+                <date-range @onDate="onSearch" />
+                <refresh-button class="float-right" @onRefresh="loadData" />
             </template>
 
             <template v-slot:top>
@@ -38,16 +38,18 @@
                     </template>
                     <template v-slot:cell(details)="row">
                         <router-link
-                            :to="{name: 'executionEdit', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.executionId},query: {tab:'gantt'} }">
-                            <eye id="edit-action"/>
+                            :to="{name: 'executionEdit', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.executionId},query: {tab:'gantt'}}"
+                        >
+                            <eye id="edit-action" />
                         </router-link>
                     </template>
-                    <template v-slot:cell(state.startDate)="row">{{ row.item.state.startDate | date('LLLL') }}
+                    <template v-slot:cell(state.startDate)="row">
+                        {{ row.item.state.startDate | date('LLLL') }}
                     </template>
                     <template v-slot:cell(state.endDate)="row">
-            <span
-                v-if="!['RUNNING', 'CREATED'].includes(row.item.state.current)"
-            >{{ row.item.state.endDate | date('LLLL') }}</span>
+                        <span
+                            v-if="!['RUNNING', 'CREATED'].includes(row.item.state.current)"
+                        >{{ row.item.state.endDate | date('LLLL') }}</span>
                     </template>
                     <template v-slot:cell(state.current)="row">
                         <status
@@ -57,15 +59,16 @@
                         />
                     </template>
                     <template v-slot:cell(state.duration)="row">
-            <span
-                v-if="['RUNNING', 'CREATED'].includes(row.item.state.current)"
-            >{{ durationFrom(row.item) | humanizeDuration }}</span>
+                        <span
+                            v-if="['RUNNING', 'CREATED'].includes(row.item.state.current)"
+                        >{{ durationFrom(row.item) | humanizeDuration }}</span>
                         <span v-else>{{ row.item.state.duration | humanizeDuration }}</span>
                     </template>
                     <template v-slot:cell(flowId)="row">
                         <router-link
                             :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.flowId}}"
-                        >{{ row.item.flowId }}
+                        >
+                            {{ row.item.flowId }}
                         </router-link>
                     </template>
                     <template v-slot:cell(id)="row">
@@ -75,7 +78,7 @@
                         <code>{{ row.item.executionId | id }}</code>
                     </template>
                     <template v-slot:cell(taskId)="row">
-                        <code v-b-tooltip.hover :title=row.item.taskId>{{ row.item.taskId | ellipsis(25) }} </code>
+                        <code v-b-tooltip.hover :title="row.item.taskId">{{ row.item.taskId | ellipsis(25) }} </code>
                     </template>
                     <template v-slot:cell(executionId)="row">
                         <code>{{ row.item.executionId | id }}</code>
@@ -214,15 +217,15 @@
                 this.$router.push({
                     name: "executionEdit",
                     params: {namespace: item.namespace, flowId: item.flowId, id: item.executionId},
-                    query: {tab: 'gantt'}
+                    query: {tab: "gantt"}
                 });
             },
             loadData(callback) {
                 this.$store
                     .dispatch("stat/taskRunDaily", {
                         q: this.executionQuery,
-                        startDate: this.$moment(this.startDate).format('YYYY-MM-DD'),
-                        endDate: this.$moment(this.endDate).format('YYYY-MM-DD')
+                        startDate: this.$moment(this.startDate).format("YYYY-MM-DD"),
+                        endDate: this.$moment(this.endDate).format("YYYY-MM-DD")
                     })
                     .then(() => {
                         this.dailyReady = true;

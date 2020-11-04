@@ -1,7 +1,9 @@
 <template>
     <div v-if="execution" class="log-wrapper text-white">
         <div v-for="taskItem in execution.taskRunList" :key="taskItem.id">
-            <template v-if="(!task || task.id === taskItem.id) && taskItem.attempts">
+            <template
+                v-if="(!task || task.id === taskItem.id) && taskItem.attempts"
+            >
                 <div class="bg-dark attempt-wrapper">
                     <template v-for="(attempt, index) in taskItem.attempts">
                         <div
@@ -13,41 +15,55 @@
                                 :target="`attempt-${index}-${taskItem.id}`"
                                 triggers="hover"
                             >
-                                {{ $t('from') }} : {{ attempt.state.startDate | date('LLL:ss') }}
-                                <br/>
-                                {{ $t('to') }} : {{ attempt.state.endDate | date('LLL:ss') }}
-                                <br/>
-                                <br/>
-                                <clock/>
-                                {{ $t('duration') }} : {{ attempt.state.duration | humanizeDuration }}
+                                {{ $t("from") }} :
+                                {{ attempt.state.startDate | date("LLL:ss") }}
+                                <br>
+                                {{ $t("to") }} :
+                                {{ attempt.state.endDate | date("LLL:ss") }}
+                                <br>
+                                <br>
+                                <clock />
+                                {{ $t("duration") }} :
+                                {{ attempt.state.duration | humanizeDuration }}
                             </b-tooltip>
 
                             <div class="attempt-header">
                                 <div class="attempt-number mr-1">
-                                    {{ $t('attempt') }} {{ index + 1 }}
+                                    {{ $t("attempt") }} {{ index + 1 }}
                                 </div>
 
                                 <div class="task-id flex-grow-1">
                                     <code>{{ taskItem.taskId }}</code>
-                                    <small v-if="taskItem.value"> {{ taskItem.value }}</small>
+                                    <small v-if="taskItem.value">
+                                        {{ taskItem.value }}</small>
                                 </div>
 
                                 <b-button-group>
                                     <b-button
                                         v-if="taskItem.outputs"
                                         :title="$t('toggle metrics')"
-                                        @click="toggleShowMetric(taskItem, index)"
-                                    ><chart-areaspline :title="$t('toggle metrics')" /></b-button>
+                                        @click="
+                                            toggleShowMetric(taskItem, index)
+                                        "
+                                    >
+                                        <chart-areaspline
+                                            :title="$t('toggle metrics')"
+                                        />
+                                    </b-button>
 
                                     <b-button
                                         v-if="taskItem.outputs"
                                         :title="$t('toggle output')"
                                         @click="toggleShowOutput(taskItem)"
-                                    ><location-exit :title="$t('toggle output')" /></b-button>
+                                    >
+                                        <location-exit
+                                            :title="$t('toggle output')"
+                                        />
+                                    </b-button>
 
                                     <restart
                                         :key="`restart-${index}-${attempt.state.startDate}`"
-                                        :isButtonGroup="true"
+                                        :is-button-group="true"
                                         :execution="execution"
                                         :task="taskItem"
                                     />
@@ -57,7 +73,9 @@
 
                         <!-- Log lines -->
                         <template>
-                            <template v-for="(log, i) in findLogs(taskItem.id, index)">
+                            <template
+                                v-for="(log, i) in findLogs(taskItem.id, index)"
+                            >
                                 <log-line
                                     :level="level"
                                     :filter="filter"
@@ -74,8 +92,8 @@
                             :title="$t('metrics')"
                             :execution="execution"
                             :key="`metrics-${index}-${taskItem.id}`"
-                            :data="convertMetric(attempt.metrics)" />
-
+                            :data="convertMetric(attempt.metrics)"
+                        />
                     </template>
                     <!-- Outputs -->
                     <vars
@@ -83,13 +101,10 @@
                         :title="$t('outputs')"
                         :execution="execution"
                         :key="taskItem.id"
-                        :data="taskItem.outputs" />
-
-
+                        :data="taskItem.outputs"
+                    />
                 </div>
             </template>
-
-
         </div>
     </div>
 </template>
@@ -104,36 +119,44 @@
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";
 
     export default {
-        components: {LogLine, Restart, Clock, LocationExit, Vars, ChartAreaspline},
+        components: {
+            LogLine,
+            Restart,
+            Clock,
+            LocationExit,
+            Vars,
+            ChartAreaspline,
+        },
         props: {
             level: {
                 type: String,
-                default: "INFO"
+                default: "INFO",
             },
             filter: {
                 type: String,
-                default: ""
+                default: "",
             },
             taskRunId: {
                 type: String,
+                default: undefined,
             },
         },
         data() {
             return {
                 showOutputs: {},
-                showMetrics: {}
+                showMetrics: {},
             };
         },
         watch: {
             level: function () {
-                this.loadLogs()
-            }
+                this.loadLogs();
+            },
         },
         created() {
             this.loadLogs();
         },
         computed: {
-            ...mapState("execution", ["execution", "task", "logs"])
+            ...mapState("execution", ["execution", "task", "logs"]),
         },
         methods: {
             toggleShowOutput(task) {
@@ -141,23 +164,25 @@
                 this.$forceUpdate();
             },
             toggleShowMetric(task, index) {
-                this.showMetrics[task.id + "-" + index] = !this.showMetrics[task.id + "-" + index];
+                this.showMetrics[task.id + "-" + index] = !this.showMetrics[
+                    task.id + "-" + index
+                ];
                 this.$forceUpdate();
             },
             loadLogs() {
                 let params = {minLevel: this.level};
 
                 if (this.taskRunId) {
-                    params.taskRunId = this.taskRunId
+                    params.taskRunId = this.taskRunId;
                 }
 
                 if (this.execution && this.execution.state.current === "RUNNING") {
                     this.$store
                         .dispatch("execution/followLogs", {
                             id: this.$route.params.id,
-                            params: params
+                            params: params,
                         })
-                        .then(sse => {
+                        .then((sse) => {
                             this.sse = sse;
                             this.$store.commit("execution/setLogs", []);
 
@@ -168,23 +193,26 @@
                 } else {
                     this.$store.dispatch("execution/loadLogs", {
                         executionId: this.$route.params.id,
-                        params: params
+                        params: params,
                     });
                 }
             },
             findLogs(taskRunId, attemptNumber) {
-                return (this.logs || [])
-                    .filter(log => {
-                        return log.taskRunId === taskRunId && log.attemptNumber === attemptNumber;
-                    })
+                return (this.logs || []).filter((log) => {
+                    return (
+                        log.taskRunId === taskRunId &&
+                        log.attemptNumber === attemptNumber
+                    );
+                });
             },
             convertMetric(metrics) {
-                return (metrics || [])
-                    .reduce((accumulator, r)  => {
-                        accumulator[r.name] = r.type === "timer" ? humanizeDuration(parseInt(r.value * 1000)) : r.value
-                        return accumulator;
-                    }, Object.create(null));
-
+                return (metrics || []).reduce((accumulator, r) => {
+                    accumulator[r.name] =
+                        r.type === "timer"
+                            ? humanizeDuration(parseInt(r.value * 1000))
+                            : r.value;
+                    return accumulator;
+                }, Object.create(null));
             },
         },
         beforeDestroy() {
@@ -192,7 +220,7 @@
                 this.sse.close();
                 this.sse = undefined;
             }
-        }
+        },
     };
 </script>
 <style lang="scss" scoped>

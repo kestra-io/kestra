@@ -15,7 +15,7 @@ export default {
     computed: {
         routeInfo() {
             return {
-                title: this.$t(this.dataType + 's')
+                title: this.$t(this.dataType + "s")
             };
         },
         storageName() {
@@ -25,7 +25,7 @@ export default {
             return this.fields.filter(f => f.sortable);
         },
         isBasePage() {
-            return ['executionsList', 'flowsList'].includes(this.$route.name)
+            return ["executionsList", "flowsList"].includes(this.$route.name)
         }
     },
     methods: {
@@ -39,13 +39,13 @@ export default {
                 `${sortItem.sortBy}:${sortItem.sortDesc ? "desc" : "asc"}`
             ];
             this.$router.push({
-                query: { ...this.$route.query, sort }
+                query: {...this.$route.query, sort}
             });
             this.loadData(this.onDataLoaded);
             this.saveFilters()
         },
         onRowDoubleClick(item) {
-            this.$router.push({ name: this.dataType + "Edit", params: item });
+            this.$router.push({name: this.dataType + "Edit", params: item});
         },
         onPageChanged(item) {
             this.$router.push({
@@ -76,10 +76,10 @@ export default {
             }
         },
         loadFilters () {
-            const query = { ...this.$route.query}
+            const query = {...this.$route.query}
             let change = false
             if (this.isBasePage) {
-                const userPreferences = JSON.parse(localStorage.getItem(this.storageName) || '{}')
+                const userPreferences = JSON.parse(localStorage.getItem(this.storageName) || "{}")
                 for (const key in userPreferences) {
                     if (!query[key] && userPreferences[key]) {
                         query[key] = userPreferences[key]
@@ -88,7 +88,7 @@ export default {
                 }
             }
             if (change) {
-                this.$router.push({ query: query });
+                this.$router.push({query: query});
             }
         }
     }

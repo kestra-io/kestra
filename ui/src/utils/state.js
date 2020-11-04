@@ -58,11 +58,11 @@ export default class State {
     static icon() {
         return {
             [State.CREATED]: "pause-circle-outline",
-            [State.SUCCESS]: 'check-circle-outline',
-            [State.RUNNING]: 'play-circle-outline',
-            [State.FAILED]: 'close-circle-outline',
-            [State.KILLING]: 'close-circle-outline',
-            [State.KILLED]: 'stop-circle-outline'
+            [State.SUCCESS]: "check-circle-outline",
+            [State.RUNNING]: "play-circle-outline",
+            [State.FAILED]: "close-circle-outline",
+            [State.KILLING]: "close-circle-outline",
+            [State.KILLED]: "stop-circle-outline"
         };
     }
 }

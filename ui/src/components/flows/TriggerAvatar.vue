@@ -7,51 +7,50 @@
                 :text="name(trigger)"
                 button
                 @click="showTriggerDetails(trigger)"
-                >
-            </b-avatar>
+            />
         </span>
     </div>
 </template>
 <script>
 
-export default {
-    props: {
-        flow: {
-            type: Object,
-            default: () => undefined,
+    export default {
+        props: {
+            flow: {
+                type: Object,
+                default: () => undefined,
+            },
+            execution: {
+                type: Object,
+                default: () => undefined,
+            },
         },
-        execution: {
-            type: Object,
-            default: () => undefined,
-        },
-    },
-    components: {},
-    methods: {
-        showTriggerDetails(trigger) {
-            this.$emit("showTriggerDetails", trigger);
-        },
-        uid(trigger) {
-            return (this.flow ? this.flow.namespace + "-" + this.flow.id : this.execution.namespace + "-" + this.execution.flowId) + '-' + trigger.id
-        },
-        name(trigger) {
-            let split = trigger.id.split(".");
+        components: {},
+        methods: {
+            showTriggerDetails(trigger) {
+                this.$emit("showTriggerDetails", trigger);
+            },
+            uid(trigger) {
+                return (this.flow ? this.flow.namespace + "-" + this.flow.id : this.execution.namespace + "-" + this.execution.flowId) + "-" + trigger.id
+            },
+            name(trigger) {
+                let split = trigger.id.split(".");
 
-            return split[split.length - 1].substr(0, 1).toUpperCase();
+                return split[split.length - 1].substr(0, 1).toUpperCase();
+            },
         },
-    },
-    computed: {
-        triggers() {
-            if (this.flow && this.flow.triggers) {
-                return this.flow.triggers
-            } else if (this.execution && this.execution.trigger) {
-                return [this.execution.trigger]
-            } else {
-                return []
+        computed: {
+            triggers() {
+                if (this.flow && this.flow.triggers) {
+                    return this.flow.triggers
+                } else if (this.execution && this.execution.trigger) {
+                    return [this.execution.trigger]
+                } else {
+                    return []
+                }
+
             }
-
         }
-    }
-};
+    };
 </script>
 
 <style lang="scss" scoped>

@@ -5,7 +5,9 @@
                 <thead>
                     <tr class="bg-light">
                         <th>{{ duration }}</th>
-                        <td v-for="(date, i) in dates" :key="i">{{ date }}</td>
+                        <td v-for="(date, i) in dates" :key="i">
+                            {{ date }}
+                        </td>
                     </tr>
                 </thead>
                 <tbody v-for="taskItem in series" :key="taskItem.id">
@@ -18,13 +20,15 @@
                                 :target="`task-title-wrapper-${taskItem.id}`"
                             >
                                 <code>{{ taskItem.name }}</code>
-                                <span v-if="taskItem.task && taskItem.task.value"><br/>{{ taskItem.task.value }}</span>
+                                <span v-if="taskItem.task && taskItem.task.value"><br>{{ taskItem.task.value }}</span>
                             </b-tooltip>
                         </th>
                         <td :colspan="dates.length">
                             <b-tooltip
                                 :target="`task-progress-${taskItem.id}`"
-                                placement="left"><span v-html="taskItem.tooltip"></span>
+                                placement="left"
+                            >
+                                <span v-html="taskItem.tooltip" />
                             </b-tooltip>
                             <div
                                 :style="{left: Math.max(1, (taskItem.start - 1)) + '%', width: taskItem.width - 1 + '%'}"
@@ -33,18 +37,19 @@
                                 :id="`task-progress-${taskItem.id}`"
                             >
                                 <div class="progress">
-                                    <div class="progress-bar"
-                                         :style="{left: taskItem.left + '%', width: (100-taskItem.left) + '%'}"
-                                         :class="'bg-' + taskItem.color + (taskItem.running ? ' progress-bar-striped' : '')"
-                                         role="progressbar">
-                                    </div>
+                                    <div
+                                        class="progress-bar"
+                                        :style="{left: taskItem.left + '%', width: (100-taskItem.left) + '%'}"
+                                        :class="'bg-' + taskItem.color + (taskItem.running ? ' progress-bar-striped' : '')"
+                                        role="progressbar"
+                                    />
                                 </div>
                             </div>
                         </td>
                     </tr>
                     <tr v-if="task && task.id === taskItem.id">
                         <td :colspan="dates.length + 1">
-                            <log-list :task-run-id="task.id" level="TRACE"/>
+                            <log-list :task-run-id="task.id" level="TRACE" />
                         </td>
                     </tr>
                 </tbody>

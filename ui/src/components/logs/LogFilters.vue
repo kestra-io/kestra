@@ -12,7 +12,7 @@
                     size="sm"
                     @input="onChange"
                     :placeholder="$t('search') + '...'"
-                ></b-form-input>
+                />
             </b-form-group>
         </b-col>
         <b-col md="6">
@@ -26,20 +26,20 @@
     </b-row>
 </template>
 <script>
-import LogLevelSelector from "./LogLevelSelector";
-export default {
-    components: { LogLevelSelector },
-    data() {
-        return {
-            filter: "",
-        };
-    },
-    methods: {
-        onChange() {
-            const query = { ...this.$route.query, q: this.filter, page: 1 };
-            this.$router.push({ query });
-            this.$emit("onChange");
+    import LogLevelSelector from "./LogLevelSelector";
+    export default {
+        components: {LogLevelSelector},
+        data() {
+            return {
+                filter: "",
+            };
         },
-    },
-};
+        methods: {
+            onChange() {
+                const query = {...this.$route.query, q: this.filter, page: 1};
+                this.$router.push({query});
+                this.$emit("onChange");
+            },
+        },
+    };
 </script>

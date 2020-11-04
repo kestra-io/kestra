@@ -1,40 +1,39 @@
 <template>
     <div>
         <b-navbar toggleable="lg" type="light" variant="light" v-if="hasNavBar">
-            <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+            <b-navbar-toggle target="nav-collapse" />
             <b-collapse id="nav-collapse" is-nav>
                 <b-nav-form>
-                    <slot name="navbar"></slot>
+                    <slot name="navbar" />
                 </b-nav-form>
             </b-collapse>
         </b-navbar>
 
-        <slot name="top"></slot>
+        <slot name="top" />
 
-        <slot name="table"></slot>
+        <slot name="table" />
         <pagination :total="total" :max="max" @onPageChanged="onPageChanged" />
     </div>
 </template>
 
 <script>
-import Pagination from "./Pagination";
-export default {
-    components: { Pagination },
-    computed: {
-        hasNavBar() {
-            return !!this.$slots["navbar"];
+    import Pagination from "./Pagination";
+    export default {
+        components: {Pagination},
+        computed: {
+            hasNavBar() {
+                return !!this.$slots["navbar"];
+            },
         },
-    },
-    props: {
-        total: { type: Number, required: true },
-        max: {type: Number, required:false}
-    },
-    methods: {
-        onPageChanged(pagination) {
-            this.$emit("onPageChanged", pagination);
+        props: {
+            total: {type: Number, required: true},
+            max: {type: Number, required:false, default: undefined}},
+        methods: {
+            onPageChanged(pagination) {
+                this.$emit("onPageChanged", pagination);
+            },
         },
-    },
-};
+    };
 </script>
 
 <style scoped lang="scss">

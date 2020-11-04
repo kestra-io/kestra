@@ -16,60 +16,61 @@
     </div>
 </template>
 <script>
-export default {
-    props: {
-        log: {
-            type: Object,
-            required: true,
+    export default {
+        props: {
+            log: {
+                type: Object,
+                required: true,
+            },
+            filter: {
+                type: String,
+                default: "",
+            },
+            level: {
+                type: String,
+                required: true,
+            },
+            excludeMetas: {
+                type: Array,
+                default: () => [],
+            },
         },
-        filter: {
-            type: String,
-            default: "",
-        },
-        level: {
-            type: String,
-        },
-        excludeMetas: {
-            type: Array,
-            default: () => [],
-        },
-    },
-    computed: {
-        metaWithValue() {
-            const metaWithValue = [];
-            const excludes = [
-                "message",
-                "timestamp",
-                "thread",
-                "taskRunId",
-                "level",
-            ];
-            excludes.push.apply(excludes, this.excludeMetas);
-            for (const key in this.log) {
-                if (this.log[key] && !excludes.includes(key)) {
-                    metaWithValue.push({ key, value: this.log[key] });
+        computed: {
+            metaWithValue() {
+                const metaWithValue = [];
+                const excludes = [
+                    "message",
+                    "timestamp",
+                    "thread",
+                    "taskRunId",
+                    "level",
+                ];
+                excludes.push.apply(excludes, this.excludeMetas);
+                for (const key in this.log) {
+                    if (this.log[key] && !excludes.includes(key)) {
+                        metaWithValue.push({key, value: this.log[key]});
+                    }
                 }
-            }
-            return metaWithValue;
+                return metaWithValue;
+            },
+            levelClass() {
+                return {
+                    TRACE: "badge-info",
+                    DEBUG: "badge-secondary",
+                    INFO: "badge-primary",
+                    WARN: "badge-warning",
+                    ERROR: "badge-danger",
+                    CRITICAL: "badge-danger font-weight-bold",
+                }[this.log.level];
+            },
+            filtered() {
+                return (
+                    this.log.message &&
+                    this.log.message.toLowerCase().includes(this.filter)
+                );
+            },
         },
-        levelClass() {
-            return {
-                TRACE: "badge-info",
-                DEBUG: "badge-secondary",
-                INFO: "badge-primary",
-                WARN: "badge-warning",
-                ERROR: "badge-danger",
-                CRITICAL: "badge-danger font-weight-bold",
-            }[this.log.level];
-        },
-        filtered() {
-            return (
-                this.log.message &&
-                this.log.message.toLowerCase().includes(this.filter)
-            );
-        },
-    },
-};
+    };
 </script>
 <style scoped lang="scss">
 @import "../../styles/_variable.scss";

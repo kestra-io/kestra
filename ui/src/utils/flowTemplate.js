@@ -19,7 +19,7 @@ export function canSaveFlowTemplate(isEdit, user, item, dataType) {
 
 export function saveFlowTemplate(self, file, dataType) {
     return self.$store
-        .dispatch(`${dataType}/save${dataType.capitalize()}`, { [dataType]: file })
+        .dispatch(`${dataType}/save${dataType.capitalize()}`, {[dataType]: file})
         .then((response) => {
             self.$toast().saved(response.id);
         })

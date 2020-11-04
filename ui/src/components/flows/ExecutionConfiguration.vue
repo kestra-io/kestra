@@ -1,64 +1,65 @@
 <template>
     <div class="container" v-if="flow">
         <b-form v-hotkey="keymap" @submit.prevent="onSubmit">
-            <b-alert v-if="flow.triggers" variant="warning" show>{{$t('warning flow with triggers')}}</b-alert>
+            <b-alert v-if="flow.triggers" variant="warning" show>
+                {{ $t('warning flow with triggers') }}
+            </b-alert>
 
             <b-form-group
-                    v-for="input in flow.inputs"
-                    :key="input.id"
-                    :label="input.name"
-                    label-cols-sm="2"
-                    label-align-sm="right"
-                    label-size="sm"
+                v-for="input in flow.inputs"
+                :key="input.id"
+                :label="input.name"
+                label-cols-sm="2"
+                label-align-sm="right"
+                label-size="sm"
             >
                 <b-form-input
-                        v-if="input.type === 'STRING'"
-                        v-model="input.value"
-                        type="text"
-                        :required="input.required"
-                        :placeholder="`${placeholder} ${input.name}`"
-                ></b-form-input>
+                    v-if="input.type === 'STRING'"
+                    v-model="input.value"
+                    type="text"
+                    :required="input.required"
+                    :placeholder="`${placeholder} ${input.name}`"
+                />
                 <b-form-input
-                        v-if="input.type === 'INT'"
-                        v-model="input.value"
-                        type="number"
-                        step="1"
-                        :required="input.required"
-                        :placeholder="`${placeholder} ${input.name}`"
-                ></b-form-input>
+                    v-if="input.type === 'INT'"
+                    v-model="input.value"
+                    type="number"
+                    step="1"
+                    :required="input.required"
+                    :placeholder="`${placeholder} ${input.name}`"
+                />
                 <b-form-input
-                        v-if="input.type === 'FLOAT'"
-                        v-model="input.value"
-                        type="number"
-                        step="0.001"
-                        :required="input.required"
-                        :placeholder="`${placeholder} ${input.name}`"
-                ></b-form-input>
+                    v-if="input.type === 'FLOAT'"
+                    v-model="input.value"
+                    type="number"
+                    step="0.001"
+                    :required="input.required"
+                    :placeholder="`${placeholder} ${input.name}`"
+                />
                 <date-picker
-                        v-if="input.type === 'DATETIME'"
-                        v-model="input.value"
-                        :required="input.required"
-                        type="datetime"
-                        class="w-100"
-                        :placeholder="$t('select datetime')"
-                ></date-picker>
+                    v-if="input.type === 'DATETIME'"
+                    v-model="input.value"
+                    :required="input.required"
+                    type="datetime"
+                    class="w-100"
+                    :placeholder="$t('select datetime')"
+                />
                 <b-form-file
-                        v-if="input.type === 'FILE'"
-                        v-model="input.value"
-                        :required="input.required"
-                        :state="Boolean(input.value)"
-                        :placeholder="$t('choose file')"
-                ></b-form-file>
+                    v-if="input.type === 'FILE'"
+                    v-model="input.value"
+                    :required="input.required"
+                    :state="Boolean(input.value)"
+                    :placeholder="$t('choose file')"
+                />
             </b-form-group>
             <b-form-group class="text-right mb-0">
                 <b-button type="submit" variant="primary">
-                    {{$t('launch execution')}}
-                    <trigger title/>
+                    {{ $t('launch execution') }}
+                    <trigger title />
                 </b-button>
-
             </b-form-group>
         </b-form>
-        <br/>
+        <br>
         <b-card :header="$t('triggers')" v-if="flow && flow.triggers">
             <triggers />
         </b-card>
@@ -79,7 +80,7 @@
             },
             keymap () {
                 return {
-                    'ctrl+enter': this.onSubmit,
+                    "ctrl+enter": this.onSubmit,
                 }
             }
         },
@@ -110,13 +111,13 @@
                         formData
                     })
                     .then(response => {
-                        this.$store.commit('execution/setExecution', response.data)
-                        this.$router.push({name: 'executionEdit', params: response.data})
+                        this.$store.commit("execution/setExecution", response.data)
+                        this.$router.push({name: "executionEdit", params: response.data})
 
                         return response.data;
                     })
                     .then((execution) => {
-                        this.$toast().success(this.$t('triggered done', {name: execution.id}));
+                        this.$toast().success(this.$t("triggered done", {name: execution.id}));
                     })
             }
         }

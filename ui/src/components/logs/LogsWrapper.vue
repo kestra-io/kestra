@@ -3,14 +3,16 @@
         <div class="log-content">
             <main-log-filter @onChange="loadData" />
             <div v-if="logs === undefined">
-                <b-alert variant="light" show>{{$t('no result')}}</b-alert>
+                <b-alert variant="light" show>
+                    {{ $t('no result') }}
+                </b-alert>
             </div>
             <div class="bg-dark text-white">
                 <template v-for="(log, i) in logs">
                     <log-line
                         level="TRACE"
                         filter=""
-                        :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
+                        :exclude-metas="isFlowEdit ? ['namespace', 'flowId'] : []"
                         :log="log"
                         :key="`${log.taskRunId}-${i}`"
                     />
@@ -22,59 +24,59 @@
 </template>
 
 <script>
-import LogLine from "../logs/LogLine";
-import Pagination from "../layout/Pagination";
-import { mapState } from "vuex";
-import RouteContext from "../../mixins/routeContext";
-import MainLogFilter from "./MainLogFilter";
-import qb from "../../utils/queryBuilder";
+    import LogLine from "../logs/LogLine";
+    import Pagination from "../layout/Pagination";
+    import {mapState} from "vuex";
+    import RouteContext from "../../mixins/routeContext";
+    import MainLogFilter from "./MainLogFilter";
+    import qb from "../../utils/queryBuilder";
 
-export default {
-    mixins: [RouteContext],
-    components: { LogLine, Pagination, MainLogFilter },
-    data() {
-        return {
-            task: undefined,
-        };
-    },
-    created() {
-        this.loadData();
-    },
-    computed: {
-        ...mapState("log", ["logs", "total", "level"]),
-        routeInfo() {
+    export default {
+        mixins: [RouteContext],
+        components: {LogLine, Pagination, MainLogFilter},
+        data() {
             return {
-                title: this.$t("logs"),
+                task: undefined,
             };
         },
-        isFlowEdit() {
-            return this.$route.name === 'flowEdit'
-        }
-    },
-    methods: {
-        onPageChanged(pagination) {
-            this.$router.push({
-                query: { ...this.$route.query, ...pagination },
-            });
+        created() {
             this.loadData();
         },
-        loadData() {
-
-            let q = qb.logQueryBuilder(this.$route);
-            if (this.isFlowEdit) {
-                q += ` AND namespace:${this.$route.params.namespace}`
-                q += ` AND flowId:${this.$route.params.id}`
+        computed: {
+            ...mapState("log", ["logs", "total", "level"]),
+            routeInfo() {
+                return {
+                    title: this.$t("logs"),
+                };
+            },
+            isFlowEdit() {
+                return this.$route.name === "flowEdit"
             }
-
-            this.$store.dispatch("log/findLogs", {
-                q,
-                page: this.$route.query.page || 1,
-                size: this.$route.query.size  || 25,
-                minLevel: this.$route.query.level || "INFO"
-            });
         },
-    },
-};
+        methods: {
+            onPageChanged(pagination) {
+                this.$router.push({
+                    query: {...this.$route.query, ...pagination},
+                });
+                this.loadData();
+            },
+            loadData() {
+
+                let q = qb.logQueryBuilder(this.$route);
+                if (this.isFlowEdit) {
+                    q += ` AND namespace:${this.$route.params.namespace}`
+                    q += ` AND flowId:${this.$route.params.id}`
+                }
+
+                this.$store.dispatch("log/findLogs", {
+                    q,
+                    page: this.$route.query.page || 1,
+                    size: this.$route.query.size  || 25,
+                    minLevel: this.$route.query.level || "INFO"
+                });
+            },
+        },
+    };
 </script>
 <style lang="scss" scoped>
 @import "../../styles/_variable.scss";

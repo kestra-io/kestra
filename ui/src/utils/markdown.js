@@ -22,11 +22,11 @@ export default class Markdown {
             breaks: true,
             linkify: true,
             typographer: true,
-            langPrefix: 'language-',
-            quotes: '“”‘’',
+            langPrefix: "language-",
+            quotes: "“”‘’",
         })
 
-        md.renderer.rules.table_open = () => `<table class="table table-bordered">\n`
+        md.renderer.rules.table_open = () => "<table class=\"table table-bordered\">\n"
 
         return md.render(
             markdown

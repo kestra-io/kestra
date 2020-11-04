@@ -1,4 +1,4 @@
-import JsYaml from 'js-yaml';
+import JsYaml from "js-yaml";
 import _cloneDeep from "lodash/cloneDeep";
 
 export default class YamlUtils {
@@ -26,7 +26,7 @@ export default class YamlUtils {
         } else if (typeof(value) === "string" || value instanceof String) {
             value = value
                 .replaceAll("\t", "  ")
-                .replaceAll(/\u00A0/g, ' ');
+                .replaceAll(/\u00A0/g, " ");
 
             if (value.indexOf("\\n") >= 0) {
                 return value.replaceAll("\\n", "\n") + "\n";

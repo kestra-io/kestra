@@ -2,9 +2,11 @@
     <div class="plugins-list">
         <b-card class="accordion" no-body :key="plugin.manifest['X-Kestra-Title']" v-for="(plugin, index) in plugins">
             <b-card-header header-tag="header" class="p-0" role="tab">
-                <b-button block v-b-toggle="plugin.manifest['X-Kestra-Title']"  variant="light">{{ plugin.manifest['X-Kestra-Title'] }}</b-button>
+                <b-button block v-b-toggle="plugin.manifest['X-Kestra-Title']" variant="light">
+                    {{ plugin.manifest['X-Kestra-Title'] }}
+                </b-button>
             </b-card-header>
-            <b-collapse :id="plugin.manifest['X-Kestra-Title']"  :visible="index === 0"  accordion="my-accordion" role="tabpanel">
+            <b-collapse :id="plugin.manifest['X-Kestra-Title']" :visible="index === 0" accordion="my-accordion" role="tabpanel">
                 <b-card-body>
                     <ul class="section-nav toc-h3">
                         <li v-for="(classes, namespace) in group(plugin.tasks)" :key="namespace">
@@ -12,14 +14,13 @@
                             <ul>
                                 <li v-for="cls in classes" :key="cls">
                                     <router-link
-                                        v-on:click.native="$emit('routerChange')"
-                                        :to="{ name: 'pluginView', params: {cls: namespace + '.' + cls}}"
+                                        @click.native="$emit('routerChange')"
+                                        :to="{name: 'pluginView', params: {cls: namespace + '.' + cls}}"
                                     >
                                         {{ cls }}
                                     </router-link>
                                 </li>
                             </ul>
-
                         </li>
                     </ul>
                 </b-card-body>

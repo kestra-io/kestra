@@ -1,36 +1,38 @@
 <template>
     <div>
-        <span v-html="markdownRenderer"></span>
+        <span v-html="markdownRenderer" />
     </div>
 </template>
 
 <script>
     import Prism from "prismjs";
     import "prismjs/themes/prism-okaidia.css";
-    import 'prismjs/components/prism-yaml.min';
+    import "prismjs/components/prism-yaml.min";
     import Markdown from "../../utils/markdown";
 
     export default {
         props: {
             watches: {
                 type: Array,
-                default: () => ['source', 'show', 'toc'],
+                default: () => ["source", "show", "toc"],
             },
             source: {
                 type: String,
-                default: ``,
+                default: "",
             },
             permalink: {
                 type: Boolean,
                 default: false,
-            }
+            },
         },
 
         computed: {
             markdownRenderer() {
-                const outHtml = Markdown.render(this.source, {permalink: this.permalink});
+                const outHtml = Markdown.render(this.source, {
+                    permalink: this.permalink,
+                });
 
-                this.$emit('rendered', outHtml)
+                this.$emit("rendered", outHtml);
 
                 this.$nextTick(() => {
                     Prism.highlightAll();
@@ -39,7 +41,6 @@
                 return outHtml;
             },
         },
-
     };
 </script>
 
@@ -52,5 +53,4 @@
         font-weight: normal;
     }
 }
-
 </style>

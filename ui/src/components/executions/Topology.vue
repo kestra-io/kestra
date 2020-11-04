@@ -4,36 +4,36 @@
             <topology-tree
                 ref="topology"
                 v-if="execution && dataTree"
-                :dataTree="dataTree"
+                :data-tree="dataTree"
                 :label="getLabel"
             />
         </b-col>
     </b-row>
 </template>
 <script>
-import TopologyTree from "../graph/TopologyTree";
-import { mapState } from "vuex";
-export default {
-    components: {
-        TopologyTree
-    },
-    computed: {
-        ...mapState("execution", ["execution", "dataTree"])
-    },
-    created() {
-        if (!this.dataTree && this.execution) {
-            this.$store.dispatch('execution/loadTree', this.execution)
-        }
-    },
-    methods: {
-        getLabel(node) {
-            return node.data.taskId;
+    import TopologyTree from "../graph/TopologyTree";
+    import {mapState} from "vuex";
+    export default {
+        components: {
+            TopologyTree
         },
-        update() {
-            if (this.$refs.topology) {
-                this.$refs.topology.update();
+        computed: {
+            ...mapState("execution", ["execution", "dataTree"])
+        },
+        created() {
+            if (!this.dataTree && this.execution) {
+                this.$store.dispatch("execution/loadTree", this.execution)
+            }
+        },
+        methods: {
+            getLabel(node) {
+                return node.data.taskId;
+            },
+            update() {
+                if (this.$refs.topology) {
+                    this.$refs.topology.update();
+                }
             }
         }
-    }
-};
+    };
 </script>

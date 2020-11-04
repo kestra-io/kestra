@@ -2,7 +2,7 @@
     <span v-if="description">
         <help-circle title="" :id="'tooltip-desc-' + id" />
         <b-popover triggers="hover" :target="'tooltip-desc-' + id" placement="bottom">
-            <markdown :source="description"></markdown>
+            <markdown :source="description" />
         </b-popover>
     </span>
 </template>
@@ -22,7 +22,7 @@
             },
             description: {
                 type: String,
-                default: ``,
+                default: "",
             }
         },
         computed: {

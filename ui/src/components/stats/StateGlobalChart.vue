@@ -1,6 +1,8 @@
 <template>
     <div class="state-global-charts">
-        <div class="title" :title="$t('last 30 days executions')">{{$t('last 30 days executions')}}</div>
+        <div class="title" :title="$t('last 30 days executions')">
+            {{ $t('last 30 days executions') }}
+        </div>
         <state-chart
             v-if="ready"
             :data="data"

@@ -2,13 +2,15 @@
     <div>
         <b-row>
             <b-col md="9" class="markdown">
-                <markdown v-if="plugin" :source="plugin.markdown" :permalink="true"></markdown>
+                <markdown v-if="plugin" :source="plugin.markdown" :permalink="true" />
                 <div v-else>
-                    <b-alert variant="info" show>{{ $t('plugins.please') }}</b-alert>
+                    <b-alert variant="info" show>
+                        {{ $t('plugins.please') }}
+                    </b-alert>
                 </div>
             </b-col>
             <b-col md="3">
-                <Toc @routerChange="routerChange" v-if="plugins" :plugins="plugins"></Toc>
+                <Toc @routerChange="routerChange" v-if="plugins" :plugins="plugins" />
             </b-col>
         </b-row>
     </div>
@@ -16,9 +18,9 @@
 
 <script>
     import RouteContext from "../../mixins/routeContext";
-    import Markdown from '../layout/Markdown.vue'
-    import Toc from './Toc.vue'
-    import { mapState } from "vuex";
+    import Markdown from "../layout/Markdown.vue"
+    import Toc from "./Toc.vue"
+    import {mapState} from "vuex";
 
     export default {
         mixins: [RouteContext],
@@ -65,7 +67,7 @@
             routerChange() {
                 window.scroll({
                     top: 0,
-                    behavior: 'smooth'
+                    behavior: "smooth"
                 })
 
                 this.loadPlugin();

@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import Vue from "vue"
 export default {
     namespaced: true,
     state: {
@@ -10,58 +10,58 @@ export default {
     },
 
     actions: {
-        findFlows({ commit }, options) {
-            const sortString = options.sort ? `?sort=${options.sort}` : ''
+        findFlows({commit}, options) {
+            const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
             return Vue.axios.get(`/api/v1/flows/search${sortString}`, {
                 params: options
             }).then(response => {
-                commit('setFlows', response.data.results)
-                commit('setTotal', response.data.total)
+                commit("setFlows", response.data.results)
+                commit("setTotal", response.data.total)
 
                 return response.data;
             })
         },
-        loadFlow({ commit }, options) {
+        loadFlow({commit}, options) {
             return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}`).then(response => {
-                commit('setFlow', response.data)
+                commit("setFlow", response.data)
 
                 return response.data;
             })
         },
-        saveFlow({ commit }, options) {
+        saveFlow({commit}, options) {
             return Vue.axios.put(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}`, options.flow).then(response => {
                 if (response.status >= 300) {
                     return Promise.reject(new Error("Server error on flow save"))
                 } else {
-                    commit('setFlow', response.data)
+                    commit("setFlow", response.data)
 
                     return response.data;
                 }
             })
         },
-        createFlow({ commit }, options) {
-            return Vue.axios.post('/api/v1/flows', options.flow).then(response => {
-                commit('setFlow', response.data)
+        createFlow({commit}, options) {
+            return Vue.axios.post("/api/v1/flows", options.flow).then(response => {
+                commit("setFlow", response.data)
 
                 return response.data;
             })
         },
-        deleteFlow({ commit }, flow) {
+        deleteFlow({commit}, flow) {
             return Vue.axios.delete(`/api/v1/flows/${flow.namespace}/${flow.id}`).then(() => {
-                commit('setFlow', null)
+                commit("setFlow", null)
             })
         },
-        loadTree({ commit }, flow) {
+        loadTree({commit}, flow) {
             return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/tree`).then(response => {
-                commit('setDataTree', response.data.tasks)
+                commit("setDataTree", response.data.tasks)
 
                 return response.data.tasks;
             })
         },
-        loadRevisions({ commit }, options) {
+        loadRevisions({commit}, options) {
             return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}/revisions`).then(response => {
-                commit('setRevisions', response.data)
+                commit("setRevisions", response.data)
 
                 return response.data;
             })

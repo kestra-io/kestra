@@ -2,55 +2,62 @@
     <b-toast @hide="onHide" :id="toastId" :variant="variant" solid :no-auto-hide="noAutoHide">
         <template v-slot:toast-title>
             <div class="d-flex flex-grow-1 align-items-baseline">
-                <strong class="mr-auto">{{title}}</strong>
+                <strong class="mr-auto">{{ title }}</strong>
             </div>
         </template>
-        <span>{{content.message || content}}</span>
-        <b-table class="mt-2 mb-0" small bordered v-if="items && items.length > 0" striped hover
-                 :items="items"></b-table>
+        <span>{{ content.message || content }}</span>
+        <b-table
+            class="mt-2 mb-0"
+            small
+            bordered
+            v-if="items && items.length > 0"
+            striped
+            hover
+            :items="items"
+        />
     </b-toast>
 </template>
 <script>
-export default {
-    props: {
-        variant: {
-            type: String,
-            default: "danger"
+    export default {
+        props: {
+            variant: {
+                type: String,
+                default: "danger"
+            },
+            title: {
+                type: String,
+                required: true
+            },
+            toastId: {
+                type: String,
+                required: true
+            },
+            content: {
+                type: Object,
+                required: true
+            },
+            noAutoHide: {
+                type: Boolean,
+                default: false
+            }
         },
-        title: {
-            type: String,
-            required: true
+        mounted() {
+            this.$bvToast.show(this.toastId);
         },
-        toastId: {
-            type: String,
-            required: true
+        computed: {
+            items() {
+                const messages = this.content && this.content._embedded && this.content._embedded.errors ? this.content._embedded.errors : []
+                return Array.isArray(messages) ? messages : [messages]
+            }
         },
-        content: {
-            type: Object,
-            required: true
-        },
-        noAutoHide: {
-            type: Boolean,
-            default: false
+        methods: {
+            onHide() {
+                setTimeout(() => {
+                    this.$store.commit("core/setErrorMessage", undefined);
+                }, 1000);
+            }
         }
-    },
-    mounted() {
-        this.$bvToast.show(this.toastId);
-    },
-    computed: {
-        items() {
-            const messages = this.content && this.content._embedded && this.content._embedded.errors ? this.content._embedded.errors : []
-            return Array.isArray(messages) ? messages : [messages]
-        }
-    },
-    methods: {
-        onHide() {
-            setTimeout(() => {
-                this.$store.commit("core/setErrorMessage", undefined);
-            }, 1000);
-        }
-    }
-};
+    };
 </script>
 <style lang="scss">
     @import "../styles/variable";

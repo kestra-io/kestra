@@ -5,7 +5,7 @@ export default {
 
             return {
                 _wrap: function(message) {
-                    return [self.$createElement('span', {domProps: {innerHTML: message}})];
+                    return [self.$createElement("span", {domProps: {innerHTML: message}})];
                 },
                 confirm: function(message, callback) {
                     return self.$bvModal

@@ -21,19 +21,19 @@
                 role="tabpanel"
             >
                 <b-card-body>
-                    <vars :data="trigger"/>
+                    <vars :data="trigger" />
                 </b-card-body>
             </b-collapse>
         </b-card>
     </div>
 </template>
 <script>
-import { mapState } from "vuex";
-import Vars from '../executions/Vars'
-export default {
-    components: { Vars },
-    computed: {
-        ...mapState("flow", ["flow"]),
-    }
-};
+    import {mapState} from "vuex";
+    import Vars from "../executions/Vars"
+    export default {
+        components: {Vars},
+        computed: {
+            ...mapState("flow", ["flow"]),
+        }
+    };
 </script>

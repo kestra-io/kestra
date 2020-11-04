@@ -5,41 +5,41 @@
         :placeholder="$t('Select namespace')"
         :options="namespaces"
         class="ns-selector"
-    ></v-select>
+    />
 </template>
 <script>
-import { mapState } from "vuex";
-export default {
-    props: {
-        dataType: {
-            type: String,
-            required: true
-        }
-    },
-    created() {
-        this.$store.dispatch("namespace/loadNamespaces", {dataType: this.dataType});
-        this.selectedNamespace = this.$route.query.namespace || "";
-    },
-    computed: {
-        ...mapState("namespace", ["namespaces"])
-    },
-    data() {
-        return {
-            selectedNamespace: ""
-        };
-    },
-    methods: {
-        onNamespaceSelect() {
-            const query = { ...this.$route.query };
-            query.namespace = this.selectedNamespace;
-            if (!this.selectedNamespace) {
-                delete query.namespace;
+    import {mapState} from "vuex";
+    export default {
+        props: {
+            dataType: {
+                type: String,
+                required: true
             }
-            this.$router.push({ query });
-            this.$emit("onNamespaceSelect");
+        },
+        created() {
+            this.$store.dispatch("namespace/loadNamespaces", {dataType: this.dataType});
+            this.selectedNamespace = this.$route.query.namespace || "";
+        },
+        computed: {
+            ...mapState("namespace", ["namespaces"])
+        },
+        data() {
+            return {
+                selectedNamespace: ""
+            };
+        },
+        methods: {
+            onNamespaceSelect() {
+                const query = {...this.$route.query};
+                query.namespace = this.selectedNamespace;
+                if (!this.selectedNamespace) {
+                    delete query.namespace;
+                }
+                this.$router.push({query});
+                this.$emit("onNamespaceSelect");
+            }
         }
-    }
-};
+    };
 </script>
 
 

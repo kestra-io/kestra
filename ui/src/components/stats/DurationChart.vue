@@ -1,19 +1,20 @@
 <template>
     <div :id="uuid" :class="'executions-charts' + (this.global ? '' : ' mini')" v-if="dataReady">
-        <current-chart :data="collections" :options="options"></current-chart>
+        <current-chart :data="collections" :options="options" />
         <b-tooltip
             custom-class="tooltip-stats"
             no-fade
             :target="uuid"
             :placement="(this.global ? 'bottom' : 'left')"
-            triggers="hover">
-            <span v-html="tooltip"></span>
+            triggers="hover"
+        >
+            <span v-html="tooltip" />
         </b-tooltip>
     </div>
 </template>
 
 <script>
-    import {Line} from 'vue-chartjs'
+    import {Line} from "vue-chartjs"
     import humanizeDuration from "humanize-duration";
     import {tooltip, defaultConfig} from "../../utils/charts.js";
     import Utils from "../../utils/utils";
@@ -72,7 +73,7 @@
                     datasets: [{
                         label: "Duration",
                         backgroundColor: "#c7e7e5",
-                        fill: 'start',
+                        fill: "start",
                         pointRadius: 1,
                         borderWidth: 1,
                         borderColor: "#1dbaaf",

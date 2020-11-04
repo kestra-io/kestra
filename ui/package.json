@@ -65,10 +65,37 @@
       "node": true
     },
     "extends": [
-      "plugin:vue/essential",
+      "plugin:vue/strongly-recommended",
       "eslint:recommended"
     ],
-    "rules": {},
+    "rules": {
+      "vue/html-indent": [
+        "error",
+        4,
+        {
+          "baseIndent": 1
+        }
+      ],
+      "vue/script-indent": [
+        "error",
+        4,
+        {
+          "baseIndent": 1
+        }
+      ],
+      "vue/max-attributes-per-line": [
+        "error",
+        {
+          "singleline": 7
+        }
+      ],
+      "quotes": [
+        "error",
+        "double"
+      ],
+      "vue/object-curly-spacing": ["error", "never"],
+      "object-curly-spacing": ["error", "never"]
+    },
     "parserOptions": {
       "parser": "babel-eslint"
     }

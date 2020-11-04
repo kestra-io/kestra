@@ -1,15 +1,15 @@
 <template>
-  <span>
-    <b-button
-        @click="restart"
-        v-if="enabled"
-        :class="!isButtonGroup ? 'rounded-lg btn-info restart mr-1' : ''"
-        :title="$t('restart')"
-    >
-      <restart-icon/>
-      {{ (isButtonGroup ? '' : $t("restart")) }}
-    </b-button>
-  </span>
+    <span>
+        <b-button
+            @click="restart"
+            v-if="enabled"
+            :class="!isButtonGroup ? 'rounded-lg btn-info restart mr-1' : ''"
+            :title="$t('restart')"
+        >
+            <restart-icon />
+            {{ (isButtonGroup ? '' : $t("restart")) }}
+        </b-button>
+    </span>
 </template>
 <script>
     import RestartIcon from "vue-material-design-icons/Restart";
@@ -30,7 +30,8 @@
             },
             task: {
                 type: Object,
-                required: false
+                required: false,
+                default: undefined
             }
         },
         methods: {
@@ -43,9 +44,9 @@
                                 taskId: this.task ? this.task.taskId : null
                             })
                             .then(response => {
-                                this.$store.commit('execution/setExecution', response.data);
-                                this.$router.push({name: 'executionEdit', params: response.data});
-                                this.$emit('restart')
+                                this.$store.commit("execution/setExecution", response.data);
+                                this.$router.push({name: "executionEdit", params: response.data});
+                                this.$emit("restart")
                             })
                             .then(() => {
                                 this.$toast().success(this.$t("restarted"));

@@ -98,7 +98,7 @@
     import DateRange from "../layout/DateRange";
     import RefreshButton from "../layout/RefreshButton";
     import StatusFilterButtons from "../layout/StatusFilterButtons";
-    import StateGlobalChart from "@/components/stats/StateGlobalChart";
+    import StateGlobalChart from "../../components/stats/StateGlobalChart";
 
     export default {
         mixins: [RouteContext, DataTableActions],

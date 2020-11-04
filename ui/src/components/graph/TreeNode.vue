@@ -97,7 +97,7 @@ import { mapState } from "vuex";
 import Status from "../Status";
 import md5 from "md5";
 import YamlUtils from "../../utils/yamlUtils";
-import MarkdownTooltip from "@/components/layout/MarkdownTooltip";
+import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
 
 export default {
     components: {

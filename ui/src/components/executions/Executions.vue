@@ -94,8 +94,8 @@ import DateRange from "../layout/DateRange";
 import RefreshButton from '../layout/RefreshButton'
 import StatusFilterButtons from '../layout/StatusFilterButtons'
 import StateGlobalChart from "../../components/stats/StateGlobalChart";
-import FlowTriggerDetailsModal from "@/components/flows/TriggerDetailsModal";
-import TriggerAvatar from "@/components/flows/TriggerAvatar";
+import FlowTriggerDetailsModal from "../../components/flows/TriggerDetailsModal";
+import TriggerAvatar from "../../components/flows/TriggerAvatar";
 
 export default {
     mixins: [RouteContext, DataTableActions],

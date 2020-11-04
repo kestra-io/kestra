@@ -34,7 +34,24 @@ public class StatsController {
         @Nullable @Format("yyyy-MM-dd") LocalDate startDate,
         @Nullable @Format("yyyy-MM-dd") LocalDate endDate
     ) {
-        return executionRepository.dailyStatistics(q, startDate, endDate);
+        return executionRepository.dailyStatistics(q, startDate, endDate, false);
+    }
+
+    /**
+     * Return daily statistics for all taskRuns filter optionnaly by a lucene query
+     *
+     * @param q Lucene string to filter execution
+     * @param startDate default to now - 30 days
+     * @param endDate default to now
+     * @return a list of DailyExecutionStatistics
+     */
+    @Post(uri = "taskruns/daily", produces = MediaType.TEXT_JSON)
+    public List<DailyExecutionStatistics> taskRunsDailyStatistics(
+        @Nullable String q,
+        @Nullable @Format("yyyy-MM-dd") LocalDate startDate,
+        @Nullable @Format("yyyy-MM-dd") LocalDate endDate
+    ) {
+        return executionRepository.dailyStatistics(q, startDate, endDate, true);
     }
 
     /**

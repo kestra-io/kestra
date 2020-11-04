@@ -4,6 +4,7 @@ export default {
     state: {
         dailyGroupByFlow: undefined,
         daily: undefined,
+        taskRunDaily: undefined
     },
     actions: {
         dailyGroupByFlow({ commit }, payload) {
@@ -20,6 +21,13 @@ export default {
                 return response.data;
             })
         },
+        taskRunDaily({ commit }, payload) {
+            return Vue.axios.post(`/api/v1/stats/executions/daily`, payload).then(response => {
+                commit('setTaskRunDaily', response.data)
+
+                return response.data;
+            })
+        },
     },
     mutations: {
         setDailyGroupByFlow(state, stats) {
@@ -27,6 +35,9 @@ export default {
         },
         setDaily(state, stats) {
             state.daily = stats
+        },
+        setTaskRunDaily(state, stats) {
+            state.taskRunDaily = stats
         }
     },
     getters: {}

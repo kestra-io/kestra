@@ -40,6 +40,7 @@ public class TaskRun {
     private Map<String, Object> outputs;
 
     @NotNull
+    @With
     private State state;
 
     public TaskRun withState(State.Type state) {

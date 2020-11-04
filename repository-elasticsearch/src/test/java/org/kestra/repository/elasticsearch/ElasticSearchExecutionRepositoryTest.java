@@ -37,15 +37,7 @@ class ElasticSearchExecutionRepositoryTest {
     ElasticSearchRepositoryTestUtils utils;
 
     static Execution.ExecutionBuilder builder(State.Type state, String flowId) {
-        State finalState = new State();
-
-        finalState = spy(finalState
-            .withState(state != null ? state : State.Type.SUCCESS));
-
-        Random rand = new Random();
-        doReturn(Duration.ofSeconds(rand.nextInt(150)))
-            .when(finalState)
-            .getDuration();
+        State finalState = randomDuration(state);
 
         Execution.ExecutionBuilder execution = Execution.builder()
             .id(FriendlyId.createFriendlyId())
@@ -60,10 +52,12 @@ class ElasticSearchExecutionRepositoryTest {
                 Return.builder().id("first").type(Return.class.getName()).format("test").build())
             )
                 .withState(State.Type.SUCCESS),
-            TaskRun.of(execution.build(), ResolvedTask.of(
+            spyTaskRun(TaskRun.of(execution.build(), ResolvedTask.of(
                 Return.builder().id("second").type(Return.class.getName()).format("test").build())
             )
                 .withState(state),
+                state
+            ),
             TaskRun.of(execution.build(), ResolvedTask.of(
                 Return.builder().id("third").type(Return.class.getName()).format("test").build())).withState(state)
         );
@@ -74,6 +68,33 @@ class ElasticSearchExecutionRepositoryTest {
 
         return execution.taskRunList(List.of(taskRuns.get(0), taskRuns.get(1)));
     }
+
+
+    static TaskRun spyTaskRun(TaskRun taskRun, State.Type state) {
+        TaskRun spy = spy(taskRun);
+
+        doReturn(randomDuration(state))
+            .when(spy)
+            .getState();
+
+        return spy;
+    }
+
+    static State randomDuration(State.Type state) {
+        State finalState = new State();
+
+        finalState = spy(finalState
+            .withState(state != null ? state : State.Type.SUCCESS)
+        );
+
+        Random rand = new Random();
+        doReturn(Duration.ofSeconds(rand.nextInt(150)))
+            .when(finalState)
+            .getDuration();
+
+        return finalState;
+    }
+
 
     void inject() {
         for (int i = 0; i < 28; i++) {
@@ -171,7 +192,8 @@ class ElasticSearchExecutionRepositoryTest {
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
             "*",
             LocalDate.now().minusDays(10),
-            LocalDate.now()
+            LocalDate.now(),
+            false
         );
 
         assertThat(result.size(), is(11));
@@ -182,6 +204,33 @@ class ElasticSearchExecutionRepositoryTest {
         assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING), is(5L));
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(20L));
     }
+
+
+    @Test
+    void taskRunsDailyStatistics() {
+        for (int i = 0; i < 28; i++) {
+            executionRepository.save(builder(
+                i < 5 ? State.Type.RUNNING : (i < 8 ? State.Type.FAILED : State.Type.SUCCESS),
+                i < 15 ? null : "second"
+            ).build());
+        }
+
+        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
+            "*",
+            LocalDate.now().minusDays(10),
+            LocalDate.now(),
+            true
+        );
+
+        assertThat(result.size(), is(11));
+        assertThat(result.get(10).getExecutionCounts().size(), is(7));
+        assertThat(result.get(10).getDuration().getAvg().getSeconds(), greaterThan(0L));
+
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED), is(3L * 2));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING), is(5L * 2));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(55L));
+    }
+
 
     @AfterEach
     protected void tearDown() throws IOException {

@@ -8,6 +8,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.filter.Filter;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
@@ -47,6 +48,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     private static final String INDEX_NAME = "executions";
     public static final String START_DATE_FORMAT = "yyyy-MM-dd";
 
+    public static final String NESTED_AGG = "NESTED";
     public static final String DATE_AGG = "DATE";
     public static final String NAMESPACE_AGG = "NAMESPACE";
     public static final String FLOW_AGG = "FLOW";
@@ -89,7 +91,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                 AggregationBuilders.terms(FLOW_AGG)
                     .size(10000)
                     .field("flowId")
-                    .subAggregation(dailyExecutionStatisticsFinalAgg(startDate, endDate))
+                    .subAggregation(dailyExecutionStatisticsFinalAgg(startDate, endDate, false))
             );
 
         SearchSourceBuilder sourceBuilder = this.searchSource(
@@ -156,7 +158,8 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
         @Nullable LocalDate startDate,
-        @Nullable LocalDate endDate
+        @Nullable LocalDate endDate,
+        boolean isTaskRun
     ) {
         if (startDate == null) {
             startDate = LocalDate.now().minusDays(30);
@@ -166,13 +169,17 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             endDate = LocalDate.now();
         }
 
+        AggregationBuilder agg = dailyExecutionStatisticsFinalAgg(startDate, endDate, isTaskRun);
+
+        if (isTaskRun) {
+            agg = AggregationBuilders.nested(NESTED_AGG, "taskRunList")
+                .subAggregation(agg);
+        }
+
         SearchSourceBuilder sourceBuilder = this.searchSource(
             this.dailyExecutionStatisticsBool(query, startDate, endDate),
             Optional.of(Collections.singletonList(
-                dailyExecutionStatisticsFinalAgg(
-                    startDate,
-                    endDate
-                )
+                agg
             )),
             null
         );
@@ -180,9 +187,9 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         try {
             SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            ParsedDateHistogram groupAgg = searchResponse
-                .getAggregations()
-                .get(DATE_AGG);
+            ParsedDateHistogram groupAgg = isTaskRun ?
+                ((ParsedNested) searchResponse.getAggregations().get(NESTED_AGG)).getAggregations().get(DATE_AGG) :
+                searchResponse.getAggregations().get(DATE_AGG);
 
             List<DailyExecutionStatistics> result = new ArrayList<>();
 
@@ -222,10 +229,11 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
     private static DateHistogramAggregationBuilder dailyExecutionStatisticsFinalAgg(
         LocalDate startDate,
-        LocalDate endDate
+        LocalDate endDate,
+        boolean isTaskRun
     ) {
         return AggregationBuilders.dateHistogram(DATE_AGG)
-            .field("state.startDate")
+            .field((isTaskRun ? "taskRunList." : "") + "state.startDate")
             .format(START_DATE_FORMAT)
             .minDocCount(0)
             .fixedInterval(DateHistogramInterval.DAY)
@@ -234,11 +242,11 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                 endDate.format(DateTimeFormatter.ofPattern(START_DATE_FORMAT))
             ))
             .subAggregation(AggregationBuilders.stats(DURATION_AGG).
-                field("state.duration")
+                field((isTaskRun ? "taskRunList." : "") + "state.duration")
             )
             .subAggregation(AggregationBuilders.terms(COUNT_AGG)
                 .size(10000)
-                .field("state.current")
+                .field((isTaskRun ? "taskRunList." : "") + "state.current")
             );
     }
 

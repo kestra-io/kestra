@@ -63,7 +63,7 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate) {
+    public List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate, boolean isTaskRun) {
         throw new UnsupportedOperationException();
     }
 }

@@ -22,7 +22,7 @@ export default {
             })
         },
         taskRunDaily({ commit }, payload) {
-            return Vue.axios.post(`/api/v1/stats/executions/daily`, payload).then(response => {
+            return Vue.axios.post(`/api/v1/stats/taskruns/daily`, payload).then(response => {
                 commit('setTaskRunDaily', response.data)
 
                 return response.data;

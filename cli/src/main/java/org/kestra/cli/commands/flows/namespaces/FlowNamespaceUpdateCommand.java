@@ -24,10 +24,7 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 @CommandLine.Command(
     name = "update",
     description = "handle namespace flows",
-    mixinStandardHelpOptions = true,
-    subcommands = {
-        ValidateCommand.class,
-    }
+    mixinStandardHelpOptions = true
 )
 @Slf4j
 public class FlowNamespaceUpdateCommand extends AbstractApiCommand {

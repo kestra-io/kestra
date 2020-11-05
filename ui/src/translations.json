@@ -107,6 +107,7 @@
         "down trend": "Decreasing",
         "update aborted": "update aborted",
         "invalid flow": "Invalid flow",
+        "invalid yaml": "Invalid YAML",
         "add schedule": "Add a schedule",
         "schedule": "Schedule",
         "schedules": {
@@ -253,6 +254,7 @@
         "down trend": "En baisse",
         "update aborted": "Mise à jour annulée",
         "invalid flow": "Flow invalide",
+        "invalid yaml": "YAML invalide",
         "add schedule": "Ajouter un plannificationS",
         "schedule": "Tâche plannifié",
         "schedules": {

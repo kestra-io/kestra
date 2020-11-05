@@ -101,8 +101,8 @@ export default {
                     item = YamlUtils.parse(this.content);
                 } catch (err) {
                     this.$toast().warning(
-                        this.$t("check your the yaml is valid"),
-                        this.$t("invalid") + " " + this.$t(this.dataType)
+                        err.message,
+                        this.$t("invalid yaml"),
                     );
 
                     return;
@@ -122,7 +122,18 @@ export default {
                         this.loadFile();
                     });
             } else {
-                const item = YamlUtils.parse(this.content);
+                let item;
+                try {
+                    item = YamlUtils.parse(this.content);
+                } catch (err) {
+                    this.$toast().warning(
+                        err.message,
+                        this.$t("invalid yaml"),
+                    );
+
+                    return;
+                }
+
                 this.$store
                     .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: item})
                     .then(() => {

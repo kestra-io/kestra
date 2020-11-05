@@ -92,7 +92,15 @@
                 let trimmedContent = this.trimContent(this.value)
                 const foldableTokens = []
                 let lineDiff = 0
-                this.getFoldLines(YamlUtils.parse(this.value), foldableTokens, autoFold)
+                try {
+                    this.getFoldLines(YamlUtils.parse(this.value), foldableTokens, autoFold)
+                } catch (err) {
+                    this.$toast().warning(
+                        err.message,
+                        this.$t("invalid yaml"),
+                    );
+                    return;
+                }
                 for (const foldableToken of foldableTokens) {
                     const search = this.trimContent(foldableToken)
                     const index = trimmedContent.indexOf(search)

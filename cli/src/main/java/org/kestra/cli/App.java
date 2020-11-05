@@ -15,6 +15,7 @@ import picocli.CommandLine;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(
@@ -48,7 +49,7 @@ public class App implements Callable<Integer> {
         applicationContext.close();
 
         // exit code
-        System.exit(exitCode);
+        System.exit(Objects.requireNonNullElse(exitCode, 0));
     }
 
     @Override

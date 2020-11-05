@@ -6,6 +6,7 @@ import graph from "./graph"
 import layout from "./layout"
 import log from "./logs"
 import namespace from "./namespaces"
+import misc from "./miscs"
 import plugin from "./plugins"
 import settings from "./settings"
 import stat from "./stat"
@@ -22,10 +23,11 @@ export default {
         log,
         stat,
         namespace,
+        misc,
         layout,
         auth,
         graph,
         plugin,
-        taskrun
+        taskrun,
     }
 }

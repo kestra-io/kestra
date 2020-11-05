@@ -19,8 +19,8 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(
     name = "kestra",
-    version = "v0.1",
 
+    versionProvider = VersionProvider.class,
     parameterListHeading = "%nParameters:%n",
     optionListHeading = "%nOptions:%n",
     commandListHeading = "%nCommands:%n",

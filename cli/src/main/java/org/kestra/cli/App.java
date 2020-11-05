@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
         SysCommand.class
     }
 )
-public class App implements Callable<Object> {
+public class App implements Callable<Integer> {
     public static void main(String[] args) {
         // Register a ClassLoader with isolation for plugins
         Thread.currentThread().setContextClassLoader(KestraClassLoader.create(Thread.currentThread().getContextClassLoader()));
@@ -43,13 +43,16 @@ public class App implements Callable<Object> {
         ApplicationContext applicationContext = App.applicationContext(args);
 
         // Call Picocli command
-        PicocliRunner.call(App.class, applicationContext, args);
+        Integer exitCode = PicocliRunner.call(App.class, applicationContext, args);
 
         applicationContext.close();
+
+        // exit code
+        System.exit(exitCode);
     }
 
     @Override
-    public Object call() throws Exception {
+    public Integer call() throws Exception {
         return PicocliRunner.call(App.class, "--help");
     }
 

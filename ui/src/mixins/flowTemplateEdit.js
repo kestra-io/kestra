@@ -1,5 +1,5 @@
-import { canSaveFlowTemplate, saveFlowTemplate } from "../utils/flowTemplate";
-import { mapGetters, mapState } from "vuex";
+import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
+import {mapGetters, mapState} from "vuex";
 
 import BottomLine from "../components/layout/BottomLine";
 import ContentSave from "vue-material-design-icons/ContentSave";
@@ -124,12 +124,12 @@ export default {
             } else {
                 const item = YamlUtils.parse(this.content);
                 this.$store
-                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, { [this.dataType]: item})
+                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: item})
                     .then(() => {
                         this.$router.push({
                             name: `${this.dataType}Edit`,
                             params: item,
-                            query: { tab: "data-source" }
+                            query: {tab: "data-source"}
                         });
                     })
                     .then(() => {

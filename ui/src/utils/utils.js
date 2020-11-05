@@ -12,9 +12,9 @@ export default class Utils {
             return []
                 .concat(...Object
                     .keys(child)
-                    .map(key => typeof child[key] === 'object' ?
+                    .map(key => typeof child[key] === "object" ?
                         _flatten(child[key], path.concat([key])) :
-                        ({ [path.concat([key]).join(".")] : child[key] })
+                        ({[path.concat([key]).join(".")] : child[key]})
                     )
                 );
         }(object));
@@ -31,12 +31,12 @@ export default class Utils {
             if (typeof(flat[key]) === "string") {
                 let date = moment(flat[key], moment.ISO_8601);
                 if (date.isValid()) {
-                    return {key, value: date.format('LLLL')};
+                    return {key, value: date.format("LLLL")};
                 }
             }
 
             if (typeof(flat[key]) === "number") {
-                return {key, value: flat[key].toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1 ')};
+                return {key, value: flat[key].toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1 ")};
             }
 
             return {key, value: flat[key]};

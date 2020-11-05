@@ -1,134 +1,145 @@
 <template>
-  <sidebar-menu
-    :menu="menu"
-    @toggle-collapse="onToggleCollapse"
-    width="200px"
-    :collapsed="collapsed"
-  >
-    <div class="logo" slot="header">
-      <router-link :to="{name: 'home'}">
-        <span>
-          <span class="img" />
+    <sidebar-menu
+        :menu="menu"
+        @toggle-collapse="onToggleCollapse"
+        width="200px"
+        :collapsed="collapsed"
+    >
+        <div class="logo" slot="header">
+            <router-link :to="{name: 'home'}">
+                <span>
+                    <span class="img" />
+                </span>
+            </router-link>
+        </div>
+        <span slot="toggle-icon">
+            <chevron-right v-if="collapsed" />
+            <chevron-left v-else />
         </span>
-      </router-link>
-    </div>
-    <span slot="toggle-icon">
-      <chevron-right v-if="collapsed" />
-      <chevron-left v-else />
-    </span>
-  </sidebar-menu>
+    </sidebar-menu>
 </template>
 
 <script>
-import Vue from "vue";
-import { SidebarMenu } from "vue-sidebar-menu";
-import ChevronLeft from "vue-material-design-icons/ChevronLeft";
-import ChevronRight from "vue-material-design-icons/ChevronRight";
-import Graph from "vue-material-design-icons/Graph";
-import Cog from "vue-material-design-icons/Cog";
-import TimelineClock from "vue-material-design-icons/TimelineClock";
-import BookOpen from "vue-material-design-icons/BookOpen";
-import CardText from "vue-material-design-icons/CardText";
-import HexagonMultiple from "vue-material-design-icons/HexagonMultiple";
+    import Vue from "vue";
+    import {SidebarMenu} from "vue-sidebar-menu";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft";
+    import ChevronRight from "vue-material-design-icons/ChevronRight";
+    import Graph from "vue-material-design-icons/Graph";
+    import Cog from "vue-material-design-icons/Cog";
+    import TimelineClock from "vue-material-design-icons/TimelineClock";
+    import BookOpen from "vue-material-design-icons/BookOpen";
+    import CardText from "vue-material-design-icons/CardText";
+    import HexagonMultiple from "vue-material-design-icons/HexagonMultiple";
+    import ChartTimeline from "vue-material-design-icons/ChartTimeline";
 
-Vue.component("graph", Graph);
-Vue.component("settings", Cog);
-Vue.component("timelineclock", TimelineClock);
-Vue.component("bookopen", BookOpen);
-Vue.component("cardtext", CardText);
-Vue.component("hexagon-multiple", HexagonMultiple);
+    Vue.component("graph", Graph);
+    Vue.component("settings", Cog);
+    Vue.component("timelineclock", TimelineClock);
+    Vue.component("bookopen", BookOpen);
+    Vue.component("cardtext", CardText);
+    Vue.component("hexagon-multiple", HexagonMultiple);
+    Vue.component("charttimeline", ChartTimeline);
 
-export default {
-  components: {
-    ChevronLeft,
-    ChevronRight,
-    SidebarMenu,
-  },
-  methods: {
-    onToggleCollapse(folded) {
-      this.collapsed = folded;
-      localStorage.setItem("menuCollapsed", folded ? "true" : "false");
-      this.$emit("onMenuCollapse", folded);
-    }
-  },
-  data() {
-    return {
-      collapsed: localStorage.getItem("menuCollapsed") === "true"
-    };
-  },
-  computed: {
-    menu() {
-      return [
-        {
-          href: "/flows",
-          alias: [
-            "/flows*"
-          ],
-          title: this.$t("flows"),
-          icon: {
-            element: "graph",
-            class: "menu-icon"
-          }
+    export default {
+        components: {
+            ChevronLeft,
+            ChevronRight,
+            SidebarMenu,
         },
-        {
-            href: "/templates",
-            alias: [
-                "/templates*"
-            ],
-            title: this.$t("templates"),
-            icon: {
-                element: "cardtext",
-                class: "menu-icon"
+        methods: {
+            onToggleCollapse(folded) {
+                this.collapsed = folded;
+                localStorage.setItem("menuCollapsed", folded ? "true" : "false");
+                this.$emit("onMenuCollapse", folded);
             }
         },
-        {
-          href: "/executions",
-          alias: [
-            "/executions*"
-          ],
-          title: this.$t("executions"),
-          icon: {
-            element: "timelineclock",
-            class: "menu-icon"
-          }
+        data() {
+            return {
+                collapsed: localStorage.getItem("menuCollapsed") === "true"
+            };
         },
-        {
-          href: "/logs",
-          alias: [
-            "/logs*"
-          ],
-          title: this.$t("logs"),
-          icon: {
-            element: "hexagon-multiple",
-            class: "menu-icon"
-          }
-        },
-        {
-          href: "/plugins",
-          alias: [
-            "/plugins*"
-          ],
-          title: this.$t("plugins.documentation"),
-          icon: {
-            element: "bookopen",
-            class: "menu-icon"
-          }
-        },
-        {
-          href: "/settings",
-          alias: [
-            "/settings*"
-          ],
-          title: this.$t("settings"),
-          icon: {
-            element: "settings",
-            class: "menu-icon"
-          }
+        computed: {
+            menu() {
+                return [
+                    {
+                        href: "/flows",
+                        alias: [
+                            "/flows*"
+                        ],
+                        title: this.$t("flows"),
+                        icon: {
+                            element: "graph",
+                            class: "menu-icon"
+                        }
+                    },
+                    {
+                        href: "/templates",
+                        alias: [
+                            "/templates*"
+                        ],
+                        title: this.$t("templates"),
+                        icon: {
+                            element: "cardtext",
+                            class: "menu-icon"
+                        }
+                    },
+                    {
+                        href: "/executions",
+                        alias: [
+                            "/executions*"
+                        ],
+                        title: this.$t("executions"),
+                        icon: {
+                            element: "timelineclock",
+                            class: "menu-icon"
+                        }
+                    },
+                    {
+                        href: "/taskruns",
+                        alias: ["/taskruns*"],
+                        title: this.$t("taskruns"),
+                        icon: {
+                            element: "charttimeline",
+                            class: "menu-icon"
+                        }
+                    },
+                    {
+                        href: "/logs",
+                        alias: [
+                            "/logs*"
+                        ],
+                        title: this.$t("logs"),
+                        icon: {
+                            element: "hexagon-multiple",
+                            class: "menu-icon"
+                        }
+                    },
+                    {
+                        href: "/plugins",
+                        alias: [
+                            "/plugins*"
+                        ],
+                        title: this.$t("plugins.documentation"),
+                        icon: {
+                            element: "bookopen",
+                            class: "menu-icon"
+                        }
+                    },
+                    {
+                        href: "/settings",
+                        alias: [
+                            "/settings*"
+                        ],
+                        title: this.$t("settings"),
+                        icon: {
+                            element: "settings",
+                            class: "menu-icon"
+                        }
+                    }
+                ];
+            }
         }
-      ];
-    }
-  }
-};
+    };
 </script>
 
 <style lang="scss" scoped>

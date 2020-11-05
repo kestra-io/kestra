@@ -1,38 +1,48 @@
 package org.kestra.repository.elasticsearch;
 
 import io.micronaut.data.model.Pageable;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.bucket.filter.Filter;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
 import org.elasticsearch.search.aggregations.bucket.histogram.ParsedDateHistogram;
+import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.ParsedStats;
+import org.elasticsearch.search.aggregations.metrics.TopHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import java.util.stream.Collectors;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
@@ -40,6 +50,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     private static final String INDEX_NAME = "executions";
     public static final String START_DATE_FORMAT = "yyyy-MM-dd";
 
+    public static final String NESTED_AGG = "NESTED";
     public static final String DATE_AGG = "DATE";
     public static final String NAMESPACE_AGG = "NAMESPACE";
     public static final String FLOW_AGG = "FLOW";
@@ -51,9 +62,9 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
         ModelValidator modelValidator,
-        ThreadMainFactoryBuilder threadFactoryBuilder
+        ExecutorsUtils executorsUtils
     ) {
-        super(client, indicesConfigs, modelValidator, threadFactoryBuilder, Execution.class);
+        super(client, indicesConfigs, modelValidator, executorsUtils, Execution.class);
     }
 
     @Override
@@ -76,14 +87,16 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         }
 
         TermsAggregationBuilder agg = AggregationBuilders.terms(NAMESPACE_AGG)
+            .size(10000)
             .field("namespace")
             .subAggregation(
                 AggregationBuilders.terms(FLOW_AGG)
+                    .size(10000)
                     .field("flowId")
-                    .subAggregation(dailyExecutionStatisticsFinalAgg(startDate, endDate))
+                    .subAggregation(dailyExecutionStatisticsFinalAgg(startDate, endDate, false))
             );
 
-        SearchSourceBuilder sourceBuilder =  this.searchSource(
+        SearchSourceBuilder sourceBuilder = this.searchSource(
             this.dailyExecutionStatisticsBool(query, startDate, endDate),
             Optional.of(Collections.singletonList(
                 agg
@@ -147,7 +160,8 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
         @Nullable LocalDate startDate,
-        @Nullable LocalDate endDate
+        @Nullable LocalDate endDate,
+        boolean isTaskRun
     ) {
         if (startDate == null) {
             startDate = LocalDate.now().minusDays(30);
@@ -157,13 +171,17 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             endDate = LocalDate.now();
         }
 
-        SearchSourceBuilder sourceBuilder =  this.searchSource(
+        AggregationBuilder agg = dailyExecutionStatisticsFinalAgg(startDate, endDate, isTaskRun);
+
+        if (isTaskRun) {
+            agg = AggregationBuilders.nested(NESTED_AGG, "taskRunList")
+                .subAggregation(agg);
+        }
+
+        SearchSourceBuilder sourceBuilder = this.searchSource(
             this.dailyExecutionStatisticsBool(query, startDate, endDate),
             Optional.of(Collections.singletonList(
-                dailyExecutionStatisticsFinalAgg(
-                    startDate,
-                    endDate
-                )
+                agg
             )),
             null
         );
@@ -171,9 +189,9 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         try {
             SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            ParsedDateHistogram groupAgg = searchResponse
-                .getAggregations()
-                .get(DATE_AGG);
+            ParsedDateHistogram groupAgg = isTaskRun ?
+                ((ParsedNested) searchResponse.getAggregations().get(NESTED_AGG)).getAggregations().get(DATE_AGG) :
+                searchResponse.getAggregations().get(DATE_AGG);
 
             List<DailyExecutionStatistics> result = new ArrayList<>();
 
@@ -213,10 +231,11 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
     private static DateHistogramAggregationBuilder dailyExecutionStatisticsFinalAgg(
         LocalDate startDate,
-        LocalDate endDate
+        LocalDate endDate,
+        boolean isTaskRun
     ) {
         return AggregationBuilders.dateHistogram(DATE_AGG)
-            .field("state.startDate")
+            .field((isTaskRun ? "taskRunList." : "") + "state.startDate")
             .format(START_DATE_FORMAT)
             .minDocCount(0)
             .fixedInterval(DateHistogramInterval.DAY)
@@ -225,10 +244,11 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                 endDate.format(DateTimeFormatter.ofPattern(START_DATE_FORMAT))
             ))
             .subAggregation(AggregationBuilders.stats(DURATION_AGG).
-                field("state.duration")
+                field((isTaskRun ? "taskRunList." : "") + "state.duration")
             )
             .subAggregation(AggregationBuilders.terms(COUNT_AGG)
-                .field("state.current")
+                .size(10000)
+                .field((isTaskRun ? "taskRunList." : "") + "state.current")
             );
     }
 
@@ -275,6 +295,62 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     }
 
     @Override
+    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, @Nullable State.Type state) {
+        BoolQueryBuilder filterAggQuery = QueryBuilders
+            .boolQuery()
+            .filter(QueryBuilders.queryStringQuery(query));
+
+        if (state != null) {
+            filterAggQuery = filterAggQuery.must(QueryBuilders.termQuery("taskRunList.state.current", state.name()));
+        }
+
+        NestedAggregationBuilder nestedAgg = AggregationBuilders
+            .nested("NESTED", "taskRunList")
+            .subAggregation(
+                AggregationBuilders.filter("FILTER", filterAggQuery)
+                    .subAggregation(
+                        AggregationBuilders
+                            .topHits("TOPHITS")
+                            .size(pageable.getSize())
+                            .sorts(defaultSorts(pageable, true))
+                            .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()))
+                    )
+            );
+
+        BoolQueryBuilder mainQuery = this.defaultFilter()
+            .filter(
+                QueryBuilders.nestedQuery("taskRunList", QueryBuilders.queryStringQuery(query), ScoreMode.Total)
+            );
+        SearchSourceBuilder sourceBuilder = this.searchSource(mainQuery, Optional.of(List.of(nestedAgg)), null)
+            .fetchSource(false);
+
+        SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
+
+        try {
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
+            ParsedNested pn = searchResponse.getAggregations().get("NESTED");
+            Filter fa = pn.getAggregations().get("FILTER");
+            long docCount = fa.getDocCount();
+            TopHits th = fa.getAggregations().get("TOPHITS");
+
+            List<TaskRun> collect = Arrays.stream(th.getHits().getHits())
+                .map(documentFields -> {
+                    try {
+                        return mapper.readValue(documentFields.getSourceAsString(), TaskRun.class);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
+
+            return new ArrayListTotal<>(collect, docCount);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable) {
         BoolQueryBuilder bool = QueryBuilders.boolQuery()
             .must(QueryBuilders.termQuery("namespace", namespace))
@@ -290,5 +366,17 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         this.putRequest(INDEX_NAME, execution.getId(), execution);
 
         return execution;
+    }
+
+    @Override
+    public Integer maxTaskRunSetting() {
+        String max = this.getSettings(INDEX_NAME, true)
+            .getSetting(
+                this.indicesConfigs.get(INDEX_NAME).getIndex(),
+                IndexSettings.MAX_INNER_RESULT_WINDOW_SETTING.getKey()
+            );
+
+        return Integer
+            .valueOf(max == null ? IndexSettings.MAX_INNER_RESULT_WINDOW_SETTING.getDefault(Settings.EMPTY) : Integer.valueOf(max));
     }
 }

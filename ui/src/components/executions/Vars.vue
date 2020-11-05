@@ -15,13 +15,15 @@
 
         <template v-slot:thead-top v-if="title">
             <b-tr class="top">
-                <b-th colspan="2">{{ title }}</b-th>
+                <b-th colspan="2">
+                    {{ title }}
+                </b-th>
             </b-tr>
         </template>
 
         <template v-slot:empty>
             <div class="alert alert-info mb-0" role="alert">
-                {{ $t("no data current task")}}
+                {{ $t("no data current task") }}
             </div>
         </template>
 
@@ -46,11 +48,13 @@
             },
             title: {
                 type: String,
-                required: false
+                required: false,
+                default: undefined
             },
             execution: {
                 type: Object,
-                required: true
+                required: false,
+                default: undefined
             }
         },
         computed: {

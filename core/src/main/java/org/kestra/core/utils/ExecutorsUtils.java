@@ -25,6 +25,16 @@ public class ExecutorsUtils {
         );
     }
 
+    public ExecutorService fixedThreadPool(int thread, String name) {
+        return this.wrap(
+            name,
+            Executors.newFixedThreadPool(
+                thread,
+                threadFactoryBuilder.build(name + "_%d")
+            )
+        );
+    }
+
     private ExecutorService wrap(String name, ExecutorService executorService) {
         return ExecutorServiceMetrics.monitor(
             meterRegistry,

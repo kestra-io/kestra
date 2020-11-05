@@ -54,6 +54,8 @@ public class Flow implements DeletedInterface {
     @Min(value = 1)
     private Integer revision;
 
+    private String description;
+
     @Valid
     private List<Input> inputs;
 
@@ -177,6 +179,7 @@ public class Flow implements DeletedInterface {
             this.id,
             this.namespace,
             this.revision,
+            this.description,
             this.inputs,
             this.variables,
             this.tasks,

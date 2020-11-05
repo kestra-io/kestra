@@ -1,6 +1,6 @@
 <template>
     <b-navbar class="bottom-line" fixed="bottom" toggleable="lg">
-        <slot/>
+        <slot />
     </b-navbar>
 </template>
 <script>

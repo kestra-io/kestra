@@ -36,7 +36,9 @@
                         <template v-slot:cell(id)="row">
                             <router-link
                                 :to="{name: `${dataType}Edit`, params: {namespace: row.item.namespace, id: row.item.id}}"
-                            >{{row.item.id}}</router-link>
+                            >
+                                {{ row.item.id }}
+                            </router-link>
                         </template>
                     </b-table>
                 </template>
@@ -48,7 +50,7 @@
                     <router-link :to="{name: 'templateAdd'}">
                         <b-button variant="primary">
                             <plus />
-                            {{$t('create')}}
+                            {{ $t('create') }}
                         </b-button>
                     </router-link>
                 </li>
@@ -58,75 +60,75 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
-import permission from "../../models/permission";
-import action from "../../models/action";
-import NamespaceSelect from "../namespace/NamespaceSelect";
-import Plus from "vue-material-design-icons/Plus";
-import Eye from "vue-material-design-icons/Eye";
-import BottomLine from "../layout/BottomLine";
-import RouteContext from "../../mixins/routeContext";
-import DataTableActions from "../../mixins/dataTableActions";
-import DataTable from "../layout/DataTable";
-import SearchField from "../layout/SearchField";
+    import {mapState} from "vuex";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import NamespaceSelect from "../namespace/NamespaceSelect";
+    import Plus from "vue-material-design-icons/Plus";
+    import Eye from "vue-material-design-icons/Eye";
+    import BottomLine from "../layout/BottomLine";
+    import RouteContext from "../../mixins/routeContext";
+    import DataTableActions from "../../mixins/dataTableActions";
+    import DataTable from "../layout/DataTable";
+    import SearchField from "../layout/SearchField";
 
-export default {
-    mixins: [RouteContext, DataTableActions],
-    components: {
-        BottomLine,
-        Plus,
-        Eye,
-        DataTable,
-        SearchField,
-        NamespaceSelect,
-    },
-    data() {
-        return {
-            dataType: "template",
-            permission: permission,
-            action: action,
-        };
-    },
-    computed: {
-        ...mapState("template", ["templates", "total"]),
-        ...mapState("stat", ["dailyGroupByFlow", "daily"]),
-        ...mapState("auth", ["user"]),
-        fields() {
-            const title = (title) => {
-                return this.$t(title);
+    export default {
+        mixins: [RouteContext, DataTableActions],
+        components: {
+            BottomLine,
+            Plus,
+            Eye,
+            DataTable,
+            SearchField,
+            NamespaceSelect,
+        },
+        data() {
+            return {
+                dataType: "template",
+                permission: permission,
+                action: action,
             };
-            return [
-                {
-                    key: "id",
-                    label: title("template"),
-                    sortable: true,
-                },
-                {
-                    key: "namespace",
-                    label: title("namespace"),
-                    sortable: true
-                },
-                {
-                    key: "actions",
-                    label: "",
-                    class: "row-action",
-                },
-            ];
         },
-    },
-    methods: {
-        loadData(callback) {
-            this.$store
-                .dispatch("template/findTemplates", {
-                    q: this.query,
-                    size: parseInt(this.$route.query.size || 25),
-                    page: parseInt(this.$route.query.page || 1),
-                    sort: this.$route.query.sort,
-                })
-                .then(() => {
-                    callback();
-                });
+        computed: {
+            ...mapState("template", ["templates", "total"]),
+            ...mapState("stat", ["dailyGroupByFlow", "daily"]),
+            ...mapState("auth", ["user"]),
+            fields() {
+                const title = (title) => {
+                    return this.$t(title);
+                };
+                return [
+                    {
+                        key: "id",
+                        label: title("template"),
+                        sortable: true,
+                    },
+                    {
+                        key: "namespace",
+                        label: title("namespace"),
+                        sortable: true
+                    },
+                    {
+                        key: "actions",
+                        label: "",
+                        class: "row-action",
+                    },
+                ];
+            },
         },
-    },
-};
+        methods: {
+            loadData(callback) {
+                this.$store
+                    .dispatch("template/findTemplates", {
+                        q: this.query,
+                        size: parseInt(this.$route.query.size || 25),
+                        page: parseInt(this.$route.query.page || 1),
+                        sort: this.$route.query.sort,
+                    })
+                    .then(() => {
+                        callback();
+                    });
+            },
+        },
+    };
 </script>

@@ -40,7 +40,7 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a tasks for a list of value",
+    title = "Execute a tasks for a list of value sequentially",
     description = "For each `value`, `tasks` will be executed\n" +
         "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` and must be a string\n" +
         "The current value is available on vars `{{ taskrun.value }}`."
@@ -84,34 +84,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return this.resolveTasks(runContext, parentTaskRun);
-    }
-
-    private List<ResolvedTask> resolveTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        ObjectMapper mapper = new ObjectMapper();
-
-        String[] values;
-
-        String renderValue = runContext.render(this.value);
-        try {
-            values = mapper.readValue(renderValue, String[].class);
-        } catch (JsonProcessingException e) {
-            throw new IllegalVariableEvaluationException(e);
-        }
-
-        return Arrays
-            .stream(values)
-            .distinct()
-            .flatMap(value -> this.getTasks()
-                .stream()
-                .map(task -> ResolvedTask.builder()
-                    .task(task)
-                    .value(value)
-                    .parentId(parentTaskRun.getId())
-                    .build()
-                )
-            )
-            .collect(Collectors.toList());
+        return FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.value);
     }
 
     @Override
@@ -130,12 +103,11 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
         );
     }
 
-
     @Override
     public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveSequentialNexts(
             execution,
-            this.resolveTasks(runContext, parentTaskRun),
+            FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.value),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             parentTaskRun
         );

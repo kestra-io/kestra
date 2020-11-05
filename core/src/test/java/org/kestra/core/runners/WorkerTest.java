@@ -74,7 +74,7 @@ class WorkerTest {
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
         workerTaskResultQueue.receive(workerTaskResult::set);
 
-        WorkerTask workerTask = workerTask("sleep infinity");
+        WorkerTask workerTask = workerTask("sleep 999");
 
         workerTaskQueue.emit(workerTask);
         Thread.sleep(500);

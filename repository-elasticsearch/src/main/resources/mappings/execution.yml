@@ -22,7 +22,7 @@ properties:
       endDate:
         type: date
       duration:
-        type: long
+        type: double
       histories:
         properties:
           date:
@@ -30,6 +30,7 @@ properties:
           state:
             type: keyword
   taskRunList:
+    type: nested
     properties:
       id:
         type: text
@@ -87,7 +88,7 @@ properties:
               endDate:
                 type: date
               duration:
-                type: long
+                type: double
               histories:
                 properties:
                   date:
@@ -118,7 +119,7 @@ properties:
           endDate:
             type: date
           duration:
-            type: long
+            type: double
           histories:
             properties:
               date:

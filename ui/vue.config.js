@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require("path");
 
 module.exports = {
     publicPath: "/ui/",
@@ -6,18 +6,14 @@ module.exports = {
     configureWebpack: {
         resolve: {
             alias: {
-                Override: path.resolve(__dirname, 'src/override/')
+                Override: path.resolve(__dirname, "src/override/")
             }
         },
         module: {
             rules: [
                 {
                     test: /\.sass$/,
-                    use: [
-                        'vue-style-loader',
-                        'css-loader',
-                        'sass-loader'
-                    ]
+                    use: ["vue-style-loader", "css-loader", "sass-loader"]
                 }
             ]
         },

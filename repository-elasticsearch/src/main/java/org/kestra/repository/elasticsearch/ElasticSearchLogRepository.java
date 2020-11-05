@@ -11,8 +11,8 @@ import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.LogRepositoryInterface;
+import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.core.utils.IdUtils;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import org.slf4j.event.Level;
 
@@ -31,9 +31,9 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
         RestHighLevelClient client,
         List<IndicesConfig> indicesConfigs,
         ModelValidator modelValidator,
-        ThreadMainFactoryBuilder threadFactoryBuilder
+        ExecutorsUtils executorsUtils
     ) {
-        super(client, indicesConfigs, modelValidator, threadFactoryBuilder, LogEntry.class);
+        super(client, indicesConfigs, modelValidator, executorsUtils, LogEntry.class);
     }
 
     @Override

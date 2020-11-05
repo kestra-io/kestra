@@ -2,9 +2,9 @@
     <div v-if="execution">
         <b-row class="mb-3 text-right">
             <b-col>
-                <restart :execution="execution" @restart="restart"/>
+                <restart :execution="execution" @restart="restart" />
                 <kill :execution="execution" />
-                <status :status="execution.state.current"/>
+                <status :status="execution.state.current" />
             </b-col>
         </b-row>
         <b-table responsive="xl" striped hover bordered :items="items" class="mb-0">
@@ -12,7 +12,8 @@
                 <router-link
                     v-if="row.item.link"
                     :to="{name: 'executionEdit', params: row.item.link}"
-                >{{ row.item.value }}
+                >
+                    {{ row.item.value }}
                 </router-link>
                 <span v-else>
                     <span v-if="row.item.key === $t('revision')">
@@ -27,17 +28,17 @@
 
         <div v-if="execution.trigger" class="mt-4">
             <h5>{{ $t('trigger') }}</h5>
-            <vars :execution="execution" :data="execution.trigger"/>
+            <vars :execution="execution" :data="execution.trigger" />
         </div>
 
         <div v-if="execution.inputs" class="mt-4">
             <h5>{{ $t('inputs') }}</h5>
-            <vars :execution="execution" :data="inputs"/>
+            <vars :execution="execution" :data="inputs" />
         </div>
 
         <div v-if="execution.variables" class="mt-4">
             <h5>{{ $t('variables') }}</h5>
-            <vars :execution="execution" :data="execution.variables"/>
+            <vars :execution="execution" :data="execution.variables" />
         </div>
     </div>
 </template>
@@ -78,8 +79,8 @@
             items() {
                 const startTs = this.execution.state.histories[0].date;
                 const stopTs = this.execution.state.histories[
-                this.execution.state.histories.length - 1
-                    ].date;
+                    this.execution.state.histories.length - 1
+                ].date;
                 const delta = ts(stopTs) - ts(startTs);
                 const duration = this.$moment.duration(delta);
                 const humanDuration = humanizeDuration(duration);
@@ -94,8 +95,8 @@
                         key: this.$t("revision"),
                         value: this.execution.flowRevision
                     },
-                    {key: this.$t("created date"), value: this.$moment(startTs).format('LLLL')},
-                    {key: this.$t("updated date"), value: this.$moment(stopTs).format('LLLL')},
+                    {key: this.$t("created date"), value: this.$moment(startTs).format("LLLL")},
+                    {key: this.$t("updated date"), value: this.$moment(stopTs).format("LLLL")},
                     {key: this.$t("duration"), value: humanDuration},
                     {key: this.$t("steps"), value: stepCount}
                 ];

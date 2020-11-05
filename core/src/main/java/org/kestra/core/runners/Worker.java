@@ -21,14 +21,14 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.queues.WorkerTaskQueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.utils.ExecutorsUtils;
 import org.slf4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.inject.Named;
 
 public class Worker implements Runnable {
     private final ApplicationContext applicationContext;
@@ -40,7 +40,7 @@ public class Worker implements Runnable {
     private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
     private final AtomicReference<WorkerThread> workerThreadReference = new AtomicReference<>();
-    private final ThreadPoolExecutor executors;
+    private final ExecutorService executors;
 
     @SuppressWarnings("unchecked")
     public Worker(ApplicationContext applicationContext, int thread) {
@@ -56,8 +56,8 @@ public class Worker implements Runnable {
         );
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
 
-        ThreadMainFactoryBuilder threadFactoryBuilder = applicationContext.getBean(ThreadMainFactoryBuilder.class);
-        this.executors = (ThreadPoolExecutor) Executors.newFixedThreadPool(thread, threadFactoryBuilder.build("worker-%d"));
+        ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
+        this.executors = executorsUtils.fixedThreadPool(thread, "worker");
     }
 
     @Override

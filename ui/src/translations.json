@@ -38,8 +38,8 @@
         "running duration": "Running duration",
         "queued duration": "Queued duration",
         "choose file": "Choose a file or drop it here...",
-        "trigger": "Trigger",
-        "trigger execution": "Trigger an execution",
+        "launch execution": "Execute",
+        "warning flow with triggers": "This flow contain triggers, a manual execution can failed if this one depends on triggers variables",
         "triggered": "Execution trigger",
         "triggered done": "Execution <em>{name}</em> is successfully triggered",
         "topology": "Topology",
@@ -132,7 +132,17 @@
         "template": "Template",
         "template creation": "Template creation",
         "templates": "Templates",
-        "no result": "No result for current selection"
+        "no result": "No result for current selection",
+        "trigger": "Trigger",
+        "triggers": "Triggers",
+        "trigger details": "Trigger details",
+        "conditions": "conditions",
+        "taskruns":"Task Runs",
+        "Fold auto": "Editor: automatic fold of multilines",
+        "Fold content lines": "Fold content lines",
+        "Unfold content lines": "Unfold content lines",
+        "Max displayable": "Max displayable",
+        "Total": "Total"
     },
     "fr": {
         "id": "Identifiant",
@@ -173,8 +183,8 @@
         "running duration": "Durée de traitement",
         "queued duration": "Durée d'attente",
         "choose file": "Choisir un fichier ou le glisser le ici...",
-        "trigger execution": "Déclencher une execution",
-        "trigger": "Déclencher",
+        "launch execution": "Déclencher",
+        "warning flow with triggers": "Ce flow contient des déclencheurs, une execution manuelle peut ne pas fonctionner si celui-ci dépend de variables de déclencheurs !",
         "triggered": "Execution déclenchée",
         "triggered done": "L'execution <em>{name}</em> est déclenchée !",
         "topology": "Topology",
@@ -260,7 +270,7 @@
             "documentation": "Documentation",
             "name": "Plugin",
             "names": "Plugins",
-            "please": "Veuillez choisir une tache sur la droit afin de voir sa documentation"
+            "please": "Veuillez choisir une tache sur la droite afin de voir sa documentation"
         },
         "last 30 days executions": "Execution des 30 derniers jours",
         "revisions": "Révisions",
@@ -268,6 +278,16 @@
         "template": "Template",
         "template creation": "Création de template",
         "templates": "Templates",
-        "no result": "Aucun résultat pour la selection courante."
+        "no result": "Aucun résultat pour la selection courante.",
+        "trigger": "Déclencheur",
+        "triggers": "Déclencheurs",
+        "trigger details": "Détails du déclencheur",
+        "conditions": "conditions",
+        "taskruns":"Execution de tâches",
+        "Fold auto": "Editeur : Replier automatiquement le contenu multi-lignes",
+        "Fold content lines": "Replier le contenu des lignes",
+        "Unfold content lines": "Déplier le contenu des lignes",
+        "Max displayable": "Max affichables",
+        "Total": "Total"
     }
 }

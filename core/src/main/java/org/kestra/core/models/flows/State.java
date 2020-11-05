@@ -6,13 +6,14 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 @Value
 @Slf4j
@@ -78,6 +79,13 @@ public class State {
     @JsonIgnore
     public boolean isRunning() {
         return this.current.isRunning();
+    }
+
+    @JsonIgnore
+    public static Type[] runningTypes() {
+        return Arrays.stream(Type.values())
+            .filter(type -> type.isRunning())
+            .toArray(Type[]::new);
     }
 
     @JsonIgnore

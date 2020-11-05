@@ -5,17 +5,17 @@ export default {
         configurationPanelPosition: undefined,
     },
     actions: {
-        updateConfigurationPanelPosition({ commit, state }) {
+        updateConfigurationPanelPosition({commit, state}) {
             if (state.node) {
                 const position = {
                     right: state.node.getCTM().e + 95,
                     top: state.node.getCTM().f + 10
                 }
-                commit('setConfigurationPanelPosition', position)
+                commit("setConfigurationPanelPosition", position)
             }
         },
         setNode({commit}, node) {
-            commit('setNode', node)
+            commit("setNode", node)
             // dispatch('updateConfigurationPanelPosition')
         },
     },

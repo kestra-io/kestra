@@ -2,21 +2,23 @@ package org.kestra.runner.memory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.hash.Hashing;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
+import org.kestra.core.queues.AbstractQueue;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.utils.ExecutorsUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @Slf4j
-public class MemoryQueue<T> implements QueueInterface<T> {
+public class MemoryQueue<T> extends AbstractQueue implements QueueInterface<T> {
     private static final ObjectMapper mapper = JacksonMapper.ofJson();
     private static ExecutorService poolExecutor;
 
@@ -25,12 +27,20 @@ public class MemoryQueue<T> implements QueueInterface<T> {
 
     public MemoryQueue(Class<T> cls, ApplicationContext applicationContext) {
         if (poolExecutor == null) {
-            poolExecutor = Executors.newCachedThreadPool(
-                applicationContext.getBean(ThreadMainFactoryBuilder.class).build("memory-queue-%d")
-            );
+            ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
+            poolExecutor = executorsUtils.cachedThreadPool("memory-queue");
         }
 
         this.cls = cls;
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    private static int selectConsumer(String key, int size) {
+        if (key == null) {
+            return (new Random()).nextInt(size);
+        } else {
+            return Hashing.consistentHash(Hashing.crc32().hashString(key, StandardCharsets.UTF_8), size);
+        }
     }
 
     @Override
@@ -49,7 +59,7 @@ public class MemoryQueue<T> implements QueueInterface<T> {
                             log.debug("No consumer connected on queue '" + this.cls.getName() + "'");
                             return;
                         } else {
-                            int index = (new Random()).nextInt(consumers.size());
+                            int index = selectConsumer(key(message), consumers.size());
                             consumer = consumers.get(index);
                         }
                     }

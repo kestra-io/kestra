@@ -4,7 +4,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
-import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -15,6 +14,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
+import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.FlowTree;
@@ -83,11 +83,30 @@ public class ExecutionController {
         @QueryValue(value = "size", defaultValue = "10") int size,
         @Nullable @QueryValue(value = "state") State.Type state,
         @Nullable @QueryValue(value = "sort") List<String> sort
-    ) throws HttpStatusException {
+    ) {
         return PagedResults.of(
             executionRepository
                 .find(query, PageableUtils.from(page, size, sort), state)
         );
+    }
+
+    @Get(uri = "taskruns/search", produces = MediaType.TEXT_JSON)
+    public PagedResults<TaskRun> findTaskRun(
+        @QueryValue(value = "q") String query,
+        @QueryValue(value = "page", defaultValue = "1") int page,
+        @QueryValue(value = "size", defaultValue = "10") int size,
+        @Nullable @QueryValue(value = "state") State.Type state,
+        @Nullable @QueryValue(value = "sort") List<String> sort
+    ) {
+        return PagedResults.of(
+            executionRepository
+                .findTaskRun(query, PageableUtils.from(page, size, sort), state)
+        );
+    }
+
+    @Get(uri = "taskruns/maxTaskRunSetting")
+    public Integer maxTaskRunSetting() {
+        return executionRepository.maxTaskRunSetting();
     }
 
     /**
@@ -260,7 +279,7 @@ public class ExecutionController {
         return Flowable
             .<Event<Execution>>create(emitter -> {
                 // already finished execution
-                Execution execution  = Await.until(
+                Execution execution = Await.until(
                     () -> executionRepository.findById(executionId).orElse(null),
                     Duration.ofMillis(500)
                 );

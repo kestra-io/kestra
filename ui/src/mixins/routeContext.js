@@ -16,7 +16,7 @@ export default {
     methods: {
         onLoad() {
             if (!this.preventRouteInfo) {
-                this.$store.commit('layout/setTopNavbar', this.routeInfo)
+                this.$store.commit("layout/setTopNavbar", this.routeInfo)
 
                 let baseTitle;
 

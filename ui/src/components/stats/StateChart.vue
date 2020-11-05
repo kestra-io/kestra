@@ -1,19 +1,20 @@
 <template>
     <div :id="uuid" :class="'executions-charts' + (this.global ? '' : ' mini')" v-if="dataReady">
-        <current-chart :data="collections" :options="options"></current-chart>
+        <current-chart :data="collections" :options="options" />
         <b-tooltip
             custom-class="tooltip-stats"
             no-fade
             :target="uuid"
             :placement="(this.global ? 'bottom' : 'left')"
-            triggers="hover">
-            <span v-html="tooltip"></span>
+            triggers="hover"
+        >
+            <span v-html="tooltip" />
         </b-tooltip>
     </div>
 </template>
 
 <script>
-    import {Bar} from 'vue-chartjs'
+    import {Bar} from "vue-chartjs"
     import Utils from "../../utils/utils.js";
     import {tooltip, defaultConfig} from "../../utils/charts.js";
     import State from "../..//utils/state";

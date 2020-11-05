@@ -10,26 +10,26 @@
     </b-card>
 </template>
 <script>
-import YamlUtils from "../../utils/yamlUtils";
-import { mapState } from "vuex";
-export default {
-    computed: {
-        ...mapState("graph", ["node"]),
-        task() {
-            return this.node && this.node.task;
-        },
-        items() {
-            const items = [];
-            for (const property in this.task) {
-                const v = this.task[property];
-                const value =
-                    typeof v === "object"
-                        ? `<pre>${YamlUtils.stringify(v)}</pre>`
-                        : v;
-                items.push({ property, value });
+    import YamlUtils from "../../utils/yamlUtils";
+    import {mapState} from "vuex";
+    export default {
+        computed: {
+            ...mapState("graph", ["node"]),
+            task() {
+                return this.node && this.node.task;
+            },
+            items() {
+                const items = [];
+                for (const property in this.task) {
+                    const v = this.task[property];
+                    const value =
+                        typeof v === "object"
+                            ? `<pre>${YamlUtils.stringify(v)}</pre>`
+                            : v;
+                    items.push({property, value});
+                }
+                return items;
             }
-            return items;
         }
-    }
-};
+    };
 </script>

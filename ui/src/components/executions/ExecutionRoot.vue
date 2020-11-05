@@ -17,148 +17,148 @@
     </b-card>
 </template>
 <script>
-import Gantt from "./Gantt";
-import Overview from "./Overview";
-import Logs from "../logs/Logs";
-import Topology from "./Topology";
-import ExecutionOutput from "./ExecutionOutput";
-import Trigger from "vue-material-design-icons/Cogs";
-import BottomLine from "../layout/BottomLine";
-import FlowActions from "../flows/FlowActions";
-import RouteContext from "../../mixins/routeContext";
-import { mapState } from "vuex";
+    import Gantt from "./Gantt";
+    import Overview from "./Overview";
+    import Logs from "../logs/Logs";
+    import Topology from "./Topology";
+    import ExecutionOutput from "./ExecutionOutput";
+    import Trigger from "vue-material-design-icons/Cogs";
+    import BottomLine from "../layout/BottomLine";
+    import FlowActions from "../flows/FlowActions";
+    import RouteContext from "../../mixins/routeContext";
+    import {mapState} from "vuex";
 
-export default {
-    mixins: [RouteContext],
-    components: {
-        Overview,
-        BottomLine,
-        Trigger,
-        Gantt,
-        Logs,
-        Topology,
-        FlowActions,
-        ExecutionOutput
-    },
-    data() {
-        return {
-            sse: undefined
-        };
-    },
-    created() {
-        this.follow();
-    },
-    methods: {
-        follow() {
-            this.closeSSE();
-
-            this.$store
-                .dispatch("execution/followExecution", this.$route.params)
-                .then(sse => {
-                    this.sse = sse;
-                    sse.subscribe("", (data, event) => {
-                        this.$store.commit("execution/setExecution", data);
-                        if (this.$route.query.tab === 'topology') {
-                            this.$store.dispatch('execution/loadTree', data)
-                        }
-                        if (event && event.lastEventId === "end") {
-                            this.closeSSE();
-                        }
-                    });
-                });
+    export default {
+        mixins: [RouteContext],
+        components: {
+            Overview,
+            BottomLine,
+            Trigger,
+            Gantt,
+            Logs,
+            Topology,
+            FlowActions,
+            ExecutionOutput
         },
-        closeSSE() {
-            if (this.sse) {
-                this.sse.close();
-                this.sse = undefined;
-            }
-        },
-        setTab(tab) {
-            this.$store.commit("execution/setTask", undefined);
-            this.$router.push({
-                name: "executionEdit",
-                params: this.$route.params,
-                query: { tab }
-            });
-        }
-    },
-    computed: {
-        ...mapState("execution", ["execution"]),
-        routeInfo() {
-            const ns = this.$route.params.namespace;
+        data() {
             return {
-                title: this.$t("execution"),
-                breadcrumb: [
-                    {
-                        label: this.$t("flows"),
-                        link: {
-                            name: "flowsList",
-                            query: {
-                                namespace: ns
-                            }
-                        }
-                    },
-                    {
-                        label: `${ns}.${this.$route.params.flowId}`,
-                        link: {
-                            name: "flowEdit",
-                            params: {
-                                namespace: ns,
-                                id: this.$route.params.flowId
-                            }
-                        }
-                    },
-                    {
-                        label: this.$t("executions"),
-                        link: {
-                            name: 'flowEdit',
-                            params: {
-                                namespace: ns,
-                                id: this.$route.params.flowId
-                            },
-                            query: {
-                                tab: 'executions'
-                            }
-                        }
-                    },
-                    {
-                        label: this.$route.params.id,
-                        link: {
-                            name: "executionEdit"
-                        }
-                    }
-                ]
+                sse: undefined
             };
         },
-        tabs() {
-            const title = title => this.$t(title);
-            return [
-                {
-                    tab: "overview",
-                    title: title("overview")
-                },
-                {
-                    tab: "gantt",
-                    title: title("gantt")
-                },
-                {
-                    tab: "logs",
-                    title: title("logs")
-                },
-                {
-                    tab: "topology",
-                    title: title("topology")
-                },
-                {
-                    tab: "execution-output",
-                    title: title("output")
+        created() {
+            this.follow();
+        },
+        methods: {
+            follow() {
+                this.closeSSE();
+
+                this.$store
+                    .dispatch("execution/followExecution", this.$route.params)
+                    .then(sse => {
+                        this.sse = sse;
+                        sse.subscribe("", (data, event) => {
+                            this.$store.commit("execution/setExecution", data);
+                            if (this.$route.query.tab === "topology") {
+                                this.$store.dispatch("execution/loadTree", data)
+                            }
+                            if (event && event.lastEventId === "end") {
+                                this.closeSSE();
+                            }
+                        });
+                    });
+            },
+            closeSSE() {
+                if (this.sse) {
+                    this.sse.close();
+                    this.sse = undefined;
                 }
-            ];
+            },
+            setTab(tab) {
+                this.$store.commit("execution/setTask", undefined);
+                this.$router.push({
+                    name: "executionEdit",
+                    params: this.$route.params,
+                    query: {tab}
+                });
+            }
+        },
+        computed: {
+            ...mapState("execution", ["execution"]),
+            routeInfo() {
+                const ns = this.$route.params.namespace;
+                return {
+                    title: this.$t("execution"),
+                    breadcrumb: [
+                        {
+                            label: this.$t("flows"),
+                            link: {
+                                name: "flowsList",
+                                query: {
+                                    namespace: ns
+                                }
+                            }
+                        },
+                        {
+                            label: `${ns}.${this.$route.params.flowId}`,
+                            link: {
+                                name: "flowEdit",
+                                params: {
+                                    namespace: ns,
+                                    id: this.$route.params.flowId
+                                }
+                            }
+                        },
+                        {
+                            label: this.$t("executions"),
+                            link: {
+                                name: "flowEdit",
+                                params: {
+                                    namespace: ns,
+                                    id: this.$route.params.flowId
+                                },
+                                query: {
+                                    tab: "executions"
+                                }
+                            }
+                        },
+                        {
+                            label: this.$route.params.id,
+                            link: {
+                                name: "executionEdit"
+                            }
+                        }
+                    ]
+                };
+            },
+            tabs() {
+                const title = title => this.$t(title);
+                return [
+                    {
+                        tab: "overview",
+                        title: title("overview")
+                    },
+                    {
+                        tab: "gantt",
+                        title: title("gantt")
+                    },
+                    {
+                        tab: "logs",
+                        title: title("logs")
+                    },
+                    {
+                        tab: "topology",
+                        title: title("topology")
+                    },
+                    {
+                        tab: "execution-output",
+                        title: title("output")
+                    }
+                ];
+            }
+        },
+        beforeDestroy() {
+            this.closeSSE();
+            this.$store.commit("execution/setExecution", undefined);
         }
-    },
-    beforeDestroy() {
-        this.closeSSE();
-        this.$store.commit("execution/setExecution", undefined);
-    }
-};
+    };
 </script>

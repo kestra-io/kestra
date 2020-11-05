@@ -5,18 +5,18 @@ export function tooltip(tooltipModel) {
     const bodyLines = (tooltipModel.body || []).map(r => r.lines);
 
     if (tooltipModel.body) {
-        let innerHtml = '';
+        let innerHtml = "";
 
         titleLines.forEach(function (title) {
-            innerHtml += '<h6>' + title + '</h6>';
+            innerHtml += "<h6>" + title + "</h6>";
         });
 
         bodyLines.forEach(function (body, i) {
             let colors = tooltipModel.labelColors[i];
-            let style = 'background:' + colors.backgroundColor;
-            style += '; border-color:' + colors.borderColor;
-            let span = '<span class="square" style="' + style + '"></span>';
-            innerHtml += span + body + '<br />';
+            let style = "background:" + colors.backgroundColor;
+            style += "; border-color:" + colors.borderColor;
+            let span = "<span class=\"square\" style=\"" + style + "\"></span>";
+            innerHtml += span + body + "<br />";
         });
 
         return innerHtml;
@@ -36,7 +36,7 @@ export function defaultConfig(overide) {
             }
         },
         tooltips: {
-            mode: 'index',
+            mode: "index",
             intersect: false,
             enabled: false,
         },

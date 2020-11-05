@@ -79,8 +79,16 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         title = "Wait the end of the execution.",
         description = "By default, we don't wait till the end of the flow, if you set to true, we wait the end of the trigger flow before continue this one."
     )
-    @PluginProperty(dynamic = true)
-    private Boolean wait = false;
+    @PluginProperty(dynamic = false)
+    private final Boolean wait = false;
+
+    @Builder.Default
+    @Schema(
+        title = "Failed the current execution if the waited execution is failed or killed.",
+        description = "`wait` need to be true to make it work"
+    )
+    @PluginProperty(dynamic = false)
+    private final Boolean transmitFailed = false;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -133,6 +141,10 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             );
 
             outputBuilder.state(ended.getState().getCurrent());
+
+            if (transmitFailed && (ended.getState().isFailed() || ended.getState().getCurrent() == State.Type.KILLED)) {
+                throw new Exception("Execution '" + ended.getId() + "' failed with status '" + ended.getState().getCurrent() + "'");
+            }
         }
 
         return outputBuilder
@@ -145,7 +157,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         @Schema(
             title = "The id of the execution trigger."
         )
-        private String executionId;
+        private final String executionId;
 
         @Schema(
             title = "The state of the execution trigger.",

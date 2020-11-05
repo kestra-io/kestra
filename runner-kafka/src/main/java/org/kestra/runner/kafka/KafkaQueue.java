@@ -3,30 +3,18 @@ package org.kestra.runner.kafka;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.config.TopicConfig;
-import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.ExecutionKilled;
-import org.kestra.core.models.executions.LogEntry;
-import org.kestra.core.models.flows.Flow;
-import org.kestra.core.models.templates.Template;
+import org.kestra.core.queues.AbstractQueue;
 import org.kestra.core.queues.QueueException;
-import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
-import org.kestra.core.runners.WorkerInstance;
-import org.kestra.core.runners.WorkerTask;
-import org.kestra.core.runners.WorkerTaskResult;
-import org.kestra.core.runners.WorkerTaskRunning;
-import org.kestra.core.utils.ThreadMainFactoryBuilder;
+import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -34,18 +22,18 @@ import org.kestra.runner.kafka.services.KafkaConsumerService;
 import org.kestra.runner.kafka.services.KafkaProducerService;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
 
 @Slf4j
-public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
+public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, AutoCloseable {
     private final Class<T> cls;
     private final AdminClient adminClient;
     private final KafkaConsumerService kafkaConsumerService;
@@ -56,9 +44,8 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
         if (poolExecutor == null) {
-            poolExecutor = Executors.newCachedThreadPool(
-                applicationContext.getBean(ThreadMainFactoryBuilder.class).build("kakfa-queue-%d")
-            );
+            ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
+            poolExecutor = executorsUtils.cachedThreadPool("kakfa-queue");
         }
 
         KafkaAdminService kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
@@ -70,30 +57,6 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         this.topicsConfig = topicsConfig(applicationContext, this.cls);
 
         kafkaAdminService.createIfNotExist(this.cls);
-    }
-
-    static String key(Object object) {
-        if (object.getClass() == Execution.class) {
-            return ((Execution) object).getId();
-        } else if (object.getClass() == WorkerTask.class) {
-            return ((WorkerTask) object).getTaskRun().getId();
-        } else if (object.getClass() == WorkerTaskRunning.class) {
-            return ((WorkerTaskRunning) object).getTaskRun().getId();
-        } else if (object.getClass() == WorkerInstance.class) {
-            return ((WorkerInstance) object).getWorkerUuid().toString();
-        } else if (object.getClass() == WorkerTaskResult.class) {
-            return ((WorkerTaskResult) object).getTaskRun().getId();
-        } else if (object.getClass() == LogEntry.class) {
-            return null;
-        } else if (object.getClass() == Flow.class) {
-            return ((Flow) object).uid();
-        } else if (object.getClass() == Template.class) {
-            return ((Template) object).uid();
-        } else if (object.getClass() == ExecutionKilled.class) {
-            return ((ExecutionKilled) object).getExecutionId();
-        } else {
-            throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
-        }
     }
 
     static <T> void log(TopicsConfig topicsConfig, T object, String message) {

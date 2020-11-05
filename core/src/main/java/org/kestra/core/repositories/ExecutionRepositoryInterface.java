@@ -2,6 +2,7 @@ package org.kestra.core.repositories;
 
 import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.models.flows.State;
 
@@ -17,7 +18,11 @@ public interface ExecutionRepositoryInterface {
 
     ArrayListTotal<Execution> find(String query, Pageable pageable, State.Type state);
 
-    List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate);
+    ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, State.Type state);
+
+    Integer maxTaskRunSetting();
+
+    List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate, boolean isTaskRun);
 
     Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query, LocalDate startDate, LocalDate endDate);
 

@@ -1,6 +1,6 @@
-import Vue from 'vue';
-import VueAxios from 'vue-axios';
-import axios from 'axios';
+import Vue from "vue";
+import VueAxios from "vue-axios";
+import axios from "axios";
 
 // eslint-disable-next-line no-undef
 let root = (process.env.VUE_APP_API_URL || "") + KESTRA_BASE_PATH;
@@ -12,7 +12,7 @@ export default (callback, store, nprogress) => {
     const instance = axios.create({
         timeout: 15000,
         headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json"
         },
         onUploadProgress: function (progressEvent) {
             if (progressEvent && progressEvent.loaded && progressEvent.total) {
@@ -27,7 +27,7 @@ export default (callback, store, nprogress) => {
             return response
         }, errorResponse => {
             if (errorResponse.response && errorResponse.response.data) {
-                store.dispatch('core/showErrorMessage', errorResponse.response.data)
+                store.dispatch("core/showErrorMessage", errorResponse.response.data)
             }
 
             return Promise.reject(errorResponse);

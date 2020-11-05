@@ -2,7 +2,7 @@ bintrayUpload.enabled = false
 
 dependencies {
     annotationProcessor "io.micronaut.configuration:micronaut-openapi"
-    compile "io.swagger.core.v3:swagger-annotations"
+    implementation "io.swagger.core.v3:swagger-annotations"
 
     implementation project(":core")
 

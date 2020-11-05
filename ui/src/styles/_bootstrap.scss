@@ -52,6 +52,14 @@ ul.nav-tabs {
         color: $body-color;
     }
 
+    th.shrink {
+        width: 16px;
+    }
+
+    td.shrink {
+        white-space: nowrap;
+    }
+
     th.row-graph {
         width: 250px;
         min-width: 250px;

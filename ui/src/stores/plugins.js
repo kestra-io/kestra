@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import Vue from "vue"
 
 export default {
     namespaced: true,
@@ -7,14 +7,14 @@ export default {
         plugins: undefined,
     },
     actions: {
-        list({ commit }) {
-            return Vue.axios.get(`/api/v1/plugins`).then(response => {
-                commit('setPlugins', response.data)
+        list({commit}) {
+            return Vue.axios.get("/api/v1/plugins").then(response => {
+                commit("setPlugins", response.data)
             })
         },
-        load({ commit }, options) {
+        load({commit}, options) {
             return Vue.axios.get(`/api/v1/plugins/${options.cls}`).then(response => {
-                commit('setPlugin', response.data)
+                commit("setPlugin", response.data)
             })
         },
 

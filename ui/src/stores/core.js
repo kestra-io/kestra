@@ -5,7 +5,7 @@ export default {
     },
     actions: {
         showErrorMessage({commit}, message) {
-            commit('setErrorMessage', message)
+            commit("setErrorMessage", message)
         }
     },
     mutations: {

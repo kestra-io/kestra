@@ -1,0 +1,25 @@
+root = true
+
+[*]
+charset=utf-8
+end_of_line=lf
+insert_final_newline=false
+trim_trailing_whitespace=true
+indent_style=space
+indent_size=4
+continuation_indent_size=4
+
+[*.yml]
+indent_size=2
+
+[*.md]
+indent_size=2
+
+[*.yaml]
+indent_size=2
+
+[*.json]
+indent_size=2
+
+[*.css]
+indent_size=2

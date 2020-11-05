@@ -20,139 +20,139 @@
     </div>
 </template>
 <script>
-import Overview from "./Overview";
-import Schedule from "./Schedule";
-import DataSource from "./DataSource";
-import Revisions from "./Revisions";
-import ExecutionConfiguration from "./ExecutionConfiguration";
-import BottomLine from "../layout/BottomLine";
-import FlowActions from "./FlowActions";
-import Logs from "../logs/LogsWrapper";
-import Executions from "../executions/Executions";
-import RouteContext from "../../mixins/routeContext";
-import { mapState } from "vuex";
-import permission from "../../models/permission";
-import action from "../../models/action";
+    import Overview from "./Overview";
+    import Schedule from "./Schedule";
+    import DataSource from "./DataSource";
+    import Revisions from "./Revisions";
+    import ExecutionConfiguration from "./ExecutionConfiguration";
+    import BottomLine from "../layout/BottomLine";
+    import FlowActions from "./FlowActions";
+    import Logs from "../logs/LogsWrapper";
+    import Executions from "../executions/Executions";
+    import RouteContext from "../../mixins/routeContext";
+    import {mapState} from "vuex";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
-export default {
-    mixins: [RouteContext],
-    components: {
-        Overview,
-        Schedule,
-        BottomLine,
-        DataSource,
-        FlowActions,
-        Executions,
-        ExecutionConfiguration,
-        Revisions,
-        Logs
-    },
-    created() {
-        this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
-            if (this.flow) {
-                this.$store.dispatch("flow/loadTree", this.flow);
-            }
-        });
-    },
-    methods: {
-        setTab(tab) {
-            this.$router.push({
-                name: "flowEdit",
-                params: this.$route.params,
-                query: { tab }
-            });
-        }
-    },
-    computed: {
-        ...mapState("flow", ["flow"]),
-        ...mapState("auth", ["user"]),
-        routeInfo() {
-            return {
-                title: this.$route.params.id,
-                breadcrumb: [
-                    {
-                        label: this.$t("flows"),
-                        link: {
-                            name: "flowsList"
-                        }
-                    },
-                    {
-                        label: this.$route.params.namespace,
-                        link: {
-                            name: "flowsList",
-                            query: {
-                                namespace: this.$route.params.namespace
-                            }
-                        }
-                    },
-                    {
-                        label: this.$route.params.id,
-                        link: {
-                            name: "flowEdit",
-                            params: {
-                                namespace: this.$route.params.namespace,
-                                id: this.$route.params.id
-                            }
-                        }
-                    }
-                ]
-            };
+    export default {
+        mixins: [RouteContext],
+        components: {
+            Overview,
+            Schedule,
+            BottomLine,
+            DataSource,
+            FlowActions,
+            Executions,
+            ExecutionConfiguration,
+            Revisions,
+            Logs
         },
-        tabs() {
-            const title = title => this.$t(title);
-            const tabs = [
-                {
-                    tab: "overview",
-                    title: title("overview")
-                },
-            ];
-
-            if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
-                tabs.push({
-                    tab: "executions",
-                    title: title("executions")
+        created() {
+            this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
+                if (this.flow) {
+                    this.$store.dispatch("flow/loadTree", this.flow);
+                }
+            });
+        },
+        methods: {
+            setTab(tab) {
+                this.$router.push({
+                    name: "flowEdit",
+                    params: this.$route.params,
+                    query: {tab}
                 });
             }
+        },
+        computed: {
+            ...mapState("flow", ["flow"]),
+            ...mapState("auth", ["user"]),
+            routeInfo() {
+                return {
+                    title: this.$route.params.id,
+                    breadcrumb: [
+                        {
+                            label: this.$t("flows"),
+                            link: {
+                                name: "flowsList"
+                            }
+                        },
+                        {
+                            label: this.$route.params.namespace,
+                            link: {
+                                name: "flowsList",
+                                query: {
+                                    namespace: this.$route.params.namespace
+                                }
+                            }
+                        },
+                        {
+                            label: this.$route.params.id,
+                            link: {
+                                name: "flowEdit",
+                                params: {
+                                    namespace: this.$route.params.namespace,
+                                    id: this.$route.params.id
+                                }
+                            }
+                        }
+                    ]
+                };
+            },
+            tabs() {
+                const title = title => this.$t(title);
+                const tabs = [
+                    {
+                        tab: "overview",
+                        title: title("overview")
+                    },
+                ];
 
-            if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
-                tabs.push({
-                    tab: "execution-configuration",
-                    title: title("trigger")
-                });
+                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
+                    tabs.push({
+                        tab: "executions",
+                        title: title("executions")
+                    });
+                }
+
+                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
+                    tabs.push({
+                        tab: "execution-configuration",
+                        title: title("launch execution")
+                    });
+                }
+
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace)) {
+                    tabs.push({
+                        tab: "data-source",
+                        title: title("source"),
+                        class: "p-0"
+                    });
+
+                    tabs.push({
+                        tab: "schedule",
+                        title: title("schedule"),
+                    });
+                }
+
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                    tabs.push({
+                        tab: "revisions",
+                        title: title("revisions")
+                    });
+                }
+
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                    tabs.push({
+                        tab: "logs",
+                        title: title("logs")
+                    });
+                }
+
+                return tabs;
             }
-
-            if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace)) {
-                tabs.push({
-                    tab: "data-source",
-                    title: title("source"),
-                    class: "p-0"
-                });
-
-                tabs.push({
-                    tab: "schedule",
-                    title: title("schedule"),
-                });
-            }
-
-            if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
-                tabs.push({
-                    tab: "revisions",
-                    title: title("revisions")
-                });
-            }
-
-            if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
-                tabs.push({
-                    tab: "logs",
-                    title: title("logs")
-                });
-            }
-
-            return tabs;
+        },
+        destroyed () {
+            this.$store.commit("flow/setFlow", undefined)
         }
-    },
-    destroyed () {
-        this.$store.commit('flow/setFlow', undefined)
-    }
-};
+    };
 </script>

@@ -58,12 +58,6 @@ public class StandAloneCommand extends AbstractCommand {
         }
 
         StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
-
-        Optional<AbstractExecutor> executor = applicationContext.findBean(AbstractExecutor.class);
-        if (executor.isPresent() && executor.get() instanceof KafkaExecutor) {
-            standAloneRunner.setExecutorThreads(1);
-        }
-
         standAloneRunner.run();
 
         Await.until(() -> !standAloneRunner.isRunning());

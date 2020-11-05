@@ -286,8 +286,13 @@ task runStandalone(type: JavaExec) {
 /**********************************************************************************************************************\
  * Publish
  **********************************************************************************************************************/
-
 subprojects {
+    def isBuildSnapshot = version.toString().endsWith("-SNAPSHOT")
+
+    if (isBuildSnapshot) {
+        project.version = project.version.replaceAll(/-SNAPSHOT$/, "")
+    }
+
     javadoc {
         options {
             locale = 'en_US'
@@ -303,13 +308,6 @@ subprojects {
     task javadocJar(type: Jar) {
         archiveClassifier.set('javadoc')
         from javadoc
-    }
-
-    ext {
-        isBuildSnapshot = version.toString().endsWith("-SNAPSHOT")
-        if (isBuildSnapshot) {
-            project.version = project.version.replaceAll(/-SNAPSHOT$/, "")
-        }
     }
 
     apply plugin: "maven-publish"
@@ -347,11 +345,11 @@ subprojects {
         publications = ['BintrayMavenPublication']
         publish = true
         dryRun = false
-        override = isBuildSnapshot ? true : false
+        override = isBuildSnapshot
         pkg {
             userOrg = 'kestra'
             name = project.name.contains('cli') ? "kestra" : project.name
-            repo = project.ext.isBuildSnapshot ? 'maven-snapshot' : 'maven'
+            repo = isBuildSnapshot ? 'maven-snapshot' : 'maven'
             websiteUrl = 'https://kestra.io'
             issueTrackerUrl = 'https://github.com/kestra-io/kestra/issues'
             vcsUrl = 'https://github.com/kestra-io/kestra'
@@ -381,6 +379,6 @@ release {
     pushReleaseVersionBranch = 'master'
 
     git {
-        requireBranch = 'develop'
+        requireBranch = 'release'
     }
 }

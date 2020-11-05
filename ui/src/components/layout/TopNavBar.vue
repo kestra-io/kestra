@@ -1,11 +1,15 @@
 <template>
     <b-navbar v-if="topNavbar" :class="menuCollapsed" class="top-line" type="dark" variant="dark">
         <b-navbar-nav>
-            <b-nav-text >
-                <h1>{{title}}</h1>
+            <b-nav-text>
+                <h1>{{ title }}</h1>
 
                 <b-breadcrumb>
-                    <b-breadcrumb-item><router-link :to="{ name: 'home'}"><home /> {{$t('home')}}</router-link></b-breadcrumb-item>
+                    <b-breadcrumb-item>
+                        <router-link :to="{name: 'home'}">
+                            <home /> {{ $t('home') }}
+                        </router-link>
+                    </b-breadcrumb-item>
                     <b-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :text="item.label" :key="x" />
                 </b-breadcrumb>
             </b-nav-text>
@@ -14,31 +18,31 @@
     </b-navbar>
 </template>
 <script>
-import { mapState } from "vuex";
-import Home from "vue-material-design-icons/Home";
-import Auth from "Override/components/auth/Auth";
+    import {mapState} from "vuex";
+    import Home from "vue-material-design-icons/Home";
+    import Auth from "Override/components/auth/Auth";
 
-export default {
-    components: {
-        Home,
-        Auth,
-    },
-    props: {
-        menuCollapsed : {
-            type: String,
-            required: true
-        }
-    },
-    computed: {
-        ...mapState("layout", ["topNavbar"]),
-        title() {
-            return this.topNavbar.title;
+    export default {
+        components: {
+            Home,
+            Auth,
         },
-        breadcrumb() {
-            return this.topNavbar.breadcrumb.join(" > ");
+        props: {
+            menuCollapsed : {
+                type: String,
+                required: true
+            }
+        },
+        computed: {
+            ...mapState("layout", ["topNavbar"]),
+            title() {
+                return this.topNavbar.title;
+            },
+            breadcrumb() {
+                return this.topNavbar.breadcrumb.join(" > ");
+            }
         }
-    }
-};
+    };
 </script>
 <style lang="scss" scoped>
 @import "../../styles/variable";

@@ -1,23 +1,9 @@
 import qb from "../utils/queryBuilder";
 export default {
     created() {
-        if (localStorage.getItem(this.storageName) && this.$route.name === 'executionsList') {
-            if (localStorage.getItem(this.storageName) !== JSON.stringify(this.$route.query)) {
-                this.$router.push({
-                    query: JSON.parse(localStorage.getItem(this.storageName))
-                });
-            }
-        }
-        this.query = qb.executionQueryBuilder(this.$route, this.fields);
+        this.loadFilters()
+        this.query = qb.build(this.$route, this.fields);
         this.loadData(this.onDataLoaded);
-    },
-    watch: {
-        $route() {
-            localStorage.setItem(
-                this.storageName,
-                JSON.stringify(this.$route.query)
-            );
-        }
     },
     data() {
         return {
@@ -29,7 +15,7 @@ export default {
     computed: {
         routeInfo() {
             return {
-                title: this.$t(this.dataType + 's')
+                title: this.$t(this.dataType + "s")
             };
         },
         storageName() {
@@ -38,23 +24,28 @@ export default {
         searchableFields() {
             return this.fields.filter(f => f.sortable);
         },
+        isBasePage() {
+            return ["executionsList", "flowsList"].includes(this.$route.name)
+        }
     },
     methods: {
         onSearch() {
-            this.query = qb.executionQueryBuilder(this.$route, this.fields);
+            this.query = qb.build(this.$route, this.fields);
             this.loadData(this.onDataLoaded);
+            this.saveFilters()
         },
         onSort(sortItem) {
             const sort = [
                 `${sortItem.sortBy}:${sortItem.sortDesc ? "desc" : "asc"}`
             ];
             this.$router.push({
-                query: { ...this.$route.query, sort }
+                query: {...this.$route.query, sort}
             });
             this.loadData(this.onDataLoaded);
+            this.saveFilters()
         },
         onRowDoubleClick(item) {
-            this.$router.push({ name: this.dataType + "Edit", params: item });
+            this.$router.push({name: this.dataType + "Edit", params: item});
         },
         onPageChanged(item) {
             this.$router.push({
@@ -65,14 +56,40 @@ export default {
                 }
             });
             this.loadData(this.onDataLoaded);
+            this.saveFilters()
         },
         onNamespaceSelect() {
-            this.query = qb.executionQueryBuilder(this.$route, this.fields);
+            this.query = qb.build(this.$route, this.fields);
             this.$router.push({query: {...this.$route.query, page: 1}})
             this.loadData(this.onDataLoaded);
+            this.saveFilters()
         },
         onDataLoaded () {
             this.ready = true
+        },
+        saveFilters() {
+            if (this.isBasePage) {
+                localStorage.setItem(
+                    this.storageName,
+                    JSON.stringify(this.$route.query)
+                );
+            }
+        },
+        loadFilters () {
+            const query = {...this.$route.query}
+            let change = false
+            if (this.isBasePage) {
+                const userPreferences = JSON.parse(localStorage.getItem(this.storageName) || "{}")
+                for (const key in userPreferences) {
+                    if (!query[key] && userPreferences[key]) {
+                        query[key] = userPreferences[key]
+                        change = true
+                    }
+                }
+            }
+            if (change) {
+                this.$router.push({query: query});
+            }
         }
     }
 }

@@ -1,15 +1,15 @@
 <template>
     <div class="node-wrapper">
-        <div class="status-color" v-if="n.taskRun" :class="contentCls"></div>
+        <div class="status-color" v-if="n.taskRun" :class="contentCls" />
         <div class="task-content">
             <div class="card-header">
                 <div class="icon-wrapper">
-                    <!-- <img src=""/> -->
+                <!-- <img src=""/> -->
                 </div>
                 <div class="task-title">
-                    <span>{{task.id | ellipsis(18)}}</span>
+                    <span>{{ task.id | ellipsis(18) }}</span>
                 </div>
-                <!-- <menu-open class="node-action" @click="onSettings" /> -->
+            <!-- <menu-open class="node-action" @click="onSettings" /> -->
             </div>
             <div v-if="task.state" class="status-wrapper">
                 <status :status="state" />
@@ -21,6 +21,14 @@
                 <div v-else :title="$t('stream')" class="pull task-item">
                     <current-ac title />
                 </div>
+                <b-button
+                    v-if="task.description"
+                    :title="`${$t('description')}`"
+                    class="node-action push"
+                >
+                    <markdown-tooltip :id="task.id" :description="task.description" />
+                </b-button>
+
                 <b-button
                     v-if="childrenCount"
                     :title="`${$t('display direct sub tasks count')} : ${childrenCount}`"
@@ -73,103 +81,105 @@
             </div>
         </div>
 
-        <b-modal :hide-footer="true" :id="`modal-${hash}`" :title="`Task ${task.id}`">
-            <pre>{{taskYaml}}</pre>
+        <b-modal size="xl" :hide-footer="true" :id="`modal-${hash}`" :title="`Task ${task.id}`">
+            <pre>{{ taskYaml }}</pre>
         </b-modal>
     </div>
 </template>
 <script>
-import Console from "vue-material-design-icons/Console";
-import Graph from "vue-material-design-icons/Graph";
-import CodeTags from "vue-material-design-icons/CodeTags";
-import FormatListChecks from "vue-material-design-icons/FormatListChecks";
-import LocationExit from "vue-material-design-icons/LocationExit";
-import CurrentAc from "vue-material-design-icons/CurrentAc";
-import { mapState } from "vuex";
-import Status from "../Status";
-import md5 from "md5";
-import YamlUtils from "../../utils/yamlUtils";
+    import Console from "vue-material-design-icons/Console";
+    import Graph from "vue-material-design-icons/Graph";
+    import CodeTags from "vue-material-design-icons/CodeTags";
+    import FormatListChecks from "vue-material-design-icons/FormatListChecks";
+    import LocationExit from "vue-material-design-icons/LocationExit";
+    import CurrentAc from "vue-material-design-icons/CurrentAc";
+    import {mapState} from "vuex";
+    import Status from "../Status";
+    import md5 from "md5";
+    import YamlUtils from "../../utils/yamlUtils";
+    import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
 
-export default {
-    components: {
-        Status,
-        Console,
-        Graph,
-        CodeTags,
-        FormatListChecks,
-        LocationExit,
-        CurrentAc
-    },
-    props: {
-        n: {
-            type: Object,
-            default: undefined
+    export default {
+        components: {
+            MarkdownTooltip,
+            Status,
+            Console,
+            Graph,
+            CodeTags,
+            FormatListChecks,
+            LocationExit,
+            CurrentAc
         },
-        isFlow: {
-            type: Boolean,
-            default: false
-        }
-    },
-    methods: {
-        taskRunOutputToken(taskRun) {
-            return md5(taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ''));
-        },
-        onFilterGroup() {
-            this.$emit("onFilterGroup", this.task.id);
-        },
-        onSettings() {
-            if (this.node) {
-                this.$store.dispatch("graph/setNode", undefined);
-            } else {
-                this.$store.dispatch("graph/setNode", this.n);
-                this.$emit("onSettings");
+        props: {
+            n: {
+                type: Object,
+                default: undefined
+            },
+            isFlow: {
+                type: Boolean,
+                default: false
             }
-        }
-    },
-    computed: {
-        ...mapState("graph", ["node"]),
-        hasLogs() {
-            // @TODO
-            return true;
+        },
+        methods: {
+            taskRunOutputToken(taskRun) {
+                return md5(taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ""));
+            },
+            onFilterGroup() {
+                this.$emit("onFilterGroup", this.task.id);
+            },
+            onSettings() {
+                if (this.node) {
+                    this.$store.dispatch("graph/setNode", undefined);
+                } else {
+                    this.$store.dispatch("graph/setNode", this.n);
+                    this.$emit("onSettings");
+                }
+            }
+        },
+        computed: {
+            ...mapState("graph", ["node"]),
+            hasLogs() {
+                // @TODO
+                return true;
             // return (
             //     this.attempts.filter(attempt => attempt.logs.length).length > 0
             // );
-        },
-        hasOutputs() {
-            return this.n.taskRun && this.n.taskRun.outputs;
-        },
-        attempts() {
-            return this.n.taskRun && this.n.taskRun.attempts
-                ? this.n.taskRun.attempts
-                : [];
-        },
-        hash() {
-            return this.task.id.hashCode();
-        },
-        childrenCount() {
-            return this.task.tasks ? this.task.tasks.length : 0;
-        },
-        taskYaml() {
-            return YamlUtils.stringify(this.n);
-        },
-        state() {
-            return this.n.taskRun ? this.n.taskRun.state.current : "SUCCESS";
-        },
-        contentCls() {
-            return {
-                "is-success": !["RUNNING", "FAILED"].includes(this.state),
-                "is-running": this.state === "RUNNING",
-                "is-failed": this.state === "FAILED"
-            };
-        },
-        task() {
-            return this.n.task;
-        },
-        value () {
-            return this.n.taskRun && this.n.taskRun.value
+            },
+            hasOutputs() {
+                return this.n.taskRun && this.n.taskRun.outputs;
+            },
+            attempts() {
+                return this.n.taskRun && this.n.taskRun.attempts
+                    ? this.n.taskRun.attempts
+                    : [];
+            },
+            hash() {
+                return this.task.id.hashCode();
+            },
+            childrenCount() {
+                return this.task.tasks ? this.task.tasks.length : 0;
+            },
+            taskYaml() {
+                return YamlUtils.stringify(this.n);
+            },
+            state() {
+                return this.n.taskRun ? this.n.taskRun.state.current : "SUCCESS";
+            },
+            contentCls() {
+                return {
+                    "is-success": !["RUNNING", "FAILED"].includes(this.state),
+                    "is-running": this.state === "RUNNING",
+                    "is-failed": this.state === "FAILED"
+                };
+            },
+            task() {
+                return this.n.task;
+            },
+            value () {
+                return this.n.taskRun && this.n.taskRun.value
+            }
         }
-    }
-};
+    };
 </script>
 <style scoped lang="scss">
 @import "../../styles/_variable.scss";

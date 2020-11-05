@@ -379,6 +379,6 @@ release {
     pushReleaseVersionBranch = 'master'
 
     git {
-        requireBranch = 'develop'
+        requireBranch = 'release'
     }
 }

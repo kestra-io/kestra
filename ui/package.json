@@ -93,8 +93,14 @@
         "error",
         "double"
       ],
-      "vue/object-curly-spacing": ["error", "never"],
-      "object-curly-spacing": ["error", "never"]
+      "vue/object-curly-spacing": [
+        "error",
+        "never"
+      ],
+      "object-curly-spacing": [
+        "error",
+        "never"
+      ]
     },
     "parserOptions": {
       "parser": "babel-eslint"

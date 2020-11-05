@@ -12,7 +12,7 @@
             <b-pagination
                 @change="pageChanged"
                 v-model="page"
-                :total-rows="max || total"
+                :total-rows="Math.min((max || total ),total)"
                 hide-ellipsis
                 :per-page="size"
                 size="sm"
@@ -22,7 +22,7 @@
         </div>
 
         <small v-if="max" class="btn btn-sm btn-outline-light text-muted">
-            {{ $t('Max displayed') }}: {{ max }}
+            {{ $t('Max displayable') }}: {{ max }}
         </small>
 
         <small class="btn btn-sm btn-outline-light text-muted">

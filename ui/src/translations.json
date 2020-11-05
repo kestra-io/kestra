@@ -141,7 +141,7 @@
         "Fold auto": "Editor: automatic fold of multilines",
         "Fold content lines": "Fold content lines",
         "Unfold content lines": "Unfold content lines",
-        "Max displayed": "Max displayed",
+        "Max displayable": "Max displayable",
         "Total": "Total"
     },
     "fr": {
@@ -287,7 +287,7 @@
         "Fold auto": "Editeur : Replier automatiquement le contenu multi-lignes",
         "Fold content lines": "Replier le contenu des lignes",
         "Unfold content lines": "Déplier le contenu des lignes",
-        "Max displayed": "Max affichés",
+        "Max displayable": "Max affichables",
         "Total": "Total"
     }
 }

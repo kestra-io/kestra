@@ -201,7 +201,10 @@
                 ];
             },
             executionQuery() {
-                return this.query;
+                let query = this.query.replace("namespace:", "taskRunList.namespace:");
+                query = query.replace("state.startDate:", "taskRunList.state.startDate:");
+                query = query.replace("state.endDate:", "taskRunList.state.endDate:");
+                return query;
             },
             endDate() {
                 return new Date();

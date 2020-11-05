@@ -9,10 +9,10 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 
-import javax.inject.Singleton;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 
 @Singleton
 @MemoryRepositoryEnabled

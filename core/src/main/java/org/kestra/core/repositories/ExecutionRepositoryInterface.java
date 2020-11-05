@@ -20,6 +20,8 @@ public interface ExecutionRepositoryInterface {
 
     ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, State.Type state);
 
+    Integer maxTaskRunSetting();
+
     List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate, boolean isTaskRun);
 
     Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query, LocalDate startDate, LocalDate endDate);

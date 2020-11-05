@@ -8,6 +8,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.ShardOperationFailedException;
+import org.elasticsearch.action.admin.indices.settings.get.GetSettingsRequest;
+import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -152,7 +154,7 @@ abstract public class AbstractElasticSearchRepository<T> {
     protected static void handleWriteErrors(DocWriteResponse indexResponse) throws Exception {
         ReplicationResponse.ShardInfo shardInfo = indexResponse.getShardInfo();
         if (shardInfo.getTotal() != shardInfo.getSuccessful()) {
-            log.warn("Replication incomplete, expected " + shardInfo.getTotal() + ", got " + shardInfo.getSuccessful()) ;
+            log.warn("Replication incomplete, expected " + shardInfo.getTotal() + ", got " + shardInfo.getSuccessful());
         }
 
         if (shardInfo.getFailed() > 0) {
@@ -479,6 +481,17 @@ abstract public class AbstractElasticSearchRepository<T> {
             );
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    protected GetSettingsResponse getSettings(String index, boolean includeDefaults) {
+        GetSettingsRequest request = new GetSettingsRequest()
+            .indices(this.indicesConfigs.get(index).getIndex())
+            .includeDefaults(includeDefaults);
+        try {
+            return this.client.indices().getSettings(request, RequestOptions.DEFAULT);
+        } catch (IOException ioe) {
+            throw new RuntimeException(ioe);
         }
     }
 }

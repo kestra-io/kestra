@@ -140,7 +140,9 @@
         "taskruns":"Task Runs",
         "Fold auto": "Editor: automatic fold of multilines",
         "Fold content lines": "Fold content lines",
-        "Unfold content lines": "Unfold content lines"
+        "Unfold content lines": "Unfold content lines",
+        "Max displayed": "Max displayed",
+        "Total": "Total"
     },
     "fr": {
         "id": "Identifiant",
@@ -284,6 +286,8 @@
         "taskruns":"Execution de tâches",
         "Fold auto": "Editeur : Replier automatiquement le contenu multi-lignes",
         "Fold content lines": "Replier le contenu des lignes",
-        "Unfold content lines": "Déplier le contenu des lignes"
+        "Unfold content lines": "Déplier le contenu des lignes",
+        "Max displayed": "Max affichés",
+        "Total": "Total"
     }
 }

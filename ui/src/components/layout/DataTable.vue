@@ -12,7 +12,7 @@
         <slot name="top"></slot>
 
         <slot name="table"></slot>
-        <pagination :total="total" @onPageChanged="onPageChanged" />
+        <pagination :total="total" :max="max" @onPageChanged="onPageChanged" />
     </div>
 </template>
 
@@ -27,6 +27,7 @@ export default {
     },
     props: {
         total: { type: Number, required: true },
+        max: {type: Number, required:false}
     },
     methods: {
         onPageChanged(pagination) {

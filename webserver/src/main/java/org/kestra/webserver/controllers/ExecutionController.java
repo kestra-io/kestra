@@ -4,7 +4,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
-import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -103,6 +102,11 @@ public class ExecutionController {
             executionRepository
                 .findTaskRun(query, PageableUtils.from(page, size, sort), state)
         );
+    }
+
+    @Get(uri = "taskruns/maxTaskRunSetting")
+    public Integer maxTaskRunSetting() {
+        return executionRepository.maxTaskRunSetting();
     }
 
     /**
@@ -275,7 +279,7 @@ public class ExecutionController {
         return Flowable
             .<Event<Execution>>create(emitter -> {
                 // already finished execution
-                Execution execution  = Await.until(
+                Execution execution = Await.until(
                     () -> executionRepository.findById(executionId).orElse(null),
                     Duration.ofMillis(500)
                 );

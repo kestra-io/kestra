@@ -66,4 +66,9 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     public List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate, boolean isTaskRun) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public Integer maxTaskRunSetting() {
+        throw new UnsupportedOperationException();
+    }
 }

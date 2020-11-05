@@ -9,10 +9,10 @@ import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 
+import javax.inject.Singleton;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.inject.Singleton;
 
 @Singleton
 @MemoryRepositoryEnabled
@@ -64,6 +64,11 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
 
     @Override
     public List<DailyExecutionStatistics> dailyStatistics(String query, LocalDate startDate, LocalDate endDate, boolean isTaskRun) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Integer maxTaskRunSetting() {
         throw new UnsupportedOperationException();
     }
 }

@@ -4,7 +4,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
-import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
@@ -32,6 +31,9 @@ import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 import org.reactivestreams.Publisher;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -41,9 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -105,6 +104,11 @@ public class ExecutionController {
         );
     }
 
+    @Get(uri = "taskruns/maxTaskRunSetting")
+    public Integer maxTaskRunSetting() {
+        return executionRepository.maxTaskRunSetting();
+    }
+
     /**
      * Get an execution flow tree
      *
@@ -146,9 +150,9 @@ public class ExecutionController {
      * Find and returns all executions for a specific namespace and flow identifier
      *
      * @param namespace The flow namespace
-     * @param flowId The flow identifier
-     * @param page The number of result pages to return
-     * @param size The number of result by page
+     * @param flowId    The flow identifier
+     * @param page      The number of result pages to return
+     * @param size      The number of result by page
      * @return a list of found executions
      */
     @Get(uri = "executions", produces = MediaType.TEXT_JSON)
@@ -167,7 +171,7 @@ public class ExecutionController {
      * Trigger an new execution for current flow
      *
      * @param namespace The flow namespace
-     * @param id The flow id
+     * @param id        The flow id
      * @return execution created
      */
     @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
@@ -227,7 +231,7 @@ public class ExecutionController {
      * Create a new execution from an old one and start it from a specified ("reference") task id
      *
      * @param executionId the origin execution id to clone
-     * @param taskId the reference task id
+     * @param taskId      the reference task id
      * @return the restarted execution
      */
     @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
@@ -275,7 +279,7 @@ public class ExecutionController {
         return Flowable
             .<Event<Execution>>create(emitter -> {
                 // already finished execution
-                Execution execution  = Await.until(
+                Execution execution = Await.until(
                     () -> executionRepository.findById(executionId).orElse(null),
                     Duration.ofMillis(500)
                 );

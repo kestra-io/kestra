@@ -3,7 +3,8 @@ export default {
     namespaced: true,
     state: {
         taskruns: undefined,
-        total: 0
+        total: 0,
+        maxTaskRunSetting: 100
     },
     actions: {
         findTaskRuns({ commit }, options) {
@@ -17,6 +18,11 @@ export default {
                 commit('setTaskruns', response.data.results)
                 commit('setTotal', response.data.total)
             })
+        },
+        maxTaskRunSetting({ commit }) {
+            return Vue.axios.get(`/api/v1/taskruns/maxTaskRunSetting`).then(response => {
+                commit('setMaxTaskRunSetting', response.data)
+            })
         }
     },
     mutations: {
@@ -25,6 +31,9 @@ export default {
         },
         setTotal(state, total) {
             state.total = total
+        },
+        setMaxTaskRunSetting(state,maxTaskRunSetting){
+            state.maxTaskRunSetting = maxTaskRunSetting
         }
     },
     getters: {}

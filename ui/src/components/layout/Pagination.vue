@@ -12,7 +12,7 @@
             <b-pagination
                 @change="pageChanged"
                 v-model="page"
-                :total-rows="total"
+                :total-rows="max || total"
                 hide-ellipsis
                 :per-page="size"
                 size="sm"
@@ -20,8 +20,11 @@
                 align="right"
             ></b-pagination>
         </div>
+        <small v-if="max" class="btn btn-sm btn-outline-light text-muted"
+            >{{ $t('Max displayed') }}: {{ max }}</small
+        >
         <small class="btn btn-sm btn-outline-light text-muted"
-            >Total: {{ total }}</small
+            >{{ $t('Total') }}: {{ total }}</small
         >
     </div>
 </template>
@@ -29,6 +32,7 @@
 export default {
     props: {
         total: { type: Number, required: true },
+        max: {type: Number, required:false}
     },
     data() {
         return {

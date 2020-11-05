@@ -1,6 +1,6 @@
 <template>
     <div v-if="ready">
-        <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total">
+        <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
             <template v-slot:navbar>
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields"/>
                 <namespace-select
@@ -75,7 +75,7 @@
                         <code>{{ row.item.executionId | id }}</code>
                     </template>
                     <template v-slot:cell(taskId)="row">
-                        <code>{{ row.item.taskId }}</code>
+                        <code v-b-tooltip.hover :title=row.item.taskId>{{ row.item.taskId | ellipsis(25) }} </code>
                     </template>
                     <template v-slot:cell(executionId)="row">
                         <code>{{ row.item.executionId | id }}</code>
@@ -134,7 +134,7 @@
             localStorage.setItem("taskrunQueries", JSON.stringify(queries));
         },
         computed: {
-            ...mapState("taskrun", ["taskruns", "total"]),
+            ...mapState("taskrun", ["taskruns", "total", "maxTaskRunSetting"]),
             ...mapState("stat", ["taskRunDaily"]),
             fields() {
                 const title = title => {
@@ -228,6 +228,7 @@
                         this.dailyReady = true;
                     });
 
+                this.$store.dispatch("taskrun/maxTaskRunSetting");
 
                 this.$store
                     .dispatch("taskrun/findTaskRuns", {

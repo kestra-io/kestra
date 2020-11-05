@@ -1,4 +1,5 @@
 index:
+  max_inner_result_window: 250
   analysis:
     analyzer:
       prefix:

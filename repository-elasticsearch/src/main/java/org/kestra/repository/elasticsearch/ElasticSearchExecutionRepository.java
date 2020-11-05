@@ -6,6 +6,8 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.index.IndexSettings;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
@@ -364,5 +366,17 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         this.putRequest(INDEX_NAME, execution.getId(), execution);
 
         return execution;
+    }
+
+    @Override
+    public Integer maxTaskRunSetting() {
+        String max = this.getSettings(INDEX_NAME, true)
+            .getSetting(
+                this.indicesConfigs.get(INDEX_NAME).getIndex(),
+                IndexSettings.MAX_INNER_RESULT_WINDOW_SETTING.getKey()
+            );
+
+        return Integer
+            .valueOf(max == null ? IndexSettings.MAX_INNER_RESULT_WINDOW_SETTING.getDefault(Settings.EMPTY) : Integer.valueOf(max));
     }
 }

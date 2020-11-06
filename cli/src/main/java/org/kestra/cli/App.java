@@ -15,12 +15,13 @@ import picocli.CommandLine;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(
     name = "kestra",
-    version = "v0.1",
 
+    versionProvider = VersionProvider.class,
     parameterListHeading = "%nParameters:%n",
     optionListHeading = "%nOptions:%n",
     commandListHeading = "%nCommands:%n",
@@ -34,7 +35,7 @@ import java.util.concurrent.Callable;
         SysCommand.class
     }
 )
-public class App implements Callable<Object> {
+public class App implements Callable<Integer> {
     public static void main(String[] args) {
         // Register a ClassLoader with isolation for plugins
         Thread.currentThread().setContextClassLoader(KestraClassLoader.create(Thread.currentThread().getContextClassLoader()));
@@ -43,13 +44,16 @@ public class App implements Callable<Object> {
         ApplicationContext applicationContext = App.applicationContext(args);
 
         // Call Picocli command
-        PicocliRunner.call(App.class, applicationContext, args);
+        Integer exitCode = PicocliRunner.call(App.class, applicationContext, args);
 
         applicationContext.close();
+
+        // exit code
+        System.exit(Objects.requireNonNullElse(exitCode, 0));
     }
 
     @Override
-    public Object call() throws Exception {
+    public Integer call() throws Exception {
         return PicocliRunner.call(App.class, "--help");
     }
 

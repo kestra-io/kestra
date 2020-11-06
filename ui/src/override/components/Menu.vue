@@ -7,10 +7,9 @@
     >
         <div class="logo" slot="header">
             <router-link :to="{name: 'home'}">
-                <span>
-                    <span class="img" />
-                </span>
+                <span class="img" />
             </router-link>
+            <span class="version">{{ version.version }}</span>
         </div>
         <span slot="toggle-icon">
             <chevron-right v-if="collapsed" />
@@ -31,6 +30,7 @@
     import CardText from "vue-material-design-icons/CardText";
     import HexagonMultiple from "vue-material-design-icons/HexagonMultiple";
     import ChartTimeline from "vue-material-design-icons/ChartTimeline";
+    import {mapState} from "vuex";
 
     Vue.component("graph", Graph);
     Vue.component("settings", Cog);
@@ -53,12 +53,16 @@
                 this.$emit("onMenuCollapse", folded);
             }
         },
+        created() {
+            this.$store.dispatch("misc/loadVersion")
+        },
         data() {
             return {
                 collapsed: localStorage.getItem("menuCollapsed") === "true"
             };
         },
         computed: {
+            ...mapState("misc", ["version"]),
             menu() {
                 return [
                     {
@@ -143,38 +147,59 @@
 </script>
 
 <style lang="scss" scoped>
-@import "src/styles/variable";
+    @import "src/styles/variable";
 
-.logo {
-  height: 60px;
-  border-bottom: 2px solid $secondary;
-  overflow: hidden;
-  span {
-    display: block;
-    height: 52px;
-    overflow: hidden;
-    border-bottom: 2px solid $tertiary;
-    span.img {
-      height: 50px;
-      background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
-      background-size: 190px 60px;
-      background-position-y: -6px;
-      background-position-x: -2px;
+    .logo {
+        height: 82px;
+        min-height: 82px;
+        overflow: hidden;
+
+        a {
+            display: block;
+            height: 52px;
+            overflow: hidden;
+            border-bottom: 4px solid $tertiary;
+
+            span.img {
+                height: 50px;
+                background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
+                background-size: 190px 60px;
+                background-position-y: -6px;
+                background-position-x: -2px;
+                display: block;
+            }
+        }
+
+        span.version {
+            margin-top: 2px;
+            font-size: $font-size-xs;
+            text-align: right;
+            display: block;
+            border-top: 2px solid $secondary;
+            color: $gray-600;
+            border-bottom: 1px solid $gray-900;
+            padding-right: 16px;
+        }
     }
-  }
-}
 
-/deep/ .vsm--item {
-  transition: opacity 0.2s;
-}
+    .vsm_collapsed {
+        span.version {
+            color: black;
+        }
+    }
 
-/deep/ .menu-icon {
-  font-size: 1.5em;
-  background-color: $dark !important;
-  padding-bottom: 15px;
-  svg {
-    top: 3px;
-    left: 3px;
-  }
-}
+    /deep/ .vsm--item {
+        transition: opacity 0.2s;
+    }
+
+    /deep/ .menu-icon {
+        font-size: 1.5em;
+        background-color: $dark !important;
+        padding-bottom: 15px;
+
+        svg {
+            top: 3px;
+            left: 3px;
+        }
+    }
 </style>

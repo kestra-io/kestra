@@ -9,3 +9,17 @@ frontend {
     assembleScript = 'run build'
     checkScript = 'run test'
 }
+
+tasks.named('installFrontend') {
+    inputs.files('package.json', 'package-lock.json')
+    outputs.dir('node_modules')
+}
+
+tasks.named('assembleFrontend') {
+    shouldRunAfter installFrontend
+
+    inputs.dir('src')
+    inputs.dir('public')
+    inputs.files('vue.config.js')
+    outputs.dir('../webserver/src/main/resources/ui')
+}

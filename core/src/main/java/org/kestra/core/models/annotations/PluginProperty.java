@@ -9,7 +9,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Documented
 @Retention(RUNTIME)
-@Target({ElementType.FIELD})
+@Target({ElementType.FIELD, ElementType.METHOD})
 public @interface PluginProperty {
     /**
      * @return If the properties is renderer

@@ -22,10 +22,8 @@ export default class YamlUtils {
             return value.map(r => {
                 return YamlUtils._transform(r);
             })
-
         } else if (typeof(value) === "string" || value instanceof String) {
             value = value
-                .replaceAll("\t", "  ")
                 .replaceAll(/\u00A0/g, " ");
 
             if (value.indexOf("\\n") >= 0) {

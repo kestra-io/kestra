@@ -30,6 +30,9 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
     ElasticSearchFlowRepository elasticSearchFlowRepository;
 
     @Inject
+    ElasticSearchTemplateRepository elasticSearchTemplateRepository;
+
+    @Inject
     private ElasticSearchRepositoryTestUtils utils;
 
     @Test
@@ -43,5 +46,6 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
     protected void tearDown() throws IOException {
         utils.tearDown();
         elasticSearchFlowRepository.initMapping();
+        elasticSearchTemplateRepository.initMapping();
     }
 }

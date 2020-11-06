@@ -1,7 +1,6 @@
 package org.kestra.core.serializers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.flows.Flow;

@@ -13,7 +13,9 @@ import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.DeletedInterface;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.listeners.Listener;
+import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.Task;
+import org.kestra.core.models.tasks.TaskValidationInterface;
 import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.serializers.JacksonMapper;
@@ -107,13 +109,32 @@ public class Flow implements DeletedInterface {
         ));
     }
 
-    public Task findTaskByTaskId(String taskId) throws InternalException {
+    private Stream<Task> allTasks() {
         return Stream.of(
             this.tasks != null ? this.tasks : new ArrayList<Task>(),
             this.errors != null ? this.errors : new ArrayList<Task>(),
             this.listenersTasks()
         )
-            .flatMap(Collection::stream)
+            .flatMap(Collection::stream);
+    }
+
+    private List<Task> allTasksWithChilds() {
+        return allTasks()
+            .flatMap(task -> {
+                if (task.isFlowable()) {
+                    return Stream.concat(
+                        Stream.of(task),
+                        ((FlowableTask<?>) task).allChildTasks().stream()
+                    );
+                } else {
+                    return Stream.of(task);
+                }
+            })
+            .collect(Collectors.toList());
+    }
+
+    public Task findTaskByTaskId(String taskId) throws InternalException {
+        return allTasks()
             .flatMap(t -> t.findById(taskId).stream())
             .findFirst()
             .orElseThrow(() -> new InternalException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
@@ -144,9 +165,55 @@ public class Flow implements DeletedInterface {
         }
     }
 
+    public Optional<ConstraintViolationException> validate() {
+        Set<ConstraintViolation<?>> violations = new HashSet<>();
+
+        List<Task> allTasks = allTasksWithChilds();
+
+        // unique id
+        List<String> ids = allTasks
+            .stream()
+            .map(Task::getId)
+            .collect(Collectors.toList());
+
+        List<String> duplicates = ids
+            .stream()
+            .distinct()
+            .filter(entry -> Collections.frequency(ids, entry) > 1).collect(Collectors.toList());
+
+        if (duplicates.size() > 0) {
+            violations.add(ManualConstraintViolation.of(
+                "Duplicate task id with name [" +   String.join(", ", duplicates) + "]",
+                this,
+                Flow.class,
+                "flow.tasks",
+                String.join(", ", duplicates)
+            ));
+        }
+
+        // validate tasks
+        allTasks
+            .forEach(task -> {
+                if (task instanceof TaskValidationInterface) {
+                    violations.addAll(((TaskValidationInterface<?>) task).failedConstraints());
+                }
+            });
+
+        if (violations.size() > 0) {
+            return Optional.of(new ConstraintViolationException(violations));
+        } else {
+            return Optional.empty();
+        }
+    }
+
     public Optional<ConstraintViolationException> validateUpdate(Flow updated) {
         Set<ConstraintViolation<?>> violations = new HashSet<>();
 
+        // validate flow
+        updated.validate()
+            .ifPresent(e -> violations.addAll(e.getConstraintViolations()));
+
+        // change flow id
         if (!updated.getId().equals(this.getId())) {
             violations.add(ManualConstraintViolation.of(
                 "Illegal flow id update",
@@ -157,6 +224,7 @@ public class Flow implements DeletedInterface {
             ));
         }
 
+        // change flow namespace
         if (!updated.getNamespace().equals(this.getNamespace())) {
             violations.add(ManualConstraintViolation.of(
                 "Illegal namespace update",

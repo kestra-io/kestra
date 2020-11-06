@@ -69,12 +69,8 @@ import javax.validation.Valid;
     }
 )
 public class Template extends Task implements FlowableTask<VoidOutput> {
-
     @Valid
     protected List<Task> errors;
-
-    @Valid
-    private List<Task> tasks;
 
     @Valid
     private String templateId;

@@ -86,6 +86,12 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     public Flow create(Flow flow) throws ConstraintViolationException {
+        // control if create is valid
+        flow.validate()
+            .ifPresent(s -> {
+                throw s;
+            });
+
         Flow newFlow = this.save(flow);
         flowQueue.emit(newFlow);
 

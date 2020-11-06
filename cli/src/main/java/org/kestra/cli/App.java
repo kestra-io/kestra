@@ -1,5 +1,6 @@
 package org.kestra.cli;
 
+import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -37,6 +38,15 @@ import java.util.concurrent.Callable;
 )
 public class App implements Callable<Integer> {
     public static void main(String[] args) {
+        execute(App.class, args);
+    }
+
+    @Override
+    public Integer call() throws Exception {
+        return PicocliRunner.call(App.class, "--help");
+    }
+
+    protected static void execute(Object cls, String... args) {
         // Register a ClassLoader with isolation for plugins
         Thread.currentThread().setContextClassLoader(KestraClassLoader.create(Thread.currentThread().getContextClassLoader()));
 
@@ -44,17 +54,13 @@ public class App implements Callable<Integer> {
         ApplicationContext applicationContext = App.applicationContext(args);
 
         // Call Picocli command
-        Integer exitCode = PicocliRunner.call(App.class, applicationContext, args);
+
+        int exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
 
         applicationContext.close();
 
         // exit code
         System.exit(Objects.requireNonNullElse(exitCode, 0));
-    }
-
-    @Override
-    public Integer call() throws Exception {
-        return PicocliRunner.call(App.class, "--help");
     }
 
     /**

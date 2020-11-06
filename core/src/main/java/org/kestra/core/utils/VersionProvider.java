@@ -22,21 +22,27 @@ public class VersionProvider {
 
     @PostConstruct
     public void start() {
-        new PropertiesPropertySourceLoader()
-                .load("classpath:git", environment)
-                .ifPresent(properties -> {
-
-                    this.version = Stream
+        this.version = Stream
+            .concat(
+                new PropertiesPropertySourceLoader()
+                    .load("classpath:gradle", environment)
+                    .stream()
+                    .flatMap(properties -> Stream.of(properties.get("version"))),
+                new PropertiesPropertySourceLoader()
+                    .load("classpath:git", environment)
+                    .stream()
+                    .flatMap(properties -> Stream
                         .of(
                             properties.get("git.tags"),
                             properties.get("git.branch")
                         )
-                        .map(this::getVersion)
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .findFirst()
-                        .orElse(this.version);
-                });
+                    )
+            )
+            .map(this::getVersion)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .findFirst()
+            .orElse(this.version);
     }
 
     private Optional<String> getVersion(Object object) {

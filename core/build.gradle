@@ -2,6 +2,15 @@ configurations {
     tests
 }
 
+task copyGradleProperties(type: Copy) {
+    group = "build"
+    shouldRunAfter compileJava
+
+    from '../gradle.properties'
+    into 'src/main/resources'
+}
+processResources.dependsOn copyGradleProperties
+
 dependencies {
     // log
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'

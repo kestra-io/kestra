@@ -151,7 +151,7 @@
 
     .logo {
         height: 82px;
-
+        min-height: 82px;
         overflow: hidden;
 
         a {

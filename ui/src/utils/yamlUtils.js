@@ -1,5 +1,4 @@
 import JsYaml from "js-yaml";
-import _cloneDeep from "lodash/cloneDeep";
 
 export default class YamlUtils {
     static stringify(value) {
@@ -7,7 +6,8 @@ export default class YamlUtils {
             return "";
         }
 
-        return JsYaml.safeDump(YamlUtils._transform(_cloneDeep(value)), {
+        // return JsYaml.safeDump(YamlUtils._transform(_cloneDeep(value)), {
+        return JsYaml.safeDump(value, {
             lineWidth: -1,
             noCompatMode: true,
         });

@@ -177,7 +177,7 @@
                     params.taskRunId = this.taskRunId;
                 }
 
-                if (this.execution && this.execution.state.current === State.CURRENT) {
+                if (this.execution && this.execution.state.current === State.RUNNING) {
                     this.$store
                         .dispatch("execution/followLogs", {
                             id: this.$route.params.id,

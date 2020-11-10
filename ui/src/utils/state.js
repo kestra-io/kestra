@@ -102,20 +102,14 @@ export default class State {
     }
 
     static colorClass() {
-        return _mapValues(this.States, function(state) {
-            return state.colorClass;
-        });
+        return _mapValues(this.States, state => state.colorClass);
     }
 
     static color() {
-        return _mapValues(this.States, function(state) {
-            return state.color;
-        });
+        return _mapValues(this.States, state => state.color);
     }
 
     static icon() {
-        return _mapValues(this.States, function(state) {
-            return state.icon;
-        });
+        return _mapValues(this.States, state => state.icon);
     }
 }

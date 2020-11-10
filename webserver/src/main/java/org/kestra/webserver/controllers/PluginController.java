@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.kestra.core.contexts.KestraApplicationContext;
 import org.kestra.core.docs.DocumentationGenerator;
-import org.kestra.core.docs.PluginDocumentation;
+import org.kestra.core.docs.ClassPluginDocumentation;
 import org.kestra.core.plugins.PluginRegistry;
 import org.kestra.core.plugins.PluginScanner;
 import org.kestra.core.plugins.RegisteredPlugin;
@@ -37,13 +37,13 @@ public class PluginController {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Get(uri = "{cls}")
     public Doc pluginDocumentation(String cls) throws HttpStatusException, IOException {
-        PluginDocumentation pluginDocumentation = pluginDocumentation(plugins(), cls);
+        ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(plugins(), cls);
 
         return new Doc(
-            DocumentationGenerator.render(pluginDocumentation),
+            DocumentationGenerator.render(classPluginDocumentation),
             new Schema(
-                pluginDocumentation.getPropertiesSchema(),
-                pluginDocumentation.getOutputsSchema()
+                classPluginDocumentation.getPropertiesSchema(),
+                classPluginDocumentation.getOutputsSchema()
             )
         );
     }
@@ -68,7 +68,7 @@ public class PluginController {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private PluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className)  {
+    private ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className)  {
         RegisteredPlugin registeredPlugin = plugins
             .stream()
             .filter(r -> r.hasClass(className))
@@ -82,7 +82,7 @@ public class PluginController {
         Class baseCls = registeredPlugin
             .baseClass(className);
 
-        return PluginDocumentation.of(registeredPlugin, cls, baseCls);
+        return ClassPluginDocumentation.of(registeredPlugin, cls, baseCls);
     }
 
     @NoArgsConstructor

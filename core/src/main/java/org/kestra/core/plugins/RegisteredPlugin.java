@@ -1,9 +1,11 @@
 package org.kestra.core.plugins;
 
+import com.github.jknack.handlebars.internal.lang3.ObjectUtils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.triggers.AbstractTrigger;
@@ -72,15 +74,36 @@ public class RegisteredPlugin {
 
     @SuppressWarnings("rawtypes")
     public List<Class> allClass() {
-        List<Class> result = new ArrayList<>();
+        return allClassGrouped()
+            .entrySet()
+            .stream()
+            .flatMap(map -> map.getValue().stream())
+            .collect(Collectors.toList());
+    }
 
-        result.addAll(Arrays.asList(this.getTasks().toArray(Class[]::new)));
-        result.addAll(Arrays.asList(this.getTriggers().toArray(Class[]::new)));
-        result.addAll(Arrays.asList(this.getConditions().toArray(Class[]::new)));
-        result.addAll(Arrays.asList(this.getControllers().toArray(Class[]::new)));
-        result.addAll(Arrays.asList(this.getStorages().toArray(Class[]::new)));
+    @SuppressWarnings("rawtypes")
+    public Map<String, List<Class>> allClassGrouped() {
+        Map<String, List<Class>> result = new HashMap<>();
+
+        result.put("tasks", Arrays.asList(this.getTasks().toArray(Class[]::new)));
+        result.put("triggers", Arrays.asList(this.getTriggers().toArray(Class[]::new)));
+        result.put("conditions", Arrays.asList(this.getConditions().toArray(Class[]::new)));
+        result.put("controllers", Arrays.asList(this.getControllers().toArray(Class[]::new)));
+        result.put("storages", Arrays.asList(this.getStorages().toArray(Class[]::new)));
 
         return result;
+    }
+
+    public String title() {
+        return ObjectUtils.firstNonNull(
+            this.getManifest() != null ? this.getManifest().getMainAttributes().getValue("X-Kestra-Title") : null,
+            this.getExternalPlugin() != null ? FilenameUtils.getBaseName(this.getExternalPlugin().getLocation().getPath()) : null,
+            "Core"
+        );
+    }
+
+    public String group() {
+        return this.getManifest() == null ? null : this.getManifest().getMainAttributes().getValue("X-Kestra-Group");
     }
 
     @Override
@@ -104,7 +127,7 @@ public class RegisteredPlugin {
             b.append(this.getTriggers().stream().map(Class::getName).collect(Collectors.joining(", ")));
             b.append("] ");
         }
-        
+
         if (!this.getConditions().isEmpty()) {
             b.append("[Conditions: ");
             b.append(this.getConditions().stream().map(Class::getName).collect(Collectors.joining(", ")));

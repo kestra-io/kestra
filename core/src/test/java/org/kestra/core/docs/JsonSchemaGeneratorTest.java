@@ -20,9 +20,9 @@ class JsonSchemaGeneratorTest {
     JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator();
 
     private List<RegisteredPlugin> scanPlugins() throws URISyntaxException {
-        Path plugins = Paths.get(Objects.requireNonNull(PluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
+        Path plugins = Paths.get(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
 
-        PluginScanner pluginScanner = new PluginScanner(PluginDocumentationTest.class.getClassLoader());
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         return pluginScanner.scan(plugins);
     }
 

@@ -1,0 +1,18 @@
+---
+title: {{ capitalizeFirst (replace title "-" " ") }}
+editLink: false
+---
+# {{ capitalizeFirst (replace title "-" " ") }}
+
+{{~#each docs.classPlugins as | classPlugin subgroup | }}
+## {{ defaultIfEmpty (capitalizeFirst subgroup) "Common" }}
+
+{{~#each classPlugin as | classes type | }}
+### {{ capitalizeFirst type }}
+
+{{#each classes as | class | ~}}
+* [{{simpleName}}]({{ type }}/{{#and subgroup}}{{subgroup}}/{{/and}}{{ name }})
+{{/each ~}}
+
+{{/each ~}}
+{{/each ~}}

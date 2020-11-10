@@ -104,7 +104,7 @@
                 this.generateGraph();
             },
             $route() {
-                if (this.$route.query.filter != this.filterGroup) {
+                if (this.$route.query.filter !== this.filterGroup) {
                     this.filterGroup = this.$route.query.filter;
                     this.generateGraph();
                 }
@@ -140,6 +140,7 @@
             generateGraph() {
                 this.filteredDataTree = this.getFilteredDataTree();
                 this.virtualRootNode = this.getVirtualRootNode();
+
                 // Create the input graph
                 const arrowColor = "#ccc";
                 if (this.zoom) {
@@ -177,12 +178,15 @@
                     this.filteredDataTree.filter(e => e.parent).map(e => nodeHash(e.parent[0]))
                 );
                 const virtualRootId = this.getVirtualRootNode() && this.getVirtualRootNode().task.id
+                const groupDisabled = this.isGroupDisabled(virtualRootId);
+
                 for (const node of this.filteredDataTree) {
                     const slug = this.slug(node);
                     const hash = parentHash(node);
                     g.setNode(slug, {
                         labelType: "html",
-                        label: `<div class="node-binder" id="node-${slug}"/>`
+                        label: `<div class="node-binder" id="node-${slug}"/>`,
+                        class: groupDisabled || node.task.disabled ? "task-disabled" : ""
                     });
                     const options = getOptions(node);
                     const parentId = node.parent && node.parent[0] && node.parent[0].id
@@ -200,6 +204,7 @@
                     rootNode.label = `<div class="node-binder root-node-virtual" id="node-${this.slug(
                         this.virtualRootNode
                     )}"/>`;
+                    rootNode.class = groupDisabled  ? "task-disabled" : "";
                 } else {
                     rootNode.class = "root-node";
                     rootNode.label = "<div class=\"vector-circle-wrapper\"/>";
@@ -254,6 +259,26 @@
                     return true;
                 }
             },
+            isGroupDisabled(virtualRootId) {
+                if (virtualRootId === undefined) {
+                    return  false;
+                }
+
+                const virtualRoot = this.dataTree.filter(node => node.task.id === virtualRootId)[0];
+
+                if (virtualRoot.task.disabled === true) {
+                    return true;
+                }
+
+                if (virtualRoot.groups === undefined) {
+                    return false;
+                }
+
+                return virtualRoot.groups
+                    .map(value => this.dataTree.filter(node => node.task.id === value)[0])
+                    .filter(node => node.task.disabled === true)
+                    .length > 0
+            },
             bindNodes() {
                 let ready = true;
                 for (const node of this.filteredDataTree) {
@@ -293,7 +318,7 @@
                 }
             },
             onFilterGroup(group) {
-                if (this.$route.query.filter != group) {
+                if (this.$route.query.filter !== group) {
                     this.filterGroup = group;
                     this.$router.push({
                         query: {...this.$route.query, filter: group}
@@ -388,6 +413,12 @@ foreignObject {
     > rect {
         stroke: white;
         fill: none !important;
+    }
+}
+
+.task-disabled {
+    .card-header .task-title {
+        text-decoration: line-through;
     }
 }
 

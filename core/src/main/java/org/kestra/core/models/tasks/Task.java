@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -45,6 +46,9 @@ abstract public class Task {
 
     @Min(0)
     protected Integer timeout;
+
+    @Builder.Default
+    protected Boolean disabled = false;
 
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {

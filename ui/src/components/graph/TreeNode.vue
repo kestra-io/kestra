@@ -98,6 +98,7 @@
     import md5 from "md5";
     import YamlUtils from "../../utils/yamlUtils";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
+    import State from "../../utils/state"
 
     export default {
         components: {
@@ -163,13 +164,13 @@
                 return YamlUtils.stringify(this.n);
             },
             state() {
-                return this.n.taskRun ? this.n.taskRun.state.current : "SUCCESS";
+                return this.n.taskRun ? this.n.taskRun.state.current : State.SUCCESS;
             },
             contentCls() {
                 return {
-                    "is-success": !["RUNNING", "FAILED"].includes(this.state),
-                    "is-running": this.state === "RUNNING",
-                    "is-failed": this.state === "FAILED"
+                    "is-success": ![State.RUNNING, State.FAILED].includes(this.state),
+                    "is-running": this.state === State.RUNNING,
+                    "is-failed": this.state === State.FAILED
                 };
             },
             task() {

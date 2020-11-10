@@ -16,6 +16,7 @@
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import State from "../../utils/state";
 
     export default {
         components: {RestartIcon},
@@ -76,12 +77,12 @@
                     let subList = this.execution.taskRunList.slice(0, taskRunIndex);
 
                     let indexOfFailedTaskRun = subList.findIndex(
-                        t => t.state.current === "FAILED"
+                        t => t.state.current === State.FAILED
                     );
 
                     return indexOfFailedTaskRun === -1;
                 }
-                return this.execution.state.current === "FAILED";
+                return this.execution.state.current === State.FAILED;
             }
         }
     };

@@ -46,7 +46,7 @@
                     <template
                         v-slot:cell(state.endDate)="row"
                     >
-                        <span v-if="!['RUNNING', 'CREATED'].includes(row.item.state.current)">
+                        <span v-if="!isRunning(row.item)">
                             {{ row.item.state.endDate | date('LLLL') }}
                         </span>
                     </template>
@@ -58,7 +58,7 @@
                         />
                     </template>
                     <template v-slot:cell(state.duration)="row">
-                        <span v-if="['RUNNING', 'CREATED'].includes(row.item.state.current)">{{ durationFrom(row.item) | humanizeDuration }}</span>
+                        <span v-if="isRunning(row.item)">{{ durationFrom(row.item) | humanizeDuration }}</span>
                         <span v-else>{{ row.item.state.duration | humanizeDuration }}</span>
                     </template>
                     <template v-slot:cell(flowId)="row">

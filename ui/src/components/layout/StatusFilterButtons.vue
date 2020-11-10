@@ -2,10 +2,12 @@
     <b-form-select @input="searchStatus" v-model="selected" size="sm" :options="statuses" />
 </template>
 <script>
-    export default {
+    import State from "../../utils/state";
+    export default {        
         data() {
+            let states = State.allStates().map(s => s.toLowerCase());
             return {
-                statuses: ["all", "running", "success", "failed"],
+                statuses: ["all"].concat(states),
                 selected: "all"
             };
         },

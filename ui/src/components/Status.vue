@@ -12,6 +12,7 @@
     import PlayCircleOutline from "vue-material-design-icons/PlayCircleOutline";
     import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline";
+    import Restart from "vue-material-design-icons/Restart";
 
     export default {
         components: {
@@ -19,7 +20,8 @@
             CheckCircleOutline,
             PlayCircleOutline,
             CloseCircleOutline,
-            StopCircleOutline
+            StopCircleOutline,
+            Restart
         },
         props: {
             status: {

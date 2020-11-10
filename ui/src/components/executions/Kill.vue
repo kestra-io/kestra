@@ -11,6 +11,7 @@
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import State from "../../utils/state";
 
     export default {
         components: {StopCircleOutline},
@@ -41,9 +42,7 @@
                     return false;
                 }
 
-                return this.execution.state.current === "RUNNING" ||
-                    this.execution.state.current === "CREATED" ||
-                    this.execution.state.current === "RESTARTED";
+                return State.isKillable(this.execution.state.current);
             }
         }
     };

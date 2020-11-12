@@ -23,7 +23,7 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a Python script",
+    title = "Execute a Node.js script",
     description = "With this Node task, we can execute a full javascript script.\n" +
         "The task will create a temprorary folder for every tasks and allows you to install some npm packages defined in an optional `package.json` file.\n" +
         "\n" +
@@ -33,57 +33,43 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 @Plugin(
     examples = {
         @Example(
-
             title = "Execute a node script",
             code = {
-                "id: js",
-                "namespace: org.kestra.tests",
-                "revision: 8",
-                "tasks:",
-                "- id: date",
-                "    type: org.kestra.core.tasks.scripts.Node",
-                "    interpreter: /bin/bash",
-                "    interpreterArgs:",
-                "    - -c",
-                "    exitOnFailed: true",
-                "    inputFiles:",
-                "    main.js: |",
-                "        const fs = require('fs')",
-                "        const result = fs.readFileSync(process.argv[2], \"utf-8\")",
-                "        console.log(JSON.parse(result).status)",
-                "        const axios = require('axios')",
-                "        axios.get('http://google.fr').then(d => console.log(d.status))",
-                "        console.log(require('./mymodule').value)",
-                "    data.json: |",
-                "        {\"status\": \"OK\"}",
-                "    mymodule.js: |",
-                "        module.exports.value = 'hello world'",
-                "    package.json: |",
-                "        {",
-                "        \"name\": \"tmp\",",
-                "        \"version\": \"1.0.0\",",
-                "        \"description\": \"\",",
-                "        \"main\": \"index.js\",",
-                "        \"dependencies\": {",
-                "            \"axios\": \"^0.20.0\"",
-                "        },",
-                "        \"devDependencies\": {},",
-                "        \"scripts\": {",
-                "            \"test\": \"echo \"Error: no test specified\" && exit 1\"",
-                "        },",
-                "        \"author\": \"\",",
-                "        \"license\": \"ISC\"",
-                "        }",
-                "    nodePath: /tmp/node",
-                "    npmPath: /tmp/npm",
-                "    args:",
-                "    - data.json",
+                "inputFiles:",
+                "  main.js: |",
+                "    const fs = require('fs')",
+                "    const result = fs.readFileSync(process.argv[2], \"utf-8\")",
+                "    console.log(JSON.parse(result).status)",
+                "    const axios = require('axios')",
+                "    axios.get('http://google.fr').then(d => console.log(d.status))",
+                "    console.log(require('./mymodule').value)",
+                "  data.json: |",
+                "    {\"status\": \"OK\"}",
+                "  mymodule.js: |",
+                "    module.exports.value = 'hello world'",
+                "  package.json: |",
+                "    {",
+                "      \"name\": \"tmp\",",
+                "      \"version\": \"1.0.0\",",
+                "      \"description\": \"\",",
+                "      \"main\": \"index.js\",",
+                "      \"dependencies\": {",
+                "          \"axios\": \"^0.20.0\"",
+                "      },",
+                "      \"devDependencies\": {},",
+                "      \"scripts\": {",
+                "          \"test\": \"echo \"Error: no test specified\" && exit 1\"",
+                "      },",
+                "      \"author\": \"\",",
+                "      \"license\": \"ISC\"",
+                "    }",
+                "args:",
+                "  - data.json",
             }
         )
     }
 )
 public class Node extends AbstractBash implements RunnableTask<AbstractBash.Output> {
-
     @Builder.Default
     @Schema(
         title = "The node interpreter to use",
@@ -98,7 +84,6 @@ public class Node extends AbstractBash implements RunnableTask<AbstractBash.Outp
     )
     private final String npmPath = "/usr/bin/npm";
 
-
     @Schema(
         title = "node command args",
         description = "Arguments list to pass to main javascript script"
@@ -106,7 +91,6 @@ public class Node extends AbstractBash implements RunnableTask<AbstractBash.Outp
     )
     @PluginProperty(dynamic = true)
     private List<String> args;
-
 
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
@@ -123,7 +107,6 @@ public class Node extends AbstractBash implements RunnableTask<AbstractBash.Outp
             if (this.exitOnFailed) {
                 renderer.add("set -o errexit");
             }
-
 
             String args = getArgs() == null ? "" : " " + runContext.render(String.join(" ", getArgs()));
 

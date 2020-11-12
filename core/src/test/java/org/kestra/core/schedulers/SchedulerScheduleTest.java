@@ -5,7 +5,6 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.triggers.types.Schedule;
-import org.kestra.core.models.triggers.types.ScheduleBackfill;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.services.FlowListenersService;
 
@@ -26,7 +25,7 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
             .id("hourly")
             .type(Schedule.class.getName())
             .cron("0 * * * *")
-            .backfill(ScheduleBackfill.builder()
+            .backfill(Schedule.ScheduleBackfill.builder()
                 .start(date(5))
                 .build()
             )

@@ -15,8 +15,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 @Singleton
 public class FlowTriggerCaseTest {
@@ -66,8 +65,15 @@ public class FlowTriggerCaseTest {
         assertThat(flowListener.get().getTaskRunList().size(), is(1));
         assertThat(flowListener.get().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(flowListener.get().getTaskRunList().get(0).getOutputs().get("value"), is("childs: from parents: " + execution.getId()));
+        assertThat(flowListener.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
+        assertThat(flowListener.get().getTrigger().getVariables().get("namespace"), is("org.kestra.tests"));
+        assertThat(flowListener.get().getTrigger().getVariables().get("flowId"), is("trigger-flow"));
 
         assertThat(flowListenerNoInput.get().getTaskRunList().size(), is(1));
+        assertThat(flowListenerNoInput.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
+        assertThat(flowListenerNoInput.get().getTrigger().getVariables().get("namespace"), is("org.kestra.tests"));
+        assertThat(flowListenerNoInput.get().getTrigger().getVariables().get("flowId"), is("trigger-flow"));
+
         assertThat(flowListenerNoInput.get().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

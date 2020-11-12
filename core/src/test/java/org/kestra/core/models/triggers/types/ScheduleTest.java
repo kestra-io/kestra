@@ -79,10 +79,11 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent(), is(true));
 
-        var vars = (Map<String, ZonedDateTime>) evaluate.get().getVariables().get("schedule");
-        assertThat(vars.get("date"), is(date));
-        assertThat(vars.get("next"), is(date.plusMonths(1)));
-        assertThat(vars.get("previous"), is(date.minusMonths(1)));
+        var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
+
+        assertThat(dateFromVars(vars.get("date"), date), is(date));
+        assertThat(dateFromVars(vars.get("next"), date), is(date.plusMonths(1)));
+        assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
     }
 
     @SuppressWarnings("unchecked")
@@ -100,10 +101,12 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent(), is(true));
 
-        var vars = (Map<String, ZonedDateTime>) evaluate.get().getVariables().get("schedule");
-        assertThat(vars.get("date"), is(date));
-        assertThat(vars.get("next"), is(date.plus(Duration.ofMinutes(1))));
-        assertThat(vars.get("previous"), is(date.minus(Duration.ofMinutes(1))));
+        var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
+
+
+        assertThat(dateFromVars(vars.get("date"), date), is(date));
+        assertThat(dateFromVars(vars.get("next"), date), is(date.plus(Duration.ofMinutes(1))));
+        assertThat(dateFromVars(vars.get("previous"), date), is(date.minus(Duration.ofMinutes(1))));
     }
 
     @Test
@@ -129,7 +132,7 @@ class ScheduleTest {
 
         Schedule trigger = Schedule.builder()
             .cron("0 0 * * *")
-            .backfill(ScheduleBackfill.builder().start(date).build())
+            .backfill(Schedule.ScheduleBackfill.builder().start(date).build())
             .build();
         ZonedDateTime next = trigger.nextDate(Optional.empty());
 
@@ -140,7 +143,7 @@ class ScheduleTest {
     void backfillNextDateContext() {
         Schedule trigger = Schedule.builder()
             .cron("0 0 * * *")
-            .backfill(ScheduleBackfill.builder().start(ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]")).build())
+            .backfill(Schedule.ScheduleBackfill.builder().start(ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]")).build())
             .build();
         ZonedDateTime date = ZonedDateTime.parse("2020-03-01T00:00:00+01:00[Europe/Paris]");
         ZonedDateTime next = trigger.nextDate(Optional.of(context(date, trigger)));
@@ -150,7 +153,7 @@ class ScheduleTest {
 
     @Test
     void emptyBackfillStartDate() {
-        Schedule trigger = Schedule.builder().cron("0 0 * * *").backfill(ScheduleBackfill.builder().build()).build();
+        Schedule trigger = Schedule.builder().cron("0 0 * * *").backfill(Schedule.ScheduleBackfill.builder().build()).build();
         ZonedDateTime next = trigger.nextDate(Optional.empty());
 
         assertThat(next.getDayOfMonth(), is(ZonedDateTime.now().plusDays(1).getDayOfMonth()));
@@ -176,9 +179,13 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent(), is(true));
 
-        var vars = (Map<String, ZonedDateTime>) evaluate.get().getVariables().get("schedule");
-        assertThat(vars.get("date"), is(expexted));
-        assertThat(vars.get("next"), is(expexted.plusMonths(1)));
-        assertThat(vars.get("previous"), is(expexted.minusMonths(1)));
+        var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
+        assertThat(dateFromVars(vars.get("date"), expexted), is(expexted));
+        assertThat(dateFromVars(vars.get("next"), expexted), is(expexted.plusMonths(1)));
+        assertThat(dateFromVars(vars.get("previous"), expexted), is(expexted.minusMonths(1)));
+    }
+
+    private ZonedDateTime dateFromVars(String date, ZonedDateTime expexted) {
+        return ZonedDateTime.parse(date).withZoneSameInstant(expexted.getZone());
     }
 }

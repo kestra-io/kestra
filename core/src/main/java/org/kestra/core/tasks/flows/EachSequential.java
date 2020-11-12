@@ -1,7 +1,5 @@
 package org.kestra.core.tasks.flows;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -12,6 +10,7 @@ import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
@@ -25,11 +24,9 @@ import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.services.TreeService;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -104,7 +101,7 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
     }
 
     @Override
-    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+    public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveSequentialNexts(
             execution,
             FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.value),

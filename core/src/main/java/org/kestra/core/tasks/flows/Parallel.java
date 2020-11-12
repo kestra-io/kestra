@@ -10,8 +10,8 @@ import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
-import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
 import org.kestra.core.models.hierarchies.TaskTree;
 import org.kestra.core.models.tasks.FlowableTask;
@@ -22,10 +22,8 @@ import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.services.TreeService;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.Valid;
@@ -103,7 +101,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     }
 
     @Override
-    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+    public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveParallelNexts(
             execution,
             this.childTasks(runContext, parentTaskRun),

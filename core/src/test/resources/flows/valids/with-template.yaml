@@ -20,6 +20,8 @@ tasks:
     type: org.kestra.core.tasks.flows.Template
     namespace: org.kestra.tests
     templateId: template
+    args:
+      my-forward: "{{ inputs.with-string }}"
   - id: 3-end
     type: org.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

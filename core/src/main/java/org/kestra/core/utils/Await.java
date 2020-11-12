@@ -57,7 +57,7 @@ public class Await {
             } else {
                 return false;
             }
-        }, null);
+        }, sleep);
 
         return result.get();
     }

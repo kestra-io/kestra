@@ -120,17 +120,19 @@ public class Flow implements DeletedInterface {
 
     private List<Task> allTasksWithChilds() {
         return allTasks()
-            .flatMap(task -> {
-                if (task.isFlowable()) {
-                    return Stream.concat(
-                        Stream.of(task),
-                        ((FlowableTask<?>) task).allChildTasks().stream()
-                    );
-                } else {
-                    return Stream.of(task);
-                }
-            })
+            .flatMap(this::allTasksWithChilds)
             .collect(Collectors.toList());
+    }
+
+    private Stream<Task> allTasksWithChilds(Task task) {
+        if (task.isFlowable()) {
+            return Stream.concat(
+                Stream.of(task),
+                ((FlowableTask<?>) task).allChildTasks().stream()
+            );
+        } else {
+            return Stream.of(task);
+        }
     }
 
     public Task findTaskByTaskId(String taskId) throws InternalException {
@@ -154,6 +156,7 @@ public class Flow implements DeletedInterface {
     public boolean isListenerTask(String id) {
         return this.listenersTasks()
             .stream()
+            .flatMap(this::allTasksWithChilds)
             .anyMatch(task -> task.getId().equals(id));
     }
 

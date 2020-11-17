@@ -44,7 +44,6 @@ class DocumentationGeneratorTest {
 
         String render = DocumentationGenerator.render(doc);
 
-        System.out.println(render);
         assertThat(render, containsString("# Bash"));
     }
 }

@@ -7,6 +7,7 @@ import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.Plugin;
+import org.kestra.core.models.annotations.PluginProperty;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
@@ -84,6 +85,10 @@ import static org.kestra.core.utils.Rethrow.throwPredicate;
 public class Switch extends Task implements FlowableTask<Switch.Output>, TaskValidationInterface<Switch> {
     @NotBlank
     @NotNull
+    @Schema(
+        title = "The value to be evaluated"
+    )
+    @PluginProperty(dynamic = true)
     private String value;
 
     @Valid

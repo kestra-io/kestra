@@ -91,6 +91,21 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @PluginProperty(dynamic = false)
     private String templateId;
 
+    @Schema(
+        title = "The args to pass to the template",
+        description = "You can provide a list of named arguments (like function argument on dev) allowing to rename " +
+            "outputs of current flow for this template.\n" +
+            "for example, if you declare this use of template like this: \n" +
+            "```yaml\n" +
+            "  - id: 2-template\n" +
+            "    type: org.kestra.core.tasks.flows.Template\n" +
+            "    namespace: org.kestra.tests\n" +
+            "    templateId: template\n" +
+            "    args:\n" +
+            "      forward: \"{{ output.task-id.uri }}\"\n" +
+            "```\n" +
+            "You will be able to get this output on the template with `{{ parent.outputs.args.forward }}`"
+    )
     @PluginProperty(dynamic = true, additionalProperties = String.class)
     private Map<String, String> args;
 
@@ -210,6 +225,9 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @Builder
     @Getter
     public static class Output implements org.kestra.core.models.tasks.Output {
+        @Schema(
+            title = "The args passed to the template"
+        )
         private final Map<String, Object> args;
     }
 }

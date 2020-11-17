@@ -367,8 +367,7 @@ public abstract class AbstractExecutor implements Runnable {
         return this.saveFlowableOutput(
             FlowableUtils.resolveSequentialNexts(
                 execution,
-                currentTasks,
-                new ArrayList<>()
+                currentTasks
             ),
             flow,
             execution,

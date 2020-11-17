@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @Value
@@ -177,7 +178,7 @@ public class Execution implements DeletedInterface {
      * @param parentTaskRun  the parent task
      * @return the flow we need to follow
      */
-    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks, List<ResolvedTask> resolvedErrors, TaskRun parentTaskRun) {
+    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks, @Nullable List<ResolvedTask> resolvedErrors, TaskRun parentTaskRun) {
         resolvedTasks = removeDisabled(resolvedTasks);
         resolvedErrors = removeDisabled(resolvedErrors);
 
@@ -186,6 +187,13 @@ public class Execution implements DeletedInterface {
         if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks)) {
             return resolvedErrors == null ? new ArrayList<>() : resolvedErrors;
         }
+
+
+        return resolvedTasks;
+    }
+
+    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks) {
+        resolvedTasks = removeDisabled(resolvedTasks);
 
         return resolvedTasks;
     }

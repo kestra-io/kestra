@@ -10,6 +10,7 @@ import io.micronaut.http.sse.Event;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
@@ -309,6 +310,7 @@ public class ExecutionController {
 
                 cancel.set(receive);
             }, BackpressureStrategy.BUFFER)
+            .observeOn(Schedulers.io())
             .doOnCancel(() -> {
                 if (cancel.get() != null) {
                     cancel.get().run();

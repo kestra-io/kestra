@@ -9,6 +9,7 @@ import io.micronaut.http.sse.Event;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
@@ -106,6 +107,7 @@ public class LogController {
 
                 cancel.set(receive);
             }, BackpressureStrategy.BUFFER)
+            .observeOn(Schedulers.io())
             .doOnCancel(() -> {
                 if (cancel.get() != null) {
                     cancel.get().run();

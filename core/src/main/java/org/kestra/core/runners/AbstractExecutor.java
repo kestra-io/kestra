@@ -162,15 +162,14 @@ public abstract class AbstractExecutor implements Runnable {
 
         if (parent instanceof FlowableTask) {
             FlowableTask<?> flowableParent = (FlowableTask<?>) parent;
-            RunContext runContext = runContextFactory.of(
-                flow,
-                parent,
-                execution,
-                parentTaskRun
-            );
 
             List<NextTaskRun> nexts = flowableParent.resolveNexts(
-                runContext,
+                runContextFactory.of(
+                    flow,
+                    parent,
+                    execution,
+                    parentTaskRun
+                ),
                 execution,
                 parentTaskRun
             );
@@ -180,7 +179,7 @@ public abstract class AbstractExecutor implements Runnable {
                     .of(nexts)
                     .map(throwFunction(nextTaskRuns -> this.saveFlowableOutput(
                         nextTaskRuns,
-                        runContext,
+                        flow,
                         execution,
                         parentTaskRun
                     )));
@@ -192,7 +191,7 @@ public abstract class AbstractExecutor implements Runnable {
 
     private List<TaskRun> saveFlowableOutput(
         List<NextTaskRun> nextTaskRuns,
-        RunContext runContext,
+        Flow flow,
         Execution execution,
         TaskRun parentTaskRun
     ) {
@@ -207,13 +206,20 @@ public abstract class AbstractExecutor implements Runnable {
                 FlowableTask<?> flowableTask = (FlowableTask<?>) t.getTask();
 
                 try {
+                    RunContext runContext = runContextFactory.of(
+                        flow,
+                        t.getTask(),
+                        execution,
+                        t.getTaskRun()
+                    );
+
                     taskRun = taskRun.withOutputs(
                         flowableTask.outputs(runContext, execution, parentTaskRun) != null ?
                             flowableTask.outputs(runContext, execution, parentTaskRun).toMap() :
                             ImmutableMap.of()
                     );
                 } catch (Exception e) {
-                    log.warn("Unable to save output on taskRun '{}'", taskRun);
+                    log.warn("Unable to save output on taskRun '{}'", taskRun, e);
                 }
 
                 return taskRun;
@@ -314,7 +320,7 @@ public abstract class AbstractExecutor implements Runnable {
                     ResolvedTask.of(flow.getTasks()),
                     ResolvedTask.of(flow.getErrors())
                 ),
-            runContextFactory.of(flow, execution),
+            flow,
             execution,
             null
         );
@@ -364,7 +370,7 @@ public abstract class AbstractExecutor implements Runnable {
                 currentTasks,
                 new ArrayList<>()
             ),
-            runContextFactory.of(flow, execution),
+            flow,
             execution,
             null
         );

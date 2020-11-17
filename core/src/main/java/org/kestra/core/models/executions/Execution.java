@@ -530,8 +530,12 @@ public class Execution implements DeletedInterface {
             }
         }
 
-        if (taskRun.getOutputs() != null && taskRun.getValue() != null) {
-            current.put(taskRun.getValue(), taskRun.getOutputs());
+        if (taskRun.getOutputs() != null) {
+            if (taskRun.getValue() != null) {
+                current.put(taskRun.getValue(), taskRun.getOutputs());
+            } else {
+                current.putAll(taskRun.getOutputs());
+            }
         }
 
         return Map.of(taskRun.getTaskId(), result);

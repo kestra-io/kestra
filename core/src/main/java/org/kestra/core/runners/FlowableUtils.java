@@ -18,10 +18,21 @@ import java.util.stream.Collectors;
 public class FlowableUtils {
     public static List<NextTaskRun> resolveSequentialNexts(
         Execution execution,
+        List<ResolvedTask> tasks
+    ) {
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks);
+
+        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, null);
+    }
+
+    public static List<NextTaskRun> resolveSequentialNexts(
+        Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors
     ) {
-        return FlowableUtils.resolveSequentialNexts(execution, tasks, errors, null);
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, null);
+
+        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, null);
     }
 
     public static List<NextTaskRun> resolveSequentialNexts(
@@ -32,6 +43,14 @@ public class FlowableUtils {
     ) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, parentTaskRun);
 
+        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, parentTaskRun);
+    }
+
+    private static List<NextTaskRun> innerResolveSequentialNexts(
+        Execution execution,
+        List<ResolvedTask> currentTasks,
+        TaskRun parentTaskRun
+    ) {
         // nothing
         if (currentTasks == null || currentTasks.size() == 0) {
             return new ArrayList<>();

@@ -96,4 +96,22 @@ class VariableRendererTest {
             VARIABLE_RENDERER.render("{{ firstDefinedEval 'missing' 'missing2' }}", vars);
         });
     }
+
+    @Test
+    void get() throws IllegalVariableEvaluationException {
+        ImmutableMap<String, Object> vars = ImmutableMap.of(
+            "block", ImmutableMap.of("test", ImmutableMap.of("child", "awesome")),
+            "inner", "test"
+        );
+
+        String render = VARIABLE_RENDERER.render("{{ get block 'test' }}", vars);
+        assertThat(render, is("{child=awesome}"));
+
+        render = VARIABLE_RENDERER.render("{{ get (get block 'test') 'child' }}", vars);
+        assertThat(render, is("awesome"));
+
+        assertThrows(HandlebarsException.class, () -> {
+            VARIABLE_RENDERER.render("{{ get missing }}", vars);
+        });
+    }
 }

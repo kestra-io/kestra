@@ -34,14 +34,23 @@ public class JqHelper implements Helper<Object> {
 
         JsonNode in;
 
-        if (value instanceof String) {
-            in = JacksonMapper.ofJson().readTree((String) value);
-        } else  {
-            in = JacksonMapper.ofJson().valueToTree(value);
+        try {
+            if (value instanceof String) {
+                in = JacksonMapper.ofJson().readTree((String) value);
+            } else {
+                in = JacksonMapper.ofJson().valueToTree(value);
+            }
+        } catch (Exception e) {
+            throw new Exception("Unable to parse jq value '" + value +  "' with type '" + value.getClass().getName() + "'", e);
         }
 
         final List<JsonNode> out = new ArrayList<>();
-        q.apply(scope, in, out::add);
+
+        try {
+            q.apply(scope, in, out::add);
+        } catch (Exception e) {
+            throw new Exception("Failed to resolve JQ expression '" + pattern +  "' and value '" + value +  "'", e);
+        }
 
         if (first) {
             if (out.size() > 0) {

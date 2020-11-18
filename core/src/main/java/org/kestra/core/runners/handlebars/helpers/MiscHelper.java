@@ -5,6 +5,8 @@ import com.github.jknack.handlebars.Helper;
 import com.github.jknack.handlebars.Options;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public enum MiscHelper implements Helper<Object> {
     /**
@@ -35,6 +37,39 @@ public enum MiscHelper implements Helper<Object> {
             }
 
             return result;
+        }
+    },
+
+    get {
+        @Override
+        public Object apply(final Object value, final Options options) {
+            String key = options.param(0, options.hash("key"));
+
+            if (key == null) {
+                throw new IllegalStateException("Missing 'key' params");
+            }
+
+
+            if (value instanceof Map) {
+                Map<?, ?> map = (Map<?, ?>) value;
+
+                if (!map.containsKey(key)) {
+                    throw new IllegalStateException("Unable to find key '" + key + "' on '" + value + "'");
+                }
+                return map.get(key);
+            }
+
+            if (value instanceof List) {
+                List<?> list = (List<?>) value;
+                int arrayIndex = Integer.parseInt(key);
+
+                if (list.size() - 1 > arrayIndex) {
+                    throw new IllegalStateException("Unable to find key '" + key + "' on '" + value + "'");
+                }
+                return list.get(arrayIndex);
+            }
+
+            throw new IllegalStateException("Incompatible type '" + value.getClass() + "' for indexOf with  '" + key + "' on '" + value + "'");
         }
     }
 }

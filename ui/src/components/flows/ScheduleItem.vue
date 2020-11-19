@@ -65,6 +65,7 @@
     </b-list-group-item>
 </template>
 <script>
+    import Vue from "vue";
     const cronstrue = require("cronstrue/i18n");
     const cronParser = require("cron-parser");
     import Delete from "vue-material-design-icons/Delete";
@@ -97,6 +98,10 @@
                 },
                 set: function (val) {
                     let current = this.schedule;
+
+                    if (current.backfill === undefined) {
+                        Vue.set(current, "backfill", {})
+                    }
 
                     if (val) {
                         current.backfill = {"start": this.$moment(val).format()};

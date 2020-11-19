@@ -68,7 +68,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
         kafkaProducer.initTransactions();
 
         // then we consume
-        try (KafkaConsumer<String, WorkerTask> kafkaConsumer = kafkaConsumerService.of(
+        try (org.apache.kafka.clients.consumer.Consumer<String, WorkerTask> kafkaConsumer = kafkaConsumerService.of(
             consumerGroup,
             JsonSerde.of(WorkerTask.class),
             ImmutableMap.of("client.id", this.workerUuid.toString()),
@@ -101,7 +101,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                     consumer.accept(record.value());
                 });
 
-                kafkaProducer.sendOffsetsToTransaction(maxOffsets(records), KafkaQueue.getConsumerGroupName(consumerGroup));
+                kafkaProducer.sendOffsetsToTransaction(KafkaConsumerService.maxOffsets(records), KafkaQueue.getConsumerGroupName(consumerGroup));
 
                 kafkaProducer.commitTransaction();
             }
@@ -140,23 +140,6 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                 workerInstanceQueue.emit(workerInstance.get());
             }
         };
-    }
-
-    static <T> Map<TopicPartition, OffsetAndMetadata> maxOffsets(ConsumerRecords<String, T> records) {
-        Map<TopicPartition, OffsetAndMetadata> results = new HashMap<>();
-
-        for (ConsumerRecord<String, T> record: records) {
-            TopicPartition topicPartition = new TopicPartition(record.topic(), record.partition());
-            results.compute(topicPartition, (current, offsetAndMetadata) -> {
-                if (offsetAndMetadata == null || record.offset() + 1 > offsetAndMetadata.offset()) {
-                    return new OffsetAndMetadata(record.offset() + 1);
-                } else {
-                    return offsetAndMetadata;
-                }
-            });
-        }
-
-        return results;
     }
 
     @PreDestroy

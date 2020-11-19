@@ -1,0 +1,39 @@
+kestra:
+  queue:
+    type: kafka
+  repository:
+    type: elasticsearch
+
+  elasticsearch:
+    client:
+      httpHosts: http://localhost:9200
+
+    indices:
+      executions:
+        index: "unit_kestra_executions"
+        cls: org.kestra.core.models.executions.Execution
+        mapping-file: execution
+        settings: &settings |
+          {
+            "index.number_of_replicas": 0
+          }
+      logs:
+        index: "unit_kestra_logs"
+        cls: org.kestra.core.models.executions.LogEntry
+        mapping-file: log
+        settings: *settings
+
+  kafka:
+    client:
+      properties:
+        bootstrap.servers: "localhost:9092"
+
+    topics:
+      execution:
+        name: "unit_kestra_execution"
+        cls: org.kestra.core.models.executions.Execution
+
+      logentry:
+        cls: org.kestra.core.models.executions.LogEntry
+        name: "unit_kestra_logs"
+

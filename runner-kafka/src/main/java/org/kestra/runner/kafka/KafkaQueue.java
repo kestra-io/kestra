@@ -38,7 +38,7 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
     private final AdminClient adminClient;
     private final KafkaConsumerService kafkaConsumerService;
     private final KafkaProducer<String, T> kafkaProducer;
-    private final List<KafkaConsumer<String, T>> kafkaConsumers = new ArrayList<>();
+    private final List<org.apache.kafka.clients.consumer.Consumer<String, T>> kafkaConsumers = new ArrayList<>();
     private final TopicsConfig topicsConfig;
     private static ExecutorService poolExecutor;
 
@@ -98,7 +98,7 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
         AtomicBoolean running = new AtomicBoolean(true);
 
         poolExecutor.execute(() -> {
-            KafkaConsumer<String, T> kafkaConsumer = kafkaConsumerService.of(
+            org.apache.kafka.clients.consumer.Consumer<String, T> kafkaConsumer = kafkaConsumerService.of(
                 consumerGroup,
                 JsonSerde.of(this.cls)
             );
@@ -177,6 +177,6 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
     @Override
     public void close() {
         kafkaProducer.close();
-        kafkaConsumers.forEach(KafkaConsumer::close);
+        kafkaConsumers.forEach(org.apache.kafka.clients.consumer.Consumer::close);
     }
 }

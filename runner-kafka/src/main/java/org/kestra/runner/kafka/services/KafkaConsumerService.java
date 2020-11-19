@@ -3,9 +3,7 @@ package org.kestra.runner.kafka.services;
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -19,9 +17,9 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Singleton
 @Slf4j
@@ -35,12 +33,11 @@ public class KafkaConsumerService {
     @Inject
     private MetricRegistry metricRegistry;
 
-
-    public <V> Consumer<V> of(Class<?> group, Serde<V> serde) {
+    public <V> org.apache.kafka.clients.consumer.Consumer<String, V> of(Class<?> group, Serde<V> serde) {
         return of(group, serde, null, null);
     }
 
-    public <V> Consumer<V> of(Class<?> group, Serde<V> serde, Map<String, String> properties, ConsumerRebalanceListener consumerRebalanceListener) {
+    public <V> org.apache.kafka.clients.consumer.Consumer<String, V> of(Class<?> group, Serde<V> serde, Map<String, String> properties, ConsumerRebalanceListener consumerRebalanceListener) {
         Properties props = new Properties();
         props.putAll(clientConfig.getProperties());
 
@@ -60,6 +57,31 @@ public class KafkaConsumerService {
         }
 
         return new Consumer<>(props, serde, metricRegistry, consumerRebalanceListener);
+    }
+
+    public static <T> Map<TopicPartition, OffsetAndMetadata> maxOffsets(ConsumerRecords<String, T> records) {
+        return KafkaConsumerService.maxOffsets(
+            StreamSupport
+                .stream(records.spliterator(), false)
+                .collect(Collectors.toList())
+        );
+    }
+
+    public static <T> Map<TopicPartition, OffsetAndMetadata> maxOffsets(List<ConsumerRecord<String, T>> records) {
+        Map<TopicPartition, OffsetAndMetadata> results = new HashMap<>();
+
+        for (ConsumerRecord<String, T> record: records) {
+            TopicPartition topicPartition = new TopicPartition(record.topic(), record.partition());
+            results.compute(topicPartition, (current, offsetAndMetadata) -> {
+                if (offsetAndMetadata == null || record.offset() + 1 > offsetAndMetadata.offset()) {
+                    return new OffsetAndMetadata(record.offset() + 1);
+                } else {
+                    return offsetAndMetadata;
+                }
+            });
+        }
+
+        return results;
     }
 
     public static class Consumer<V> extends KafkaConsumer<String, V> {

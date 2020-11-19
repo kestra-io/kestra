@@ -11,5 +11,7 @@ include 'storage-local'
 include 'repository-elasticsearch'
 include 'repository-memory'
 
+include 'indexer-kafka-elasticsearch'
+
 include 'webserver'
 include 'ui'

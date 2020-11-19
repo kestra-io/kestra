@@ -58,9 +58,9 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
             poolExecutor.execute(applicationContext.getBean(Scheduler.class));
         }
 
-        if (applicationContext.containsBean(Indexer.class)) {
+        if (applicationContext.containsBean(IndexerInterface.class)) {
             for (int i = 0; i < indexerThread; i++) {
-                poolExecutor.execute(applicationContext.getBean(Indexer.class));
+                poolExecutor.execute(applicationContext.getBean(IndexerInterface.class));
             }
         }
     }

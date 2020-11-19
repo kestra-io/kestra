@@ -30,8 +30,13 @@ public class MetricRegistry {
     public final static String KESTRA_EXECUTOR_EXECUTION_END_COUNT = "executor.execution.end.count";
     public final static String METRIC_EXECUTOR_EXECUTION_DURATION = "executor.execution.duration";
 
-    public final static String METRIC_INDEXER_COUNT = "indexer.count";
-    public final static String METRIC_INDEXER_DURATION = "indexer.duration";
+    public final static String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
+    public final static String METRIC_INDEXER_REQUEST_DURATION = "indexer.request.duration";
+    public final static String METRIC_INDEXER_REQUEST_RETRY_COUNT = "indexer.request.retry.count";
+    public final static String METRIC_INDEXER_SERVER_DURATION = "indexer.server.duration";
+    public final static String METRIC_INDEXER_MESSAGE_FAILED_COUNT = "indexer.message.failed.count";
+    public final static String METRIC_INDEXER_MESSAGE_IN_COUNT = "indexer.message.in.count";
+    public final static String METRIC_INDEXER_MESSAGE_OUT_COUNT = "indexer.message.out.count";
 
     public final static String SCHEDULER_TRIGGER_COUNT = "scheduler.trigger.count";
     public final static String SCHEDULER_EVALUATE_RUNNING_COUNT = "scheduler.evaluate.running.count";

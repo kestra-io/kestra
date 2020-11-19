@@ -1,4 +1,5 @@
 import JsYaml from "js-yaml";
+import _cloneDeep from "lodash/cloneDeep"
 
 export default class YamlUtils {
     static stringify(value) {
@@ -6,8 +7,7 @@ export default class YamlUtils {
             return "";
         }
 
-        // return JsYaml.safeDump(YamlUtils._transform(_cloneDeep(value)), {
-        return JsYaml.safeDump(value, {
+        return JsYaml.safeDump(YamlUtils._transform(_cloneDeep(value)), {
             lineWidth: -1,
             noCompatMode: true,
         });
@@ -23,12 +23,12 @@ export default class YamlUtils {
                 return YamlUtils._transform(r);
             })
         } else if (typeof(value) === "string" || value instanceof String) {
-            value = value
-                .replaceAll(/\u00A0/g, " ");
-
-            if (value.indexOf("\\n") >= 0) {
-                return value.replaceAll("\\n", "\n") + "\n";
-            }
+            // value = value
+            //     .replaceAll(/\u00A0/g, " ");
+            //
+            // if (value.indexOf("\\n") >= 0) {
+            //     return value.replaceAll("\\n", "\n") + "\n";
+            // }
 
             return value;
         } else if (value instanceof Object) {

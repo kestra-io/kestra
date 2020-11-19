@@ -15,7 +15,7 @@ import javax.inject.Named;
 
 @Prototype
 @Requires(beans = {ExecutionRepositoryInterface.class, LogRepositoryInterface.class})
-public class Indexer implements Runnable {
+public class Indexer implements IndexerInterface {
     private ExecutionRepositoryInterface executionRepository;
     private LogRepositoryInterface logRepository;
     private QueueInterface<Execution> executionQueue;
@@ -40,18 +40,22 @@ public class Indexer implements Runnable {
     @Override
     public void run() {
         executionQueue.receive(Indexer.class, execution -> {
-            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_COUNT).increment();
+            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT).increment();
+            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT).increment();
 
-            this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_DURATION).record(() -> {
+            this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION).record(() -> {
                 executionRepository.save(execution);
+                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT).increment();
             });
         });
 
         logQueue.receive(Indexer.class, logEntry -> {
-            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_COUNT).increment();
+            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT).increment();
+            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT).increment();
 
-            this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_DURATION).record(() -> {
+            this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION).record(() -> {
                 logRepository.save(logEntry);
+                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT).increment();
             });
         });
     }

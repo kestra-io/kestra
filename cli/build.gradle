@@ -27,6 +27,8 @@ dependencies {
     implementation project(":runner-memory")
     implementation project(":runner-kafka")
 
+    implementation project(":indexer-kafka-elasticsearch")
+
     implementation project(":storage-local")
 
     implementation project(":webserver")

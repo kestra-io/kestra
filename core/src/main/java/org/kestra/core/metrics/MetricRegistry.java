@@ -3,6 +3,7 @@ package org.kestra.core.metrics;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.tasks.Task;
@@ -15,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
+@Slf4j
 public class MetricRegistry {
     public final static String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
     public final static String METRIC_WORKER_STARTED_COUNT = "worker.started.count";
@@ -214,7 +216,11 @@ public class MetricRegistry {
      * @param meterBinder the {@link MeterBinder} to bind to current registry
      */
     public void bind(MeterBinder meterBinder) {
-        meterBinder.bindTo(this.meterRegistry);
+        try {
+            meterBinder.bindTo(this.meterRegistry);
+        } catch (Exception e) {
+            log.warn("Error on metrics", e);
+        }
     }
 }
 

@@ -81,7 +81,7 @@ allprojects {
         implementation "io.micronaut.data:micronaut-data-model"
         implementation "io.micronaut:micronaut-management"
         implementation "io.micronaut.configuration:micronaut-micrometer-core"
-        implementation "io.micrometer:micrometer-core:1.5.2"
+        implementation "io.micrometer:micrometer-core:1.6.1"
         implementation "io.micronaut.configuration:micronaut-micrometer-registry-prometheus"
         api "io.micronaut:micronaut-http-client"
 

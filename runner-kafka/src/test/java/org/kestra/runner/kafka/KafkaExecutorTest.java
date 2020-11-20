@@ -47,7 +47,7 @@ import static org.hamcrest.Matchers.*;
 class KafkaExecutorTest {
     @Inject
     KafkaExecutor stream;
-    
+
     @Inject
     ClientConfig clientConfig;
 
@@ -59,11 +59,11 @@ class KafkaExecutorTest {
 
     @Inject
     FlowRepositoryInterface flowRepository;
-    
+
     TestTopology<String, String> testTopology;
 
     static WorkerInstance workerInstance = workerInstance();
-    
+
     @BeforeEach
     void init() throws IOException, URISyntaxException {
         TestsUtils.loads(repositoryLoader);

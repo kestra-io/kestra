@@ -92,6 +92,11 @@ kestra:
         properties:
           cleanup.policy: "compact"
 
+      executorworkerinstance:
+        name: "kestra_executor_workerinstance"
+        properties:
+          cleanup.policy: "compact"
+
       workertaskrunning:
         cls: org.kestra.core.runners.WorkerTaskRunning
         name: "kestra_workertaskrunning"

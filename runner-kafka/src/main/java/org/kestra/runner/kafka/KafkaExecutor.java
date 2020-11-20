@@ -14,10 +14,8 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
-import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.kestra.core.metrics.MetricRegistry;
-import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
@@ -50,8 +48,10 @@ public class KafkaExecutor extends AbstractExecutor {
     private static final String WORKERTASK_DEDUPLICATION_STATE_STORE_NAME = "workertask_deduplication";
     private static final String TRIGGER_DEDUPLICATION_STATE_STORE_NAME = "trigger_deduplication";
     private static final String NEXTS_DEDUPLICATION_STATE_STORE_NAME = "next_deduplication";
-    private static final String WORKERINSTANCE_STATE_STORE_NAME = "worker_instance";
+    public static final String WORKER_RUNNING_STATE_STORE_NAME = "worker_running";
+    public static final String WORKERINSTANCE_STATE_STORE_NAME = "worker_instance";
     private static final String TOPIC_EXECUTOR = "executor";
+    private static final String TOPIC_EXECUTOR_WORKERINSTANCE = "executorworkerinstance";
 
     ApplicationContext applicationContext;
     KafkaStreamService kafkaStreamService;
@@ -106,12 +106,17 @@ public class KafkaExecutor extends AbstractExecutor {
             Serdes.String()
         ));
 
-        // worker instance
-        builder.addStateStore(Stores.keyValueStoreBuilder(
-            Stores.persistentKeyValueStore(WORKERINSTANCE_STATE_STORE_NAME),
-            Serdes.String(),
-            JsonSerde.of(WorkerInstance.class)
-        ));
+        // worker instance global state store
+        builder.addGlobalStore(
+            Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(WORKERINSTANCE_STATE_STORE_NAME),
+                Serdes.String(),
+                JsonSerde.of(WorkerInstance.class)
+            ),
+            kafkaAdminService.getTopicName(TOPIC_EXECUTOR_WORKERINSTANCE),
+            Consumed.with(Serdes.String(), JsonSerde.of(WorkerInstance.class)),
+            () -> new GlobalStateProcessor<>(WORKERINSTANCE_STATE_STORE_NAME)
+        );
 
         // declare ktable & kstream
         KStream<String, WorkerTaskResult> workerTaskResultKStream = this.workerTaskResultKStream(builder);
@@ -153,7 +158,7 @@ public class KafkaExecutor extends AbstractExecutor {
 
         // handle worker
         this.purgeWorkerRunning(workerTaskResultKStream);
-        this.detectNewWorker(workerInstanceKStream, workerTaskRunningKTable);
+        this.detectNewWorker(workerInstanceKStream);
 
         // build
         Topology topology = builder.build();
@@ -231,7 +236,7 @@ public class KafkaExecutor extends AbstractExecutor {
             .globalTable(
                 kafkaAdminService.getTopicName(WorkerTaskRunning.class),
                 Consumed.with(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class)),
-                Materialized.<String, WorkerTaskRunning, KeyValueStore<Bytes, byte[]>>as("worker_running")
+                Materialized.<String, WorkerTaskRunning, KeyValueStore<Bytes, byte[]>>as(WORKER_RUNNING_STATE_STORE_NAME)
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(WorkerTaskRunning.class))
             );
@@ -643,17 +648,20 @@ public class KafkaExecutor extends AbstractExecutor {
             );
     }
 
-    private void detectNewWorker(
-        KStream<String, WorkerInstance> workerInstanceKStream,
-        @SuppressWarnings("unused") GlobalKTable<String, WorkerTaskRunning> workerTaskRunningKTable // used as a state store on WorkerInstanceTransformer
-    ) {
+    /**
+     * GlobalKTable<String, WorkerTaskRunning> is used as a state store on WorkerInstanceTransformer
+     */
+    private void detectNewWorker(KStream<String, WorkerInstance> workerInstanceKStream) {
+        workerInstanceKStream
+            .to(
+                kafkaAdminService.getTopicName(TOPIC_EXECUTOR_WORKERINSTANCE),
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerInstance.class))
+            );
+
         KStream<String, WorkerInstanceTransformer.Result> stream = workerInstanceKStream
             .transformValues(
-                () -> new WorkerInstanceTransformer(
-                    WORKERINSTANCE_STATE_STORE_NAME
-                ),
-                Named.as("detectNewWorker-transformValues"),
-                WORKERINSTANCE_STATE_STORE_NAME
+                WorkerInstanceTransformer::new,
+                Named.as("detectNewWorker-transformValues")
             )
             .flatMapValues((readOnlyKey, value) -> value, Named.as("detectNewWorker-listToItem-flatMap"));
 
@@ -678,7 +686,7 @@ public class KafkaExecutor extends AbstractExecutor {
             );
 
         // we resend the WorkerInstance update
-        logIfEnabled(
+        KStream<String, WorkerInstance> updatedStream = logIfEnabled(
             stream,
             (key, value) -> log.debug(
                 "Instance updated: {}",
@@ -689,7 +697,17 @@ public class KafkaExecutor extends AbstractExecutor {
             .map(
                 (key, value) -> value.getWorkerInstanceUpdated(),
                 Named.as("detectNewWorker-instanceUpdate-map")
-            )
+            );
+
+        // cleanup executor workerinstance state store
+        updatedStream
+            .filter((key, value) -> value != null, Named.as("detectNewWorker-null-filter"))
+            .to(
+                kafkaAdminService.getTopicName(TOPIC_EXECUTOR_WORKERINSTANCE),
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerInstance.class))
+            );
+
+        updatedStream
             .to(
                 kafkaAdminService.getTopicName(WorkerInstance.class),
                 Produced.with(Serdes.String(), JsonSerde.of(WorkerInstance.class))
@@ -847,6 +865,7 @@ public class KafkaExecutor extends AbstractExecutor {
         kafkaAdminService.createIfNotExist(Execution.class);
         kafkaAdminService.createIfNotExist(Flow.class);
         kafkaAdminService.createIfNotExist(TOPIC_EXECUTOR);
+        kafkaAdminService.createIfNotExist(TOPIC_EXECUTOR_WORKERINSTANCE);
         kafkaAdminService.createIfNotExist(ExecutionKilled.class);
         kafkaAdminService.createIfNotExist(WorkerTaskRunning.class);
         kafkaAdminService.createIfNotExist(WorkerInstance.class);

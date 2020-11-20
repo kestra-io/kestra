@@ -1,16 +1,16 @@
 export default {
     namespaced: true,
     state: {
-        errorMessage: undefined
+        message: undefined
     },
     actions: {
-        showErrorMessage({commit}, message) {
-            commit("setErrorMessage", message)
+        showMessage({commit}, message) {
+            commit("setMessage", message)
         }
     },
     mutations: {
-        setErrorMessage(state, message) {
-            state.errorMessage = message
+        setMessage(state, message) {
+            state.message = message
         }
     },
     getters: {}

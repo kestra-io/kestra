@@ -35,12 +35,13 @@ export default {
                         variant: "success"
                     })
                 },
-                success: function(message, title) {
+                success: function(message, title, options) {
                     self.$bvToast.toast(this._wrap(message), {
                         title: title || self.$t("success"),
                         autoHideDelay: 5000,
                         toaster: "b-toaster-top-right",
-                        variant: "success"
+                        variant: "success",
+                        ...(options || {})
                     })
                 },
                 warning: function(message, title) {

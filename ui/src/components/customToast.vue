@@ -1,11 +1,11 @@
 <template>
-    <b-toast @hide="onHide" :id="toastId" :variant="variant" solid :no-auto-hide="noAutoHide">
+    <b-toast @hide="onHide" id="app-toast" :variant="message.variant" solid :no-auto-hide="noAutoHide">
         <template v-slot:toast-title>
             <div class="d-flex flex-grow-1 align-items-baseline">
-                <strong class="mr-auto">{{ title }}</strong>
+                <strong class="mr-auto" v-html="title" />
             </div>
         </template>
-        <span>{{ content.message || content }}</span>
+        <span>{{ text }}</span>
         <b-table
             class="mt-2 mb-0"
             small
@@ -20,19 +20,7 @@
 <script>
     export default {
         props: {
-            variant: {
-                type: String,
-                default: "danger"
-            },
-            title: {
-                type: String,
-                required: true
-            },
-            toastId: {
-                type: String,
-                required: true
-            },
-            content: {
+            message: {
                 type: Object,
                 required: true
             },
@@ -42,19 +30,28 @@
             }
         },
         mounted() {
-            this.$bvToast.show(this.toastId);
+            this.$bvToast.show("app-toast");
+            if (this.message.timeout) {
+                this.onHide()
+            }
         },
         computed: {
+            text () {
+                return this.message.message || this.message.content.message
+            },
+            title () {
+                return this.message.title || this.$t("error")
+            },
             items() {
-                const messages = this.content && this.content._embedded && this.content._embedded.errors ? this.content._embedded.errors : []
+                const messages = this.message.content && this.message.content.c_embedded && this.message.content._embedded.errors ? this.message.content._embedded.errors : []
                 return Array.isArray(messages) ? messages : [messages]
             }
         },
         methods: {
             onHide() {
                 setTimeout(() => {
-                    this.$store.commit("core/setErrorMessage", undefined);
-                }, 1000);
+                    this.$store.commit("core/setMessage", undefined);
+                }, this.message.timeout || 1000);
             }
         }
     };

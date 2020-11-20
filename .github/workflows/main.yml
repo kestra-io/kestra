@@ -77,16 +77,16 @@ jobs:
           java-version: ${{ matrix.java }}
 
       # Gradle check
-#      - name: Build with Gradle
-#        env:
-#          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
-#        run: |
-#          python3 -m pip install virtualenv
-#          echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
-#          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
-#          ./gradlew classes testClasses --parallel --no-daemon
-#          ./gradlew check --no-daemon
-#        # --parallel
+      - name: Build with Gradle
+        env:
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+        run: |
+          python3 -m pip install virtualenv
+          echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
+          ./gradlew classes testClasses --parallel --no-daemon
+          ./gradlew check --no-daemon
+        # --parallel
 
       # Shadow Jar
       - name: Build jars
@@ -119,7 +119,7 @@ jobs:
       # Slack
       - name: Slack notification
         uses: 8398a7/action-slack@v3
-        if: failure()
+        if: always()
         with:
           status: ${{ job.status }}
           job_name: Check

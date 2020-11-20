@@ -3,7 +3,7 @@
         <nprogress-container />
         <top-nav-bar :menu-collapsed="menuCollapsed" />
         <Menu @onMenuCollapse="onMenuCollapse" />
-        <custom-toast v-if="errorMessage" :no-auto-hide="true" toast-id="errorToast" :content="errorMessage" :title="$t('error')" />
+        <custom-toast v-if="message" :no-auto-hide="true" :message="message" />
         <div id="app" class="container-fluid">
             <div class="content-wrapper" :class="menuCollapsed">
                 <router-view />
@@ -33,7 +33,7 @@
             };
         },
         computed: {
-            ...mapState("core", ["errorMessage"])
+            ...mapState("core", ["message"])
         },
         created() {
             if (this.$route.path === "/") {

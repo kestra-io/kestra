@@ -112,7 +112,7 @@
                     })
                     .then(response => {
                         this.$store.commit("execution/setExecution", response.data)
-                        this.$router.push({name: "executionEdit", params: response.data})
+                        this.$router.push({name: "executionEdit", params: response.data, query: {tab: "gantt"}})
 
                         return response.data;
                     })

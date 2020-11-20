@@ -7,7 +7,7 @@
                 <status :status="execution.state.current" />
             </b-col>
         </b-row>
-        <b-table responsive="xl" striped hover bordered :items="items" class="mb-0">
+        <b-table responsive="xl" striped hover bordered :items="freshItems" class="mb-0">
             <template v-slot:cell(value)="row">
                 <router-link
                     v-if="row.item.link"
@@ -49,6 +49,7 @@
     import humanizeDuration from "humanize-duration";
     import Restart from "./Restart";
     import Kill from "./Kill";
+    import State from "../../utils/state";
 
     const ts = date => new Date(date).getTime();
 
@@ -59,11 +60,51 @@
             Vars,
             Kill
         },
+        data() {
+            return {
+                freshItems: undefined
+            }
+        },
+        created() {
+            const refreshValues = () => {
+                const updatedItems = []
+                if (this.items){
+                    for (let item of this.items) {
+                        if (item.key === this.$t("duration")) {
+                            item.value = this.duration()
+                        }
+                        updatedItems.push(item)
+                    }
+                }
+                this.freshItems = updatedItems
+                if (!this.execution || State.isRunning(this.execution.state.current)) {
+                    setTimeout(refreshValues,100)
+                }
+
+            }
+            setTimeout(refreshValues,300)
+        },
         methods: {
             restart() {
                 this.$emit("follow");
             },
+            duration () {
+                const startTs = this.execution.state.histories[0].date;
+                const delta = ts(this.stop()) - ts(startTs);
+                const duration = this.$moment.duration(delta);
+                return humanizeDuration(duration)
+            },
+            stop() {
+                if (!this.execution || State.isRunning(this.execution.state.current)) {
+                    return new Date().toISOString()
+                } else {
+                    return this.execution.state.histories[
+                        this.execution.state.histories.length - 1
+                    ].date;
+                }
+            }
         },
+
         watch: {
             $route() {
                 if (this.execution.id !== this.$route.params.id) {
@@ -77,13 +118,9 @@
         computed: {
             ...mapState("execution", ["execution"]),
             items() {
-                const startTs = this.execution.state.histories[0].date;
-                const stopTs = this.execution.state.histories[
-                    this.execution.state.histories.length - 1
-                ].date;
-                const delta = ts(stopTs) - ts(startTs);
-                const duration = this.$moment.duration(delta);
-                const humanDuration = humanizeDuration(duration);
+                if (!this.execution) {
+                    return []
+                }
                 const stepCount = this.execution.taskRunList
                     ? this.execution.taskRunList.length
                     : 0;
@@ -95,9 +132,9 @@
                         key: this.$t("revision"),
                         value: this.execution.flowRevision
                     },
-                    {key: this.$t("created date"), value: this.$moment(startTs).format("LLLL")},
-                    {key: this.$t("updated date"), value: this.$moment(stopTs).format("LLLL")},
-                    {key: this.$t("duration"), value: humanDuration},
+                    {key: this.$t("created date"), value: this.$moment(this.execution.state.histories[0].date).format("LLLL")},
+                    {key: this.$t("updated date"), value: this.$moment(this.stop()).format("LLLL")},
+                    {key: this.$t("duration"), value: this.duration()},
                     {key: this.$t("steps"), value: stepCount}
                 ];
 

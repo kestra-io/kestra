@@ -9,6 +9,8 @@ volumes:
     driver: local
   elasticsearch-data:
     driver: local
+  kestra-data:
+    driver: local
 
 services:
   zookeeper:
@@ -46,40 +48,31 @@ services:
       - elasticsearch-data:/usr/share/elasticsearch/data
 
   kestra:
-    image: kestra/kestra:develop
+    image: kestra/kestra:develop-full
     command: server standalone
+    volumes:
+      - kestra-data:/app/storage
     environment:
-      MICRONAUT_APPLICATION_JSON: |
-        {
-          "kestra": {
-            "kafka": {
-              "client": {
-                "properties": {
-                  "bootstrap.servers": "kafka:9092"
-                }
-              }
-            },
-            "elasticsearch": {
-              "client": {
-                "http-hosts": "http://elasticsearch:9200"
-              }
-            },
-            "repository": {
-              "type": "elasticsearch"
-            },
-            "storage": {
-              "type": "local",
-              "local": {
-                "base-path": "/tmp/kestra"
-              }
-            },
-            "queue": {
-              "type": "kafka"
-            }
-          }
-        }
+      KESTRA_CONFIGURATION: |
+        kestra:
+          kafka:
+            client:
+              properties:
+                bootstrap.servers: kafka:9092
+          elasticsearch:
+            client:
+              http-hosts: http://elasticsearch:9200
+          repository:
+            type: elasticsearch
+          storage:
+            type: local
+            local:
+              base-path: "/app/storage"
+          queue:
+            type: kafka
+
     ports:
-      - 28080:8080
+      - 8080:8080
     links:
       - kafka
       - zookeeper

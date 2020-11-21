@@ -35,6 +35,10 @@ yarn.lock
 ### Docker
 /.env
 docker-compose*.overide.yml
+docker/app/plugins/*.jar
+docker/app/kestra
+docker/app/confs/*.yml
+docker/app/secrets/*.yml
 
 ### Build
 core/src/main/resources/gradle.properties

@@ -45,6 +45,14 @@ class YamlFlowParserTest {
     }
 
     @Test
+    void allFlowable() {
+        Flow flow = this.parse("flows/valids/all-flowable.yaml");
+
+        assertThat(flow.getId(), is("all-flowable"));
+        assertThat(flow.getTasks().size(), is(4));
+    }
+
+    @Test
     void validation() {
         assertThrows(ConstraintViolationException.class, () -> {
             this.parse("flows/invalids/invalid.yaml");

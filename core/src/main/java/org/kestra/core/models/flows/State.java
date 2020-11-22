@@ -2,6 +2,7 @@ package org.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.core.annotation.Introspected;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -17,6 +18,7 @@ import java.util.Optional;
 
 @Value
 @Slf4j
+@Introspected
 public class State {
     @NotNull
     private Type current;
@@ -93,6 +95,7 @@ public class State {
         return this.current.isFailed();
     }
 
+    @Introspected
     public enum Type {
         CREATED,
         RUNNING,

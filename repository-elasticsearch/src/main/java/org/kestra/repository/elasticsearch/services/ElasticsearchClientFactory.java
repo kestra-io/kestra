@@ -1,6 +1,6 @@
 package org.kestra.repository.elasticsearch.services;
 
-import io.micronaut.configuration.elasticsearch.DefaultElasticsearchClientFactory;
+import io.micronaut.elasticsearch.DefaultElasticsearchClientFactory;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Replaces;

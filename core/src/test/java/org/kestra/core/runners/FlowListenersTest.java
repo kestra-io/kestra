@@ -1,6 +1,6 @@
 package org.kestra.core.runners;
 
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.SneakyThrows;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.repositories.FlowRepositoryInterface;

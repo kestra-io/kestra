@@ -3,11 +3,11 @@ bintrayUpload.enabled = false
 dependencies {
     implementation project(":core")
 
-    implementation "io.micronaut.configuration:micronaut-elasticsearch"
+    implementation "io.micronaut.elasticsearch:micronaut-elasticsearch"
 
     implementation group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: "$elasticsearchVersion"
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':runner-memory')
-    testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: '3.3.3'
+    testImplementation 'org.mockito:mockito-junit-jupiter:3.7.0'
 }

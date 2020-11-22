@@ -17,27 +17,24 @@ dependencies {
 
     // serializers
     implementation group: "org.apache.avro", name: "avro", version: '1.10.0'
-    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: '2.11.3'
-
-    // validations
-    implementation group: 'org.hibernate.validator', name: 'hibernate-validator', version: '6.1.0.Final'
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: '2.12.1'
 
     // utils
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.0'
 
     // scheduler
-    implementation group: 'com.cronutils', name: 'cron-utils', version: '9.0.2'
+    implementation group: 'com.cronutils', name: 'cron-utils', version: '9.1.3'
 
     // schema
-    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.16.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.16.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.16.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.16.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.17.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.17.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.17.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.17.0'
 
     // test
     testImplementation project(':repository-memory')
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
 
-    testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: '3.3.3'
+    testImplementation 'org.mockito:mockito-junit-jupiter:3.7.0'
 }

@@ -1,6 +1,6 @@
 package org.kestra.core.schedulers;
 
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.utils.IdUtils;

@@ -15,7 +15,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.filter.Filter;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
-import org.elasticsearch.search.aggregations.bucket.histogram.ExtendedBounds;
+import org.elasticsearch.search.aggregations.bucket.histogram.LongBounds;
 import org.elasticsearch.search.aggregations.bucket.histogram.ParsedDateHistogram;
 import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
@@ -34,15 +34,15 @@ import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
@@ -239,7 +239,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             .format(START_DATE_FORMAT)
             .minDocCount(0)
             .fixedInterval(DateHistogramInterval.DAY)
-            .extendedBounds(new ExtendedBounds(
+            .extendedBounds(new LongBounds(
                 startDate.format(DateTimeFormatter.ofPattern(START_DATE_FORMAT)),
                 endDate.format(DateTimeFormatter.ofPattern(START_DATE_FORMAT))
             ))

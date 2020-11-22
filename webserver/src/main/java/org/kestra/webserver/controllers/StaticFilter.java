@@ -36,7 +36,7 @@ public class StaticFilter implements HttpServerFilter {
         return Publishers
             .map(chain.proceed(request), response -> {
                 boolean first = response.getBody(NettyStreamedFileCustomizableResponseType.class)
-                    .filter(n -> n.getName().equals("index.html"))
+                    .filter(n -> n.getMediaType().getName().equals(MediaType.TEXT_HTML))
                     .isPresent();
 
                 boolean second = response.getBody(NettySystemFileCustomizableResponseType.class)

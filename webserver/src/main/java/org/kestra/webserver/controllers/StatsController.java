@@ -4,6 +4,8 @@ import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import org.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -28,6 +30,7 @@ public class StatsController {
      * @param endDate default to now
      * @return a list of DailyExecutionStatistics
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/daily", produces = MediaType.TEXT_JSON)
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String q,
@@ -45,6 +48,7 @@ public class StatsController {
      * @param endDate default to now
      * @return a list of DailyExecutionStatistics
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "taskruns/daily", produces = MediaType.TEXT_JSON)
     public List<DailyExecutionStatistics> taskRunsDailyStatistics(
         @Nullable String q,
@@ -62,6 +66,7 @@ public class StatsController {
      * @param endDate default to now
      * @return map of namespace, containing a Map of flow, DailyExecutionStatistics
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/daily/group-by-flow", produces = MediaType.TEXT_JSON)
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String q,

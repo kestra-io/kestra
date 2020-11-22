@@ -13,7 +13,6 @@ import io.micronaut.http.client.sse.RxSseClient;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.sse.Event;
 import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
@@ -70,9 +69,10 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void getNotFound() {
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/exec_id_not_found"));
-        });
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/executions/exec_id_not_found"))
+        );
 
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
     }
@@ -96,7 +96,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             ExecutionControllerTest.class.getClassLoader().getResource("logback.xml")
         ).getPath());
 
-        MultipartBody requestBody = MultipartBody.builder()
+        return MultipartBody.builder()
             .addPart("string", "myString")
             .addPart("int", "42")
             .addPart("float", "42.42")
@@ -104,8 +104,6 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             .addPart("files", "file", MediaType.TEXT_PLAIN_TYPE, applicationFile)
             .addPart("files", "optionalFile", MediaType.TEXT_XML_TYPE, logbackFile)
             .build();
-
-        return requestBody;
     }
 
     private Execution triggerInputsFlowExecution() {
@@ -114,7 +112,6 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         return triggerExecution(TESTS_FLOW_NS, "inputs", requestBody);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     void trigger() {
         Execution result = triggerInputsFlowExecution();
@@ -140,6 +137,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(foundExecution.getNamespace(), is(result.getNamespace()));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void findByFlowId() {
         String namespace = "org.kestra.tests.minimal.bis";
@@ -163,23 +161,18 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    @Disabled("TODO: don't work")
     void triggerAndFollow() {
+        Execution result = triggerInputsFlowExecution();
+
         RxSseClient sseClient = embeddedServer.getApplicationContext().createBean(RxSseClient.class, embeddedServer.getURL());
 
-        Execution execution = client.toBlocking().retrieve(
-            HttpRequest
-                .POST("/api/v1/executions/trigger/org.kestra.tests/full", MultipartBody.builder().addPart("string", "myString").build())
-                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-            Execution.class
-        );
-
         List<Event<Execution>> results = sseClient
-            .eventStream("executions/" + execution.getId() + "/follow", Execution.class)
+            .eventStream("/api/v1/executions/" + result.getId() + "/follow", Execution.class)
             .toList()
             .blockingGet();
 
-        assertThat(results.size(), is(13));
+        assertThat(results.size(), is(greaterThan(0)));
+        assertThat(results.get(results.size() - 1).getData().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
@@ -190,16 +183,15 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         // Run execution until it ends
         Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
-            Execution createdChidExec = client.toBlocking().retrieve(
-                HttpRequest
-                    .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
-                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-                Execution.class
-            );
-        });
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        ));
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+        assertThat(e.getResponse().getBody(JsonError.class).isPresent(), is(true));
         assertThat(e.getResponse().getBody(JsonError.class).get().getMessage(), containsString("Task [" + referenceTaskId + "] does not exist !"));
     }
 
@@ -210,16 +202,15 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         // Run execution until it ends
         Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
-            Execution createdChidExec = client.toBlocking().retrieve(
-                HttpRequest
-                    .POST("/api/v1/executions/" + parentExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
-                    .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-                Execution.class
-            );
-        });
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/" + parentExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        ));
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+        assertThat(e.getResponse().getBody(JsonError.class).isPresent(), is(true));
         assertThat(e.getResponse().getBody(JsonError.class).get().getMessage(), containsString("No failed task found to restart execution from !"));
     }
 
@@ -232,6 +223,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null, (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
+
+        assertThat(flow.isPresent(), is(true));
 
         // Run child execution starting from a specific task and wait until it finishes
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
@@ -253,11 +246,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
                 IntStream
                     .range(0, 3)
-                    .mapToObj(value -> {
-                        return createdChidExec.getTaskRunList().get(value);
-                    }).forEach(taskRun -> {
-                    assertThat(taskRun.getState().getCurrent(), is(State.Type.SUCCESS));
-                });
+                    .mapToObj(value -> createdChidExec.getTaskRunList().get(value))
+                    .forEach(taskRun -> assertThat(taskRun.getState().getCurrent(), is(State.Type.SUCCESS)));
 
                 assertThat(createdChidExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.CREATED));
                 assertThat(createdChidExec.getTaskRunList().get(3).getAttempts().size(), is(1));
@@ -285,9 +275,10 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
+        assertThat(flow.isPresent(), is(true));
 
         // Run child execution starting from a specific task and wait until it finishes
-        Execution finishedChildExecution = runnerUtils.awaitChildExecution(
+        runnerUtils.awaitChildExecution(
             flow.get(),
             parentExecution, throwRunnable(() -> {
                 Thread.sleep(100);
@@ -329,6 +320,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         // Update task's command to make second execution successful
         Optional<Flow> flow = flowRepositoryInterface.findById(TESTS_FLOW_NS, flowId);
+        assertThat(flow.isPresent(), is(true));
 
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
@@ -351,9 +343,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
                 IntStream
                     .range(0, 2)
-                    .mapToObj(value -> {
-                        return restartedExec.getTaskRunList().get(value);
-                    }).forEach(taskRun -> {
+                    .mapToObj(value -> restartedExec.getTaskRunList().get(value)).forEach(taskRun -> {
                     assertThat(taskRun.getState().getCurrent(), is(State.Type.SUCCESS));
                     assertThat(taskRun.getAttempts().size(), is(1));
 
@@ -395,14 +385,12 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(file, containsString("micronaut:"));
 
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path.replace(execution.getId(),
-                    IdUtils.create()
-                )),
-                String.class
-            );
-        });
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path.replace(execution.getId(),
+                IdUtils.create()
+            )),
+            String.class
+        ));
 
         assertThat(e.getStatus().getCode(), is(422));
     }

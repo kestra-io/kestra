@@ -1,6 +1,6 @@
 package org.kestra.repository.memory;
 
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.repositories.TemplateRepositoryInterface;

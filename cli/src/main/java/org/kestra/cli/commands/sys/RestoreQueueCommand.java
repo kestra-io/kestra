@@ -5,27 +5,30 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.repositories.TemplateRepositoryInterface;
 import picocli.CommandLine;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @CommandLine.Command(
-    name = "restore-flow-queue",
-    description = {"send all flows from a repository to the persistent queue.",
+    name = "restore-queue",
+    description = {"send all flows & template from a repository to the persistent queue.",
         "Mostly usefull to send all flows from repository to persistant queue in case of restore."
     }
 )
 @Slf4j
-public class RestoreFlowQueueCommand extends AbstractCommand {
+public class RestoreQueueCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    public RestoreFlowQueueCommand() {
+    public RestoreQueueCommand() {
         super(false);
     }
 
@@ -40,15 +43,27 @@ public class RestoreFlowQueueCommand extends AbstractCommand {
             Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED)
         );
 
-        List<Flow> list = flowRepository
+        List<Flow> flows = flowRepository
             .findAll()
             .stream()
             .flatMap(flow -> flowRepository.findRevisions(flow.getNamespace(), flow.getId()).stream())
             .collect(Collectors.toList());
 
-        list.forEach(flowQueue::emit);
+        flows.forEach(flowQueue::emit);
 
-        log.info("Successfully send {} flow to queue", list.size());
+        log.info("Successfully send {} flows to queue", flows.size());
+
+        TemplateRepositoryInterface templateRepository = applicationContext.getBean(TemplateRepositoryInterface.class);
+        QueueInterface<Template> templateQueue = (QueueInterface<Template>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.TEMPLATE_NAMED)
+        );
+
+        List<Template> templates = new ArrayList<>(templateRepository.findAll());
+
+        templates.forEach(templateQueue::emit);
+
+        log.info("Successfully send {} templates to queue", templates.size());
 
         return 0;
     }

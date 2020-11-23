@@ -21,6 +21,8 @@ import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.runners.Indexer;
 import org.kestra.core.runners.IndexerInterface;
 import org.kestra.core.utils.DurationOrSizeTrigger;
+import org.kestra.repository.elasticsearch.ElasticSearchExecutionRepository;
+import org.kestra.repository.elasticsearch.ElasticSearchLogRepository;
 import org.kestra.repository.elasticsearch.ElasticSearchRepositoryEnabled;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import org.kestra.runner.kafka.KafkaQueueEnabled;
@@ -60,7 +62,9 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
         IndexerConfig indexerConfig,
         List<TopicsConfig> topicsConfig,
         List<IndicesConfig> indicesConfigs,
-        KafkaConsumerService kafkaConsumerService
+        KafkaConsumerService kafkaConsumerService,
+        ElasticSearchExecutionRepository executionRepository,
+        ElasticSearchLogRepository logRepository
     ) {
         this.metricRegistry = metricRegistry;
         this.elasticClient = elasticClient;
@@ -78,6 +82,9 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
             indexerConfig.getBatchDuration(),
             indexerConfig.getBatchSize()
         );
+
+        logRepository.initMapping();
+        executionRepository.initMapping();
     }
 
     @Override

@@ -14,6 +14,8 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.utils.TestsUtils;
+import org.kestra.repository.elasticsearch.ElasticSearchExecutionRepository;
+import org.kestra.repository.elasticsearch.ElasticSearchLogRepository;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.services.KafkaConsumerService;
@@ -51,6 +53,12 @@ class KafkaElasticIndexerTest {
     @Inject
     KafkaConsumerService kafkaConsumerService;
 
+    @Inject
+    ElasticSearchLogRepository logRepository;
+
+    @Inject
+    ElasticSearchExecutionRepository executionRepository;
+
     @Test
     void run() throws IOException, InterruptedException {
         String topic = this.topicsConfig
@@ -84,7 +92,9 @@ class KafkaElasticIndexerTest {
             indexerConfig,
             topicsConfig,
             indicesConfigs,
-            kafkaConsumerServiceSpy
+            kafkaConsumerServiceSpy,
+            executionRepository,
+            logRepository
         );
 
         Thread thread = new Thread(indexer);

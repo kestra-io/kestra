@@ -119,11 +119,11 @@ jobs:
       # Slack
       - name: Slack notification
         uses: 8398a7/action-slack@v3
-        if: failure()
+        if: always()
         with:
           status: ${{ job.status }}
           job_name: Check
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          fields: repo,message,author,action,ref,job,took
           username: Github Actions
           icon_emoji: ':octocat:'
           channel: '#kestra'
@@ -199,7 +199,7 @@ jobs:
         with:
           status: ${{ job.status }}
           job_name: Publish docker
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          fields: repo,commit,action,ref,job,took
           username: Github Actions
           icon_emoji: ':octocat:'
           channel: '#kestra'

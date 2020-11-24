@@ -26,6 +26,9 @@ public class KafkaProducerService {
     private ProducerDefaultsConfig producerConfig;
 
     @Inject
+    private KafkaConfigService kafkaConfigService;
+
+    @Inject
     private MetricRegistry metricRegistry;
 
     public <V> KafkaProducerService.Producer<V> of(Class<?> name, Serde<V> serde) {
@@ -42,7 +45,7 @@ public class KafkaProducerService {
 
         props.putAll(properties);
 
-        props.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(name));
+        props.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConfigService.getConsumerGroupName(name));
 
         return new Producer<>(props, serde, metricRegistry);
     }

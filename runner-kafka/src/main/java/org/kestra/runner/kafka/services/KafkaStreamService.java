@@ -29,12 +29,15 @@ public class KafkaStreamService {
     private StreamDefaultsConfig streamConfig;
 
     @Inject
+    private KafkaConfigService kafkaConfigService;
+
+    @Inject
     private MetricRegistry metricRegistry;
 
     public KafkaStreamService.Stream of(Class<?> group, Topology topology) {
         return this.of(group, topology, new Properties());
     }
-    
+
     public KafkaStreamService.Stream of(Class<?> group, Topology topology, Properties properties) {
         properties.putAll(clientConfig.getProperties());
 
@@ -42,8 +45,8 @@ public class KafkaStreamService {
             properties.putAll(streamConfig.getProperties());
         }
 
-        properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
-        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
+        properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
+        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
 
         return new Stream(topology, properties, metricRegistry);
     }
@@ -58,24 +61,32 @@ public class KafkaStreamService {
             meterRegistry.bind(metrics);
         }
 
-        @Override
-        public synchronized void start() throws IllegalStateException, StreamsException {
+        public synchronized void start(final KafkaStreams.StateListener listener) throws IllegalStateException, StreamsException {
             this.setUncaughtExceptionHandler((thread, e) -> {
                 log.error("Uncaught exception in Kafka Stream " + thread.getName() + ", closing !", e);
                 System.exit(1);
             });
 
-            if (log.isTraceEnabled()) {
-                this.setStateListener((newState, oldState) -> {
+            this.setStateListener((newState, oldState) -> {
+                if (log.isTraceEnabled()) {
                     log.trace("Switching stream state from {} to {}", oldState, newState);
-                });
-            }
+                }
+
+                if (listener != null) {
+                    listener.onChange(newState, oldState);
+                }
+            });
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 this.close(Duration.ofSeconds(10));
             }));
 
             super.start();
+        }
+
+        @Override
+        public synchronized void start() throws IllegalStateException, StreamsException {
+            this.start(null);
         }
 
         @Override

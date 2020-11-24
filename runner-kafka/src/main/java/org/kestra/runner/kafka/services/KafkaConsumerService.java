@@ -31,6 +31,9 @@ public class KafkaConsumerService {
     private ConsumerDefaultsConfig consumerConfig;
 
     @Inject
+    private KafkaConfigService kafkaConfigService;
+
+    @Inject
     private MetricRegistry metricRegistry;
 
     public <V> org.apache.kafka.clients.consumer.Consumer<String, V> of(Class<?> group, Serde<V> serde) {
@@ -46,8 +49,8 @@ public class KafkaConsumerService {
         }
 
         if (group != null) {
-            props.put(CommonClientConfigs.CLIENT_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
-            props.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaQueue.getConsumerGroupName(group));
+            props.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
+            props.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
         } else {
             props.remove(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG);
         }

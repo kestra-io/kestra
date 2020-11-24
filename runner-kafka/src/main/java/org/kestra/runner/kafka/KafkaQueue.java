@@ -166,13 +166,6 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
         }
     }
 
-    public static String getConsumerGroupName(Class<?> group) {
-        return "kestra_" +
-            CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE,
-                group.getSimpleName().replace("Kafka", "")
-            );
-    }
-
     @PreDestroy
     @Override
     public void close() {

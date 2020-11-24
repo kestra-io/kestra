@@ -19,6 +19,7 @@ import org.kestra.core.utils.Await;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
+import org.kestra.runner.kafka.services.KafkaConfigService;
 import org.kestra.runner.kafka.services.KafkaConsumerService;
 import org.kestra.runner.kafka.services.KafkaProducerService;
 
@@ -40,6 +41,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
     private final TopicsConfig topicsConfigWorkerTaskRunning;
     private final KafkaProducer<String, WorkerTaskRunning> kafkaProducer;
     private final KafkaConsumerService kafkaConsumerService;
+    private final KafkaConfigService kafkaConfigService;
     private final AtomicReference<WorkerInstance> workerInstance = new AtomicReference<>();
     private final UUID workerUuid;
 
@@ -54,6 +56,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
         this.topicsConfigWorkerTask = KafkaQueue.topicsConfig(applicationContext, WorkerTask.class);
         this.topicsConfigWorkerTaskRunning = KafkaQueue.topicsConfig(applicationContext, WorkerTaskRunning.class);
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
+        this.kafkaConfigService = applicationContext.getBean(KafkaConfigService.class);
         this.workerInstanceQueue = (QueueInterface<WorkerInstance>) applicationContext.getBean(
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.WORKERINSTANCE_NAMED)
@@ -101,7 +104,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                     consumer.accept(record.value());
                 });
 
-                kafkaProducer.sendOffsetsToTransaction(KafkaConsumerService.maxOffsets(records), KafkaQueue.getConsumerGroupName(consumerGroup));
+                kafkaProducer.sendOffsetsToTransaction(KafkaConsumerService.maxOffsets(records), kafkaConfigService.getConsumerGroupName(consumerGroup));
 
                 kafkaProducer.commitTransaction();
             }

@@ -20,7 +20,7 @@ import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.repositories.TriggerRepositoryInterface;
 import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.services.ConditionService;
-import org.kestra.core.services.FlowListenersService;
+import org.kestra.core.services.FlowListenersInterface;
 import org.kestra.core.utils.Await;
 import org.kestra.core.utils.ExecutorsUtils;
 
@@ -40,7 +40,7 @@ import static org.kestra.core.utils.Rethrow.throwSupplier;
 public class Scheduler implements Runnable, AutoCloseable {
     private final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
-    private final FlowListenersService flowListenersService;
+    private final FlowListenersInterface flowListeners;
     private final TriggerRepositoryInterface triggerContextRepository;
     private final ExecutionRepositoryInterface executionRepository;
     private final RunContextFactory runContextFactory;
@@ -59,13 +59,13 @@ public class Scheduler implements Runnable, AutoCloseable {
         ApplicationContext applicationContext,
         ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        FlowListenersService flowListenersService,
+        FlowListenersInterface flowListeners,
         ExecutionRepositoryInterface executionRepository,
         TriggerRepositoryInterface triggerContextRepository
     ) {
         this.applicationContext = applicationContext;
         this.executionQueue = executionQueue;
-        this.flowListenersService = flowListenersService;
+        this.flowListeners = flowListeners;
         this.triggerContextRepository = triggerContextRepository;
         this.executionRepository = executionRepository;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
@@ -85,7 +85,7 @@ public class Scheduler implements Runnable, AutoCloseable {
         );
 
         // empty cache on any flow changes
-        this.flowListenersService.listen(flows -> {
+        this.flowListeners.listen(flows -> {
             synchronized (this) {
                 lastTriggers = new ConcurrentHashMap<>();
             }
@@ -113,8 +113,8 @@ public class Scheduler implements Runnable, AutoCloseable {
     private void handle() {
         synchronized (this) {
             // get all PollingTriggerInterface from flow
-            List<FlowWithTrigger> schedulable = this.flowListenersService
-                .getFlows()
+            List<FlowWithTrigger> schedulable = this.flowListeners
+                .flows()
                 .stream()
                 .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
                 .flatMap(flow -> flow.getTriggers().stream().map(trigger -> new FlowWithTrigger(flow, trigger)))
@@ -125,7 +125,7 @@ public class Scheduler implements Runnable, AutoCloseable {
                 log.trace(
                     "Scheduler next iteration with {} schedulables of {} flows",
                     schedulable.size(),
-                    this.flowListenersService.getFlows().size()
+                    this.flowListeners.flows().size()
                 );
             }
 

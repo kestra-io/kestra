@@ -1,6 +1,5 @@
 package org.kestra.core.services;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
@@ -16,10 +15,9 @@ import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
-public class FlowListenersService {
+public class FlowListenersService implements FlowListenersInterface {
     private final QueueInterface<Flow> flowQueue;
 
-    @Getter
     private final List<Flow> flows;
 
     private final List<Consumer<List<Flow>>> consumers = new ArrayList<>();
@@ -82,8 +80,14 @@ public class FlowListenersService {
             .forEach(consumer -> consumer.accept(new ArrayList<>(this.flows)));
     }
 
+    @Override
     public void listen(Consumer<List<Flow>> consumer) {
         consumers.add(consumer);
         consumer.accept(new ArrayList<>(this.flows));
+    }
+
+    @Override
+    public List<Flow> flows() {
+        return this.flows;
     }
 }

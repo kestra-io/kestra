@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
-class FlowListenersServiceTest {
+public class FlowListenersServiceTest {
     @Inject
     FlowListenersService flowListenersService;
 
@@ -29,12 +29,20 @@ class FlowListenersServiceTest {
             .id(flowId)
             .namespace("org.kestra.unittest")
             .revision(1)
-            .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format("test").build()))
+            .tasks(Collections.singletonList(Return.builder()
+                .id(taskId)
+                .type(Return.class.getName())
+                .format("test")
+                .build()))
             .build();
     }
 
     @Test
-    void all() {
+    public void all() {
+        this.suite(flowListenersService);
+    }
+
+    public void suite(FlowListenersInterface flowListenersService) {
         AtomicInteger count = new AtomicInteger();
         var ref = new Ref();
 
@@ -43,49 +51,47 @@ class FlowListenersServiceTest {
             ref.countDownLatch.countDown();
         });
 
+        // initial state
         wait(ref, () -> {
             assertThat(count.get(), is(0));
-            assertThat(flowListenersService.getFlows().size(), is(0));
+            assertThat(flowListenersService.flows().size(), is(0));
         });
 
+        // create first
         Flow first = create(IdUtils.create(), "test");
 
         flowRepository.create(first);
         wait(ref, () -> {
             assertThat(count.get(), is(1));
-            assertThat(flowListenersService.getFlows().size(), is(1));
+            assertThat(flowListenersService.flows().size(), is(1));
         });
 
-        flowRepository.update(first, first);
-        wait(ref, () -> {
-            assertThat(count.get(), is(1));
-            assertThat(flowListenersService.getFlows().size(), is(1));
-        });
-
-
-        flowRepository.update(first.withRevision(2), first);
-        wait(ref, () -> {
-            assertThat(count.get(), is(1));
-            assertThat(flowListenersService.getFlows().size(), is(1));
-        });
-
-
+        // create the same id than first, no additional flows
         flowRepository.update(create(first.getId(), "test2"), first);
         wait(ref, () -> {
             assertThat(count.get(), is(1));
-            assertThat(flowListenersService.getFlows().size(), is(1));
+            assertThat(flowListenersService.flows().size(), is(1));
         });
 
+        // create a new one
         flowRepository.create(create(IdUtils.create(), "test"));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
-            assertThat(flowListenersService.getFlows().size(), is(2));
+            assertThat(flowListenersService.flows().size(), is(2));
         });
 
+        // delete first
         flowRepository.delete(first);
         wait(ref, () -> {
             assertThat(count.get(), is(1));
-            assertThat(flowListenersService.getFlows().size(), is(1));
+            assertThat(flowListenersService.flows().size(), is(1));
+        });
+
+        // restore must works
+        flowRepository.create(first);
+        wait(ref, () -> {
+            assertThat(count.get(), is(2));
+            assertThat(flowListenersService.flows().size(), is(2));
         });
     }
 
@@ -94,7 +100,7 @@ class FlowListenersServiceTest {
     }
 
     @SneakyThrows
-    private void wait(Ref ref, Runnable run)  {
+    private void wait(Ref ref, Runnable run) {
         ref.countDownLatch.await();
         run.run();
         ref.countDownLatch = new CountDownLatch(1);

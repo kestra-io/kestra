@@ -51,7 +51,7 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
 
         doReturn(Collections.singletonList(flow))
             .when(flowListenersServiceSpy)
-            .getFlows();
+            .flows();
 
         // mock the backfill execution is ended
         doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))

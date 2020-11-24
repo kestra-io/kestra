@@ -92,10 +92,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 throw s;
             });
 
-        Flow newFlow = this.save(flow);
-        flowQueue.emit(newFlow);
-
-        return newFlow;
+        return this.save(flow);
     }
 
     public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
@@ -109,7 +106,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 throw s;
             });
 
-        flowQueue.emit(flow);
         return this.save(flow);
     }
 
@@ -137,6 +133,8 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
         this.flows.put(flowId(flow), flow);
         this.revisions.put(flow.uid(), flow);
+
+        flowQueue.emit(flow);
 
         return flow;
     }

@@ -8,10 +8,7 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.runners.RunContextFactory;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -44,7 +41,7 @@ public class FlowService {
 
     private java.util.stream.Collector<Flow, ?, HashMap<String, Flow>> keepLastVersionCollector() {
         return Collectors.toMap(
-            Flow::uidWithRevision,
+            Flow::uidWithoutRevision,
             e -> e,
             (left, right) -> left.getRevision() > right.getRevision() ? left : right,
             HashMap::new

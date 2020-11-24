@@ -94,7 +94,7 @@ public class Flow implements DeletedInterface {
     }
 
     @JsonIgnore
-    public String uidWithRevision() {
+    public String uidWithoutRevision() {
         return String.join("_", Arrays.asList(
             this.getNamespace(),
             this.getId()

@@ -6,6 +6,7 @@ import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
@@ -94,9 +95,7 @@ public abstract class AbstractExecutor implements Runnable {
                 flowableParent
                     .resolveState(runContext, execution, parentTaskRun),
                 parent,
-                parentTaskRun,
-                runContext,
-                execution
+                parentTaskRun
             );
 
             if (endedTask.isPresent()) {
@@ -110,9 +109,7 @@ public abstract class AbstractExecutor implements Runnable {
                     return childWorkerTaskTypeToWorkerTask(
                         Optional.of(State.Type.KILLING),
                         parent,
-                        parentTaskRun,
-                        runContext,
-                        execution
+                        parentTaskRun
                     );
                 }
 
@@ -128,9 +125,7 @@ public abstract class AbstractExecutor implements Runnable {
                     return childWorkerTaskTypeToWorkerTask(
                         Optional.of(State.Type.KILLED),
                         parent,
-                        parentTaskRun,
-                        runContext,
-                        execution
+                        parentTaskRun
                     );
                 }
             }
@@ -142,21 +137,11 @@ public abstract class AbstractExecutor implements Runnable {
     private Optional<WorkerTaskResult> childWorkerTaskTypeToWorkerTask(
         Optional<State.Type> findState,
         Task parentTask,
-        TaskRun parentTaskRun,
-        RunContext runContext,
-        Execution execution
-    ) throws IllegalVariableEvaluationException {
-        FlowableTask<?> flowableParent = (FlowableTask<?>) parentTask;
-
+        TaskRun parentTaskRun
+    ) {
         return findState
             .map(throwFunction(type -> new WorkerTaskResult(
-                parentTaskRun
-                    .withState(type)
-                    .withOutputs(
-                        flowableParent.outputs(runContext, execution, parentTaskRun) != null ?
-                            flowableParent.outputs(runContext, execution, parentTaskRun).toMap() :
-                            ImmutableMap.of()
-                    ),
+                parentTaskRun.withState(type),
                 parentTask
             )))
             .stream()
@@ -172,28 +157,74 @@ public abstract class AbstractExecutor implements Runnable {
             .findFirst();
     }
 
-    private Optional<List<TaskRun>> childNextsTaskRun(Flow flow, Execution execution, TaskRun taskRun) throws IllegalVariableEvaluationException, InternalException {
-        Task parent = flow.findTaskByTaskId(taskRun.getTaskId());
+    private Optional<List<TaskRun>> childNextsTaskRun(Flow flow, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException, InternalException {
+        Task parent = flow.findTaskByTaskId(parentTaskRun.getTaskId());
 
         if (parent instanceof FlowableTask) {
             FlowableTask<?> flowableParent = (FlowableTask<?>) parent;
-            List<TaskRun> nexts = flowableParent.resolveNexts(
+
+            List<NextTaskRun> nexts = flowableParent.resolveNexts(
                 runContextFactory.of(
                     flow,
                     parent,
                     execution,
-                    taskRun
+                    parentTaskRun
                 ),
                 execution,
-                taskRun
+                parentTaskRun
             );
 
             if (nexts.size() > 0) {
-                return Optional.of(nexts);
+                return Optional
+                    .of(nexts)
+                    .map(throwFunction(nextTaskRuns -> this.saveFlowableOutput(
+                        nextTaskRuns,
+                        flow,
+                        execution,
+                        parentTaskRun
+                    )));
             }
         }
 
         return Optional.empty();
+    }
+
+    private List<TaskRun> saveFlowableOutput(
+        List<NextTaskRun> nextTaskRuns,
+        Flow flow,
+        Execution execution,
+        TaskRun parentTaskRun
+    ) {
+        return nextTaskRuns
+            .stream()
+            .map(throwFunction(t -> {
+                TaskRun taskRun = t.getTaskRun();
+
+                if (!(t.getTask() instanceof FlowableTask)) {
+                    return taskRun;
+                }
+                FlowableTask<?> flowableTask = (FlowableTask<?>) t.getTask();
+
+                try {
+                    RunContext runContext = runContextFactory.of(
+                        flow,
+                        t.getTask(),
+                        execution,
+                        t.getTaskRun()
+                    );
+
+                    taskRun = taskRun.withOutputs(
+                        flowableTask.outputs(runContext, execution, parentTaskRun) != null ?
+                            flowableTask.outputs(runContext, execution, parentTaskRun).toMap() :
+                            ImmutableMap.of()
+                    );
+                } catch (Exception e) {
+                    log.warn("Unable to save output on taskRun '{}'", taskRun, e);
+                }
+
+                return taskRun;
+            }))
+            .collect(Collectors.toList());
     }
 
     private Execution onEnd(Flow flow, Execution execution) {
@@ -282,10 +313,16 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     private List<TaskRun> handleNext(Execution execution, Flow flow) {
-        return FlowableUtils.resolveSequentialNexts(
+        return this.saveFlowableOutput(
+            FlowableUtils
+                .resolveSequentialNexts(
+                    execution,
+                    ResolvedTask.of(flow.getTasks()),
+                    ResolvedTask.of(flow.getErrors())
+                ),
+            flow,
             execution,
-            ResolvedTask.of(flow.getTasks()),
-            ResolvedTask.of(flow.getErrors())
+            null
         );
     }
 
@@ -327,10 +364,14 @@ public abstract class AbstractExecutor implements Runnable {
 
         List<ResolvedTask> currentTasks = conditionService.findValidListeners(flow, execution);
 
-        return FlowableUtils.resolveSequentialNexts(
+        return this.saveFlowableOutput(
+            FlowableUtils.resolveSequentialNexts(
+                execution,
+                currentTasks
+            ),
+            flow,
             execution,
-            currentTasks,
-            new ArrayList<>()
+            null
         );
     }
 

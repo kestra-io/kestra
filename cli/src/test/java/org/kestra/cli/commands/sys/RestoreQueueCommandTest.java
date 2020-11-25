@@ -21,11 +21,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-class RestoreFlowQueueCommandTest {
+class RestoreQueueCommandTest {
     @BeforeAll
     static void init() {
         if (!KestraClassLoader.isInit()) {
-            KestraClassLoader.create(RestoreFlowQueueCommandTest.class.getClassLoader());
+            KestraClassLoader.create(RestoreQueueCommandTest.class.getClassLoader());
         }
     }
 
@@ -58,7 +58,7 @@ class RestoreFlowQueueCommandTest {
                 countDownLatch.countDown();
             });
 
-            PicocliRunner.call(RestoreFlowQueueCommand.class, ctx);
+            PicocliRunner.call(RestoreQueueCommand.class, ctx);
 
             countDownLatch.await();
             assertThat(atomicInteger.get(), is(COUNT));

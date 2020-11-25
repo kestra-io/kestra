@@ -12,6 +12,8 @@ import org.kestra.core.runners.RunContext;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 
+import javax.validation.constraints.NotBlank;
+
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
@@ -33,6 +35,8 @@ import org.slf4j.event.Level;
     }
 )
 public class Echo extends Task implements RunnableTask<VoidOutput> {
+    @NonNull
+    @NotBlank
     private String format;
 
     @Builder.Default
@@ -43,7 +47,7 @@ public class Echo extends Task implements RunnableTask<VoidOutput> {
         Logger logger = runContext.logger();
 
         String render = runContext.render(this.format);
-        
+
         switch (this.level) {
             case TRACE:
                 logger.trace(render);

@@ -3,6 +3,7 @@ package org.kestra.core.metrics;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.lang.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.tasks.Task;
@@ -15,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
+@Slf4j
 public class MetricRegistry {
     public final static String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
     public final static String METRIC_WORKER_STARTED_COUNT = "worker.started.count";
@@ -30,8 +32,13 @@ public class MetricRegistry {
     public final static String KESTRA_EXECUTOR_EXECUTION_END_COUNT = "executor.execution.end.count";
     public final static String METRIC_EXECUTOR_EXECUTION_DURATION = "executor.execution.duration";
 
-    public final static String METRIC_INDEXER_COUNT = "indexer.count";
-    public final static String METRIC_INDEXER_DURATION = "indexer.duration";
+    public final static String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
+    public final static String METRIC_INDEXER_REQUEST_DURATION = "indexer.request.duration";
+    public final static String METRIC_INDEXER_REQUEST_RETRY_COUNT = "indexer.request.retry.count";
+    public final static String METRIC_INDEXER_SERVER_DURATION = "indexer.server.duration";
+    public final static String METRIC_INDEXER_MESSAGE_FAILED_COUNT = "indexer.message.failed.count";
+    public final static String METRIC_INDEXER_MESSAGE_IN_COUNT = "indexer.message.in.count";
+    public final static String METRIC_INDEXER_MESSAGE_OUT_COUNT = "indexer.message.out.count";
 
     public final static String SCHEDULER_TRIGGER_COUNT = "scheduler.trigger.count";
     public final static String SCHEDULER_EVALUATE_RUNNING_COUNT = "scheduler.evaluate.running.count";
@@ -209,7 +216,11 @@ public class MetricRegistry {
      * @param meterBinder the {@link MeterBinder} to bind to current registry
      */
     public void bind(MeterBinder meterBinder) {
-        meterBinder.bindTo(this.meterRegistry);
+        try {
+            meterBinder.bindTo(this.meterRegistry);
+        } catch (Exception e) {
+            log.warn("Error on metrics", e);
+        }
     }
 }
 

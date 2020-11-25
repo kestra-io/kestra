@@ -1,7 +1,9 @@
 package org.kestra.core.models.tasks;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.TaskTree;
@@ -12,6 +14,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FlowableTask <T extends Output> {
+    @Schema(
+        title = "List of tasks to run if any tasks failed on this FlowableTask"
+    )
     List<Task> getErrors();
 
     List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException;
@@ -20,7 +25,7 @@ public interface FlowableTask <T extends Output> {
 
     List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException;
 
-    List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException;
+    List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException;
 
     default Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveState(

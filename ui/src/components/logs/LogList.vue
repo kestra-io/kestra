@@ -117,6 +117,7 @@
     import Clock from "vue-material-design-icons/Clock";
     import LocationExit from "vue-material-design-icons/LocationExit";
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";
+    import State from "../../utils/state";
 
     export default {
         components: {
@@ -176,7 +177,7 @@
                     params.taskRunId = this.taskRunId;
                 }
 
-                if (this.execution && this.execution.state.current === "RUNNING") {
+                if (this.execution && this.execution.state.current === State.RUNNING) {
                     this.$store
                         .dispatch("execution/followLogs", {
                             id: this.$route.params.id,

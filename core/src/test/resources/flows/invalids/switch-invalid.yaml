@@ -1,0 +1,13 @@
+id: switch-impossible
+namespace: org.kestra.tests
+
+inputs:
+  - name: string
+    type: STRING
+
+tasks:
+  - id: impossible
+    type: org.kestra.core.tasks.flows.Switch
+    value: "{{inputs.string}}"
+    cases: {}
+    defaults: null

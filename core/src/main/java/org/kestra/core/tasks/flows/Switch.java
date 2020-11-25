@@ -7,7 +7,9 @@ import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.Plugin;
+import org.kestra.core.models.annotations.PluginProperty;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
@@ -16,6 +18,8 @@ import org.kestra.core.models.hierarchies.TaskTree;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
+import org.kestra.core.models.tasks.TaskValidationInterface;
+import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.services.TreeService;
@@ -23,9 +27,9 @@ import org.kestra.core.services.TreeService;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.validation.ConstraintViolation;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
@@ -78,9 +82,13 @@ import static org.kestra.core.utils.Rethrow.throwPredicate;
         )
     }
 )
-public class Switch extends Task implements FlowableTask<Switch.Output> {
+public class Switch extends Task implements FlowableTask<Switch.Output>, TaskValidationInterface<Switch> {
     @NotBlank
     @NotNull
+    @Schema(
+        title = "The value to be evaluated"
+    )
+    @PluginProperty(dynamic = true)
     private String value;
 
     @Valid
@@ -157,7 +165,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     }
 
     @Override
-    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+    public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveSequentialNexts(
             execution,
             this.childTasks(runContext, parentTaskRun),
@@ -176,6 +184,21 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
                 .noneMatch(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))
             )
             .build();
+    }
+
+    @Override
+    public List<ConstraintViolation<Switch>> failedConstraints() {
+        if ((this.cases == null || this.cases.size() == 0) && (this.defaults == null || this.defaults.size() == 0)) {
+            return Collections.singletonList(ManualConstraintViolation.of(
+                "No task defined, neither cases or default have any tasks",
+                this,
+                Switch.class,
+                "switch.tasks",
+                this.getId()
+            ));
+        }
+
+        return Collections.emptyList();
     }
 
     @Builder

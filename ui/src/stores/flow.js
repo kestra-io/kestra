@@ -75,25 +75,7 @@ export default {
             state.revisions = revisions
         },
         setFlow(state, flow) {
-            if (!flow) {
-                state.flow = flow;
-            } else {
-                if (flow.triggers !== undefined) {
-                    flow.triggers = flow.triggers.map(trigger => {
-                        if (trigger.type === "org.kestra.core.models.triggers.types.Schedule") {
-                            if (trigger.backfill  === undefined) {
-                                trigger.backfill = {
-                                    start: undefined
-                                }
-                            }
-                        }
-
-                        return trigger;
-                    })
-                }
-
-                state.flow = {...flow}
-            }
+            state.flow = flow;
         },
         setTrigger(state, {index, trigger}) {
             let flow = state.flow;

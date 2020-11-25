@@ -9,7 +9,7 @@
             <router-link :to="{name: 'home'}">
                 <span class="img" />
             </router-link>
-            <span class="version">{{ version.version }}</span>
+            <span class="version">{{ version ? version.version : '' }}</span>
         </div>
         <span slot="toggle-icon">
             <chevron-right v-if="collapsed" />

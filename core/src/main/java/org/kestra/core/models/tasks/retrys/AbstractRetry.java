@@ -28,7 +28,7 @@ public abstract class AbstractRetry {
 
     private Duration maxDuration;
 
-    @Min(0)
+    @Min(1)
     private Integer maxAttempt;
 
     public <T> RetryPolicy<T> toPolicy() {

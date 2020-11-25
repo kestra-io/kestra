@@ -13,6 +13,14 @@ REM Plugins path default to pwd & must be exported as env var
 SET "current_dir=%~dp0"
 IF NOT DEFINED kestra_plugins_path (set "kestra_plugins_path=%current_dir%plugins\")
 
+REM Kestra configuration env vars
+
+IF NOT DEFINED kestra_configuration_path (set "kestra_configuration_path=%current_dir%confs\")
+
+IF DEFINED kestra_configuration (
+    echo %kestra_configuration% > "%kestra_configuration_path%application.yml"
+    set "micronaut_config_files=%kestra_configuration_path%application.yml"
+)
 
 REM Check java version
 FOR /f "delims=" %%w in ('java -fullversion 2^>^&1') do set java_fullversion=%%w

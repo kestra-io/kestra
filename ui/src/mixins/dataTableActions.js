@@ -1,4 +1,5 @@
 import qb from "../utils/queryBuilder";
+import State from "../utils/state";
 export default {
     created() {
         this.loadFilters()
@@ -90,6 +91,9 @@ export default {
             if (change) {
                 this.$router.push({query: query});
             }
+        },
+        isRunning(item){
+            return State.isRunning(item.state.current);
         }
     }
 }

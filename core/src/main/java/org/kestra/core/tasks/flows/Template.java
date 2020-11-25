@@ -4,35 +4,37 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.Plugin;
+import org.kestra.core.models.annotations.PluginProperty;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.hierarchies.ParentTaskTree;
 import org.kestra.core.models.hierarchies.TaskTree;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
-import org.kestra.core.models.tasks.VoidOutput;
 import org.kestra.core.repositories.TemplateRepositoryInterface;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.services.TreeService;
 
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
+import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
@@ -40,8 +42,7 @@ import javax.validation.Valid;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Process tasks ones after others sequentially",
-    description = "Mostly use in order to group tasks."
+    title = "Include a resuable template inside a flow"
 )
 @Plugin(
     examples = {
@@ -51,36 +52,62 @@ import javax.validation.Valid;
                 "id: template",
                 "namespace: org.kestra.tests",
                 "",
+                "inputs:" +
+                "  - name: with-string" +
+                "    type: STRING",
+                "",
                 "tasks:",
-                "  - id: template",
-                "    type: org.kestra.core.tasks.flows.Template",
-                "    tasks:",
-                "      - id: 1st",
-                "        type: org.kestra.core.tasks.debugs.Return",
-                "        format: \"{{task.id}} > {{taskrun.startDate}}\"",
-                "      - id: 2nd",
-                "        type: org.kestra.core.tasks.debugs.Return",
-                "        format: \"{{task.id}} > {{taskrun.id}}\"",
-                "  - id: last",
+                "  - id: 1-return",
                 "    type: org.kestra.core.tasks.debugs.Return",
-                "    format: \"{{task.id}} > {{taskrun.startDate}}\""
+                "    format: \"{{task.id}} > {{taskrun.startDate}}\"",
+                "  - id: 2-template",
+                "    type: org.kestra.core.tasks.flows.Template",
+                "    namespace: org.kestra.tests",
+                "    templateId: template",
+                "    args:",
+                "      my-forward: \"{{ inputs.with-string }}\"",
+                "  - id: 3-end",
+                "    type: org.kestra.core.tasks.debugs.Return",
+                "    format: \"{{task.id}} > {{taskrun.startDate}}\"\n"
             }
         )
     }
 )
-public class Template extends Task implements FlowableTask<VoidOutput> {
-
+public class Template extends Task implements FlowableTask<Template.Output> {
     @Valid
     protected List<Task> errors;
 
-    @Valid
-    private List<Task> tasks;
+    @NotNull
+    @Schema(
+        title = "The namespace of the template"
+    )
+    @PluginProperty(dynamic = false)
+    private String namespace;
 
-    @Valid
+    @NotNull
+    @Schema(
+        title = "The id of the template"
+    )
+    @PluginProperty(dynamic = false)
     private String templateId;
 
-    @Valid
-    private String namespace;
+    @Schema(
+        title = "The args to pass to the template",
+        description = "You can provide a list of named arguments (like function argument on dev) allowing to rename " +
+            "outputs of current flow for this template.\n" +
+            "for example, if you declare this use of template like this: \n" +
+            "```yaml\n" +
+            "  - id: 2-template\n" +
+            "    type: org.kestra.core.tasks.flows.Template\n" +
+            "    namespace: org.kestra.tests\n" +
+            "    templateId: template\n" +
+            "    args:\n" +
+            "      forward: \"{{ output.task-id.uri }}\"\n" +
+            "```\n" +
+            "You will be able to get this output on the template with `{{ parent.outputs.args.forward }}`"
+    )
+    @PluginProperty(dynamic = true, additionalProperties = String.class)
+    private Map<String, String> args;
 
     @Override
     public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {
@@ -122,7 +149,7 @@ public class Template extends Task implements FlowableTask<VoidOutput> {
     }
 
     @Override
-    public List<TaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+    public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         org.kestra.core.models.templates.Template template = this.findTemplate(runContext.getApplicationContext());
 
         return FlowableUtils.resolveSequentialNexts(
@@ -131,6 +158,23 @@ public class Template extends Task implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(template.getErrors(), parentTaskRun),
             parentTaskRun
         );
+    }
+
+    @Override
+    public Template.Output outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        org.kestra.core.models.templates.Template template = this.findTemplate(runContext.getApplicationContext());
+
+        return Template.Output.builder()
+            .args(runContext.render(this.args
+                .entrySet()
+                .stream()
+                .map(throwFunction(e -> new AbstractMap.SimpleEntry<>(
+                    e.getKey(),
+                    runContext.render(e.getValue())
+                )))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+            ))
+            .build();
     }
 
     private org.kestra.core.models.templates.Template findTemplate(ApplicationContext applicationContext) throws IllegalVariableEvaluationException {
@@ -178,4 +222,12 @@ public class Template extends Task implements FlowableTask<VoidOutput> {
         }
     }
 
+    @Builder
+    @Getter
+    public static class Output implements org.kestra.core.models.tasks.Output {
+        @Schema(
+            title = "The args passed to the template"
+        )
+        private final Map<String, Object> args;
+    }
 }

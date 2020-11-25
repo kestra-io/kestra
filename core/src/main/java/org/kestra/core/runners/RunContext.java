@@ -177,7 +177,12 @@ public class RunContext {
         }
 
         if (taskRun != null && execution != null) {
-            builder.put("parents", execution.parents(taskRun));
+            List<Map<String, Object>> parents = execution.parents(taskRun);
+
+            builder.put("parents", parents);
+            if (parents.size() > 0) {
+                builder.put("parent", parents.get(0));
+            }
         }
 
         // special cases for listeners

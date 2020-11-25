@@ -35,11 +35,15 @@ jobs:
         with:
           python-version: '3.x'
           architecture: 'x64'
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12'
+          check-latest: true
+
       # Services
       - name: Build the docker-compose stack
         run: docker-compose -f docker-compose-ci.yml up -d
 
-      # Caches
       # Caches
       - name: Gradle cache
         uses: actions/cache@v2
@@ -119,7 +123,7 @@ jobs:
         with:
           status: ${{ job.status }}
           job_name: Check
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          fields: repo,message,author,action,ref,job,took
           username: Github Actions
           icon_emoji: ':octocat:'
           channel: '#kestra'
@@ -136,29 +140,66 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # Artifact
       - name: Download executable
         uses: actions/download-artifact@v1
         with:
           name: exe
-      - name: Copy exe to image
-        run: cp exe/* docker/app/kestra && chmod +x docker/app/kestra
 
-      - name: Publish to Docker Hub
-        uses: elgohr/Publish-Docker-Github-Action@master
+      - name: Copy exe to image
+        run: |
+          cp exe/* docker/app/kestra && chmod +x docker/app/kestra
+
+      # Vars
+      - name: Set image name
+        id: vars
+        run: |
+          TAG=${GITHUB_REF#refs/*/}
+          if [[ $TAG = "master" ]]
+          then
+            echo ::set-output name=tag::latest
+          else
+            echo ::set-output name=tag::${TAG}
+          fi
+
+      # Docker
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
         with:
-          name: kestra/kestra
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          tag_names: true
+
+      - name: Push to Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ format('kestra/kestra:{0}', steps.vars.outputs.tag) }}
+
+      - name: Push to Docker Hub Full
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ format('kestra/kestra:{0}-full', steps.vars.outputs.tag) }}
+          build-args: |
+            KESTRA_PLUGINS=org.kestra.storage.gcs:storage-gcs:LATEST org.kestra.storage.minio:storage-minio:LATEST org.kestra.task.aws:task-aws:LATEST org.kestra.task.gcp:task-gcp:LATEST org.kestra.task.kubernetes:task-kubernetes:LATEST org.kestra.task.serdes:task-serdes:LATEST org.kestra.task.notifications:task-notifications:LATEST org.kestra.task.crypto:task-crypto:LATEST org.kestra.task.jdbc:mysql:LATEST org.kestra.task.jdbc:postgres:LATEST
+            APT_PACKAGES=python3-pip python3-wheel python3-setuptools python3-virtualenv nodejs
 
       # Slack
       - name: Slack notification
         uses: 8398a7/action-slack@v3
-        if: failure()
+        if: always()
         with:
           status: ${{ job.status }}
           job_name: Publish docker
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          fields: repo,commit,action,ref,job,took
           username: Github Actions
           icon_emoji: ':octocat:'
           channel: '#kestra'

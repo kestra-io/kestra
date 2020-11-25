@@ -109,6 +109,12 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     public Flow create(Flow flow) throws ConstraintViolationException {
+        // control if create is valid
+        flow.validate()
+            .ifPresent(s -> {
+                throw s;
+            });
+
         return this.save(flow);
     }
 

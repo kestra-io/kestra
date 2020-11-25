@@ -20,13 +20,13 @@ import static org.hamcrest.Matchers.is;
 class DocumentationGeneratorTest {
     @Test
     void tasks() throws URISyntaxException, IOException {
-        Path plugins = Paths.get(Objects.requireNonNull(PluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
+        Path plugins = Paths.get(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
 
-        PluginScanner pluginScanner = new PluginScanner(PluginDocumentationTest.class.getClassLoader());
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
         assertThat(scan.size(), is(1));
-        PluginDocumentation<? extends Task> doc = PluginDocumentation.of(scan.get(0), scan.get(0).getTasks().get(0), Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan.get(0), scan.get(0).getTasks().get(0), Task.class);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -36,15 +36,14 @@ class DocumentationGeneratorTest {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
     void bash() throws IOException {
-        PluginScanner pluginScanner = new PluginScanner(PluginDocumentationTest.class.getClassLoader());
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         RegisteredPlugin scan = pluginScanner.scan();
         Class bash = scan.findClass(Bash.class.getName()).orElseThrow();
 
-        PluginDocumentation<? extends Task> doc = PluginDocumentation.of(scan, bash,  Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan, bash,  Task.class);
 
         String render = DocumentationGenerator.render(doc);
 
-        System.out.println(render);
         assertThat(render, containsString("# Bash"));
     }
 }

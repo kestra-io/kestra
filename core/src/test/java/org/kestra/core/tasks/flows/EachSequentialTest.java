@@ -43,6 +43,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
         TaskRun evalL2 = execution.findTaskRunByTaskIdAndValue("1-2-2_return", Arrays.asList("s1", "a a"));
         TaskRun evalL2Lookup = execution.findTaskRunByTaskIdAndValue("1-2-1_return", Arrays.asList("s1", "a a"));
+        assertThat((String) evalL2.getOutputs().get("value"), containsString("get " + (String) evalL2Lookup.getOutputs().get("value")));
         assertThat((String) evalL2.getOutputs().get("value"), containsString((String) evalL2Lookup.getOutputs().get("value")));
     }
 

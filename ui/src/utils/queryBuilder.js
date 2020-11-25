@@ -20,7 +20,7 @@ export default class QueryBuilder {
         const query = []
 
         if (q.namespace) {
-            query.push(`namespace:${q.namespace}`)
+            query.push(`namespace:${q.namespace}*`)
         }
 
         if (q.start) {
@@ -41,10 +41,11 @@ export default class QueryBuilder {
         const q = route.query
         const start = q.start ? iso(q.start) : "*"
         const end = q.end ? iso(q.end) : "*"
+        const namespace = q.namespace ? q.namespace + "*": "";
         return [
             `${q.q ? QueryBuilder.toLucene(q.q) : "*"}`,
             `timestamp:[${start} TO ${end}]`,
-            `namespace:${q.namespace || "*"}`,
+            `namespace:${namespace || "*"}`,
         ].join(" AND ")
     }
 }

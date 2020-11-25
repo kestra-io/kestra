@@ -4,9 +4,8 @@ import com.github.jknack.handlebars.EscapingStrategy;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
-import com.github.jknack.handlebars.internal.lang3.ObjectUtils;
 import com.google.common.base.Charsets;
-import org.apache.commons.io.FilenameUtils;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.IOUtils;
 import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.tasks.Task;
@@ -15,12 +14,10 @@ import org.kestra.core.plugins.RegisteredPlugin;
 import org.kestra.core.runners.handlebars.helpers.DateHelper;
 import org.kestra.core.runners.handlebars.helpers.JsonHelper;
 import org.kestra.core.serializers.JacksonMapper;
+import org.kestra.core.utils.Slugify;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -36,8 +33,10 @@ abstract public class DocumentationGenerator {
         .registerHelpers(DateHelper.class)
         .registerHelpers(JsonHelper.class);
 
-    public static List<Document> generate(RegisteredPlugin registeredPlugin) {
+    public static List<Document> generate(RegisteredPlugin registeredPlugin) throws IOException {
         ArrayList<Document> result = new ArrayList<>();
+
+        result.addAll(DocumentationGenerator.index(registeredPlugin));
 
         result.addAll(DocumentationGenerator.generate(registeredPlugin, registeredPlugin.getTasks(), Task.class, "tasks"));
         result.addAll(DocumentationGenerator.generate(registeredPlugin, registeredPlugin.getTriggers(), AbstractTrigger.class, "triggers"));
@@ -46,22 +45,35 @@ abstract public class DocumentationGenerator {
         return result;
     }
 
+    private static List<Document> index(RegisteredPlugin plugin) throws IOException {
+        PluginDocumentation pluginDocumentation = PluginDocumentation.of(plugin);
+
+        if (pluginDocumentation.getClassPlugins().size() == 0) {
+            return Collections.emptyList();
+        }
+
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+
+        if (plugin.getManifest() != null) {
+            builder.put("title", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Title"));
+            builder.put("group", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Group"));
+            builder.put("docs", JacksonMapper.toMap(pluginDocumentation));
+        }
+
+        return Collections.singletonList(new Document(
+            docPath(plugin),
+            render("index", builder.build())
+        ));
+    }
+
     private static <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {
         return cls
             .stream()
-            .map(r -> PluginDocumentation.of(registeredPlugin, r, baseCls))
+            .map(r -> ClassPluginDocumentation.of(registeredPlugin, r, baseCls))
             .map(pluginDocumentation -> {
                 try {
-                    String project = ObjectUtils.firstNonNull(
-                        registeredPlugin.getManifest() != null ? registeredPlugin.getManifest().getMainAttributes().getValue("X-Kestra-Title") : null,
-                        registeredPlugin.getExternalPlugin() != null ? FilenameUtils.getBaseName(registeredPlugin.getExternalPlugin().getLocation().getPath()) : null,
-                        "core"
-                    );
-
                     return new Document(
-                        project + "/" + type + "/" +
-                            (pluginDocumentation.getSubGroup() != null ? pluginDocumentation.getSubGroup() + "/" : "") +
-                            pluginDocumentation.getCls() + ".md",
+                        docPath(registeredPlugin, type, pluginDocumentation),
                         render(pluginDocumentation)
                     );
                 } catch (IOException e) {
@@ -71,14 +83,31 @@ abstract public class DocumentationGenerator {
             .collect(Collectors.toList());
     }
 
-    public static <T> String render(PluginDocumentation<T> pluginDocumentation) throws IOException {
+    private static <T> String docPath(RegisteredPlugin registeredPlugin) {
+        String pluginName = Slugify.of(registeredPlugin.title());
+
+        return pluginName + "/README.md";
+    }
+
+    private static <T> String docPath(RegisteredPlugin registeredPlugin, String type, ClassPluginDocumentation<T> classPluginDocumentation) {
+        String pluginName = Slugify.of(registeredPlugin.title());
+
+        return pluginName + "/" + type + "/" +
+            (classPluginDocumentation.getSubGroup() != null ? classPluginDocumentation.getSubGroup() + "/" : "") +
+            classPluginDocumentation.getCls() + ".md";
+    }
+
+    public static <T> String render(ClassPluginDocumentation<T> classPluginDocumentation) throws IOException {
+        return render("task", JacksonMapper.toMap(classPluginDocumentation));
+    }
+
+    public static <T> String render(String templateName, Map<String, Object> vars) throws IOException {
         String hbsTemplate = IOUtils.toString(
-            Objects.requireNonNull(DocumentationGenerator.class.getClassLoader().getResourceAsStream("docs/task.hbs")),
+            Objects.requireNonNull(DocumentationGenerator.class.getClassLoader().getResourceAsStream("docs/" + templateName + ".hbs")),
             Charsets.UTF_8
         );
 
         Template template = handlebars.compileInline(hbsTemplate);
-        Map<String, Object> vars = JacksonMapper.toMap(pluginDocumentation);
         String renderer = template.apply(vars);
 
         // vuepress {{ }} evaluation

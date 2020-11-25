@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
@@ -15,15 +16,26 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class FlowableUtils {
-    public static List<TaskRun> resolveSequentialNexts(
+    public static List<NextTaskRun> resolveSequentialNexts(
+        Execution execution,
+        List<ResolvedTask> tasks
+    ) {
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks);
+
+        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, null);
+    }
+
+    public static List<NextTaskRun> resolveSequentialNexts(
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors
     ) {
-        return FlowableUtils.resolveSequentialNexts(execution, tasks, errors, null);
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, null);
+
+        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, null);
     }
 
-    public static List<TaskRun> resolveSequentialNexts(
+    public static List<NextTaskRun> resolveSequentialNexts(
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
@@ -31,6 +43,14 @@ public class FlowableUtils {
     ) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, parentTaskRun);
 
+        return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, parentTaskRun);
+    }
+
+    private static List<NextTaskRun> innerResolveSequentialNexts(
+        Execution execution,
+        List<ResolvedTask> currentTasks,
+        TaskRun parentTaskRun
+    ) {
         // nothing
         if (currentTasks == null || currentTasks.size() == 0) {
             return new ArrayList<>();
@@ -39,7 +59,7 @@ public class FlowableUtils {
         // first one
         List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
         if (taskRuns.size() == 0) {
-            return Collections.singletonList(currentTasks.get(0).toTaskRun(execution));
+            return Collections.singletonList(currentTasks.get(0).toNextTaskRun(execution));
         }
 
         // first created, leave
@@ -60,7 +80,7 @@ public class FlowableUtils {
             int lastIndex = taskRuns.indexOf(lastTerminated.get());
 
             if (currentTasks.size() > lastIndex + 1) {
-                return Collections.singletonList(currentTasks.get(lastIndex + 1).toTaskRun(execution));
+                return Collections.singletonList(currentTasks.get(lastIndex + 1).toNextTaskRun(execution));
             }
         }
 
@@ -115,7 +135,7 @@ public class FlowableUtils {
     }
 
 
-    public static List<TaskRun> resolveParallelNexts(
+    public static List<NextTaskRun> resolveParallelNexts(
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
@@ -145,7 +165,7 @@ public class FlowableUtils {
         if (notFinds.size() > 0 && lastCreated.isEmpty()) {
             return notFinds
                 .stream()
-                .map(resolvedTask -> resolvedTask.toTaskRun(execution))
+                .map(resolvedTask -> resolvedTask.toNextTaskRun(execution))
                 .limit(1)
                 .collect(Collectors.toList());
         }

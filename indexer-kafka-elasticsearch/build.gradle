@@ -1,0 +1,13 @@
+bintrayUpload.enabled = false
+
+dependencies {
+    implementation project(":core")
+    implementation project(":repository-elasticsearch")
+    implementation project(":runner-kafka")
+
+    implementation group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: "$elasticsearchVersion"
+    implementation group: "org.apache.kafka", name: "kafka-clients", version: kafkaVersion
+    implementation group: 'net.jodah', name: 'failsafe', version: '2.4.0'
+
+    testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: '3.3.3'
+}

@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @Value
@@ -177,14 +178,35 @@ public class Execution implements DeletedInterface {
      * @param parentTaskRun  the parent task
      * @return the flow we need to follow
      */
-    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks, List<ResolvedTask> resolvedErrors, TaskRun parentTaskRun) {
+    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks, @Nullable List<ResolvedTask> resolvedErrors, TaskRun parentTaskRun) {
+        resolvedTasks = removeDisabled(resolvedTasks);
+        resolvedErrors = removeDisabled(resolvedErrors);
+
         List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
 
         if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks)) {
             return resolvedErrors == null ? new ArrayList<>() : resolvedErrors;
         }
 
+
         return resolvedTasks;
+    }
+
+    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks) {
+        resolvedTasks = removeDisabled(resolvedTasks);
+
+        return resolvedTasks;
+    }
+
+    private List<ResolvedTask> removeDisabled(List<ResolvedTask> tasks) {
+        if (tasks == null) {
+            return null;
+        }
+
+        return tasks
+            .stream()
+            .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
+            .collect(Collectors.toList());
     }
 
     public List<TaskRun> findTaskRunByTasks(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
@@ -516,8 +538,12 @@ public class Execution implements DeletedInterface {
             }
         }
 
-        if (taskRun.getOutputs() != null && taskRun.getValue() != null) {
-            current.put(taskRun.getValue(), taskRun.getOutputs());
+        if (taskRun.getOutputs() != null) {
+            if (taskRun.getValue() != null) {
+                current.put(taskRun.getValue(), taskRun.getOutputs());
+            } else {
+                current.putAll(taskRun.getOutputs());
+            }
         }
 
         return Map.of(taskRun.getTaskId(), result);

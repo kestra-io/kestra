@@ -9,4 +9,9 @@ tasks:
   - id: impossible
     type: org.kestra.core.tasks.flows.Switch
     value: "{{inputs.string}}"
-    cases: {}
+    cases:
+      "NO":
+      - id: date
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{taskrun.startDate}}"
+    defaults: null

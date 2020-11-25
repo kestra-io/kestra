@@ -11,7 +11,7 @@ import picocli.CommandLine;
     description = "handle systems maintenance",
     mixinStandardHelpOptions = true,
     subcommands = {
-        RestoreFlowQueueCommand.class,
+        RestoreQueueCommand.class,
     }
 )
 @Slf4j

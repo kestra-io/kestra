@@ -15,20 +15,20 @@ import java.util.Objects;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-class PluginDocumentationTest {
+class ClassPluginDocumentationTest {
 
     @SuppressWarnings("unchecked")
     @Test
     void tasks() throws URISyntaxException {
-        Path plugins = Paths.get(Objects.requireNonNull(PluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
+        Path plugins = Paths.get(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
 
-        PluginScanner pluginScanner = new PluginScanner(PluginDocumentationTest.class.getClassLoader());
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
         assertThat(scan.size(), is(1));
         assertThat(scan.get(0).getTasks().size(), is(1));
 
-        PluginDocumentation<? extends Task> doc = PluginDocumentation.of(scan.get(0), scan.get(0).getTasks().get(0), Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan.get(0), scan.get(0).getTasks().get(0), Task.class);
 
         assertThat(doc.getDocExamples().size(), is(2));
 

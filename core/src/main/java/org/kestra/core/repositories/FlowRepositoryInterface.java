@@ -46,5 +46,5 @@ public interface FlowRepositoryInterface {
 
     Flow update(Flow flow, Flow previous) throws ConstraintViolationException;
 
-    void delete(Flow flow);
+    Flow delete(Flow flow);
 }

@@ -12,7 +12,7 @@ import org.kestra.core.models.triggers.PollingTriggerInterface;
 import org.kestra.core.models.triggers.TriggerContext;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.runners.RunContext;
-import org.kestra.core.services.FlowListenersService;
+import org.kestra.runner.memory.MemoryFlowListeners;
 import org.kestra.core.utils.IdUtils;
 
 import java.time.Duration;
@@ -39,7 +39,7 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
     @Test
     void thread() throws Exception {
         // mock flow listeners
-        FlowListenersService flowListenersServiceSpy = spy(this.flowListenersService);
+        MemoryFlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         ExecutionRepositoryInterface executionRepositorySpy = spy(this.executionRepository);
         CountDownLatch queueCount = new CountDownLatch(2);
 

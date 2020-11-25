@@ -1,10 +1,11 @@
-package org.kestra.core.services;
+package org.kestra.runner.memory;
 
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.services.FlowListenersInterface;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,8 @@ import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
-public class FlowListenersService implements FlowListenersInterface {
+@MemoryQueueEnabled
+public class MemoryFlowListeners implements FlowListenersInterface {
     private final QueueInterface<Flow> flowQueue;
 
     private final List<Flow> flows;
@@ -23,7 +25,7 @@ public class FlowListenersService implements FlowListenersInterface {
     private final List<Consumer<List<Flow>>> consumers = new ArrayList<>();
 
     @Inject
-    public FlowListenersService(
+    public MemoryFlowListeners(
         FlowRepositoryInterface flowRepository,
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue
     ) {

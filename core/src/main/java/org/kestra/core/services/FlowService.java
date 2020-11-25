@@ -26,28 +26,37 @@ public class FlowService {
     ConditionService conditionService;
 
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {
-        return stream
-            .collect(keepLastVersionCollector())
-            .values()
-            .stream();
+        return keepLastVersionCollector(stream);
     }
 
     public Collection<Flow> keepLastVersion(List<Flow> flows) {
-        return flows
+        return keepLastVersionCollector(flows.stream())
+            .collect(Collectors.toList());
+    }
+    private Stream<Flow> keepLastVersionCollector(Stream<Flow> stream) {
+        return stream
+            .sorted((left, right) -> left.getRevision() > right.getRevision() ? -1 : (left.getRevision().equals(right.getRevision()) ? 0 : 1))
+            .collect(Collectors.groupingBy(Flow::uidWithoutRevision))
+            .values()
             .stream()
-            .collect(keepLastVersionCollector())
-            .values();
+            .map(flows -> {
+                Flow flow = flows.stream().findFirst().orElseThrow();
+
+                // edge case, 2 flows with same revision, we keep the not deleted
+                final Flow finalFlow = flow;
+                Optional<Flow> notDeleted = flows.stream()
+                    .filter(f -> f.getRevision().equals(finalFlow.getRevision()) && !f.isDeleted())
+                    .findFirst();
+
+                if (notDeleted.isPresent()) {
+                    flow = notDeleted.get();
+                }
+
+                return flow.isDeleted() ? null : flow;
+            })
+            .filter(Objects::nonNull);
     }
 
-    private java.util.stream.Collector<Flow, ?, HashMap<String, Flow>> keepLastVersionCollector() {
-        return Collectors.toMap(
-            Flow::uidWithoutRevision,
-            e -> e,
-            (left, right) -> left.getRevision() > right.getRevision() ? left : right,
-            HashMap::new
-        );
-    }
-    
     public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution) {
         return flowStream
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)

@@ -140,13 +140,17 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public void delete(Flow flow) {
+    public Flow delete(Flow flow) {
         if (this.findById(flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision())).isEmpty()) {
             throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
         }
 
-        flowQueue.emit(flow.toDeleted());
-        this.flows.remove(flowId(flow));
+        Flow deleted = flow.toDeleted();
+
+        flowQueue.emit(deleted);
+        this.flows.remove(flowId(deleted));
+
+        return deleted;
     }
 
     @Override

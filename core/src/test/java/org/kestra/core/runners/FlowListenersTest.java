@@ -1,10 +1,10 @@
-package org.kestra.core.services;
+package org.kestra.core.runners;
 
 import io.micronaut.test.annotation.MicronautTest;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.Test;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.services.FlowListenersInterface;
 import org.kestra.core.tasks.debugs.Return;
 import org.kestra.core.utils.IdUtils;
 
@@ -17,10 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
-public class FlowListenersServiceTest {
-    @Inject
-    FlowListenersService flowListenersService;
-
+abstract public class FlowListenersTest {
     @Inject
     FlowRepositoryInterface flowRepository;
 
@@ -35,11 +32,6 @@ public class FlowListenersServiceTest {
                 .format("test")
                 .build()))
             .build();
-    }
-
-    @Test
-    public void all() {
-        this.suite(flowListenersService);
     }
 
     public void suite(FlowListenersInterface flowListenersService) {
@@ -67,7 +59,7 @@ public class FlowListenersServiceTest {
         });
 
         // create the same id than first, no additional flows
-        flowRepository.update(create(first.getId(), "test2"), first);
+        first = flowRepository.update(create(first.getId(), "test2"), first);
         wait(ref, () -> {
             assertThat(count.get(), is(1));
             assertThat(flowListenersService.flows().size(), is(1));
@@ -81,14 +73,14 @@ public class FlowListenersServiceTest {
         });
 
         // delete first
-        flowRepository.delete(first);
+        Flow deleted = flowRepository.delete(first);
         wait(ref, () -> {
             assertThat(count.get(), is(1));
             assertThat(flowListenersService.flows().size(), is(1));
         });
 
         // restore must works
-        flowRepository.create(first);
+        flowRepository.create(first.withRevision(deleted.getRevision() + 1));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
             assertThat(flowListenersService.flows().size(), is(2));

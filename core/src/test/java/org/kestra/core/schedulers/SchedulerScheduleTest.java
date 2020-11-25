@@ -6,7 +6,7 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.triggers.types.Schedule;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
-import org.kestra.core.services.FlowListenersService;
+import org.kestra.runner.memory.MemoryFlowListeners;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -43,7 +43,7 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
     @Test
     void schedule() throws Exception {
         // mock flow listeners
-        FlowListenersService flowListenersServiceSpy = spy(this.flowListenersService);
+        MemoryFlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         ExecutionRepositoryInterface executionRepositorySpy = spy(this.executionRepository);
         CountDownLatch queueCount = new CountDownLatch(5);
 

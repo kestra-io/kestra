@@ -9,7 +9,7 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.repositories.TriggerRepositoryInterface;
-import org.kestra.core.services.FlowListenersService;
+import org.kestra.runner.memory.MemoryFlowListeners;
 import org.kestra.core.tasks.debugs.Return;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.core.utils.IdUtils;
@@ -20,7 +20,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 @MicronautTest
-abstract class AbstractSchedulerTest {
+abstract public class AbstractSchedulerTest {
     @Inject
     protected ApplicationContext applicationContext;
 
@@ -34,7 +34,7 @@ abstract class AbstractSchedulerTest {
     protected ExecutionRepositoryInterface executionRepository;
 
     @Inject
-    protected FlowListenersService flowListenersService;
+    protected MemoryFlowListeners flowListenersService;
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)

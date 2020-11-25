@@ -161,9 +161,13 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public void delete(Flow flow) {
-        flowQueue.emit(flow.toDeleted());
-        this.deleteRequest(INDEX_NAME, flowId(flow));
+    public Flow delete(Flow flow) {
+        Flow deleted = flow.toDeleted();
+
+        flowQueue.emit(deleted);
+        this.deleteRequest(INDEX_NAME, flowId(deleted));
+
+        return deleted;
     }
 
     public List<String> findDistinctNamespace() {

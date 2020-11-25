@@ -249,7 +249,7 @@ public class Flow implements DeletedInterface {
         return new Flow(
             this.id,
             this.namespace,
-            this.revision,
+            this.revision + 1,
             this.description,
             this.inputs,
             this.variables,

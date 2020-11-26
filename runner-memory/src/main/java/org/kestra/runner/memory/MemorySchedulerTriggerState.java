@@ -1,15 +1,17 @@
-package org.kestra.repository.memory;
+package org.kestra.runner.memory;
 
 import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.models.triggers.TriggerContext;
-import org.kestra.core.repositories.TriggerRepositoryInterface;
+import org.kestra.core.schedulers.SchedulerTriggerStateInterface;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import javax.inject.Singleton;
 
 @Singleton
-@MemoryRepositoryEnabled
-public class MemoryTriggerRepository implements TriggerRepositoryInterface {
+@MemoryQueueEnabled
+public class MemorySchedulerTriggerState implements SchedulerTriggerStateInterface {
     private final Map<String, Trigger> triggers = new HashMap<>();
 
     @Override

@@ -5,7 +5,7 @@ import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.models.ServerType;
-import org.kestra.core.schedulers.Scheduler;
+import org.kestra.core.schedulers.AbstractScheduler;
 import org.kestra.core.utils.Await;
 import picocli.CommandLine;
 
@@ -36,7 +36,7 @@ public class SchedulerCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        Scheduler scheduler = applicationContext.getBean(Scheduler.class);
+        AbstractScheduler scheduler = applicationContext.getBean(AbstractScheduler.class);
         scheduler.run();
 
         log.info("Scheduler started");

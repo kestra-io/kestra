@@ -18,12 +18,14 @@ import org.elasticsearch.common.xcontent.XContentType;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.LogEntry;
+import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.runners.Indexer;
 import org.kestra.core.runners.IndexerInterface;
 import org.kestra.core.utils.DurationOrSizeTrigger;
 import org.kestra.repository.elasticsearch.ElasticSearchExecutionRepository;
 import org.kestra.repository.elasticsearch.ElasticSearchLogRepository;
 import org.kestra.repository.elasticsearch.ElasticSearchRepositoryEnabled;
+import org.kestra.repository.elasticsearch.ElasticsearchTriggerRepository;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import org.kestra.runner.kafka.KafkaQueueEnabled;
 import org.kestra.runner.kafka.configs.TopicsConfig;
@@ -64,7 +66,8 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
         List<IndicesConfig> indicesConfigs,
         KafkaConsumerService kafkaConsumerService,
         ElasticSearchExecutionRepository executionRepository,
-        ElasticSearchLogRepository logRepository
+        ElasticSearchLogRepository logRepository,
+        ElasticsearchTriggerRepository triggerRepository
     ) {
         this.metricRegistry = metricRegistry;
         this.elasticClient = elasticClient;
@@ -72,7 +75,7 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
 
         this.subscriptions = topicsConfig
             .stream()
-            .filter(t -> t.getCls() == Execution.class || t.getCls() == LogEntry.class)
+            .filter(t -> t.getCls() == Execution.class || t.getCls() == LogEntry.class || t.getCls() == Trigger.class)
             .map(TopicsConfig::getName)
             .collect(Collectors.toSet());
 
@@ -85,6 +88,7 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
 
         logRepository.initMapping();
         executionRepository.initMapping();
+        triggerRepository.initMapping();
     }
 
     @Override

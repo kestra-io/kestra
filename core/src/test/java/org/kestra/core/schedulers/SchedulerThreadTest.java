@@ -1,25 +1,17 @@
 package org.kestra.core.schedulers;
 
-import com.google.common.collect.ImmutableMap;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.triggers.AbstractTrigger;
-import org.kestra.core.models.triggers.PollingTriggerInterface;
-import org.kestra.core.models.triggers.TriggerContext;
-import org.kestra.core.repositories.ExecutionRepositoryInterface;
-import org.kestra.core.runners.RunContext;
 import org.kestra.runner.memory.MemoryFlowListeners;
-import org.kestra.core.utils.IdUtils;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -27,6 +19,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class SchedulerThreadTest extends AbstractSchedulerTest {
+    @Inject
+    protected MemoryFlowListeners flowListenersService;
+
+    @Inject
+    protected SchedulerTriggerStateInterface triggerState;
+
+    @Inject
+    protected SchedulerExecutionStateInterface executionState;
+
     private static Flow createThreadFlow() {
         UnitTest schedule = UnitTest.builder()
             .id("sleep")
@@ -40,7 +41,7 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
     void thread() throws Exception {
         // mock flow listeners
         MemoryFlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        ExecutionRepositoryInterface executionRepositorySpy = spy(this.executionRepository);
+        SchedulerExecutionStateInterface executionRepositorySpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(2);
 
         Flow flow = createThreadFlow();
@@ -55,13 +56,11 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
             .findById(any());
 
         // scheduler
-        try (Scheduler scheduler = new Scheduler(
+        try (AbstractScheduler scheduler = new DefaultScheduler(
             applicationContext,
-            executorsUtils,
-            executionQueue,
             flowListenersServiceSpy,
             executionRepositorySpy,
-            triggerContextRepository
+            triggerState
         )) {
 
             AtomicReference<Execution> last = new AtomicReference<>();
@@ -80,37 +79,4 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
         }
     }
 
-    @SuperBuilder
-    @ToString
-    @EqualsAndHashCode
-    @Getter
-    @NoArgsConstructor
-    public static class UnitTest extends AbstractTrigger implements PollingTriggerInterface {
-        @Builder.Default
-        private final Duration interval = Duration.ofSeconds(2);
-
-        @Builder.Default
-        private transient int counter = 0;
-
-        public Optional<Execution> evaluate(RunContext runContext, TriggerContext context) throws InterruptedException {
-            counter++;
-
-            if (counter % 2 == 0) {
-                Thread.sleep(4000);
-
-                return Optional.empty();
-            } else {
-                Execution execution = Execution.builder()
-                    .id(IdUtils.create())
-                    .namespace(context.getNamespace())
-                    .flowId(context.getFlowId())
-                    .flowRevision(context.getFlowRevision())
-                    .state(new State())
-                    .variables(ImmutableMap.of("counter", counter))
-                    .build();
-
-                return Optional.of(execution);
-            }
-        }
-    }
 }

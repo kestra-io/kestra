@@ -3,6 +3,7 @@ package org.kestra.core.queues;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
+import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.runners.WorkerInstance;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.templates.Template;
@@ -20,6 +21,7 @@ public interface QueueFactoryInterface {
     String KILL_NAMED = "executionKilledQueue";
     String WORKERINSTANCE_NAMED = "workerInstanceQueue";
     String WORKERTASKRUNNING_NAMED = "workerTaskRuninngQueue";
+    String TRIGGER_NAMED = "trigger";
 
     QueueInterface<Execution> execution();
 
@@ -38,6 +40,8 @@ public interface QueueFactoryInterface {
     QueueInterface<WorkerInstance> workerInstance();
 
     QueueInterface<WorkerTaskRunning> workerTaskRunning();
+
+    QueueInterface<Trigger> trigger();
 
     WorkerTaskQueueInterface workerTaskQueue();
 }

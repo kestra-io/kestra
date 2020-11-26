@@ -1,5 +1,6 @@
 package org.kestra.repository.elasticsearch;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.models.triggers.TriggerContext;
@@ -32,8 +33,8 @@ public class ElasticsearchTriggerRepository extends AbstractElasticSearchReposit
         return this.rawGetRequest(INDEX_NAME, trigger.uid());
     }
 
-    @Override
-    public Trigger save(Trigger trigger) {
+    @VisibleForTesting
+    Trigger save(Trigger trigger) {
         this.putRequest(INDEX_NAME, trigger.uid(), trigger);
 
         return trigger;

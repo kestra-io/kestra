@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
-import org.kestra.core.schedulers.Scheduler;
+import org.kestra.core.schedulers.AbstractScheduler;
 import org.kestra.core.utils.ExecutorsUtils;
 
 import java.io.Closeable;
@@ -55,7 +55,7 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
         poolExecutor.execute(new Worker(applicationContext, workerThread));
 
         for (int i = 0; i < schedulerThread; i++) {
-            poolExecutor.execute(applicationContext.getBean(Scheduler.class));
+            poolExecutor.execute(applicationContext.getBean(AbstractScheduler.class));
         }
 
         if (applicationContext.containsBean(IndexerInterface.class)) {

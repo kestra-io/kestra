@@ -7,6 +7,7 @@ import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.templates.Template;
+import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.queues.WorkerTaskQueueInterface;
@@ -83,6 +84,13 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.WORKERTASKRUNNING_NAMED)
     public QueueInterface<WorkerTaskRunning> workerTaskRunning() {
         return new MemoryQueue<>(WorkerTaskRunning.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.TRIGGER_NAMED)
+    public QueueInterface<Trigger> trigger() {
+        return new MemoryQueue<>(Trigger.class, applicationContext);
     }
 
     @Override

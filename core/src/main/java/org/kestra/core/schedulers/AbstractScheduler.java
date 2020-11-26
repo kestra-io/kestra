@@ -2,6 +2,7 @@ package org.kestra.core.schedulers;
 
 import com.google.common.util.concurrent.*;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,8 +17,6 @@ import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.models.triggers.TriggerContext;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
-import org.kestra.core.repositories.ExecutionRepositoryInterface;
-import org.kestra.core.repositories.TriggerRepositoryInterface;
 import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowListenersInterface;
@@ -26,53 +25,53 @@ import org.kestra.core.utils.ExecutorsUtils;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import static org.kestra.core.utils.Rethrow.throwSupplier;
 
 @Slf4j
-public class Scheduler implements Runnable, AutoCloseable {
-    private final ApplicationContext applicationContext;
+public abstract class AbstractScheduler implements Runnable, AutoCloseable {
+    protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
     private final FlowListenersInterface flowListeners;
-    private final TriggerRepositoryInterface triggerContextRepository;
-    private final ExecutionRepositoryInterface executionRepository;
     private final RunContextFactory runContextFactory;
     private final MetricRegistry metricRegistry;
     private final ConditionService conditionService;
 
+    protected SchedulerExecutionStateInterface executionState;
+    protected SchedulerTriggerStateInterface triggerState;
+
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
     private final ListeningExecutorService cachedExecutor;
-    private Map<String, Trigger> lastTriggers = new ConcurrentHashMap<>();
     private final Map<String, ZonedDateTime> lastEvaluate = new ConcurrentHashMap<>();
     private final Map<String, ZonedDateTime> evaluateRunning = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> evaluateRunningCount = new ConcurrentHashMap<>();
 
+    @SuppressWarnings("unchecked")
     @Inject
-    public Scheduler(
+    public AbstractScheduler(
         ApplicationContext applicationContext,
-        ExecutorsUtils executorsUtils,
-        @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        FlowListenersInterface flowListeners,
-        ExecutionRepositoryInterface executionRepository,
-        TriggerRepositoryInterface triggerContextRepository
+        FlowListenersInterface flowListeners
     ) {
         this.applicationContext = applicationContext;
-        this.executionQueue = executionQueue;
+        this.executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         this.flowListeners = flowListeners;
-        this.triggerContextRepository = triggerContextRepository;
-        this.executionRepository = executionRepository;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
         this.conditionService = applicationContext.getBean(ConditionService.class);
 
-        this.cachedExecutor = MoreExecutors.listeningDecorator(executorsUtils.cachedThreadPool("scheduler-polling"));
+        this.cachedExecutor = MoreExecutors.listeningDecorator(applicationContext
+            .getBean(ExecutorsUtils.class)
+            .cachedThreadPool("scheduler-polling")
+        );
     }
 
     @Override
@@ -83,13 +82,6 @@ public class Scheduler implements Runnable, AutoCloseable {
             1,
             TimeUnit.SECONDS
         );
-
-        // empty cache on any flow changes
-        this.flowListeners.listen(flows -> {
-            synchronized (this) {
-                lastTriggers = new ConcurrentHashMap<>();
-            }
-        });
 
         // look at exception on the main thread
         Thread thread = new Thread(
@@ -149,17 +141,18 @@ public class Scheduler implements Runnable, AutoCloseable {
                     .build()
                 )
                 .filter(this::isEvaluationInterval)
-                .peek(this::getLastTrigger)
                 .filter(this::isExecutionNotRunning)
                 .map(f -> {
                     synchronized (this) {
-                        if (!lastTriggers.containsKey(f.getTriggerContext().uid())) {
+                        Trigger lastTrigger = this.getLastTrigger(f);
+
+                        if (lastTrigger == null) {
                             return null;
                         }
 
                         return FlowWithPollingTriggerNextDate.of(
                             f,
-                            f.getPollingTrigger().nextDate(Optional.of(lastTriggers.get(f.getTriggerContext().uid())))
+                            f.getPollingTrigger().nextDate(Optional.of(lastTrigger))
                         );
                     }
                 })
@@ -184,10 +177,10 @@ public class Scheduler implements Runnable, AutoCloseable {
     }
 
     private static class EvaluateFuture implements FutureCallback<SchedulerExecutionWithTrigger> {
-        private final Scheduler scheduler;
+        private final AbstractScheduler scheduler;
         private final FlowWithPollingTriggerNextDate flowWithPollingTriggerNextDate;
 
-        public EvaluateFuture(Scheduler scheduler, FlowWithPollingTriggerNextDate flowWithPollingTriggerNextDate) {
+        public EvaluateFuture(AbstractScheduler scheduler, FlowWithPollingTriggerNextDate flowWithPollingTriggerNextDate) {
             this.scheduler = scheduler;
             this.flowWithPollingTriggerNextDate = flowWithPollingTriggerNextDate;
         }
@@ -241,13 +234,13 @@ public class Scheduler implements Runnable, AutoCloseable {
     }
 
     private boolean isExecutionNotRunning(FlowWithPollingTrigger f) {
-        Trigger lastTrigger = lastTriggers.get(f.getTriggerContext().uid());
+        Trigger lastTrigger = this.getLastTrigger(f);
 
         if (lastTrigger.getExecutionId() == null) {
             return true;
         }
 
-        Optional<Execution> execution = executionRepository.findById(lastTrigger.getExecutionId());
+        Optional<Execution> execution = executionState.findById(lastTrigger.getExecutionId());
 
         // indexer hasn't received the execution, we skip
         if (execution.isEmpty()) {
@@ -292,28 +285,25 @@ public class Scheduler implements Runnable, AutoCloseable {
         );
     }
 
-    private void getLastTrigger(FlowWithPollingTrigger f) {
-        lastTriggers.computeIfAbsent(
-            f.getTriggerContext().uid(),
-            s -> triggerContextRepository
-                .findLast(f.getTriggerContext())
-                // we don't find, so never started execution, create an trigger context with next date.
-                // this allow some edge case when the evaluation loop of schedulers will change second
-                // between start and end
-                .orElseGet(() -> {
+    private Trigger getLastTrigger(FlowWithPollingTrigger f) {
+        return triggerState
+            .findLast(f.getTriggerContext())
+            // we don't find, so never started execution, create an trigger context with next date.
+            // this allow some edge case when the evaluation loop of schedulers will change second
+            // between start and end
+            .orElseGet(() -> {
                     ZonedDateTime nextDate = f.getPollingTrigger().nextDate(Optional.empty());
                     ZonedDateTime now = ZonedDateTime.now();
 
                     return Trigger.builder()
-                            .date(nextDate.compareTo(now) < 0 ? nextDate : now)
-                            .flowId(f.getFlow().getId())
-                            .flowRevision(f.getFlow().getRevision())
-                            .namespace(f.getFlow().getNamespace())
-                            .triggerId(f.getTriggerContext().getTriggerId())
-                            .build();
-                    }
-                )
-        );
+                        .date(nextDate.compareTo(now) < 0 ? nextDate : now)
+                        .flowId(f.getFlow().getId())
+                        .flowRevision(f.getFlow().getRevision())
+                        .namespace(f.getFlow().getNamespace())
+                        .triggerId(f.getTriggerContext().getTriggerId())
+                        .build();
+                }
+            );
     }
 
     private boolean isEvaluationInterval(FlowWithPollingTrigger flowWithPollingTrigger) {
@@ -346,8 +336,7 @@ public class Scheduler implements Runnable, AutoCloseable {
             executionWithTrigger.getExecution()
         );
 
-        this.lastTriggers.put(executionWithTrigger.getTriggerContext().uid(), trigger);
-        this.triggerContextRepository.save(trigger);
+        this.triggerState.save(trigger);
     }
 
     private ZonedDateTime now() {

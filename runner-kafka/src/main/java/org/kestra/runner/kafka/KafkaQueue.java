@@ -1,12 +1,11 @@
 package org.kestra.runner.kafka;
 
-import com.google.common.base.CaseFormat;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -34,15 +33,16 @@ import javax.annotation.PreDestroy;
 
 @Slf4j
 public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, AutoCloseable {
-    private final Class<T> cls;
+    private Class<T> cls;
     private final AdminClient adminClient;
     private final KafkaConsumerService kafkaConsumerService;
-    private final KafkaProducer<String, T> kafkaProducer;
     private final List<org.apache.kafka.clients.consumer.Consumer<String, T>> kafkaConsumers = new ArrayList<>();
-    private final TopicsConfig topicsConfig;
     private static ExecutorService poolExecutor;
 
-    public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
+    private KafkaProducer<String, T> kafkaProducer;
+    private TopicsConfig topicsConfig;
+
+    private KafkaQueue(ApplicationContext applicationContext) {
         if (poolExecutor == null) {
             ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
             poolExecutor = executorsUtils.cachedThreadPool("kakfa-queue");
@@ -50,13 +50,31 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
 
         KafkaAdminService kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
 
-        this.cls = cls;
         this.adminClient = kafkaAdminService.of();
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
+    }
+
+    public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
+        this(applicationContext);
+
+        this.cls = cls;
         this.kafkaProducer = applicationContext.getBean(KafkaProducerService.class).of(cls, JsonSerde.of(cls));
         this.topicsConfig = topicsConfig(applicationContext, this.cls);
 
+        KafkaAdminService kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
         kafkaAdminService.createIfNotExist(this.cls);
+    }
+
+    @VisibleForTesting
+    public KafkaQueue(String topicKey, Class<T> cls, ApplicationContext applicationContext) {
+        this(applicationContext);
+
+        this.cls = cls;
+        this.kafkaProducer = applicationContext.getBean(KafkaProducerService.class).of(cls, JsonSerde.of(cls));
+        this.topicsConfig = topicsConfig(applicationContext, topicKey);
+
+        KafkaAdminService kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
+        kafkaAdminService.createIfNotExist(topicKey);
     }
 
     static <T> void log(TopicsConfig topicsConfig, T object, String message) {
@@ -144,6 +162,15 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
             .getBeansOfType(TopicsConfig.class)
             .stream()
             .filter(r -> r.getCls() == cls)
+            .findFirst()
+            .orElseThrow();
+    }
+
+    static TopicsConfig topicsConfig(ApplicationContext applicationContext, String name) {
+        return applicationContext
+            .getBeansOfType(TopicsConfig.class)
+            .stream()
+            .filter(r -> r.getKey().equals(name))
             .findFirst()
             .orElseThrow();
     }

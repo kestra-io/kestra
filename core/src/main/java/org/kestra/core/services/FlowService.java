@@ -7,6 +7,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.runners.RunContextFactory;
+import org.kestra.core.utils.ListUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -82,6 +83,16 @@ public class FlowService {
             ))
             .filter(Optional::isPresent)
             .map(Optional::get)
+            .collect(Collectors.toList());
+    }
+
+    public static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
+        return ListUtils.emptyOnNull(previous.getTriggers())
+            .stream()
+            .filter(p -> ListUtils.emptyOnNull(flow.getTriggers())
+                .stream()
+                .noneMatch(c -> c.getId().equals(p.getId()))
+            )
             .collect(Collectors.toList());
     }
 

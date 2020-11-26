@@ -3,6 +3,7 @@ package org.kestra.core.models.triggers;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.flows.Flow;
 
 import java.util.Arrays;
 import javax.validation.constraints.NotNull;
@@ -34,6 +35,15 @@ public class Trigger extends TriggerContext {
             execution.getFlowId(),
             execution.getTrigger().getId()
         ));
+    }
+
+    public static Trigger of(Flow flow, AbstractTrigger abstractTrigger) {
+        return Trigger.builder()
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .flowRevision(flow.getRevision())
+            .triggerId(abstractTrigger.getId())
+            .build();
     }
 
     public static Trigger of(TriggerContext triggerContext, Execution execution) {

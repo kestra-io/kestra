@@ -8,6 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.Helpers;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
+import org.kestra.core.models.triggers.Trigger;
+import org.kestra.core.queues.QueueFactoryInterface;
+import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.schedulers.AbstractSchedulerTest;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.tasks.debugs.Return;
 import org.kestra.core.tasks.scripts.Bash;
@@ -19,11 +23,14 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
@@ -33,6 +40,10 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Inject
     private LocalFlowRepositoryLoader repositoryLoader;
+
+    @Inject
+    @Named(QueueFactoryInterface.TRIGGER_NAMED)
+    private QueueInterface<Trigger> triggerQueue;
 
     @BeforeEach
     private void init() throws IOException, URISyntaxException {
@@ -172,7 +183,6 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(false));
     }
 
-
     @Test
     void updateConflict() {
         String flowId = IdUtils.create();
@@ -203,6 +213,45 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(e.getConstraintViolations().size(), is(2));
 
         flowRepository.delete(save);
+    }
 
+    @Test
+    void removeTrigger() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        triggerQueue.receive(trigger -> {
+            assertThat(trigger, is(nullValue()));
+            countDownLatch.countDown();
+        });
+
+        String flowId = IdUtils.create();
+
+        Flow flow = Flow.builder()
+            .id(flowId)
+            .namespace("org.kestra.unittest")
+            .triggers(Collections.singletonList(AbstractSchedulerTest.UnitTest.builder()
+                .id("sleep")
+                .type(AbstractSchedulerTest.UnitTest.class.getName())
+                .build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
+            .build();
+
+        Flow save = flowRepository.create(flow);
+
+        assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
+
+        Flow update = Flow.builder()
+            .id(flowId)
+            .namespace("org.kestra.unittest")
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
+            .build();;
+
+        Flow updated = flowRepository.update(update, flow);
+
+        countDownLatch.await();
+
+        assertThat(updated.getTriggers(), is(nullValue()));
+
+        flowRepository.delete(save);
     }
 }

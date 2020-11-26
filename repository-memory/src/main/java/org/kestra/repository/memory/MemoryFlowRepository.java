@@ -2,12 +2,14 @@ package org.kestra.repository.memory;
 
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
+import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.services.FlowService;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -25,6 +27,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
     private QueueInterface<Flow> flowQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.TRIGGER_NAMED)
+    private QueueInterface<Trigger> triggerQueue;
 
     @Inject
     private ModelValidator modelValidator;
@@ -106,7 +112,13 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 throw s;
             });
 
-        return this.save(flow);
+        Flow saved = this.save(flow);
+
+        FlowService
+            .findRemovedTrigger(flow, previous)
+            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+
+        return saved;
     }
 
     private Flow save(Flow flow) throws ConstraintViolationException {

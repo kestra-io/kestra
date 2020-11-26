@@ -85,15 +85,16 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
         }
     }
 
-    @Override
-    public void emit(T message) throws QueueException {
+    private void produce(String key, T message) {
         KafkaQueue.log(topicsConfig, message, "Outgoing messsage");
 
         try {
             kafkaProducer
-                .send(new ProducerRecord<>(
-                    topicsConfig.getName(),
-                    key(message), message),
+                .send(
+                    new ProducerRecord<>(
+                        topicsConfig.getName(),
+                        key, message
+                    ),
                     (metadata, e) -> {
                         if (e != null) {
                             log.error("Failed to produce '{}' with metadata '{}'", e, metadata);
@@ -104,6 +105,17 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
         } catch (InterruptedException | ExecutionException e) {
             throw new QueueException("Failed to produce", e);
         }
+    }
+
+    @Override
+    public void emit(T message) throws QueueException {
+        this.produce(key(message), message);
+    }
+
+
+    @Override
+    public void delete(T message) throws QueueException {
+        this.produce(key(message), null);
     }
 
     @Override

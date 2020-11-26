@@ -1,4 +1,4 @@
-package org.kestra.core.repositories;
+package org.kestra.core.schedulers;
 
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -13,9 +13,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @MicronautTest
-public abstract class AbstractTriggerRepositoryTest {
+public abstract class SchedulerTriggerStateInterfaceTest {
     @Inject
-    protected TriggerRepositoryInterface triggerRepository;
+    protected SchedulerTriggerStateInterface triggerState;
 
     private static Trigger.TriggerBuilder<?, ?> trigger() {
         return Trigger.builder()
@@ -31,19 +31,19 @@ public abstract class AbstractTriggerRepositoryTest {
     void all() {
         Trigger.TriggerBuilder<?, ?> builder = trigger();
 
-        Optional<Trigger> find = triggerRepository.findLast(builder.build());
+        Optional<Trigger> find = triggerState.findLast(builder.build());
         assertThat(find.isPresent(), is(false));
 
-        Trigger save = triggerRepository.save(builder.build());
+        Trigger save = triggerState.save(builder.build());
 
-        find = triggerRepository.findLast(save);
+        find = triggerState.findLast(save);
 
         assertThat(find.isPresent(), is(true));
         assertThat(find.get().getExecutionId(), is(save.getExecutionId()));
 
-        save = triggerRepository.save(builder.executionId(IdUtils.create()).build());
+        save = triggerState.save(builder.executionId(IdUtils.create()).build());
 
-        find = triggerRepository.findLast(save);
+        find = triggerState.findLast(save);
 
         assertThat(find.isPresent(), is(true));
         assertThat(find.get().getExecutionId(), is(save.getExecutionId()));

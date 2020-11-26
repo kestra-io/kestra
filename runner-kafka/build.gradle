@@ -12,8 +12,9 @@ dependencies {
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':repository-memory')
-    testImplementation project(':runner-memory').sourceSets.test.output
     testImplementation project(':storage-local')
 
     testImplementation group: 'com.bakdata.fluent-kafka-streams-tests', name: 'fluent-kafka-streams-tests', version: "2.1.0"
+
+    testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: '3.3.3'
 }

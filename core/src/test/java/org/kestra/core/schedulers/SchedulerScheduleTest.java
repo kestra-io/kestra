@@ -5,7 +5,6 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.triggers.types.Schedule;
-import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.runner.memory.MemoryFlowListeners;
 
 import java.time.ZonedDateTime;
@@ -14,12 +13,23 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
+import javax.inject.Inject;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class SchedulerScheduleTest extends AbstractSchedulerTest {
+    @Inject
+    protected MemoryFlowListeners flowListenersService;
+
+    @Inject
+    protected SchedulerTriggerStateInterface triggerState;
+
+    @Inject
+    protected SchedulerExecutionStateInterface executionState;
+
     private static Flow createScheduleFlow() {
         Schedule schedule = Schedule.builder()
             .id("hourly")
@@ -44,7 +54,7 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
     void schedule() throws Exception {
         // mock flow listeners
         MemoryFlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        ExecutionRepositoryInterface executionRepositorySpy = spy(this.executionRepository);
+        SchedulerExecutionStateInterface executionRepositorySpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(5);
 
         Flow flow = createScheduleFlow();
@@ -59,13 +69,11 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
             .findById(any());
 
         // scheduler
-        try (Scheduler scheduler = new Scheduler(
+        try (AbstractScheduler scheduler = new DefaultScheduler(
             applicationContext,
-            executorsUtils,
-            executionQueue,
             flowListenersServiceSpy,
             executionRepositorySpy,
-            triggerContextRepository
+            triggerState
         )) {
 
             // wait for execution

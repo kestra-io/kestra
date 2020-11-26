@@ -23,6 +23,7 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.templates.Template;
+import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.*;
@@ -32,6 +33,7 @@ import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaStreamService;
+import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 import org.kestra.runner.kafka.streams.*;
 
 import java.util.HashMap;
@@ -50,14 +52,15 @@ public class KafkaExecutor extends AbstractExecutor {
     private static final String NEXTS_DEDUPLICATION_STATE_STORE_NAME = "next_deduplication";
     public static final String WORKER_RUNNING_STATE_STORE_NAME = "worker_running";
     public static final String WORKERINSTANCE_STATE_STORE_NAME = "worker_instance";
-    private static final String TOPIC_EXECUTOR = "executor";
-    private static final String TOPIC_EXECUTOR_WORKERINSTANCE = "executorworkerinstance";
+    public static final String TOPIC_EXECUTOR_WORKERINSTANCE = "executorworkerinstance";
 
     ApplicationContext applicationContext;
     KafkaStreamService kafkaStreamService;
     KafkaAdminService kafkaAdminService;
     QueueInterface<LogEntry> logQueue;
     FlowService flowService;
+    KafkaStreamSourceService kafkaStreamSourceService;
+
 
     @Inject
     public KafkaExecutor(
@@ -68,7 +71,8 @@ public class KafkaExecutor extends AbstractExecutor {
         @javax.inject.Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRegistry metricRegistry,
         FlowService flowService,
-        ConditionService conditionService
+        ConditionService conditionService,
+        KafkaStreamSourceService kafkaStreamSourceService
     ) {
         super(runContextFactory, metricRegistry, conditionService);
 
@@ -77,6 +81,7 @@ public class KafkaExecutor extends AbstractExecutor {
         this.kafkaAdminService = kafkaAdminService;
         this.logQueue = logQueue;
         this.flowService = flowService;
+        this.kafkaStreamSourceService = kafkaStreamSourceService;
     }
 
     public Topology topology() {
@@ -120,17 +125,17 @@ public class KafkaExecutor extends AbstractExecutor {
 
         // declare ktable & kstream
         KStream<String, WorkerTaskResult> workerTaskResultKStream = this.workerTaskResultKStream(builder);
-        KTable<String, Execution> executionKTable = this.executionKTable(builder);
-        KTable<String, Execution> executionNotKilledKTable = this.joinExecutionKilled(builder, executionKTable);
+        KTable<String, Execution> executorKTable = kafkaStreamSourceService.executorKTable(builder);
+        KTable<String, Execution> executionNotKilledKTable = this.joinExecutionKilled(builder, executorKTable);
         KTable<String, WorkerTaskResultState> workerTaskResultKTable = this.workerTaskResultKTable(workerTaskResultKStream);
-        GlobalKTable<String, Flow> flowKTable = this.flowKTable(builder);
+        GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowKTable(builder);
         GlobalKTable<String, WorkerTaskRunning> workerTaskRunningKTable = this.workerTaskRunningKStream(builder);
         KStream<String, WorkerInstance> workerInstanceKStream = this.workerInstanceKStream(builder);
         this.templateKTable(builder);
 
         // logs
         logIfEnabled(
-            executionKTable.toStream(Named.as("execution-toStream")),
+            executorKTable.toStream(Named.as("execution-toStream")),
             (key, value) -> log.debug(
                 "Execution in '{}' with checksum '{}': {}",
                 value.getId(),
@@ -144,7 +149,7 @@ public class KafkaExecutor extends AbstractExecutor {
         KStream<String, Execution> executionKStream = this.joinWorkerResult(workerTaskResultKTable, executionNotKilledKTable);
 
         // handle state on execution
-        KStream<String, ExecutionWithFlow> stream = this.withFlow(flowKTable, executionKStream);
+        KStream<String, ExecutionWithFlow> stream = kafkaStreamSourceService.withFlow(flowKTable, executionKStream);
 
         this.handleMain(stream);
         this.handleNexts(stream);
@@ -158,7 +163,7 @@ public class KafkaExecutor extends AbstractExecutor {
 
         // handle worker
         this.purgeWorkerRunning(workerTaskResultKStream);
-        this.detectNewWorker(workerInstanceKStream);
+        this.detectNewWorker(workerInstanceKStream, workerTaskRunningKTable);
 
         // build
         Topology topology = builder.build();
@@ -182,21 +187,11 @@ public class KafkaExecutor extends AbstractExecutor {
                 Named.as("executionToExecutor")
             )
             .to(
-                kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
+                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
             );
     }
 
-    private GlobalKTable<String, Flow> flowKTable(StreamsBuilder builder) {
-        return builder
-            .globalTable(
-                kafkaAdminService.getTopicName(Flow.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)),
-                Materialized.<String, Flow, KeyValueStore<Bytes, byte[]>>as("flow")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(Flow.class))
-            );
-    }
 
     private GlobalKTable<String, Template> templateKTable(StreamsBuilder builder) {
         return builder
@@ -206,17 +201,6 @@ public class KafkaExecutor extends AbstractExecutor {
                 Materialized.<String, Template, KeyValueStore<Bytes, byte[]>>as("template")
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(Template.class))
-            );
-    }
-
-    private KTable<String, Execution> executionKTable(StreamsBuilder builder) {
-        return builder
-            .table(
-                kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
-                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)),
-                Materialized.<String, Execution, KeyValueStore<Bytes, byte[]>>as("execution")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(Execution.class))
             );
     }
 
@@ -373,16 +357,6 @@ public class KafkaExecutor extends AbstractExecutor {
         return toExecutionJoin(join);
     }
 
-    private KStream<String, ExecutionWithFlow> withFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, Execution> executionKStream) {
-        return executionKStream
-            .join(
-                flowGlobalKTable,
-                (key, value) -> Flow.uid(value),
-                (execution, flow) -> new ExecutionWithFlow(flow, execution),
-                Named.as("withFlow-join")
-            );
-    }
-
     private void handleMain(KStream<String, ExecutionWithFlow> stream) {
         KStream<String, Execution> result = stream
             .mapValues(
@@ -420,7 +394,7 @@ public class KafkaExecutor extends AbstractExecutor {
                 Named.as("purgeExecutor-executorToNull-map")
             )
             .to(
-                kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
+                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
             );
 
@@ -648,10 +622,7 @@ public class KafkaExecutor extends AbstractExecutor {
             );
     }
 
-    /**
-     * GlobalKTable<String, WorkerTaskRunning> is used as a state store on WorkerInstanceTransformer
-     */
-    private void detectNewWorker(KStream<String, WorkerInstance> workerInstanceKStream) {
+    private void detectNewWorker(KStream<String, WorkerInstance> workerInstanceKStream, GlobalKTable<String, WorkerTaskRunning> workerTaskRunningGlobalKTable) {
         workerInstanceKStream
             .to(
                 kafkaAdminService.getTopicName(TOPIC_EXECUTOR_WORKERINSTANCE),
@@ -784,7 +755,7 @@ public class KafkaExecutor extends AbstractExecutor {
 
         executionKStream
             .to(
-                kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
+                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
             );
     }
@@ -864,13 +835,14 @@ public class KafkaExecutor extends AbstractExecutor {
         kafkaAdminService.createIfNotExist(WorkerTaskResult.class);
         kafkaAdminService.createIfNotExist(Execution.class);
         kafkaAdminService.createIfNotExist(Flow.class);
-        kafkaAdminService.createIfNotExist(TOPIC_EXECUTOR);
-        kafkaAdminService.createIfNotExist(TOPIC_EXECUTOR_WORKERINSTANCE);
+        kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_EXECUTOR);
+        kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_EXECUTOR_WORKERINSTANCE);
         kafkaAdminService.createIfNotExist(ExecutionKilled.class);
         kafkaAdminService.createIfNotExist(WorkerTaskRunning.class);
         kafkaAdminService.createIfNotExist(WorkerInstance.class);
         kafkaAdminService.createIfNotExist(Template.class);
         kafkaAdminService.createIfNotExist(LogEntry.class);
+        kafkaAdminService.createIfNotExist(Trigger.class);
 
         KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology());
         resultStream.start();

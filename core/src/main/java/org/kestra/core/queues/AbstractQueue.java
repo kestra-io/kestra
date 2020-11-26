@@ -5,6 +5,7 @@ import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.templates.Template;
+import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.runners.WorkerInstance;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
@@ -30,6 +31,8 @@ public abstract class AbstractQueue {
             return ((Template) object).uid();
         } else if (object.getClass() == ExecutionKilled.class) {
             return ((ExecutionKilled) object).getExecutionId();
+        } else if (object.getClass() == Trigger.class) {
+            return ((Trigger) object).uid();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

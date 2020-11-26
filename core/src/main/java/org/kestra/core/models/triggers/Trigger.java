@@ -1,9 +1,6 @@
 package org.kestra.core.models.triggers;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.executions.Execution;
 
@@ -31,6 +28,14 @@ public class Trigger extends TriggerContext {
         ));
     }
 
+    public static String uid(Execution execution) {
+        return String.join("_", Arrays.asList(
+            execution.getNamespace(),
+            execution.getFlowId(),
+            execution.getTrigger().getId()
+        ));
+    }
+
     public static Trigger of(TriggerContext triggerContext, Execution execution) {
         return Trigger.builder()
             .namespace(triggerContext.getNamespace())
@@ -39,6 +44,16 @@ public class Trigger extends TriggerContext {
             .triggerId(triggerContext.getTriggerId())
             .executionId(execution.getId())
             .date(triggerContext.getDate())
+            .build();
+    }
+
+    public Trigger resetExecution() {
+        return Trigger.builder()
+            .namespace(this.getNamespace())
+            .flowId(this.getFlowId())
+            .flowRevision(this.getFlowRevision())
+            .triggerId(this.getTriggerId())
+            .date(this.getDate())
             .build();
     }
 }

@@ -3,6 +3,7 @@ package org.kestra.core.models.triggers;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
 import java.time.ZonedDateTime;
@@ -10,6 +11,7 @@ import java.util.Arrays;
 import javax.validation.constraints.NotNull;
 
 @SuperBuilder
+@ToString
 @Getter
 @NoArgsConstructor
 @Introspected

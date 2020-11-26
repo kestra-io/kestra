@@ -84,11 +84,14 @@ class KafkaElasticIndexerTest {
         MockConsumer<String, String> mockConsumer = mockConsumer(topic);
         doReturn(mockConsumer).when(kafkaConsumerServiceSpy).of(any(), any());
 
-        mockConsumer.addRecord(buildExecutionRecord(topic, 0));
+        ConsumerRecord<String, String> first = buildExecutionRecord(topic, 0);
+
+        mockConsumer.addRecord(first);
         mockConsumer.addRecord(buildExecutionRecord(topic, 1));
         mockConsumer.addRecord(buildExecutionRecord(topic, 2));
         mockConsumer.addRecord(buildExecutionRecord(topic, 3));
         mockConsumer.addRecord(buildExecutionRecord(topic, 4));
+        mockConsumer.addRecord(buildRecord(topic, first.key(), null, 5));
 
         KafkaElasticIndexer indexer = new KafkaElasticIndexer(
             metricRegistry,
@@ -112,6 +115,7 @@ class KafkaElasticIndexerTest {
     private ConsumerRecord<String, String> buildExecutionRecord(String topic, int offset) throws JsonProcessingException {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+
         return buildRecord(
             topic,
             execution.getId(),

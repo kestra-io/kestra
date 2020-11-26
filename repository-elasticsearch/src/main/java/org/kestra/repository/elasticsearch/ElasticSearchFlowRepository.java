@@ -8,11 +8,13 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.services.FlowService;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
@@ -31,6 +33,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     protected static final String REVISIONS_NAME = "flows-revisions";
 
     private final QueueInterface<Flow> flowQueue;
+    private final QueueInterface<Trigger> triggerQueue;
 
     @Inject
     public ElasticSearchFlowRepository(
@@ -38,11 +41,13 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         List<IndicesConfig> indicesConfigs,
         ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
-        @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue
+        @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue,
+        @Named(QueueFactoryInterface.TRIGGER_NAMED) QueueInterface<Trigger> triggerQueue
     ) {
         super(client, indicesConfigs, modelValidator, executorsUtils, Flow.class);
 
         this.flowQueue = flowQueue;
+        this.triggerQueue = triggerQueue;
     }
 
     private static String flowId(Flow flow) {
@@ -129,7 +134,13 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        return this.save(flow);
+        Flow saved = this.save(flow);
+
+        FlowService
+            .findRemovedTrigger(flow, previous)
+            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+
+        return saved;
     }
 
     public Flow save(Flow flow) throws ConstraintViolationException {

@@ -11,6 +11,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
@@ -151,11 +152,20 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
         BulkRequest request = new BulkRequest();
 
         rows
-            .forEach(record -> request
-                .add(new IndexRequest(this.indexName(record))
-                .id(record.key())
-                .source(record.value(), XContentType.JSON)
-            ));
+            .forEach(record -> {
+                if (record.value() == null) {
+                    request
+                        .add(new DeleteRequest(this.indexName(record))
+                            .id(record.key())
+                        );
+                } else {
+                    request
+                        .add(new IndexRequest(this.indexName(record))
+                            .id(record.key())
+                            .source(record.value(), XContentType.JSON)
+                        );
+                }
+            });
 
         return request;
     }

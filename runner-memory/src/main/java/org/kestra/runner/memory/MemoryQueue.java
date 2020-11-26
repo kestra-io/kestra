@@ -6,6 +6,7 @@ import com.google.common.hash.Hashing;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.queues.AbstractQueue;
+import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.utils.ExecutorsUtils;
@@ -43,8 +44,7 @@ public class MemoryQueue<T> extends AbstractQueue implements QueueInterface<T> {
         }
     }
 
-    @Override
-    public void emit(T message) {
+    private void produce(String key, T message) {
         if (log.isTraceEnabled()) {
             log.trace("New message: topic '{}', value {}", this.cls.getName(), message);
         }
@@ -59,7 +59,7 @@ public class MemoryQueue<T> extends AbstractQueue implements QueueInterface<T> {
                             log.debug("No consumer connected on queue '" + this.cls.getName() + "'");
                             return;
                         } else {
-                            int index = selectConsumer(key(message), consumers.size());
+                            int index = selectConsumer(key, consumers.size());
                             consumer = consumers.get(index);
                         }
                     }
@@ -67,13 +67,23 @@ public class MemoryQueue<T> extends AbstractQueue implements QueueInterface<T> {
                     // we force serialization to be a the same case than an another queue with serialization
                     // this enabled debugging classLoader
                     try {
-                        T serialized = mapper.readValue(mapper.writeValueAsString(message), this.cls);
+                        T serialized = message == null ? null : mapper.readValue(mapper.writeValueAsString(message), this.cls);
                         consumer.accept(serialized);
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
                 });
             });
+    }
+
+    @Override
+    public void emit(T message) {
+        this.produce(key(message), message);
+    }
+
+    @Override
+    public void delete(T message) throws QueueException {
+        this.produce(key(message), null);
     }
 
     @Override

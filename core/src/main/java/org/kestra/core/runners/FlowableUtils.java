@@ -107,12 +107,12 @@ public class FlowableUtils {
         } else if (currentTasks.size() > 0) {
             // handle nominal case, tasks or errors flow are ready to be analysed
             if (execution.isTerminated(currentTasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState(currentTasks, parentTaskRun));
+                return Optional.of(execution.guessFinalState(tasks, parentTaskRun));
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
-            if (execution.hasFailed(tasks, parentTaskRun)) {
-                return Optional.of(execution.guessFinalState());
+            if (execution.hasFailed(tasks, parentTaskRun) || execution.hasWarning(tasks, parentTaskRun)) {
+                return Optional.of(execution.guessFinalState(tasks, parentTaskRun));
             }
         }
 

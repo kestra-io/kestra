@@ -84,7 +84,7 @@ public class State {
     @JsonIgnore
     public static Type[] runningTypes() {
         return Arrays.stream(Type.values())
-            .filter(type -> type.isRunning())
+            .filter(Type::isRunning)
             .toArray(Type[]::new);
     }
 
@@ -99,11 +99,12 @@ public class State {
         RESTARTED,
         KILLING,
         SUCCESS,
+        WARNING,
         FAILED,
         KILLED;
 
         public boolean isTerninated() {
-            return this == Type.FAILED || this == Type.SUCCESS || this == Type.KILLED;
+            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED;
         }
 
         public boolean isRunning() {

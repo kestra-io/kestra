@@ -228,7 +228,7 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
     private Execution onEnd(Flow flow, Execution execution) {
-        Execution newExecution = execution.withState(execution.guessFinalState());
+        Execution newExecution = execution.withState(execution.guessFinalState(flow));
 
         Logger logger = flow.logger();
 

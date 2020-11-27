@@ -26,6 +26,7 @@ public class DailyExecutionStatistics {
         State.Type.RESTARTED, 0L,
         State.Type.KILLING, 0L,
         State.Type.SUCCESS, 0L,
+        State.Type.WARNING, 0L,
         State.Type.FAILED, 0L,
         State.Type.KILLED, 0L
     ));

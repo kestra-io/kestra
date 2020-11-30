@@ -2,6 +2,7 @@ package org.kestra.repository.elasticsearch;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.models.triggers.TriggerContext;
 import org.kestra.core.models.validations.ModelValidator;
@@ -31,6 +32,14 @@ public class ElasticsearchTriggerRepository extends AbstractElasticSearchReposit
 
     public Optional<Trigger> findLast(TriggerContext trigger) {
         return this.rawGetRequest(INDEX_NAME, trigger.uid());
+    }
+
+    @Override
+    public List<Trigger> findAll() {
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(this.defaultFilter());
+
+        return this.scroll(INDEX_NAME, sourceBuilder);
     }
 
     @VisibleForTesting

@@ -51,6 +51,14 @@ export default class State {
             isRunning: false,
             isKillable: false
         },
+        WARNING: {
+            name: "WARNING",
+            colorClass: "warning",
+            color: "#FBD10B",
+            icon: "alert-circle",
+            isRunning: false,
+            isKillable: false
+        },
         FAILED: {
             name: "FAILED",
             colorClass: "danger",
@@ -87,6 +95,10 @@ export default class State {
 
     static get FAILED() {
         return this.States.FAILED.name;
+    }
+
+    static get WARNING() {
+        return this.States.WARNING.name;
     }
 
     static isRunning(state) {

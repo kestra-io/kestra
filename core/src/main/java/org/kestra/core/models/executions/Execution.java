@@ -12,6 +12,7 @@ import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.DeletedInterface;
+import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.runners.FlowableUtils;
@@ -184,10 +185,9 @@ public class Execution implements DeletedInterface {
 
         List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
 
-        if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks)) {
+        if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks) || this.hasWarning(resolvedTasks)) {
             return resolvedErrors == null ? new ArrayList<>() : resolvedErrors;
         }
-
 
         return resolvedTasks;
     }
@@ -289,6 +289,22 @@ public class Execution implements DeletedInterface {
         return terminatedCount == resolvedTasks.size();
     }
 
+    public boolean hasWarning() {
+        return this.taskRunList != null && this.taskRunList
+            .stream()
+            .anyMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.WARNING);
+    }
+
+    public boolean hasWarning(List<ResolvedTask> resolvedTasks) {
+        return this.hasWarning(resolvedTasks, null);
+    }
+
+    public boolean hasWarning(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
+        return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
+            .stream()
+            .anyMatch(taskRun -> taskRun.getState().getCurrent() == State.Type.WARNING);
+    }
+
     public boolean hasFailed() {
         return this.taskRunList != null && this.taskRunList
             .stream()
@@ -315,17 +331,18 @@ public class Execution implements DeletedInterface {
             .anyMatch(taskRun -> taskRun.getState().isRunning());
     }
 
-    public State.Type guessFinalState() {
-        return this
-            .findFirstByState(State.Type.KILLED)
-            .map(taskRun -> taskRun.getState().getCurrent())
-            .orElse(this.hasFailed() ? State.Type.FAILED : State.Type.SUCCESS);
+    public State.Type guessFinalState(Flow flow) {
+        return this.guessFinalState(ResolvedTask.of(flow.getTasks()), null);
     }
 
     public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun) {
         return this
             .findLastByState(currentTasks, State.Type.KILLED, parentTaskRun)
             .map(taskRun -> taskRun.getState().getCurrent())
+            .or(() -> this
+                .findLastByState(currentTasks, State.Type.WARNING, parentTaskRun)
+                .map(taskRun -> taskRun.getState().getCurrent())
+            )
             .orElse(this.hasFailed(currentTasks) ? State.Type.FAILED : State.Type.SUCCESS);
     }
 

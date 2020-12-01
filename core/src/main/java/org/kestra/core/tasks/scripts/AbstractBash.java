@@ -1,14 +1,18 @@
 package org.kestra.core.tasks.scripts;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.io.FileUtils;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.PluginProperty;
+import org.kestra.core.models.executions.AbstractMetricEntry;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.runners.RunContext;
+import org.kestra.core.serializers.JacksonMapper;
 import org.slf4j.Logger;
 
 import java.io.*;
@@ -19,6 +23,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
@@ -64,6 +70,7 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
         deprecated = true
     )
     @PluginProperty(dynamic = true)
+    @Deprecated
     protected List<String> files;
 
     @Schema(
@@ -91,6 +98,7 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
     @Builder.Default
     protected transient List<File> cleanupDirectory = new ArrayList<>();
     protected transient Path workingDirectory;
+    protected static transient ObjectMapper mapper = JacksonMapper.ofJson();
 
     protected Map<String, String> handleOutputFiles(Map<String, Object> additionalVars) throws IOException {
         List<String> outputs = new ArrayList<>();
@@ -195,8 +203,6 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
 
         int exitCode = process.waitFor();
 
-        this.cleanup();
-
         if (exitCode != 0) {
             stdOut.join();
             stdErr.join();
@@ -224,11 +230,18 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
             bashTempFiles.delete();
         }
 
+        this.cleanup();
+
+        Map<String, Object> outputs = new HashMap<>();
+        outputs.putAll(parseOut(runContext, stdOut.getLogs()));
+        outputs.putAll(parseOut(runContext, stdErr.getLogs()));
+
         // output
         return Output.builder()
             .exitCode(exitCode)
-            .stdOut(stdOut.getLogs())
-            .stdErr(stdErr.getLogs())
+            .stdOutLineCount(stdOut.getLogs().size())
+            .stdErrLineCount(stdErr.getLogs().size())
+            .vars(outputs)
             .files(uploaded)
             .build();
     }
@@ -247,6 +260,41 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
         }
 
         return this.workingDirectory;
+    }
+
+    protected Map<String, Object> parseOut(RunContext runContext, List<String> outs) throws JsonProcessingException {
+        Map<String, Object> outputs = new HashMap<>();
+
+        for (String out : outs) {
+            // captures output per line
+            String pattern = "^::(\\{.*\\})::$";
+
+            Pattern r = Pattern.compile(pattern);
+            Matcher m = r.matcher(out);
+
+            if (m.find()) {
+                BashCommand<?> bashCommand = mapper.readValue(m.group(1), BashCommand.class);
+
+                if (bashCommand.outputs != null) {
+                    outputs.putAll(bashCommand.outputs);
+                }
+
+
+                if (bashCommand.metrics != null) {
+                    bashCommand.metrics.forEach(runContext::metric);
+                }
+            }
+        }
+
+        return outputs;
+    }
+
+    @NoArgsConstructor
+    @Data
+    public static class BashCommand <T> {
+        private Map<String, Object> outputs;
+        private List<AbstractMetricEntry<T>> metrics;
+
     }
 
     protected LogThread readInput(Logger logger, InputStream inputStream, boolean isStdErr) {
@@ -302,14 +350,19 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
     @Getter
     public static class Output implements org.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The standard output of the commands"
+            title = "The value extract from output of the commands"
         )
-        private final List<String> stdOut;
+        private final Map<String, Object> vars;
 
         @Schema(
-            title = "The standard error of the commands"
+            title = "The standard output line count"
         )
-        private final List<String> stdErr;
+        private final int stdOutLineCount;
+
+        @Schema(
+            title = "The standard error line count"
+        )
+        private final int stdErrLineCount;
 
         @Schema(
             title = "The exit code of the whole execution"

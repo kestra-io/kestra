@@ -1,8 +1,10 @@
 package org.kestra.core.tasks.scripts;
 
+import com.google.common.base.Charsets;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.io.IOUtils;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.annotations.PluginProperty;
@@ -14,6 +16,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -28,7 +31,17 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
         "The task will create a temprorary folder for every tasks and allows you to install some npm packages defined in an optional `package.json` file.\n" +
         "\n" +
         "By convention, you need to define at least a `main.js` files in `inputFiles` that will be the script used.\n" +
-        "You can also  add as many javascript files as you need in `inputFiles`."
+        "You can also  add as many javascript files as you need in `inputFiles`.\n" +
+        "\n" +
+        "You can send outputs & metrics from your node script that can be used by others tasks. In order to help, we inject a node package directly on the working dir." +
+        "Here is an example usage:\n" +
+        "```javascript\n" +
+        "const Kestra = require(\"./kestra\");\n" +
+        "Kestra.outputs({test: 'value', int: 2, bool: true, float: 3.65});\n" +
+        "Kestra.counter('count', 1, {tag1: 'i', tag2: 'win'});\n" +
+        "Kestra.timer('timer1', (callback) => { setTimeout(callback, 1000) }, {tag1: 'i', tag2: 'lost'});\n" +
+        "Kestra.timer('timer2', 2.12, {tag1: 'i', tag2: 'destroy'});\n" +
+        "```"
 )
 @Plugin(
     examples = {
@@ -37,11 +50,12 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
             code = {
                 "inputFiles:",
                 "  main.js: |",
+                "    const Kestra = require(\"./kestra\");",
                 "    const fs = require('fs')",
                 "    const result = fs.readFileSync(process.argv[2], \"utf-8\")",
                 "    console.log(JSON.parse(result).status)",
                 "    const axios = require('axios')",
-                "    axios.get('http://google.fr').then(d => console.log(d.status))",
+                "    axios.get('http://google.fr').then(d => console.log(d.status); Kestra.outputs({'status': d.status, 'text': d.data}))",
                 "    console.log(require('./mymodule').value)",
                 "  data.json: |",
                 "    {\"status\": \"OK\"}",
@@ -97,6 +111,11 @@ public class Node extends AbstractBash implements RunnableTask<AbstractBash.Outp
         if (!inputFiles.containsKey("main.js")) {
             throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.js key with javascript code value.");
         }
+
+        this.inputFiles.put("kestra.js", IOUtils.toString(
+            Objects.requireNonNull(this.getClass().getClassLoader().getResourceAsStream("scripts/kestra.js")),
+            Charsets.UTF_8
+        ));
 
         return run(runContext, throwFunction((additionalVars) -> {
             Path workingDirectory = this.tmpWorkingDirectory(additionalVars);

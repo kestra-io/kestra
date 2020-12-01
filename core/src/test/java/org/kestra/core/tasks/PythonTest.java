@@ -9,10 +9,10 @@ import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.tasks.scripts.Bash;
 import org.kestra.core.tasks.scripts.Python;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -31,7 +31,7 @@ class PythonTest {
     void run() throws Exception {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = new HashMap<>();
-        files.put("main.py", "print('hello world')");
+        files.put("main.py", "print('::{\"outputs\": {\"extract\":\"hello world\"}}::')");
 
         Python python = Python.builder()
             .id("test-python-task")
@@ -42,9 +42,9 @@ class PythonTest {
         Bash.Output run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().size(), is(1));
-        assertThat(run.getStdOut().get(0), is("hello world"));
-        assertThat(run.getStdErr().size(), equalTo(0));
+        assertThat(run.getStdOutLineCount(), is(1));
+        assertThat(run.getVars().get("extract"), is("hello world"));
+        assertThat(run.getStdErrLineCount(), equalTo(0));
     }
 
     @Test
@@ -72,7 +72,7 @@ class PythonTest {
     void requirements() throws Exception {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = new HashMap<>();
-        files.put("main.py", "import requests; print(requests.get('http://google.com').status_code)");
+        files.put("main.py", "import requests; print('::{\"outputs\": {\"extract\":\"' + str(requests.get('http://google.com').status_code) + '\"}}::')");
 
         Python python = Python.builder()
             .id("test-python-task")
@@ -84,7 +84,7 @@ class PythonTest {
         Bash.Output run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(0), is("200"));
+        assertThat(run.getVars().get("extract"), is("200"));
     }
 
     @Test
@@ -92,7 +92,7 @@ class PythonTest {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = new HashMap<>();
         files.put("main.py", "import otherfile; otherfile.test()");
-        files.put("otherfile.py", "def test(): print('success')");
+        files.put("otherfile.py", "def test(): print('::{\"outputs\": {\"extract\":\"success\"}}::')");
 
         Python python = Python.builder()
             .id("test-python-task")
@@ -103,14 +103,14 @@ class PythonTest {
         Bash.Output run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(0), is("success"));
+        assertThat(run.getVars().get("extract"), is("success"));
     }
 
     @Test
     void pipConf() throws Exception {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = new HashMap<>();
-        files.put("main.py", "print(open('pip.conf').read())");
+        files.put("main.py", "print('::{\"outputs\": {\"extract\":\"' + str('#it worked !' in open('pip.conf').read()) + '\"}}::')");
         files.put("pip.conf", "[global]\nno-cache-dir = false\n#it worked !");
 
         Python python = Python.builder()
@@ -122,14 +122,14 @@ class PythonTest {
         Bash.Output run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(2), is("#it worked !"));
+        assertThat(run.getVars().get("extract"), is("True"));
     }
 
     @Test
     void fileInSubFolders() throws Exception {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = new HashMap<>();
-        files.put("main.py", "print(open('sub/folder/file/test.txt').read())");
+        files.put("main.py", "print('::{\"outputs\": {\"extract\":\"' + open('sub/folder/file/test.txt').read() + '\"}}::')");
         files.put("sub/folder/file/test.txt", "OK");
         files.put("sub/folder/file/test1.txt", "OK");
 
@@ -142,14 +142,14 @@ class PythonTest {
         Bash.Output run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(0), is("OK"));
+        assertThat(run.getVars().get("extract"), is("OK"));
     }
 
     @Test
     void args() throws Exception {
         RunContext runContext = runContextFactory.of(ImmutableMap.of("test", "value"));
         Map<String, String> files = new HashMap<>();
-        files.put("main.py", "import sys; print(' '.join(sys.argv))");
+        files.put("main.py", "import sys; print('::{\"outputs\": {\"extract\":\"' + ' '.join(sys.argv) + '\"}}::')");
 
         Python python = Python.builder()
             .id("test-python-task")
@@ -160,6 +160,34 @@ class PythonTest {
 
         Bash.Output run = python.run(runContext);
 
-        assertThat(run.getStdOut().get(0), is("main.py test param value"));
+        assertThat(run.getVars().get("extract"), is("main.py test param value"));
+    }
+
+    @Test
+    void outputs() throws Exception {
+        RunContext runContext = runContextFactory.of(ImmutableMap.of("test", "value"));
+        Map<String, String> files = new HashMap<>();
+        files.put("main.py", "from kestra import Kestra\n" +
+            "import time\n" +
+            "Kestra.outputs({'test': 'value', 'int': 2, 'bool': True, 'float': 3.65})\n" +
+            "Kestra.counter('count', 1, {'tag1': 'i', 'tag2': 'win'})\n" +
+            "Kestra.timer('timer1', lambda: time.sleep(1), {'tag1': 'i', 'tag2': 'lost'})\n" +
+            "Kestra.timer('timer2', 2.12, {'tag1': 'i', 'tag2': 'destroy'})\n"
+        );
+
+        Python node = Python.builder()
+            .id("test-node-task")
+            .pythonPath("python3")
+            .inputFiles(files)
+            .build();
+
+        Bash.Output run = node.run(runContext);
+
+        assertThat(run.getVars().get("test"), is("value"));
+        assertThat(run.getVars().get("int"), is(2));
+        assertThat(run.getVars().get("bool"), is(true));
+        assertThat(run.getVars().get("float"), is(3.65));
+
+        BashTest.controlOutputs(runContext, run);
     }
 }

@@ -9,10 +9,10 @@ import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.tasks.scripts.Bash;
 import org.kestra.core.tasks.scripts.Node;
 
-import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -31,7 +31,7 @@ class NodeTest {
     void run() throws Exception {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = new HashMap<>();
-        files.put("main.js", "console.log('hello world')");
+        files.put("main.js", "console.log('::{\"outputs\": {\"extract\":\"hello world\"}}::')");
 
         Node node = Node.builder()
             .id("test-node-task")
@@ -42,9 +42,9 @@ class NodeTest {
         Bash.Output run = node.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().size(), is(1));
-        assertThat(run.getStdOut().get(0), is("hello world"));
-        assertThat(run.getStdErr().size(), equalTo(0));
+        assertThat(run.getStdOutLineCount(), is(1));
+        assertThat(run.getVars().get("extract"), is("hello world"));
+        assertThat(run.getStdErrLineCount(), equalTo(0));
     }
 
     @Test
@@ -72,7 +72,7 @@ class NodeTest {
     void requirements() throws Exception {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = new HashMap<>();
-        files.put("main.js", "require('axios').get('http://google.com').then(r => { console.log( r.status ) })");
+        files.put("main.js", "require('axios').get('http://google.com').then(r => { console.log('::{\"outputs\": {\"extract\":\"' + r.status + '\"}}::') })");
         files.put("package.json", "{\"dependencies\":{\"axios\":\"^0.20.0\"}}");
 
         Node node = Node.builder()
@@ -85,14 +85,14 @@ class NodeTest {
         Bash.Output run = node.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(0), is("200"));
+        assertThat(run.getVars().get("extract"), is("200"));
     }
 
     @Test
     void manyFiles() throws Exception {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = new HashMap<>();
-        files.put("main.js", "console.log(require('./otherfile').value)");
+        files.put("main.js", "console.log('::{\"outputs\": {\"extract\":\"' + (require('./otherfile').value) + '\"}}::')");
         files.put("otherfile.js", "module.exports.value = 'success'");
 
         Node node = Node.builder()
@@ -104,14 +104,14 @@ class NodeTest {
         Bash.Output run = node.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(0), is("success"));
+        assertThat(run.getVars().get("extract"), is("success"));
     }
 
     @Test
     void fileInSubFolders() throws Exception {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = new HashMap<>();
-        files.put("main.js", "console.log(require('fs').readFileSync('./sub/folder/file/test.txt', 'utf-8'))");
+        files.put("main.js", "console.log('::{\"outputs\": {\"extract\":\"' + (require('fs').readFileSync('./sub/folder/file/test.txt', 'utf-8')) + '\"}}::')");
         files.put("sub/folder/file/test.txt", "OK");
         files.put("sub/folder/file/test1.txt", "OK");
 
@@ -124,14 +124,14 @@ class NodeTest {
         Bash.Output run = node.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(0), is("OK"));
+        assertThat(run.getVars().get("extract"), is("OK"));
     }
 
     @Test
     void args() throws Exception {
         RunContext runContext = runContextFactory.of(ImmutableMap.of("test", "value"));
         Map<String, String> files = new HashMap<>();
-        files.put("main.js", "console.log(process.argv.slice(2).join(' '))");
+        files.put("main.js", "console.log('::{\"outputs\": {\"extract\":\"' + (process.argv.slice(2).join(' ')) + '\"}}::')");
 
         Node node = Node.builder()
             .id("test-node-task")
@@ -142,6 +142,28 @@ class NodeTest {
 
         Bash.Output run = node.run(runContext);
 
-        assertThat(run.getStdOut().get(0), is("test param value"));
+        assertThat(run.getVars().get("extract"), is("test param value"));
+    }
+
+    @Test
+    void outputs() throws Exception {
+        RunContext runContext = runContextFactory.of(ImmutableMap.of("test", "value"));
+        Map<String, String> files = new HashMap<>();
+        files.put("main.js", "const Kestra = require(\"./kestra\");" +
+            "Kestra.outputs({test: 'value', int: 2, bool: true, float: 3.65});" +
+            "Kestra.counter('count', 1, {tag1: 'i', tag2: 'win'});" +
+            "Kestra.timer('timer1', (callback) => { setTimeout(callback, 1000) }, {tag1: 'i', tag2: 'lost'});" +
+            "Kestra.timer('timer2', 2.12, {tag1: 'i', tag2: 'destroy'});"
+        );
+
+        Node node = Node.builder()
+            .id("test-node-task")
+            .nodePath("node")
+            .inputFiles(files)
+            .build();
+
+        Bash.Output run = node.run(runContext);
+
+        BashTest.controlOutputs(runContext, run);
     }
 }

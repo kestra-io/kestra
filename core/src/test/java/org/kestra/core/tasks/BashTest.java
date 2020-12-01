@@ -5,10 +5,12 @@ import com.google.common.io.CharStreams;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.kestra.core.models.executions.AbstractMetricEntry;
 import org.kestra.core.runners.RunContext;
 import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.tasks.scripts.Bash;
+import org.kestra.core.tasks.scripts.Node;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -19,9 +21,11 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -47,8 +51,8 @@ class BashTest {
         Bash.Output run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().size(), is(2));
-        assertThat(run.getStdErr().size() > 0, is(true));
+        assertThat(run.getStdOutLineCount(), is(2));
+        assertThat(run.getStdErrLineCount() > 0, is(true));
     }
 
     @Test
@@ -56,18 +60,23 @@ class BashTest {
         RunContext runContext = runContextFactory.of();
 
         Bash bash = Bash.builder()
-            .files(Arrays.asList("xml", "csv"))
+            .outputsFiles(Arrays.asList("xml", "csv"))
             .inputFiles(ImmutableMap.of("files/in/in.txt", "I'm here"))
-            .commands(new String[]{"cat files/in/in.txt", "echo 1 >> {{ outputFiles.xml }}", "echo 2 >> {{ outputFiles.csv }}", "echo 3 >> {{ outputFiles.xml }}"})
+            .commands(new String[]{
+                "echo '::{\"outputs\": {\"extract\":\"'$(cat files/in/in.txt)'\"}}::'",
+                "echo 1 >> {{ outputFiles.xml }}",
+                "echo 2 >> {{ outputFiles.csv }}",
+                "echo 3 >> {{ outputFiles.xml }}"
+            })
             .build();
 
         Bash.Output run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdErr().size(), is(0));
+        assertThat(run.getStdErrLineCount(), is(0));
 
-        assertThat(run.getStdOut().size(), is(1));
-        assertThat(run.getStdOut().get(0), is("I'm here"));
+        assertThat(run.getStdOutLineCount(), is(1));
+        assertThat(run.getVars().get("extract"), is("I'm here"));
 
         InputStream get = storageInterface.get(run.getFiles().get("xml"));
 
@@ -134,8 +143,8 @@ class BashTest {
         Bash.Output run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().size(), is(1));
-        assertThat(run.getStdErr().size(), is(1));
+        assertThat(run.getStdOutLineCount(), is(1));
+        assertThat(run.getStdErrLineCount(), is(1));
     }
 
     @Test
@@ -154,8 +163,8 @@ class BashTest {
         Bash.Output run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().size(), is(2));
-        assertThat(run.getStdErr().size() > 0, is(false));
+        assertThat(run.getStdOutLineCount(), is(2));
+        assertThat(run.getStdErrLineCount() > 0, is(false));
     }
 
     @Test
@@ -163,7 +172,7 @@ class BashTest {
         RunContext runContext = runContextFactory.of();
 
         Map<String, String> files = new HashMap<>();
-        files.put("test.sh", "tst() { echo 'testbash' ; echo '{{workingDir}}'; }");
+        files.put("test.sh", "tst() { echo '::{\"outputs\": {\"extract\":\"testbash\"}}::' ; echo '{{workingDir}}'; }");
 
         List<String> commands = new ArrayList<>();
         commands.add("source {{workingDir}}/test.sh && tst");
@@ -177,7 +186,7 @@ class BashTest {
         Bash.Output run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        assertThat(run.getStdOut().get(0), is("testbash"));
+        assertThat(run.getVars().get("extract"), is("testbash"));
     }
 
     @Test
@@ -196,19 +205,53 @@ class BashTest {
         files.put("fscontent.txt", put.toString());
 
         List<String> commands = new ArrayList<>();
-        commands.add("cat fscontent.txt");
+        commands.add("cat fscontent.txt > {{ outputFiles.out }} ");
 
         Bash bash = Bash.builder()
             .interpreter("/bin/bash")
             .commands(commands.toArray(String[]::new))
             .inputFiles(files)
+            .outputsFiles(Collections.singletonList("out"))
             .build();
 
         Bash.Output run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        String outputContent = String.join("\n", run.getStdOut());
+        InputStream get = storageInterface.get(run.getFiles().get("out"));
+        String outputContent = CharStreams.toString(new InputStreamReader(get));
         String fileContent = String.join("\n", Files.readAllLines(new File(resource.getPath()).toPath(), StandardCharsets.UTF_8));
         assertThat(outputContent, is(fileContent));
+    }
+
+    static void controlOutputs(RunContext runContext, Bash.Output run) {
+        assertThat(run.getVars().get("test"), is("value"));
+        assertThat(run.getVars().get("int"), is(2));
+        assertThat(run.getVars().get("bool"), is(true));
+        assertThat(run.getVars().get("float"), is(3.65));
+
+        assertThat(BashTest.getMetrics(runContext, "count").getValue(), is(1D));
+        assertThat(BashTest.getMetrics(runContext, "count").getTags().size(), is(2));
+        assertThat(BashTest.getMetrics(runContext, "count").getTags().get("tag1"), is("i"));
+        assertThat(BashTest.getMetrics(runContext, "count").getTags().get("tag2"), is("win"));
+
+        assertThat(BashTest.<Duration>getMetrics(runContext, "timer1").getValue().getNano(), greaterThan(0));
+        assertThat(BashTest.<Duration>getMetrics(runContext, "timer1").getTags().size(), is(2));
+        assertThat(BashTest.<Duration>getMetrics(runContext, "timer1").getTags().get("tag1"), is("i"));
+        assertThat(BashTest.<Duration>getMetrics(runContext, "timer1").getTags().get("tag2"), is("lost"));
+
+        assertThat(BashTest.<Duration>getMetrics(runContext, "timer2").getValue().getNano(), greaterThan(100000000));
+        assertThat(BashTest.<Duration>getMetrics(runContext, "timer2").getTags().size(), is(2));
+        assertThat(BashTest.<Duration>getMetrics(runContext, "timer2").getTags().get("tag1"), is("i"));
+        assertThat(BashTest.<Duration>getMetrics(runContext, "timer2").getTags().get("tag2"), is("destroy"));
+    }
+
+    @SuppressWarnings("unchecked")
+    static <T> AbstractMetricEntry<T> getMetrics(RunContext runContext, String name) {
+        return (AbstractMetricEntry<T>) runContext.metrics()
+            .stream()
+            .filter(abstractMetricEntry -> abstractMetricEntry.getName().equals(name))
+            .findFirst()
+            .orElseThrow();
+
     }
 }

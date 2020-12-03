@@ -115,6 +115,9 @@
             if (this.$route.query.filter) {
                 this.filterGroup = this.$route.query.filter;
             }
+            this.dataTree.forEach(node => {
+                node.children = this.children(node)
+            })
         },
         mounted() {
             this.generateGraph();
@@ -248,6 +251,17 @@
                 const transform = d3.zoomIdentity.translate(50, 50).translate(0, 0);
                 svgWrapper.call(this.zoom.transform, transform);
                 this.bindNodes();
+            },
+            children(node) {
+                const children = []
+                for (let child of this.dataTree) {
+                    for (let parent of (child.parent || [])) {
+                        if (parent.id === node.task.id) {
+                            children.push(JSON.parse(JSON.stringify(node)))
+                        }
+                    }
+                }
+                return children
             },
             virtalNodeReady() {
                 if (this.virtualRootNode) {

@@ -158,7 +158,7 @@
                 return this.task.id.hashCode();
             },
             childrenCount() {
-                return this.task.tasks ? this.task.tasks.length : 0;
+                return this.n.children ? this.n.children.length : 0;
             },
             taskYaml() {
                 return YamlUtils.stringify(this.n);

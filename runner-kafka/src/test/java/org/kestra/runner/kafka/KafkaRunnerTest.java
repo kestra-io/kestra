@@ -14,6 +14,7 @@ import org.kestra.core.runners.FlowTriggerCaseTest;
 import org.kestra.core.runners.InputsTest;
 import org.kestra.core.runners.ListenersTest;
 import org.kestra.core.runners.RestartCaseTest;
+import org.kestra.core.tasks.flows.EachSequentialTest;
 import org.kestra.core.tasks.flows.TemplateTest;
 import org.kestra.core.utils.TestsUtils;
 
@@ -194,6 +195,11 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Test
     void flowTrigger() throws Exception {
         flowTriggerCaseTest.trigger();
+    }
+
+    @Test
+    void eachWithNull() throws Exception {
+        EachSequentialTest.eachNullTest(runnerUtils, workerTaskLogQueue);
     }
 
     @Test

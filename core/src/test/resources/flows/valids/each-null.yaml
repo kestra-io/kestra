@@ -1,0 +1,14 @@
+id: each-null
+namespace: org.kestra.tests
+
+tasks:
+  - id: 1_each
+    type: org.kestra.core.tasks.flows.EachSequential
+    value: '[1, null, 2]'
+    tasks:
+      - id: 1-1
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+  - id: 2_end
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

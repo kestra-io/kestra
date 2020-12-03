@@ -64,7 +64,7 @@ public class Bash extends AbstractBash implements RunnableTask<AbstractBash.Outp
         title = "The commands to run",
         description = "Default command will be launched with `/bin/sh -c \"commands\"`"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty(dynamic = true)
     @NotNull
     @NotEmpty
     protected String[] commands;

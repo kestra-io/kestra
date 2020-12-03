@@ -10,7 +10,6 @@ import org.kestra.core.runners.RunContext;
 import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.storages.StorageInterface;
 import org.kestra.core.tasks.scripts.Bash;
-import org.kestra.core.tasks.scripts.Node;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -85,7 +84,7 @@ class BashTest {
             is("1\n3\n")
         );
 
-        get = storageInterface.get(run.getFiles().get("csv"));
+        get = storageInterface.get(run.getOutputFiles().get("csv"));
 
         assertThat(
             CharStreams.toString(new InputStreamReader(get)),
@@ -217,7 +216,7 @@ class BashTest {
         Bash.Output run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
-        InputStream get = storageInterface.get(run.getFiles().get("out"));
+        InputStream get = storageInterface.get(run.getOutputFiles().get("out"));
         String outputContent = CharStreams.toString(new InputStreamReader(get));
         String fileContent = String.join("\n", Files.readAllLines(new File(resource.getPath()).toPath(), StandardCharsets.UTF_8));
         assertThat(outputContent, is(fileContent));

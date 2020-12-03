@@ -48,12 +48,12 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, Bash.class);
 
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(8));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(9));
 
         generate = jsonSchemaGenerator.outputs(Task.class, Bash.class);
 
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(5));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
     }
 
     @SuppressWarnings("unchecked")

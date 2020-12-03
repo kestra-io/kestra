@@ -1,10 +1,14 @@
 package org.kestra.runner.memory;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
+import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.services.FlowListenersInterface;
 
 import java.util.ArrayList;
@@ -18,6 +22,9 @@ import javax.inject.Singleton;
 @Slf4j
 @MemoryQueueEnabled
 public class MemoryFlowListeners implements FlowListenersInterface {
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+    private static final TypeReference<List<Flow>> TYPE_REFERENCE = new TypeReference<>(){};
+
     private final QueueInterface<Flow> flowQueue;
 
     private final List<Flow> flows;
@@ -85,11 +92,13 @@ public class MemoryFlowListeners implements FlowListenersInterface {
     @Override
     public void listen(Consumer<List<Flow>> consumer) {
         consumers.add(consumer);
-        consumer.accept(new ArrayList<>(this.flows));
+        consumer.accept(new ArrayList<>(this.flows()));
     }
 
+    @SneakyThrows
     @Override
     public List<Flow> flows() {
-        return this.flows;
+        // we forced a deep clone to avoid concurrency where instance are changed during iteration (especially scheduler).
+        return MAPPER.readValue(MAPPER.writeValueAsString(this.flows), TYPE_REFERENCE);
     }
 }

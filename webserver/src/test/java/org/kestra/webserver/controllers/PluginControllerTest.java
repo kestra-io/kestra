@@ -59,8 +59,8 @@ class PluginControllerTest {
             assertThat(doc.getMarkdown(), containsString("org.kestra.core.tasks.scripts.Bash"));
             assertThat(doc.getMarkdown(), containsString("Exit if any non true return value"));
             assertThat(doc.getMarkdown(), containsString("The standard output line count"));
-            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(7));
-            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(5));
+            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(8));
+            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(6));
         });
     }
 

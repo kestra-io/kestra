@@ -66,12 +66,21 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
 
     @Schema(
         title = "The list of files that will be uploaded to internal storage, ",
-        description ="/!\\deprecated property, use `outputsFiles` property instead",
+        description ="use `outputsFiles` property instead",
         deprecated = true
     )
     @PluginProperty(dynamic = true)
     @Deprecated
     protected List<String> files;
+
+    @Schema(
+        title = "Deprecated Output file",
+        description = "use `outputFiles`",
+        deprecated = true
+    )
+    @PluginProperty(dynamic = false)
+    @Deprecated
+    protected List<String> outputsFiles;
 
     @Schema(
         title = "Output file list that will be uploaded to internal storage",
@@ -81,7 +90,7 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
             " and you used on others tasks using `{{ outputs.task-id.files.first }}`"
     )
     @PluginProperty(dynamic = false)
-    protected List<String> outputsFiles;
+    protected List<String> outputFiles;
 
     @Schema(
         title = "Input files are extra files supplied by user that make it simpler organize code.",
@@ -102,6 +111,10 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
 
     protected Map<String, String> handleOutputFiles(Map<String, Object> additionalVars) throws IOException {
         List<String> outputs = new ArrayList<>();
+
+        if (this.outputFiles != null && this.outputFiles.size() > 0) {
+            outputs.addAll(this.outputFiles);
+        }
 
         if (this.outputsFiles != null && this.outputsFiles.size() > 0) {
             outputs.addAll(this.outputsFiles);
@@ -243,6 +256,7 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
             .stdErrLineCount(stdErr.getLogs().size())
             .vars(outputs)
             .files(uploaded)
+            .outputFiles(uploaded)
             .build();
     }
 
@@ -371,10 +385,19 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
         private final int exitCode;
 
         @Schema(
+            title = "Deprecated output files",
+            description = "use `outputFiles`",
+            deprecated = true
+        )
+        @Deprecated
+        @PluginProperty(additionalProperties = URI.class)
+        private final Map<String, URI> files;
+
+        @Schema(
             title = "The output files uri in Kestra internal storage"
         )
         @PluginProperty(additionalProperties = URI.class)
-        private final Map<String, URI> files;
+        private final Map<String, URI> outputFiles;
     }
 
     @Getter

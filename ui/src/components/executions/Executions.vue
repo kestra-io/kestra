@@ -241,7 +241,7 @@
                     size: parseInt(this.$route.query.size || 25),
                     page: parseInt(this.$route.query.page || 1),
                     q: this.executionQuery,
-                    sort: this.$route.query.sort,
+                    sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.status
                 }).finally(callback);
             },

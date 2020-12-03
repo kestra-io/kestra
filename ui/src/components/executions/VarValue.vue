@@ -27,7 +27,7 @@
         },
         props: {
             value: {
-                type: Object,
+                type: [String, Object],
                 required: true
             },
             execution: {

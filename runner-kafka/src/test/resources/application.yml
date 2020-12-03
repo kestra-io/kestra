@@ -73,7 +73,7 @@ kestra:
           cleanup.policy: "delete,compact"
 
       killed:
-        name: "kestra_executor_killed"
+        name: "unit_${kestra.prefix}_kestra_executor_killed"
         cls: org.kestra.core.models.executions.ExecutionKilled
         properties:
           cleanup.policy: "delete,compact"

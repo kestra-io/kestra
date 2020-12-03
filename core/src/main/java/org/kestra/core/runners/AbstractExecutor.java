@@ -82,7 +82,7 @@ public abstract class AbstractExecutor implements Runnable {
         return newExecution;
     }
 
-    private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException, InternalException {
+    private Optional<WorkerTaskResult> childWorkerTaskResult(Flow flow, Execution execution, TaskRun parentTaskRun) throws InternalException {
         Task parent = flow.findTaskByTaskId(parentTaskRun.getTaskId());
 
         if (parent instanceof FlowableTask) {
@@ -157,7 +157,7 @@ public abstract class AbstractExecutor implements Runnable {
             .findFirst();
     }
 
-    private Optional<List<TaskRun>> childNextsTaskRun(Flow flow, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException, InternalException {
+    private Optional<List<TaskRun>> childNextsTaskRun(Flow flow, Execution execution, TaskRun parentTaskRun) throws InternalException {
         Task parent = flow.findTaskByTaskId(parentTaskRun.getTaskId());
 
         if (parent instanceof FlowableTask) {
@@ -265,7 +265,7 @@ public abstract class AbstractExecutor implements Runnable {
         return this.handleKilling(execution, flow);
     }
 
-    protected Optional<List<TaskRun>> doNexts(Execution execution, Flow flow) throws Exception {
+    protected Optional<List<TaskRun>> doNexts(Execution execution, Flow flow) throws InternalException {
         List<TaskRun> nexts;
 
         // killing, so no more nexts
@@ -290,7 +290,7 @@ public abstract class AbstractExecutor implements Runnable {
         return Optional.empty();
     }
 
-    protected Optional<List<WorkerTask>> doWorkerTask(Execution execution, Flow flow) throws Exception {
+    protected Optional<List<WorkerTask>> doWorkerTask(Execution execution, Flow flow) throws InternalException {
         List<WorkerTask> nexts;
 
         nexts = this.handleWorkerTask(execution, flow);
@@ -301,7 +301,7 @@ public abstract class AbstractExecutor implements Runnable {
         return Optional.empty();
     }
 
-    protected Optional<List<WorkerTaskResult>> doWorkerTaskResult(Execution execution, Flow flow) throws Exception {
+    protected Optional<List<WorkerTaskResult>> doWorkerTaskResult(Execution execution, Flow flow) throws InternalException {
         List<WorkerTaskResult> nexts;
 
         nexts = this.handleChildWorkerTaskResult(execution, flow);
@@ -326,23 +326,31 @@ public abstract class AbstractExecutor implements Runnable {
         );
     }
 
-    private List<TaskRun> handleChildNext(Execution execution, Flow flow) throws Exception {
+    private List<TaskRun> handleChildNext(Execution execution, Flow flow) throws InternalException {
         if (execution.getTaskRunList() == null) {
             return new ArrayList<>();
         }
 
-        return execution
+
+        List<TaskRun> running = execution
             .getTaskRunList()
             .stream()
             .filter(taskRun -> taskRun.getState().isRunning())
-            .flatMap(throwFunction(taskRun -> this.childNextsTaskRun(flow, execution, taskRun)
-                .orElse(new ArrayList<>())
-                .stream()
-            ))
             .collect(Collectors.toList());
+
+        // Remove functionnal style to avoid (class org.kestra.core.exceptions.IllegalVariableEvaluationException cannot be cast to class java.lang.RuntimeException'
+        ArrayList<TaskRun> result = new ArrayList<>();
+
+        for (TaskRun taskRun :running) {
+            result.addAll(this.childNextsTaskRun(flow, execution, taskRun)
+                .orElse(new ArrayList<>())
+            );
+        }
+
+        return result;
     }
 
-    private List<WorkerTaskResult> handleChildWorkerTaskResult(Execution execution, Flow flow) throws Exception {
+    private List<WorkerTaskResult> handleChildWorkerTaskResult(Execution execution, Flow flow) throws InternalException {
         if (execution.getTaskRunList() == null) {
             return new ArrayList<>();
         }
@@ -412,7 +420,7 @@ public abstract class AbstractExecutor implements Runnable {
     }
 
 
-    private List<WorkerTask> handleWorkerTask(Execution execution, Flow flow) throws Exception {
+    private List<WorkerTask> handleWorkerTask(Execution execution, Flow flow) throws InternalException {
         if (execution.getTaskRunList() == null || execution.getState().getCurrent() == State.Type.KILLING) {
             return new ArrayList<>();
         }

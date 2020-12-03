@@ -1,6 +1,6 @@
 package org.kestra.core.exceptions;
 
-public class IllegalVariableEvaluationException extends Exception {
+public class IllegalVariableEvaluationException extends InternalException {
     public IllegalVariableEvaluationException(Throwable e) {
         super(e);
     }

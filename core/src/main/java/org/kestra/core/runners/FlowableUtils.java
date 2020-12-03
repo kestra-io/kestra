@@ -185,6 +185,17 @@ public class FlowableUtils {
             throw new IllegalVariableEvaluationException(e);
         }
 
+        long nullCount = Arrays
+            .stream(values)
+            .filter(Objects::isNull)
+            .count();
+
+        if (nullCount > 0) {
+            throw new IllegalVariableEvaluationException("Found '" + nullCount + "' null values on Each, " +
+                "with values=" + Arrays.toString(values)
+            );
+        }
+
         return Arrays
             .stream(values)
             .distinct()

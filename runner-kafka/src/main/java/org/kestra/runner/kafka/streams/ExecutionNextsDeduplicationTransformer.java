@@ -43,7 +43,7 @@ public class ExecutionNextsDeduplicationTransformer implements ValueTransformerW
 
         if (groups.get(true).size() > 0) {
             groups.get(true).forEach(s ->
-                log.warn("Duplicate next taskRun for execution '{}', value '{}'", key, s)
+                log.debug("Duplicate next taskRun for execution '{}', value '{}'", key, s)
             );
 
             return null;

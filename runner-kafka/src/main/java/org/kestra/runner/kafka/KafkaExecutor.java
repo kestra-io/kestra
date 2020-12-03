@@ -24,6 +24,7 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.models.triggers.Trigger;
+import org.kestra.core.queues.AbstractQueue;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.*;
@@ -541,7 +542,7 @@ public class KafkaExecutor extends AbstractExecutor {
                 Named.as("handleWorkerTask-map")
             );
 
-        KStream<String, WorkerTask> result = branchException(streamEither, "handleWorkerTask")
+        KStream<String, WorkerTask> dedupWorkerTask = branchException(streamEither, "handleWorkerTask")
             .flatMapValues((readOnlyKey, value) -> value)
             .transformValues(
                 () -> new DeduplicationTransformer<>(
@@ -552,20 +553,53 @@ public class KafkaExecutor extends AbstractExecutor {
                 Named.as("handleWorkerTask-deduplication-transform"),
                 WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
             )
-            .filter((key, value) -> value != null, Named.as("handleWorkerTask-null-filter"))
-            .map((key, value) -> new KeyValue<>(value.getTaskRun().getId(), value))
+            .filter((key, value) -> value != null, Named.as("handleWorkerTask-null-filter"));
+
+        KStream<String, WorkerTaskResult> resultFlowable = dedupWorkerTask
+            .filter((key, value) -> value.getTask().isFlowable(), Named.as("handleWorkerTask-isFlowable-filter"))
+            .mapValues(
+                (key, value) -> new WorkerTaskResult(value.withTaskRun(value.getTaskRun().withState(State.Type.RUNNING))),
+                Named.as("handleWorkerTask-isFlowableToRunning-mapValues")
+            )
+            .map(
+                (key, value) -> new KeyValue<>(AbstractQueue.key(value), value),
+                Named.as("handleWorkerTask-isFlowable-map")
+            )
             .selectKey(
-                (key, value) -> value.getTaskRun().getId(),
-                Named.as("handleWorkerTask-selectKey")
+                (key, value) -> AbstractQueue.key(value),
+                Named.as("handleWorkerTask-isFlowable-selectKey")
+            );
+
+        KStream<String, WorkerTaskResult> workerTaskResultKStream = logIfEnabled(
+            resultFlowable,
+            (key, value) -> log.debug(
+                "WorkerTaskResult out: {}",
+                value.getTaskRun().toStringState()
+            ),
+            "handleWorkerTask-isFlowableLog"
+        );
+
+        workerTaskResultKStream
+            .to(
+                kafkaAdminService.getTopicName(WorkerTaskResult.class),
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
+            );
+
+        KStream<String, WorkerTask> resultNotFlowable = dedupWorkerTask
+            .filter((key, value) -> !value.getTask().isFlowable(), Named.as("handleWorkerTask-notFlowable-filter"))
+            .map((key, value) -> new KeyValue<>(AbstractQueue.key(value), value), Named.as("handleWorkerTask-notFlowableKeyValue-map"))
+            .selectKey(
+                (key, value) -> AbstractQueue.key(value),
+                Named.as("handleWorkerTask-notFlowableKeyValue-selectKey")
             );
 
         KStream<String, WorkerTask> workerTaskKStream = logIfEnabled(
-            result,
+            resultNotFlowable,
             (key, value) -> log.debug(
                 "WorkerTask out: {}",
                 value.getTaskRun().toStringState()
             ),
-            "handleWorkerTask-log"
+            "handleWorkerTask-notFlowableLog"
         );
 
         workerTaskKStream

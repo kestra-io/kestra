@@ -37,7 +37,7 @@ public class DeduplicationTransformer<K, V, SV> implements ValueTransformerWithK
         SV latestValue = store.get(storeKey);
 
         if (latestValue != null && latestValue.equals(currentValue)) {
-            log.warn("Duplicate value for key '{}', storeKey '{}', value '{}'", key, storeKey, latestValue);
+            log.debug("Duplicate value for key '{}', storeKey '{}', value '{}'", key, storeKey, latestValue);
             return null;
         }
 

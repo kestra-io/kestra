@@ -101,11 +101,23 @@ public class MemoryExecutor extends AbstractExecutor {
 
                 Optional<List<WorkerTask>> workerTasks = this.doWorkerTask(execution, flow);
                 if (workerTasks.isPresent()) {
-                    workerTasks.stream()
+                    List<WorkerTask> workerTasksDedup = workerTasks.stream()
                         .flatMap(Collection::stream)
                         .filter(workerTask -> this.deduplicateWorkerTask(execution, workerTask.getTaskRun()))
+                        .collect(Collectors.toList());
+
+                    // WorkerTask not flowable to workerTask
+                    workerTasksDedup
+                        .stream()
+                        .filter(workerTask -> !workerTask.getTask().isFlowable())
                         .forEach(workerTaskQueue::emit);
 
+                    // WorkerTask not flowable to workerTaskResult as Running
+                    workerTasksDedup
+                        .stream()
+                        .filter(workerTask -> workerTask.getTask().isFlowable())
+                        .map(workerTask -> new WorkerTaskResult(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING))))
+                        .forEach(workerTaskResultQueue::emit);
                     return;
                 }
 
@@ -224,7 +236,7 @@ public class MemoryExecutor extends AbstractExecutor {
         State.Type current = executionState.workerTaskDeduplication.get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.warn("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
+            log.debug("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
             return false;
         } else {
             executionState.workerTaskDeduplication.put(deduplicationKey, taskRun.getState().getCurrent());
@@ -241,7 +253,7 @@ public class MemoryExecutor extends AbstractExecutor {
                 String deduplicationKey = taskRun.getParentTaskRunId() + "-" + taskRun.getTaskId() + "-" + taskRun.getValue();
 
                 if (executionState.childDeduplication.containsKey(deduplicationKey)) {
-                    log.warn("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
+                    log.debug("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
                     return false;
                 } else {
                     executionState.childDeduplication.put(deduplicationKey, taskRun.getId());

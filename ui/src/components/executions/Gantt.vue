@@ -10,7 +10,7 @@
                         </td>
                     </tr>
                 </thead>
-                <tbody v-for="taskItem in series" :key="taskItem.id">
+                <tbody v-for="taskItem in partialSeries" :key="taskItem.id">
                     <tr>
                         <th :id="`task-title-wrapper-${taskItem.id}`">
                             <code>{{ taskItem.name }}</code>
@@ -64,36 +64,48 @@
     import State from "../../utils/state";
 
     const ts = date => new Date(date).getTime();
-
+    const TASK_THRESHOLD = 50
     export default {
         components: {LogList},
         data() {
             return {
                 colors: State.colorClass(),
                 series: [],
-                intervalHandler: undefined
+                realTime: true,
+                dates: [],
+                duration: undefined,
+                usePartialSerie: true,
             };
         },
         watch: {
             execution() {
                 this.computeSeries();
+                this.computeDates();
+                this.computeDuration();
             }
         },
         mounted() {
-            this.intervalHandler = setInterval(this.computeSeries, 40);
+            const repaint = () => {
+                this.computeSeries()
+                this.computeDates()
+                this.computeDuration()
+                if (this.realTime) {
+                    const delay = this.tasksCount < TASK_THRESHOLD ? 40 : 500
+                    setTimeout(repaint, delay);
+                }
+            }
+            setTimeout(repaint);
+            setTimeout(() => {
+                this.usePartialSerie = false
+            }, 500);
         },
         computed: {
-            ...mapState("execution", ["execution", "task"]),
-            dates() {
-                const ticks = 5;
-                const date = ts => this.$moment(ts).format("h:mm:ss");
-                const start = this.start;
-                const delta = this.delta() / ticks;
-                const dates = [];
-                for (let i = 0; i < ticks; i++) {
-                    dates.push(date(start + i * delta));
-                }
-                return dates;
+            ...mapState("execution", ["task", "execution"]),
+            tasksCount() {
+                return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
+            },
+            partialSeries() {
+                return (this.series || []).slice(0, this.usePartialSerie ? TASK_THRESHOLD : this.tasksCount)
             },
             hasTaskLog() {
                 return (
@@ -105,10 +117,7 @@
                 );
             },
             start() {
-                return ts(this.execution.state.histories[0].date);
-            },
-            duration() {
-                return humanizeDuration(this.delta());
+                return this.execution ? ts(this.execution.state.histories[0].date) : 0;
             },
             tasks () {
                 const rootTasks = []
@@ -159,7 +168,7 @@
                 return this.stop() - this.start;
             },
             stop() {
-                if (State.isRunning(this.execution.state.current)) {
+                if (!this.execution || State.isRunning(this.execution.state.current)) {
                     return +new Date();
                 }
 
@@ -226,14 +235,26 @@
                 }
                 this.series = series;
             },
+            computeDates() {
+                const ticks = 5;
+                const date = ts => this.$moment(ts).format("h:mm:ss");
+                const start = this.start;
+                const delta = this.delta() / ticks;
+                const dates = [];
+                for (let i = 0; i < ticks; i++) {
+                    dates.push(date(start + i * delta));
+                }
+                this.dates = dates;
+            },
+            computeDuration() {
+                this.duration = humanizeDuration(this.delta());
+            },
             onTaskSelect(task) {
                 task = this.task && this.task.id === task.id ? undefined : task;
                 this.$store.commit("execution/setTask", task);
             },
             stopRealTime() {
-                if (this.intervalHandler) {
-                    clearInterval(this.intervalHandler);
-                }
+                this.realTime = false
             }
         },
         destroyed() {

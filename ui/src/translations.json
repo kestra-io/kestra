@@ -139,11 +139,13 @@
         "trigger details": "Trigger details",
         "conditions": "conditions",
         "taskruns":"Task Runs",
-        "Fold auto": "Editor: automatic fold of multilines",
+        "Fold auto": "Editor: automatic multilines fold",
+        "Fold auto gantt": "Gantt: automatic multilines fold",
         "Fold content lines": "Fold content lines",
         "Unfold content lines": "Unfold content lines",
         "Max displayable": "Max displayable",
-        "Total": "Total"
+        "Total": "Total",
+        "Fold / unfold all": "Fold / unfold all"
     },
     "fr": {
         "id": "Identifiant",
@@ -287,9 +289,11 @@
         "conditions": "conditions",
         "taskruns":"Execution de tâches",
         "Fold auto": "Editeur : Replier automatiquement le contenu multi-lignes",
+        "Fold auto gantt": "Gantt : Replier automatiquement le contenu multi-lignes",
         "Fold content lines": "Replier le contenu des lignes",
         "Unfold content lines": "Déplier le contenu des lignes",
         "Max displayable": "Max affichables",
-        "Total": "Total"
+        "Total": "Total",
+        "Fold / unfold all": "Plier / replier tout"
     }
 }

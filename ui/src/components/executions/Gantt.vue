@@ -10,48 +10,65 @@
                         </td>
                     </tr>
                 </thead>
-                <tbody v-for="taskItem in partialSeries" :key="taskItem.id">
+                <tbody>
                     <tr>
-                        <th :id="`task-title-wrapper-${taskItem.id}`">
-                            <code>{{ taskItem.name }}</code>
-                            <small v-if="taskItem.task && taskItem.task.value"> {{ taskItem.task.value }}</small>
-                            <b-tooltip
-                                placement="right"
-                                :target="`task-title-wrapper-${taskItem.id}`"
-                            >
-                                <code>{{ taskItem.name }}</code>
-                                <span v-if="taskItem.task && taskItem.task.value"><br>{{ taskItem.task.value }}</span>
-                            </b-tooltip>
-                        </th>
-                        <td :colspan="dates.length">
-                            <b-tooltip
-                                :target="`task-progress-${taskItem.id}`"
-                                placement="left"
-                            >
-                                <span v-html="taskItem.tooltip" />
-                            </b-tooltip>
-                            <div
-                                :style="{left: Math.max(1, (taskItem.start - 1)) + '%', width: taskItem.width - 1 + '%'}"
-                                class="task-progress"
-                                @click="onTaskSelect(taskItem.task)"
-                                :id="`task-progress-${taskItem.id}`"
-                            >
-                                <div class="progress">
-                                    <div
-                                        class="progress-bar"
-                                        :style="{left: taskItem.left + '%', width: (100-taskItem.left) + '%'}"
-                                        :class="'bg-' + taskItem.color + (taskItem.running ? ' progress-bar-striped' : '')"
-                                        role="progressbar"
-                                    />
+                        <td class="actions" colspan="6">
+                            <b-button size="sm" variant="light" @click="toggleFoldAll(false)">
+                                <unfold-more-horizontal />
+                            </b-button>
+                            <b-button size="sm" variant="light" @click="toggleFoldAll(true)">
+                                <unfold-less-horizontal />
+                            </b-button>
+                            <span>{{ $t('Fold / unfold all') }}</span>
+                        </td>
+                    </tr>
+                    <template v-for="taskItem in partialSeries">
+                        <tr v-if="!folds[taskItem.rootId] || taskItem.rootId === taskItem.id" :key="taskItem.id + '-line'">
+                            <th :id="`task-title-wrapper-${taskItem.id}`">
+                                <div class="float-left" v-if="!taskItem.task.parentTaskRunId">
+                                    <unfold-more-horizontal v-if="folds[taskItem.id]" @click="toggleFold(taskItem, false)" />
+                                    <unfold-less-horizontal v-else @click="toggleFold(taskItem, true)" />
                                 </div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr v-if="task && task.id === taskItem.id">
-                        <td :colspan="dates.length + 1">
-                            <log-list :task-run-id="task.id" level="TRACE" />
-                        </td>
-                    </tr>
+                                <code>{{ taskItem.name }}</code>
+                                <small v-if="taskItem.task && taskItem.task.value"> {{ taskItem.task.value }}</small>
+                                <b-tooltip
+                                    placement="right"
+                                    :target="`task-title-wrapper-${taskItem.id}`"
+                                >
+                                    <code>{{ taskItem.name }}</code>
+                                    <span v-if="taskItem.task && taskItem.task.value"><br>{{ taskItem.task.value }}</span>
+                                </b-tooltip>
+                            </th>
+                            <td :colspan="dates.length">
+                                <b-tooltip
+                                    :target="`task-progress-${taskItem.id}`"
+                                    placement="left"
+                                >
+                                    <span v-html="taskItem.tooltip" />
+                                </b-tooltip>
+                                <div
+                                    :style="{left: Math.max(1, (taskItem.start - 1)) + '%', width: taskItem.width - 1 + '%'}"
+                                    class="task-progress"
+                                    @click="onTaskSelect(taskItem.task)"
+                                    :id="`task-progress-${taskItem.id}`"
+                                >
+                                    <div class="progress">
+                                        <div
+                                            class="progress-bar"
+                                            :style="{left: taskItem.left + '%', width: (100-taskItem.left) + '%'}"
+                                            :class="'bg-' + taskItem.color + (taskItem.running ? ' progress-bar-striped' : '')"
+                                            role="progressbar"
+                                        />
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="task && task.id === taskItem.id" :key="taskItem.id + '-logs'">
+                            <td :colspan="dates.length + 1">
+                                <log-list :task-run-id="task.id" level="TRACE" />
+                            </td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
         </div>
@@ -62,11 +79,17 @@
     import {mapState} from "vuex";
     import humanizeDuration from "humanize-duration";
     import State from "../../utils/state";
+    import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal";
+    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal";
 
     const ts = date => new Date(date).getTime();
     const TASK_THRESHOLD = 50
     export default {
-        components: {LogList},
+        components: {
+            LogList,
+            UnfoldLessHorizontal,
+            UnfoldMoreHorizontal
+        },
         data() {
             return {
                 colors: State.colorClass(),
@@ -75,6 +98,7 @@
                 dates: [],
                 duration: undefined,
                 usePartialSerie: true,
+                folds: {},
             };
         },
         watch: {
@@ -98,9 +122,20 @@
             setTimeout(() => {
                 this.usePartialSerie = false
             }, 500);
+            this.toggleFoldAll(localStorage.getItem("autofoldGantt") === "1")
         },
         computed: {
             ...mapState("execution", ["task", "execution"]),
+            ancestors() {
+                const ancestors = {}
+                const tasks = this.execution && this.execution.taskRunList ? this.execution.taskRunList : []
+                for (let task of tasks) {
+                    if (task.parentTaskRunId) {
+                        ancestors[task.id] = task.parentTaskRunId
+                    }
+                }
+                return ancestors
+            },
             tasksCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },
@@ -161,9 +196,39 @@
                 }
                 childrenSort(rootTasks)
                 return sortedTasks
-            }
+            },
+            rootTasks () {
+                const rootTasks = []
+                const tasks = this.execution && this.execution.taskRunList ? this.execution.taskRunList : []
+                for (let task of tasks) {
+                    if (!task.parentTaskRunId) {
+                        rootTasks.push(task)
+                    }
+                }
+                return rootTasks
+            },
         },
         methods: {
+            getRootAncestor(task) {
+                let id = task.id
+                while(id!== undefined) {
+                    if (this.ancestors[id]) {
+                        id = this.ancestors[id]
+                    } else {
+                        return id
+                    }
+                }
+            },
+            toggleFold (task, value) {
+                this.folds[task.id] = value
+                this.$forceUpdate()
+            },
+            toggleFoldAll (value) {
+                for (let task of this.rootTasks) {
+                    this.folds[task.id] = value
+                }
+                this.$forceUpdate()
+            },
             delta() {
                 return this.stop() - this.start;
             },
@@ -189,6 +254,7 @@
                 const series = [];
                 const executionDelta = this.delta(); //caching this value matters
                 for (let task of this.tasks) {
+
                     let stopTs;
 
                     if (State.isRunning(task.state.current)) {
@@ -230,7 +296,8 @@
                         tooltip,
                         color: this.colors[task.state.current],
                         running: State.isRunning(task.state.current),
-                        task
+                        task,
+                        rootId :this.getRootAncestor(task)
                     });
                 }
                 this.series = series;
@@ -250,6 +317,7 @@
                 this.duration = humanizeDuration(this.delta());
             },
             onTaskSelect(task) {
+                console.log(task)
                 task = this.task && this.task.id === task.id ? undefined : task;
                 this.$store.commit("execution/setTask", task);
             },
@@ -327,5 +395,7 @@ table {
 /deep/ .log-wrapper .attempt-wrapper {
     margin-bottom: 0;
 }
-
+.actions button {
+    margin-right: 10px;
+}
 </style>

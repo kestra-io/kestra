@@ -6,6 +6,9 @@
         <b-form-group :label="$t('Fold auto')" label-cols-sm="3">
             <b-checkbox v-model="autofoldTextEditor" value="1" unchecked-value="0" />
         </b-form-group>
+        <b-form-group :label="$t('Fold auto gantt')" label-cols-sm="3">
+            <b-checkbox v-model="autofoldGantt" value="1" unchecked-value="0" />
+        </b-form-group>
     </div>
 </template>
 
@@ -46,6 +49,16 @@
                 },
                 get() {
                     return localStorage.getItem("autofoldTextEditor")
+                }
+            },
+            autofoldGantt: {
+                set(value) {
+                    localStorage.setItem("autofoldGantt", value);
+
+                    this.$toast().saved();
+                },
+                get() {
+                    return localStorage.getItem("autofoldGantt")
                 }
             },
 

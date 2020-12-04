@@ -12,6 +12,7 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.runners.RunnerUtils;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
@@ -83,7 +84,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
         List<LogEntry> logs = new ArrayList<>();
         logQueue.receive(logs::add);
 
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "each-null");
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "each-null", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));

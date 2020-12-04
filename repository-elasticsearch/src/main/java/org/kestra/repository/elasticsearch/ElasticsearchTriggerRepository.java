@@ -2,6 +2,7 @@ package org.kestra.repository.elasticsearch;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.models.triggers.TriggerContext;
@@ -37,7 +38,7 @@ public class ElasticsearchTriggerRepository extends AbstractElasticSearchReposit
     @Override
     public List<Trigger> findAll() {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(this.defaultFilter());
+            .query(QueryBuilders.matchAllQuery());
 
         return this.scroll(INDEX_NAME, sourceBuilder);
     }

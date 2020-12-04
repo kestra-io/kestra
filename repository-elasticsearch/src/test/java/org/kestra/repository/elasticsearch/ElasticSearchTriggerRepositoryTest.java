@@ -65,6 +65,15 @@ class ElasticSearchTriggerRepositoryTest {
 
         assertThat(find.isPresent(), is(true));
         assertThat(find.get().getExecutionId(), is(save.getExecutionId()));
+
+
+        triggerRepository.save(trigger().build());
+        triggerRepository.save(trigger().build());
+        triggerRepository.save(trigger().build());
+
+        List<Trigger> all = triggerRepository.findAll();
+
+        assertThat(all.size(), is(4));
     }
 
     @AfterEach

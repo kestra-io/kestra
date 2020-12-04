@@ -183,6 +183,16 @@ public class RunnerUtils {
         );
     }
 
+    public Execution runOne(String namespace, String flowId, Duration duration) throws TimeoutException {
+        return this.runOne(
+            flowRepository
+                .findById(namespace, flowId, Optional.empty())
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+            (f, e) -> ImmutableMap.of(),
+            duration
+        );
+    }
+
     public Execution runOne(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) throws TimeoutException {
         return this.runOne(flow, inputs, null);
     }

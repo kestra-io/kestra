@@ -4,7 +4,7 @@ namespace: org.kestra.tests
 tasks:
   - id: 1_each
     type: org.kestra.core.tasks.flows.EachSequential
-    value: '[1, null, 2]'
+    value: '[1, null, {"key": "my-key", "value": "my-value"}]'
     tasks:
       - id: 1-1
         type: org.kestra.core.tasks.debugs.Return

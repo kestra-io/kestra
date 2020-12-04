@@ -39,7 +39,7 @@ import javax.validation.constraints.NotNull;
 @Schema(
     title = "Execute a tasks for a list of value in parallel.",
     description = "For each `value`, `tasks` will be executed\n" +
-        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` and must be a string\n" +
+        "The value must be valid json string representing an arrays, like `[\"value1\", \"value2\"]` or `[{\"key\":\"value1\"}, {\"key\":\"value2\"}]` \n" +
         "The current value is available on vars `{{ taskrun.value }}`.\n" +
         "The task list will be executed in parallel, for example if you have a 3 value with each one 2 tasks, all the " +
         "6 tasks will be computed in parallel with out any garantee on the order.\n" +

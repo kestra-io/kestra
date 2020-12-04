@@ -109,6 +109,49 @@
             },
             duration() {
                 return humanizeDuration(this.delta());
+            },
+            tasks () {
+                const rootTasks = []
+                const childTasks = []
+                const sortedTasks = []
+                const tasksById = {}
+                for (let task of (this.execution.taskRunList || [])) {
+                    const taskWrapper = {task}
+                    if (task.parentTaskRunId) {
+                        childTasks.push(taskWrapper)
+                    } else {
+                        rootTasks.push(taskWrapper)
+                    }
+                    tasksById[task.id] = taskWrapper
+                }
+                while (childTasks.length) {
+                    const taskWrapper = childTasks.pop()
+                    const parentTask = tasksById[taskWrapper.task.parentTaskRunId]
+                    if (parentTask) {
+                        tasksById[taskWrapper.task.id] = taskWrapper
+                        if (!parentTask.children) {
+                            parentTask.children = []
+                        }
+                        parentTask.children.push(taskWrapper)
+                    } else {
+                        childTasks.unshift(taskWrapper)
+                    }
+
+                }
+                const nodeStart = node => ts(node.task.state.histories[0].date)
+                const childrenSort = nodes => {
+                    nodes.sort((n1,n2) => {
+                        return nodeStart(n1) > nodeStart(n2) ? 1 : -1
+                    })
+                    for (let node of nodes) {
+                        sortedTasks.push(node.task)
+                        if (node.children) {
+                            childrenSort(node.children)
+                        }
+                    }
+                }
+                childrenSort(rootTasks)
+                return sortedTasks
             }
         },
         methods: {
@@ -136,7 +179,7 @@
 
                 const series = [];
                 const executionDelta = this.delta(); //caching this value matters
-                for (let task of this.execution.taskRunList || []) {
+                for (let task of this.tasks) {
                     let stopTs;
 
                     if (State.isRunning(task.state.current)) {

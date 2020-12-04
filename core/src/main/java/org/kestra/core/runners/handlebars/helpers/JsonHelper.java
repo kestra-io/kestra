@@ -24,6 +24,27 @@ public enum JsonHelper implements Helper<Object> {
                 throw new RuntimeException(e);
             }
         }
+    },
+
+    /**
+     * <p>
+     * Usage:
+     * </p>
+     *
+     * <pre>
+     *    {{json object}}
+     * </pre>
+     */
+    isJson {
+        @Override
+        public Boolean apply(final Object value, final Options options) {
+            try {
+                JacksonMapper.ofJson().readTree((String) value);
+                return true;
+            } catch (JsonProcessingException e) {
+                return false;
+            }
+        }
     }
 }
 

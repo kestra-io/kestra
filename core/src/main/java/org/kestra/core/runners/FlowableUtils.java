@@ -1,6 +1,7 @@
 package org.kestra.core.runners;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -10,6 +11,7 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
+import org.kestra.core.serializers.JacksonMapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -173,42 +175,56 @@ public class FlowableUtils {
         return new ArrayList<>();
     }
 
+    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {};
+    private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
+
     public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, String value) throws IllegalVariableEvaluationException {
-        ObjectMapper mapper = new ObjectMapper();
-
-        String[] values;
-
         String renderValue = runContext.render(value);
+
+        List<Object> values;
         try {
-            values = mapper.readValue(renderValue, String[].class);
+            values = MAPPER.readValue(renderValue, TYPE_REFERENCE);
         } catch (JsonProcessingException e) {
             throw new IllegalVariableEvaluationException(e);
         }
 
-        long nullCount = Arrays
-            .stream(values)
+        List<Object> distinctValue = values
+            .stream()
+            .distinct()
+            .collect(Collectors.toList());
+
+
+        long nullCount = distinctValue
+            .stream()
             .filter(Objects::isNull)
             .count();
 
         if (nullCount > 0) {
             throw new IllegalVariableEvaluationException("Found '" + nullCount + "' null values on Each, " +
-                "with values=" + Arrays.toString(values)
+                "with values=" + Arrays.toString(values.toArray())
             );
         }
 
-        return Arrays
-            .stream(values)
-            .distinct()
-            .flatMap(v -> tasks
-                .stream()
-                .map(task -> ResolvedTask.builder()
-                    .task(task)
-                    .value(v)
-                    .parentId(parentTaskRun.getId())
-                    .build()
-                )
-            )
-            .collect(Collectors.toList());
+        ArrayList<ResolvedTask> result = new ArrayList<>();
+
+        for (Object current: distinctValue) {
+            for( Task task: tasks) {
+                try {
+                    String resolvedValue = current instanceof String ? (String)current : MAPPER.writeValueAsString(current);
+
+                    result.add(ResolvedTask.builder()
+                        .task(task)
+                        .value(resolvedValue)
+                        .parentId(parentTaskRun.getId())
+                        .build()
+                    );
+                } catch (JsonProcessingException e) {
+                    throw new IllegalVariableEvaluationException(e);
+                }
+            }
+        }
+
+        return result;
     }
 
     public static boolean isTaskRunFor(ResolvedTask resolvedTask, TaskRun taskRun, TaskRun parentTaskRun) {

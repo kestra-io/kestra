@@ -37,6 +37,15 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void object() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "each-object");
+
+        assertThat(execution.getTaskRunList(), hasSize(8));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat((String) execution.getTaskRunList().get(6).getOutputs().get("value"), containsString("json > JSON > [\"my-complex\"]"));
+    }
+
+    @Test
     void sequentialNested() throws TimeoutException, InternalException {
         Execution execution = runnerUtils.runOne("org.kestra.tests", "each-sequential-nested");
 
@@ -78,7 +87,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(logs.get(1).getMessage(), Matchers.containsString("Found '1' null values on Each, with values=[1, null, 2]"));
+        assertThat(logs.get(1).getMessage(), Matchers.containsString("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]"));
     }
 
     @Test

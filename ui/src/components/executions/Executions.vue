@@ -189,7 +189,7 @@
                     filter = `namespace:${this.$route.params.namespace} AND flowId:${this.$route.params.id}`;
                 }
 
-                return this.query + (filter ? " " + filter : "");
+                return this.query + (filter ? " AND " + filter : "");
             },
             endDate() {
                 return new Date();

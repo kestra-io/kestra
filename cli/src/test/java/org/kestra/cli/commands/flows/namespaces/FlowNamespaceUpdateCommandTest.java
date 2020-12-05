@@ -65,7 +65,7 @@ class FlowNamespaceUpdateCommandTest {
 
             assertThat(call, is(1));
             assertThat(out.toString(), containsString("Unable to parse flow"));
-            assertThat(out.toString(), containsString("must not be empty with value"));
+            assertThat(out.toString(), containsString("must not be empty"));
         }
     }
 }

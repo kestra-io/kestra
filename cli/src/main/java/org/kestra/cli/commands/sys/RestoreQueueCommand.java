@@ -70,6 +70,6 @@ public class RestoreQueueCommand extends AbstractCommand {
 
         list.forEach(flowQueue::emit);
 
-        log.info("Successfully send {} flows to {}", list.size(), queueName);
+        stdOut("Successfully send {1} flows to {2}", list.size(), queueName);
     }
 }

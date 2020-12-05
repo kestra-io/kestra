@@ -1,34 +1,30 @@
-package org.kestra.cli.commands.plugins;
+package org.kestra.cli.commands.configs.sys;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.cli.App;
 import picocli.CommandLine;
 
 @CommandLine.Command(
-    name = "plugins",
-    description = "handle plugins",
+    name = "configs",
+    description = "handle configs",
     mixinStandardHelpOptions = true,
     subcommands = {
-        PluginInstallCommand.class,
-        PluginListCommand.class,
-        PluginDocCommand.class
+        ConfigPropertiesCommand.class,
     }
 )
 @Slf4j
-public class PluginCommand extends AbstractCommand {
-    public PluginCommand() {
+public class ConfigCommand extends AbstractCommand {
+    public ConfigCommand() {
         super(false);
     }
 
-    @SneakyThrows
     @Override
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "plugins",  "--help");
+        PicocliRunner.call(App.class, "configs",  "--help");
 
         return 0;
     }

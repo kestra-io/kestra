@@ -1,7 +1,6 @@
 package org.kestra.cli.commands.plugins;
 
 import com.google.common.base.Charsets;
-import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.docs.DocumentationGenerator;
 import org.kestra.core.plugins.PluginScanner;
@@ -19,7 +18,6 @@ import java.util.List;
     name = "doc",
     description = "write documentation for all plugins currently installed"
 )
-@Slf4j
 public class PluginDocCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0", description = "Path to write documentations files")
     private Path output = Paths.get(System.getProperty("user.dir"), "docs");
@@ -61,7 +59,7 @@ public class PluginDocCommand extends AbstractCommand {
                                     Charsets.UTF_8
                                 ).write(s.getBody());
 
-                            log.info("Generate doc in: {}", file);
+                            stdOut("Generate doc in: {0}", file);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }

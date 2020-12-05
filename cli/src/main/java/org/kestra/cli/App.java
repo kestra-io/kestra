@@ -4,7 +4,7 @@ import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import org.kestra.cli.commands.TestCommand;
+import org.kestra.cli.commands.configs.sys.ConfigCommand;
 import org.kestra.cli.commands.flows.FlowCommand;
 import org.kestra.cli.commands.plugins.PluginCommand;
 import org.kestra.cli.commands.servers.ServerCommand;
@@ -32,8 +32,8 @@ import java.util.concurrent.Callable;
         PluginCommand.class,
         ServerCommand.class,
         FlowCommand.class,
-        TestCommand.class,
-        SysCommand.class
+        SysCommand.class,
+        ConfigCommand.class,
     }
 )
 public class App implements Callable<Integer> {
@@ -46,12 +46,12 @@ public class App implements Callable<Integer> {
         return PicocliRunner.call(App.class, "--help");
     }
 
-    protected static void execute(Object cls, String... args) {
+    protected static void execute(Class<?> cls, String... args) {
         // Register a ClassLoader with isolation for plugins
         Thread.currentThread().setContextClassLoader(KestraClassLoader.create(Thread.currentThread().getContextClassLoader()));
 
         // Init ApplicationContext
-        ApplicationContext applicationContext = App.applicationContext(args);
+        ApplicationContext applicationContext = App.applicationContext(cls, args);
 
         // Call Picocli command
 
@@ -70,13 +70,13 @@ public class App implements Callable<Integer> {
      * @param args args passed to java app
      * @return the application context created
      */
-    protected static ApplicationContext applicationContext(String[] args) {
+    protected static ApplicationContext applicationContext(Class<?> mainClass, String[] args) {
         KestraApplicationContextBuilder builder = new KestraApplicationContextBuilder()
-            .mainClass(App.class)
+            .mainClass(mainClass)
             .environments(Environment.CLI)
             .classLoader(KestraClassLoader.instance());
 
-        CommandLine cmd = new CommandLine(App.class, CommandLine.defaultFactory());
+        CommandLine cmd = new CommandLine(mainClass, CommandLine.defaultFactory());
 
         CommandLine.ParseResult parseResult = cmd.parseArgs(args);
         List<CommandLine> parsedCommands = parseResult.asCommandLineList();

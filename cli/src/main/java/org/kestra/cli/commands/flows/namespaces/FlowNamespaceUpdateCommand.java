@@ -53,7 +53,7 @@ public class FlowNamespaceUpdateCommand extends AbstractApiCommand {
                 .collect(Collectors.toList());
 
             if (flows.size() == 0) {
-                System.err.println("No flow found on '" + directory.toFile().getAbsolutePath() + "'");
+                stdErr("No flow found on '{}'", directory.toFile().getAbsolutePath());
                 return 1;
             }
 
@@ -66,15 +66,12 @@ public class FlowNamespaceUpdateCommand extends AbstractApiCommand {
                     Argument.listOf(Flow.class)
                 );
 
-                System.out.println(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");
-                updated.forEach(flow -> System.out.println("- " + flow.getNamespace() + "."  + flow.getId()));
+                stdOut(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");
+                updated.forEach(flow -> stdOut("- " + flow.getNamespace() + "."  + flow.getId()));
             }
         } catch (ConstraintViolationException e) {
-            System.err.println("Unable to parse flow due to the following error(s):");
-            e.getConstraintViolations()
-                .forEach(constraintViolation -> {
-                    System.err.println("- " + constraintViolation.getMessage() + " with value '" + constraintViolation.getInvalidValue() + "'");
-                });
+            ValidateCommand.handleException(e);
+
             return 1;
         }
 

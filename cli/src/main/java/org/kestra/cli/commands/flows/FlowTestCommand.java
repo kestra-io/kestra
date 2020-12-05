@@ -1,4 +1,4 @@
-package org.kestra.cli.commands;
+package org.kestra.cli.commands.flows;
 
 import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
@@ -31,7 +31,7 @@ import javax.inject.Inject;
 )
 @Slf4j
 @Prototype
-public class TestCommand extends AbstractCommand {
+public class FlowTestCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0", description = "the flow file to test")
     private Path file;
 
@@ -50,7 +50,7 @@ public class TestCommand extends AbstractCommand {
 
     private static final SecureRandom random = new SecureRandom();
 
-    public TestCommand() {
+    public FlowTestCommand() {
         super(false);
     }
 
@@ -67,7 +67,7 @@ public class TestCommand extends AbstractCommand {
     private static Path generateTempDir() {
         return Path.of(
             System.getProperty("java.io.tmpdir"),
-            TestCommand.class.getSimpleName(),
+            FlowTestCommand.class.getSimpleName(),
             String.valueOf(random.nextLong())
         );
     }

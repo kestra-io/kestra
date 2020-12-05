@@ -1,6 +1,5 @@
 package org.kestra.cli.commands.plugins;
 
-import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.contexts.KestraClassLoader;
 import org.kestra.core.plugins.PluginScanner;
@@ -13,7 +12,6 @@ import java.util.List;
     name = "list",
     description = "list all plugins already installed"
 )
-@Slf4j
 public class PluginListCommand extends AbstractCommand {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -43,7 +41,7 @@ public class PluginListCommand extends AbstractCommand {
             scan.add(corePluginScanner.scan());
         }
 
-        scan.forEach(registeredPlugin -> log.info(registeredPlugin.toString()));
+        scan.forEach(registeredPlugin -> stdOut(registeredPlugin.toString()));
 
         return 0;
     }

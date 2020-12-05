@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -73,6 +74,20 @@ abstract public class AbstractCommand implements Callable<Integer> {
         startWebserver();
 
         return 0;
+    }
+
+    private static String message(String message, Object... format) {
+        return CommandLine.Help.Ansi.AUTO.string(
+            format.length == 0 ? message : MessageFormat.format(message, format)
+        );
+    }
+
+    protected static void stdOut(String message, Object... format) {
+        System.out.println(message(message, format));
+    }
+
+    protected static void stdErr(String message, Object... format) {
+        System.err.println(message(message, format));
     }
 
     private void startLogger() {

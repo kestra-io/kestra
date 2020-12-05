@@ -7,7 +7,6 @@ import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.serializers.YamlFlowParser;
 import picocli.CommandLine;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
@@ -35,16 +34,26 @@ public class ValidateCommand extends AbstractCommand {
 
         try {
             Flow parse = yamlFlowParser.parse(file.toFile());
-            System.out.println(mapper.writeValueAsString(parse));
+            stdOut(mapper.writeValueAsString(parse));
         } catch (ConstraintViolationException e) {
-            System.err.println("Unable to parse flow due to the following error(s):");
-            e.getConstraintViolations()
-                .forEach(constraintViolation -> {
-                    System.err.println("- " + constraintViolation.getMessage() + " with value '" + constraintViolation.getInvalidValue() + "'");
-                });
+            ValidateCommand.handleException(e);
+
             return 1;
         }
 
         return 0;
+    }
+
+    public static void handleException(ConstraintViolationException e) {
+        stdErr("@|fg(red) Unable to parse flow due to the following error(s):|@");
+        e.getConstraintViolations()
+            .forEach(constraintViolation -> {
+                stdErr(
+                    "- {0} at @|underline,blue {1}|@ with value @|bold,yellow {2}|@ ",
+                    constraintViolation.getMessage(),
+                    constraintViolation.getPropertyPath(),
+                    constraintViolation.getInvalidValue()
+                );
+            });
     }
 }

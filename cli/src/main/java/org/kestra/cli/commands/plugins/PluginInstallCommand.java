@@ -1,6 +1,5 @@
 package org.kestra.cli.commands.plugins;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.cli.plugins.PluginDownloader;
@@ -18,7 +17,6 @@ import javax.inject.Inject;
     name = "install",
     description = "install a plugin"
 )
-@Slf4j
 public class PluginInstallCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0..*", description = "the plugins to install")
     List<String> dependencies = new ArrayList<>();
@@ -50,7 +48,7 @@ public class PluginInstallCommand extends AbstractCommand {
         }
 
         List<URL> resolveUrl = pluginDownloader.resolve(dependencies);
-        log.debug("Resolved Plugin(s) with {}", resolveUrl);
+        stdOut("Resolved Plugin(s) with {0}", resolveUrl);
 
         for (URL url: resolveUrl) {
             Files.copy(
@@ -60,7 +58,7 @@ public class PluginInstallCommand extends AbstractCommand {
             );
         }
 
-        log.info("Successfully installed plugins {} into {}", dependencies, pluginsPath);
+        stdOut("Successfully installed plugins {0} into {1}", dependencies, pluginsPath);
 
         return 0;
     }

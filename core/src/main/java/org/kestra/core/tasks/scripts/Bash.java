@@ -50,7 +50,7 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
         @Example(
             title = "Bash with some inputs files",
             code = {
-                "inputsFiles:",
+                "inputFiles:",
                 "  script.sh: |",
                 "    echo {{ workingDir }}",
                 "commands:",

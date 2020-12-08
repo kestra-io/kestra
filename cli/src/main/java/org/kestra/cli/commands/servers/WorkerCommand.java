@@ -40,6 +40,8 @@ public class WorkerCommand extends AbstractCommand {
         super.call();
 
         Worker worker = new Worker(applicationContext, this.thread);
+        applicationContext.registerSingleton(worker);
+
         worker.run();
 
         log.info("Workers started with {} thread(s)", this.thread);

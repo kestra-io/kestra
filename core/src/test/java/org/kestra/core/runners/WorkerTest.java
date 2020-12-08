@@ -18,7 +18,9 @@ import org.kestra.core.utils.IdUtils;
 import org.kestra.core.utils.TestsUtils;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
@@ -71,24 +73,42 @@ class WorkerTest {
         Worker worker = new Worker(applicationContext, 8);
         worker.run();
 
-        AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
-        workerTaskResultQueue.receive(workerTaskResult::set);
+        List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
+        workerTaskResultQueue.receive(workerTaskResult::add);
 
         WorkerTask workerTask = workerTask("sleep 999");
 
         workerTaskQueue.emit(workerTask);
+        workerTaskQueue.emit(workerTask);
+        workerTaskQueue.emit(workerTask);
+        workerTaskQueue.emit(workerTask);
+
+        WorkerTask notKilled = workerTask("sleep 2");
+        workerTaskQueue.emit(notKilled);
+
         Thread.sleep(500);
 
         executionKilledQueue.emit(ExecutionKilled.builder().executionId(workerTask.getTaskRun().getExecutionId()).build());
 
         Await.until(
-            () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isTerninated(),
+            () -> workerTaskResult.stream().filter(r -> r.getTaskRun().getState().isTerninated()).count() == 5,
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );
 
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(3));
-        assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), is(State.Type.KILLED));
+        WorkerTaskResult oneKilled = workerTaskResult.stream()
+            .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.KILLED)
+            .findFirst()
+            .orElseThrow();
+        assertThat(oneKilled.getTaskRun().getState().getHistories().size(), is(3));
+        assertThat(oneKilled.getTaskRun().getState().getCurrent(), is(State.Type.KILLED));
+
+        WorkerTaskResult oneNotKilled = workerTaskResult.stream()
+            .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.SUCCESS)
+            .findFirst()
+            .orElseThrow();
+        assertThat(oneNotKilled.getTaskRun().getState().getHistories().size(), is(3));
+        assertThat(oneNotKilled.getTaskRun().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     private WorkerTask workerTask(String command) {

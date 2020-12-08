@@ -37,10 +37,14 @@ public class Worker implements Runnable {
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     private final MetricRegistry metricRegistry;
 
-    private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
-    private final AtomicReference<WorkerThread> workerThreadReference = new AtomicReference<>();
     private final ExecutorService executors;
+
+    @Getter
+    private final Map<Long, AtomicInteger> metricRunningCount = new ConcurrentHashMap<>();
+
+    @Getter
+    private final List<WorkerThread> workerThreadReferences = new ArrayList<>();
 
     @SuppressWarnings("unchecked")
     public Worker(ApplicationContext applicationContext, int thread) {
@@ -68,9 +72,12 @@ public class Worker implements Runnable {
                 killedExecution.add(executionKilled.getExecutionId());
             }
 
-            if (executionKilled != null && workerThreadReference.get() != null) {
-                if (executionKilled.getExecutionId().equals(workerThreadReference.get().getWorkerTask().getTaskRun().getExecutionId())) {
-                    workerThreadReference.get().kill();
+            if (executionKilled != null) {
+                synchronized (this) {
+                    workerThreadReferences
+                        .stream()
+                        .filter(workerThread -> executionKilled.getExecutionId().equals(workerThread.getWorkerTask().getTaskRun().getExecutionId()))
+                        .forEach(WorkerThread::kill);
                 }
             }
         });
@@ -228,14 +235,18 @@ public class Worker implements Runnable {
         // run it
         State.Type state;
         try {
-            workerThreadReference.set(workerThread);
+            synchronized (this) {
+                workerThreadReferences.add(workerThread);
+            }
             workerThread.join();
             state = workerThread.getTaskState();
         } catch (InterruptedException e) {
             logger.error("Failed to join WorkerThread {}", e.getMessage(), e);
             state = State.Type.FAILED;
         } finally {
-            workerThreadReference.set(null);
+            synchronized (this) {
+                workerThreadReferences.remove(workerThread);
+            }
         }
 
         metricRunningCount.decrementAndGet();

@@ -379,6 +379,8 @@ class KafkaExecutorTest {
         createExecution(flow);
 
         Execution execution = runningAndSuccessSequential(flow, 0, State.Type.RUNNING);
+        String taskRunId = execution.getTaskRunList().get(0).getId();
+
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
         assertThat(this.workerTaskOutput().readOneRecord().value().getTaskRun().getState().getCurrent(), is(State.Type.CREATED));
 
@@ -387,7 +389,14 @@ class KafkaExecutorTest {
         this.workerInstanceInput().add(newInstance.getWorkerUuid().toString(), newInstance);
 
         // receive a new WorkTask meaning that the resend is done
-        assertThat(this.workerTaskOutput().readOneRecord().value().getTaskRun().getState().getCurrent(), is(State.Type.CREATED));
+        ProducerRecord<String, WorkerTask> workerTaskRecord = this.workerTaskOutput().readOneRecord();
+        assertThat(workerTaskRecord.value().getTaskRun().getState().getCurrent(), is(State.Type.CREATED));
+        assertThat(workerTaskRecord.value().getTaskRun().getId(), is(taskRunId));
+
+        // running is deleted
+        ProducerRecord<String, WorkerTaskRunning> workerTaskRunningRecord = workerTaskRunningOutput().readOneRecord();
+        assertThat(workerTaskRunningRecord.value(), is(nullValue()));
+        assertThat(workerTaskRunningRecord.key(), is(taskRunId));
     }
 
     private void createExecution(Flow flow) {

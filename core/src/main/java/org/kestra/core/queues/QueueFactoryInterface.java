@@ -21,7 +21,7 @@ public interface QueueFactoryInterface {
     String KILL_NAMED = "executionKilledQueue";
     String WORKERINSTANCE_NAMED = "workerInstanceQueue";
     String WORKERTASKRUNNING_NAMED = "workerTaskRuninngQueue";
-    String TRIGGER_NAMED = "trigger";
+    String TRIGGER_NAMED = "triggerQueue";
 
     QueueInterface<Execution> execution();
 

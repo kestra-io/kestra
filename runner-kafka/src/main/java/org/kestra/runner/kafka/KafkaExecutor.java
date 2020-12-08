@@ -677,6 +677,14 @@ public class KafkaExecutor extends AbstractExecutor {
                 Named.as("detectNewWorker-workerTask-flatMapValues")
             );
 
+        // and remove from running since already sent
+        resultWorkerTask
+            .map((key, value) -> KeyValue.pair(value.getTaskRun().getId(), (WorkerTaskRunning)null), Named.as("detectNewWorker-runningToNull-map"))
+            .to(
+                kafkaAdminService.getTopicName(WorkerTaskRunning.class),
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class))
+            );
+
         logIfEnabled(
             resultWorkerTask,
             (key, value) -> log.debug(

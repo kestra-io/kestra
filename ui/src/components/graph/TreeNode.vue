@@ -148,9 +148,6 @@
             taskRunOutputToken(taskRun) {
                 return md5(taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ""));
             },
-            onFilterGroup() {
-                this.$emit("onFilterGroup", this.task.id);
-            },
             onTaskRunSelect(taskRun) {
                 this.$store.commit("execution/setTaskRun", taskRun);
             },

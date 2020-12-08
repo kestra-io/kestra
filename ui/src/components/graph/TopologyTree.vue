@@ -2,29 +2,46 @@
     <div>
         <div class="d-flex top">
             <div>
-                <b-tooltip placement="left" target="graph-orientation">
-                    {{ $t('graph orientation') }}
-                </b-tooltip>
-                <b-btn size="sm" @click="toggleOrientation" id="graph-orientation">
-                    <arrow-collapse-down v-if="orientation" />
-                    <arrow-collapse-right v-else />
-                </b-btn>
-                <b-btn size="sm" @click="setZoom('in')">
-                    <magnify-plus />
-                </b-btn>
-                <b-btn size="sm" @click="setZoom('out')">
-                    <magnify-minus />
-                </b-btn>
-                <b-btn size="sm" @click="setZoom('reset')">
-                    <arrow-collapse-all />
-                </b-btn>
+                <b-btn-group>
+                    <b-btn size="sm" @click="toggleOrientation" id="graph-orientation">
+                        <arrow-collapse-down v-if="orientation" />
+                        <arrow-collapse-right v-else />
+                    </b-btn>
+                    <b-tooltip placement="bottom" target="graph-orientation">
+                        {{ $t('topology-graph.graph-orientation') }}
+                    </b-tooltip>
+                    <b-btn size="sm" @click="setAction('in')" id="zoom-in">
+                        <magnify-plus />
+                    </b-btn>
+                    <b-tooltip placement="bottom" target="zoom-in">
+                        {{ $t('topology-graph.zoom-in') }}
+                    </b-tooltip>
+                    <b-btn size="sm" @click="setAction('out')" id="zoom-out">
+                        <magnify-minus />
+                    </b-btn>
+                    <b-tooltip placement="bottom" target="zoom-out">
+                        {{ $t('topology-graph.zoom-out') }}
+                    </b-tooltip>
+                    <b-btn size="sm" @click="setAction('reset')" id="zoom-reset">
+                        <arrow-collapse-all />
+                    </b-btn>
+                    <b-tooltip placement="bottom" target="zoom-reset">
+                        {{ $t('topology-graph.zoom-reset') }}
+                    </b-tooltip>
+                    <b-btn size="sm" @click="setAction('fit')" id="zoom-fit">
+                        <fit-to-page />
+                    </b-btn>
+                    <b-tooltip placement="bottom" target="zoom-fit">
+                        {{ $t('topology-graph.zoom-fit') }}
+                    </b-tooltip>
+                </b-btn-group>
             </div>
         </div>
 
-        <div :class="{hide: !ready}" class="wrapper" ref="wrapper" />
+        <div :class="{hide: !ready}" class="graph-wrapper" :id="uuid" ref="wrapper" />
+
         <div class="hidden">
             <tree-node
-                @onFilterGroup="onFilterGroup"
                 :ref="node.uid"
                 v-for="node in treeTaskNode"
                 :key="node.uid"
@@ -37,16 +54,18 @@
     </div>
 </template>
 <script>
-    import {debounce} from "throttle-debounce";
+    import * as cytoscape from "cytoscape";
+    import * as dagre from "cytoscape-dagre";
+    import * as nodeHtmlLabel  from "cytoscape-node-html-label";
 
-    const dagreD3 = require("dagre-d3");
     import TreeNode from "./TreeNode";
-    import * as d3 from "d3";
     import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight";
     import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown";
     import MagnifyPlus from "vue-material-design-icons/MagnifyPlus";
     import MagnifyMinus from "vue-material-design-icons/MagnifyMinus";
     import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll";
+    import FitToPage from "vue-material-design-icons/FitToPage";
+    import Utils from "../../utils/utils";
 
     export default {
         components: {
@@ -55,7 +74,8 @@
             ArrowCollapseRight,
             MagnifyPlus,
             MagnifyMinus,
-            ArrowCollapseAll
+            ArrowCollapseAll,
+            FitToPage,
         },
         props: {
             flowGraph: {
@@ -81,58 +101,39 @@
         },
         data() {
             return {
+                uuid: Utils.uid(),
                 ready: false,
-                filterGroup: undefined,
                 orientation: true,
                 zoom: undefined,
-                resizeHandler: undefined,
                 zoomFactor: 1,
-                lastX: 50,
-                lastY: 50,
             };
         },
+        cy: undefined,
         watch: {
             flowGraph() {
                 this.generateGraph();
-            },
-            $route() {
-                if (this.$route.query.filter !== this.filterGroup) {
-                    this.filterGroup = this.$route.query.filter;
-                    this.generateGraph();
-                }
             }
         },
         created() {
             this.orientation = localStorage.getItem("topology-orientation") === "1";
-            if (this.$route.query.filter) {
-                this.filterGroup = this.$route.query.filter;
-            }
-            this.resizeHandler = debounce(500, () => {
-                this.generateGraph()
-            })
-
-            window.addEventListener("resize", this.resizeHandler);
         },
-        mounted() {
+        mounted: function () {
             this.generateGraph();
         },
         methods: {
-            setZoom(direction) {
-                if (direction === "in") {
-                    if (this.zoomFactor <= 1.7) {
-                        this.zoomFactor += 0.2
-                        this.generateGraph()
+            setAction(action) {
+                if (action === "in") {
+                    if (this.cy.zoom() <= 1.7) {
+                        this.cy.zoom(this.cy.zoom() + 0.2);
                     }
-                } else if (direction === "out") {
-                    if (this.zoomFactor >= 0.3) {
-                        this.zoomFactor -= 0.2
-                        this.generateGraph()
+                } else if (action === "out") {
+                    if (this.cy.zoom() >= 0.3) {
+                        this.cy.zoom(this.cy.zoom() - 0.2);
                     }
-                } else if (direction === "reset") {
-                    this.zoomFactor = 1
-                    this.lastX = 50
-                    this.lastY = 50
-                    this.generateGraph()
+                } else if (action === "reset") {
+                    this.cy.zoom(1);
+                } else if (action === "fit") {
+                    this.cy.fit(null, 50)
                 }
             },
             toggleOrientation() {
@@ -143,136 +144,251 @@
                 );
                 this.generateGraph();
             },
-            getOptions(relation) {
-                const edgeOption = {};
+            getEdgeLabel(relation) {
+                let label = "";
+
                 if (relation.relationType && relation.relationType !== "SEQUENTIAL") {
-                    edgeOption.label = relation.relationType.toLowerCase();
+                    label = relation.relationType.toLowerCase();
                     if (relation.value) {
-                        edgeOption.label += ` : ${relation.value}`;
+                        label += ` : ${relation.value}`;
+                    }
+                }
+                return label;
+            },
+            getClusters() {
+                const clusters = {};
+                const nodes = [];
+
+                for (let cluster of (this.flowGraph.clusters || [])) {
+                    for (let nodeUid of cluster.nodes) {
+                        clusters[nodeUid] = cluster.cluster;
                     }
 
-                    edgeOption.class =
-                        {
-                            ERROR: "error-edge",
-                            DYNAMIC: "dynamic-edge",
-                            CHOICE: "choice-edge",
-                            PARALLEL: "choice-edge"
-                        }[relation.relationType] || "";
+                    nodes.push({
+                        data: {
+                            id: cluster.cluster.uid,
+                            label: cluster.cluster.task.id,
+                            type: "cluster",
+                            parent: cluster.parents ? cluster.parents[cluster.parents.length - 1] : undefined
+                        },
+                    })
                 }
 
-                return edgeOption;
+                return {nodes: nodes, clusters: clusters};
             },
-            generateGraph() {
-                // Create the input graph
-                const arrowColor = "#ccc";
-                if (this.zoom) {
-                    this.zoom.on("zoom", null);
-                }
-
-                // init
-                this.$refs.wrapper.innerHTML = `<svg id="svg-canvas" width="100%" style="min-height:${window.innerHeight - 290}px"/>`
-                const g = new dagreD3.graphlib.Graph({
-                    compound: true,
-                    multigraph: true
-                })
-                    .setGraph({})
-                    .setDefaultEdgeLabel(function() {
-                        return {};
-                    });
-
+            getNodes(clusters) {
+                const nodes = [];
                 // add nodes
                 for (const node of this.flowGraph.nodes) {
-                    if (this.isEdgeNode(node)) {
-                        g.setNode(node.uid, {
-                            labelType: "html",
-                            class: "root-node",
-                            label: `<div class="vector-circle-wrapper" id="node-${node.uid.hashCode()}" />`,
-                            height: 20,
-                            width: 20
-                        });
-                    } else {
-                        g.setNode(node.uid, {
-                            labelType: "html",
-                            label: `<div class="node-binder" id="node-${node.uid.hashCode()}" />`,
-                            class: node.task && node.task.disabled ? "task-disabled" : "",
-                            width: 180
-                        });
-                    }
-                }
+                    const isEdge = this.isEdgeNode(node);
+                    const cluster = clusters[node.uid];
 
-                // add edges
-                for (const edge of this.flowGraph.edges) {
-                    g.setEdge(edge.source, edge.target, this.getOptions(edge.relation));
-                }
-
-                // add cluster
-                for (let cluster of this.flowGraph.clusters || []) {
-                    g.setNode(cluster.cluster.uid, {
-                        label: cluster.cluster.task.id,
-                        clusterLabelPos: "top",
-                        width: "100%"
+                    nodes.push({
+                        data: {
+                            id: node.uid,
+                            label: isEdge ? undefined : node.task.id,
+                            type: isEdge ? "dot" : "task",
+                            cls: node.type,
+                            parent: cluster ? cluster.uid : undefined,
+                            relationType: node.relationType
+                        },
                     });
-
-                    for (let nodeUid of cluster.nodes) {
-                        g.setParent(nodeUid, cluster.cluster.uid);
-                    }
                 }
 
-                // reset padding
-                g.nodes().forEach(v => {
-                    const node = g.node(v);
-                    if (node) {
-                        node.paddingLeft = node.paddingRight = node.paddingTop = node.paddingBottom = 0;
+                return nodes;
+            },
+            getEdges() {
+                const edges = []
+                for (const edge of this.flowGraph.edges) {
+                    edges.push({
+                        data: {
+                            id: edge.source + "|" + edge.target,
+                            source: edge.source,
+                            target: edge.target,
+                            label: this.getEdgeLabel(edge.relation),
+                            relationType: edge.relation && edge.relation.relationType ? edge.relation.relationType : undefined
+                        },
+                        selectable: true,
+                    })
+                }
+
+                return edges;
+            },
+            getStyles() {
+                return [
+                    {
+                        selector: "*",
+                        style: {
+                            "events": "no",
+                            "overlay-color": "#FBD10B",
+                            "overlay-padding": "2"
+                        }
+                    },
+                    {
+                        selector: "node[type = \"task\"]",
+                        style: {
+                            // "label": "data(label)",
+                            "shape": "rectangle",
+                            "width": 182,
+                            "height": 50,
+                            "border-width": 1,
+                            "background-color": "#FFF",
+                            "border-color": "#999",
+                            "text-halign": "center",
+                            "text-valign": "center",
+                        }
+                    },
+                    {
+                        selector: "node[type = \"dot\"]",
+                        style: {
+                            "width": 10,
+                            "height": 10,
+                            "background-color": "#1AA5DE",
+                        }
+                    },
+                    {
+                        selector: "node[type = \"cluster\"]",
+                        style: {
+                            label: "data(label)",
+                            "background-color": "#1AA5DE",
+                            "background-opacity": 0.05,
+                            "border-color": "#1AA5DE",
+                            "color": "#1AA5DE",
+                            "text-margin-y": 20,
+                            "padding": "25px",
+                        }
+                    },
+                    {
+                        selector: "edge",
+                        style: {
+                            "font-size": "13px",
+                            "width": 1,
+                            "target-arrow-shape": "vee",
+                            "line-color": "#1AA5DE",
+                            "target-arrow-color": "#1AA5DE",
+                            "source-endpoint": this.orientation ? undefined : "50% 0%",
+                            "target-endpoint": this.orientation ? undefined : "-50% 0%",
+                            "curve-style": "straight",
+                            "events": "yes",
+                        }
+                    },
+                    {
+                        selector: "edge:selected",
+                        style: {
+                            "line-style": "dashed",
+                            "line-dash-pattern": "3 3",
+                        }
+                    },
+                    {
+                        selector: "edge[label]",
+                        style: {
+                            "label": "data(label)",
+                            "color": "#666",
+                            "line-height": 2,
+                            "source-text-offset": "100",
+                            "target-text-offset": "100",
+                            "edge-text-rotation": "autorotate",
+                            "text-margin-y": "-10px",
+                        }
+                    },
+                    {
+                        selector: "edge[relationType = \"ERROR\"]",
+                        style: {
+                            "line-color": "#dc3545",
+                            "color": "#dc3545",
+                            "target-arrow-color": "#dc3545",
+                        }
+                    },
+                    {
+                        selector: "edge[relationType = \"DYNAMIC\"]",
+                        style: {
+                            "line-color": "#6610f2",
+                            "color": "#6610f2",
+                            "target-arrow-color": "#6610f2",
+                        }
+                    },
+                    {
+                        selector: "edge[relationType = \"CHOICE\"]",
+                        style: {
+                            "line-color": "#fd7e14",
+                            "color": "#fd7e14",
+                            "target-arrow-color": "#fd7e14",
+                        }
+                    },
+                    {
+                        selector: "core",
+                        css: {
+                            "active-bg-size": 0,
+                            "selection-box-border-width": 0,
+                            "selection-box-color": "#FF0000",
+                            "active-bg-color" : "#FF0000"
+                        }
                     }
+                ];
+            },
+            onReady(cy) {
+                cy.autolock(true);
+                cy.nodeHtmlLabel([
+                    {
+                        query: "node[type = \"task\"]",
+                        tpl: d => {
+                            return `<div class="node-binder" id="node-${d.id.hashCode()}" />`;
+                        }
+                    }
+                ], {
+                    enablePointerEvents: true
                 });
 
-                if (!this.orientation) {
-                    g.graph().rankDir = "LR";
-                }
-
-                const render = new dagreD3.render();
-
-                // Set up an SVG group so that we can translate the final graph.
-                const svgWrapper = d3.select("#svg-canvas"),
-                      svgGroup = svgWrapper.append("g");
-
-                // Run the renderer. This is what draws the final graph.
-                this.zoom = d3
-                    .zoom()
-                    .on("zoom", () => {
-                        const t = d3.event.transform;
-                        this.lastX = t.x
-                        this.lastY = t.y
-                        svgGroup.attr(
-                            "transform",
-                            `translate(${this.lastX || t.x},${this.lastY || t.y}) scale(${t.k*this.zoomFactor})`
-                        );
-                    })
-                    .scaleExtent([1, 1]);
-
-                // zoom
-                svgWrapper.call(this.zoom);
-                svgWrapper.on("dblclick.zoom", null);
-
-                // path color
-                render(d3.select("#svg-canvas g"), g);
-                d3.selectAll("#svg-canvas g path").style("stroke", arrowColor);
-                d3.selectAll("#svg-canvas .edgePath marker").style(
-                    "fill",
-                    arrowColor
-                );
-
-                const transform = d3.zoomIdentity.translate(0, 0).translate(this.lastX || 0, this.lastY || 0);
-                svgWrapper.call(this.zoom.transform, transform);
-
                 this.bindNodes();
+            },
+            generateGraph() {
+                this.ready = false;
+
+                // plugins
+                try {
+                    cytoscape.use(dagre);
+                    cytoscape.use(nodeHtmlLabel);
+                    // eslint-disable-next-line no-empty
+                } catch (ignored) {}
+
+                // get nodes & edges
+                const {nodes: clustersNodes, clusters} = this.getClusters();
+                const taskNodes = this.getNodes(clusters);
+                const nodes = [...clustersNodes, ...taskNodes];
+                const edges = this.getEdges();
+
+                // init
+                const self = this;
+                this.cy = cytoscape({
+                    container: document.getElementById(this.$refs.wrapper.id),
+                    ready: function() {
+                        self.onReady(this);
+                    },
+                    elements: {
+                        nodes: nodes,
+                        edges: edges
+                    },
+                    style: this.getStyles(),
+                    layout: {
+                        name: "dagre",
+                        rankDir: this.orientation ? "TB" : "LR",
+                        animate: false,
+                        fit: true,
+                        padding: 50,
+                        spacingFactor: 1.2,
+                    },
+                    pixelRatio: 1,
+                    minZoom: 0.2,
+                    maxZoom: 2
+                });
             },
             bindNodes() {
                 let ready = true;
                 for (const node of this.treeTaskNode) {
                     if (
                         !this.$refs[node.uid] ||
-                        !this.$refs[node.uid].length
+                        !this.$refs[node.uid].length ||
+                        !this.$el.querySelector(`#node-${node.uid.hashCode()}`)
                     ) {
                         ready = false;
                     }
@@ -286,16 +402,7 @@
                     }
                     this.ready = true;
                 } else {
-                    setTimeout(this.bindNodes, 30);
-                }
-            },
-            onFilterGroup(group) {
-                if (this.$route.query.filter !== group) {
-                    this.filterGroup = group;
-                    this.$router.push({
-                        query: {...this.$route.query, filter: group}
-                    });
-                    this.generateGraph();
+                    setTimeout(this.bindNodes, 1000);
                 }
             },
             isEdgeNode(node) {
@@ -303,56 +410,30 @@
             },
         },
         computed: {
-            groups() {
-                const groups = new Set();
-                this.flowGraph.forEach(node =>
-                    (node.groups || []).forEach(group => groups.add(group))
-                );
-                return groups;
-            },
             treeTaskNode() {
                 return this.flowGraph.nodes.filter(n => n.task !== undefined && n.type === "org.kestra.core.models.hierarchies.GraphTask")
             },
-            clusterNode() {
-                return this.flowGraph.nodes.filter(n => n.task !== undefined && n.type === "org.kestra.core.models.hierarchies.GraphCluster")
-            }
         },
         destroyed() {
             this.ready = false;
-            if (this.resizeHandler) {
-                window.removeEventListener("resize", this.resizeHandler)
-            }
         }
     };
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 @import "../../styles/variable";
 
-.clusters {
-    rect {
-        fill: $primary;
-        opacity: 0.05;
-        outline: 1px solid lighten($primary, 35%);
-    }
-
-    .label {
-        fill: lighten($primary, 15%);
-    }
+.graph-wrapper {
+    height: calc(100vh - 300px);
 }
 
-text {
-    font-size: $font-size-sm;
+.hidden {
+    opacity: 0;
+    height:0;
+    overflow: hidden;
 }
 
-.node rect {
-    stroke: $gray-600;
-    fill: #fff;
-    stroke-width: 1px;
-}
-
-.edgePath path {
-    stroke: #333;
-    stroke-width: 1.5px;
+.hide {
+    opacity: 0;
 }
 
 .top {
@@ -365,86 +446,5 @@ text {
     > div {
         margin: 6px;
     }
-}
-.node-binder,
-.node-wrapper,
-.node,
-foreignObject {
-    width: 180px;
-    height: 48px;
-}
-.root-node {
-    color: $gray-600;
-    foreignObject {
-        width: 35px;
-        height: 35px;
-    }
-    > rect {
-        stroke: transparent;
-        fill: none !important;
-    }
-    .vector-circle-wrapper {
-        background: $gray-600;
-        width: 15px;
-        height: 15px;
-        border-radius: 50%;
-        top: 10px;
-        position: absolute;
-        left: 10px;
-    }
-}
-
-.task-disabled {
-    .card-header .task-title {
-        text-decoration: line-through;
-    }
-}
-
-.hidden {
-    opacity: 0;
-    height:0px;
-    overflow: hidden;
-}
-
-.error-edge {
-    > path {
-        stroke: $red !important;
-    }
-    marker path {
-        fill: $red !important;
-        stroke: $red !important;
-    }
-}
-.dynamic-edge {
-    > path {
-        stroke: $blue !important;
-    }
-    marker path {
-        fill: $blue !important;
-        stroke: $blue !important;
-    }
-}
-
-.choice-edge {
-    > path {
-        stroke: $green !important;
-    }
-    marker path {
-        fill: $green !important;
-        stroke: $green !important;
-    }
-}
-
-.edgeLabel tspan {
-    fill: $gray-600;
-}
-
-
-.hide {
-    opacity: 0;
-}
-
-.edgeLabel text {
-    font-size: 10px;
 }
 </style>

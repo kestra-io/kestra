@@ -92,7 +92,10 @@
                                 this.$store.commit("execution/setExecution", data);
                                 if (this.$route.query.tab === "topology") {
                                     this.$store.dispatch("execution/loadGraph", data)
+                                } else {
+                                    this.$store.commit("execution/setFlowGraph", undefined)
                                 }
+
                                 if (event && event.lastEventId === "end") {
                                     this.closeSSE();
                                 }

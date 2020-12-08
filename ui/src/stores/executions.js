@@ -29,6 +29,7 @@ export default {
         loadExecution({commit}, options) {
             return Vue.axios.get(`/api/v1/executions/${options.id}`).then(response => {
                 commit("setExecution", response.data)
+                commit("flowGraph", undefined)
 
                 return response.data;
             })

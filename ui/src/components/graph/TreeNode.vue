@@ -30,15 +30,6 @@
                 </b-button>
 
                 <b-button
-                    v-if="childrenCount"
-                    :title="`${$t('display direct sub tasks count')} : ${childrenCount}`"
-                    class="node-action push"
-                    @click="onFilterGroup"
-                >
-                    <graph title />
-                </b-button>
-
-                <b-button
                     v-if="!isFlow"
                     :disabled="!hasLogs"
                     class="node-action"
@@ -104,7 +95,6 @@
 </template>
 <script>
     import Console from "vue-material-design-icons/Console";
-    import Graph from "vue-material-design-icons/Graph";
     import CodeTags from "vue-material-design-icons/CodeTags";
     import FormatListChecks from "vue-material-design-icons/FormatListChecks";
     import LocationExit from "vue-material-design-icons/LocationExit";
@@ -126,7 +116,6 @@
             MarkdownTooltip,
             Status,
             Console,
-            Graph,
             CodeTags,
             FormatListChecks,
             LocationExit,

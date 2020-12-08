@@ -1,20 +1,6 @@
 <template>
     <div>
         <div class="d-flex top">
-            <b-breadcrumb class="flex-grow-1">
-                <b-breadcrumb-item
-                    :class="{'font-weight-bold': filterGroup === undefined}"
-                    @click="onFilterGroup(undefined)"
-                    text="root"
-                />
-                <b-breadcrumb-item
-                    :class="{'font-weight-bold': group === filterGroup}"
-                    v-for="group in groups"
-                    @click="onFilterGroup(group)"
-                    :text="group"
-                    :key="group"
-                />
-            </b-breadcrumb>
             <div>
                 <b-tooltip placement="left" target="graph-orientation">
                     {{ $t('graph orientation') }}
@@ -54,6 +40,7 @@
     </div>
 </template>
 <script>
+
     const dagreD3 = require("dagre-d3");
     import TreeNode from "./TreeNode";
     import * as d3 from "d3";
@@ -108,7 +95,8 @@
                 orientation: true,
                 zoom: undefined,
                 filteredDataTree: undefined,
-                virtualRootNode: undefined
+                virtualRootNode: undefined,
+                clusterColors: []
             };
         },
         watch: {
@@ -135,6 +123,12 @@
             this.generateGraph();
         },
         methods: {
+            nextClusterColor() {
+                if (this.clusterColors.length === 0) {
+                    this.clusterColors = "#F7F9F9#E5E7E9#D5DBDB#CCD1D1#AEB6BF#ABB2B9#FBFCFC#F2F3F4#EAEDED#E5E8E8#D6DBDF#D5D8DC".split("#")
+                }
+                return `#${this.clusterColors.pop()}`
+            },
             toggleOrientation() {
                 this.orientation = !this.orientation;
                 localStorage.setItem(
@@ -161,8 +155,9 @@
                 if (this.zoom) {
                     this.zoom.on("zoom", null);
                 }
+                window.innerHeight
                 this.$refs.wrapper.innerHTML =
-                    "<svg id=\"svg-canvas\" width=\"100%\" style=\"min-height:800px\"/>";
+                    `<svg id="svg-canvas" width="100%" style="min-height:${window.innerHeight - 290}px"/>`
                 const g = new dagreD3.graphlib.Graph({
                     compound: true,
                     multigraph: true
@@ -194,10 +189,23 @@
                 );
                 const virtualRootId = this.getVirtualRootNode() && this.getVirtualRootNode().task.id
                 const groupDisabled = this.isGroupDisabled(virtualRootId);
-
+                const clusters = {}
+                for (const node of this.filteredDataTree) {
+                    const cluster = node.groups ? node.groups[node.groups.length - 1] : "root"
+                    if (cluster) {
+                        if (!clusters[cluster]) {
+                            clusters[cluster] = new Set()
+                        }
+                        if (node.groups && node.groups.length > 1) {
+                            clusters[cluster].add(node.groups[node.groups.length - 2])
+                        }
+                    }
+                }
                 for (const node of this.filteredDataTree) {
                     const slug = this.slug(node);
                     const hash = parentHash(node);
+                    const cluster = node.groups ? node.groups[node.groups.length - 1] : "root"
+                    g.setParent(slug, cluster)
                     g.setNode(slug, {
                         labelType: "html",
                         label: `<div class="node-binder" id="node-${slug}"/>`,
@@ -211,6 +219,17 @@
                         g.setEdge("parent node", slug, options)
                     }
                 }
+                for (let cluster in clusters) {
+                    for (let parent of clusters[cluster]) {
+                        g.setParent(cluster, parent)
+                    }
+                    if (cluster !== "root" && clusters[cluster].size === 0) {
+                        g.setParent(cluster, "root")
+                    }
+                    g.setNode(cluster, {label: cluster, clusterLabelPos: "top", style: `fill: ${this.nextClusterColor()}`});
+                }
+                g.setNode("root", {label: "root", clusterLabelPos: "top", style: `fill: ${this.nextClusterColor()}`});
+
                 const rootNode = {
                     labelType: "html",
                     clusterLabelPos: "bottom"
@@ -361,15 +380,7 @@
                 return hash.hashCode();
             },
             getFilteredDataTree() {
-                if (this.filterGroup) {
-                    return this.dataTree.filter(
-                        node =>
-                            node.groups &&
-                            node.groups[node.groups.length - 1] === this.filterGroup
-                    );
-                } else {
-                    return this.dataTree.filter(node => !node.groups);
-                }
+                return this.dataTree
             }
         },
         computed: {

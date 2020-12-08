@@ -7,6 +7,7 @@
                 :flow-graph="flowGraph"
                 :flow-id="execution.flowId"
                 :namespace="execution.namespace"
+                :is-flow="false"
                 :label="getLabel"
             />
         </b-col>

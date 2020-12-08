@@ -67,9 +67,8 @@ public class RestoreQueueCommand extends AbstractCommand {
             Qualifiers.byName(queueName)
         );
 
-
         list.forEach(flowQueue::emit);
 
-        stdOut("Successfully send {1} flows to {2}", list.size(), queueName);
+        stdOut("Successfully send {0} flows to {1}", list.size(), queueName);
     }
 }

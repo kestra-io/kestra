@@ -53,6 +53,10 @@ public class PluginDownloader {
         this.session = repositorySystemSession(system, localRepositoryPath);
     }
 
+    public void addRepository(RepositoryConfig repositoryConfig) {
+        this.repositoryConfigs.add(repositoryConfig);
+    }
+
     public List<URL> resolve(List<String> dependencies) throws DependencyResolutionException, MalformedURLException {
         List<RemoteRepository> repositories = remoteRepositories();
 

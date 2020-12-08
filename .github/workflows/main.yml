@@ -158,8 +158,10 @@ jobs:
           if [[ $TAG = "master" ]]
           then
             echo ::set-output name=tag::latest
+            echo ::set-output name=plugins::
           else
             echo ::set-output name=tag::${TAG}
+            echo ::set-output name=plugins::--repositories=https://dl.bintray.com/kestra/maven-snapshot
           fi
 
       # Docker
@@ -189,7 +191,7 @@ jobs:
           push: true
           tags: ${{ format('kestra/kestra:{0}-full', steps.vars.outputs.tag) }}
           build-args: |
-            KESTRA_PLUGINS=org.kestra.storage.gcs:storage-gcs:LATEST org.kestra.storage.minio:storage-minio:LATEST org.kestra.task.aws:task-aws:LATEST org.kestra.task.gcp:task-gcp:LATEST org.kestra.task.kubernetes:task-kubernetes:LATEST org.kestra.task.serdes:task-serdes:LATEST org.kestra.task.notifications:task-notifications:LATEST org.kestra.task.crypto:task-crypto:LATEST org.kestra.task.jdbc:mysql:LATEST org.kestra.task.jdbc:postgres:LATEST
+            KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }} org.kestra.storage.gcs:storage-gcs:LATEST org.kestra.storage.minio:storage-minio:LATEST org.kestra.task.aws:task-aws:LATEST org.kestra.task.fs:task-fs:LATEST org.kestra.task.gcp:task-gcp:LATEST org.kestra.task.kubernetes:task-kubernetes:LATEST org.kestra.task.serdes:task-serdes:LATEST org.kestra.task.notifications:task-notifications:LATEST org.kestra.task.crypto:task-crypto:LATEST org.kestra.task.jdbc:mysql:LATEST org.kestra.task.jdbc:postgres:LATEST org.kestra.task.jdbc:vertica:LATEST org.kestra.task.jdbc:clickhouse:LATEST
             APT_PACKAGES=python3-pip python3-wheel python3-setuptools python3-virtualenv nodejs
 
       # Slack

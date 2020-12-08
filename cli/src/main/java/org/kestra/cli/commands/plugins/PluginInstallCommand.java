@@ -3,13 +3,17 @@ package org.kestra.cli.commands.plugins;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.cli.plugins.PluginDownloader;
+import org.kestra.cli.plugins.RepositoryConfig;
+import org.kestra.core.utils.IdUtils;
 import picocli.CommandLine;
 
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -20,6 +24,9 @@ import javax.inject.Inject;
 public class PluginInstallCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0..*", description = "the plugins to install")
     List<String> dependencies = new ArrayList<>();
+
+    @CommandLine.Option(names = {"--repositories"}, description = "url to additional maven repositories")
+    private URI[] repositories;
 
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -45,6 +52,11 @@ public class PluginInstallCommand extends AbstractCommand {
             if (!pluginsPath.toFile().mkdir()) {
                 throw new RuntimeException("Cannot create directory: " + pluginsPath.toFile().getAbsolutePath());
             }
+        }
+
+        if (repositories != null) {
+            Arrays.stream(repositories)
+                .forEach(s -> pluginDownloader.addRepository(new RepositoryConfig(IdUtils.create(), "default", s.toString())));
         }
 
         List<URL> resolveUrl = pluginDownloader.resolve(dependencies);

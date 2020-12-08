@@ -2,10 +2,12 @@ package org.kestra.cli.plugins;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @EachProperty("kestra.plugins.repositories")
 @Getter
+@AllArgsConstructor
 public class RepositoryConfig {
     String id;
 

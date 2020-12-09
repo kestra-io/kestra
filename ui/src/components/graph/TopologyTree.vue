@@ -9,6 +9,12 @@
                     <arrow-collapse-down v-if="orientation" />
                     <arrow-collapse-right v-else />
                 </b-btn>
+                <b-btn size="sm" @click="setZoom('in')">
+                    <magnify-plus />
+                </b-btn>
+                <b-btn size="sm" @click="setZoom('out')">
+                    <magnify-minus />
+                </b-btn>
             </div>
         </div>
 
@@ -47,6 +53,8 @@
     import * as d3 from "d3";
     import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight";
     import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown";
+    import MagnifyPlus from "vue-material-design-icons/MagnifyPlus";
+    import MagnifyMinus from "vue-material-design-icons/MagnifyMinus";
     import VectorCircle from "vue-material-design-icons/Circle";
     const parentHash = node => {
         if (node.parent) {
@@ -65,7 +73,9 @@
             TreeNode,
             ArrowCollapseDown,
             ArrowCollapseRight,
-            VectorCircle
+            VectorCircle,
+            MagnifyPlus,
+            MagnifyMinus
         },
         props: {
             dataTree: {
@@ -98,7 +108,10 @@
                 filteredDataTree: undefined,
                 virtualRootNode: undefined,
                 clusterColors: [],
-                resizeHandler: undefined
+                resizeHandler: undefined,
+                zoomFactor: 1,
+                lastX: 50,
+                lastY: 50,
             };
         },
         watch: {
@@ -131,6 +144,19 @@
             this.generateGraph();
         },
         methods: {
+            setZoom(direction) {
+                if (direction === "in") {
+                    if (this.zoomFactor <= 1.7) {
+                        this.zoomFactor += 0.2
+                        this.generateGraph()
+                    }
+                } else {
+                    if (this.zoomFactor >= 0.3) {
+                        this.zoomFactor -= 0.2
+                        this.generateGraph()
+                    }
+                }
+            },
             resetClusterColors() {
                 this.clusterColors = "#F7F9F9#E5E7E9#D5DBDB#CCD1D1#AEB6BF#ABB2B9#FBFCFC#F2F3F4#EAEDED#E5E8E8#D6DBDF#D5D8DC".split("#")
             },
@@ -276,9 +302,11 @@
                     .zoom()
                     .on("zoom", () => {
                         const t = d3.event.transform;
+                        this.lastX = t.x
+                        this.lastY = t.y
                         svgGroup.attr(
                             "transform",
-                            `translate(${t.x},${t.y}) scale(${t.k})`
+                            `translate(${this.lastX || t.x},${this.lastY || t.y}) scale(${t.k*this.zoomFactor})`
                         );
                     })
                     .scaleExtent([1, 1]);
@@ -291,7 +319,7 @@
                     "fill",
                     arrowColor
                 );
-                const transform = d3.zoomIdentity.translate(50, 50).translate(0, 0);
+                const transform = d3.zoomIdentity.translate(0, 0).translate(this.lastX || 0, this.lastY || 0);
                 svgWrapper.call(this.zoom.transform, transform);
                 this.bindNodes();
             },

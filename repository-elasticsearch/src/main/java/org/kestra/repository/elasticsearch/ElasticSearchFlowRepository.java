@@ -155,11 +155,11 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             return exists.get();
         }
 
-        Optional<Flow> current = this.findById(flow.getNamespace(), flow.getId());
+        List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
 
-        if (current.isPresent()) {
-            flow = flow.withRevision(current.get().getRevision() + 1);
-        } else if (flow.getRevision() == null) {
+        if (revisions.size() > 0) {
+            flow = flow.withRevision(revisions.get(revisions.size() - 1).getRevision() + 1);
+        } else {
             flow = flow.withRevision(1);
         }
 

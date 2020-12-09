@@ -68,7 +68,7 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(full.isPresent(), is(true));
 
         full.ifPresent(current -> {
-            assertThat(full.get().getRevision(), is(3));
+            assertThat(full.get().getRevision(), is(1));
         });
     }
 
@@ -122,9 +122,8 @@ public abstract class AbstractFlowRepositoryTest {
         );
         assertThat(incremented3.getRevision(), is(3));
 
-        // cleanup
+        // delete
         flowRepository.delete(flow);
-        flowRepository.delete(incremented);
 
         // revisions is still findable after delete
         revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
@@ -137,6 +136,11 @@ public abstract class AbstractFlowRepositoryTest {
         );
         assertThat(findDeleted.isPresent(), is(true));
         assertThat(findDeleted.get().getRevision(), is(flow.getRevision()));
+
+        // recreate the first one, we have a new revision
+        Flow incremented4 = flowRepository.create(flow);
+
+        assertThat(incremented4.getRevision(), is(4));
     }
 
     @Test
@@ -144,7 +148,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = builder().revision(12).build();
         Flow save = flowRepository.create(flow);
 
-        assertThat(save.getRevision(), is(12));
+        assertThat(save.getRevision(), is(1));
     }
 
     @Test

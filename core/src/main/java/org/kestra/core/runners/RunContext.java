@@ -226,10 +226,15 @@ public class RunContext {
         }
 
         if (trigger != null) {
-            builder.put("trigger", ImmutableMap.of(
-                "id", trigger.getId(),
-                "type", trigger.getType()
-            ));
+            builder
+                .put("flow", ImmutableMap.of(
+                    "id", flow.getId(),
+                    "namespace", flow.getNamespace()
+                ))
+                .put("trigger", ImmutableMap.of(
+                    "id", trigger.getId(),
+                    "type", trigger.getType()
+                ));
         }
 
         return builder.build();

@@ -30,18 +30,6 @@
                 :flow-id="flowId"
                 :is-flow="isFlow"
             />
-            <tree-node
-                :ref="`node-${slug(virtualRootNode)}`"
-                v-if="virtualRootNode"
-                :n="virtualRootNode"
-                :namespace="namespace"
-                :flow-id="flowId"
-                :is-flow="isFlow"
-            />
-        </div>
-
-        <div ref="vector-circle">
-            <vector-circle v-if="!virtualRootNode" title />
         </div>
     </div>
 </template>
@@ -55,25 +43,23 @@
     import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown";
     import MagnifyPlus from "vue-material-design-icons/MagnifyPlus";
     import MagnifyMinus from "vue-material-design-icons/MagnifyMinus";
-    import VectorCircle from "vue-material-design-icons/Circle";
-    const parentHash = node => {
-        if (node.parent) {
-            const parent = node.parent[0];
-            return nodeHash(parent)
-        } else {
-            return undefined;
-        }
-    };
-    const nodeHash = node => {
-        return (node.id + (node.value ? "-" + node.value : "")).hashCode();
-    }
+    // const parentHash = node => {
+    //     if (node.parent) {
+    //         const parent = node.parent[0];
+    //         return nodeHash(parent)
+    //     } else {
+    //         return undefined;
+    //     }
+    // };
+    // const nodeHash = node => {
+    //     return (node.id + (node.value ? "-" + node.value : "")).hashCode();
+    // }
 
     export default {
         components: {
             TreeNode,
             ArrowCollapseDown,
             ArrowCollapseRight,
-            VectorCircle,
             MagnifyPlus,
             MagnifyMinus
         },
@@ -106,7 +92,6 @@
                 orientation: true,
                 zoom: undefined,
                 filteredDataTree: undefined,
-                virtualRootNode: undefined,
                 clusterColors: [],
                 resizeHandler: undefined,
                 zoomFactor: 1,
@@ -174,19 +159,11 @@
                 );
                 this.generateGraph();
             },
-            getVirtualRootNode() {
-                return this.filterGroup
-                    ? {
-                        task: {
-                            id: this.filterGroup
-                        }
-                    }
-                    : undefined;
-            },
+
             generateGraph() {
                 this.resetClusterColors()
                 this.filteredDataTree = this.getFilteredDataTree();
-                this.virtualRootNode = this.getVirtualRootNode();
+                // this.virtualRootNode = this.getVirtualRootNode();
 
                 // Create the input graph
                 const arrowColor = "#ccc";
@@ -222,14 +199,14 @@
                         }[node.relation] || "";
                     return edgeOption;
                 };
-                const ancestorsHashes = new Set(
-                    this.filteredDataTree.filter(e => e.parent).map(e => nodeHash(e.parent[0]))
-                );
-                const virtualRootId = this.getVirtualRootNode() && this.getVirtualRootNode().task.id
-                const groupDisabled = this.isGroupDisabled(virtualRootId);
+                // const ancestorsHashes = new Set(
+                //     this.filteredDataTree.filter(e => e.parent).map(e => nodeHash(e.parent[0]))
+                // );
+                // const virtualRootId = this.getVirtualRootNode() && this.getVirtualRootNode().task.id
+                // const groupDisabled = this.isGroupDisabled(virtualRootId);
                 const clusters = {}
                 for (const node of this.filteredDataTree) {
-                    const cluster = node.groups ? node.groups[node.groups.length - 1] : "root"
+                    const cluster = node.groups ? node.groups[node.groups.length - 1] : undefined
                     if (cluster) {
                         if (!clusters[cluster]) {
                             clusters[cluster] = new Set()
@@ -239,51 +216,66 @@
                         }
                     }
                 }
+                // const s = n => {
+
+                // }
+                const edges = []
+                for (const node of this.filteredDataTree) {
+                    const group = node.groups && node.groups.length > 0 ? node.groups[node.groups.length - 1] : ""
+                    const parent = node.parent && node.parent.length > 0 ? `${group}${node.parent[0].id}` : ""
+                    const child = node.task && node.task.taskRun ? `${group}${node.task.id}${node.task.taskRun.id}` : `${group}${node.task.id}`
+                    const id = `${group}${parent}${child}`
+                    const edge = {
+                        options: getOptions(node),
+                        parent,
+                        child,
+                        id
+                    }
+                    if (parent) {
+                        edges.push(edge)
+                        console.log(parent, "<-", child)
+                    }
+                    // console.log({parent, group, child, id})
+                }
+                // for (let edge in edges) {
+                //     g.setEdge(edge.parent, edge.child, edge.options);
+                // }
+                // console.log("edges", edges)
                 for (const node of this.filteredDataTree) {
                     const slug = this.slug(node);
-                    const hash = parentHash(node);
-                    const cluster = node.groups ? node.groups[node.groups.length - 1] : "root"
+                    // const hash = parentHash(node);
+                    const cluster = node.groups ? node.groups[node.groups.length - 1] : undefined
+                    console.log("cluster", cluster)
                     g.setParent(slug, cluster)
+                    // if (cluster) {
+                    // }
                     g.setNode(slug, {
                         labelType: "html",
                         label: `<div class="node-binder" id="node-${slug}"/>`,
-                        class: groupDisabled || node.task.disabled ? "task-disabled" : ""
+                        class: node.task.disabled ? "task-disabled" : ""
                     });
-                    const options = getOptions(node);
-                    const parentId = node.parent && node.parent[0] && node.parent[0].id
-                    if (ancestorsHashes.has(hash) && ["SEQUENTIAL", "ERROR"].includes(node.relation) && virtualRootId !== parentId) {
-                        g.setEdge(parentHash(node), slug, options);
-                    } else {
-                        g.setEdge("parent node", slug, options)
-                    }
+                    // const options = getOptions(node);
+                    // const parentId = node.parent && node.parent[0] && node.parent[0].id
+                    // console.log("hash", hash, options, parentId)
+
+                    // if (ancestorsHashes.has(hash) && ["SEQUENTIAL", "ERROR"].includes(node.relation) && virtualRootId !== parentId) {
+                    //     g.setEdge(parentHash(node), slug, options);
+                    // } else {
+                    //     g.setEdge("parent node", slug, options)
+                    // }
                 }
                 for (let cluster in clusters) {
                     for (let parent of clusters[cluster]) {
                         g.setParent(cluster, parent)
                     }
-                    if (cluster !== "root" && clusters[cluster].size === 0) {
-                        g.setParent(cluster, "root")
-                    }
+                    // if (cluster !== undefined && clusters[cluster].size === 0) {
+                    //     g.setParent(cluster, "root")
+                    // }
                     g.setNode(cluster, {label: cluster, clusterLabelPos: "top", style: `fill: ${this.nextClusterColor()}`});
                 }
-                g.setNode("root", {label: "root", clusterLabelPos: "top", style: `fill: ${this.nextClusterColor()}`});
+                // g.setNode("root", {label: "root", clusterLabelPos: "top", style: `fill: ${this.nextClusterColor()}`});
 
-                const rootNode = {
-                    labelType: "html",
-                    clusterLabelPos: "bottom"
-                };
-                if (this.filterGroup) {
-                    rootNode.label = `<div class="node-binder root-node-virtual" id="node-${this.slug(
-                        this.virtualRootNode
-                    )}"/>`;
-                    rootNode.class = groupDisabled  ? "task-disabled" : "";
-                } else {
-                    rootNode.class = "root-node";
-                    rootNode.label = "<div class=\"vector-circle-wrapper\"/>";
-                    rootNode.height = 30;
-                    rootNode.width = 30;
-                }
-                g.setNode("parent node", rootNode);
+
                 g.nodes().forEach(v => {
                     const node = g.node(v);
                     if (node) {
@@ -322,6 +314,7 @@
                 const transform = d3.zoomIdentity.translate(0, 0).translate(this.lastX || 0, this.lastY || 0);
                 svgWrapper.call(this.zoom.transform, transform);
                 this.bindNodes();
+                console.log("generate")
             },
             children(node) {
                 const children = []
@@ -334,44 +327,12 @@
                 }
                 return children
             },
-            virtalNodeReady() {
-                if (this.virtualRootNode) {
-                    const vueNode = this.$refs[
-                        `node-${this.slug(this.virtualRootNode)}`
-                    ];
-                    return vueNode && vueNode.$el;
-                } else {
-                    return true;
-                }
-            },
-            isGroupDisabled(virtualRootId) {
-                if (virtualRootId === undefined) {
-                    return  false;
-                }
-
-                const virtualRoot = this.dataTree.filter(node => node.task.id === virtualRootId)[0];
-
-                if (virtualRoot.task.disabled === true) {
-                    return true;
-                }
-
-                if (virtualRoot.groups === undefined) {
-                    return false;
-                }
-
-                return virtualRoot.groups
-                    .map(value => this.dataTree.filter(node => node.task.id === value)[0])
-                    .filter(node => node.task.disabled === true)
-                    .length > 0
-            },
             bindNodes() {
                 let ready = true;
                 for (const node of this.filteredDataTree) {
                     if (
-                        !this.virtalNodeReady() ||
                         !this.$refs[this.slug(node)] ||
-                        !this.$refs[this.slug(node)].length ||
-                        !this.$refs["vector-circle"]
+                        !this.$refs[this.slug(node)].length
                     ) {
                         ready = false;
                     }
@@ -382,23 +343,9 @@
                             .querySelector(`#node-${this.slug(node)}`)
                             .appendChild(this.$refs[this.slug(node)][0].$el);
                     }
-                    if (this.virtualRootNode) {
-                        this.$el
-                            .querySelector(
-                                `#node-${this.slug(this.virtualRootNode)}`
-                            )
-                            .appendChild(
-                                this.$refs[
-                                    `node-${this.slug(this.virtualRootNode)}`
-                                ].$el
-                            );
-                    } else {
-                        this.$el
-                            .querySelector(".vector-circle-wrapper")
-                            .appendChild(this.$refs["vector-circle"]);
-                    }
                     this.ready = true;
                 } else {
+                    console.log("ici")
                     setTimeout(this.bindNodes, 30);
                 }
             },
@@ -543,13 +490,7 @@ foreignObject {
     fill: $gray-600;
 }
 
-.vector-circle-wrapper path {
-    fill: $gray-400 !important;
-}
 
-.root-node-virtual {
-    opacity: 0.5;
-}
 .hide {
     opacity: 0;
 }

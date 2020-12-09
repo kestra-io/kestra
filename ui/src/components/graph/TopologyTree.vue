@@ -109,10 +109,6 @@
             if (this.$route.query.filter) {
                 this.filterGroup = this.$route.query.filter;
             }
-            this.dataTree.forEach(node => {
-                node.children = this.children(node)
-            })
-
             this.resizeHandler = debounce(500, () => {
                 this.generateGraph()
             })
@@ -142,8 +138,7 @@
                 }
             },
             resetClusterColors() {
-                // this.clusterColors = "#F7F9F9#E5E7E9#D5DBDB#CCD1D1#AEB6BF#ABB2B9#FBFCFC#F2F3F4#EAEDED#E5E8E8#D6DBDF#D5D8DC".split("#")
-                this.clusterColors = "#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff".split("#")
+                this.clusterColors = "#F7F9F9#E5E7E9#D5DBDB#CCD1D1#AEB6BF#ABB2B9#FBFCFC#F2F3F4#EAEDED#E5E8E8#D6DBDF#D5D8DC".split("#")
             },
             nextClusterColor() {
                 if (this.clusterColors.length === 0) {
@@ -163,14 +158,12 @@
             generateGraph() {
                 this.resetClusterColors()
                 this.filteredDataTree = this.getFilteredDataTree();
-                // this.virtualRootNode = this.getVirtualRootNode();
 
                 // Create the input graph
                 const arrowColor = "#ccc";
                 if (this.zoom) {
                     this.zoom.on("zoom", null);
                 }
-                window.innerHeight
                 this.$refs.wrapper.innerHTML =
                     `<svg id="svg-canvas" width="100%" style="min-height:${window.innerHeight - 290}px"/>`
                 const g = new dagreD3.graphlib.Graph({
@@ -218,7 +211,6 @@
                 console.log("--- >start")
                 for (const node of this.filteredDataTree) {
 
-                    // const children = (node.children || []).map(c => c.tasks)
                     const options = getOptions(node)
                     g.setEdge(this.slug(node), this.slug(node), options);
                     const group = node.groups && node.groups.length ? node.groups[node.groups.length - 1] : undefined
@@ -282,17 +274,6 @@
                 const transform = d3.zoomIdentity.translate(0, 0).translate(this.lastX || 0, this.lastY || 0);
                 svgWrapper.call(this.zoom.transform, transform);
                 this.bindNodes();
-            },
-            children(node) {
-                const children = []
-                for (let child of this.dataTree) {
-                    for (let parent of (child.parent || [])) {
-                        if (parent.id === node.task.id) {
-                            children.push(JSON.parse(JSON.stringify(node)))
-                        }
-                    }
-                }
-                return children
             },
             bindNodes() {
                 let ready = true;

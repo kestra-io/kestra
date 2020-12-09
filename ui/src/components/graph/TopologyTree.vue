@@ -40,6 +40,7 @@
     </div>
 </template>
 <script>
+    import {debounce} from "throttle-debounce";
 
     const dagreD3 = require("dagre-d3");
     import TreeNode from "./TreeNode";
@@ -96,7 +97,8 @@
                 zoom: undefined,
                 filteredDataTree: undefined,
                 virtualRootNode: undefined,
-                clusterColors: []
+                clusterColors: [],
+                resizeHandler: undefined
             };
         },
         watch: {
@@ -118,14 +120,23 @@
             this.dataTree.forEach(node => {
                 node.children = this.children(node)
             })
+
+            this.resizeHandler = debounce(500, () => {
+                this.generateGraph()
+            })
+
+            window.addEventListener("resize", this.resizeHandler);
         },
         mounted() {
             this.generateGraph();
         },
         methods: {
+            resetClusterColors() {
+                this.clusterColors = "#F7F9F9#E5E7E9#D5DBDB#CCD1D1#AEB6BF#ABB2B9#FBFCFC#F2F3F4#EAEDED#E5E8E8#D6DBDF#D5D8DC".split("#")
+            },
             nextClusterColor() {
                 if (this.clusterColors.length === 0) {
-                    this.clusterColors = "#F7F9F9#E5E7E9#D5DBDB#CCD1D1#AEB6BF#ABB2B9#FBFCFC#F2F3F4#EAEDED#E5E8E8#D6DBDF#D5D8DC".split("#")
+                    this.resetClusterColors()
                 }
                 return `#${this.clusterColors.pop()}`
             },
@@ -147,6 +158,7 @@
                     : undefined;
             },
             generateGraph() {
+                this.resetClusterColors()
                 this.filteredDataTree = this.getFilteredDataTree();
                 this.virtualRootNode = this.getVirtualRootNode();
 
@@ -372,6 +384,8 @@
                 }
             },
             slug(node) {
+                // const group
+                // console.log(node)
                 const hash =
                     node.task.id +
                     (node.taskRun && node.taskRun.value
@@ -394,6 +408,9 @@
         },
         destroyed() {
             this.ready = false;
+            if (this.resizeHandler) {
+                window.removeEventListener("resize", this.resizeHandler)
+            }
         }
     };
 </script>
@@ -461,6 +478,8 @@ foreignObject {
 
 .hidden {
     opacity: 0;
+    height:0px;
+    overflow: hidden;
 }
 
 .error-edge {

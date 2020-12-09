@@ -15,6 +15,9 @@
                 <b-btn size="sm" @click="setZoom('out')">
                     <magnify-minus />
                 </b-btn>
+                <b-btn size="sm" @click="setZoom('reset')">
+                    <arrow-collapse-all />
+                </b-btn>
             </div>
         </div>
 
@@ -43,17 +46,7 @@
     import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown";
     import MagnifyPlus from "vue-material-design-icons/MagnifyPlus";
     import MagnifyMinus from "vue-material-design-icons/MagnifyMinus";
-    // const parentHash = node => {
-    //     if (node.parent) {
-    //         const parent = node.parent[0];
-    //         return nodeHash(parent)
-    //     } else {
-    //         return undefined;
-    //     }
-    // };
-    // const nodeHash = node => {
-    //     return (node.id + (node.value ? "-" + node.value : "")).hashCode();
-    // }
+    import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll";
 
     export default {
         components: {
@@ -61,7 +54,8 @@
             ArrowCollapseDown,
             ArrowCollapseRight,
             MagnifyPlus,
-            MagnifyMinus
+            MagnifyMinus,
+            ArrowCollapseAll
         },
         props: {
             dataTree: {
@@ -135,15 +129,21 @@
                         this.zoomFactor += 0.2
                         this.generateGraph()
                     }
-                } else {
+                } else if (direction === "out") {
                     if (this.zoomFactor >= 0.3) {
                         this.zoomFactor -= 0.2
                         this.generateGraph()
                     }
+                } else if (direction === "reset") {
+                    this.zoomFactor = 1
+                    this.lastX = 50
+                    this.lastY = 50
+                    this.generateGraph()
                 }
             },
             resetClusterColors() {
-                this.clusterColors = "#F7F9F9#E5E7E9#D5DBDB#CCD1D1#AEB6BF#ABB2B9#FBFCFC#F2F3F4#EAEDED#E5E8E8#D6DBDF#D5D8DC".split("#")
+                // this.clusterColors = "#F7F9F9#E5E7E9#D5DBDB#CCD1D1#AEB6BF#ABB2B9#FBFCFC#F2F3F4#EAEDED#E5E8E8#D6DBDF#D5D8DC".split("#")
+                this.clusterColors = "#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff#ffffff".split("#")
             },
             nextClusterColor() {
                 if (this.clusterColors.length === 0) {
@@ -199,11 +199,6 @@
                         }[node.relation] || "";
                     return edgeOption;
                 };
-                // const ancestorsHashes = new Set(
-                //     this.filteredDataTree.filter(e => e.parent).map(e => nodeHash(e.parent[0]))
-                // );
-                // const virtualRootId = this.getVirtualRootNode() && this.getVirtualRootNode().task.id
-                // const groupDisabled = this.isGroupDisabled(virtualRootId);
                 const clusters = {}
                 for (const node of this.filteredDataTree) {
                     const cluster = node.groups ? node.groups[node.groups.length - 1] : undefined
@@ -216,65 +211,38 @@
                         }
                     }
                 }
-                // const s = n => {
+                // const ancestors = {}
+                // for (const node of this.filteredDataTree) {
 
                 // }
-                const edges = []
+                console.log("--- >start")
                 for (const node of this.filteredDataTree) {
-                    const group = node.groups && node.groups.length > 0 ? node.groups[node.groups.length - 1] : ""
-                    const parent = node.parent && node.parent.length > 0 ? `${group}${node.parent[0].id}` : ""
-                    const child = node.task && node.task.taskRun ? `${group}${node.task.id}${node.task.taskRun.id}` : `${group}${node.task.id}`
-                    const id = `${group}${parent}${child}`
-                    const edge = {
-                        options: getOptions(node),
-                        parent,
-                        child,
-                        id
-                    }
-                    if (parent) {
-                        edges.push(edge)
-                        console.log(parent, "<-", child)
-                    }
-                    // console.log({parent, group, child, id})
+
+                    // const children = (node.children || []).map(c => c.tasks)
+                    const options = getOptions(node)
+                    g.setEdge(this.slug(node), this.slug(node), options);
+                    const group = node.groups && node.groups.length ? node.groups[node.groups.length - 1] : undefined
+                    console.log("id", node.task.id, "group",  group)
+                    // console.log(node.task.id,"<-", node.task.id)
+                    // console.log("parent", node.task)
+                    // console.log("child", child.task)
                 }
-                // for (let edge in edges) {
-                //     g.setEdge(edge.parent, edge.child, edge.options);
-                // }
-                // console.log("edges", edges)
                 for (const node of this.filteredDataTree) {
                     const slug = this.slug(node);
-                    // const hash = parentHash(node);
                     const cluster = node.groups ? node.groups[node.groups.length - 1] : undefined
-                    console.log("cluster", cluster)
                     g.setParent(slug, cluster)
-                    // if (cluster) {
-                    // }
                     g.setNode(slug, {
                         labelType: "html",
                         label: `<div class="node-binder" id="node-${slug}"/>`,
                         class: node.task.disabled ? "task-disabled" : ""
                     });
-                    // const options = getOptions(node);
-                    // const parentId = node.parent && node.parent[0] && node.parent[0].id
-                    // console.log("hash", hash, options, parentId)
-
-                    // if (ancestorsHashes.has(hash) && ["SEQUENTIAL", "ERROR"].includes(node.relation) && virtualRootId !== parentId) {
-                    //     g.setEdge(parentHash(node), slug, options);
-                    // } else {
-                    //     g.setEdge("parent node", slug, options)
-                    // }
                 }
                 for (let cluster in clusters) {
                     for (let parent of clusters[cluster]) {
                         g.setParent(cluster, parent)
                     }
-                    // if (cluster !== undefined && clusters[cluster].size === 0) {
-                    //     g.setParent(cluster, "root")
-                    // }
                     g.setNode(cluster, {label: cluster, clusterLabelPos: "top", style: `fill: ${this.nextClusterColor()}`});
                 }
-                // g.setNode("root", {label: "root", clusterLabelPos: "top", style: `fill: ${this.nextClusterColor()}`});
-
 
                 g.nodes().forEach(v => {
                     const node = g.node(v);
@@ -314,7 +282,6 @@
                 const transform = d3.zoomIdentity.translate(0, 0).translate(this.lastX || 0, this.lastY || 0);
                 svgWrapper.call(this.zoom.transform, transform);
                 this.bindNodes();
-                console.log("generate")
             },
             children(node) {
                 const children = []
@@ -345,7 +312,6 @@
                     }
                     this.ready = true;
                 } else {
-                    console.log("ici")
                     setTimeout(this.bindNodes, 30);
                 }
             },
@@ -359,8 +325,6 @@
                 }
             },
             slug(node) {
-                // const group
-                // console.log(node)
                 const hash =
                     node.task.id +
                     (node.taskRun && node.taskRun.value

@@ -34,6 +34,7 @@
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal";
 
     import YamlUtils from "../../utils/yamlUtils";
+    import {debounce} from "throttle-debounce";
 
     export default {
         props: {
@@ -52,18 +53,31 @@
                 return this.$refs.aceEditor.editor
             }
         },
+        created() {
+            this.resize = debounce(300, () => {
+                this.handleResize();
+            });
+            window.addEventListener("resize", this.resize);
+        },
+        beforeDestroy() {
+            window.removeEventListener("resize", this.resize);
+        },
         methods: {
+            handleResize() {
+                this.setEditorMaxLines();
+            },
             editorInit: function (editor) {
                 require("brace/mode/yaml");
                 require("brace/theme/merbivore_soft");
                 require("brace/ext/language_tools")
                 require("brace/ext/error_marker")
                 require("brace/ext/searchbox")
-                editor.textInput.focus()
+                editor.textInput.focus();
+
+                this.setEditorMaxLines();
 
                 editor.setOptions({
                     minLines: 5,
-                    maxLines: Infinity,
                     fontFamily: "\"Source Code Pro\", SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
                     showPrintMargin: false,
                     tabSize: 2,
@@ -130,6 +144,15 @@
             },
             onInput(value) {
                 this.$emit("input", value);
+            },
+            setEditorMaxLines(){
+                // We compute max lines to display in the editor and avoid page scroll
+                var viewPortHeight = (window.innerHeight - 290)
+                var fontSize = this.ed.getOption("fontSize");
+                var nbLines = Math.ceil(viewPortHeight / (fontSize + 2));
+                this.ed.setOptions({
+                    maxLines: nbLines
+                });
             }
         },
     };

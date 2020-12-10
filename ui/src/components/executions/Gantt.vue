@@ -13,6 +13,7 @@
                 <tbody v-for="taskItem in partialSeries" :key="taskItem.id">
                     <tr>
                         <th :id="`task-title-wrapper-${taskItem.id}`">
+                            <sub-flow-link class="sub-flow" v-if="taskItem.executionId" tab-execution="gantt" :execution-id="taskItem.executionId" :namespace="taskItem.namespace" :flow-id="taskItem.flowId" />
                             <code>{{ taskItem.name }}</code>
                             <small v-if="taskItem.task && taskItem.task.value"> {{ taskItem.task.value }}</small>
                             <b-tooltip
@@ -62,11 +63,12 @@
     import {mapState} from "vuex";
     import humanizeDuration from "humanize-duration";
     import State from "../../utils/state";
+    import SubFlowLink from "../flows/SubFlowLink"
 
     const ts = date => new Date(date).getTime();
     const TASK_THRESHOLD = 50
     export default {
-        components: {LogList},
+        components: {LogList, SubFlowLink},
         data() {
             return {
                 colors: State.colorClass(),
@@ -79,16 +81,15 @@
         },
         watch: {
             execution() {
-                this.computeSeries();
-                this.computeDates();
-                this.computeDuration();
+                this.compute()
+            },
+            $route() {
+                this.compute()
             }
         },
         mounted() {
             const repaint = () => {
-                this.computeSeries()
-                this.computeDates()
-                this.computeDuration()
+                this.compute()
                 if (this.realTime) {
                     const delay = this.tasksCount < TASK_THRESHOLD ? 40 : 500
                     setTimeout(repaint, delay);
@@ -164,6 +165,11 @@
             }
         },
         methods: {
+            compute() {
+                this.computeSeries();
+                this.computeDates();
+                this.computeDuration();
+            },
             delta() {
                 return this.stop() - this.start;
             },
@@ -190,7 +196,6 @@
                 const executionDelta = this.delta(); //caching this value matters
                 for (let task of this.tasks) {
                     let stopTs;
-
                     if (State.isRunning(task.state.current)) {
                         stopTs = ts(new Date());
                     } else {
@@ -230,7 +235,10 @@
                         tooltip,
                         color: this.colors[task.state.current],
                         running: State.isRunning(task.state.current),
-                        task
+                        task,
+                        flowId: task.flowId,
+                        namespace: task.namespace,
+                        executionId: task.outputs && task.outputs.executionId
                     });
                 }
                 this.series = series;
@@ -326,6 +334,18 @@ table {
 
 /deep/ .log-wrapper .attempt-wrapper {
     margin-bottom: 0;
+}
+
+.sub-flow {
+    display: inline;
+    margin-right: 5px;
+    /deep/ button {
+        font-size: 0.8em;
+        height: 20px;
+        width: 20px;
+        padding: 0px;
+        border-radius: 5px;
+    }
 }
 
 </style>

@@ -6,7 +6,7 @@ export default {
         execution: undefined,
         task: undefined,
         total: 0,
-        dataTree: undefined,
+        flowGraph: undefined,
         logs: []
     },
     actions: {
@@ -62,9 +62,11 @@ export default {
         followLogs(_, options) {
             return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/logs/${options.id}/follow`, {format: "json", params: options.params})
         },
-        loadTree({commit}, execution) {
-            return Vue.axios.get(`/api/v1/executions/${execution.id}/tree`).then(response => {
-                commit("setDataTree", response.data.tasks)
+        loadGraph({commit}, execution) {
+            return Vue.axios.get(`/api/v1/executions/${execution.id}/graph`).then(response => {
+                commit("setFlowGraph", response.data)
+
+                return response.data;
             })
         },
         loadLogs({commit}, options) {
@@ -88,8 +90,8 @@ export default {
         setTotal(state, total) {
             state.total = total
         },
-        setDataTree(state, tree) {
-            state.dataTree = tree
+        setFlowGraph(state, tree) {
+            state.flowGraph = tree
         },
         setLogs(state, logs) {
             state.logs = logs

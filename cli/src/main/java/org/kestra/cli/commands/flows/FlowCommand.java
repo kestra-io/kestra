@@ -16,6 +16,7 @@ import picocli.CommandLine;
         ValidateCommand.class,
         FlowTestCommand.class,
         FlowNamespaceCommand.class,
+        FlowDotCommand.class
     }
 )
 @Slf4j

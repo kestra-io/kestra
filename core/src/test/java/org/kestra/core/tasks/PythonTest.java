@@ -44,7 +44,6 @@ class PythonTest {
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOutLineCount(), is(1));
         assertThat(run.getVars().get("extract"), is("hello world"));
-        assertThat(run.getStdErrLineCount(), equalTo(0));
     }
 
     @Test
@@ -65,7 +64,6 @@ class PythonTest {
 
         assertThat(pythonException.getExitCode(), is(1));
         assertThat(pythonException.getStdOut().size(), is(0));
-        assertThat(pythonException.getStdErr().size(), equalTo(0));
     }
 
     @Test

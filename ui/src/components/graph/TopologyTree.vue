@@ -25,9 +25,9 @@
         <div class="hidden">
             <tree-node
                 @onFilterGroup="onFilterGroup"
-                :ref="slug(node)"
-                v-for="node in filteredDataTree"
-                :key="slug(node)"
+                :ref="node.uid"
+                v-for="node in treeTaskNode"
+                :key="node.uid"
                 :n="node"
                 :namespace="namespace"
                 :flow-id="flowId"
@@ -58,8 +58,8 @@
             ArrowCollapseAll
         },
         props: {
-            dataTree: {
-                type: Array,
+            flowGraph: {
+                type: Object,
                 required: true
             },
             label: {
@@ -85,8 +85,6 @@
                 filterGroup: undefined,
                 orientation: true,
                 zoom: undefined,
-                filteredDataTree: undefined,
-                clusterColors: [],
                 resizeHandler: undefined,
                 zoomFactor: 1,
                 lastX: 50,
@@ -94,7 +92,7 @@
             };
         },
         watch: {
-            dataTree() {
+            flowGraph() {
                 this.generateGraph();
             },
             $route() {
@@ -137,15 +135,6 @@
                     this.generateGraph()
                 }
             },
-            resetClusterColors() {
-                this.clusterColors = "#F7F9F9#E5E7E9#D5DBDB#CCD1D1#AEB6BF#ABB2B9#FBFCFC#F2F3F4#EAEDED#E5E8E8#D6DBDF#D5D8DC".split("#")
-            },
-            nextClusterColor() {
-                if (this.clusterColors.length === 0) {
-                    this.resetClusterColors()
-                }
-                return `#${this.clusterColors.pop()}`
-            },
             toggleOrientation() {
                 this.orientation = !this.orientation;
                 localStorage.setItem(
@@ -154,18 +143,34 @@
                 );
                 this.generateGraph();
             },
+            getOptions(relation) {
+                const edgeOption = {};
+                if (relation.relationType && relation.relationType !== "SEQUENTIAL") {
+                    edgeOption.label = relation.relationType.toLowerCase();
+                    if (relation.value) {
+                        edgeOption.label += ` : ${relation.value}`;
+                    }
 
+                    edgeOption.class =
+                        {
+                            ERROR: "error-edge",
+                            DYNAMIC: "dynamic-edge",
+                            CHOICE: "choice-edge",
+                            PARALLEL: "choice-edge"
+                        }[relation.relationType] || "";
+                }
+
+                return edgeOption;
+            },
             generateGraph() {
-                this.resetClusterColors()
-                this.filteredDataTree = this.getFilteredDataTree();
-
                 // Create the input graph
                 const arrowColor = "#ccc";
                 if (this.zoom) {
                     this.zoom.on("zoom", null);
                 }
-                this.$refs.wrapper.innerHTML =
-                    `<svg id="svg-canvas" width="100%" style="min-height:${window.innerHeight - 290}px"/>`
+
+                // init
+                this.$refs.wrapper.innerHTML = `<svg id="svg-canvas" width="100%" style="min-height:${window.innerHeight - 290}px"/>`
                 const g = new dagreD3.graphlib.Graph({
                     compound: true,
                     multigraph: true
@@ -175,80 +180,62 @@
                         return {};
                     });
 
-                const getOptions = node => {
-                    const edgeOption = {};
-                    if (node.relation !== "SEQUENTIAL") {
-                        edgeOption.label = node.relation.toLowerCase();
-                        if (node.taskRun && node.taskRun.value) {
-                            edgeOption.label += ` : ${node.taskRun.value}`;
-                        }
-                    }
-                    edgeOption.class =
-                        {
-                            ERROR: "error-edge",
-                            DYNAMIC: "dynamic-edge",
-                            CHOICE: "choice-edge",
-                            PARALLEL: "choice-edge"
-                        }[node.relation] || "";
-                    return edgeOption;
-                };
-                const clusters = {}
-                for (const node of this.filteredDataTree) {
-                    const cluster = node.groups ? node.groups[node.groups.length - 1] : undefined
-                    if (cluster) {
-                        if (!clusters[cluster]) {
-                            clusters[cluster] = new Set()
-                        }
-                        if (node.groups && node.groups.length > 1) {
-                            clusters[cluster].add(node.groups[node.groups.length - 2])
-                        }
+                // add nodes
+                for (const node of this.flowGraph.nodes) {
+                    if (this.isEdgeNode(node)) {
+                        g.setNode(node.uid, {
+                            labelType: "html",
+                            class: "root-node",
+                            label: `<div class="vector-circle-wrapper" id="node-${node.uid.hashCode()}" />`,
+                            height: 20,
+                            width: 20
+                        });
+                    } else {
+                        g.setNode(node.uid, {
+                            labelType: "html",
+                            label: `<div class="node-binder" id="node-${node.uid.hashCode()}" />`,
+                            class: node.task && node.task.disabled ? "task-disabled" : "",
+                            width: 180
+                        });
                     }
                 }
-                // const ancestors = {}
-                // for (const node of this.filteredDataTree) {
 
-                // }
-                console.log("--- >start")
-                for (const node of this.filteredDataTree) {
-
-                    const options = getOptions(node)
-                    g.setEdge(this.slug(node), this.slug(node), options);
-                    const group = node.groups && node.groups.length ? node.groups[node.groups.length - 1] : undefined
-                    console.log("id", node.task.id, "group",  group)
-                    // console.log(node.task.id,"<-", node.task.id)
-                    // console.log("parent", node.task)
-                    // console.log("child", child.task)
+                // add edges
+                for (const edge of this.flowGraph.edges) {
+                    g.setEdge(edge.source, edge.target, this.getOptions(edge.relation));
                 }
-                for (const node of this.filteredDataTree) {
-                    const slug = this.slug(node);
-                    const cluster = node.groups ? node.groups[node.groups.length - 1] : undefined
-                    g.setParent(slug, cluster)
-                    g.setNode(slug, {
-                        labelType: "html",
-                        label: `<div class="node-binder" id="node-${slug}"/>`,
-                        class: node.task.disabled ? "task-disabled" : ""
+
+                // add cluster
+                for (let cluster of this.flowGraph.clusters) {
+                    g.setNode(cluster.cluster.uid, {
+                        label: cluster.cluster.task.id,
+                        clusterLabelPos: "top",
+                        width: "100%"
                     });
-                }
-                for (let cluster in clusters) {
-                    for (let parent of clusters[cluster]) {
-                        g.setParent(cluster, parent)
+
+                    for (let nodeUid of cluster.nodes) {
+                        g.setParent(nodeUid, cluster.cluster.uid);
                     }
-                    g.setNode(cluster, {label: cluster, clusterLabelPos: "top", style: `fill: ${this.nextClusterColor()}`});
                 }
 
+                // reset padding
                 g.nodes().forEach(v => {
                     const node = g.node(v);
                     if (node) {
                         node.paddingLeft = node.paddingRight = node.paddingTop = node.paddingBottom = 0;
                     }
                 });
+
                 if (!this.orientation) {
                     g.graph().rankDir = "LR";
                 }
+
                 const render = new dagreD3.render();
+
                 // Set up an SVG group so that we can translate the final graph.
                 const svgWrapper = d3.select("#svg-canvas"),
                       svgGroup = svgWrapper.append("g");
+
                 // Run the renderer. This is what draws the final graph.
                 this.zoom = d3
                     .zoom()
@@ -262,34 +249,40 @@
                         );
                     })
                     .scaleExtent([1, 1]);
+
+                // zoom
                 svgWrapper.call(this.zoom);
                 svgWrapper.on("dblclick.zoom", null);
 
+                // path color
                 render(d3.select("#svg-canvas g"), g);
                 d3.selectAll("#svg-canvas g path").style("stroke", arrowColor);
                 d3.selectAll("#svg-canvas .edgePath marker").style(
                     "fill",
                     arrowColor
                 );
+
                 const transform = d3.zoomIdentity.translate(0, 0).translate(this.lastX || 0, this.lastY || 0);
                 svgWrapper.call(this.zoom.transform, transform);
+
                 this.bindNodes();
             },
             bindNodes() {
                 let ready = true;
-                for (const node of this.filteredDataTree) {
+                for (const node of this.treeTaskNode) {
                     if (
-                        !this.$refs[this.slug(node)] ||
-                        !this.$refs[this.slug(node)].length
+                        !this.$refs[node.uid] ||
+                        !this.$refs[node.uid].length
                     ) {
                         ready = false;
                     }
                 }
+
                 if (ready) {
-                    for (const node of this.filteredDataTree) {
+                    for (const node of this.treeTaskNode) {
                         this.$el
-                            .querySelector(`#node-${this.slug(node)}`)
-                            .appendChild(this.$refs[this.slug(node)][0].$el);
+                            .querySelector(`#node-${node.uid.hashCode()}`)
+                            .appendChild(this.$refs[node.uid][0].$el);
                     }
                     this.ready = true;
                 } else {
@@ -305,25 +298,23 @@
                     this.generateGraph();
                 }
             },
-            slug(node) {
-                const hash =
-                    node.task.id +
-                    (node.taskRun && node.taskRun.value
-                        ? "-" + node.taskRun.value
-                        : "");
-                return hash.hashCode();
+            isEdgeNode(node) {
+                return node.type !== "org.kestra.core.models.hierarchies.GraphTask"
             },
-            getFilteredDataTree() {
-                return this.dataTree
-            }
         },
         computed: {
             groups() {
                 const groups = new Set();
-                this.dataTree.forEach(node =>
+                this.flowGraph.forEach(node =>
                     (node.groups || []).forEach(group => groups.add(group))
                 );
                 return groups;
+            },
+            treeTaskNode() {
+                return this.flowGraph.nodes.filter(n => n.task !== undefined && n.type === "org.kestra.core.models.hierarchies.GraphTask")
+            },
+            clusterNode() {
+                return this.flowGraph.nodes.filter(n => n.task !== undefined && n.type === "org.kestra.core.models.hierarchies.GraphCluster")
             }
         },
         destroyed() {
@@ -336,22 +327,27 @@
 </script>
 <style lang="scss">
 @import "../../styles/variable";
-.clusters rect {
-    fill: #00ffd0;
-    stroke: #999;
-    stroke-width: 1.5px;
+
+.clusters {
+    rect {
+        fill: $primary;
+        opacity: 0.05;
+        outline: 1px solid lighten($primary, 35%);
+    }
+
+    .label {
+        fill: lighten($primary, 15%);
+    }
 }
 
 text {
-    font-weight: 300;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-    font-size: 14px;
+    font-size: $font-size-sm;
 }
 
 .node rect {
-    stroke: #999;
+    stroke: $gray-600;
     fill: #fff;
-    stroke-width: 1.5px;
+    stroke-width: 1px;
 }
 
 .edgePath path {
@@ -374,19 +370,27 @@ text {
 .node-wrapper,
 .node,
 foreignObject {
-    width: 250px;
-    height: 55px;
+    width: 180px;
+    height: 48px;
 }
 .root-node {
-    text-align: center;
-    font-size: 2.2em;
     color: $gray-600;
     foreignObject {
-        width: 50px;
+        width: 35px;
+        height: 35px;
     }
     > rect {
-        stroke: white;
+        stroke: transparent;
         fill: none !important;
+    }
+    .vector-circle-wrapper {
+        background: $gray-600;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        top: 10px;
+        position: absolute;
+        left: 10px;
     }
 }
 

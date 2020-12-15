@@ -18,7 +18,7 @@ import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.hierarchies.FlowTree;
+import org.kestra.core.models.hierarchies.FlowGraph;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -116,8 +116,8 @@ public class ExecutionController {
      * @param executionId The execution identifier
      * @return the flow tree  with the provided identifier
      */
-    @Get(uri = "executions/{executionId}/tree", produces = MediaType.TEXT_JSON)
-    public FlowTree getTree(String executionId) throws IllegalVariableEvaluationException {
+    @Get(uri = "executions/{executionId}/graph", produces = MediaType.TEXT_JSON)
+    public FlowGraph flowGraph(String executionId) throws IllegalVariableEvaluationException {
         return executionRepository
             .findById(executionId)
             .map(throwFunction(execution -> {
@@ -128,7 +128,7 @@ public class ExecutionController {
                 );
 
                 return flow
-                    .map(throwFunction(value -> FlowTree.of(value, execution)))
+                    .map(throwFunction(value -> FlowGraph.of(value, execution)))
                     .orElse(null);
             }))
             .orElse(null);

@@ -13,18 +13,16 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.hierarchies.ParentTaskTree;
+import org.kestra.core.models.hierarchies.GraphCluster;
 import org.kestra.core.models.hierarchies.RelationType;
-import org.kestra.core.models.hierarchies.TaskTree;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.tasks.VoidOutput;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
-import org.kestra.core.services.TreeService;
+import org.kestra.core.services.GraphService;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
@@ -88,19 +86,18 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     protected List<Task> errors;
 
     @Override
-    public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {
-        return TreeService.parallel(
+    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.DYNAMIC);
+
+        GraphService.parallel(
+            subGraph,
             this.getTasks(),
             this.errors,
-            Collections.singletonList(ParentTaskTree.builder()
-                .id(this.getId())
-                .value(this.value)
-                .build()
-            ),
-            execution,
-            RelationType.DYNAMIC,
-            groups
+            taskRun,
+            execution
         );
+
+        return subGraph;
     }
 
     @Override

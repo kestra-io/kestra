@@ -92,7 +92,7 @@
                             sse.subscribe("", (data, event) => {
                                 this.$store.commit("execution/setExecution", data);
                                 if (this.$route.query.tab === "topology") {
-                                    this.$store.dispatch("execution/loadTree", data)
+                                    this.$store.dispatch("execution/loadGraph", data)
                                 }
                                 if (event && event.lastEventId === "end") {
                                     this.closeSSE();
@@ -100,7 +100,6 @@
                             });
                         });
                 }, 500)
-
             },
             closeSSE() {
                 if (this.sse) {

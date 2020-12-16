@@ -18,13 +18,13 @@ import org.kestra.core.services.FlowService;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.validation.ConstraintViolationException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
@@ -95,6 +95,16 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             .query(this.defaultFilter());
 
         return this.scroll(INDEX_NAME, sourceBuilder);
+    }
+
+    @Override
+    public List<Flow> findAllWithRevisions() {
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(this.defaultFilter())
+            .sort(new FieldSortBuilder("id").order(SortOrder.ASC))
+            .sort(new FieldSortBuilder("revision").order(SortOrder.ASC));
+
+        return this.scroll(REVISIONS_NAME, sourceBuilder);
     }
 
     @Override

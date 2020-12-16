@@ -4,9 +4,9 @@ import io.micronaut.data.model.Pageable;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 
+import javax.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
-import javax.validation.ConstraintViolationException;
 
 public interface FlowRepositoryInterface {
     Optional<Flow> findById(String namespace, String id, Optional<Integer> revision);
@@ -35,6 +35,8 @@ public interface FlowRepositoryInterface {
     List<Flow> findRevisions(String namespace, String id);
 
     List<Flow> findAll();
+
+    List<Flow> findAllWithRevisions();
 
     List<Flow> findByNamespace(String namespace);
 

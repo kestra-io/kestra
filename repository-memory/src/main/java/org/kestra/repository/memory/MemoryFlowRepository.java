@@ -2,9 +2,9 @@ package org.kestra.repository.memory;
 
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
+import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.models.validations.ModelValidator;
-import org.kestra.core.models.flows.Flow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ArrayListTotal;
@@ -72,6 +72,14 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     @Override
     public List<Flow> findAll() {
         return new ArrayList<>(flows.values());
+    }
+
+    @Override
+    public List<Flow> findAllWithRevisions() {
+        return flows.values().stream()
+            .map(flow -> findRevisions(flow.getNamespace(), flow.getId()))
+            .flatMap(revisions -> revisions.stream())
+            .collect(Collectors.toList());
     }
 
     @Override

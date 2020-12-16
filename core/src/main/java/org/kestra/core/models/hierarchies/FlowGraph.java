@@ -4,11 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Value;
+import org.apache.commons.lang3.tuple.Pair;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.services.GraphService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,14 +40,15 @@ public class FlowGraph {
         return FlowGraph.builder()
             .nodes(nodes(graph))
             .edges(edges(graph))
-            .clusters(clusters(graph)
+            .clusters(clusters(graph, new ArrayList<>())
                 .stream()
-                .map(g -> new Cluster(g, g.getGraph()
+                .map(g -> new Cluster(g.getKey(), g.getKey().getGraph()
                     .nodes()
                     .stream()
                     .map(AbstractGraphTask::getUid)
-                    .collect(Collectors.toList()))
-                )
+                    .collect(Collectors.toList()),
+                    g.getValue()
+                ))
                 .collect(Collectors.toList())
             )
             .build();
@@ -71,10 +74,23 @@ public class FlowGraph {
             .collect(Collectors.toList());
     }
 
-    private static List<GraphCluster> clusters(GraphCluster graphCluster) {
+    private static List<Pair<GraphCluster, List<String>>> clusters(GraphCluster graphCluster, List<String> parents) {
         return graphCluster.getGraph().nodes()
             .stream()
-            .flatMap(t -> t instanceof GraphCluster ? Stream.concat(Stream.of((GraphCluster) t), clusters((GraphCluster) t).stream()) : Stream.of())
+            .flatMap(t -> {
+
+                if (t instanceof GraphCluster) {
+                    ArrayList<String> currentParents = new ArrayList<>(parents);
+                    currentParents.add(t.getUid());
+
+                    return Stream.concat(
+                        Stream.of(Pair.of((GraphCluster) t, parents)),
+                        clusters((GraphCluster) t, currentParents).stream()
+                    );
+                }
+
+                return Stream.of();
+            })
             .collect(Collectors.toList());
     }
 
@@ -91,5 +107,6 @@ public class FlowGraph {
     public static class Cluster {
         private final GraphCluster cluster;
         private final List<String> nodes;
+        private final List<String> parents;
     }
 }

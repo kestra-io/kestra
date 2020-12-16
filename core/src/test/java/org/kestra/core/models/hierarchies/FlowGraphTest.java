@@ -95,6 +95,8 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         assertThat(flowGraph.getEdges().size(), is(20));
         assertThat(flowGraph.getClusters().size(), is(3));
 
+        assertThat(flowGraph.getClusters().get(2).getParents(), containsInRelativeOrder("1_par", "1-3_par"));
+
         assertThat(edge(flowGraph, "1_par_.*_root", "1-4_end").getRelation().getRelationType(), is(RelationType.PARALLEL));
         assertThat(edge(flowGraph, "1_par_.*_root", "1-3_par_.*_root").getRelation().getRelationType(), is(RelationType.PARALLEL));
         assertThat(edge(flowGraph, "1-3-2_par_.*_root", "1-3-2-1").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));

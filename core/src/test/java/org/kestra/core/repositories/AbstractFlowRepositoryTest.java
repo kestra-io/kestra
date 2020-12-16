@@ -18,15 +18,15 @@ import org.kestra.core.tasks.scripts.Bash;
 import org.kestra.core.utils.IdUtils;
 import org.kestra.core.utils.TestsUtils;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -169,6 +169,14 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findAllWithRevisions() {
+        List<Flow> save = flowRepository.findAllWithRevisions();
+
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT + 1));
+        assertThat(save.stream().filter(flow -> flow.getId().equals("minimal")).count(), is(2L));
+    }
+
+    @Test
     void findByNamespace() {
         List<Flow> save = flowRepository.findByNamespace("org.kestra.tests");
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
@@ -207,7 +215,8 @@ public abstract class AbstractFlowRepositoryTest {
             .namespace("org.kestra.unittest2")
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("b").build()))
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .build();;
+            .build();
+        ;
 
         ConstraintViolationException e = assertThrows(
             ConstraintViolationException.class,
@@ -248,7 +257,8 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace("org.kestra.unittest")
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
-            .build();;
+            .build();
+        ;
 
         Flow updated = flowRepository.update(update, flow);
 

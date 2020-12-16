@@ -34,12 +34,16 @@
                 v-for="node in filteredDataTree"
                 :key="slug(node)"
                 :n="node"
+                :namespace="namespace"
+                :flowId="flowId"
                 :is-flow="isFlow"
             />
             <tree-node
                 :ref="`node-${slug(virtualRootNode)}`"
                 v-if="virtualRootNode"
                 :n="virtualRootNode"
+                :namespace="namespace"
+                :flowId="flowId"
                 :is-flow="isFlow"
             />
         </div>
@@ -82,6 +86,14 @@
             },
             label: {
                 type: Function,
+                required: true
+            },
+            flowId: {
+                type: String,
+                required: true
+            },
+            namespace: {
+                type: String,
                 required: true
             },
             isFlow: {

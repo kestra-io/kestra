@@ -14,6 +14,7 @@ import org.kestra.core.Helpers;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
 import org.kestra.core.models.hierarchies.FlowTree;
+import org.kestra.core.models.tasks.Task;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.tasks.debugs.Return;
 import org.kestra.core.utils.IdUtils;
@@ -203,6 +204,36 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getStatus(), is(NOT_FOUND));
     }
 
+    @Test
+    void updateTaskFlow() {
+        String flowId = IdUtils.create();
+
+        Flow flow = generateFlow(flowId, "org.kestra.unittest", "a");
+
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
+
+        assertThat(result.getId(), is(flow.getId()));
+        assertThat(result.getInputs().get(0).getName(), is("a"));
+
+        Task task = generateTask("test", "updated task");
+
+        Flow get = client.toBlocking().retrieve(
+            PATCH("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "/" + task.getId(), task),
+            Flow.class
+        );
+
+        assertThat(get.getId(), is(flow.getId()));
+        assertThat(((Return) get.getTasks().get(0)).getFormat(), is("updated task"));
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(
+                PATCH("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "/test2", task),
+                Flow.class
+            );
+        });
+        assertThat(e.getStatus(), is(NOT_FOUND));
+    }
+
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     void invalidUpdateFlow() {
@@ -247,11 +278,15 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .id(friendlyId)
             .namespace(namespace)
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name(inputName).build()))
-            .tasks(Collections.singletonList(Return.builder()
-                .id("test")
-                .type(Return.class.getName())
-                .format("test")
-                .build()))
+            .tasks(Collections.singletonList(generateTask("test", "test")))
+            .build();
+    }
+
+    private Task generateTask(String id, String format) {
+        return Return.builder()
+            .id(id)
+            .type(Return.class.getName())
+            .format(format)
             .build();
     }
 }

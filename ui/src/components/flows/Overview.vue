@@ -2,7 +2,14 @@
     <div>
         <b-row class="topology-wrapper">
             <b-col>
-                <topology-tree :is-flow="true" v-if="flow && dataTree" :data-tree="dataTree" :label="getLabel" />
+                <topology-tree
+                    :is-flow="true"
+                    v-if="flow && dataTree"
+                    :flow-id="flow.id"
+                    :namespace="flow.namespace"
+                    :data-tree="dataTree"
+                    :label="getLabel"
+                />
             </b-col>
         </b-row>
         <b-row>

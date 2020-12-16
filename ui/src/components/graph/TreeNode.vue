@@ -81,8 +81,23 @@
             </div>
         </div>
 
-        <b-modal size="xl" :hide-footer="true" :id="`modal-${hash}`" :title="`Task ${task.id}`">
-            <pre>{{ taskYaml }}</pre>
+        <b-modal
+            :id="`modal-${hash}`"
+            :title="`Task ${task.id}`"
+            header-bg-variant="dark"
+            header-text-variant="light"
+            hide-backdrop
+            modal-class="right"
+            size="xl"
+        >
+            <template #modal-footer>
+                <b-button @click="saveTask" v-if="canSave">
+                    <content-save />
+                    <span>{{ $t('save') }}</span>
+                </b-button>
+            </template>
+
+            <editor @onSave="saveTask" v-model="taskYaml" lang="yaml" />
         </b-modal>
     </div>
 </template>
@@ -99,6 +114,9 @@
     import YamlUtils from "../../utils/yamlUtils";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
     import State from "../../utils/state"
+    import Editor from "../../components/inputs/Editor";
+    import ContentSave from "vue-material-design-icons/ContentSave";
+    import {canSaveFlowTemplate} from "../../utils/flowTemplate";
 
     export default {
         components: {
@@ -109,12 +127,22 @@
             CodeTags,
             FormatListChecks,
             LocationExit,
-            CurrentAc
+            CurrentAc,
+            Editor,
+            ContentSave,
         },
         props: {
             n: {
                 type: Object,
                 default: undefined
+            },
+            flowId: {
+                type: String,
+                required: true
+            },
+            namespace: {
+                type: String,
+                required: true
             },
             isFlow: {
                 type: Boolean,
@@ -135,10 +163,44 @@
                     this.$store.dispatch("graph/setNode", this.n);
                     this.$emit("onSettings");
                 }
+            },
+            saveTask() {
+                let task;
+                try {
+                    task = YamlUtils.parse(this.taskYaml);
+                } catch (err) {
+                    this.$toast().warning(
+                        err.message,
+                        this.$t("invalid yaml"),
+                    );
+
+                    return;
+                }
+
+                return this.$store
+                    .dispatch("flow/updateFlowTask", {
+                        flow: {
+                            id: this.flowId,
+                            namespace: this.namespace
+                        },
+                        task: task
+                    })
+                    .then((response) => {
+                        this.$toast().saved(response.id);
+                    })
             }
+        },
+        data() {
+            return {
+                taskYaml: undefined,
+            };
+        },
+        created() {
+            this.taskYaml = YamlUtils.stringify(this.n.task);
         },
         computed: {
             ...mapState("graph", ["node"]),
+            ...mapState("auth", ["user"]),
             hasLogs() {
                 // @TODO
                 return true;
@@ -160,9 +222,7 @@
             childrenCount() {
                 return this.n.children ? this.n.children.length : 0;
             },
-            taskYaml() {
-                return YamlUtils.stringify(this.n);
-            },
+
             state() {
                 return this.n.taskRun ? this.n.taskRun.state.current : State.SUCCESS;
             },
@@ -178,6 +238,9 @@
             },
             value () {
                 return this.n.taskRun && this.n.taskRun.value
+            },
+            canSave() {
+                return canSaveFlowTemplate(true, this.user, {namespace:this.namespace}, "flow");
             }
         }
     };

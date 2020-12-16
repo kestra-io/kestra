@@ -166,5 +166,72 @@ mark {
             }
         }
     }
+}
 
+.modal.left,
+.modal.right {
+    .modal-dialog {
+        position: fixed;
+        margin: auto;
+        height: 100%;
+        transform: translate3d(0%, 0, 0);
+        max-width: 95%;
+    }
+
+    .modal-content {
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .modal-body {
+    }
+}
+
+$modal-size: ("sm": $modal-sm, "md": $modal-md, "lg": $modal-lg, $modal-xl: $modal-xl);
+
+@each $name, $size in $modal-size {
+    .modal.left,
+    .modal.right {
+        .modal-dialog {
+            width: $size;
+        }
+    }
+
+    .modal.left {
+        &.fade {
+            .modal-dialog{
+                left: -$size;
+                transition: opacity 0.3s linear, left 0.3s ease-out;
+            }
+        }
+    }
+
+    .modal.right {
+        &.fade {
+            .modal-dialog{
+                right: -$size;
+                transition: opacity 0.3s linear, right 0.3s ease-out;
+            }
+        }
+    }
+}
+
+.modal.left {
+    &.fade {
+        &.show {
+            .modal-dialog {
+                left: 0;
+            }
+        }
+    }
+}
+
+.modal.right {
+    &.fade {
+        &.show {
+            .modal-dialog {
+                right: 0;
+            }
+        }
+    }
 }

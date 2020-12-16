@@ -7,8 +7,10 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.validation.Validated;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
+import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.hierarchies.FlowTree;
+import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.webserver.responses.PagedResults;
@@ -168,6 +170,35 @@ public class FlowController {
 
         return HttpResponse.ok(flowRepository.update(flow, existingFlow.get()));
     }
+
+    /**
+     * @param namespace flow namespace
+     * @param id        flow id to update
+     * @param taskId    taskId id to update
+     * @return flow updated
+     */
+    @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)
+    public HttpResponse<Flow> updateTask(String namespace, String id, String taskId, @Body Task task) throws ConstraintViolationException {
+        Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
+
+        if (existingFlow.isEmpty()) {
+            return HttpResponse.status(HttpStatus.NOT_FOUND);
+        }
+
+        Flow flow = existingFlow.get();
+        Task previousTask;
+        try {
+            previousTask = flow.findTaskByTaskId(taskId);
+        } catch (InternalException e) {
+            return HttpResponse.status(HttpStatus.NOT_FOUND);
+        }
+
+        int index = flow.getTasks().indexOf(previousTask);
+        flow.getTasks().set(index, task);
+
+        return HttpResponse.ok(flowRepository.update(flow, flowRepository.findById(namespace, id).get()));
+    }
+
 
     /**
      * @param namespace flow namespace

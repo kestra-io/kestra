@@ -5,6 +5,8 @@
                 ref="topology"
                 v-if="execution && dataTree"
                 :data-tree="dataTree"
+                :flow-id="execution.flowId"
+                :namespace="execution.namespace"
                 :label="getLabel"
             />
         </b-col>

@@ -40,6 +40,13 @@ export default {
                 }
             })
         },
+        updateFlowTask({commit}, options) {
+            return Vue.axios.patch(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
+                commit("setFlow", response.data)
+
+                return response.data;
+            })
+        },
         createFlow({commit}, options) {
             return Vue.axios.post("/api/v1/flows", options.flow).then(response => {
                 commit("setFlow", response.data)

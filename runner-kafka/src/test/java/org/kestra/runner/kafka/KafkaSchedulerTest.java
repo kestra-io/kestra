@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.schedulers.AbstractScheduler;
 import org.kestra.core.schedulers.AbstractSchedulerTest;
 import org.kestra.runner.kafka.configs.TopicsConfig;
@@ -22,8 +23,6 @@ import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 
 class KafkaSchedulerTest extends AbstractSchedulerTest {
     @Inject
@@ -31,6 +30,9 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
 
     @Inject
     protected KafkaAdminService kafkaAdminService;
+
+    @Inject
+    protected FlowRepositoryInterface flowRepositoryInterface;
 
     protected KafkaQueue<Execution> executorQueue;
     protected KafkaProducer<String, Execution> executorProducer;
@@ -55,19 +57,16 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
     @Test
     void thread() throws Exception {
         // mock flow listeners
-        KafkaFlowListeners flowListenersServiceSpy = spy(this.flowListeners);
         CountDownLatch queueCount = new CountDownLatch(2);
 
         Flow flow = createThreadFlow();
 
-        doReturn(Collections.singletonList(flow))
-            .when(flowListenersServiceSpy)
-            .flows();
+        flowRepositoryInterface.create(flow);
 
         // scheduler
         try (AbstractScheduler scheduler = new KafkaScheduler(
             applicationContext,
-            flowListenersServiceSpy
+            flowListeners
         )) {
 
             AtomicReference<Execution> last = new AtomicReference<>();

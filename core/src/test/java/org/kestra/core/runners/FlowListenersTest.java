@@ -7,6 +7,7 @@ import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.services.FlowListenersInterface;
 import org.kestra.core.tasks.debugs.Return;
 import org.kestra.core.utils.IdUtils;
+import org.kestra.runner.memory.MemoryFlowListeners;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
@@ -48,6 +49,14 @@ abstract public class FlowListenersTest {
             assertThat(count.get(), is(0));
             assertThat(flowListenersService.flows().size(), is(0));
         });
+
+        // resend on startup done for kafka
+        if (flowListenersService.getClass().getName().equals("org.kestra.runner.kafka.KafkaFlowListeners")) {
+            wait(ref, () -> {
+                assertThat(count.get(), is(0));
+                assertThat(flowListenersService.flows().size(), is(0));
+            });
+        }
 
         // create first
         Flow first = create(IdUtils.create(), "test");

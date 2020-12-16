@@ -56,10 +56,13 @@ public class KafkaFlowListeners implements FlowListenersInterface {
             if (newState == KafkaStreams.State.RUNNING) {
                 try {
                     this.store = stream.store("flow", QueryableStoreTypes.keyValueStore());
+                    this.send(this.flows());
                 } catch (InvalidStateStoreException e) {
                     this.store = null;
                     log.warn(e.getMessage(), e);
                 }
+            } else {
+                this.send(new ArrayList<>());
             }
         });
     }
@@ -77,8 +80,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
             )
             .toStream()
             .peek((key, value) -> {
-                this.consumers
-                    .forEach(consumer -> consumer.accept(new ArrayList<>(flows())));
+                this.send(this.flows());
             });
 
         Topology topology = builder.build();
@@ -106,6 +108,11 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                 .filter(flow -> !flow.isDeleted())
                 .collect(Collectors.toList());
         }
+    }
+
+    private void send(List<Flow> flows) {
+        this.consumers
+            .forEach(consumer -> consumer.accept(flows));
     }
 
     @Override

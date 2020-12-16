@@ -40,8 +40,10 @@ public class MetricRegistry {
     public final static String METRIC_INDEXER_MESSAGE_IN_COUNT = "indexer.message.in.count";
     public final static String METRIC_INDEXER_MESSAGE_OUT_COUNT = "indexer.message.out.count";
 
+    public final static String SCHEDULER_LOOP_COUNT = "scheduler.loop.count";
     public final static String SCHEDULER_TRIGGER_COUNT = "scheduler.trigger.count";
     public final static String SCHEDULER_EVALUATE_RUNNING_COUNT = "scheduler.evaluate.running.count";
+    public final static String SCHEDULER_EVALUATE_COUNT = "scheduler.evaluate.count";
     public final static String SCHEDULER_EVALUATE_DURATION = "scheduler.evaluate.duration";
 
     public final static String TAG_TASK_ID = "task_id";

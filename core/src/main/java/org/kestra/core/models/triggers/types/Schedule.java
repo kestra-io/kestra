@@ -75,7 +75,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     private ScheduleBackfill backfill;
 
     @Builder.Default
-    private final Duration interval = Duration.ofSeconds(1);
+    private final Duration interval = null;
 
     public ZonedDateTime nextDate(Optional<? extends TriggerContext> last) {
         if (last.isPresent()) {

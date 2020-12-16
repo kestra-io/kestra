@@ -7,6 +7,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.triggers.AbstractTrigger;
+import org.kestra.core.runners.RunContext;
 import org.kestra.core.runners.RunContextFactory;
 
 import java.util.ArrayList;
@@ -23,28 +24,46 @@ public class ConditionService {
     @Inject
     private RunContextFactory runContextFactory;
 
-    public boolean isValid(AbstractTrigger trigger, Flow flow) {
-        return this.isValid(trigger, flow, null);
-    }
-
     @VisibleForTesting
     public boolean isValid(Condition condition, Flow flow, @Nullable Execution execution) {
-        return this.valid(Collections.singletonList(condition), flow, execution);
+        ConditionContext conditionContext = this.conditionContext(
+            runContextFactory.of(flow, execution),
+            flow,
+            execution
+        );
+
+        return this.valid(Collections.singletonList(condition), conditionContext);
     }
 
-    public boolean isValid(AbstractTrigger trigger, Flow flow, @Nullable Execution execution) {
+    public boolean isValid(AbstractTrigger trigger, ConditionContext conditionContext) {
         List<Condition> conditions = trigger.getConditions() == null ? new ArrayList<>() : trigger.getConditions();
 
-        return this.valid(conditions, flow, execution);
+        return this.valid(conditions, conditionContext);
     }
 
-    public boolean valid(List<Condition> list, Flow flow, @Nullable Execution execution) {
-        ConditionContext conditionContext = ConditionContext.builder()
+    public boolean isValid(AbstractTrigger trigger, Flow flow, Execution execution) {
+        assert execution != null;
+
+        List<Condition> conditions = trigger.getConditions() == null ? new ArrayList<>() : trigger.getConditions();
+
+        ConditionContext conditionContext = this.conditionContext(
+            runContextFactory.of(flow, execution),
+            flow,
+            execution
+        );
+
+        return this.valid(conditions, conditionContext);
+    }
+
+    public ConditionContext conditionContext(RunContext runContext, Flow flow, @Nullable Execution execution) {
+        return ConditionContext.builder()
             .flow(flow)
             .execution(execution)
-            .runContext(runContextFactory.of(flow, execution))
+            .runContext(runContext)
             .build();
+    }
 
+    boolean valid(List<Condition> list, ConditionContext conditionContext) {
         return list
             .stream()
             .allMatch(condition -> condition.test(conditionContext));
@@ -63,11 +82,17 @@ public class ConditionService {
             return new ArrayList<>();
         }
 
+        ConditionContext conditionContext = this.conditionContext(
+            runContextFactory.of(flow, execution),
+            flow,
+            execution
+        );
+
         return flow
             .getListeners()
             .stream()
             .filter(listener -> listener.getConditions() == null ||
-                this.valid(listener.getConditions(), flow, execution)
+                this.valid(listener.getConditions(), conditionContext)
             )
             .flatMap(listener -> listener.getTasks().stream())
             .map(ResolvedTask::of)

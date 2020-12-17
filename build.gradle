@@ -57,6 +57,7 @@ allprojects {
     apply plugin: "java"
     apply plugin: "java-library"
     apply plugin: "idea"
+    apply plugin: "jacoco"
 
     configurations {
         developmentOnly // for dependencies that are needed for development only
@@ -241,8 +242,6 @@ task executableJar(type: Zip) {
  * Jacoco
  **********************************************************************************************************************/
 subprojects {
-    apply plugin: "jacoco"
-
     test {
         finalizedBy jacocoTestReport
     }
@@ -258,13 +257,16 @@ subprojects {
     }
 }
 
+
 task jacoco(type: JacocoReport) {
     dependsOn = subprojects.test
 
-    getAdditionalSourceDirs().setFrom(files(subprojects.sourceSets.main.allSource.srcDirs))
-    getSourceDirectories().setFrom(files(subprojects.sourceSets.main.allSource.srcDirs))
-    getClassDirectories().setFrom(files(subprojects.sourceSets.main.output))
-    getExecutionData().setFrom(files(subprojects.jacocoTestReport.executionData))
+    def javaProject = subprojects.findAll { it.name != 'ui' };
+
+    getAdditionalSourceDirs().setFrom(files(javaProject.sourceSets.main.allSource.srcDirs))
+    getSourceDirectories().setFrom(files(javaProject.sourceSets.main.allSource.srcDirs))
+    getClassDirectories().setFrom(files(javaProject.sourceSets.main.output))
+    getExecutionData().setFrom(files(javaProject.jacocoTestReport.executionData))
 
     reports {
         html.enabled = true

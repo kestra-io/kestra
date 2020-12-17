@@ -53,7 +53,7 @@
                 />
             </b-form-group>
             <b-form-group class="text-right mb-0">
-                <b-button type="submit" variant="primary">
+                <b-button type="submit" variant="primary" v-b-tooltip.hover.top="'(Ctrl + Enter)'">
                     {{ $t('launch execution') }}
                     <trigger title />
                 </b-button>
@@ -70,9 +70,23 @@
     import DatePicker from "vue2-datepicker";
     import Trigger from "vue-material-design-icons/Cogs";
     import Triggers from "./Triggers";
-
+    import {executeTask} from "../../utils/submitTask"
     export default {
         components: {DatePicker, Trigger, Triggers},
+        props: {
+            redirect: {
+                type: Boolean,
+                default: true
+            }
+        },
+        mounted() {
+            setTimeout(() => {
+                const input = this.$el.querySelector("input")
+                if (input) {
+                    input.focus()
+                }
+            }, 500)
+        },
         computed: {
             ...mapState("flow", ["flow"]),
             placeholder() {
@@ -86,39 +100,8 @@
         },
         methods: {
             onSubmit() {
-                const formData = new FormData();
-                for (let input of this.flow.inputs || []) {
-                    if (input.value !== undefined) {
-                        if (input.type === "DATETIME") {
-                            formData.append(input.name, input.value.toISOString());
-                        } else if (input.type === "FILE") {
-                            formData.append("files", input.value, input.name);
-                        } else {
-                            formData.append(input.name, input.value);
-                        }
-                    } else if (input.required) {
-                        this.$toast().error(
-                            this.$t("invalid field", {name: input.name}),
-                            this.$t("form error")
-                        )
-
-                        return;
-                    }
-                }
-                this.$store
-                    .dispatch("execution/triggerExecution", {
-                        ...this.$route.params,
-                        formData
-                    })
-                    .then(response => {
-                        this.$store.commit("execution/setExecution", response.data)
-                        this.$router.push({name: "executionEdit", params: response.data, query: {tab: "gantt"}})
-
-                        return response.data;
-                    })
-                    .then((execution) => {
-                        this.$toast().success(this.$t("triggered done", {name: execution.id}));
-                    })
+                executeTask(this, this.flow, {redirect: this.redirect, id: this.flow.id, namespace: this.flow.namespace})
+                this.$emit("onExecutionTrigger")
             }
         }
     };

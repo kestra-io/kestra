@@ -32,7 +32,7 @@
 <script>
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal";
-
+    import {mapGetters} from "vuex";
     import YamlUtils from "../../utils/yamlUtils";
     import {debounce} from "throttle-debounce";
 
@@ -46,12 +46,13 @@
         components: {
             editor: require("vue2-ace-editor"),
             UnfoldLessHorizontal,
-            UnfoldMoreHorizontal
+            UnfoldMoreHorizontal,
         },
         computed: {
+            ...mapGetters("flow", ["flow"]),
             ed() {
                 return this.$refs.aceEditor.editor
-            }
+            },
         },
         created() {
             this.resize = debounce(300, () => {

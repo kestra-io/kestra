@@ -38,6 +38,9 @@ export default {
         canSave() {
             return canSaveFlowTemplate(true, this.user, this.item, this.dataType);
         },
+        canExecute() {
+            return this.dataType === "flow" && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
+        },
         routeInfo() {
             return {
                 title: this.$t(`${this.dataType} creation`),

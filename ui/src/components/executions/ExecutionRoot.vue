@@ -1,20 +1,34 @@
 <template>
-    <b-card no-body>
-        <b-tabs card>
-            <b-tab
-                v-for="tab in tabs"
-                :key="tab.tab"
-                @click="setTab(tab.tab)"
-                :active="$route.query.tab === tab.tab"
-                :title="tab.title"
-                lazy
-            >
-                <b-card-text>
-                    <div :is="tab.tab" @follow="follow" />
-                </b-card-text>
-            </b-tab>
-        </b-tabs>
-    </b-card>
+    <div>
+        <b-card no-body>
+            <b-tabs card>
+                <b-tab
+                    v-for="tab in tabs"
+                    :key="tab.tab"
+                    @click="setTab(tab.tab)"
+                    :active="$route.query.tab === tab.tab"
+                    :title="tab.title"
+                    lazy
+                >
+                    <b-card-text>
+                        <div :is="tab.tab" @follow="follow" />
+                    </b-card-text>
+                </b-tab>
+            </b-tabs>
+        </b-card>
+        <bottom-line>
+            <ul class="navbar-nav ml-auto" v-hotkey="keymap">
+                <li v-if="isAllowedTrigger" class="nav-item">
+                    <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
+                </li>
+                <li v-if="isAllowedEdit" class="nav-item">
+                    <b-button v-b-tooltip.hover.top="'(Ctrl + Shift + e)'" @click="editFlow">
+                        <pencil /> {{ $t('edit flow') }}
+                    </b-button>
+                </li>
+            </ul>
+        </bottom-line>
+    </div>
 </template>
 <script>
     import Gantt from "./Gantt";
@@ -25,8 +39,13 @@
     import Trigger from "vue-material-design-icons/Cogs";
     import BottomLine from "../layout/BottomLine";
     import FlowActions from "../flows/FlowActions";
+    import TriggerFlow from "../flows/TriggerFlow";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
+    import Pencil from "vue-material-design-icons/Pencil";
+    import permission from "@/models/permission";
+    import action from "@/models/action";
+
 
     export default {
         mixins: [RouteContext],
@@ -38,7 +57,9 @@
             Logs,
             Topology,
             FlowActions,
-            ExecutionOutput
+            TriggerFlow,
+            ExecutionOutput,
+            Pencil,
         },
         data() {
             return {
@@ -94,10 +115,24 @@
                     params: this.$route.params,
                     query: {tab}
                 });
-            }
+            },
+            editFlow() {
+                this.$router.push({name:"flowEdit", params: {
+                    namespace: this.$route.params.namespace,
+                    id: this.$route.params.flowId
+                }, query:{
+                    tab: "data-source"
+                }})
+            },
         },
         computed: {
             ...mapState("execution", ["execution"]),
+            ...mapState("auth", ["user"]),
+            keymap () {
+                return {
+                    "ctrl+shift+e": this.editFlow,
+                }
+            },
             routeInfo() {
                 const ns = this.$route.params.namespace;
                 return {
@@ -168,6 +203,12 @@
                         title: title("output")
                     }
                 ];
+            },
+            isAllowedTrigger() {
+                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
+            },
+            isAllowedEdit() {
+                return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
             }
         },
         beforeDestroy() {

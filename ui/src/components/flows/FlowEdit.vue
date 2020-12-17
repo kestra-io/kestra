@@ -9,7 +9,9 @@
                         <span>{{ $t('delete') }}</span>
                     </b-button>
 
-                    <b-button @click="save" v-if="canSave">
+                    <trigger-flow v-if="flow && canExecute" :flow-id="flow.id" :namespace="flow.namespace" />
+
+                    <b-button @click="save" v-if="canSave" v-b-tooltip.hover.top="'(Ctrl + s)'">
                         <content-save />
                         <span>{{ $t('save') }}</span>
                     </b-button>
@@ -22,8 +24,12 @@
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
     import {mapGetters} from "vuex";
+    import TriggerFlow from "./TriggerFlow"
 
     export default {
+        components: {
+            TriggerFlow
+        },
         mixins: [flowTemplateEdit],
         data() {
             return {

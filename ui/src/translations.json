@@ -144,7 +144,10 @@
         "Unfold content lines": "Unfold content lines",
         "Max displayable": "Max displayable",
         "Total": "Total",
-        "link to sub flow": "Go to sub flow"
+        "link to sub flow": "Go to sub flow",
+        "New execution": "New execution",
+        "execute the flow": "Trigger the flow",
+        "execute flow now ?": "Do you want to execute this flow ?"
     },
     "fr": {
         "id": "Identifiant",
@@ -292,6 +295,9 @@
         "Unfold content lines": "Déplier le contenu des lignes",
         "Max displayable": "Max affichables",
         "Total": "Total",
-        "link to sub flow": "Lien vers le sous flow"
+        "link to sub flow": "Lien vers le sous flow",
+        "New execution": "Nouvelle execution",
+        "execute the flow": "Créer une exécution",
+        "execute flow now ?": "Voulez-vous executer ce flow ?"
     }
 }

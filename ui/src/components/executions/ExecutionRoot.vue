@@ -18,12 +18,12 @@
         </b-card>
         <bottom-line>
             <ul class="navbar-nav ml-auto" v-hotkey="keymap">
-                <li class="nav-item">
+                <li v-if="isAllowedTrigger" class="nav-item">
                     <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
                 </li>
-                <li class="nav-item">
-                    <b-button v-b-tooltip.hover.top="$t('(e)')" @click="editFlow">
-                        <pencil /> {{ $t('Edit flow') }}
+                <li v-if="isAllowedEdit" class="nav-item">
+                    <b-button v-b-tooltip.hover.top="'(Ctrl + Shift + e)'" @click="editFlow">
+                        <pencil /> {{ $t('edit flow') }}
                     </b-button>
                 </li>
             </ul>
@@ -43,6 +43,8 @@
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
     import Pencil from "vue-material-design-icons/Pencil";
+    import permission from "@/models/permission";
+    import action from "@/models/action";
 
 
     export default {
@@ -122,13 +124,13 @@
                     tab: "data-source"
                 }})
             },
-
         },
         computed: {
             ...mapState("execution", ["execution"]),
+            ...mapState("auth", ["user"]),
             keymap () {
                 return {
-                    "e": this.editFlow,
+                    "ctrl+shift+e": this.editFlow,
                 }
             },
             routeInfo() {
@@ -201,6 +203,12 @@
                         title: title("output")
                     }
                 ];
+            },
+            isAllowedTrigger() {
+                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
+            },
+            isAllowedEdit() {
+                return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
             }
         },
         beforeDestroy() {

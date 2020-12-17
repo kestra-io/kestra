@@ -146,10 +146,8 @@
         "Total": "Total",
         "link to sub flow": "Go to sub flow",
         "New execution": "New execution",
-        "(Ctrl + Enter)": "(Ctrl + Enter)",
-        "(Ctrl + s)": "(Ctrl + s)",
-        "(Ctrl + e)": "(Ctrl + e)",
-        "Trigger the flow": "Trigger the flow"
+        "execute the flow": "Trigger the flow",
+        "execute flow now ?": "Do you want to execute this flow ?"
     },
     "fr": {
         "id": "Identifiant",
@@ -299,9 +297,7 @@
         "Total": "Total",
         "link to sub flow": "Lien vers le sous flow",
         "New execution": "Nouvelle execution",
-        "(Ctrl + Enter)": "(Ctrl + Entrée)",
-        "(Ctrl + s)": "(Ctrl + s)",
-        "(Ctrl + e)": "(Ctrl + e)",
-        "Trigger the flow": "Créer une exécution"
+        "execute the flow": "Créer une exécution",
+        "execute flow now ?": "Voulez-vous executer ce flow ?"
     }
 }

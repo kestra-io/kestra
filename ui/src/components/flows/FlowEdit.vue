@@ -9,9 +9,9 @@
                         <span>{{ $t('delete') }}</span>
                     </b-button>
 
-                    <trigger-flow :flow-id="flow.id" :namespace="flow.namespace" />
+                    <trigger-flow v-if="flow && canExecute" :flow-id="flow.id" :namespace="flow.namespace" />
 
-                    <b-button @click="save" v-if="canSave" v-b-tooltip.hover.top="$t('(Ctrl + s)')">
+                    <b-button @click="save" v-if="canSave" v-b-tooltip.hover.top="'(Ctrl + s)'">
                         <content-save />
                         <span>{{ $t('save') }}</span>
                     </b-button>

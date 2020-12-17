@@ -23,7 +23,6 @@ export default {
             })
         },
         loadFlow({commit}, options) {
-            console.log("topios", options)
             return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}`).then(response => {
                 commit("setFlow", response.data)
 

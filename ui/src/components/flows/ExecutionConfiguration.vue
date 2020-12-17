@@ -53,7 +53,7 @@
                 />
             </b-form-group>
             <b-form-group class="text-right mb-0">
-                <b-button type="submit" variant="primary" v-b-tooltip.hover.top="$t('(Ctrl + Enter)')">
+                <b-button type="submit" variant="primary" v-b-tooltip.hover.top="'(Ctrl + Enter)'">
                     {{ $t('launch execution') }}
                     <trigger title />
                 </b-button>

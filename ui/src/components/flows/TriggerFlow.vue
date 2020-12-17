@@ -1,9 +1,9 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <b-button v-hotkey="keymap" @click="onSubmit" v-b-tooltip.hover.top="$t('(Ctrl + Enter)')">
+        <b-button v-hotkey="keymap" @click="onSubmit" v-b-tooltip.hover.top="'(Ctrl + Enter)'">
             <flash /> {{ $t('New execution') }}
         </b-button>
-        <b-modal size="lg" hide-footer id="trigger-flow" :title="$t('Trigger the flow')">
+        <b-modal size="lg" hide-footer id="trigger-flow" :title="$t('execute the flow')">
             <execution-configuration @onExecutionTrigger="closeModal" :redirect="true" />
         </b-modal>
     </div>
@@ -30,13 +30,12 @@
             },
         },
         created() {
-            console.log("id/namespace", this.flowId, this.namespace)
         },
         methods: {
             triggerFlow() {
                 if (!this.flow.inputs || this.flow.inputs.length === 0) {
                     this.$bvModal
-                        .msgBoxConfirm(this.$t("Trigger flow now ?"), {})
+                        .msgBoxConfirm(this.$t("execute flow now ?"), {})
                         .then(value => {
                             if (value) {
                                 executeTask(this, this.flow, {

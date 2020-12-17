@@ -143,7 +143,8 @@
         "Fold content lines": "Fold content lines",
         "Unfold content lines": "Unfold content lines",
         "Max displayable": "Max displayable",
-        "Total": "Total"
+        "Total": "Total",
+        "link to sub flow": "Go to sub flow"
     },
     "fr": {
         "id": "Identifiant",
@@ -290,6 +291,7 @@
         "Fold content lines": "Replier le contenu des lignes",
         "Unfold content lines": "Déplier le contenu des lignes",
         "Max displayable": "Max affichables",
-        "Total": "Total"
+        "Total": "Total",
+        "link to sub flow": "Lien vers le sous flow"
     }
 }

@@ -78,6 +78,7 @@
                 >
                     <code-tags />
                 </b-button>
+                <sub-flow-link v-if="task.type === 'org.kestra.core.tasks.flows.Flow'" :execution-id="n.taskRun && n.taskRun.executionId" :namespace="task.namespace" :flow-id="task.flowId" />
             </div>
         </div>
 
@@ -108,6 +109,8 @@
     import FormatListChecks from "vue-material-design-icons/FormatListChecks";
     import LocationExit from "vue-material-design-icons/LocationExit";
     import CurrentAc from "vue-material-design-icons/CurrentAc";
+
+    import SubFlowLink from "../flows/SubFlowLink"
     import {mapState} from "vuex";
     import Status from "../Status";
     import md5 from "md5";
@@ -128,6 +131,7 @@
             FormatListChecks,
             LocationExit,
             CurrentAc,
+            SubFlowLink,
             Editor,
             ContentSave,
         },
@@ -150,6 +154,9 @@
             }
         },
         methods: {
+            d(task) {
+                console.log(task)
+            },
             taskRunOutputToken(taskRun) {
                 return md5(taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ""));
             },

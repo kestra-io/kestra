@@ -42,30 +42,44 @@
         },
         data() {
             return {
-                sse: undefined
+                sse: undefined,
+                previousExecutionId: undefined
             };
         },
         created() {
             this.follow();
+            window.addEventListener("popstate", this.follow)
+        },
+        mounted () {
+            this.previousExecutionId = this.$route.params.id
+        },
+        watch: {
+            $route () {
+                if (this.previousExecutionId !== this.$route.params.id) {
+                    this.follow()
+                }
+            },
         },
         methods: {
             follow() {
                 this.closeSSE();
-
-                this.$store
-                    .dispatch("execution/followExecution", this.$route.params)
-                    .then(sse => {
-                        this.sse = sse;
-                        sse.subscribe("", (data, event) => {
-                            this.$store.commit("execution/setExecution", data);
-                            if (this.$route.query.tab === "topology") {
-                                this.$store.dispatch("execution/loadTree", data)
-                            }
-                            if (event && event.lastEventId === "end") {
-                                this.closeSSE();
-                            }
+                setTimeout(() => {
+                    this.$store
+                        .dispatch("execution/followExecution", this.$route.params)
+                        .then(sse => {
+                            this.sse = sse;
+                            sse.subscribe("", (data, event) => {
+                                this.$store.commit("execution/setExecution", data);
+                                if (this.$route.query.tab === "topology") {
+                                    this.$store.dispatch("execution/loadTree", data)
+                                }
+                                if (event && event.lastEventId === "end") {
+                                    this.closeSSE();
+                                }
+                            });
                         });
-                    });
+                }, 500)
+
             },
             closeSSE() {
                 if (this.sse) {
@@ -158,6 +172,7 @@
         },
         beforeDestroy() {
             this.closeSSE();
+            window.removeEventListener("popstate", this.follow)
             this.$store.commit("execution/setExecution", undefined);
         }
     };

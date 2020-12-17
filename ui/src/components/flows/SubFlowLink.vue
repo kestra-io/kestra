@@ -5,7 +5,7 @@
             <b-button
                 class="node-action"
                 size="sm"
-                :title="$t('link to sub task')"
+                :title="$t('link to sub flow')"
             >
                 <axis-y-arrow title />
             </b-button>

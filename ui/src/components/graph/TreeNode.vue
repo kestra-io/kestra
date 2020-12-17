@@ -78,7 +78,7 @@
                 >
                     <code-tags />
                 </b-button>
-                <sub-flow-link v-if="task.type === 'org.kestra.core.tasks.flows.Flow'" :execution-id="n.taskRun && n.taskRun.executionId" :namespace="task.namespace" :flow-id="task.id" />
+                <sub-flow-link v-if="task.type === 'org.kestra.core.tasks.flows.Flow'" :execution-id="n.taskRun && n.taskRun.executionId" :namespace="task.namespace" :flow-id="task.flowId" />
             </div>
         </div>
 

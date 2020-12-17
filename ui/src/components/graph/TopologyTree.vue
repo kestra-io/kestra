@@ -35,7 +35,7 @@
                 :key="slug(node)"
                 :n="node"
                 :namespace="namespace"
-                :flowId="flowId"
+                :flow-id="flowId"
                 :is-flow="isFlow"
             />
             <tree-node
@@ -43,7 +43,7 @@
                 v-if="virtualRootNode"
                 :n="virtualRootNode"
                 :namespace="namespace"
-                :flowId="flowId"
+                :flow-id="flowId"
                 :is-flow="isFlow"
             />
         </div>

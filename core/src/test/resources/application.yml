@@ -1,4 +1,5 @@
 kestra:
+  url: https://mysuperhost.com/subpath
   repository:
     type: memory
   queue:

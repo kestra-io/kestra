@@ -85,8 +85,14 @@ jobs:
           echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
           ./gradlew classes testClasses --parallel --no-daemon
-          ./gradlew check --no-daemon
+          ./gradlew check jacoco --no-daemon
         # --parallel
+
+      # Codecov
+      - uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+#          directory: ./build/reports/jacoco/jacoco/html/index.html
 
       # Shadow Jar
       - name: Build jars

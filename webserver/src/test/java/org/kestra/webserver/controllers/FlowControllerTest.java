@@ -135,6 +135,22 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         // flow is not updated
         retrieve = client.toBlocking().retrieve(GET("/api/v1/flows/org.kestra.updatenamespace/f4"), Flow.class);
         assertThat(retrieve.getInputs().get(0).getName(), is("4"));
+
+
+        // send 2 same id
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/flows/org.kestra.same", Arrays.asList(
+                    generateFlow("f7", "org.kestra.same", "1"),
+                    generateFlow("f7", "org.kestra.same", "5")
+                )),
+                Argument.listOf(Flow.class)
+            )
+        );
+        jsonError = e.getResponse().getBody(JsonError.class).get();
+        assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
+        assertThat(jsonError.getMessage(), containsString("flow.id: Duplicate"));
     }
 
     @Test

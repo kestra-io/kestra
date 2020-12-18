@@ -111,7 +111,7 @@ public class FlowController {
      */
     @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON)
     public List<Flow> updateNamespace(String namespace, @Body List<Flow> flows) throws ConstraintViolationException {
-        // control flow to update
+        // control namespace to update
         Set<ManualConstraintViolation<Flow>> invalids = flows
             .stream()
             .filter(flow -> !flow.getNamespace().equals(namespace))
@@ -126,6 +126,23 @@ public class FlowController {
 
         if (invalids.size() > 0) {
             throw new ConstraintViolationException(invalids);
+        }
+
+        // multiple same flows
+        List<String> duplicate = flows
+            .stream()
+            .map(Flow::getId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        if (duplicate.size() < flows.size()) {
+            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
+                "Duplicate flow id",
+                flows,
+                List.class,
+                "flow.id",
+                duplicate
+            )));
         }
 
         // list all ids of updated flows

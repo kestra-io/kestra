@@ -20,5 +20,6 @@ public class DefaultScheduler extends AbstractScheduler {
         super(applicationContext, flowListeners);
         this.triggerState = triggerState;
         this.executionState = executionState;
+        this.isReady = true;
     }
 }

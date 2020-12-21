@@ -47,6 +47,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
     protected SchedulerExecutionStateInterface executionState;
     protected SchedulerTriggerStateInterface triggerState;
+    protected Boolean isReady = false;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
     private final ListeningExecutorService cachedExecutor;
@@ -127,6 +128,10 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     }
 
     private void handle() {
+        if (!this.isReady) {
+            log.warn("Scheduler is not ready, waiting");
+        }
+
         metricRegistry
             .counter(MetricRegistry.SCHEDULER_LOOP_COUNT)
             .increment();

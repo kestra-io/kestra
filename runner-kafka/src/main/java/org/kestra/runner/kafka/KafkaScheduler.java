@@ -6,9 +6,13 @@ import io.micronaut.context.annotation.Replaces;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.kstream.GlobalKTable;
+import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.Named;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
@@ -123,7 +127,9 @@ public class KafkaScheduler extends AbstractScheduler {
         kafkaAdminService.createIfNotExist(Trigger.class);
 
         KafkaStreamService.Stream stateStream = kafkaStreamService.of(SchedulerState.class, new SchedulerState().topology());
-        stateStream.start();
+        stateStream.start((newState, oldState) -> {
+            this.isReady = newState == KafkaStreams.State.RUNNING;
+        });
 
         this.triggerState =  new KafkaSchedulerTriggerState(
             stateStream.store("trigger", QueryableStoreTypes.keyValueStore()),

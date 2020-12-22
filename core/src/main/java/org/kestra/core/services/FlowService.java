@@ -43,14 +43,14 @@ public class FlowService {
             .map(flows -> {
                 Flow flow = flows.stream().findFirst().orElseThrow();
 
-                // edge case, 2 flows with same revision, we keep the not deleted
+                // edge case, 2 flows with same revision, we keep the deleted
                 final Flow finalFlow = flow;
-                Optional<Flow> notDeleted = flows.stream()
-                    .filter(f -> f.getRevision().equals(finalFlow.getRevision()) && !f.isDeleted())
+                Optional<Flow> deleted = flows.stream()
+                    .filter(f -> f.getRevision().equals(finalFlow.getRevision()) && f.isDeleted())
                     .findFirst();
 
-                if (notDeleted.isPresent()) {
-                    flow = notDeleted.get();
+                if (deleted.isPresent()) {
+                    return null;
                 }
 
                 return flow.isDeleted() ? null : flow;

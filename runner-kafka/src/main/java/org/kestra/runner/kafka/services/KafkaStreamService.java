@@ -3,10 +3,12 @@ package org.kestra.runner.kafka.services;
 import io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.StreamsException;
+import org.apache.kafka.streams.processor.StateRestoreListener;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.runner.kafka.KafkaQueue;
 import org.kestra.runner.kafka.configs.ClientConfig;
@@ -67,6 +69,8 @@ public class KafkaStreamService {
                 System.exit(1);
             });
 
+            this.setGlobalStateRestoreListener(new StateRestoreLoggerListeners());
+
             this.setStateListener((newState, oldState) -> {
                 if (log.isTraceEnabled()) {
                     log.trace("Switching stream state from {} to {}", oldState, newState);
@@ -99,6 +103,48 @@ public class KafkaStreamService {
         public boolean close(Duration timeout) {
             metrics.close();
             return super.close(timeout);
+        }
+    }
+
+    public static class StateRestoreLoggerListeners implements StateRestoreListener {
+        @Override
+        public void onRestoreStart(TopicPartition topicPartition, String storeName, long startingOffset, long endingOffset) {
+            if (log.isDebugEnabled()) {
+                log.debug(
+                    "Starting restore topic '{}', partition '{}', store '{}' from {} to {}",
+                    topicPartition.topic(),
+                    topicPartition.partition(),
+                    storeName,
+                    startingOffset,
+                    endingOffset
+                );
+            }
+        }
+
+        @Override
+        public void onBatchRestored(TopicPartition topicPartition, String storeName, long batchEndOffset, long numRestored) {
+            if (log.isTraceEnabled()) {
+                log.trace(
+                    "Restore done for topic '{}', partition '{}', store '{}' at offset {} with {} records",
+                    topicPartition.topic(),
+                    topicPartition.partition(),
+                    storeName,
+                    batchEndOffset,
+                    numRestored
+                );
+            }
+        }
+
+        @Override
+        public void onRestoreEnd(TopicPartition topicPartition, String storeName, long totalRestored) {
+            if (log.isDebugEnabled()) {
+                log.debug(
+                    "Restore ended for topic '{}', partition '{}', store '{}'",
+                    topicPartition.topic(),
+                    topicPartition.partition(),
+                    storeName
+                );
+            }
         }
     }
 }

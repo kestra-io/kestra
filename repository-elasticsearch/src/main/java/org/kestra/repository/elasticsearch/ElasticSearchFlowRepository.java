@@ -3,6 +3,8 @@ package org.kestra.repository.elasticsearch;
 import io.micronaut.data.model.Pageable;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
@@ -18,13 +20,13 @@ import org.kestra.core.services.FlowService;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.validation.ConstraintViolationException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
@@ -64,7 +66,10 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             .must(QueryBuilders.termQuery("id", id));
 
         revision
-            .ifPresent(v -> bool.must(QueryBuilders.termQuery("revision", v)));
+            .ifPresent(v -> {
+                this.removeDeleted(bool);
+                bool.must(QueryBuilders.termQuery("revision", v));
+            });
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(bool)
@@ -76,11 +81,26 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         return query.size() > 0 ? Optional.of(query.get(0)) : Optional.empty();
     }
 
+    private void removeDeleted(BoolQueryBuilder bool) {
+        QueryBuilder deleted = bool
+            .must()
+            .stream()
+            .filter(queryBuilder -> queryBuilder instanceof MatchQueryBuilder && ((MatchQueryBuilder) queryBuilder).fieldName().equals("deleted"))
+            .findFirst()
+            .orElseThrow();
+
+        bool.must().remove(deleted);
+    }
+
     @Override
     public List<Flow> findRevisions(String namespace, String id) {
-        BoolQueryBuilder bool = this.defaultFilter()
+        BoolQueryBuilder defaultFilter = this.defaultFilter();
+
+        BoolQueryBuilder bool = defaultFilter
             .must(QueryBuilders.termQuery("namespace", namespace))
             .must(QueryBuilders.termQuery("id", id));
+
+        this.removeDeleted(defaultFilter);
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(bool)
@@ -187,6 +207,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
         flowQueue.emit(deleted);
         this.deleteRequest(INDEX_NAME, flowId(deleted));
+        this.putRequest(REVISIONS_NAME, deleted.uid(), deleted);
 
         return deleted;
     }

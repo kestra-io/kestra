@@ -169,6 +169,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
         flowQueue.emit(deleted);
         this.flows.remove(flowId(deleted));
+        this.revisions.put(deleted.uid(), deleted);
 
         return deleted;
     }

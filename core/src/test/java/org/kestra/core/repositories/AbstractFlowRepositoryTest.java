@@ -190,9 +190,13 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = builder().build();
 
         Flow save = flowRepository.create(flow);
-        flowRepository.delete(save);
+        assertThat(flowRepository.findById(save.getNamespace(), save.getId()).isPresent(), is(true));
+
+        Flow delete = flowRepository.delete(save);
 
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(false));
+        assertThat(flowRepository.findById(flow.getNamespace(), flow.getId(), Optional.of(save.getRevision())).isPresent(), is(true));
+        assertThat(flowRepository.findById(flow.getNamespace(), flow.getId(), Optional.of(delete.getRevision())).isPresent(), is(true));
     }
 
     @Test

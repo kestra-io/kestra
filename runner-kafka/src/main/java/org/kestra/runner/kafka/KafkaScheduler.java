@@ -63,7 +63,7 @@ public class KafkaScheduler extends AbstractScheduler {
             StreamsBuilder builder = new StreamsBuilder();
 
             KStream<String, Execution> executorKStream = kafkaStreamSourceService.executorKStream(builder);
-            GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowKTable(builder);
+            GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
             KStream<String, KafkaExecutor.ExecutionWithFlow> executionWithFlowKStream = kafkaStreamSourceService.withFlow(
                 flowKTable,
                 executorKStream

@@ -129,7 +129,7 @@ public class KafkaExecutor extends AbstractExecutor {
         KTable<String, Execution> executorKTable = kafkaStreamSourceService.executorKTable(builder);
         KTable<String, Execution> executionNotKilledKTable = this.joinExecutionKilled(builder, executorKTable);
         KTable<String, WorkerTaskResultState> workerTaskResultKTable = this.workerTaskResultKTable(workerTaskResultKStream);
-        GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowKTable(builder);
+        GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
         GlobalKTable<String, WorkerTaskRunning> workerTaskRunningKTable = this.workerTaskRunningKStream(builder);
         KStream<String, WorkerInstance> workerInstanceKStream = this.workerInstanceKStream(builder);
         this.templateKTable(builder);

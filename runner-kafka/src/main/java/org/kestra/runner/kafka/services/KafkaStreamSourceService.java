@@ -16,13 +16,14 @@ import javax.inject.Singleton;
 
 @Singleton
 public class KafkaStreamSourceService {
+    public static final String TOPIC_FLOWLAST = "flowlast";
     public static final String TOPIC_EXECUTOR = "executor";
     public static final String TOPIC_EXECUTOR_WORKERINSTANCE = "executorworkerinstance";
 
     @Inject
     private KafkaAdminService kafkaAdminService;
 
-    public GlobalKTable<String, Flow> flowKTable(StreamsBuilder builder) {
+    public GlobalKTable<String, Flow> flowGlobalKTable(StreamsBuilder builder) {
         return builder
             .globalTable(
                 kafkaAdminService.getTopicName(Flow.class),

@@ -140,6 +140,23 @@ public class KafkaAdminService implements AutoCloseable {
         }
     }
 
+    public void delete(String key) {
+        this.delete(this.getTopicConfig(key));
+    }
+
+    public void delete(Class<?> cls) {
+        this.delete(this.getTopicConfig(cls));
+    }
+
+    public void delete(TopicsConfig topicConfig) {
+        try {
+            this.of().deleteTopics(Collections.singletonList(topicConfig.getName())).all().get();
+            log.info("Topic '{}' deleted", topicConfig.getName());
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public String getTopicName(Class<?> cls) {
         return this.getTopicConfig(cls).getName();
     }

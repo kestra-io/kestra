@@ -30,12 +30,15 @@ public class Helpers {
 
         PluginScanner pluginScanner = new PluginScanner(KestraClassLoader.instance());
         List<RegisteredPlugin> scan = pluginScanner.scan(pluginsPath);
+        PluginRegistry pluginRegistry = new PluginRegistry(scan);
+
+        KestraClassLoader.instance().setPluginRegistry(pluginRegistry);
 
         return new KestraApplicationContextBuilder()
             .mainClass(Helpers.class)
             .environments(Environment.TEST)
             .classLoader(KestraClassLoader.instance())
-            .pluginRegistry(new PluginRegistry(scan))
+            .pluginRegistry(pluginRegistry)
             .build();
     }
 

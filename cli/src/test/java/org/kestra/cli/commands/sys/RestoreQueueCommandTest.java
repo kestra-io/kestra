@@ -29,7 +29,7 @@ class RestoreQueueCommandTest {
         }
     }
 
-    private static Flow create() {
+    static Flow create() {
         return Flow.builder()
             .id(IdUtils.create())
             .namespace("org.kestra.unittest")

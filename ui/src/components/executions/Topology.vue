@@ -3,8 +3,8 @@
         <b-col>
             <topology-tree
                 ref="topology"
-                v-if="execution && dataTree"
-                :data-tree="dataTree"
+                v-if="execution && flowGraph"
+                :flow-graph="flowGraph"
                 :flow-id="execution.flowId"
                 :namespace="execution.namespace"
                 :label="getLabel"
@@ -20,11 +20,11 @@
             TopologyTree
         },
         computed: {
-            ...mapState("execution", ["execution", "dataTree"])
+            ...mapState("execution", ["execution", "flowGraph"])
         },
         created() {
-            if (!this.dataTree && this.execution) {
-                this.$store.dispatch("execution/loadTree", this.execution)
+            if (!this.flowGraph && this.execution) {
+                this.$store.dispatch("execution/loadGraph", this.execution)
             }
         },
         methods: {

@@ -7,7 +7,13 @@
                 <!-- <img src=""/> -->
                 </div>
                 <div class="task-title">
-                    <span>{{ task.id | ellipsis(18) }}</span>
+                    <div :title="task.type" v-if="!childrenCount" class="task-item">
+                        <console title />
+                    </div>
+                    <div v-else :title="$t('stream')" class="task-item">
+                        <current-ac title />
+                    </div>
+                    <span>{{ task.id }}</span>
                 </div>
             <!-- <menu-open class="node-action" @click="onSettings" /> -->
             </div>
@@ -15,70 +21,60 @@
                 <status :status="state" />
             </div>
             <div class="info-wrapper">
-                <div :title="task.type" v-if="!childrenCount" class="pull task-item">
-                    <console title />
-                </div>
-                <div v-else :title="$t('stream')" class="pull task-item">
-                    <current-ac title />
-                </div>
-                <b-button
-                    v-if="task.description"
-                    :title="`${$t('description')}`"
-                    class="node-action push"
-                >
-                    <markdown-tooltip :id="task.id" :description="task.description" />
-                </b-button>
+                <span class="duration">
+                    <span v-if="duration">{{ duration | humanizeDuration }}</span>
+                </span>
+                <b-btn-group>
+                    <b-button
+                        v-if="task.description"
+                        :title="`${$t('description')}`"
+                        class="node-action push"
+                    >
+                        <markdown-tooltip :id="hash" :description="task.description" />
+                    </b-button>
 
-                <b-button
-                    v-if="childrenCount"
-                    :title="`${$t('display direct sub tasks count')} : ${childrenCount}`"
-                    class="node-action push"
-                    @click="onFilterGroup"
-                >
-                    <graph title />
-                </b-button>
-
-                <b-button
-                    v-if="!isFlow"
-                    :disabled="!hasLogs"
-                    class="node-action"
-                    :title="$t('show task logs')"
-                >
-                    <router-link
+                    <b-button
+                        v-if="!isFlow"
+                        :disabled="!hasLogs"
+                        class="node-action"
                         :title="$t('show task logs')"
-                        v-if="hasLogs"
-                        class="btn-secondary"
-                        :to="{name:'executionEdit', params: $route.params, query: {tab:'logs', search: task.id}}"
                     >
-                        <format-list-checks title />
-                    </router-link>
-                    <format-list-checks v-else title />
-                </b-button>
-                <b-button
-                    v-if="!isFlow"
-                    :disabled="!hasOutputs"
-                    class="node-action"
-                    :title="$t('show task outputs')"
-                >
-                    <router-link
-                        v-if="hasOutputs"
-                        class="btn-secondary"
+                        <router-link
+                            :title="$t('show task logs')"
+                            v-if="hasLogs"
+                            class="btn-secondary"
+                            :to="{name:'executionEdit', params: $route.params, query: {tab:'logs', search: task.id}}"
+                        >
+                            <format-list-checks title />
+                        </router-link>
+                        <format-list-checks v-else title />
+                    </b-button>
+                    <b-button
+                        v-if="!isFlow"
+                        :disabled="!hasOutputs"
+                        class="node-action"
                         :title="$t('show task outputs')"
-                        :to="{name:'executionEdit', params: $route.params, query: {tab:'execution-output', search: taskRunOutputToken(n.taskRun)}}"
                     >
-                        <location-exit title />
-                    </router-link>
-                    <location-exit v-else title />
-                </b-button>
-                <b-button
-                    class="node-action"
-                    size="sm"
-                    v-b-modal="`modal-${hash}`"
-                    :title="$t('show task source')"
-                >
-                    <code-tags />
-                </b-button>
-                <sub-flow-link v-if="task.type === 'org.kestra.core.tasks.flows.Flow'" :execution-id="n.taskRun && n.taskRun.executionId" :namespace="task.namespace" :flow-id="task.flowId" />
+                        <router-link
+                            v-if="hasOutputs"
+                            class="btn-secondary"
+                            :title="$t('show task outputs')"
+                            :to="{name:'executionEdit', params: $route.params, query: {tab:'execution-output', search: taskRunOutputToken(n.taskRun)}}"
+                        >
+                            <location-exit title />
+                        </router-link>
+                        <location-exit v-else title />
+                    </b-button>
+                    <b-button
+                        class="node-action"
+                        size="sm"
+                        v-b-modal="`modal-${hash}`"
+                        :title="$t('show task source')"
+                    >
+                        <code-tags />
+                    </b-button>
+                    <sub-flow-link v-if="task.type === 'org.kestra.core.tasks.flows.Flow'" :execution-id="n.taskRun && n.taskRun.executionId" :namespace="task.namespace" :flow-id="task.flowId" />
+                </b-btn-group>
             </div>
         </div>
 
@@ -104,7 +100,6 @@
 </template>
 <script>
     import Console from "vue-material-design-icons/Console";
-    import Graph from "vue-material-design-icons/Graph";
     import CodeTags from "vue-material-design-icons/CodeTags";
     import FormatListChecks from "vue-material-design-icons/FormatListChecks";
     import LocationExit from "vue-material-design-icons/LocationExit";
@@ -126,7 +121,6 @@
             MarkdownTooltip,
             Status,
             Console,
-            Graph,
             CodeTags,
             FormatListChecks,
             LocationExit,
@@ -224,7 +218,7 @@
                     : [];
             },
             hash() {
-                return this.task.id.hashCode();
+                return this.n.uid.hashCode();
             },
             childrenCount() {
                 return this.n.children ? this.n.children.length : 0;
@@ -232,6 +226,9 @@
 
             state() {
                 return this.n.taskRun ? this.n.taskRun.state.current : State.SUCCESS;
+            },
+            duration() {
+                return this.n.taskRun ? this.n.taskRun.state.duration : null;
             },
             contentCls() {
                 return {
@@ -254,26 +251,26 @@
 </script>
 <style scoped lang="scss">
 @import "../../styles/_variable.scss";
-.wrapper.is-container {
-    border: 2px dashed $purple;
-    border-radius: 2px;
-}
+
 .node-wrapper {
     cursor: pointer;
     display: flex;
+    width: 180px;
 
     .status-color {
-        width: 4px;
-        height: 55px;
+        width: 10px;
+        height: 48px;
         border: 0;
     }
 
     .is-success {
         background-color: $green;
     }
+
     .is-running {
         background-color: $blue;
     }
+
     .is-failed {
         background-color: $red;
     }
@@ -281,11 +278,12 @@
     .task-content {
         flex-grow: 1;
         background-color: $white;
+        width: 38px;
 
         .card-header {
-            height: 30px;
+            height: 23px;
             padding: 2px;
-            margin: 0px;
+            margin: 0;
             border-bottom: 1px solid $gray-500;
             background: $gray-200;
             flex: 1;
@@ -301,11 +299,16 @@
             }
 
             .task-title {
-                margin-left: 5px;
+                margin-left: 2px;
                 display: inline-block;
                 font-size: $font-size-sm;
                 flex-grow: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                white-space: nowrap;
             }
+
             .node-action {
                 flex-shrink: 2;
                 padding-top: 18px;
@@ -323,7 +326,15 @@
     }
     .info-wrapper {
         display: flex;
-        justify-content: right;
+        .duration {
+            padding: 4px 4px;
+            color: $text-muted;
+            font-size: $font-size-xs;
+            flex-grow: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     }
     .push {
         margin-left: auto;
@@ -331,6 +342,8 @@
     .pull {
         margin-right: auto;
     }
+
+
     .node-action {
         height: 25px;
         padding-top: 1px;
@@ -338,8 +351,9 @@
         padding-left: 5px;
     }
     .task-item {
-        margin-left: 5px;
-        margin-bottom: 5px;
+        flex: 1;
+        display: inline;
+        margin-right: 5px;
     }
 }
 </style>

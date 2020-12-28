@@ -1,20 +1,6 @@
 <template>
     <div>
         <div class="d-flex top">
-            <b-breadcrumb class="flex-grow-1">
-                <b-breadcrumb-item
-                    :class="{'font-weight-bold': filterGroup === undefined}"
-                    @click="onFilterGroup(undefined)"
-                    text="root"
-                />
-                <b-breadcrumb-item
-                    :class="{'font-weight-bold': group === filterGroup}"
-                    v-for="group in groups"
-                    @click="onFilterGroup(group)"
-                    :text="group"
-                    :key="group"
-                />
-            </b-breadcrumb>
             <div>
                 <b-tooltip placement="left" target="graph-orientation">
                     {{ $t('graph orientation') }}
@@ -23,6 +9,15 @@
                     <arrow-collapse-down v-if="orientation" />
                     <arrow-collapse-right v-else />
                 </b-btn>
+                <b-btn size="sm" @click="setZoom('in')">
+                    <magnify-plus />
+                </b-btn>
+                <b-btn size="sm" @click="setZoom('out')">
+                    <magnify-minus />
+                </b-btn>
+                <b-btn size="sm" @click="setZoom('reset')">
+                    <arrow-collapse-all />
+                </b-btn>
             </div>
         </div>
 
@@ -30,58 +25,41 @@
         <div class="hidden">
             <tree-node
                 @onFilterGroup="onFilterGroup"
-                :ref="slug(node)"
-                v-for="node in filteredDataTree"
-                :key="slug(node)"
+                :ref="node.uid"
+                v-for="node in treeTaskNode"
+                :key="node.uid"
                 :n="node"
                 :namespace="namespace"
                 :flow-id="flowId"
                 :is-flow="isFlow"
             />
-            <tree-node
-                :ref="`node-${slug(virtualRootNode)}`"
-                v-if="virtualRootNode"
-                :n="virtualRootNode"
-                :namespace="namespace"
-                :flow-id="flowId"
-                :is-flow="isFlow"
-            />
-        </div>
-
-        <div ref="vector-circle">
-            <vector-circle v-if="!virtualRootNode" title />
         </div>
     </div>
 </template>
 <script>
+    import {debounce} from "throttle-debounce";
+
     const dagreD3 = require("dagre-d3");
     import TreeNode from "./TreeNode";
     import * as d3 from "d3";
     import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight";
     import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown";
-    import VectorCircle from "vue-material-design-icons/Circle";
-    const parentHash = node => {
-        if (node.parent) {
-            const parent = node.parent[0];
-            return nodeHash(parent)
-        } else {
-            return undefined;
-        }
-    };
-    const nodeHash = node => {
-        return (node.id + (node.value ? "-" + node.value : "")).hashCode();
-    }
+    import MagnifyPlus from "vue-material-design-icons/MagnifyPlus";
+    import MagnifyMinus from "vue-material-design-icons/MagnifyMinus";
+    import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll";
 
     export default {
         components: {
             TreeNode,
             ArrowCollapseDown,
             ArrowCollapseRight,
-            VectorCircle
+            MagnifyPlus,
+            MagnifyMinus,
+            ArrowCollapseAll
         },
         props: {
-            dataTree: {
-                type: Array,
+            flowGraph: {
+                type: Object,
                 required: true
             },
             label: {
@@ -107,12 +85,14 @@
                 filterGroup: undefined,
                 orientation: true,
                 zoom: undefined,
-                filteredDataTree: undefined,
-                virtualRootNode: undefined
+                resizeHandler: undefined,
+                zoomFactor: 1,
+                lastX: 50,
+                lastY: 50,
             };
         },
         watch: {
-            dataTree() {
+            flowGraph() {
                 this.generateGraph();
             },
             $route() {
@@ -127,14 +107,34 @@
             if (this.$route.query.filter) {
                 this.filterGroup = this.$route.query.filter;
             }
-            this.dataTree.forEach(node => {
-                node.children = this.children(node)
+            this.resizeHandler = debounce(500, () => {
+                this.generateGraph()
             })
+
+            window.addEventListener("resize", this.resizeHandler);
         },
         mounted() {
             this.generateGraph();
         },
         methods: {
+            setZoom(direction) {
+                if (direction === "in") {
+                    if (this.zoomFactor <= 1.7) {
+                        this.zoomFactor += 0.2
+                        this.generateGraph()
+                    }
+                } else if (direction === "out") {
+                    if (this.zoomFactor >= 0.3) {
+                        this.zoomFactor -= 0.2
+                        this.generateGraph()
+                    }
+                } else if (direction === "reset") {
+                    this.zoomFactor = 1
+                    this.lastX = 50
+                    this.lastY = 50
+                    this.generateGraph()
+                }
+            },
             toggleOrientation() {
                 this.orientation = !this.orientation;
                 localStorage.setItem(
@@ -143,26 +143,34 @@
                 );
                 this.generateGraph();
             },
-            getVirtualRootNode() {
-                return this.filterGroup
-                    ? {
-                        task: {
-                            id: this.filterGroup
-                        }
+            getOptions(relation) {
+                const edgeOption = {};
+                if (relation.relationType && relation.relationType !== "SEQUENTIAL") {
+                    edgeOption.label = relation.relationType.toLowerCase();
+                    if (relation.value) {
+                        edgeOption.label += ` : ${relation.value}`;
                     }
-                    : undefined;
+
+                    edgeOption.class =
+                        {
+                            ERROR: "error-edge",
+                            DYNAMIC: "dynamic-edge",
+                            CHOICE: "choice-edge",
+                            PARALLEL: "choice-edge"
+                        }[relation.relationType] || "";
+                }
+
+                return edgeOption;
             },
             generateGraph() {
-                this.filteredDataTree = this.getFilteredDataTree();
-                this.virtualRootNode = this.getVirtualRootNode();
-
                 // Create the input graph
                 const arrowColor = "#ccc";
                 if (this.zoom) {
                     this.zoom.on("zoom", null);
                 }
-                this.$refs.wrapper.innerHTML =
-                    "<svg id=\"svg-canvas\" width=\"100%\" style=\"min-height:800px\"/>";
+
+                // init
+                this.$refs.wrapper.innerHTML = `<svg id="svg-canvas" width="100%" style="min-height:${window.innerHeight - 290}px"/>`
                 const g = new dagreD3.graphlib.Graph({
                     compound: true,
                     multigraph: true
@@ -172,171 +180,109 @@
                         return {};
                     });
 
-                const getOptions = node => {
-                    const edgeOption = {};
-                    if (node.relation !== "SEQUENTIAL") {
-                        edgeOption.label = node.relation.toLowerCase();
-                        if (node.taskRun && node.taskRun.value) {
-                            edgeOption.label += ` : ${node.taskRun.value}`;
-                        }
-                    }
-                    edgeOption.class =
-                        {
-                            ERROR: "error-edge",
-                            DYNAMIC: "dynamic-edge",
-                            CHOICE: "choice-edge",
-                            PARALLEL: "choice-edge"
-                        }[node.relation] || "";
-                    return edgeOption;
-                };
-                const ancestorsHashes = new Set(
-                    this.filteredDataTree.filter(e => e.parent).map(e => nodeHash(e.parent[0]))
-                );
-                const virtualRootId = this.getVirtualRootNode() && this.getVirtualRootNode().task.id
-                const groupDisabled = this.isGroupDisabled(virtualRootId);
-
-                for (const node of this.filteredDataTree) {
-                    const slug = this.slug(node);
-                    const hash = parentHash(node);
-                    g.setNode(slug, {
-                        labelType: "html",
-                        label: `<div class="node-binder" id="node-${slug}"/>`,
-                        class: groupDisabled || node.task.disabled ? "task-disabled" : ""
-                    });
-                    const options = getOptions(node);
-                    const parentId = node.parent && node.parent[0] && node.parent[0].id
-                    if (ancestorsHashes.has(hash) && ["SEQUENTIAL", "ERROR"].includes(node.relation) && virtualRootId !== parentId) {
-                        g.setEdge(parentHash(node), slug, options);
+                // add nodes
+                for (const node of this.flowGraph.nodes) {
+                    if (this.isEdgeNode(node)) {
+                        g.setNode(node.uid, {
+                            labelType: "html",
+                            class: "root-node",
+                            label: `<div class="vector-circle-wrapper" id="node-${node.uid.hashCode()}" />`,
+                            height: 20,
+                            width: 20
+                        });
                     } else {
-                        g.setEdge("parent node", slug, options)
+                        g.setNode(node.uid, {
+                            labelType: "html",
+                            label: `<div class="node-binder" id="node-${node.uid.hashCode()}" />`,
+                            class: node.task && node.task.disabled ? "task-disabled" : "",
+                            width: 180
+                        });
                     }
                 }
-                const rootNode = {
-                    labelType: "html",
-                    clusterLabelPos: "bottom"
-                };
-                if (this.filterGroup) {
-                    rootNode.label = `<div class="node-binder root-node-virtual" id="node-${this.slug(
-                        this.virtualRootNode
-                    )}"/>`;
-                    rootNode.class = groupDisabled  ? "task-disabled" : "";
-                } else {
-                    rootNode.class = "root-node";
-                    rootNode.label = "<div class=\"vector-circle-wrapper\"/>";
-                    rootNode.height = 30;
-                    rootNode.width = 30;
+
+                // add edges
+                for (const edge of this.flowGraph.edges) {
+                    g.setEdge(edge.source, edge.target, this.getOptions(edge.relation));
                 }
-                g.setNode("parent node", rootNode);
+
+                // add cluster
+                for (let cluster of this.flowGraph.clusters) {
+                    g.setNode(cluster.cluster.uid, {
+                        label: cluster.cluster.task.id,
+                        clusterLabelPos: "top",
+                        width: "100%"
+                    });
+
+                    for (let nodeUid of cluster.nodes) {
+                        g.setParent(nodeUid, cluster.cluster.uid);
+                    }
+                }
+
+                // reset padding
                 g.nodes().forEach(v => {
                     const node = g.node(v);
                     if (node) {
                         node.paddingLeft = node.paddingRight = node.paddingTop = node.paddingBottom = 0;
                     }
                 });
+
                 if (!this.orientation) {
                     g.graph().rankDir = "LR";
                 }
+
                 const render = new dagreD3.render();
+
                 // Set up an SVG group so that we can translate the final graph.
                 const svgWrapper = d3.select("#svg-canvas"),
                       svgGroup = svgWrapper.append("g");
+
                 // Run the renderer. This is what draws the final graph.
                 this.zoom = d3
                     .zoom()
                     .on("zoom", () => {
                         const t = d3.event.transform;
+                        this.lastX = t.x
+                        this.lastY = t.y
                         svgGroup.attr(
                             "transform",
-                            `translate(${t.x},${t.y}) scale(${t.k})`
+                            `translate(${this.lastX || t.x},${this.lastY || t.y}) scale(${t.k*this.zoomFactor})`
                         );
                     })
                     .scaleExtent([1, 1]);
+
+                // zoom
                 svgWrapper.call(this.zoom);
                 svgWrapper.on("dblclick.zoom", null);
 
+                // path color
                 render(d3.select("#svg-canvas g"), g);
                 d3.selectAll("#svg-canvas g path").style("stroke", arrowColor);
                 d3.selectAll("#svg-canvas .edgePath marker").style(
                     "fill",
                     arrowColor
                 );
-                const transform = d3.zoomIdentity.translate(50, 50).translate(0, 0);
+
+                const transform = d3.zoomIdentity.translate(0, 0).translate(this.lastX || 0, this.lastY || 0);
                 svgWrapper.call(this.zoom.transform, transform);
+
                 this.bindNodes();
-            },
-            children(node) {
-                const children = []
-                for (let child of this.dataTree) {
-                    for (let parent of (child.parent || [])) {
-                        if (parent.id === node.task.id) {
-                            children.push(JSON.parse(JSON.stringify(node)))
-                        }
-                    }
-                }
-                return children
-            },
-            virtalNodeReady() {
-                if (this.virtualRootNode) {
-                    const vueNode = this.$refs[
-                        `node-${this.slug(this.virtualRootNode)}`
-                    ];
-                    return vueNode && vueNode.$el;
-                } else {
-                    return true;
-                }
-            },
-            isGroupDisabled(virtualRootId) {
-                if (virtualRootId === undefined) {
-                    return  false;
-                }
-
-                const virtualRoot = this.dataTree.filter(node => node.task.id === virtualRootId)[0];
-
-                if (virtualRoot.task.disabled === true) {
-                    return true;
-                }
-
-                if (virtualRoot.groups === undefined) {
-                    return false;
-                }
-
-                return virtualRoot.groups
-                    .map(value => this.dataTree.filter(node => node.task.id === value)[0])
-                    .filter(node => node.task.disabled === true)
-                    .length > 0
             },
             bindNodes() {
                 let ready = true;
-                for (const node of this.filteredDataTree) {
+                for (const node of this.treeTaskNode) {
                     if (
-                        !this.virtalNodeReady() ||
-                        !this.$refs[this.slug(node)] ||
-                        !this.$refs[this.slug(node)].length ||
-                        !this.$refs["vector-circle"]
+                        !this.$refs[node.uid] ||
+                        !this.$refs[node.uid].length
                     ) {
                         ready = false;
                     }
                 }
+
                 if (ready) {
-                    for (const node of this.filteredDataTree) {
+                    for (const node of this.treeTaskNode) {
                         this.$el
-                            .querySelector(`#node-${this.slug(node)}`)
-                            .appendChild(this.$refs[this.slug(node)][0].$el);
-                    }
-                    if (this.virtualRootNode) {
-                        this.$el
-                            .querySelector(
-                                `#node-${this.slug(this.virtualRootNode)}`
-                            )
-                            .appendChild(
-                                this.$refs[
-                                    `node-${this.slug(this.virtualRootNode)}`
-                                ].$el
-                            );
-                    } else {
-                        this.$el
-                            .querySelector(".vector-circle-wrapper")
-                            .appendChild(this.$refs["vector-circle"]);
+                            .querySelector(`#node-${node.uid.hashCode()}`)
+                            .appendChild(this.$refs[node.uid][0].$el);
                     }
                     this.ready = true;
                 } else {
@@ -352,58 +298,56 @@
                     this.generateGraph();
                 }
             },
-            slug(node) {
-                const hash =
-                    node.task.id +
-                    (node.taskRun && node.taskRun.value
-                        ? "-" + node.taskRun.value
-                        : "");
-                return hash.hashCode();
+            isEdgeNode(node) {
+                return node.type !== "org.kestra.core.models.hierarchies.GraphTask"
             },
-            getFilteredDataTree() {
-                if (this.filterGroup) {
-                    return this.dataTree.filter(
-                        node =>
-                            node.groups &&
-                            node.groups[node.groups.length - 1] === this.filterGroup
-                    );
-                } else {
-                    return this.dataTree.filter(node => !node.groups);
-                }
-            }
         },
         computed: {
             groups() {
                 const groups = new Set();
-                this.dataTree.forEach(node =>
+                this.flowGraph.forEach(node =>
                     (node.groups || []).forEach(group => groups.add(group))
                 );
                 return groups;
+            },
+            treeTaskNode() {
+                return this.flowGraph.nodes.filter(n => n.task !== undefined && n.type === "org.kestra.core.models.hierarchies.GraphTask")
+            },
+            clusterNode() {
+                return this.flowGraph.nodes.filter(n => n.task !== undefined && n.type === "org.kestra.core.models.hierarchies.GraphCluster")
             }
         },
         destroyed() {
             this.ready = false;
+            if (this.resizeHandler) {
+                window.removeEventListener("resize", this.resizeHandler)
+            }
         }
     };
 </script>
 <style lang="scss">
 @import "../../styles/variable";
-.clusters rect {
-    fill: #00ffd0;
-    stroke: #999;
-    stroke-width: 1.5px;
+
+.clusters {
+    rect {
+        fill: $primary;
+        opacity: 0.05;
+        outline: 1px solid lighten($primary, 35%);
+    }
+
+    .label {
+        fill: lighten($primary, 15%);
+    }
 }
 
 text {
-    font-weight: 300;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
-    font-size: 14px;
+    font-size: $font-size-sm;
 }
 
 .node rect {
-    stroke: #999;
+    stroke: $gray-600;
     fill: #fff;
-    stroke-width: 1.5px;
+    stroke-width: 1px;
 }
 
 .edgePath path {
@@ -426,19 +370,27 @@ text {
 .node-wrapper,
 .node,
 foreignObject {
-    width: 250px;
-    height: 55px;
+    width: 180px;
+    height: 48px;
 }
 .root-node {
-    text-align: center;
-    font-size: 2.2em;
     color: $gray-600;
     foreignObject {
-        width: 50px;
+        width: 35px;
+        height: 35px;
     }
     > rect {
-        stroke: white;
+        stroke: transparent;
         fill: none !important;
+    }
+    .vector-circle-wrapper {
+        background: $gray-600;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        top: 10px;
+        position: absolute;
+        left: 10px;
     }
 }
 
@@ -450,6 +402,8 @@ foreignObject {
 
 .hidden {
     opacity: 0;
+    height:0px;
+    overflow: hidden;
 }
 
 .error-edge {
@@ -485,13 +439,7 @@ foreignObject {
     fill: $gray-600;
 }
 
-.vector-circle-wrapper path {
-    fill: $gray-400 !important;
-}
 
-.root-node-virtual {
-    opacity: 0.5;
-}
 .hide {
     opacity: 0;
 }

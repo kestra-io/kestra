@@ -9,7 +9,7 @@ import io.micronaut.validation.Validated;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.models.flows.Flow;
-import org.kestra.core.models.hierarchies.FlowTree;
+import org.kestra.core.models.hierarchies.FlowGraph;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.repositories.FlowRepositoryInterface;
@@ -38,11 +38,11 @@ public class FlowController {
      * @param id        The flow id
      * @return flow tree found
      */
-    @Get(uri = "{namespace}/{id}/tree", produces = MediaType.TEXT_JSON)
-    public FlowTree flowTree(String namespace, String id) throws IllegalVariableEvaluationException {
+    @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
+    public FlowGraph flowGraph(String namespace, String id) throws IllegalVariableEvaluationException {
         return flowRepository
             .findById(namespace, id)
-            .map(throwFunction(FlowTree::of))
+            .map(throwFunction(FlowGraph::of))
             .orElse(null);
     }
 

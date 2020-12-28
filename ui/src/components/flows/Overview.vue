@@ -4,10 +4,10 @@
             <b-col>
                 <topology-tree
                     :is-flow="true"
-                    v-if="flow && dataTree"
+                    v-if="flow && flowGraph"
                     :flow-id="flow.id"
                     :namespace="flow.namespace"
-                    :data-tree="dataTree"
+                    :flow-graph="flowGraph"
                     :label="getLabel"
                 />
             </b-col>
@@ -30,7 +30,7 @@
             TaskDetails
         },
         computed: {
-            ...mapState("flow", ["flow", "dataTree"]),
+            ...mapState("flow", ["flow", "flowGraph"]),
         },
         methods: {
             getLabel (node) {

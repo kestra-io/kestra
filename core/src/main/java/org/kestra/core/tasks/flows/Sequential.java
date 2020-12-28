@@ -12,17 +12,16 @@ import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
-import org.kestra.core.models.hierarchies.ParentTaskTree;
-import org.kestra.core.models.hierarchies.TaskTree;
+import org.kestra.core.models.hierarchies.GraphCluster;
+import org.kestra.core.models.hierarchies.RelationType;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.models.tasks.VoidOutput;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
-import org.kestra.core.services.TreeService;
+import org.kestra.core.services.GraphService;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -72,17 +71,18 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
     private List<Task> tasks;
 
     @Override
-    public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {
-        return TreeService.sequential(
+    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
+
+        GraphService.sequential(
+            subGraph,
             this.tasks,
             this.errors,
-            Collections.singletonList(ParentTaskTree.builder()
-                .id(this.getId())
-                .build()
-            ),
-            execution,
-            groups
+            taskRun,
+            execution
         );
+
+        return subGraph;
     }
 
     @Override

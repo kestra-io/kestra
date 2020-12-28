@@ -12,9 +12,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.hierarchies.ParentTaskTree;
-import org.kestra.core.models.hierarchies.RelationType;
-import org.kestra.core.models.hierarchies.TaskTree;
+import org.kestra.core.models.hierarchies.*;
 import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
@@ -22,7 +20,7 @@ import org.kestra.core.models.tasks.TaskValidationInterface;
 import org.kestra.core.models.validations.ManualConstraintViolation;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
-import org.kestra.core.services.TreeService;
+import org.kestra.core.services.GraphService;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,7 +30,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-import static org.kestra.core.utils.Rethrow.throwFunction;
 import static org.kestra.core.utils.Rethrow.throwPredicate;
 
 @SuperBuilder
@@ -118,28 +115,23 @@ public class Switch extends Task implements FlowableTask<Switch.Output>, TaskVal
     }
 
     @Override
-    public List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException {
-        return Stream
-            .concat(
-                this.defaults != null ? ImmutableMap.of("defaults", this.defaults).entrySet().stream() : Stream.empty(),
-                this.cases != null ? this.cases.entrySet().stream() : Stream.empty()
-            )
-            .flatMap(throwFunction(e -> {
-                List<ParentTaskTree> parents = Collections.singletonList((ParentTaskTree.builder()
-                    .id(this.id)
-                    .value(e.getKey())
-                    .build()));
+    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.CHOICE);
 
-                return TreeService.sequential(
-                    e.getValue(),
-                    this.getErrors(),
-                    parents,
-                    execution,
-                    RelationType.CHOICE,
-                    groups
-                ).stream();
-            }))
-            .collect(Collectors.toList());
+        GraphService.switchCase(
+            subGraph,
+            Stream
+                .concat(
+                    this.defaults != null ? ImmutableMap.of("defaults", this.defaults).entrySet().stream() : Stream.empty(),
+                    this.cases != null ? this.cases.entrySet().stream() : Stream.empty()
+                )
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)),
+            this.errors,
+            taskRun,
+            execution
+        );
+
+        return subGraph;
     }
 
     @Override

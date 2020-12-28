@@ -5,7 +5,7 @@ export default {
         flows: undefined,
         flow: undefined,
         total: 0,
-        dataTree: undefined,
+        flowGraph: undefined,
         revisions: undefined,
     },
 
@@ -59,11 +59,11 @@ export default {
                 commit("setFlow", null)
             })
         },
-        loadTree({commit}, flow) {
-            return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/tree`).then(response => {
-                commit("setDataTree", response.data.tasks)
+        loadGraph({commit}, flow) {
+            return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph`).then(response => {
+                commit("setFlowGraph", response.data)
 
-                return response.data.tasks;
+                return response.data;
             })
         },
         loadRevisions({commit}, options) {
@@ -121,8 +121,8 @@ export default {
         setTotal(state, total) {
             state.total = total
         },
-        setDataTree(state, dataTree) {
-            state.dataTree = dataTree
+        setFlowGraph(state, flowGraph) {
+            state.flowGraph = flowGraph
         }
     },
     getters: {

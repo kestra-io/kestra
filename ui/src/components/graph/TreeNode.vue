@@ -21,7 +21,7 @@
                 <status :status="state" />
             </div>
             <div class="info-wrapper">
-                <span class="duration" >
+                <span class="duration">
                     <span v-if="duration">{{ duration | humanizeDuration }}</span>
                 </span>
                 <b-btn-group>
@@ -75,7 +75,6 @@
                     </b-button>
                     <sub-flow-link v-if="task.type === 'org.kestra.core.tasks.flows.Flow'" :execution-id="n.taskRun && n.taskRun.executionId" :namespace="task.namespace" :flow-id="task.flowId" />
                 </b-btn-group>
-
             </div>
         </div>
 

@@ -7,7 +7,7 @@
                     v-if="flow && flowGraph"
                     :flow-id="flow.id"
                     :namespace="flow.namespace"
-                    :data-tree="flowGraph"
+                    :flow-graph="flowGraph"
                     :label="getLabel"
                 />
             </b-col>

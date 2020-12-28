@@ -66,6 +66,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .values()
             .stream()
             .filter(flow -> flow.getNamespace().equals(namespace) && flow.getId().equals(id))
+            .sorted(Comparator.comparingInt(Flow::getRevision))
             .collect(Collectors.toList());
     }
 
@@ -76,10 +77,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     @Override
     public List<Flow> findAllWithRevisions() {
-        return flows.values().stream()
-            .map(flow -> findRevisions(flow.getNamespace(), flow.getId()))
-            .flatMap(revisions -> revisions.stream())
-            .collect(Collectors.toList());
+        return new ArrayList<>(revisions.values());
     }
 
     @Override
@@ -87,6 +85,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return flows.values()
             .stream()
             .filter(flow -> flow.getNamespace().equals(namespace))
+            .sorted(Comparator.comparingInt(Flow::getRevision))
             .collect(Collectors.toList());
     }
 

@@ -135,7 +135,7 @@ public class KafkaExecutor extends AbstractExecutor {
         this.templateKTable(builder);
 
         // logs
-        logIfEnabled(
+        KafkaStreamSourceService.logIfEnabled(
             executorKTable.toStream(Named.as("execution-toStream")),
             (key, value) -> log.debug(
                 "Execution in '{}' with checksum '{}': {}",
@@ -570,7 +570,7 @@ public class KafkaExecutor extends AbstractExecutor {
                 Named.as("handleWorkerTask-isFlowable-selectKey")
             );
 
-        KStream<String, WorkerTaskResult> workerTaskResultKStream = logIfEnabled(
+        KStream<String, WorkerTaskResult> workerTaskResultKStream = KafkaStreamSourceService.logIfEnabled(
             resultFlowable,
             (key, value) -> log.debug(
                 "WorkerTaskResult out: {}",
@@ -593,7 +593,7 @@ public class KafkaExecutor extends AbstractExecutor {
                 Named.as("handleWorkerTask-notFlowableKeyValue-selectKey")
             );
 
-        KStream<String, WorkerTask> workerTaskKStream = logIfEnabled(
+        KStream<String, WorkerTask> workerTaskKStream = KafkaStreamSourceService.logIfEnabled(
             resultNotFlowable,
             (key, value) -> log.debug(
                 "WorkerTask out: {}",
@@ -685,7 +685,7 @@ public class KafkaExecutor extends AbstractExecutor {
                 Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class))
             );
 
-        logIfEnabled(
+        KafkaStreamSourceService.logIfEnabled(
             resultWorkerTask,
             (key, value) -> log.debug(
                 "WorkerTask resend out: {}",
@@ -699,7 +699,7 @@ public class KafkaExecutor extends AbstractExecutor {
             );
 
         // we resend the WorkerInstance update
-        KStream<String, WorkerInstance> updatedStream = logIfEnabled(
+        KStream<String, WorkerInstance> updatedStream = KafkaStreamSourceService.logIfEnabled(
             stream,
             (key, value) -> log.debug(
                 "Instance updated: {}",
@@ -778,7 +778,7 @@ public class KafkaExecutor extends AbstractExecutor {
         KStream<String, Execution> result = stream
             .filter((key, value) -> value != null, Named.as(methodName + "-null-filter"));
 
-        KStream<String, Execution> executionKStream = logIfEnabled(
+        KStream<String, Execution> executionKStream = KafkaStreamSourceService.logIfEnabled(
             result,
             (key, value) -> log.debug(
                 "Execution out '{}' with checksum '{}': {}",
@@ -800,16 +800,6 @@ public class KafkaExecutor extends AbstractExecutor {
                 kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
             );
-    }
-
-    private static <T> KStream<String, T> logIfEnabled(KStream<String, T> stream, ForeachAction<String, T> action, String name) {
-        if (log.isDebugEnabled()) {
-            return stream
-                .filter((key, value) -> value != null, Named.as(name + "-null-filter"))
-                .peek(action, Named.as(name + "-peek"));
-        } else {
-            return stream;
-        }
     }
 
     public interface ExecutionInterface {

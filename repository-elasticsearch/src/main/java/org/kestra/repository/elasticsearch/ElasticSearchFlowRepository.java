@@ -119,8 +119,11 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
     @Override
     public List<Flow> findAllWithRevisions() {
+        BoolQueryBuilder defaultFilter = this.defaultFilter();
+        this.removeDeleted(defaultFilter);
+
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(this.defaultFilter())
+            .query(defaultFilter)
             .sort(new FieldSortBuilder("id").order(SortOrder.ASC))
             .sort(new FieldSortBuilder("revision").order(SortOrder.ASC));
 

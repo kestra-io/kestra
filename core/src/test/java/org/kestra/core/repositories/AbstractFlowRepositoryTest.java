@@ -51,10 +51,14 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     private static Flow.FlowBuilder builder() {
+        return builder(IdUtils.create(), "test");
+    }
+
+    private static Flow.FlowBuilder builder(String flowId, String taskId) {
         return Flow.builder()
-            .id(IdUtils.create())
+            .id(flowId)
             .namespace("org.kestra.unittest")
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()));
+            .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format("test").build()));
     }
 
     @Test
@@ -170,10 +174,15 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     void findAllWithRevisions() {
-        List<Flow> save = flowRepository.findAllWithRevisions();
+        String flowId = "findall_" + IdUtils.create();
 
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT + 1));
-        assertThat(save.stream().filter(flow -> flow.getId().equals("minimal")).count(), is(2L));
+        flowRepository.create(builder(flowId, "test").build());
+        flowRepository.create(builder(flowId, "test1").build());
+        Flow last = flowRepository.create(builder(flowId, "test2").build());
+        flowRepository.delete(last);
+
+        List<Flow> allWithRevisions = flowRepository.findAllWithRevisions();
+        assertThat(allWithRevisions.stream().filter(flow -> flow.getId().equals(flowId)).count(), is(4L));
     }
 
     @Test
@@ -196,7 +205,9 @@ public abstract class AbstractFlowRepositoryTest {
 
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(false));
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId(), Optional.of(save.getRevision())).isPresent(), is(true));
-        assertThat(flowRepository.findById(flow.getNamespace(), flow.getId(), Optional.of(delete.getRevision())).isPresent(), is(true));
+
+        List<Flow> revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
+        assertThat(revisions.get(revisions.size() - 1).getRevision(), is(delete.getRevision()));
     }
 
     @Test

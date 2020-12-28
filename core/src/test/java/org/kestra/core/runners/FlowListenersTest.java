@@ -11,6 +11,7 @@ import org.kestra.runner.memory.MemoryFlowListeners;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
@@ -59,7 +60,7 @@ abstract public class FlowListenersTest {
         }
 
         // create first
-        Flow first = create(IdUtils.create(), "test");
+        Flow first = create("first_" + IdUtils.create(), "test");
 
         flowRepository.create(first);
         wait(ref, () -> {
@@ -76,7 +77,7 @@ abstract public class FlowListenersTest {
         });
 
         // create a new one
-        flowRepository.create(create(IdUtils.create(), "test"));
+        flowRepository.create(create("second_" + IdUtils.create(), "test"));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
             assertThat(flowListenersService.flows().size(), is(2));
@@ -90,7 +91,7 @@ abstract public class FlowListenersTest {
         });
 
         // restore must works
-        flowRepository.create(first.withRevision(deleted.getRevision() + 1));
+        flowRepository.create(first);
         wait(ref, () -> {
             assertThat(count.get(), is(2));
             assertThat(flowListenersService.flows().size(), is(2));
@@ -103,7 +104,7 @@ abstract public class FlowListenersTest {
 
     @SneakyThrows
     private void wait(Ref ref, Runnable run) {
-        ref.countDownLatch.await();
+        ref.countDownLatch.await(60, TimeUnit.SECONDS);
         run.run();
         ref.countDownLatch = new CountDownLatch(1);
     }

@@ -24,7 +24,6 @@ import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -78,11 +77,23 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         public Topology topology() {
             StreamsBuilder builder = new StreamsBuilder();
 
-            builder
+            KStream<String, Flow> stream = builder
                 .stream(
                     kafkaAdminService.getTopicName(Flow.class),
                     Consumed.with(Serdes.String(), JsonSerde.of(Flow.class))
-                )
+                );
+
+            KStream<String, Flow> result = KafkaStreamSourceService.logIfEnabled(
+                stream,
+                (key, value) -> log.debug(
+                    "Flow in '{}.{}' with revision {}",
+                    value.getNamespace(),
+                    value.getId(),
+                    value.getRevision()
+                ),
+                "flow-in"
+            )
+                .selectKey((key, value) -> value.uidWithoutRevision(), Named.as("rekey"))
                 .groupBy(
                     (String key, Flow value) -> value.uidWithoutRevision(),
                     Grouped.<String, Flow>as("grouped")
@@ -100,7 +111,8 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                         .withKeySerde(Serdes.String())
                         .withValueSerde(JsonSerde.of(AllFlowRevision.class))
                 )
-                .mapValues((readOnlyKey, value) -> {
+                .mapValues(
+                    (readOnlyKey, value) -> {
                         List<Flow> flows = new ArrayList<>(flowService
                             .keepLastVersion(value.revisions));
 
@@ -112,7 +124,18 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                     },
                     Named.as("last")
                 )
-                .toStream()
+                .toStream();
+
+            KafkaStreamSourceService.logIfEnabled(
+                result,
+                (key, value) -> log.debug(
+                    "Flow out '{}.{}' with revision {}",
+                    value.getNamespace(),
+                    value.getId(),
+                    value.getRevision()
+                ),
+                "Flow-out"
+            )
                 .to(
                     kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_FLOWLAST),
                     Produced.with(Serdes.String(), JsonSerde.of(Flow.class))

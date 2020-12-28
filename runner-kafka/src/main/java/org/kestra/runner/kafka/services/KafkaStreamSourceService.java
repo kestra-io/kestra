@@ -1,5 +1,6 @@
 package org.kestra.runner.kafka.services;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -15,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
+@Slf4j
 public class KafkaStreamSourceService {
     public static final String TOPIC_FLOWLAST = "flowlast";
     public static final String TOPIC_EXECUTOR = "executor";
@@ -85,5 +87,16 @@ public class KafkaStreamSourceService {
                 (execution, flow) -> new KafkaExecutor.ExecutionWithFlow(flow, execution),
                 Named.as("withFlow-join")
             );
+    }
+
+
+    public static <T> KStream<String, T> logIfEnabled(KStream<String, T> stream, ForeachAction<String, T> action, String name) {
+        if (log.isDebugEnabled()) {
+            return stream
+                .filter((key, value) -> value != null, Named.as(name + "-null-filter"))
+                .peek(action, Named.as(name + "-peek"));
+        } else {
+            return stream;
+        }
     }
 }

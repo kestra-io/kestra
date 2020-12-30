@@ -41,13 +41,13 @@
                     <template
                         v-slot:cell(state.startDate)="row"
                     >
-                        {{ row.item.state.startDate | date('LLLL') }}
+                        <date-ago :date="row.item.state.startDate" />
                     </template>
                     <template
                         v-slot:cell(state.endDate)="row"
                     >
                         <span v-if="!isRunning(row.item)">
-                            {{ row.item.state.endDate | date('LLLL') }}
+                            <date-ago :date="row.item.state.endDate" />
                         </span>
                     </template>
                     <template v-slot:cell(state.current)="row">
@@ -98,6 +98,7 @@
     import StateGlobalChart from "../../components/stats/StateGlobalChart";
     import FlowTriggerDetailsModal from "../../components/flows/TriggerDetailsModal";
     import TriggerAvatar from "../../components/flows/TriggerAvatar";
+    import DateAgo from "../layout/DateAgo";
 
     export default {
         mixins: [RouteContext, DataTableActions],
@@ -112,7 +113,8 @@
             StatusFilterButtons,
             StateGlobalChart,
             FlowTriggerDetailsModal,
-            TriggerAvatar
+            TriggerAvatar,
+            DateAgo
         },
         data() {
             return {

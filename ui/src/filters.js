@@ -6,7 +6,7 @@ Vue.filter("id", value => value ? value.toString().substr(0, 8) : "");
 Vue.filter("humanizeDuration", (value, options) => {
     options = options || {maxDecimalPoints: 2}
     options.spacer = ""
-    var language = localStorage.getItem("lang") || "en"
+    const language = localStorage.getItem("lang") || "en"
     options.language = language
     options.languages = {}
     options.languages[language] = {
@@ -28,10 +28,10 @@ Vue.filter("lower", value => value ? value.toString().toLowerCase() : "");
 
 Vue.filter("date", (dateString, format) => {
     let f;
-    if (format === "full") {
-        f = "MMMM Do YYYY, h: mm: ss"
-    } else if (format === "human") {
+    if (format === undefined) {
         f = "LLLL"
+    } else if (format === "iso") {
+        f = "YYYY-MM-DD HH:mm:ss.SSS"
     } else {
         f = format
     }

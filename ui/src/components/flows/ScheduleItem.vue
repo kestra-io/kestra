@@ -23,7 +23,7 @@
                         </p>
 
                         <span v-if="occurences.length">
-                            <span v-for="(occurence, x) in occurences" :key="x">{{ occurence | date('LLL:ss') }}<br></span>
+                            <span v-for="(occurence, x) in occurences" :key="x">{{ occurence | date }}<br></span>
                         </span>
                     </div>
                     <span v-else>

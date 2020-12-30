@@ -15,6 +15,9 @@
                 >
                     {{ row.item.value }}
                 </router-link>
+                <span v-else-if="row.item.date">
+                    <date-ago :date="row.item.value" />
+                </span>
                 <span v-else>
                     <span v-if="row.item.key === $t('revision')">
                         <router-link
@@ -50,6 +53,7 @@
     import Restart from "./Restart";
     import Kill from "./Kill";
     import State from "../../utils/state";
+    import DateAgo from "../layout/DateAgo";
 
     const ts = date => new Date(date).getTime();
 
@@ -58,7 +62,8 @@
             Status,
             Restart,
             Vars,
-            Kill
+            Kill,
+            DateAgo
         },
         data() {
             return {
@@ -132,8 +137,8 @@
                         key: this.$t("revision"),
                         value: this.execution.flowRevision
                     },
-                    {key: this.$t("created date"), value: this.$moment(this.execution.state.histories[0].date).format("LLLL")},
-                    {key: this.$t("updated date"), value: this.$moment(this.stop()).format("LLLL")},
+                    {key: this.$t("created date"), value: this.execution.state.histories[0].date, date: true},
+                    {key: this.$t("updated date"), value: this.stop(), date: true},
                     {key: this.$t("duration"), value: this.duration()},
                     {key: this.$t("steps"), value: stepCount}
                 ];

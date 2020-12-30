@@ -15,10 +15,10 @@
                                 triggers="hover"
                             >
                                 {{ $t("from") }} :
-                                {{ attempt.state.startDate | date("LLL:ss") }}
+                                {{ attempt.state.startDate | date }}
                                 <br>
                                 {{ $t("to") }} :
-                                {{ attempt.state.endDate | date("LLL:ss") }}
+                                {{ attempt.state.endDate | date }}
                                 <br>
                                 <br>
                                 <clock />

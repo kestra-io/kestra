@@ -2,7 +2,7 @@
     <div class="line text-monospace" v-if="filtered">
         <span :class="levelClass" class="header-badge log-level">{{ log.level.padEnd(9) }}</span>
         <span class="header-badge bg-light text-dark">
-            {{ log.timestamp | date("LLLL") }}
+            {{ log.timestamp | date("iso") }}
         </span>
         <span v-for="(meta, x) in metaWithValue" :key="x">
             <span class="header-badge bg-light text-dark property">

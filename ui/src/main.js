@@ -48,10 +48,14 @@ if (app) {
 
   Vue.use(VueI18n);
 
+  let locale = localStorage.getItem("lang") || "en";
+
   let i18n = new VueI18n({
-    locale: localStorage.getItem("lang") || "en",
+    locale: locale,
     messages: Translations
   });
+
+  moment.locale(locale)
 
   const nprogress = new NProgress()
   Vue.use(NProgress, {

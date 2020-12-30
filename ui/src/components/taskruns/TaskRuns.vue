@@ -44,12 +44,12 @@
                         </router-link>
                     </template>
                     <template v-slot:cell(state.startDate)="row">
-                        {{ row.item.state.startDate | date('LLLL') }}
+                        <date-ago :date="row.item.state.startDate" />
                     </template>
                     <template v-slot:cell(state.endDate)="row">
-                        <span
-                            v-if="!isRunning(row.item)"
-                        >{{ row.item.state.endDate | date('LLLL') }}</span>
+                        <span v-if="!isRunning(row.item)">
+                            <date-ago :date="row.item.state.endDate" />
+                        </span>
                     </template>
                     <template v-slot:cell(state.current)="row">
                         <status
@@ -102,6 +102,7 @@
     import RefreshButton from "../layout/RefreshButton";
     import StatusFilterButtons from "../layout/StatusFilterButtons";
     import StateGlobalChart from "../../components/stats/StateGlobalChart";
+    import DateAgo from "../layout/DateAgo";
 
     export default {
         mixins: [RouteContext, DataTableActions],
@@ -115,6 +116,7 @@
             RefreshButton,
             StatusFilterButtons,
             StateGlobalChart,
+            DateAgo
         },
         data() {
             return {

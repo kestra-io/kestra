@@ -31,7 +31,7 @@ export default class Utils {
             if (typeof(flat[key]) === "string") {
                 let date = moment(flat[key], moment.ISO_8601);
                 if (date.isValid()) {
-                    return {key, value: date.format("LLLL")};
+                    return {key, value: flat[key], date: true};
                 }
             }
 

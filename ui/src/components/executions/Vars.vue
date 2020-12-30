@@ -30,15 +30,24 @@
         <template v-slot:cell(key)="row">
             <code>{{ row.item.key }}</code>
         </template>
+
+        <template v-slot:cell(value)="row">
+            <template v-if="row.item.date">
+                <date-ago :inverted="true" :date="row.item.value" />
+            </template>
+            <code v-else>{{ row.item.key }}</code>
+        </template>
     </b-table>
 </template>
 
 <script>
     import Utils from "../../utils/utils";
     import VarValue from "./VarValue";
+    import DateAgo from "@/components/layout/DateAgo";
 
     export default {
         components: {
+            DateAgo,
             VarValue,
         },
         props: {

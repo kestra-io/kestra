@@ -1,11 +1,9 @@
 <template>
     <div class="line text-monospace" v-if="filtered">
-        <span :class="levelClass" class="header-badge">{{
-            log.level.padEnd(9)
-        }}</span>
-        <span class="header-badge bg-light text-dark">{{
-            log.timestamp | date("LLLL")
-        }}</span>
+        <span :class="levelClass" class="header-badge log-level">{{ log.level.padEnd(9) }}</span>
+        <span class="header-badge bg-light text-dark">
+            {{ log.timestamp | date("LLLL") }}
+        </span>
         <span v-for="(meta, x) in metaWithValue" :key="x">
             <span class="header-badge bg-light text-dark property">
                 <span>{{ meta.key }}</span>
@@ -91,6 +89,10 @@ div.line {
         white-space: nowrap;
         vertical-align: baseline;
         margin-right: 10px;
+
+        &.log-level {
+            white-space: pre;
+        }
 
         &.property {
             padding: $badge-padding-y $badge-padding-x/2;

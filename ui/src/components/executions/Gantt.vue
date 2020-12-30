@@ -50,7 +50,7 @@
                     </tr>
                     <tr v-if="task && task.id === taskItem.id">
                         <td :colspan="dates.length + 1">
-                            <log-list :task-run-id="task.id" level="TRACE" />
+                            <log-list :task-run-id="task.id" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" level="TRACE" />
                         </td>
                     </tr>
                 </tbody>
@@ -107,15 +107,6 @@
             },
             partialSeries() {
                 return (this.series || []).slice(0, this.usePartialSerie ? TASK_THRESHOLD : this.tasksCount)
-            },
-            hasTaskLog() {
-                return (
-                    this.task &&
-                    this.task.attempts &&
-                    this.task.attempts.length &&
-                    this.task.attempts[0].logs &&
-                    this.task.attempts[0].logs.length
-                );
             },
             start() {
                 return this.execution ? ts(this.execution.state.histories[0].date) : 0;

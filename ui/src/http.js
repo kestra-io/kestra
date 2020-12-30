@@ -27,7 +27,6 @@ export default (callback, store, nprogress) => {
             return response
         }, errorResponse => {
             if (errorResponse.response && errorResponse.response.data) {
-                console.log("response", errorResponse.response.data)
                 store.dispatch("core/showMessage", {
                     content: errorResponse.response.data,
                     variant: "danger"

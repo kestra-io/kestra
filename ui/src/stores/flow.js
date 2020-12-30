@@ -29,16 +29,22 @@ export default {
                 return response.data;
             })
         },
-        saveFlow({commit}, options) {
-            return Vue.axios.put(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}`, options.flow).then(response => {
-                if (response.status >= 300) {
-                    return Promise.reject(new Error("Server error on flow save"))
-                } else {
-                    commit("setFlow", response.data)
+        saveFlow({commit, dispatch}, options) {
+            return Vue.axios.put(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}`, options.flow)
+                .then(response => {
+                    if (response.status >= 300) {
+                        return Promise.reject(new Error("Server error on flow save"))
+                    } else {
+                        commit("setFlow", response.data)
 
-                    return response.data;
-                }
-            })
+                        return response.data;
+                    }
+                })
+                .then(flow => {
+                    dispatch("loadGraph", flow);
+
+                    return flow;
+                })
         },
         updateFlowTask({commit}, options) {
             return Vue.axios.patch(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
@@ -83,6 +89,7 @@ export default {
         },
         setFlow(state, flow) {
             state.flow = flow;
+            state.flowGraph = undefined
         },
         setTrigger(state, {index, trigger}) {
             let flow = state.flow;

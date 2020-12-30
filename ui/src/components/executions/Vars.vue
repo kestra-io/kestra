@@ -35,7 +35,7 @@
             <template v-if="row.item.date">
                 <date-ago :inverted="true" :date="row.item.value" />
             </template>
-            <code v-else>{{ row.item.key }}</code>
+            <code v-else>{{ row.item.value }}</code>
         </template>
     </b-table>
 </template>

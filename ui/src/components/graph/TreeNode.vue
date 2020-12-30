@@ -214,7 +214,6 @@
                 return this.n.taskRun ? this.n.taskRun.state.current : undefined;
             },
             duration() {
-                console.log(this.n.taskRun)
                 return this.n.taskRun ? this.n.taskRun.state.duration : null;
             },
             nodeClass() {

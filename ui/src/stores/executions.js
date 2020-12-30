@@ -83,6 +83,7 @@ export default {
         },
         setExecution(state, execution) {
             state.execution = execution
+            state.flowGraph = undefined
         },
         setTaskRun(state, taskRun) {
             state.taskRun = taskRun

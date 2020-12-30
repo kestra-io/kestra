@@ -2,7 +2,7 @@
     <div v-if="execution" class="log-wrapper text-white">
         <div v-for="currentTaskRun in execution.taskRunList" :key="currentTaskRun.id">
             <template
-                v-if="(!task || task.id === currentTaskRun.id)"
+                v-if="(!taskRun || taskRun.id === currentTaskRun.id)"
             >
                 <div class="bg-dark attempt-wrapper">
                     <template v-for="(attempt, index) in attempts(currentTaskRun)">
@@ -176,7 +176,7 @@
             this.loadLogs();
         },
         computed: {
-            ...mapState("execution", ["execution", "task", "logs"]),
+            ...mapState("execution", ["execution", "taskRun", "logs"]),
         },
         methods: {
             toggleShowOutput(taskRun) {

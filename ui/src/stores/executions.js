@@ -4,7 +4,7 @@ export default {
     state: {
         executions: undefined,
         execution: undefined,
-        task: undefined,
+        taskRun: undefined,
         total: 0,
         flowGraph: undefined,
         logs: []
@@ -84,8 +84,8 @@ export default {
         setExecution(state, execution) {
             state.execution = execution
         },
-        setTask(state, task) {
-            state.task = task
+        setTaskRun(state, taskRun) {
+            state.taskRun = taskRun
         },
         setTotal(state, total) {
             state.total = total

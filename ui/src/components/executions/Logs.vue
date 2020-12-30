@@ -11,7 +11,7 @@
     export default {
         components: {LogList, LogFilters},
         computed: {
-            ...mapState("execution", ["execution", "task", "logs"]),
+            ...mapState("execution", ["execution", "taskRun", "logs"]),
             filterTerm() {
                 return (this.$route.query.q || "").toLowerCase();
             },

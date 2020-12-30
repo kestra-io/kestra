@@ -1,6 +1,6 @@
 <template>
-    <div class="node-wrapper">
-        <div class="status-color" v-if="n.taskRun" :class="contentCls" />
+    <div class="node-wrapper" :class="nodeClass">
+        <div class="status-color" v-if="!isFlow" :class="statusClass" />
         <div class="task-content">
             <div class="card-header">
                 <div class="icon-wrapper">
@@ -15,7 +15,6 @@
                     </div>
                     <span>{{ task.id }}</span>
                 </div>
-            <!-- <menu-open class="node-action" @click="onSettings" /> -->
             </div>
             <div v-if="task.state" class="status-wrapper">
                 <status :status="state" />
@@ -34,41 +33,19 @@
                     </b-button>
 
                     <b-button
-                        v-if="!isFlow"
-                        :disabled="!hasLogs"
+                        v-if="!isFlow && n.taskRun"
                         class="node-action"
                         :title="$t('show task logs')"
+                        :disabled="!n.taskRun"
+                        @click="onTaskRunSelect(n.taskRun)"
+                        v-b-modal="`modal-logs-${n.taskRun.id}`"
                     >
-                        <router-link
-                            :title="$t('show task logs')"
-                            v-if="hasLogs"
-                            class="btn-secondary"
-                            :to="{name:'executionEdit', params: $route.params, query: {tab:'logs', search: task.id}}"
-                        >
-                            <format-list-checks title />
-                        </router-link>
-                        <format-list-checks v-else title />
-                    </b-button>
-                    <b-button
-                        v-if="!isFlow"
-                        :disabled="!hasOutputs"
-                        class="node-action"
-                        :title="$t('show task outputs')"
-                    >
-                        <router-link
-                            v-if="hasOutputs"
-                            class="btn-secondary"
-                            :title="$t('show task outputs')"
-                            :to="{name:'executionEdit', params: $route.params, query: {tab:'execution-output', search: taskRunOutputToken(n.taskRun)}}"
-                        >
-                            <location-exit title />
-                        </router-link>
-                        <location-exit v-else title />
+                        <text-box-search :title="$t('show task logs')" />
                     </b-button>
                     <b-button
                         class="node-action"
                         size="sm"
-                        v-b-modal="`modal-${hash}`"
+                        v-b-modal="`modal-source-${hash}`"
                         :title="$t('show task source')"
                     >
                         <code-tags />
@@ -79,7 +56,7 @@
         </div>
 
         <b-modal
-            :id="`modal-${hash}`"
+            :id="`modal-source-${hash}`"
             :title="`Task ${task.id}`"
             header-bg-variant="dark"
             header-text-variant="light"
@@ -96,13 +73,26 @@
 
             <editor @onSave="saveTask" v-model="taskYaml" lang="yaml" />
         </b-modal>
+
+        <b-modal
+            :id="`modal-logs-${n.taskRun.id}`"
+            :title="`Task ${task.id}`"
+            header-bg-variant="dark"
+            header-text-variant="light"
+            hide-backdrop
+            hide-footer
+            modal-class="right"
+            size="xl"
+            v-if="n.taskRun"
+        >
+            <log-list :task-run-id="n.taskRun.id" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" level="TRACE" />
+        </b-modal>
     </div>
 </template>
 <script>
     import Console from "vue-material-design-icons/Console";
     import CodeTags from "vue-material-design-icons/CodeTags";
-    import FormatListChecks from "vue-material-design-icons/FormatListChecks";
-    import LocationExit from "vue-material-design-icons/LocationExit";
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
     import CurrentAc from "vue-material-design-icons/CurrentAc";
 
     import SubFlowLink from "../flows/SubFlowLink"
@@ -115,6 +105,7 @@
     import Editor from "../../components/inputs/Editor";
     import ContentSave from "vue-material-design-icons/ContentSave";
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
+    import LogList from "../logs/LogList";
 
     export default {
         components: {
@@ -122,12 +113,12 @@
             Status,
             Console,
             CodeTags,
-            FormatListChecks,
-            LocationExit,
+            TextBoxSearch,
             CurrentAc,
             SubFlowLink,
             Editor,
             ContentSave,
+            LogList
         },
         props: {
             n: {
@@ -148,14 +139,14 @@
             }
         },
         methods: {
-            d(task) {
-                console.log(task)
-            },
             taskRunOutputToken(taskRun) {
                 return md5(taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ""));
             },
             onFilterGroup() {
                 this.$emit("onFilterGroup", this.task.id);
+            },
+            onTaskRunSelect(taskRun) {
+                this.$store.commit("execution/setTaskRun", taskRun);
             },
             onSettings() {
                 if (this.node) {
@@ -203,11 +194,7 @@
             ...mapState("graph", ["node"]),
             ...mapState("auth", ["user"]),
             hasLogs() {
-                // @TODO
                 return true;
-            // return (
-            //     this.attempts.filter(attempt => attempt.logs.length).length > 0
-            // );
             },
             hasOutputs() {
                 return this.n.taskRun && this.n.taskRun.outputs;
@@ -223,18 +210,21 @@
             childrenCount() {
                 return this.n.children ? this.n.children.length : 0;
             },
-
             state() {
-                return this.n.taskRun ? this.n.taskRun.state.current : State.SUCCESS;
+                return this.n.taskRun ? this.n.taskRun.state.current : undefined;
             },
             duration() {
+                console.log(this.n.taskRun)
                 return this.n.taskRun ? this.n.taskRun.state.duration : null;
             },
-            contentCls() {
+            nodeClass() {
                 return {
-                    "is-success": ![State.RUNNING, State.FAILED].includes(this.state),
-                    "is-running": this.state === State.RUNNING,
-                    "is-failed": this.state === State.FAILED
+                    ["task-disabled"]: this.task.disabled,
+                };
+            },
+            statusClass() {
+                return {
+                    ["bg-" + State.colorClass()[this.state]]: true,
                 };
             },
             task() {
@@ -256,6 +246,11 @@
     cursor: pointer;
     display: flex;
     width: 180px;
+    &.task-disabled {
+        .card-header .task-title {
+            text-decoration: line-through;
+        }
+    }
 
     .status-color {
         width: 10px;
@@ -273,6 +268,10 @@
 
     .is-failed {
         background-color: $red;
+    }
+
+    .bg-undefined {
+        background-color: $gray-400;
     }
 
     .task-content {

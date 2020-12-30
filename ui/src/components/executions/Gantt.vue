@@ -10,47 +10,47 @@
                         </td>
                     </tr>
                 </thead>
-                <tbody v-for="taskItem in partialSeries" :key="taskItem.id">
+                <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
                     <tr>
-                        <th :id="`task-title-wrapper-${taskItem.id}`">
-                            <sub-flow-link class="sub-flow" v-if="taskItem.executionId" tab-execution="gantt" :execution-id="taskItem.executionId" :namespace="taskItem.namespace" :flow-id="taskItem.flowId" />
-                            <code>{{ taskItem.name }}</code>
-                            <small v-if="taskItem.task && taskItem.task.value"> {{ taskItem.task.value }}</small>
+                        <th :id="`task-title-wrapper-${currentTaskRun.id}`">
+                            <sub-flow-link class="sub-flow" v-if="currentTaskRun.executionId" tab-execution="gantt" :execution-id="currentTaskRun.executionId" :namespace="currentTaskRun.namespace" :flow-id="currentTaskRun.flowId" />
+                            <code>{{ currentTaskRun.name }}</code>
+                            <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
                             <b-tooltip
                                 placement="right"
-                                :target="`task-title-wrapper-${taskItem.id}`"
+                                :target="`task-title-wrapper-${currentTaskRun.id}`"
                             >
-                                <code>{{ taskItem.name }}</code>
-                                <span v-if="taskItem.task && taskItem.task.value"><br>{{ taskItem.task.value }}</span>
+                                <code>{{ currentTaskRun.name }}</code>
+                                <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
                             </b-tooltip>
                         </th>
                         <td :colspan="dates.length">
                             <b-tooltip
-                                :target="`task-progress-${taskItem.id}`"
+                                :target="`task-progress-${currentTaskRun.id}`"
                                 placement="left"
                             >
-                                <span v-html="taskItem.tooltip" />
+                                <span v-html="currentTaskRun.tooltip" />
                             </b-tooltip>
                             <div
-                                :style="{left: Math.max(1, (taskItem.start - 1)) + '%', width: taskItem.width - 1 + '%'}"
+                                :style="{left: Math.max(1, (currentTaskRun.start - 1)) + '%', width: currentTaskRun.width - 1 + '%'}"
                                 class="task-progress"
-                                @click="onTaskSelect(taskItem.task)"
-                                :id="`task-progress-${taskItem.id}`"
+                                @click="onTaskSelect(currentTaskRun.task)"
+                                :id="`task-progress-${currentTaskRun.id}`"
                             >
                                 <div class="progress">
                                     <div
                                         class="progress-bar"
-                                        :style="{left: taskItem.left + '%', width: (100-taskItem.left) + '%'}"
-                                        :class="'bg-' + taskItem.color + (taskItem.running ? ' progress-bar-striped' : '')"
+                                        :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
+                                        :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped' : '')"
                                         role="progressbar"
                                     />
                                 </div>
                             </div>
                         </td>
                     </tr>
-                    <tr v-if="task && task.id === taskItem.id">
+                    <tr v-if="taskRun && taskRun.id === currentTaskRun.id">
                         <td :colspan="dates.length + 1">
-                            <log-list :task-run-id="task.id" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" level="TRACE" />
+                            <log-list :task-run-id="taskRun.id" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" level="TRACE" />
                         </td>
                     </tr>
                 </tbody>
@@ -66,7 +66,7 @@
     import SubFlowLink from "../flows/SubFlowLink"
 
     const ts = date => new Date(date).getTime();
-    const TASK_THRESHOLD = 50
+    const TASKRUN_THRESHOLD = 50
     export default {
         components: {LogList, SubFlowLink},
         data() {
@@ -91,7 +91,7 @@
             const repaint = () => {
                 this.compute()
                 if (this.realTime) {
-                    const delay = this.tasksCount < TASK_THRESHOLD ? 40 : 500
+                    const delay = this.taskRunsCount < TASKRUN_THRESHOLD ? 40 : 500
                     setTimeout(repaint, delay);
                 }
             }
@@ -101,12 +101,12 @@
             }, 500);
         },
         computed: {
-            ...mapState("execution", ["task", "execution"]),
-            tasksCount() {
+            ...mapState("execution", ["taskRun", "execution"]),
+            taskRunsCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },
             partialSeries() {
-                return (this.series || []).slice(0, this.usePartialSerie ? TASK_THRESHOLD : this.tasksCount)
+                return (this.series || []).slice(0, this.usePartialSerie ? TASKRUN_THRESHOLD : this.taskRunsCount)
             },
             start() {
                 return this.execution ? ts(this.execution.state.histories[0].date) : 0;
@@ -248,9 +248,9 @@
             computeDuration() {
                 this.duration = humanizeDuration(this.delta());
             },
-            onTaskSelect(task) {
-                task = this.task && this.task.id === task.id ? undefined : task;
-                this.$store.commit("execution/setTask", task);
+            onTaskSelect(taskRun) {
+                taskRun = this.taskRun && this.taskRun.id === taskRun.id ? undefined : taskRun;
+                this.$store.commit("execution/setTaskRun", taskRun);
             },
             stopRealTime() {
                 this.realTime = false

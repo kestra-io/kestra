@@ -206,7 +206,7 @@
                 }
 
                 // add cluster
-                for (let cluster of this.flowGraph.clusters) {
+                for (let cluster of this.flowGraph.clusters || []) {
                     g.setNode(cluster.cluster.uid, {
                         label: cluster.cluster.task.id,
                         clusterLabelPos: "top",

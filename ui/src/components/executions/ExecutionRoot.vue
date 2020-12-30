@@ -108,7 +108,7 @@
                 }
             },
             setTab(tab) {
-                this.$store.commit("execution/setTask", undefined);
+                this.$store.commit("execution/setTaskRun", undefined);
                 this.$router.push({
                     name: "executionEdit",
                     params: this.$route.params,

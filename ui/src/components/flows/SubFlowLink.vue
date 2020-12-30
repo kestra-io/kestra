@@ -37,11 +37,15 @@
         },
         methods: {
             click() {
-                this.$store
-                    .dispatch("execution/loadExecution", {id: this.executionId})
-                    .then(value => {
-                        this.$router.push({name:this.routeName, params: this.params(value), query: this.query})
-                    })
+                if (this.execution) {
+                    this.$store
+                        .dispatch("execution/loadExecution", {id: this.executionId})
+                        .then(value => {
+                            this.$router.push({name: this.routeName, params: this.params(value), query: this.query})
+                        })
+                } else {
+                    this.$router.push({name: this.routeName, params: this.params(), query: this.query})
+                }
 
             },
             params (execution) {

@@ -46,12 +46,18 @@ export default {
                     return flow;
                 })
         },
-        updateFlowTask({commit}, options) {
-            return Vue.axios.patch(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
-                commit("setFlow", response.data)
+        updateFlowTask({commit, dispatch}, options) {
+            return Vue.axios
+                .patch(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
+                    commit("setFlow", response.data)
 
-                return response.data;
-            })
+                    return response.data;
+                })
+                .then(flow => {
+                    dispatch("loadGraph", flow);
+
+                    return flow;
+                })
         },
         createFlow({commit}, options) {
             return Vue.axios.post("/api/v1/flows", options.flow).then(response => {

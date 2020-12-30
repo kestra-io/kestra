@@ -47,14 +47,22 @@
             Revisions,
             Logs
         },
+        watch: {
+            $route() {
+                this.onLoad()
+            }
+        },
         created() {
-            this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
-                if (this.flow) {
-                    this.$store.dispatch("flow/loadGraph", this.flow);
-                }
-            });
+            this.onLoad();
         },
         methods: {
+            onLoad() {
+                this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
+                    if (this.flow) {
+                        this.$store.dispatch("flow/loadGraph", this.flow);
+                    }
+                });
+            },
             setTab(tab) {
                 this.$router.push({
                     name: "flowEdit",

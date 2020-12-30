@@ -51,6 +51,12 @@
                                 </div>
 
                                 <b-button-group>
+                                    <sub-flow-link
+                                        v-if="currentTaskRun.outputs && currentTaskRun.outputs.executionId"
+                                        tab-execution="gantt"
+                                        :execution-id="currentTaskRun.outputs.executionId"
+                                    />
+
                                     <b-button
                                         :disabled="!currentTaskRun.metrics || currentTaskRun.metrics.length ===0"
                                         :title="$t('toggle metrics')"
@@ -132,6 +138,7 @@
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";
     import State from "../../utils/state";
     import Status from "../Status";
+    import SubFlowLink from "../flows/SubFlowLink"
 
     export default {
         components: {
@@ -141,7 +148,8 @@
             LocationExit,
             Vars,
             ChartAreaspline,
-            Status
+            Status,
+            SubFlowLink
         },
         props: {
             level: {

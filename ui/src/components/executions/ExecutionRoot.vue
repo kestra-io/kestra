@@ -43,9 +43,8 @@
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
     import Pencil from "vue-material-design-icons/Pencil";
-    import permission from "@/models/permission";
-    import action from "@/models/action";
-
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
     export default {
         mixins: [RouteContext],

@@ -196,7 +196,8 @@ public class RunContext {
                 builder
                     .put("flow", ImmutableMap.of(
                         "id", flow.getId(),
-                        "namespace", flow.getNamespace()
+                        "namespace", flow.getNamespace(),
+                        "revision", flow.getRevision()
                     ));
 
                 builder

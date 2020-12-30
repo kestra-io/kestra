@@ -32,6 +32,13 @@
                         <markdown-tooltip :id="hash" :description="task.description" />
                     </b-button>
 
+                    <sub-flow-link
+                        v-if="task.type === 'org.kestra.core.tasks.flows.Flow'"
+                        :execution-id="n.taskRun && n.taskRun.outputs.executionId ? n.taskRun.outputs.executionId : undefined"
+                        :namespace="task.namespace"
+                        :flow-id="task.flowId"
+                    />
+
                     <b-button
                         v-if="!isFlow && n.taskRun"
                         class="node-action"
@@ -50,7 +57,6 @@
                     >
                         <code-tags />
                     </b-button>
-                    <sub-flow-link v-if="task.type === 'org.kestra.core.tasks.flows.Flow'" :execution-id="n.taskRun && n.taskRun.executionId" :namespace="task.namespace" :flow-id="task.flowId" />
                 </b-btn-group>
             </div>
         </div>

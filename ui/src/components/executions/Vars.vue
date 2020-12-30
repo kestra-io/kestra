@@ -35,7 +35,14 @@
             <template v-if="row.item.date">
                 <date-ago :inverted="true" :date="row.item.value" />
             </template>
-            <code v-else>{{ row.item.value }}</code>
+            <template v-if="row.item.subflow">
+                {{ row.item.value }}
+                <sub-flow-link
+                    class="btn-xs"
+                    :execution-id="row.item.value"
+                />
+            </template>
+            <template v-else>{{ row.item.value }}</template>
         </template>
     </b-table>
 </template>
@@ -43,12 +50,14 @@
 <script>
     import Utils from "../../utils/utils";
     import VarValue from "./VarValue";
-    import DateAgo from "@/components/layout/DateAgo";
+    import DateAgo from "../../components/layout/DateAgo";
+    import SubFlowLink from "../flows/SubFlowLink"
 
     export default {
         components: {
             DateAgo,
             VarValue,
+            SubFlowLink
         },
         props: {
             data: {

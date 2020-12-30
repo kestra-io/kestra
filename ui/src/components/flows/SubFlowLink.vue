@@ -1,16 +1,10 @@
 <template>
-    <div>
-        <slot v-if="useSlot" />
-        <router-link v-else :to="{name:this.routeName, params: this.params, query: this.query}">
-            <b-button
-                class="node-action"
-                size="sm"
-                :title="$t('link to sub flow')"
-            >
-                <axis-y-arrow title />
-            </b-button>
-        </router-link>
-    </div>
+    <b-button
+        @click="click"
+        class="node-action"
+    >
+        <axis-y-arrow :title="$t('link to sub flow')" />
+    </b-button>
 </template>
 <script>
     import AxisYArrow from "vue-material-design-icons/AxisYArrow";
@@ -20,21 +14,17 @@
             AxisYArrow
         },
         props: {
-            useSlot: {
-                type :Boolean,
-                default: false
+            executionId: {
+                type :String,
+                default: undefined
             },
             namespace: {
-                type :String,
-                required: true
-            },
-            executionId: {
                 type :String,
                 default: undefined
             },
             flowId: {
                 type :String,
-                required: true
+                default: undefined
             },
             tabFlow: {
                 type :String,
@@ -45,17 +35,28 @@
                 default: "topology"
             }
         },
-        computed : {
-            routeName () {
-                return this.executionId ? "executionEdit" : "flowEdit"
+        methods: {
+            click() {
+                this.$store
+                    .dispatch("execution/loadExecution", {id: this.executionId})
+                    .then(value => {
+                        this.$router.push({name:this.routeName, params: this.params(value), query: this.query})
+                    })
+
             },
-            params () {
-                if (this.executionId) {
-                    return {namespace: this.namespace, flowId: this.flowId, id: this.executionId}
+            params (execution) {
+                if (execution) {
+                    return {namespace: execution.namespace, flowId: execution.flowId, id: execution.id}
                 } else {
                     return {namespace: this.namespace, id: this.flowId}
                 }
             },
+        },
+        computed : {
+            routeName () {
+                return this.executionId ? "executionEdit" : "flowEdit"
+            },
+
             query () {
                 return this.executionId ? {tab: this.tabExecution} : {tab: this.tabFlow}
             }

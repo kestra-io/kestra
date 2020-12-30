@@ -29,6 +29,8 @@ export default {
         loadExecution({commit}, options) {
             return Vue.axios.get(`/api/v1/executions/${options.id}`).then(response => {
                 commit("setExecution", response.data)
+
+                return response.data;
             })
         },
         findExecutions({commit}, options) {

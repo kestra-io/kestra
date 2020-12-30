@@ -57,6 +57,7 @@ public class Execution implements DeletedInterface {
 
     private String parentId;
 
+    @With
     private ExecutionTrigger trigger;
 
     @NotNull

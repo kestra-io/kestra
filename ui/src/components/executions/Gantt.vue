@@ -13,7 +13,6 @@
                 <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
                     <tr>
                         <th :id="`task-title-wrapper-${currentTaskRun.id}`">
-                            <sub-flow-link class="sub-flow" v-if="currentTaskRun.executionId" tab-execution="gantt" :execution-id="currentTaskRun.executionId" :namespace="currentTaskRun.namespace" :flow-id="currentTaskRun.flowId" />
                             <code>{{ currentTaskRun.name }}</code>
                             <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
                             <b-tooltip
@@ -63,12 +62,11 @@
     import {mapState} from "vuex";
     import humanizeDuration from "humanize-duration";
     import State from "../../utils/state";
-    import SubFlowLink from "../flows/SubFlowLink"
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50
     export default {
-        components: {LogList, SubFlowLink},
+        components: {LogList},
         data() {
             return {
                 colors: State.colorClass(),
@@ -325,18 +323,6 @@ table {
 
 /deep/ .log-wrapper .attempt-wrapper {
     margin-bottom: 0;
-}
-
-.sub-flow {
-    display: inline;
-    margin-right: 5px;
-    /deep/ button {
-        font-size: 0.8em;
-        height: 20px;
-        width: 20px;
-        padding: 0px;
-        border-radius: 5px;
-    }
 }
 
 </style>

@@ -2,10 +2,10 @@
     <div v-if="execution" class="log-wrapper text-white">
         <div v-for="currentTaskRun in execution.taskRunList" :key="currentTaskRun.id">
             <template
-                v-if="(!task || task.id === currentTaskRun.id) && currentTaskRun.attempts"
+                v-if="(!task || task.id === currentTaskRun.id)"
             >
                 <div class="bg-dark attempt-wrapper">
-                    <template v-for="(attempt, index) in currentTaskRun.attempts">
+                    <template v-for="(attempt, index) in attempts(currentTaskRun)">
                         <div
                             :key="`attempt-${index}-${currentTaskRun.id}`"
                         >
@@ -216,6 +216,11 @@
                         params: params,
                     });
                 }
+            },
+            attempts(taskRun) {
+                return taskRun.attempts || [{
+                    state: taskRun.state
+                }];
             },
             findLogs(taskRunId, attemptNumber) {
                 return (this.logs || []).filter((log) => {

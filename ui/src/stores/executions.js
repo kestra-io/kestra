@@ -5,6 +5,7 @@ export default {
         executions: undefined,
         execution: undefined,
         taskRun: undefined,
+        task: undefined,
         total: 0,
         flowGraph: undefined,
         logs: []
@@ -65,13 +66,6 @@ export default {
         followLogs(_, options) {
             return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/logs/${options.id}/follow`, {format: "json", params: options.params})
         },
-        loadGraph({commit}, execution) {
-            return Vue.axios.get(`/api/v1/executions/${execution.id}/graph`).then(response => {
-                commit("setFlowGraph", response.data)
-
-                return response.data;
-            })
-        },
         loadLogs({commit}, options) {
             return Vue.axios.get(`/api/v1/logs/${options.executionId}`, {
                 params: options.params
@@ -86,16 +80,15 @@ export default {
         },
         setExecution(state, execution) {
             state.execution = execution
-            state.flowGraph = undefined
+        },
+        setTask(state, task) {
+            state.task = task
         },
         setTaskRun(state, taskRun) {
             state.taskRun = taskRun
         },
         setTotal(state, total) {
             state.total = total
-        },
-        setFlowGraph(state, tree) {
-            state.flowGraph = tree
         },
         setLogs(state, logs) {
             state.logs = logs

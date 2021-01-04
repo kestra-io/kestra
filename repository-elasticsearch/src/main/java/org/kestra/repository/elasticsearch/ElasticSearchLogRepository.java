@@ -68,6 +68,23 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     }
 
     @Override
+    public List<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel) {
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.termQuery("executionId", executionId))
+            .must(QueryBuilders.termQuery("taskId", taskId));
+
+        if (minLevel != null) {
+            bool.must(minLevel(minLevel));
+        }
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool)
+            .sort("timestamp", SortOrder.ASC);
+
+        return this.scroll(INDEX_NAME, sourceBuilder);
+    }
+
+    @Override
     public List<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel) {
         BoolQueryBuilder bool = this.defaultFilter()
             .must(QueryBuilders.termQuery("executionId", executionId))

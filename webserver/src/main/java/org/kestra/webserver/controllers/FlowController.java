@@ -39,9 +39,9 @@ public class FlowController {
      * @return flow tree found
      */
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
-    public FlowGraph flowGraph(String namespace, String id) throws IllegalVariableEvaluationException {
+    public FlowGraph flowGraph(String namespace, String id, Optional<Integer> revision) throws IllegalVariableEvaluationException {
         return flowRepository
-            .findById(namespace, id)
+            .findById(namespace, id, revision)
             .map(throwFunction(FlowGraph::of))
             .orElse(null);
     }

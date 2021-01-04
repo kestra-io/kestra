@@ -23,11 +23,27 @@
                 ],
             };
         },
+        props: {
+            router: {
+                type: Boolean,
+                default: true
+            },
+            logLevel: {
+                type: String,
+                default: "INFO"
+            }
+        },
+        created() {
+            this.level = this.logLevel;
+        },
         methods: {
             onChange() {
-                const query = {...this.$route.query, level: this.level};
-                this.$router.push({query});
-                this.$emit("onChange");
+                if (this.router) {
+                    const query = {...this.$route.query, level: this.level};
+                    this.$router.push({query});
+                }
+
+                this.$emit("onChange", this.level);
             },
         },
     };

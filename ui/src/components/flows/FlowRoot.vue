@@ -111,7 +111,8 @@
                 const tabs = [
                     {
                         tab: "overview",
-                        title: title("overview")
+                        title: title("overview"),
+                        class: "p-0"
                     },
                 ];
 

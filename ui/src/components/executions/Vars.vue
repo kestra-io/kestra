@@ -42,7 +42,9 @@
                     :execution-id="row.item.value"
                 />
             </template>
-            <template v-else>{{ row.item.value }}</template>
+            <template v-else>
+                {{ row.item.value }}
+            </template>
         </template>
     </b-table>
 </template>

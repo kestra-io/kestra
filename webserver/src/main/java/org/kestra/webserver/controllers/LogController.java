@@ -68,9 +68,12 @@ public class LogController {
     public List<LogEntry> findByExecution(
         String executionId,
         @Nullable @QueryValue(value = "minLevel") Level minLevel,
-        @Nullable @QueryValue(value = "taskRunId") String taskRunId
+        @Nullable @QueryValue(value = "taskRunId") String taskRunId,
+        @Nullable @QueryValue(value = "taskId") String taskId
     ) {
-        if (taskRunId != null) {
+        if (taskId != null) {
+            return logRepository.findByExecutionIdAndTaskId(executionId, taskId, minLevel);
+        } else if (taskRunId != null) {
             return logRepository.findByExecutionIdAndTaskRunId(executionId, taskRunId, minLevel);
         } else {
             return logRepository.findByExecutionId(executionId, minLevel);

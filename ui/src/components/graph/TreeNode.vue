@@ -1,17 +1,12 @@
 <template>
     <div class="node-wrapper" :class="nodeClass">
-        <div class="status-color" v-if="!isFlow" :class="statusClass" />
+        <div class="status-color" v-if="this.execution" :class="statusClass" />
         <div class="task-content">
             <div class="card-header">
-                <div class="icon-wrapper">
-                <!-- <img src=""/> -->
-                </div>
+
                 <div class="task-title">
-                    <div :title="task.type" v-if="!childrenCount" class="task-item">
-                        <console title />
-                    </div>
-                    <div v-else :title="$t('stream')" class="task-item">
-                        <current-ac title />
+                    <div :title="task.type" class="task-item">
+                        <console :title="task.type" />
                     </div>
                     <span>{{ task.id }}</span>
                 </div>
@@ -20,35 +15,39 @@
                 <status :status="state" />
             </div>
             <div class="info-wrapper">
-                <span class="duration">
+                <span class="bottom">
+                    <b-badge
+                        v-if="this.execution"
+                        variant="primary"
+                        class="mr-1"
+                        pill
+                    >
+                        {{ taskRuns.length }}
+                    </b-badge>
+
                     <span v-if="duration">{{ duration | humanizeDuration }}</span>
                 </span>
+
                 <b-btn-group>
                     <b-button
                         v-if="task.description"
                         :title="`${$t('description')}`"
-                        class="node-action push"
+                        class="node-action"
                     >
                         <markdown-tooltip :id="hash" :description="task.description" />
                     </b-button>
 
-                    <sub-flow-link
-                        v-if="task.type === 'org.kestra.core.tasks.flows.Flow'"
-                        :execution-id="n.taskRun && n.taskRun.outputs.executionId ? n.taskRun.outputs.executionId : undefined"
-                        :namespace="task.namespace"
-                        :flow-id="task.flowId"
-                    />
-
                     <b-button
-                        v-if="!isFlow && n.taskRun"
+                        v-if="this.execution"
                         class="node-action"
                         :title="$t('show task logs')"
-                        :disabled="!n.taskRun"
-                        @click="onTaskRunSelect(n.taskRun)"
-                        v-b-modal="`modal-logs-${n.taskRun.id}`"
+                        :disabled="this.taskRuns.length === 0"
+                        @click="onTaskSelect()"
+                        v-b-modal="`modal-logs-${task.id}`"
                     >
                         <text-box-search :title="$t('show task logs')" />
                     </b-button>
+
                     <b-button
                         class="node-action"
                         size="sm"
@@ -81,7 +80,7 @@
         </b-modal>
 
         <b-modal
-            :id="`modal-logs-${n.taskRun.id}`"
+            :id="`modal-logs-${task.id}`"
             :title="`Task ${task.id}`"
             header-bg-variant="dark"
             header-text-variant="light"
@@ -89,9 +88,18 @@
             hide-footer
             modal-class="right"
             size="xl"
-            v-if="n.taskRun"
+            v-if="execution"
         >
-            <log-list :task-run-id="n.taskRun.id" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" level="TRACE" />
+            <b-navbar toggleable="lg" type="light" variant="light">
+                <b-navbar-toggle target="nav-collapse" />
+                <b-collapse id="nav-collapse" is-nav>
+                    <b-nav-form>
+                        <search-field :router="false" ref="searchField" @onSearch="onSearch" class="mr-2" />
+                        <log-level-selector :log-level="logLevel" :router="false" @onChange="onLevelChange" />
+                    </b-nav-form>
+                </b-collapse>
+            </b-navbar>
+            <log-list :task-id="task.id" :filter="this.filter" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" :level="logLevel" />
         </b-modal>
     </div>
 </template>
@@ -99,12 +107,9 @@
     import Console from "vue-material-design-icons/Console";
     import CodeTags from "vue-material-design-icons/CodeTags";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
-    import CurrentAc from "vue-material-design-icons/CurrentAc";
 
-    import SubFlowLink from "../flows/SubFlowLink"
     import {mapState} from "vuex";
     import Status from "../Status";
-    import md5 from "md5";
     import YamlUtils from "../../utils/yamlUtils";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
     import State from "../../utils/state"
@@ -112,6 +117,8 @@
     import ContentSave from "vue-material-design-icons/ContentSave";
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
     import LogList from "../logs/LogList";
+    import LogLevelSelector from "../../components/logs/LogLevelSelector";
+    import SearchField from "../layout/SearchField";
 
     export default {
         components: {
@@ -120,11 +127,11 @@
             Console,
             CodeTags,
             TextBoxSearch,
-            CurrentAc,
-            SubFlowLink,
             Editor,
             ContentSave,
-            LogList
+            LogList,
+            LogLevelSelector,
+            SearchField
         },
         props: {
             n: {
@@ -139,25 +146,14 @@
                 type: String,
                 required: true
             },
-            isFlow: {
-                type: Boolean,
-                default: false
+            execution: {
+                type: Object,
+                default: undefined
             }
         },
         methods: {
-            taskRunOutputToken(taskRun) {
-                return md5(taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ""));
-            },
-            onTaskRunSelect(taskRun) {
-                this.$store.commit("execution/setTaskRun", taskRun);
-            },
-            onSettings() {
-                if (this.node) {
-                    this.$store.dispatch("graph/setNode", undefined);
-                } else {
-                    this.$store.dispatch("graph/setNode", this.n);
-                    this.$emit("onSettings");
-                }
+            onTaskSelect() {
+                this.$store.commit("execution/setTask", this.task);
             },
             saveTask() {
                 let task;
@@ -183,11 +179,19 @@
                     .then((response) => {
                         this.$toast().saved(response.id);
                     })
+            },
+            onSearch(search) {
+                this.filter = search
+            },
+            onLevelChange(level) {
+                this.logLevel = level;
             }
         },
         data() {
             return {
                 taskYaml: undefined,
+                logLevel: "INFO",
+                filter: undefined
             };
         },
         created() {
@@ -196,28 +200,43 @@
         computed: {
             ...mapState("graph", ["node"]),
             ...mapState("auth", ["user"]),
-            hasLogs() {
-                return true;
-            },
-            hasOutputs() {
-                return this.n.taskRun && this.n.taskRun.outputs;
-            },
-            attempts() {
-                return this.n.taskRun && this.n.taskRun.attempts
-                    ? this.n.taskRun.attempts
-                    : [];
-            },
             hash() {
                 return this.n.uid.hashCode();
             },
-            childrenCount() {
-                return this.n.children ? this.n.children.length : 0;
+            taskRuns() {
+                return (this.execution && this.execution.taskRunList ? this.execution.taskRunList : [])
+                    .filter(t => t.taskId === this.task.id)
             },
             state() {
-                return this.n.taskRun ? this.n.taskRun.state.current : undefined;
+                if (!this.taskRuns) {
+                    return  null;
+                }
+
+                if (this.taskRuns.length === 1) {
+                    return this.taskRuns[0].state.current
+                }
+
+                const allStates = [...new Set(this.taskRuns.map(t => t.state.current))];
+
+                const sortStatus = [
+                    State.FAILED,
+                    State.KILLED,
+                    State.WARNING,
+                    State.KILLING,
+                    State.RESTARTED,
+                    State.RUNNING,
+                    State.CREATED,
+                    State.SUCCESS
+                ];
+
+                allStates.sort((a, b) => {
+                    return sortStatus.indexOf(a[1]) - sortStatus.indexOf(b[1]);
+                });
+
+                return allStates[0];
             },
             duration() {
-                return this.n.taskRun ? this.n.taskRun.state.duration : null;
+                return this.taskRuns ? this.taskRuns.reduce((inc, taskRun) => inc + taskRun.state.duration, 0) : null;
             },
             nodeClass() {
                 return {
@@ -231,9 +250,6 @@
             },
             task() {
                 return this.n.task;
-            },
-            value () {
-                return this.n.taskRun && this.n.taskRun.value
             },
             canSave() {
                 return canSaveFlowTemplate(true, this.user, {namespace:this.namespace}, "flow");
@@ -315,6 +331,8 @@
                 padding-top: 18px;
                 padding-right: 18px;
             }
+
+
         }
         .status-wrapper {
             margin: 10px;
@@ -325,9 +343,10 @@
         top: 50px;
         position: absolute;
     }
+
     .info-wrapper {
         display: flex;
-        .duration {
+        .bottom {
             padding: 4px 4px;
             color: $text-muted;
             font-size: $font-size-xs;
@@ -335,15 +354,16 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            position: relative;
+
+            .badge {
+                padding-bottom: $badge-padding-y;
+                font-weight: bold;
+                font-size: 100%;
+                top: -3px;
+            }
         }
     }
-    .push {
-        margin-left: auto;
-    }
-    .pull {
-        margin-right: auto;
-    }
-
 
     .node-action {
         height: 25px;
@@ -351,6 +371,7 @@
         padding-right: 5px;
         padding-left: 5px;
     }
+
     .task-item {
         flex: 1;
         display: inline;

@@ -40,16 +40,21 @@
 
         <div :class="{hide: !ready}" class="graph-wrapper" :id="uuid" ref="wrapper" />
 
-        <div class="hidden">
-            <tree-node
-                :ref="node.uid"
-                v-for="node in treeTaskNode"
-                :key="node.uid"
-                :n="node"
-                :namespace="namespace"
-                :flow-id="flowId"
-                :is-flow="isFlow"
-            />
+        <div v-if="ready">
+            <div v-for="node in treeTaskNode" :key="node.uid">
+                <MountingPortal
+                    :mount-to="`#node-${node.uid.hashCode()}`"
+                    append
+                    :name="`source-${node.uid.hashCode()}`"
+                >
+                    <tree-node
+                        :n="node"
+                        :namespace="namespace"
+                        :flow-id="flowId"
+                        :execution="execution"
+                    />
+                </MountingPortal>
+            </div>
         </div>
     </div>
 </template>
@@ -57,6 +62,7 @@
     import * as cytoscape from "cytoscape";
     import * as dagre from "cytoscape-dagre";
     import * as nodeHtmlLabel  from "cytoscape-node-html-label";
+    import {MountingPortal} from "portal-vue"
 
     import TreeNode from "./TreeNode";
     import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight";
@@ -69,6 +75,7 @@
 
     export default {
         components: {
+            MountingPortal,
             TreeNode,
             ArrowCollapseDown,
             ArrowCollapseRight,
@@ -82,10 +89,6 @@
                 type: Object,
                 required: true
             },
-            label: {
-                type: Function,
-                required: true
-            },
             flowId: {
                 type: String,
                 required: true
@@ -94,9 +97,9 @@
                 type: String,
                 required: true
             },
-            isFlow: {
-                type: Boolean,
-                default: false
+            execution: {
+                type: Object,
+                default: undefined
             }
         },
         data() {
@@ -186,8 +189,8 @@
                     nodes.push({
                         data: {
                             id: node.uid,
-                            label: isEdge ? undefined : node.task.id,
-                            type: isEdge ? "dot" : "task",
+                            label: isEdge ? node.task.id : undefined,
+                            type: isEdge ? "task" : "dot",
                             cls: node.type,
                             parent: cluster ? cluster.uid : undefined,
                             relationType: node.relationType
@@ -375,7 +378,7 @@
                         animate: false,
                         fit: true,
                         padding: 50,
-                        spacingFactor: 1.2,
+                        spacingFactor: 1.4,
                     },
                     pixelRatio: 1,
                     minZoom: 0.2,
@@ -386,8 +389,8 @@
                 let ready = true;
                 for (const node of this.treeTaskNode) {
                     if (
-                        !this.$refs[node.uid] ||
-                        !this.$refs[node.uid].length ||
+                        // !this.$refs[node.uid] ||
+                        // !this.$refs[node.uid].length ||
                         !this.$el.querySelector(`#node-${node.uid.hashCode()}`)
                     ) {
                         ready = false;
@@ -395,23 +398,20 @@
                 }
 
                 if (ready) {
-                    for (const node of this.treeTaskNode) {
-                        this.$el
-                            .querySelector(`#node-${node.uid.hashCode()}`)
-                            .appendChild(this.$refs[node.uid][0].$el);
-                    }
                     this.ready = true;
                 } else {
                     setTimeout(this.bindNodes, 1000);
                 }
             },
             isEdgeNode(node) {
-                return node.type !== "org.kestra.core.models.hierarchies.GraphTask"
+                return node.task !== undefined && (node.type === "org.kestra.core.models.hierarchies.GraphTask" || node.type === "org.kestra.core.models.hierarchies.GraphClusterRoot")
             },
         },
         computed: {
             treeTaskNode() {
-                return this.flowGraph.nodes.filter(n => n.task !== undefined && n.type === "org.kestra.core.models.hierarchies.GraphTask")
+                return this.flowGraph.nodes.filter(n => {
+                    return this.isEdgeNode(n);
+                })
             },
         },
         destroyed() {
@@ -423,7 +423,7 @@
 @import "../../styles/variable";
 
 .graph-wrapper {
-    height: calc(100vh - 300px);
+    height: calc(100vh - 260px);
 }
 
 .hidden {

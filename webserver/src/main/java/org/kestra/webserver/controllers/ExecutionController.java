@@ -82,7 +82,7 @@ public class ExecutionController {
         @QueryValue(value = "q") String query,
         @QueryValue(value = "page", defaultValue = "1") int page,
         @QueryValue(value = "size", defaultValue = "10") int size,
-        @Nullable @QueryValue(value = "state") State.Type state,
+        @Nullable @QueryValue(value = "state") List<State.Type> state,
         @Nullable @QueryValue(value = "sort") List<String> sort
     ) {
         return PagedResults.of(
@@ -96,7 +96,7 @@ public class ExecutionController {
         @QueryValue(value = "q") String query,
         @QueryValue(value = "page", defaultValue = "1") int page,
         @QueryValue(value = "size", defaultValue = "10") int size,
-        @Nullable @QueryValue(value = "state") State.Type state,
+        @Nullable @QueryValue(value = "state") List<State.Type> state,
         @Nullable @QueryValue(value = "sort") List<String> sort
     ) {
         return PagedResults.of(

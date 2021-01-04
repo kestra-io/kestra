@@ -1,7 +1,7 @@
 <template>
     <div v-if="ready">
-        <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total">
-            <template v-slot:navbar>
+        <data-table @onPageChanged="onPageChangedOverload" ref="dataTable" :total="total">
+            <template v-slot:navbar v-if="embed === false">
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <namespace-select data-type="flow" v-if="$route.name !== 'flowEdit'" @onNamespaceSelect="onNamespaceSelect" />
                 <status-filter-buttons @onRefresh="onStatusChange" />
@@ -9,7 +9,7 @@
                 <refresh-button class="float-right" @onRefresh="loadData" />
             </template>
 
-            <template v-slot:top>
+            <template v-slot:top v-if="embed === false">
                 <state-global-chart
                     v-if="daily"
                     :ready="dailyReady"
@@ -21,7 +21,7 @@
                 <b-table
                     :no-local-sorting="true"
                     @sort-changed="onSort"
-                    responsive="xl"
+                    responsive
                     striped
                     hover
                     bordered
@@ -116,17 +116,33 @@
             TriggerAvatar,
             DateAgo
         },
+        props: {
+            embed: {
+                type: Boolean,
+                default: false
+            },
+            hidden: {
+                type: Array,
+                default: () => []
+            },
+            statuses: {
+                type: Array,
+                default: () => []
+            },
+        },
         data() {
             return {
                 dataType: "execution",
                 dailyReady: false,
+                pageSize: 25,
+                pageNumber: 1,
                 flowTriggerDetails: undefined
             };
         },
         beforeCreate() {
             const q = JSON.parse(localStorage.getItem("executionQueries") || "{}")
             q.sort = q.sort ? q.sort :  "state.startDate:desc"
-            q.status = q.status ? q.status : "ALL"
+            q.status = q.status ? q.status : []
             localStorage.setItem("executionQueries", JSON.stringify(q))
         },
         computed: {
@@ -136,7 +152,7 @@
                 const title = title => {
                     return this.$t(title);
                 };
-                return [
+                let fields = [
                     {
                         key: "id",
                         label: title("id")
@@ -183,6 +199,12 @@
                         class: "row-action"
                     }
                 ];
+
+                this.hidden.forEach(value => {
+                    fields = fields.filter(col => col.key !== value);
+                })
+
+                return fields;
             },
             executionQuery() {
                 let filter;
@@ -206,6 +228,11 @@
             onStatusChange() {
                 this.saveFilters()
                 this.loadData()
+            },
+            onPageChangedOverload(item) {
+                this.pageSize = item.size;
+                this.pageNumber = item.page;
+                this.onPageChanged(item);
             },
             showTriggerDetails(trigger) {
                 this.flowTriggerDetails = trigger
@@ -238,13 +265,12 @@
                         this.dailyReady = true;
                     });
 
-
                 this.$store.dispatch("execution/findExecutions", {
-                    size: parseInt(this.$route.query.size || 25),
-                    page: parseInt(this.$route.query.page || 1),
+                    size: parseInt(this.$route.query.size || this.pageSize),
+                    page: parseInt(this.$route.query.page || this.pageNumber),
                     q: this.executionQuery,
                     sort: this.$route.query.sort || "state.startDate:desc",
-                    state: this.$route.query.status
+                    state: this.$route.query.status ? [this.$route.query.status] : this.statuses
                 }).finally(callback);
             },
             durationFrom(item) {

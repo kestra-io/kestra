@@ -129,7 +129,7 @@
                 localStorage.getItem("taskrunQueries") || "{}"
             );
             queries.sort = queries.sort ? queries.sort : "taskRunList.state.startDate:desc";
-            queries.status = this.$route.query.status || queries.status || "ALL";
+            queries.status = this.$route.query.status || queries.status || [];
             if (!this.$route.query.sort) {
                 this.$router.push({
                     name: this.$route.name,

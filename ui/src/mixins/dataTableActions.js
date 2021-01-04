@@ -49,15 +49,18 @@ export default {
             this.$router.push({name: this.dataType + "Edit", params: item});
         },
         onPageChanged(item) {
-            this.$router.push({
-                query: {
-                    ...this.$route.query,
-                    size: item.size,
-                    page: item.page
-                }
-            });
+            if (!this.embed) {
+                this.$router.push({
+                    query: {
+                        ...this.$route.query,
+                        size: item.size,
+                        page: item.page
+                    }
+                });
+                this.saveFilters()
+            }
+
             this.loadData(this.onDataLoaded);
-            this.saveFilters()
         },
         onNamespaceSelect() {
             this.query = qb.build(this.$route, this.fields);

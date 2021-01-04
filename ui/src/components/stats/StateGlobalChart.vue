@@ -51,7 +51,7 @@
         color: $white;
         position: absolute;
         font-size: $font-size-xs;
-        height: 100px;
+        height: 100%;
         width: 35px;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -61,9 +61,18 @@
     .executions-charts {
         margin-left: 35px;
         top: 0;
+        height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-evenly;
+    }
+
+    &.big {
+        height: 200px;
+
+        .executions-charts > div {
+            height: 200px;
+        }
     }
 }
 </style>

@@ -43,7 +43,7 @@
                 return this.message.title || this.$t("error")
             },
             items() {
-                const messages = this.message.content && this.message.content.c_embedded && this.message.content._embedded.errors ? this.message.content._embedded.errors : []
+                const messages = this.message.content && this.message.content._embedded && this.message.content._embedded.errors ? this.message.content._embedded.errors : []
                 return Array.isArray(messages) ? messages : [messages]
             }
         },

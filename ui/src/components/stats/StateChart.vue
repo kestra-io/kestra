@@ -50,6 +50,10 @@
             global: {
                 type: Boolean,
                 default: () => false
+            },
+            big: {
+                type: Boolean,
+                default: () => true
             }
         },
         data() {

@@ -20,12 +20,12 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     private Map<String, Execution> executions = new HashMap<>();
 
     @Override
-    public ArrayListTotal<Execution> find(String query, Pageable pageable, State.Type state) {
+    public ArrayListTotal<Execution> find(String query, Pageable pageable, List<State.Type> state) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, State.Type state) {
+    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, List<State.Type> state) {
         throw new UnsupportedOperationException();
     }
 

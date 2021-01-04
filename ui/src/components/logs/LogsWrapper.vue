@@ -1,7 +1,7 @@
 <template>
     <div class="log-panel">
         <div class="log-content">
-            <main-log-filter @onChange="loadData" />
+            <main-log-filter v-if="!embed" @onChange="loadData" />
             <div v-if="logs === undefined">
                 <b-alert variant="light" show>
                     {{ $t('no result') }}
@@ -34,6 +34,16 @@
     export default {
         mixins: [RouteContext],
         components: {LogLine, Pagination, MainLogFilter},
+        props: {
+            logLevel: {
+                type: String,
+                default: "INFO"
+            },
+            embed: {
+                type: Boolean,
+                default: false
+            },
+        },
         data() {
             return {
                 task: undefined,
@@ -61,7 +71,6 @@
                 this.loadData();
             },
             loadData() {
-
                 let q = qb.logQueryBuilder(this.$route);
                 if (this.isFlowEdit) {
                     q += ` AND namespace:${this.$route.params.namespace}`
@@ -72,7 +81,7 @@
                     q,
                     page: this.$route.query.page || 1,
                     size: this.$route.query.size  || 25,
-                    minLevel: this.$route.query.level || "INFO"
+                    minLevel: this.$route.query.level || this.logLevel
                 });
             },
         },

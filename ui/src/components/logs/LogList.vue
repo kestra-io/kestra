@@ -2,7 +2,7 @@
     <div v-if="execution" class="log-wrapper text-white">
         <div v-for="currentTaskRun in execution.taskRunList" :key="currentTaskRun.id">
             <template
-                v-if="(!taskRun || taskRun.id === currentTaskRun.id)"
+                v-if="displayTaskRun(currentTaskRun)"
             >
                 <div class="bg-dark attempt-wrapper">
                     <template v-for="(attempt, index) in attempts(currentTaskRun)">
@@ -36,7 +36,11 @@
                                     <small v-if="currentTaskRun.value">
                                         {{ currentTaskRun.value }}
                                     </small>
-                                    <small class="ml-1">
+
+                                </div>
+
+                                <div class="task-id">
+                                    <small class="mr-1">
                                         <clock />
                                         {{ attempt.state.duration | humanizeDuration }}
                                     </small>
@@ -164,6 +168,10 @@
                 type: String,
                 default: undefined,
             },
+            taskId: {
+                type: String,
+                default: undefined,
+            },
             excludeMetas: {
                 type: Array,
                 default: () => [],
@@ -184,9 +192,19 @@
             this.loadLogs();
         },
         computed: {
-            ...mapState("execution", ["execution", "taskRun", "logs"]),
+            ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
         },
         methods: {
+            displayTaskRun(currentTaskRun) {
+                if (this.taskRun && this.taskRun.id !== currentTaskRun.id) {
+                    return false;
+                }
+
+                if (this.task && this.task.id !== currentTaskRun.taskId) {
+                    return false;
+                }
+                return  true;
+            },
             toggleShowOutput(taskRun) {
                 this.showOutputs[taskRun.id] = !this.showOutputs[taskRun.id];
                 this.$forceUpdate();
@@ -202,6 +220,10 @@
 
                 if (this.taskRunId) {
                     params.taskRunId = this.taskRunId;
+                }
+
+                if (this.taskId) {
+                    params.taskId = this.taskId;
                 }
 
                 if (this.execution && this.execution.state.current === State.RUNNING) {

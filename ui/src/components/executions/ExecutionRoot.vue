@@ -8,6 +8,7 @@
                     @click="setTab(tab.tab)"
                     :active="$route.query.tab === tab.tab"
                     :title="tab.title"
+                    :class="tab.class"
                     lazy
                 >
                     <b-card-text>
@@ -90,11 +91,6 @@
                             this.sse = sse;
                             sse.subscribe("", (data, event) => {
                                 this.$store.commit("execution/setExecution", data);
-                                if (this.$route.query.tab === "topology") {
-                                    this.$store.dispatch("execution/loadGraph", data)
-                                } else {
-                                    this.$store.commit("execution/setFlowGraph", undefined)
-                                }
 
                                 if (event && event.lastEventId === "end") {
                                     this.closeSSE();
@@ -111,6 +107,7 @@
             },
             setTab(tab) {
                 this.$store.commit("execution/setTaskRun", undefined);
+                this.$store.commit("execution/setTask", undefined);
                 this.$router.push({
                     name: "executionEdit",
                     params: this.$route.params,
@@ -185,7 +182,7 @@
                 return [
                     {
                         tab: "overview",
-                        title: title("overview")
+                        title: title("overview"),
                     },
                     {
                         tab: "gantt",
@@ -197,7 +194,8 @@
                     },
                     {
                         tab: "topology",
-                        title: title("topology")
+                        title: title("topology"),
+                        class: "p-0"
                     },
                     {
                         tab: "execution-output",

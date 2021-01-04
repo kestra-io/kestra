@@ -72,7 +72,7 @@ export default {
             })
         },
         loadGraph({commit}, flow) {
-            return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph`).then(response => {
+            return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph?revision=${flow.revision}`).then(response => {
                 commit("setFlowGraph", response.data)
 
                 return response.data;

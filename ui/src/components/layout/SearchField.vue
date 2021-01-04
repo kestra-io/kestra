@@ -20,6 +20,12 @@
                 this.$emit("onSearch", this.search);
             });
         },
+        props: {
+            router: {
+                type: Boolean,
+                default: true
+            }
+        },
         data() {
             return {
                 search: ""
@@ -27,11 +33,13 @@
         },
         methods: {
             onSearch() {
-                const query = {...this.$route.query, q: this.search, page: 1};
-                if (!this.search) {
-                    delete query.q;
+                if (this.router) {
+                    const query = {...this.$route.query, q: this.search, page: 1};
+                    if (!this.search) {
+                        delete query.q;
+                    }
+                    this.$router.push({query});
                 }
-                this.$router.push({query});
                 this.searchDebounce();
             },
         },

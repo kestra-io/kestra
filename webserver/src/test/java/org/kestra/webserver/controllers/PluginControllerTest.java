@@ -5,14 +5,14 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.client.RxHttpClient;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.Helpers;
+import org.kestra.core.tasks.scripts.Bash;
 
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 class PluginControllerTest {
     @Test
@@ -45,6 +45,21 @@ class PluginControllerTest {
 
         });
     }
+
+    @Test
+    void icons() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
+            RxHttpClient client = RxHttpClient.create(embeddedServer.getURL());
+
+            Map<String, PluginController.PluginIcon> list = client.toBlocking().retrieve(
+                HttpRequest.GET("/api/v1/plugins/icons"),
+                Argument.mapOf(String.class, PluginController.PluginIcon.class)
+            );
+
+            assertThat(list.entrySet().stream().filter(e -> e.getKey().equals(Bash.class.getName())).findFirst().orElseThrow().getValue().getIcon(), is(notNullValue()));
+        });
+    }
+
 
     @Test
     void bash() throws URISyntaxException {

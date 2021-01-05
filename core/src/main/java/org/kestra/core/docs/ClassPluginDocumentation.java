@@ -17,6 +17,7 @@ public class ClassPluginDocumentation<T> {
     private static final JsonSchemaGenerator JSON_SCHEMA_GENERATOR = new JsonSchemaGenerator();
 
     private String cls;
+    private String icon;
     private String group;
     private String subGroup;
     private String shortName;
@@ -33,7 +34,7 @@ public class ClassPluginDocumentation<T> {
     private ClassPluginDocumentation(RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
         this.cls = cls.getName();
         this.group = plugin.group();
-
+        this.icon = DocumentationGenerator.icon(plugin, cls);
 
         if (this.group != null && cls.getPackageName().startsWith(this.group) && cls.getPackageName().length() > this.group.length()) {
             this.subGroup = cls.getPackageName().substring(this.group.length() + 1);

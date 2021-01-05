@@ -1,27 +1,23 @@
 <template>
     <b-button-group size="sm">
-        <b-tooltip
-            target="toggle-automatic-refresh-action"
-        >
-            {{ $t('toggle periodic refresh each 10 seconds') }}
-        </b-tooltip>
-        <b-button @click="toggleAutoRefresh" :pressed="autoRefresh" id="toggle-automatic-refresh-action">
-            <clock /> <span class="label">{{ $t('automatic refresh') }}</span>
+        <b-button @click="toggleAutoRefresh" :pressed="autoRefresh">
+            <kicon :tooltip="$t('toggle periodic refresh each 10 seconds')" placement="bottomleft">
+                <clock />
+            </kicon>
         </b-button>
-        <b-tooltip target="trigger-refresh-action">
-            {{ $t('trigger refresh') }}
-        </b-tooltip>
-        <b-button @click="triggerRefresh" id="trigger-refresh-action">
-            <refresh /> <span class="label">{{ $t('trigger refresh') }}</span>
+        <b-button @click="triggerRefresh">
+            <kicon :tooltip="$t('trigger refresh')" placement="bottomleft">
+                <refresh />
+            </kicon>
         </b-button>
     </b-button-group>
 </template>
 <script>
     import Refresh from "vue-material-design-icons/Refresh";
     import Clock from "vue-material-design-icons/Clock";
-
+    import Kicon from "../Kicon"
     export default {
-        components: {Refresh, Clock},
+        components: {Refresh, Clock, Kicon},
         data() {
             return {
                 autoRefresh: false,

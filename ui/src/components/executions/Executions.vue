@@ -36,7 +36,9 @@
 
                     <template v-slot:cell(details)="row">
                         <router-link :to="{name: 'executionEdit', params: row.item}">
-                            <eye id="edit-action" />
+                            <kicon :tooltip="$t('details')" placement="left">
+                                <eye />
+                            </kicon>
                         </router-link>
                     </template>
                     <template
@@ -100,6 +102,7 @@
     import FlowTriggerDetailsModal from "../../components/flows/TriggerDetailsModal";
     import TriggerAvatar from "../../components/flows/TriggerAvatar";
     import DateAgo from "../layout/DateAgo";
+    import Kicon from "../Kicon"
 
     export default {
         mixins: [RouteContext, DataTableActions],
@@ -115,7 +118,8 @@
             StateGlobalChart,
             FlowTriggerDetailsModal,
             TriggerAvatar,
-            DateAgo
+            DateAgo,
+            Kicon
         },
         props: {
             embed: {

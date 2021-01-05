@@ -41,7 +41,9 @@
                         <router-link
                             :to="{name: 'executionEdit', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.executionId},query: {tab:'gantt'}}"
                         >
-                            <eye id="edit-action" />
+                            <kicon :tooltip="$t('details')" placement="left">
+                                <eye />
+                            </kicon>
                         </router-link>
                     </template>
                     <template v-slot:cell(state.startDate)="row">
@@ -104,6 +106,7 @@
     import StatusFilterButtons from "../layout/StatusFilterButtons";
     import StateGlobalChart from "../../components/stats/StateGlobalChart";
     import DateAgo from "../layout/DateAgo";
+    import Kicon from "../Kicon"
 
     export default {
         mixins: [RouteContext, DataTableActions],
@@ -117,7 +120,8 @@
             RefreshButton,
             StatusFilterButtons,
             StateGlobalChart,
-            DateAgo
+            DateAgo,
+            Kicon
         },
         data() {
             return {

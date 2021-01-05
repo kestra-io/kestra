@@ -3,37 +3,32 @@
         <div class="d-flex top">
             <div>
                 <b-btn-group>
-                    <b-btn size="sm" @click="toggleOrientation" id="graph-orientation">
-                        <arrow-collapse-down v-if="orientation" />
-                        <arrow-collapse-right v-else />
+                    <b-btn size="sm" @click="toggleOrientation">
+                        <kicon placement="bottomright" :tooltip="$t('topology-graph.graph-orientation')">
+                            <arrow-collapse-down v-if="orientation" />
+                            <arrow-collapse-right v-else />
+                        </kicon>
                     </b-btn>
-                    <b-tooltip placement="bottom" target="graph-orientation">
-                        {{ $t('topology-graph.graph-orientation') }}
-                    </b-tooltip>
-                    <b-btn size="sm" @click="setAction('in')" id="zoom-in">
-                        <magnify-plus />
+                    <b-btn size="sm" @click="setAction('in')">
+                        <kicon placement="bottom" :tooltip="$t('topology-graph.zoom-in')">
+                            <magnify-plus />
+                        </kicon>
                     </b-btn>
-                    <b-tooltip placement="bottom" target="zoom-in">
-                        {{ $t('topology-graph.zoom-in') }}
-                    </b-tooltip>
-                    <b-btn size="sm" @click="setAction('out')" id="zoom-out">
-                        <magnify-minus />
+                    <b-btn size="sm" @click="setAction('out')">
+                        <kicon placement="bottom" :tooltip="$t('topology-graph.zoom-out')">
+                            <magnify-minus />
+                        </kicon>
                     </b-btn>
-                    <b-tooltip placement="bottom" target="zoom-out">
-                        {{ $t('topology-graph.zoom-out') }}
-                    </b-tooltip>
                     <b-btn size="sm" @click="setAction('reset')" id="zoom-reset">
-                        <arrow-collapse-all />
+                        <kicon placement="bottom" :tooltip="$t('topology-graph.zoom-reset')">
+                            <arrow-collapse-all />
+                        </kicon>
                     </b-btn>
-                    <b-tooltip placement="bottom" target="zoom-reset">
-                        {{ $t('topology-graph.zoom-reset') }}
-                    </b-tooltip>
                     <b-btn size="sm" @click="setAction('fit')" id="zoom-fit">
-                        <fit-to-page />
+                        <kicon placement="bottom" :tooltip="$t('topology-graph.zoom-fit')">
+                            <fit-to-page />
+                        </kicon>
                     </b-btn>
-                    <b-tooltip placement="bottom" target="zoom-fit">
-                        {{ $t('topology-graph.zoom-fit') }}
-                    </b-tooltip>
                 </b-btn-group>
             </div>
         </div>
@@ -72,6 +67,7 @@
     import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll";
     import FitToPage from "vue-material-design-icons/FitToPage";
     import Utils from "../../utils/utils";
+    import Kicon from "../Kicon"
 
     export default {
         components: {
@@ -83,6 +79,7 @@
             MagnifyMinus,
             ArrowCollapseAll,
             FitToPage,
+            Kicon
         },
         props: {
             flowGraph: {

@@ -62,24 +62,22 @@
 
                                     <b-button
                                         :disabled="!currentTaskRun.metrics || currentTaskRun.metrics.length ===0"
-                                        :title="$t('toggle metrics')"
                                         @click="
                                             toggleShowMetric(currentTaskRun, index)
                                         "
                                     >
-                                        <chart-areaspline
-                                            :title="$t('toggle metrics')"
-                                        />
+                                        <kicon :tooltip="$t('toggle metrics')">
+                                            <chart-areaspline />
+                                        </kicon>
                                     </b-button>
 
                                     <b-button
                                         :disabled="!currentTaskRun.outputs || currentTaskRun.outputs.length ===0"
-                                        :title="$t('toggle output')"
                                         @click="toggleShowOutput(currentTaskRun)"
                                     >
-                                        <location-exit
-                                            :title="$t('toggle output')"
-                                        />
+                                        <kicon :tooltip="$t('toggle output')">
+                                            <location-exit />
+                                        </kicon>
                                     </b-button>
 
                                     <restart
@@ -142,6 +140,7 @@
     import State from "../../utils/state";
     import Status from "../Status";
     import SubFlowLink from "../flows/SubFlowLink"
+    import Kicon from "../Kicon"
 
     export default {
         components: {
@@ -152,7 +151,8 @@
             Vars,
             ChartAreaspline,
             Status,
-            SubFlowLink
+            SubFlowLink,
+            Kicon,
         },
         props: {
             level: {

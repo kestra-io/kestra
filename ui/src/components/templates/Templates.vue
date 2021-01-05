@@ -29,7 +29,9 @@
                     >
                         <template v-slot:cell(actions)="row">
                             <router-link :to="{name: 'templateEdit', params : row.item}">
-                                <eye id="edit-action" />
+                                <kicon :tooltip="$t('details')" placement="left">
+                                    <eye />
+                                </kicon>
                             </router-link>
                         </template>
 
@@ -49,8 +51,10 @@
                 <li class="nav-item">
                     <router-link :to="{name: 'templateAdd'}">
                         <b-button variant="primary">
-                            <plus />
-                            {{ $t('create') }}
+                            <kicon>
+                                <plus />
+                                {{ $t('create') }}
+                            </kicon>
                         </b-button>
                     </router-link>
                 </li>
@@ -71,6 +75,7 @@
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../layout/DataTable";
     import SearchField from "../layout/SearchField";
+    import Kicon from "../Kicon"
 
     export default {
         mixins: [RouteContext, DataTableActions],
@@ -81,6 +86,7 @@
             DataTable,
             SearchField,
             NamespaceSelect,
+            Kicon
         },
         data() {
             return {

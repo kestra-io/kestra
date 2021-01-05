@@ -3,7 +3,6 @@
         <div class="status-color" v-if="this.execution" :class="statusClass" />
         <div class="task-content">
             <div class="card-header">
-
                 <div class="task-title">
                     <div :title="task.type" class="task-item">
                         <console :title="task.type" />
@@ -34,27 +33,31 @@
                         :title="`${$t('description')}`"
                         class="node-action"
                     >
-                        <markdown-tooltip :id="hash" :description="task.description" />
+                        <kicon :tooltip="task.description">
+                            <markdown-tooltip :id="hash" />
+                        </kicon>
                     </b-button>
 
                     <b-button
                         v-if="this.execution"
                         class="node-action"
-                        :title="$t('show task logs')"
                         :disabled="this.taskRuns.length === 0"
                         @click="onTaskSelect()"
                         v-b-modal="`modal-logs-${task.id}`"
                     >
-                        <text-box-search :title="$t('show task logs')" />
+                        <kicon :tooltip="$t('show task logs')">
+                            <text-box-search />
+                        </kicon>
                     </b-button>
 
                     <b-button
                         class="node-action"
                         size="sm"
                         v-b-modal="`modal-source-${hash}`"
-                        :title="$t('show task source')"
                     >
-                        <code-tags />
+                        <kicon :tooltip="$t('show task source')">
+                            <code-tags />
+                        </kicon>
                     </b-button>
                 </b-btn-group>
             </div>
@@ -119,6 +122,7 @@
     import LogList from "../logs/LogList";
     import LogLevelSelector from "../../components/logs/LogLevelSelector";
     import SearchField from "../layout/SearchField";
+    import Kicon from "../Kicon"
 
     export default {
         components: {
@@ -131,7 +135,8 @@
             ContentSave,
             LogList,
             LogLevelSelector,
-            SearchField
+            SearchField,
+            Kicon,
         },
         props: {
             n: {

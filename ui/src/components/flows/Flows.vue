@@ -42,7 +42,9 @@
 
                         <template v-slot:cell(actions)="row">
                             <router-link :to="{name: 'flowEdit', params : row.item}">
-                                <eye id="edit-action" />
+                                <kicon :tooltip="$t('details')" placement="left">
+                                    <eye />
+                                </kicon>
                             </router-link>
                         </template>
 
@@ -84,8 +86,10 @@
                 <li class="nav-item">
                     <router-link :to="{name: 'flowsAdd'}">
                         <b-button variant="primary">
-                            <plus />
-                            {{ $t('create') }}
+                            <kicon>
+                                <plus />
+                                {{ $t('create') }}
+                            </kicon>
                         </b-button>
                     </router-link>
                 </li>
@@ -112,6 +116,7 @@
     import TriggerDetailsModal from "./TriggerDetailsModal";
     import TriggerAvatar from "./TriggerAvatar";
     import MarkdownTooltip from "../layout/MarkdownTooltip"
+    import Kicon from "../Kicon"
 
     export default {
         mixins: [RouteContext, DataTableActions],
@@ -127,7 +132,8 @@
             StateGlobalChart,
             TriggerDetailsModal,
             TriggerAvatar,
-            MarkdownTooltip
+            MarkdownTooltip,
+            Kicon
         },
         data() {
             return {

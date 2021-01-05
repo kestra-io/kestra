@@ -61,6 +61,12 @@
                 collapsed: localStorage.getItem("menuCollapsed") === "true"
             };
         },
+        mounted() {
+            this.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                //empty icon name on mouseover
+                e.setAttribute("title","")
+            })
+        },
         computed: {
             ...mapState("misc", ["version"]),
             menu() {
@@ -73,7 +79,7 @@
                         title: this.$t("flows"),
                         icon: {
                             element: "graph",
-                            class: "menu-icon"
+                            class: "menu-icon",
                         }
                     },
                     {

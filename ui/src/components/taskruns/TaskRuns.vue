@@ -32,6 +32,7 @@
                     :items="taskruns"
                     :fields="fields"
                     @row-dblclicked="onRowDoubleClick"
+                    show-empty
                 >
                     <template #empty>
                         <span class="text-black-50">{{ $t('no result') }}</span>
@@ -130,12 +131,6 @@
             );
             queries.sort = queries.sort ? queries.sort : "taskRunList.state.startDate:desc";
             queries.status = this.$route.query.status || queries.status || [];
-            if (!this.$route.query.sort) {
-                this.$router.push({
-                    name: this.$route.name,
-                    query: {...this.$route.query, ...queries}
-                });
-            }
             localStorage.setItem("taskrunQueries", JSON.stringify(queries));
         },
         computed: {

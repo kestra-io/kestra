@@ -36,7 +36,6 @@
                                     <small v-if="currentTaskRun.value">
                                         {{ currentTaskRun.value }}
                                     </small>
-
                                 </div>
 
                                 <div class="task-id">

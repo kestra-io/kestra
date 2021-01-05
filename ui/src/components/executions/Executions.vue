@@ -28,6 +28,7 @@
                     :items="executions"
                     :fields="fields"
                     @row-dblclicked="onRowDoubleClick"
+                    show-empty
                 >
                     <template #empty>
                         <span class="text-black-50">{{ $t('no result') }}</span>

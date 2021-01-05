@@ -47,6 +47,8 @@
         data() {
             return {
                 task: undefined,
+                pageSize: 25,
+                pageNumber: 1,
             };
         },
         created() {
@@ -64,10 +66,16 @@
             }
         },
         methods: {
-            onPageChanged(pagination) {
-                this.$router.push({
-                    query: {...this.$route.query, ...pagination},
-                });
+            onPageChanged(item) {
+                this.pageSize = item.size;
+                this.pageNumber = item.page;
+
+                if (!this.embed) {
+                    this.$router.push({
+                        query: {...this.$route.query, ...item},
+                    });
+                }
+
                 this.loadData();
             },
             loadData() {
@@ -79,8 +87,8 @@
 
                 this.$store.dispatch("log/findLogs", {
                     q,
-                    page: this.$route.query.page || 1,
-                    size: this.$route.query.size  || 25,
+                    page: this.$route.query.page || this.pageNumber,
+                    size: this.$route.query.size  || this.pageSize,
                     minLevel: this.$route.query.level || this.logLevel
                 });
             },

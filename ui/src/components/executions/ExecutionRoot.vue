@@ -23,8 +23,10 @@
                     <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
                 </li>
                 <li v-if="isAllowedEdit" class="nav-item">
-                    <b-button v-b-tooltip.hover.top="'(Ctrl + Shift + e)'" @click="editFlow">
-                        <pencil /> {{ $t('edit flow') }}
+                    <b-button @click="editFlow">
+                        <kicon :tooltip="'(Ctrl + Shift + e)'">
+                            <pencil /> {{ $t('edit flow') }}
+                        </kicon>
                     </b-button>
                 </li>
             </ul>
@@ -46,6 +48,7 @@
     import Pencil from "vue-material-design-icons/Pencil";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import Kicon from "../Kicon"
 
     export default {
         mixins: [RouteContext],
@@ -60,6 +63,7 @@
             TriggerFlow,
             ExecutionOutput,
             Pencil,
+            Kicon,
         },
         data() {
             return {

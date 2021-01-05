@@ -5,15 +5,19 @@
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
                     <b-button class="btn-danger" v-if="canDelete" @click="deleteFile">
-                        <delete />
-                        <span>{{ $t('delete') }}</span>
+                        <kicon>
+                            <delete />
+                            <span>{{ $t('delete') }}</span>
+                        </kicon>
                     </b-button>
 
                     <trigger-flow v-if="flow && canExecute" :flow-id="flow.id" :namespace="flow.namespace" />
 
-                    <b-button @click="save" v-if="canSave" v-b-tooltip.hover.top="'(Ctrl + s)'">
-                        <content-save />
-                        <span>{{ $t('save') }}</span>
+                    <b-button @click="save" v-if="canSave">
+                        <kicon :tooltip="'(Ctrl + s)'">
+                            <content-save />
+                            <span>{{ $t('save') }}</span>
+                        </kicon>
                     </b-button>
                 </li>
             </ul>
@@ -25,10 +29,12 @@
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
     import {mapGetters} from "vuex";
     import TriggerFlow from "./TriggerFlow"
+    import Kicon from "../Kicon"
 
     export default {
         components: {
-            TriggerFlow
+            TriggerFlow,
+            Kicon,
         },
         mixins: [flowTemplateEdit],
         data() {

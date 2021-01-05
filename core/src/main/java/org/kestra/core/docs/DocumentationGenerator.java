@@ -17,6 +17,8 @@ import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.utils.Slugify;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -81,6 +83,20 @@ abstract public class DocumentationGenerator {
                 }
             })
             .collect(Collectors.toList());
+    }
+
+    public static String icon(RegisteredPlugin plugin, Class<?> cls ) {
+        try (InputStream resourceAsStream = plugin.getClassLoader().getResourceAsStream("icons/" + cls.getName() + ".svg")) {
+            if (resourceAsStream != null) {
+                return Base64.getEncoder().encodeToString(
+                    IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)
+                );
+            }
+        } catch (IOException ignored) {
+
+        }
+
+        return null;
     }
 
     private static <T> String docPath(RegisteredPlugin registeredPlugin) {

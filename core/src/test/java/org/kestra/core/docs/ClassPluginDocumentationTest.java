@@ -31,7 +31,7 @@ class ClassPluginDocumentationTest {
         ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan.get(0), scan.get(0).getTasks().get(0), Task.class);
 
         assertThat(doc.getDocExamples().size(), is(2));
-
+        assertThat(doc.getIcon(), is(notNullValue()));
         assertThat(doc.getInputs().size(), is(5));
 
         // simple

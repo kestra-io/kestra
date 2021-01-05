@@ -30,7 +30,7 @@ class DocumentationGeneratorTest {
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("# ExampleTask"));
+        assertThat(render, containsString("ExampleTask"));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -44,6 +44,6 @@ class DocumentationGeneratorTest {
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("# Bash"));
+        assertThat(render, containsString("Bash"));
     }
 }

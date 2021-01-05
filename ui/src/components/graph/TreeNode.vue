@@ -1,12 +1,12 @@
 <template>
     <div class="node-wrapper" :class="nodeClass">
         <div class="status-color" v-if="this.execution" :class="statusClass" />
+        <div class="icon">
+            <task-icon :cls="task.type" />
+        </div>
         <div class="task-content">
             <div class="card-header">
                 <div class="task-title">
-                    <div :title="task.type" class="task-item">
-                        <console :title="task.type" />
-                    </div>
                     <span>{{ task.id }}</span>
                 </div>
             </div>
@@ -107,7 +107,6 @@
     </div>
 </template>
 <script>
-    import Console from "vue-material-design-icons/Console";
     import CodeTags from "vue-material-design-icons/CodeTags";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
 
@@ -122,13 +121,12 @@
     import LogList from "../logs/LogList";
     import LogLevelSelector from "../../components/logs/LogLevelSelector";
     import SearchField from "../layout/SearchField";
-    import Kicon from "../Kicon"
+    import TaskIcon from "../plugins/TaskIcon";
 
     export default {
         components: {
             MarkdownTooltip,
             Status,
-            Console,
             CodeTags,
             TextBoxSearch,
             Editor,
@@ -136,7 +134,7 @@
             LogList,
             LogLevelSelector,
             SearchField,
-            Kicon,
+            TaskIcon,
         },
         props: {
             n: {
@@ -268,17 +266,26 @@
 .node-wrapper {
     cursor: pointer;
     display: flex;
-    width: 180px;
+    width: 200px;
+    border: 1px solid $gray-600;
     &.task-disabled {
         .card-header .task-title {
             text-decoration: line-through;
         }
     }
 
+    > .icon {
+        width: 35px;
+        height: 51px;
+        background: white;
+        border-right: 1px solid $gray-500;
+        position: relative;
+    }
+
     .status-color {
         width: 10px;
-        height: 48px;
-        border: 0;
+        height: 51px;
+        border-right: 1px solid $gray-500;
     }
 
     .is-success {
@@ -303,7 +310,7 @@
         width: 38px;
 
         .card-header {
-            height: 23px;
+            height: 25px;
             padding: 2px;
             margin: 0;
             border-bottom: 1px solid $gray-500;
@@ -314,10 +321,6 @@
             .icon-wrapper {
                 display: inline-block;
                 flex-shrink: 2;
-                img {
-                    width: 16px;
-                    height: 16px;
-                }
             }
 
             .task-title {
@@ -336,9 +339,8 @@
                 padding-top: 18px;
                 padding-right: 18px;
             }
-
-
         }
+
         .status-wrapper {
             margin: 10px;
         }
@@ -365,22 +367,16 @@
                 padding-bottom: $badge-padding-y;
                 font-weight: bold;
                 font-size: 100%;
-                top: -3px;
+                top: -4px;
             }
         }
     }
 
     .node-action {
-        height: 25px;
+        height: 26px;
         padding-top: 1px;
         padding-right: 5px;
         padding-left: 5px;
-    }
-
-    .task-item {
-        flex: 1;
-        display: inline;
-        margin-right: 5px;
     }
 }
 </style>

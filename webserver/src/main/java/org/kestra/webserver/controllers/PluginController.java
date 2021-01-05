@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.kestra.core.contexts.KestraApplicationContext;
 import org.kestra.core.docs.DocumentationGenerator;
 import org.kestra.core.docs.ClassPluginDocumentation;
+import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.plugins.PluginRegistry;
 import org.kestra.core.plugins.PluginScanner;
 import org.kestra.core.plugins.RegisteredPlugin;
@@ -18,6 +19,7 @@ import org.kestra.core.plugins.RegisteredPlugin;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 
 @Validated
@@ -32,6 +34,30 @@ public class PluginController {
             .stream()
             .map(Plugin::of)
             .collect(Collectors.toList());
+    }
+
+    @Get(uri = "icons")
+    public Map<String, PluginIcon> icons() throws HttpStatusException {
+        return plugins()
+            .stream()
+            .flatMap(plugin -> Stream
+                .concat(
+                    plugin.getTasks().stream(),
+                    Stream.concat(
+                        plugin.getTriggers().stream(),
+                        plugin.getConditions().stream()
+                    )
+                )
+                .map(e -> new AbstractMap.SimpleEntry<>(
+                    e.getName(),
+                    new PluginIcon(
+                        e.getSimpleName(),
+                        DocumentationGenerator.icon(plugin, e),
+                        FlowableTask.class.isAssignableFrom(e)
+                    )
+                ))
+            )
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -132,6 +158,15 @@ public class PluginController {
     public static class Doc {
         String markdown;
         Schema schema;
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Data
+    public static class PluginIcon {
+        String name;
+        String icon;
+        Boolean flowable;
     }
 
     @NoArgsConstructor

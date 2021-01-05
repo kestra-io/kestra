@@ -17,6 +17,9 @@
                                         @click.native="$emit('routerChange')"
                                         :to="{name: 'pluginView', params: {cls: namespace + '.' + cls}}"
                                     >
+                                        <div class="icon">
+                                            <task-icon :only-icon="true" :cls="namespace + '.' + cls" />
+                                        </div>
                                         {{ cls }}
                                     </router-link>
                                 </li>
@@ -30,11 +33,16 @@
 </template>
 
 <script>
+    import TaskIcon from "../plugins/TaskIcon";
+
     export default {
         data() {
             return {
                 offset: 0
             }
+        },
+        components: {
+            TaskIcon
         },
         props: {
             plugins: {
@@ -66,6 +74,14 @@
 
     .plugins-list {
         font-size: $font-size-xs;
-    }
 
+        .toc-h3 {
+            .icon {
+                width: $font-size-sm;
+                height: $font-size-sm;
+                display: inline-block;
+                position: relative;
+            }
+        }
+    }
 </style>

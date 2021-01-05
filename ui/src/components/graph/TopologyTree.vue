@@ -229,11 +229,11 @@
                         style: {
                             // "label": "data(label)",
                             "shape": "rectangle",
-                            "width": 182,
+                            "width": 202,
                             "height": 50,
-                            "border-width": 1,
+                            "border-width": 0,
                             "background-color": "#FFF",
-                            "border-color": "#999",
+                            "background-opacity": 0,
                             "text-halign": "center",
                             "text-valign": "center",
                         }

@@ -12,6 +12,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -83,7 +84,7 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
             });
 
             scheduler.run();
-            queueCount.await();
+            queueCount.await(1, TimeUnit.MINUTES);
         }
     }
 }

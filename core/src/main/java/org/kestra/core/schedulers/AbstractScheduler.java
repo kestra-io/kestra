@@ -453,6 +453,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                 .flow(f.getFlow())
                 .trigger(f.getTrigger())
                 .pollingTrigger(f.getPollingTrigger())
+                .runContext(f.getRunContext())
                 .triggerContext(TriggerContext.builder()
                     .namespace(f.getTriggerContext().getNamespace())
                     .flowId(f.getTriggerContext().getFlowId())

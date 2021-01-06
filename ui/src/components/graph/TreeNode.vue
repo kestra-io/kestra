@@ -122,6 +122,7 @@
     import LogLevelSelector from "../../components/logs/LogLevelSelector";
     import SearchField from "../layout/SearchField";
     import TaskIcon from "../plugins/TaskIcon";
+    import Kicon from "../Kicon"
 
     export default {
         components: {
@@ -135,6 +136,7 @@
             LogLevelSelector,
             SearchField,
             TaskIcon,
+            Kicon
         },
         props: {
             n: {
@@ -219,9 +221,9 @@
                     return this.taskRuns[0].state.current
                 }
 
-                const allStates = [...new Set(this.taskRuns.map(t => t.state.current))];
+                const allStates = this.taskRuns.map(t => t.state.current);
 
-                const sortStatus = [
+                const SORT_STATUS = [
                     State.FAILED,
                     State.KILLED,
                     State.WARNING,
@@ -232,11 +234,17 @@
                     State.SUCCESS
                 ];
 
-                allStates.sort((a, b) => {
-                    return sortStatus.indexOf(a[1]) - sortStatus.indexOf(b[1]);
-                });
+                // sorting based on SORT_STATUS array
+                const result = allStates
+                    .map((item) => {
+                        const n = SORT_STATUS.indexOf(item[1]);
+                        SORT_STATUS[n] = undefined;
+                        return [n, item]
+                    })
+                    .sort()
+                    .map((j) => j[1])
 
-                return allStates[0];
+                return result[0];
             },
             duration() {
                 return this.taskRuns ? this.taskRuns.reduce((inc, taskRun) => inc + taskRun.state.duration, 0) : null;

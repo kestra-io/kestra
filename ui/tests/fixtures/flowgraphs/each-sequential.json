@@ -1,0 +1,162 @@
+{
+  "nodes": [
+    {
+      "uid": "iPEGVh8eo6L2eJvAZ7yZ7_root",
+      "type": "org.kestra.core.models.hierarchies.GraphClusterRoot"
+    },
+    {
+      "uid": "21OCHso6nuOEOy2f6LA1tu_end",
+      "type": "org.kestra.core.models.hierarchies.GraphClusterEnd"
+    },
+    {
+      "uid": "1_each_6PrKjf95xBLmWqrejmv8aH_root",
+      "type": "org.kestra.core.models.hierarchies.GraphClusterRoot",
+      "task": {
+        "id": "1_each",
+        "type": "org.kestra.core.tasks.flows.EachSequential",
+        "tasks": [
+          {
+            "id": "1-1",
+            "type": "org.kestra.core.tasks.debugs.Return",
+            "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+          },
+          {
+            "id": "1-2",
+            "type": "org.kestra.core.tasks.debugs.Return",
+            "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+          }
+        ],
+        "value": "[\"value 1\", \"value 2\", \"value 3\"]"
+      },
+      "relationType": "DYNAMIC"
+    },
+    {
+      "uid": "1_each_4fwiMSrBsSia67rYJlnuuL_end",
+      "type": "org.kestra.core.models.hierarchies.GraphClusterEnd",
+      "task": {
+        "id": "1_each",
+        "type": "org.kestra.core.tasks.flows.EachSequential",
+        "tasks": [
+          {
+            "id": "1-1",
+            "type": "org.kestra.core.tasks.debugs.Return",
+            "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+          },
+          {
+            "id": "1-2",
+            "type": "org.kestra.core.tasks.debugs.Return",
+            "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+          }
+        ],
+        "value": "[\"value 1\", \"value 2\", \"value 3\"]"
+      },
+      "relationType": "DYNAMIC"
+    },
+    {
+      "uid": "1-1",
+      "type": "org.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "1-1",
+        "type": "org.kestra.core.tasks.debugs.Return",
+        "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+      },
+      "relationType": "SEQUENTIAL"
+    },
+    {
+      "uid": "1-2",
+      "type": "org.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "1-2",
+        "type": "org.kestra.core.tasks.debugs.Return",
+        "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+      },
+      "relationType": "SEQUENTIAL"
+    },
+    {
+      "uid": "2_end",
+      "type": "org.kestra.core.models.hierarchies.GraphTask",
+      "task": {
+        "id": "2_end",
+        "type": "org.kestra.core.tasks.debugs.Return",
+        "format": "{{task.id}} > {{taskrun.startDate}}"
+      },
+      "relationType": "SEQUENTIAL"
+    }
+  ],
+  "edges": [
+    {
+      "source": "2_end",
+      "target": "21OCHso6nuOEOy2f6LA1tu_end",
+      "relation": {
+
+      }
+    },
+    {
+      "source": "1_each_4fwiMSrBsSia67rYJlnuuL_end",
+      "target": "2_end",
+      "relation": {
+
+      }
+    },
+    {
+      "source": "iPEGVh8eo6L2eJvAZ7yZ7_root",
+      "target": "1_each_6PrKjf95xBLmWqrejmv8aH_root",
+      "relation": {
+
+      }
+    },
+    {
+      "source": "1-2",
+      "target": "1_each_4fwiMSrBsSia67rYJlnuuL_end",
+      "relation": {
+
+      }
+    },
+    {
+      "source": "1-1",
+      "target": "1-2",
+      "relation": {
+        "relationType": "DYNAMIC"
+      }
+    },
+    {
+      "source": "1_each_6PrKjf95xBLmWqrejmv8aH_root",
+      "target": "1-1",
+      "relation": {
+        "relationType": "DYNAMIC"
+      }
+    }
+  ],
+  "clusters": [
+    {
+      "cluster": {
+        "uid": "1_each",
+        "type": "org.kestra.core.models.hierarchies.GraphCluster",
+        "task": {
+          "id": "1_each",
+          "type": "org.kestra.core.tasks.flows.EachSequential",
+          "tasks": [
+            {
+              "id": "1-1",
+              "type": "org.kestra.core.tasks.debugs.Return",
+              "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+            },
+            {
+              "id": "1-2",
+              "type": "org.kestra.core.tasks.debugs.Return",
+              "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+            }
+          ],
+          "value": "[\"value 1\", \"value 2\", \"value 3\"]"
+        },
+        "relationType": "DYNAMIC"
+      },
+      "nodes": [
+        "1_each_6PrKjf95xBLmWqrejmv8aH_root",
+        "1_each_4fwiMSrBsSia67rYJlnuuL_end",
+        "1-1",
+        "1-2"
+      ]
+    }
+  ]
+}

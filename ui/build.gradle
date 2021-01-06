@@ -7,7 +7,7 @@ bintrayUpload.enabled = false
 frontend {
     nodeVersion = '14.8.0'
     assembleScript = 'run build'
-    checkScript = 'run test'
+    checkScript = 'run test:unit'
 }
 
 tasks.named('installFrontend') {

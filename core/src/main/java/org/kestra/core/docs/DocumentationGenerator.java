@@ -5,7 +5,9 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
 import com.google.common.base.Charsets;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
+import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.tasks.Task;
@@ -22,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 abstract public class DocumentationGenerator {
     private static final Handlebars handlebars = new Handlebars()
@@ -85,15 +88,21 @@ abstract public class DocumentationGenerator {
             .collect(Collectors.toList());
     }
 
+    @SneakyThrows
     public static String icon(RegisteredPlugin plugin, Class<?> cls ) {
-        try (InputStream resourceAsStream = plugin.getClassLoader().getResourceAsStream("icons/" + cls.getName() + ".svg")) {
-            if (resourceAsStream != null) {
-                return Base64.getEncoder().encodeToString(
-                    IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)
-                );
-            }
-        } catch (IOException ignored) {
+        InputStream resourceAsStream = Stream
+            .of(
+                plugin.getClassLoader().getResourceAsStream("icons/" + cls.getName() + ".svg"),
+                plugin.getClassLoader().getResourceAsStream("icons/" + cls.getPackageName() + ".svg")
+            )
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
 
+        if (resourceAsStream != null) {
+            return Base64.getEncoder().encodeToString(
+                IOUtils.toString(resourceAsStream, Charsets.UTF_8).getBytes(StandardCharsets.UTF_8)
+            );
         }
 
         return null;

@@ -112,6 +112,7 @@
                 margin: 0;
                 margin-top: 2px;
                 height: 100%;
+                vertical-align: center;
             }
         }
     }

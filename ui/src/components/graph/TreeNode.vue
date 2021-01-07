@@ -30,12 +30,9 @@
                 <b-btn-group>
                     <b-button
                         v-if="task.description"
-                        :title="`${$t('description')}`"
                         class="node-action"
                     >
-                        <kicon :tooltip="task.description">
-                            <markdown-tooltip :id="hash" />
-                        </kicon>
+                        <markdown-tooltip :description="task.description" :id="hash" />
                     </b-button>
 
                     <b-button

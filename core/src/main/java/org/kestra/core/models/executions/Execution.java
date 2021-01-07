@@ -186,7 +186,7 @@ public class Execution implements DeletedInterface {
 
         List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
 
-        if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks) || this.hasWarning(resolvedTasks)) {
+        if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks)) {
             return resolvedErrors == null ? new ArrayList<>() : resolvedErrors;
         }
 
@@ -341,10 +341,14 @@ public class Execution implements DeletedInterface {
             .findLastByState(currentTasks, State.Type.KILLED, parentTaskRun)
             .map(taskRun -> taskRun.getState().getCurrent())
             .or(() -> this
+                .findLastByState(currentTasks, State.Type.FAILED, parentTaskRun)
+                .map(taskRun -> taskRun.getState().getCurrent())
+            )
+            .or(() -> this
                 .findLastByState(currentTasks, State.Type.WARNING, parentTaskRun)
                 .map(taskRun -> taskRun.getState().getCurrent())
             )
-            .orElse(this.hasFailed(currentTasks) ? State.Type.FAILED : State.Type.SUCCESS);
+            .orElse(State.Type.SUCCESS);
     }
 
     @JsonIgnore

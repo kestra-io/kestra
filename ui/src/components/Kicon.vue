@@ -1,5 +1,5 @@
 <template>
-    <div v-b-tooltip="{title:tooltip, placement}">
+    <div class="kicon" v-b-tooltip="{title:tooltip, placement}">
         <slot />
     </div>
 </template>

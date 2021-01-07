@@ -33,9 +33,7 @@
                         :title="`${$t('description')}`"
                         class="node-action"
                     >
-                        <kicon :tooltip="task.description">
-                            <markdown-tooltip :id="hash" />
-                        </kicon>
+                        <markdown-tooltip :id="hash" :description="task.description" />
                     </b-button>
 
                     <b-button
@@ -342,11 +340,6 @@
                 white-space: nowrap;
             }
 
-            .node-action {
-                flex-shrink: 2;
-                padding-top: 18px;
-                padding-right: 18px;
-            }
         }
 
         .status-wrapper {
@@ -385,6 +378,9 @@
         padding-top: 1px;
         padding-right: 5px;
         padding-left: 5px;
+        .kicon span{
+            font-size: 1.2em;
+        }
     }
 }
 </style>

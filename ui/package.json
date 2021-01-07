@@ -5,10 +5,11 @@
   "scripts": {
     "serve": "vue-cli-service serve --port 8090",
     "build": "vue-cli-service build",
+    "test:unit": "vue-cli-service test:unit",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "bootstrap": "^4.5.3",
     "bootstrap-vue": "^2.18.1",
     "chart.js": "^2.9.4",
@@ -52,67 +53,34 @@
     "vuex": "^3.5.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
     "@vue/cli-plugin-babel": "^4.5.8",
     "@vue/cli-plugin-eslint": "^4.5.8",
+    "@vue/cli-plugin-unit-jest": "^4.4.4",
     "@vue/cli-service": "^4.5.8",
+    "@vue/test-utils": "^1.1.2",
+    "babel-core": "^7.0.0-bridge.0",
     "babel-eslint": "^10.1.0",
+    "babel-jest": "^26.6.3",
     "eslint": "^7.11.0",
+    "eslint-plugin-jest": "^24.1.0",
     "eslint-plugin-vue": "^6.2.2",
+    "jest-transform-stub": "^2.0.0",
     "node-sass": "^4.14.1",
     "sass-loader": "^9.0.3",
+    "vue-jest": "^3.0.7",
     "vue-template-compiler": "^2.6.12"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/strongly-recommended",
-      "eslint:recommended"
-    ],
-    "rules": {
-      "vue/html-indent": [
-        "error",
-        4,
-        {
-          "baseIndent": 1
-        }
-      ],
-      "vue/script-indent": [
-        "error",
-        4,
-        {
-          "baseIndent": 1
-        }
-      ],
-      "vue/max-attributes-per-line": [
-        "error",
-        {
-          "singleline": 7
-        }
-      ],
-      "quotes": [
-        "error",
-        "double"
-      ],
-      "vue/object-curly-spacing": [
-        "error",
-        "never"
-      ],
-      "object-curly-spacing": [
-        "error",
-        "never"
-      ]
-    },
-    "parserOptions": {
-      "parser": "babel-eslint"
-    }
   },
   "postcss": {
     "plugins": {
       "autoprefixer": {}
     }
+  },
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ]
   },
   "browserslist": [
     "> 1%",

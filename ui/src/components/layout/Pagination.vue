@@ -2,7 +2,7 @@
     <div class="d-flex">
         <div class="flex-grow-1">
             <b-form-select
-                v-model="size"
+                v-model="internalSize"
                 @change="pageSizeChange"
                 size="sm"
                 :options="pageOptions"
@@ -11,10 +11,10 @@
         <div>
             <b-pagination
                 @change="pageChanged"
-                v-model="page"
+                v-model="internalPage"
                 :total-rows="Math.min((max || total ),total)"
                 hide-ellipsis
-                :per-page="size"
+                :per-page="internalSize"
                 size="sm"
                 class="my-0"
                 align="right"
@@ -34,11 +34,14 @@
     export default {
         props: {
             total: {type: Number, required: true},
-            max: {type: Number, required:false, default: undefined}},
+            max: {type: Number, default: undefined},
+            size: {type: Number, required: true},
+            page: {type: Number, required: true}
+        },
         data() {
             return {
-                size: parseInt(this.$route.query.size || 25),
-                page: parseInt(this.$route.query.page || 1),
+                internalSize: parseInt(this.$route.query.size || this.size),
+                internalPage: parseInt(this.$route.query.page || this.page),
                 pageOptions: [
                     {value: 10, text: `10 ${this.$t("Per page")}`},
                     {value: 25, text: `25 ${this.$t("Per page")}`},
@@ -51,13 +54,14 @@
             pageSizeChange() {
                 this.$emit("onPageChanged", {
                     page: 1,
-                    size: this.size,
+                    size: this.internalSize,
                 });
             },
             pageChanged(page) {
+                this.internalPage = page;
                 this.$emit("onPageChanged", {
                     page: page,
-                    size: this.size,
+                    size: this.internalSize,
                 });
             },
         },

@@ -26,7 +26,12 @@
                         :items="templates"
                         :fields="fields"
                         ref="table"
+                        show-empty
                     >
+                        <template #empty>
+                            <span class="text-black-50">{{ $t('no result') }}</span>
+                        </template>
+
                         <template v-slot:cell(actions)="row">
                             <router-link :to="{name: 'templateEdit', params : row.item}">
                                 <kicon :tooltip="$t('details')" placement="left">

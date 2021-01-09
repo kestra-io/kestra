@@ -167,7 +167,7 @@
                     return +new Date();
                 }
 
-                return Math.max(...this.execution.taskRunList.map(r => {
+                return Math.max(...(this.execution.taskRunList || []).map(r => {
                     let lastIndex = r.state.histories.length - 1
                     return ts(r.state.histories[lastIndex].date)
                 }));

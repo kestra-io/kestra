@@ -3,7 +3,7 @@
         <b-card no-body>
             <b-tabs card>
                 <b-tab
-                    v-for="tab in tabs"
+                    v-for="tab in tabs()"
                     :key="tab.tab"
                     @click="setTab(tab.tab)"
                     :active="$route.query.tab === tab.tab"
@@ -20,7 +20,7 @@
     </div>
 </template>
 <script>
-    import Overview from "./Overview";
+    import Topology from "./Topology";
     import Schedule from "./Schedule";
     import DataSource from "./DataSource";
     import Revisions from "./Revisions";
@@ -37,7 +37,7 @@
     export default {
         mixins: [RouteContext],
         components: {
-            Overview,
+            Topology,
             Schedule,
             BottomLine,
             DataSource,
@@ -69,6 +69,58 @@
                     params: this.$route.params,
                     query: {tab}
                 });
+            },
+            tabs() {
+                const tabs = [
+                    {
+                        tab: "topology",
+                        title: this.$t("topology"),
+                        class: "p-0"
+                    },
+                ];
+
+                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
+                    tabs.push({
+                        tab: "executions",
+                        title: this.$t("executions")
+                    });
+                }
+
+                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
+                    tabs.push({
+                        tab: "execution-configuration",
+                        title: this.$t("launch execution")
+                    });
+                }
+
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace)) {
+                    tabs.push({
+                        tab: "data-source",
+                        title: this.$t("source"),
+                        class: "p-0"
+                    });
+
+                    tabs.push({
+                        tab: "schedule",
+                        title: this.$t("schedule"),
+                    });
+                }
+
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                    tabs.push({
+                        tab: "revisions",
+                        title: this.$t("revisions")
+                    });
+                }
+
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                    tabs.push({
+                        tab: "logs",
+                        title: this.$t("logs")
+                    });
+                }
+
+                return tabs;
             }
         },
         computed: {
@@ -105,59 +157,6 @@
                         }
                     ]
                 };
-            },
-            tabs() {
-                const title = title => this.$t(title);
-                const tabs = [
-                    {
-                        tab: "overview",
-                        title: title("overview"),
-                        class: "p-0"
-                    },
-                ];
-
-                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
-                    tabs.push({
-                        tab: "executions",
-                        title: title("executions")
-                    });
-                }
-
-                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
-                    tabs.push({
-                        tab: "execution-configuration",
-                        title: title("launch execution")
-                    });
-                }
-
-                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace)) {
-                    tabs.push({
-                        tab: "data-source",
-                        title: title("source"),
-                        class: "p-0"
-                    });
-
-                    tabs.push({
-                        tab: "schedule",
-                        title: title("schedule"),
-                    });
-                }
-
-                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
-                    tabs.push({
-                        tab: "revisions",
-                        title: title("revisions")
-                    });
-                }
-
-                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
-                    tabs.push({
-                        tab: "logs",
-                        title: title("logs")
-                    });
-                }
-
-                return tabs;
             }
         },
         destroyed () {

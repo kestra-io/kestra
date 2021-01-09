@@ -1,5 +1,5 @@
 <template>
-    <span v-b-tooltip.hover="inverted ? from : full">{{ inverted ? full : from }}</span>
+    <span v-if="date" v-b-tooltip.hover="inverted ? from : full">{{ inverted ? full : from }}</span>
 </template>
 <script>
     import Vue from "vue";
@@ -8,7 +8,7 @@
         props: {
             date: {
                 type: String,
-                required: true
+                default: undefined
             },
             inverted: {
                 type: Boolean,

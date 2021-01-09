@@ -6,7 +6,7 @@ const STATE = Object.freeze({
         name: "CREATED",
         colorClass: "info",
         color: "#75bcdd",
-        icon: "pause-circle-outline",
+        icon: "pause-circle",
         isRunning: true,
         isKillable: true
     },
@@ -22,7 +22,7 @@ const STATE = Object.freeze({
         name: "SUCCESS",
         colorClass: "success",
         color: "#43ac6a",
-        icon: "check-circle-outline",
+        icon: "check-circle",
         isRunning: false,
         isKillable: false
     },
@@ -30,7 +30,7 @@ const STATE = Object.freeze({
         name: "RUNNING",
         colorClass: "primary",
         color: "#1AA5DE",
-        icon: "play-circle-outline",
+        icon: "play-circle",
         isRunning: true,
         isKillable: true
     },
@@ -38,7 +38,7 @@ const STATE = Object.freeze({
         name: "KILLING",
         colorClass: "warning",
         color: "#FBD10B",
-        icon: "close-circle-outline",
+        icon: "close-circle",
         isRunning: true,
         isKillable: false
     },
@@ -46,7 +46,7 @@ const STATE = Object.freeze({
         name: "KILLED",
         colorClass: "warning",
         color: "#FBD10B",
-        icon: "stop-circle-outline",
+        icon: "stop-circle",
         isRunning: false,
         isKillable: false
     },
@@ -62,7 +62,7 @@ const STATE = Object.freeze({
         name: "FAILED",
         colorClass: "danger",
         color: "#F04124",
-        icon: "close-circle-outline",
+        icon: "close-circle",
         isRunning: false,
         isKillable: false
     }
@@ -102,11 +102,11 @@ export default class State {
     }
 
     static isRunning(state) {
-        return state[state] && state[state].isRunning;
+        return STATE[state] && STATE[state].isRunning;
     }
 
     static isKillable(state) {
-        return state[state] && state[state].isKillable;
+        return STATE[state] && STATE[state].isKillable;
     }
 
     static allStates() {

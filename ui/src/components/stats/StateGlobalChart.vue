@@ -3,11 +3,19 @@
         <div class="title" :title="$t('last 30 days executions')">
             {{ $t('last 30 days executions') }}
         </div>
-        <state-chart
-            v-if="ready"
-            :data="data"
-            :global="true"
-        />
+        <template v-if="hasData">
+            <state-chart
+                v-if="ready"
+                :data="data"
+                :big="big"
+                :global="true"
+            />
+        </template>
+        <template v-else>
+            <b-alert variant="light" class="m-0" show>
+                {{ $t('no result') }}
+            </b-alert>
+        </template>
     </div>
 </template>
 
@@ -27,7 +35,18 @@
                 type: Array,
                 required: true
             },
+            big: {
+                type: Boolean,
+                default: false
+            }
         },
+        computed: {
+            hasData() {
+                return [...this.data].reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0) > 0
+            }
+        }
     };
 </script>
 
@@ -40,6 +59,7 @@
     background: $gray-100;
     position: relative;
     height: 100px;
+    vertical-align: middle;
 
     .title {
         writing-mode: vertical-rl;
@@ -56,6 +76,10 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+    }
+
+    .alert {
+        margin-left: 35px !important;
     }
 
     .executions-charts {

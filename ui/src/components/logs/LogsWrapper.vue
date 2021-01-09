@@ -19,7 +19,7 @@
                 </template>
             </div>
         </div>
-        <pagination :total="total" @onPageChanged="onPageChanged" />
+        <pagination :size="pageSize" :page="pageNumber" :total="total" @onPageChanged="onPageChanged" />
     </div>
 </template>
 
@@ -43,15 +43,25 @@
                 type: Boolean,
                 default: false
             },
+            pageSize: {
+                type: Number,
+                default: 25
+            },
+            pageNumber: {
+                type: Number,
+                default: 1
+            },
         },
         data() {
             return {
                 task: undefined,
-                pageSize: 25,
-                pageNumber: 1,
+                internalPageSize: undefined,
+                internalPageNumber: undefined,
             };
         },
         created() {
+            this.internalPageSize = this.pageSize;
+            this.internalPageNumber = this.pageNumber;
             this.loadData();
         },
         computed: {
@@ -66,13 +76,13 @@
             }
         },
         methods: {
-            onPageChanged(item) {
-                this.pageSize = item.size;
-                this.pageNumber = item.page;
+            onPageChanged(pagination) {
+                this.internalPageSize = pagination.size;
+                this.internalPageNumber = pagination.page;
 
                 if (!this.embed) {
                     this.$router.push({
-                        query: {...this.$route.query, ...item},
+                        query: {...this.$route.query, ...pagination},
                     });
                 }
 
@@ -87,8 +97,8 @@
 
                 this.$store.dispatch("log/findLogs", {
                     q,
-                    page: this.$route.query.page || this.pageNumber,
-                    size: this.$route.query.size  || this.pageSize,
+                    page: this.$route.query.page || this.internalPageNumber,
+                    size: this.$route.query.size  || this.internalPageSize,
                     minLevel: this.$route.query.level || this.logLevel
                 });
             },

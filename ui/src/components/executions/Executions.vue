@@ -1,6 +1,6 @@
 <template>
     <div v-if="ready">
-        <data-table @onPageChanged="onPageChangedOverload" ref="dataTable" :total="total">
+        <data-table @onPageChanged="onPageChangedOverload" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
             <template v-slot:navbar v-if="embed === false">
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <namespace-select data-type="flow" v-if="$route.name !== 'flowEdit'" @onNamespaceSelect="onNamespaceSelect" />
@@ -134,13 +134,25 @@
                 type: Array,
                 default: () => []
             },
+            pageSize: {
+                type: Number,
+                default: 25
+            },
+            pageNumber: {
+                type: Number,
+                default: 1
+            },
+        },
+        created() {
+            this.internalPageSize = this.pageSize;
+            this.internalPageNumber = this.pageNumber;
         },
         data() {
             return {
                 dataType: "execution",
                 dailyReady: false,
-                pageSize: 25,
-                pageNumber: 1,
+                internalPageSize: undefined,
+                internalPageNumber: undefined,
                 flowTriggerDetails: undefined
             };
         },
@@ -235,8 +247,8 @@
                 this.loadData()
             },
             onPageChangedOverload(item) {
-                this.pageSize = item.size;
-                this.pageNumber = item.page;
+                this.internalPageSize = item.size;
+                this.internalPageNumber = item.page;
                 this.onPageChanged(item);
             },
             showTriggerDetails(trigger) {
@@ -271,8 +283,8 @@
                     });
 
                 this.$store.dispatch("execution/findExecutions", {
-                    size: parseInt(this.$route.query.size || this.pageSize),
-                    page: parseInt(this.$route.query.page || this.pageNumber),
+                    size: parseInt(this.$route.query.size || this.internalPageSize),
+                    page: parseInt(this.$route.query.page || this.internalPageNumber),
                     q: this.executionQuery,
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.status ? [this.$route.query.status] : this.statuses

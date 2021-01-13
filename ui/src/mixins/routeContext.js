@@ -6,15 +6,15 @@ export default {
         }
     },
     mounted() {
-        this.onLoad()
+        this.handleBreadcrumb()
     },
     watch: {
         $route() {
-            this.onLoad()
+            this.handleBreadcrumb()
         }
     },
     methods: {
-        onLoad() {
+        handleBreadcrumb() {
             if (!this.preventRouteInfo) {
                 this.$store.commit("layout/setTopNavbar", this.routeInfo)
 

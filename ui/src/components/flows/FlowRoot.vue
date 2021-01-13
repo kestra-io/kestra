@@ -49,14 +49,14 @@
         },
         watch: {
             $route() {
-                this.onLoad()
+                this.load()
             }
         },
         created() {
-            this.onLoad();
+            this.load();
         },
         methods: {
-            onLoad() {
+            load() {
                 this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
                     if (this.flow) {
                         this.$store.dispatch("flow/loadGraph", this.flow);

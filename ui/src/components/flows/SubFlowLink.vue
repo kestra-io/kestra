@@ -37,7 +37,7 @@
         },
         methods: {
             click() {
-                if (this.execution) {
+                if (this.executionId) {
                     this.$store
                         .dispatch("execution/loadExecution", {id: this.executionId})
                         .then(value => {

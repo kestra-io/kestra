@@ -152,6 +152,7 @@ class NodeTest {
         files.put("main.js", "const Kestra = require(\"./kestra\");" +
             "Kestra.outputs({test: 'value', int: 2, bool: true, float: 3.65});" +
             "Kestra.counter('count', 1, {tag1: 'i', tag2: 'win'});" +
+            "Kestra.counter('count2', 2);" +
             "Kestra.timer('timer1', (callback) => { setTimeout(callback, 1000) }, {tag1: 'i', tag2: 'lost'});" +
             "Kestra.timer('timer2', 2.12, {tag1: 'i', tag2: 'destroy'});"
         );

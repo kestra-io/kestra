@@ -10,7 +10,7 @@ class Kestra:
         print("::" + json.dumps(map) + "::")
 
     @staticmethod
-    def _metrics(name, type, value, tags):
+    def _metrics(name, type, value, tags=None):
         Kestra._send({
             "metrics": [
                 {
@@ -29,14 +29,14 @@ class Kestra:
         })
 
     @staticmethod
-    def counter(name, value, tags):
-        Kestra._metrics(name, "counter", value, tags);
+    def counter(name, value, tags=None):
+        Kestra._metrics(name, "counter", value, tags)
 
     @staticmethod
-    def timer(name, duration, tags):
+    def timer(name, duration, tags=None):
         if callable(duration):
             start = datetime.now()
             duration()
-            Kestra._metrics(name, "timer", (datetime.now().microsecond - start.microsecond) / 1000, tags);
+            Kestra._metrics(name, "timer", (datetime.now().microsecond - start.microsecond) / 1000, tags)
         else:
             Kestra._metrics(name, "timer", duration, tags);

@@ -229,6 +229,8 @@ class BashTest {
         assertThat(run.getVars().get("float"), is(3.65));
 
         assertThat(BashTest.getMetrics(runContext, "count").getValue(), is(1D));
+        assertThat(BashTest.getMetrics(runContext, "count2").getValue(), is(2D));
+        assertThat(BashTest.getMetrics(runContext, "count2").getTags().size(), is(0));
         assertThat(BashTest.getMetrics(runContext, "count").getTags().size(), is(2));
         assertThat(BashTest.getMetrics(runContext, "count").getTags().get("tag1"), is("i"));
         assertThat(BashTest.getMetrics(runContext, "count").getTags().get("tag2"), is("win"));

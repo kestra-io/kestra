@@ -169,6 +169,7 @@ class PythonTest {
             "import time\n" +
             "Kestra.outputs({'test': 'value', 'int': 2, 'bool': True, 'float': 3.65})\n" +
             "Kestra.counter('count', 1, {'tag1': 'i', 'tag2': 'win'})\n" +
+            "Kestra.counter('count2', 2)\n" +
             "Kestra.timer('timer1', lambda: time.sleep(1), {'tag1': 'i', 'tag2': 'lost'})\n" +
             "Kestra.timer('timer2', 2.12, {'tag1': 'i', 'tag2': 'destroy'})\n"
         );

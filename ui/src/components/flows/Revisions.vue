@@ -7,10 +7,24 @@
             </b-col>
 
             <b-col md="6">
-                <b-form-select v-model="revisionLeft" :options="options" />
+                <b-input-group>
+                    <b-form-select v-model="revisionLeft" :options="options" />
+                    <b-btn @click="seeRevision(revisionLeft, revisionLeftText)">
+                        <kicon placement="bottomright" :tooltip="$t('see full revision')">
+                            <file-code />
+                        </kicon>
+                    </b-btn>
+                </b-input-group>
             </b-col>
             <b-col md="6">
-                <b-form-select v-model="revisionRight" :options="options" />
+                <b-input-group>
+                    <b-form-select v-model="revisionRight" :options="options" />
+                    <b-btn @click="seeRevision(revisionRight, revisionRightText)">
+                        <kicon placement="bottomright" :tooltip="$t('see full revision')">
+                            <file-code />
+                        </kicon>
+                    </b-btn>
+                </b-input-group>
             </b-col>
             <b-col md="12">
                 <br>
@@ -22,6 +36,18 @@
                 />
             </b-col>
         </b-row>
+
+        <b-modal
+            :id="`modal-source-${revisionId}`"
+            :title="`Revision ${revision}`"
+            header-bg-variant="dark"
+            header-text-variant="light"
+            hide-backdrop
+            modal-class="right"
+            size="xl"
+        >
+            <editor v-model="revisionYaml" lang="yaml" />
+        </b-modal>
     </div>
     <div v-else>
         <b-alert class="mb-0" show>
@@ -33,9 +59,12 @@
     import {mapState} from "vuex";
     import YamlUtils from "../../utils/yamlUtils";
     import CodeDiff from "vue-code-diff";
+    import Editor from "../../components/inputs/Editor";
+    import FileCode from "vue-material-design-icons/FileCode";
+    import Kicon from "../Kicon"
 
     export default {
-        components: {CodeDiff},
+        components: {CodeDiff, Editor, FileCode, Kicon},
         created() {
             this.$store
                 .dispatch("flow/loadRevisions", this.$route.params)
@@ -73,6 +102,15 @@
                         return i;
                     }
                 }
+            },
+
+            seeRevision(index, revision) {
+                this.revisionId = index
+                this.revisionYaml = revision
+                this.revision = this.revisions[index].revision
+                setTimeout(() => {
+                    this.$bvModal.show(`modal-source-${index}`)
+                })
             },
         },
         computed: {
@@ -112,6 +150,9 @@
             return {
                 revisionLeft: 0,
                 revisionRight: 0,
+                revision: undefined,
+                revisionId: undefined,
+                revisionYaml: undefined,
                 displayType: "side-by-side",
                 displayTypes: [
                     {value: "side-by-side", text: "side-by-side"},

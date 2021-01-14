@@ -2,7 +2,6 @@ package org.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
 import lombok.extern.slf4j.Slf4j;
-import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.exceptions.InternalException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
@@ -14,6 +13,7 @@ import org.kestra.core.models.tasks.FlowableTask;
 import org.kestra.core.models.tasks.ResolvedTask;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.services.ConditionService;
+import org.kestra.core.services.TaskDefaultService;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -28,11 +28,18 @@ public abstract class AbstractExecutor implements Runnable {
     protected RunContextFactory runContextFactory;
     protected MetricRegistry metricRegistry;
     protected ConditionService conditionService;
+    protected TaskDefaultService taskDefaultService;
 
-    public AbstractExecutor(RunContextFactory runContextFactory, MetricRegistry metricRegistry, ConditionService conditionService) {
+    public AbstractExecutor(
+        RunContextFactory runContextFactory,
+        MetricRegistry metricRegistry,
+        ConditionService conditionService,
+        TaskDefaultService taskDefaultService
+    ) {
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
         this.conditionService = conditionService;
+        this.taskDefaultService = taskDefaultService;
     }
 
     protected Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
@@ -433,10 +440,12 @@ public abstract class AbstractExecutor implements Runnable {
             .map(throwFunction(taskRun -> {
                 Task task = flow.findTaskByTaskId(taskRun.getTaskId());
 
+                Task taskWithDefault = taskDefaultService.injectDefaults(task, flow);
+
                 return WorkerTask.builder()
-                    .runContext(runContextFactory.of(flow, task, execution, taskRun))
+                    .runContext(runContextFactory.of(flow, taskWithDefault, execution, taskRun))
                     .taskRun(taskRun)
-                    .task(task)
+                    .task(taskWithDefault)
                     .build();
                 }))
             .collect(Collectors.toList());

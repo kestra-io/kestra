@@ -17,6 +17,7 @@ import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
 import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowService;
+import org.kestra.core.services.TaskDefaultService;
 
 import java.util.Collection;
 import java.util.List;
@@ -51,9 +52,11 @@ public class MemoryExecutor extends AbstractExecutor {
         @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRegistry metricRegistry,
         FlowService flowService,
-        ConditionService conditionService
+        ConditionService conditionService,
+        TaskDefaultService taskDefaultService
     ) {
-        super(runContextFactory, metricRegistry, conditionService);
+        super(runContextFactory, metricRegistry, conditionService, taskDefaultService);
+
         this.flowRepository = flowRepository;
         this.executionQueue = executionQueue;
         this.workerTaskQueue = workerTaskQueue;

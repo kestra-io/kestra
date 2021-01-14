@@ -14,3 +14,16 @@ kestra:
       string: "string"
       int: 1
       bool: true
+
+  tasks:
+    defaults:
+    - type: org.kestra.core.services.TaskDefaultServiceTest$DefaultTester
+      values:
+        doubleValue: 19
+        arrays:
+          - 2
+        property:
+          here: me
+          lists:
+          - val:
+              key: test

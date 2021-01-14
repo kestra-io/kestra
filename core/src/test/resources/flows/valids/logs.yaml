@@ -1,6 +1,11 @@
 id: logs
 namespace: org.kestra.tests
 
+taskDefaults:
+  - type: org.kestra.core.tasks.debugs.Echo
+    values:
+      format: third {{flow.id}}
+
 tasks:
 - id: t1
   type: org.kestra.core.tasks.debugs.Echo

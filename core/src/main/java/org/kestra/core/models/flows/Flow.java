@@ -76,6 +76,8 @@ public class Flow implements DeletedInterface {
     @Valid
     private List<AbstractTrigger> triggers;
 
+    private List<TaskDefault> taskDefaults;
+
     @Builder.Default
     @NotNull
     private boolean deleted = false;
@@ -257,6 +259,7 @@ public class Flow implements DeletedInterface {
             this.errors,
             this.listeners,
             this.triggers,
+            this.taskDefaults,
             true
         );
     }

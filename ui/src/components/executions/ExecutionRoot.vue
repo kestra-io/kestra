@@ -87,21 +87,20 @@
         },
         methods: {
             follow() {
+                const self = this;
                 this.closeSSE();
-                setTimeout(() => {
-                    this.$store
-                        .dispatch("execution/followExecution", this.$route.params)
-                        .then(sse => {
-                            this.sse = sse;
-                            sse.subscribe("", (data, event) => {
-                                this.$store.commit("execution/setExecution", data);
+                this.$store
+                    .dispatch("execution/followExecution", this.$route.params)
+                    .then(sse => {
+                        this.sse = sse
+                        this.sse.onmessage = (event) => {
+                            if (event && event.lastEventId === "end") {
+                                self.closeSSE();
+                            }
 
-                                if (event && event.lastEventId === "end") {
-                                    this.closeSSE();
-                                }
-                            });
-                        });
-                }, 500)
+                            this.$store.commit("execution/setExecution", JSON.parse(event.data));
+                        }
+                    });
             },
             closeSSE() {
                 if (this.sse) {

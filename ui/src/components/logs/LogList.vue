@@ -186,6 +186,11 @@
             level: function () {
                 this.loadLogs();
             },
+            execution: function() {
+                if (this.execution && this.execution.state.current !== State.RUNNING) {
+                    this.closeSSE();
+                }
+            },
         },
         created() {
             this.loadLogs();
@@ -232,18 +237,30 @@
                             params: params,
                         })
                         .then((sse) => {
+                            const self = this;
                             this.sse = sse;
                             this.$store.commit("execution/setLogs", []);
 
-                            sse.subscribe("", (data) => {
-                                this.$store.commit("execution/appendLogs", data);
-                            });
+                            this.sse.onmessage = (event) => {
+                                if (event && event.lastEventId === "end") {
+                                    self.closeSSE();
+                                }
+
+                                this.$store.commit("execution/appendLogs", JSON.parse(event.data));
+                            }
                         });
                 } else {
                     this.$store.dispatch("execution/loadLogs", {
                         executionId: this.$route.params.id,
                         params: params,
                     });
+                    this.closeSSE();
+                }
+            },
+            closeSSE() {
+                if (this.sse) {
+                    this.sse.close();
+                    this.sse = undefined;
                 }
             },
             attempts(taskRun) {

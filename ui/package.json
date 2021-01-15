@@ -47,7 +47,6 @@
     "vue-router": "^3.4.7",
     "vue-select": "^3.10.8",
     "vue-sidebar-menu": "^4.7.3",
-    "vue-sse": "^1.0.2",
     "vue2-ace-editor": "^0.0.15",
     "vue2-datepicker": "^3.7.0",
     "vuex": "^3.5.1"

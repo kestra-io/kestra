@@ -59,10 +59,10 @@ export default {
             })
         },
         followExecution(_, options) {
-            return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/executions/${options.id}/follow`, {format: "json"})
+            return new EventSource(`${Vue.axios.defaults.baseURL}api/v1/executions/${options.id}/follow`);
         },
         followLogs(_, options) {
-            return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/logs/${options.id}/follow`, {format: "json", params: options.params})
+            return new EventSource(`${Vue.axios.defaults.baseURL}api/v1/logs/${options.id}/follow`);
         },
         loadLogs({commit}, options) {
             return Vue.axios.get(`/api/v1/logs/${options.executionId}`, {

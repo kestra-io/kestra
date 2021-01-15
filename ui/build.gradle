@@ -5,7 +5,7 @@ plugins {
 bintrayUpload.enabled = false
 
 frontend {
-    nodeVersion = '14.8.0'
+    nodeVersion = '14.15.4'
     assembleScript = 'run build'
     checkScript = 'run test:unit'
 }

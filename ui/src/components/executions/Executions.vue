@@ -1,7 +1,7 @@
 <template>
     <div v-if="ready">
         <data-table @onPageChanged="onPageChangedOverload" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
-            <template v-slot:navbar v-if="embed === false">
+            <template #navbar v-if="embed === false">
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <namespace-select data-type="flow" v-if="$route.name !== 'flowEdit'" @onNamespaceSelect="onNamespaceSelect" />
                 <status-filter-buttons @onRefresh="onStatusChange" />
@@ -9,7 +9,7 @@
                 <refresh-button class="float-right" @onRefresh="loadData" />
             </template>
 
-            <template v-slot:top v-if="embed === false">
+            <template #top v-if="embed === false">
                 <state-global-chart
                     v-if="daily"
                     :ready="dailyReady"
@@ -17,7 +17,7 @@
                 />
             </template>
 
-            <template v-slot:table>
+            <template #table>
                 <b-table
                     :no-local-sorting="true"
                     @sort-changed="onSort"
@@ -34,48 +34,44 @@
                         <span class="text-black-50">{{ $t('no result') }}</span>
                     </template>
 
-                    <template v-slot:cell(details)="row">
+                    <template #cell(details)="row">
                         <router-link :to="{name: 'executionEdit', params: row.item}">
                             <kicon :tooltip="$t('details')" placement="left">
                                 <eye />
                             </kicon>
                         </router-link>
                     </template>
-                    <template
-                        v-slot:cell(state.startDate)="row"
-                    >
+                    <template #cell(startDate)="row">
                         <date-ago :date="row.item.state.startDate" />
                     </template>
-                    <template
-                        v-slot:cell(state.endDate)="row"
-                    >
+                    <template #cell(endDate)="row">
                         <span v-if="!isRunning(row.item)">
                             <date-ago :date="row.item.state.endDate" />
                         </span>
                     </template>
-                    <template v-slot:cell(state.current)="row">
+                    <template #cell(current)="row">
                         <status
                             class="status"
                             :status="row.item.state.current"
                             size="sm"
                         />
                     </template>
-                    <template v-slot:cell(state.duration)="row">
+                    <template #cell(duration)="row">
                         <span v-if="isRunning(row.item)">{{ durationFrom(row.item) | humanizeDuration }}</span>
                         <span v-else>{{ row.item.state.duration | humanizeDuration }}</span>
                     </template>
-                    <template v-slot:cell(flowId)="row">
+                    <template #cell(flowId)="row">
                         <router-link
                             :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >
                             {{ row.item.flowId }}
                         </router-link>
                     </template>
-                    <template v-slot:cell(id)="row">
+                    <template #cell(id)="row">
                         <code>{{ row.item.id | id }}</code>
                     </template>
 
-                    <template v-slot:cell(trigger)="row">
+                    <template #cell(trigger)="row">
                         <trigger-avatar @showTriggerDetails="showTriggerDetails" :execution="row.item" />
                     </template>
                 </b-table>
@@ -175,17 +171,17 @@
                         label: title("id")
                     },
                     {
-                        key: "state.startDate",
+                        key: "startDate",
                         label: title("start date"),
                         sortable: true
                     },
                     {
-                        key: "state.endDate",
+                        key: "endDate",
                         label: title("end date"),
                         sortable: true
                     },
                     {
-                        key: "state.duration",
+                        key: "duration",
                         label: title("duration"),
                         sortable: true
                     },
@@ -200,7 +196,7 @@
                         sortable: true
                     },
                     {
-                        key: "state.current",
+                        key: "current",
                         label: title("state"),
                         class: "text-center",
                         sortable: true

@@ -9,12 +9,12 @@
                 ref="dataTable"
                 :total="total"
             >
-                <template v-slot:navbar>
+                <template #navbar>
                     <search-field @onSearch="onSearch" :fields="searchableFields" />
                     <namespace-select :data-type="dataType" @onNamespaceSelect="onNamespaceSelect" />
                 </template>
 
-                <template v-slot:table>
+                <template #table>
                     <b-table
                         :no-local-sorting="true"
                         @row-dblclicked="onRowDoubleClick"
@@ -32,7 +32,7 @@
                             <span class="text-black-50">{{ $t('no result') }}</span>
                         </template>
 
-                        <template v-slot:cell(actions)="row">
+                        <template #cell(actions)="row">
                             <router-link :to="{name: 'templateEdit', params : row.item}">
                                 <kicon :tooltip="$t('details')" placement="left">
                                     <eye />
@@ -40,7 +40,7 @@
                             </router-link>
                         </template>
 
-                        <template v-slot:cell(id)="row">
+                        <template #cell(id)="row">
                             <router-link
                                 :to="{name: `${dataType}Edit`, params: {namespace: row.item.namespace, id: row.item.id}}"
                             >

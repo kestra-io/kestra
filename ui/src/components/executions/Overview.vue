@@ -8,7 +8,7 @@
             </b-col>
         </b-row>
         <b-table responsive="xl" striped hover bordered :items="freshItems" class="mb-0">
-            <template v-slot:cell(value)="row">
+            <template #cell(value)="row">
                 <router-link
                     v-if="row.item.link"
                     :to="{name: 'executionEdit', params: row.item.link}"

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-card no-body>
+        <b-card v-if="ready" no-body>
             <b-tabs card>
                 <b-tab
                     v-for="tab in tabs()"
@@ -157,6 +157,9 @@
                         }
                     ]
                 };
+            },
+            ready() {
+                return this.flow !== undefined;
             }
         },
         destroyed () {

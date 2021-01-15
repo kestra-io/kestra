@@ -1,6 +1,6 @@
 <template>
     <b-toast @hide="onHide" id="app-toast" :variant="message.variant" solid :no-auto-hide="noAutoHide">
-        <template v-slot:toast-title>
+        <template #toast-title>
             <div class="d-flex flex-grow-1 align-items-baseline">
                 <strong class="mr-auto" v-html="title" />
             </div>

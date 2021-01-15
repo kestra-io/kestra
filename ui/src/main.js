@@ -68,7 +68,7 @@ if (app) {
 
   Vue.use(Toast)
 
-  Vue.component("v-select", vSelect);
+  Vue.component("VSelect", vSelect);
 
   Vue.config.productionTip = false;
 

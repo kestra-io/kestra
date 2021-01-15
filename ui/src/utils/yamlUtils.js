@@ -7,14 +7,15 @@ export default class YamlUtils {
             return "";
         }
 
-        return JsYaml.safeDump(YamlUtils._transform(_cloneDeep(value)), {
+        return JsYaml.dump(YamlUtils._transform(_cloneDeep(value)), {
             lineWidth: -1,
             noCompatMode: true,
+            quotingType: "\"",
         });
     }
 
     static parse(item) {
-        return JsYaml.safeLoad(item);
+        return JsYaml.load(item);
     }
 
     static _transform(value) {

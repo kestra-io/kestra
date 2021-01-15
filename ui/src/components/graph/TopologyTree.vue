@@ -397,7 +397,7 @@
                 if (ready) {
                     this.ready = true;
                 } else {
-                    setTimeout(this.bindNodes, 1000);
+                    setTimeout(this.bindNodes, 50);
                 }
             },
             isEdgeNode(node) {

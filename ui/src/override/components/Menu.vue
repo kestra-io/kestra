@@ -32,13 +32,13 @@
     import ChartTimeline from "vue-material-design-icons/ChartTimeline";
     import {mapState} from "vuex";
 
-    Vue.component("graph", Graph);
-    Vue.component("settings", Cog);
-    Vue.component("timelineclock", TimelineClock);
-    Vue.component("bookopen", BookOpen);
-    Vue.component("cardtext", CardText);
-    Vue.component("hexagon-multiple", HexagonMultiple);
-    Vue.component("charttimeline", ChartTimeline);
+    Vue.component("Graph", Graph);
+    Vue.component("Settings", Cog);
+    Vue.component("Timelineclock", TimelineClock);
+    Vue.component("Bookopen", BookOpen);
+    Vue.component("Cardtext", CardText);
+    Vue.component("HexagonMultiple", HexagonMultiple);
+    Vue.component("Charttimeline", ChartTimeline);
 
     export default {
         components: {

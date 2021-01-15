@@ -1,7 +1,7 @@
 <template>
     <div v-if="ready">
         <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
-            <template v-slot:navbar>
+            <template #navbar>
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <namespace-select
                     data-type="flow"
@@ -13,7 +13,7 @@
                 <refresh-button class="float-right" @onRefresh="loadData" />
             </template>
 
-            <template v-slot:top>
+            <template #top>
                 <state-global-chart
                     v-if="taskRunDaily"
                     :ready="dailyReady"
@@ -21,7 +21,7 @@
                 />
             </template>
 
-            <template v-slot:table>
+            <template #table>
                 <b-table
                     :no-local-sorting="true"
                     @sort-changed="onSort"
@@ -37,7 +37,7 @@
                     <template #empty>
                         <span class="text-black-50">{{ $t('no result') }}</span>
                     </template>
-                    <template v-slot:cell(details)="row">
+                    <template #cell(details)="row">
                         <router-link
                             :to="{name: 'executionEdit', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.executionId},query: {tab:'gantt'}}"
                         >
@@ -46,45 +46,44 @@
                             </kicon>
                         </router-link>
                     </template>
-                    <template v-slot:cell(state.startDate)="row">
+                    <template #cell(startDate)="row">
                         <date-ago :date="row.item.state.startDate" />
                     </template>
-                    <template v-slot:cell(state.endDate)="row">
+                    <template #cell(endDate)="row">
                         <span v-if="!isRunning(row.item)">
                             <date-ago :date="row.item.state.endDate" />
                         </span>
                     </template>
-                    <template v-slot:cell(state.current)="row">
+                    <template #cell(current)="row">
                         <status
                             class="status"
                             :status="row.item.state.current"
                             size="sm"
                         />
                     </template>
-                    <template v-slot:cell(state.duration)="row">
-                        <span
-                            v-if="isRunning(row.item)"
-                        >{{ durationFrom(row.item) | humanizeDuration }}</span>
-                        <span v-else>{{ row.item.state.duration | humanizeDuration }}</span>
+                    <template #cell(duration)="row">
+                        <span v-if="isRunning(row.item)">
+                            {{ durationFrom(row.item) | humanizeDuration }}
+                        </span>
+                        <span v-else>
+                            {{ row.item.state.duration | humanizeDuration }}
+                        </span>
                     </template>
-                    <template v-slot:cell(flowId)="row">
+                    <template #cell(flowId)="row">
                         <router-link
                             :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >
                             {{ row.item.flowId }}
                         </router-link>
                     </template>
-                    <template v-slot:cell(id)="row">
+                    <template #cell(id)="row">
                         <code>{{ row.item.id | id }}</code>
                     </template>
-                    <template v-slot:cell(executionId)="row">
+                    <template #cell(executionId)="row">
                         <code>{{ row.item.executionId | id }}</code>
                     </template>
-                    <template v-slot:cell(taskId)="row">
+                    <template #cell(taskId)="row">
                         <code v-b-tooltip.hover :title="row.item.taskId">{{ row.item.taskId | ellipsis(25) }} </code>
-                    </template>
-                    <template v-slot:cell(executionId)="row">
-                        <code>{{ row.item.executionId | id }}</code>
                     </template>
                 </b-table>
             </template>
@@ -158,19 +157,19 @@
                         label: title("execution")
                     },
                     {
-                        key: "state.startDate",
+                        key: "startDate",
                         label: title("start date"),
                         sortable: true,
                         sortKey: "taskRunList.state.startDate"
                     },
                     {
-                        key: "state.endDate",
+                        key: "endDate",
                         label: title("end date"),
                         sortable: true,
                         sortKey: "taskRunList.state.endDate"
                     },
                     {
-                        key: "state.duration",
+                        key: "duration",
                         label: title("duration"),
                         sortable: true,
                         sortKey: "taskRunList.state.duration"
@@ -188,7 +187,7 @@
                         sortKey: "taskRunList.flowId.keyword"
                     },
                     {
-                        key: "state.current",
+                        key: "current",
                         label: title("state"),
                         class: "text-center",
                         sortable: true,

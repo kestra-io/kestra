@@ -30,6 +30,7 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.*;
 import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowService;
+import org.kestra.core.services.TaskDefaultService;
 import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -73,9 +74,10 @@ public class KafkaExecutor extends AbstractExecutor {
         MetricRegistry metricRegistry,
         FlowService flowService,
         ConditionService conditionService,
-        KafkaStreamSourceService kafkaStreamSourceService
+        KafkaStreamSourceService kafkaStreamSourceService,
+        TaskDefaultService taskDefaultService
     ) {
-        super(runContextFactory, metricRegistry, conditionService);
+        super(runContextFactory, metricRegistry, conditionService, taskDefaultService);
 
         this.applicationContext = applicationContext;
         this.kafkaStreamService = kafkaStreamService;

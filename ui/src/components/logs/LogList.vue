@@ -61,7 +61,7 @@
                                     />
 
                                     <b-button
-                                        :disabled="!currentTaskRun.metrics || currentTaskRun.metrics.length ===0"
+                                        :disabled="!(attempt.metrics && attempt.metrics.length > 0) "
                                         @click="
                                             toggleShowMetric(currentTaskRun, index)
                                         "

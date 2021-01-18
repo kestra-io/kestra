@@ -1,5 +1,6 @@
 package org.kestra.core.tasks.flows;
 
+import com.google.common.collect.ImmutableMap;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -8,6 +9,7 @@ import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.Plugin;
 import org.kestra.core.models.annotations.PluginProperty;
 import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.executions.ExecutionTrigger;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.tasks.RunnableTask;
 import org.kestra.core.models.tasks.Task;
@@ -114,10 +116,22 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             this.revision != null ? Optional.of(this.revision) : Optional.empty()
         ).orElseThrow();
 
-        Execution execution = runnerUtils.newExecution(
-            flow,
-            (f, e) -> runnerUtils.typedInputs(f, e, inputs)
-        );
+        Execution execution = runnerUtils
+            .newExecution(
+                flow,
+                (f, e) -> runnerUtils.typedInputs(f, e, inputs)
+            )
+            .withTrigger(ExecutionTrigger.builder()
+                .id(this.getId())
+                .type(this.getType())
+                .variables(ImmutableMap.of(
+                    "executionId", ((Map<String, Object>) runContext.getVariables().get("execution")).get("id"),
+                    "namespace", ((Map<String, Object>) runContext.getVariables().get("flow")).get("namespace"),
+                    "flowId", ((Map<String, Object>) runContext.getVariables().get("flow")).get("id"),
+                    "flowRevision", ((Map<String, Object>) runContext.getVariables().get("flow")).get("revision")
+                ))
+                .build()
+            );
 
         Output.OutputBuilder outputBuilder = Output.builder()
             .executionId(execution.getId());

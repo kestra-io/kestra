@@ -5,6 +5,10 @@
 .text-monospace {
     font-size: $font-size-base * 0.7;
 }
+// Button
+.btn-xs {
+    @include button-size($btn-padding-y-sm / 2, $btn-padding-x-sm / 2, $btn-font-size-sm * 0.85, $btn-line-height-sm * 0.85, $btn-border-radius-sm);
+}
 
 // Tabs
 ul.nav-tabs {
@@ -43,7 +47,7 @@ ul.nav-tabs {
 }
 
 // table
-.table-responsive-xl {
+table.table {
     th.row-action {
         width: 16px;
     }

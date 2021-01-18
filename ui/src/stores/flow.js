@@ -5,7 +5,7 @@ export default {
         flows: undefined,
         flow: undefined,
         total: 0,
-        dataTree: undefined,
+        flowGraph: undefined,
         revisions: undefined,
     },
 
@@ -29,23 +29,35 @@ export default {
                 return response.data;
             })
         },
-        saveFlow({commit}, options) {
-            return Vue.axios.put(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}`, options.flow).then(response => {
-                if (response.status >= 300) {
-                    return Promise.reject(new Error("Server error on flow save"))
-                } else {
+        saveFlow({commit, dispatch}, options) {
+            return Vue.axios.put(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}`, options.flow)
+                .then(response => {
+                    if (response.status >= 300) {
+                        return Promise.reject(new Error("Server error on flow save"))
+                    } else {
+                        commit("setFlow", response.data)
+
+                        return response.data;
+                    }
+                })
+                .then(flow => {
+                    dispatch("loadGraph", flow);
+
+                    return flow;
+                })
+        },
+        updateFlowTask({commit, dispatch}, options) {
+            return Vue.axios
+                .patch(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
                     commit("setFlow", response.data)
 
                     return response.data;
-                }
-            })
-        },
-        updateFlowTask({commit}, options) {
-            return Vue.axios.patch(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
-                commit("setFlow", response.data)
+                })
+                .then(flow => {
+                    dispatch("loadGraph", flow);
 
-                return response.data;
-            })
+                    return flow;
+                })
         },
         createFlow({commit}, options) {
             return Vue.axios.post("/api/v1/flows", options.flow).then(response => {
@@ -59,11 +71,11 @@ export default {
                 commit("setFlow", null)
             })
         },
-        loadTree({commit}, flow) {
-            return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/tree`).then(response => {
-                commit("setDataTree", response.data.tasks)
+        loadGraph({commit}, flow) {
+            return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph?revision=${flow.revision}`).then(response => {
+                commit("setFlowGraph", response.data)
 
-                return response.data.tasks;
+                return response.data;
             })
         },
         loadRevisions({commit}, options) {
@@ -83,6 +95,7 @@ export default {
         },
         setFlow(state, flow) {
             state.flow = flow;
+            state.flowGraph = undefined
         },
         setTrigger(state, {index, trigger}) {
             let flow = state.flow;
@@ -121,8 +134,8 @@ export default {
         setTotal(state, total) {
             state.total = total
         },
-        setDataTree(state, dataTree) {
-            state.dataTree = dataTree
+        setFlowGraph(state, flowGraph) {
+            state.flowGraph = flowGraph
         }
     },
     getters: {

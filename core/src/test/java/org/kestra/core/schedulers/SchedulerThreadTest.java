@@ -9,6 +9,7 @@ import org.kestra.runner.memory.MemoryFlowListeners;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
@@ -73,7 +74,7 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
             });
 
             scheduler.run();
-            queueCount.await();
+            queueCount.await(1, TimeUnit.MINUTES);
 
             assertThat(last.get().getVariables().get("counter"), is(3));
         }

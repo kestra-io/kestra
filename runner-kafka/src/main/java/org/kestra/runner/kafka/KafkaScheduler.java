@@ -1,7 +1,6 @@
 package org.kestra.runner.kafka;
 
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
@@ -29,8 +28,10 @@ import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 
+import javax.inject.Singleton;
+
 @KafkaQueueEnabled
-@Prototype
+@Singleton
 @Slf4j
 @Replaces(DefaultScheduler.class)
 public class KafkaScheduler extends AbstractScheduler {
@@ -62,7 +63,7 @@ public class KafkaScheduler extends AbstractScheduler {
             StreamsBuilder builder = new StreamsBuilder();
 
             KStream<String, Execution> executorKStream = kafkaStreamSourceService.executorKStream(builder);
-            GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowKTable(builder);
+            GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
             KStream<String, KafkaExecutor.ExecutionWithFlow> executionWithFlowKStream = kafkaStreamSourceService.withFlow(
                 flowKTable,
                 executorKStream

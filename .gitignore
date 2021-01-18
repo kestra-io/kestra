@@ -31,6 +31,7 @@ ui/.env.local
 ui/.env.*.local
 webserver/src/main/resources/ui
 yarn.lock
+ui/coverage
 
 ### Docker
 /.env

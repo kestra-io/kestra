@@ -1,6 +1,8 @@
 package org.kestra.runner.kafka;
 
 import com.google.common.collect.Streams;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -8,8 +10,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
@@ -20,6 +21,7 @@ import org.kestra.core.services.FlowService;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaStreamService;
+import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,8 +52,12 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         this.flowService = flowService;
 
         kafkaAdminService.createIfNotExist(Flow.class);
+        kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_FLOWLAST);
 
-        stream = kafkaStreamService.of(this.getClass(), this.topology());
+        KafkaStreamService.Stream buillLastVersion = kafkaStreamService.of(FlowListenerBuild.class, new FlowListenerBuild().topology());
+        buillLastVersion.start();
+
+        stream = kafkaStreamService.of(FlowListener.class, new FlowListener().topology());
         stream.start((newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING) {
                 try {
@@ -67,29 +73,116 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         });
     }
 
-    public Topology topology() {
-        StreamsBuilder builder = new StreamsBuilder();
+    public class FlowListenerBuild {
+        public Topology topology() {
+            StreamsBuilder builder = new StreamsBuilder();
 
-        builder
-            .table(
-                kafkaAdminService.getTopicName(Flow.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)),
-                Materialized.<String, Flow, KeyValueStore<Bytes, byte[]>>as("flow")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(Flow.class))
+            KStream<String, Flow> stream = builder
+                .stream(
+                    kafkaAdminService.getTopicName(Flow.class),
+                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class))
+                );
+
+            KStream<String, Flow> result = KafkaStreamSourceService.logIfEnabled(
+                stream,
+                (key, value) -> log.debug(
+                    "Flow in '{}.{}' with revision {}",
+                    value.getNamespace(),
+                    value.getId(),
+                    value.getRevision()
+                ),
+                "flow-in"
             )
-            .toStream()
-            .peek((key, value) -> {
-                this.send(this.flows());
-            });
+                .selectKey((key, value) -> value.uidWithoutRevision(), Named.as("rekey"))
+                .groupBy(
+                    (String key, Flow value) -> value.uidWithoutRevision(),
+                    Grouped.<String, Flow>as("grouped")
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(JsonSerde.of(Flow.class))
+                )
+                .aggregate(
+                    AllFlowRevision::new,
+                    (key, value, aggregate) -> {
+                        aggregate.revisions.add(value);
 
-        Topology topology = builder.build();
+                        return aggregate;
+                    },
+                    Materialized.<String, AllFlowRevision, KeyValueStore<Bytes, byte[]>>as("list")
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(JsonSerde.of(AllFlowRevision.class))
+                )
+                .mapValues(
+                    (readOnlyKey, value) -> {
+                        List<Flow> flows = new ArrayList<>(flowService
+                            .keepLastVersion(value.revisions));
 
-        if (log.isTraceEnabled()) {
-            log.trace(topology.describe().toString());
+                        if (flows.size() > 1) {
+                            throw new IllegalArgumentException("Too many flows (" + flows.size() + ")");
+                        }
+
+                        return flows.size() == 0 ? null : flows.get(0);
+                    },
+                    Named.as("last")
+                )
+                .toStream();
+
+            KafkaStreamSourceService.logIfEnabled(
+                result,
+                (key, value) -> log.debug(
+                    "Flow out '{}.{}' with revision {}",
+                    value.getNamespace(),
+                    value.getId(),
+                    value.getRevision()
+                ),
+                "Flow-out"
+            )
+                .to(
+                    kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_FLOWLAST),
+                    Produced.with(Serdes.String(), JsonSerde.of(Flow.class))
+                );
+
+            Topology topology = builder.build();
+
+            if (log.isTraceEnabled()) {
+                log.trace(topology.describe().toString());
+            }
+
+            return topology;
         }
 
-        return topology;
+    }
+
+    @NoArgsConstructor
+    @Getter
+    public static class AllFlowRevision {
+        private final List<Flow> revisions = new ArrayList<>();
+    }
+
+    public class FlowListener {
+        public Topology topology() {
+            StreamsBuilder builder = new StreamsBuilder();
+
+            builder
+                .table(
+                    kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_FLOWLAST),
+                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)),
+                    Materialized.<String, Flow, KeyValueStore<Bytes, byte[]>>as("flow")
+                        .withKeySerde(Serdes.String())
+                        .withValueSerde(JsonSerde.of(Flow.class))
+                )
+                .toStream()
+                .peek((key, value) -> {
+                    send(flows());
+                });
+
+            Topology topology = builder.build();
+
+            if (log.isTraceEnabled()) {
+                log.trace(topology.describe().toString());
+            }
+
+            return topology;
+        }
     }
 
     @SuppressWarnings("UnstableApiUsage")
@@ -102,8 +195,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         try (KeyValueIterator<String, Flow> all = this.store.all()) {
             List<Flow> alls = Streams.stream(all).map(r -> r.value).collect(Collectors.toList());
 
-            return flowService
-                .keepLastVersion(alls)
+            return alls
                 .stream()
                 .filter(flow -> !flow.isDeleted())
                 .collect(Collectors.toList());

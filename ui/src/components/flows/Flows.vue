@@ -9,12 +9,12 @@
                 ref="dataTable"
                 :total="total"
             >
-                <template v-slot:navbar>
+                <template #navbar>
                     <search-field @onSearch="onSearch" :fields="searchableFields" />
                     <namespace-select :data-type="dataType" @onNamespaceSelect="onNamespaceSelect" />
                 </template>
 
-                <template v-slot:top>
+                <template #top>
                     <state-global-chart
                         v-if="daily"
                         :ready="dailyReady"
@@ -22,7 +22,7 @@
                     />
                 </template>
 
-                <template v-slot:table>
+                <template #table>
                     <b-table
                         :no-local-sorting="true"
                         @row-dblclicked="onRowDoubleClick"
@@ -40,27 +40,29 @@
                             <span class="text-black-50">{{ $t('no result') }}</span>
                         </template>
 
-                        <template v-slot:cell(actions)="row">
+                        <template #cell(actions)="row">
                             <router-link :to="{name: 'flowEdit', params : row.item}">
-                                <eye id="edit-action" />
+                                <kicon :tooltip="$t('details')" placement="left">
+                                    <eye />
+                                </kicon>
                             </router-link>
                         </template>
 
-                        <template v-slot:cell(state)="row">
+                        <template #cell(state)="row">
                             <state-chart
                                 v-if="dailyGroupByFlowReady"
                                 :data="chartData(row)"
                             />
                         </template>
 
-                        <template v-slot:cell(duration)="row">
+                        <template #cell(duration)="row">
                             <duration-chart
                                 v-if="dailyGroupByFlowReady"
                                 :data="chartData(row)"
                             />
                         </template>
 
-                        <template v-slot:cell(id)="row">
+                        <template #cell(id)="row">
                             <router-link
                                 :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
                             >
@@ -69,7 +71,7 @@
                             &nbsp;<markdown-tooltip :id="row.item.namespace + '-' + row.item.id" :description="row.item.description" />
                         </template>
 
-                        <template v-slot:cell(triggers)="row">
+                        <template #cell(triggers)="row">
                             <trigger-avatar @showTriggerDetails="showTriggerDetails" :flow="row.item" />
                         </template>
                     </b-table>
@@ -84,8 +86,10 @@
                 <li class="nav-item">
                     <router-link :to="{name: 'flowsAdd'}">
                         <b-button variant="primary">
-                            <plus />
-                            {{ $t('create') }}
+                            <kicon>
+                                <plus />
+                                {{ $t('create') }}
+                            </kicon>
                         </b-button>
                     </router-link>
                 </li>
@@ -112,6 +116,7 @@
     import TriggerDetailsModal from "./TriggerDetailsModal";
     import TriggerAvatar from "./TriggerAvatar";
     import MarkdownTooltip from "../layout/MarkdownTooltip"
+    import Kicon from "../Kicon"
 
     export default {
         mixins: [RouteContext, DataTableActions],
@@ -127,7 +132,8 @@
             StateGlobalChart,
             TriggerDetailsModal,
             TriggerAvatar,
-            MarkdownTooltip
+            MarkdownTooltip,
+            Kicon
         },
         data() {
             return {

@@ -9,11 +9,7 @@
         :fields="fields"
         class="mb-0"
     >
-        <template v-slot:cell(value)="row">
-            <var-value :execution="execution" :value="row.item.value" />
-        </template>
-
-        <template v-slot:thead-top v-if="title">
+        <template #thead-top v-if="title">
             <b-tr class="top">
                 <b-th colspan="2">
                     {{ title }}
@@ -21,14 +17,30 @@
             </b-tr>
         </template>
 
-        <template v-slot:empty>
+        <template #empty>
             <div class="alert alert-info mb-0" role="alert">
                 {{ $t("no data current task") }}
             </div>
         </template>
 
-        <template v-slot:cell(key)="row">
+        <template #cell(key)="row">
             <code>{{ row.item.key }}</code>
+        </template>
+
+        <template #cell(value)="row">
+            <template v-if="row.item.date">
+                <date-ago :inverted="true" :date="row.item.value" />
+            </template>
+            <template v-else-if="row.item.subflow">
+                {{ row.item.value }}
+                <sub-flow-link
+                    class="btn-xs"
+                    :execution-id="row.item.value"
+                />
+            </template>
+            <template v-else>
+                <var-value :execution="execution" :value="row.item.value" />
+            </template>
         </template>
     </b-table>
 </template>
@@ -36,10 +48,14 @@
 <script>
     import Utils from "../../utils/utils";
     import VarValue from "./VarValue";
+    import DateAgo from "../../components/layout/DateAgo";
+    import SubFlowLink from "../flows/SubFlowLink"
 
     export default {
         components: {
+            DateAgo,
             VarValue,
+            SubFlowLink
         },
         props: {
             data: {

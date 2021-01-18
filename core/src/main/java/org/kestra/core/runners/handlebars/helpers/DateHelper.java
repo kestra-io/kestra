@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
@@ -54,64 +55,16 @@ public enum DateHelper implements Helper<Object> {
      * The format option can be specified as a parameter or hash (a.k.a named parameter).
      */
     dateFormat {
-        /**
-         * The default date styles.
-         */
-        private final Map<String, FormatStyle> styles = ImmutableMap.of(
-            "full", FormatStyle.FULL,
-            "long", FormatStyle.LONG,
-            "medium", FormatStyle.MEDIUM,
-            "short", FormatStyle.SHORT
-        );
 
-        /**
-         * The default date formatters
-         */
-        private final Map<String, DateTimeFormatter> formatters = ImmutableMap.<String, DateTimeFormatter>builder()
-            .put("iso", DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX"))
-            .put("iso_sec", DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
-            .put("sql", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))
-            .put("sql_seq", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-            .put("iso_date_time", DateTimeFormatter.ISO_DATE_TIME)
-            .put("iso_date", DateTimeFormatter.ISO_DATE)
-            .put("iso_time", DateTimeFormatter.ISO_TIME)
-            .put("iso_local_date", DateTimeFormatter.ISO_LOCAL_DATE)
-            .put("iso_instant", DateTimeFormatter.ISO_INSTANT)
-            .put("iso_local_date_time", DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            .put("iso_local_time", DateTimeFormatter.ISO_LOCAL_TIME)
-            .put("iso_offset_time", DateTimeFormatter.ISO_OFFSET_TIME)
-            .put("iso_ordinal_date", DateTimeFormatter.ISO_ORDINAL_DATE)
-            .put("iso_week_date", DateTimeFormatter.ISO_WEEK_DATE)
-            .put("iso_zoned_date_time", DateTimeFormatter.ISO_ZONED_DATE_TIME)
-            .put("rfc_1123_date_time", DateTimeFormatter.RFC_1123_DATE_TIME)
-            .build();
 
         @Override
         public CharSequence apply(final Object value, final Options options) {
             ZoneId zoneId = DateHelper.zoneId(options);
             ZonedDateTime date = zonedDateTime(value, zoneId);
-
-            DateTimeFormatter formatter;
-
             String format = options.param(0, options.hash("format", "iso"));
-
-            DateTimeFormatter formatterFind = formatters.get(format);
-            FormatStyle styleFind = styles.get(format);
-            if (styleFind != null) {
-                formatter = DateTimeFormatter.ofLocalizedDateTime(styleFind);
-            } else if (formatterFind != null) {
-                formatter = formatterFind;
-            } else {
-                formatter = DateTimeFormatter.ofPattern(format);
-            }
-
             String localeStr = options.param(1, Locale.getDefault().toString());
-            Locale locale = LocaleUtils.toLocale(localeStr);
-            formatter = formatter.withLocale(locale);
 
-            formatter = formatter.withZone(zoneId);
-
-            return formatter.format(date);
+            return format(date, format, zoneId, localeStr);
         }
     },
 
@@ -145,7 +98,77 @@ public enum DateHelper implements Helper<Object> {
 
             return String.valueOf(TimeUnit.SECONDS.toNanos(date.toEpochSecond()) + TimeUnit.NANOSECONDS.toMicros(date.getNano()));
         }
+    },
+
+    dateAdd {
+        @Override
+        public Object apply(final Object value, final Options options) throws IOException {
+            ZonedDateTime date = zonedDateTime(value, DateHelper.zoneId(options));
+            ZoneId zoneId = DateHelper.zoneId(options);
+
+            Integer amount = options.param(0, options.hash("amount"));
+            String unit = options.param(1, options.hash("unit"));
+            String format = options.param(2, options.hash("format", "iso"));
+            String localeStr = options.param(2, Locale.getDefault().toString());
+
+            ZonedDateTime plus = date.plus(amount, ChronoUnit.valueOf(unit));
+
+            return format(plus, format, zoneId, localeStr);
+        }
     };
+
+    /**
+     * The default date styles.
+     */
+    private static final Map<String, FormatStyle> styles = ImmutableMap.of(
+        "full", FormatStyle.FULL,
+        "long", FormatStyle.LONG,
+        "medium", FormatStyle.MEDIUM,
+        "short", FormatStyle.SHORT
+    );
+
+    /**
+     * The default date formatters
+     */
+    private static final Map<String, DateTimeFormatter> formatters = ImmutableMap.<String, DateTimeFormatter>builder()
+        .put("iso", DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSXXX"))
+        .put("iso_sec", DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
+        .put("sql", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS"))
+        .put("sql_seq", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+        .put("iso_date_time", DateTimeFormatter.ISO_DATE_TIME)
+        .put("iso_date", DateTimeFormatter.ISO_DATE)
+        .put("iso_time", DateTimeFormatter.ISO_TIME)
+        .put("iso_local_date", DateTimeFormatter.ISO_LOCAL_DATE)
+        .put("iso_instant", DateTimeFormatter.ISO_INSTANT)
+        .put("iso_local_date_time", DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        .put("iso_local_time", DateTimeFormatter.ISO_LOCAL_TIME)
+        .put("iso_offset_time", DateTimeFormatter.ISO_OFFSET_TIME)
+        .put("iso_ordinal_date", DateTimeFormatter.ISO_ORDINAL_DATE)
+        .put("iso_week_date", DateTimeFormatter.ISO_WEEK_DATE)
+        .put("iso_zoned_date_time", DateTimeFormatter.ISO_ZONED_DATE_TIME)
+        .put("rfc_1123_date_time", DateTimeFormatter.RFC_1123_DATE_TIME)
+        .build();
+
+    private static String format(ZonedDateTime date, String format, ZoneId zoneId, String localeStr) {
+        DateTimeFormatter formatter;
+
+        DateTimeFormatter formatterFind = formatters.get(format);
+        FormatStyle styleFind = styles.get(format);
+        if (styleFind != null) {
+            formatter = DateTimeFormatter.ofLocalizedDateTime(styleFind);
+        } else if (formatterFind != null) {
+            formatter = formatterFind;
+        } else {
+            formatter = DateTimeFormatter.ofPattern(format);
+        }
+
+        Locale locale = LocaleUtils.toLocale(localeStr);
+        formatter = formatter.withLocale(locale);
+
+        formatter = formatter.withZone(zoneId);
+
+        return formatter.format(date);
+    }
 
     private static ZonedDateTime zonedDateTime(Object value, ZoneId zoneId) {
         ZonedDateTime date;

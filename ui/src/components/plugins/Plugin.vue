@@ -80,7 +80,7 @@
     @import "../../styles/_variable.scss";
     .markdown {
         h1 {
-            display: none;
+            font-size: $h2-font-size;
         }
 
         blockquote {

@@ -28,10 +28,14 @@ export default class Utils {
         const flat = Utils.flatten(data);
 
         return Object.keys(flat).map(key =>  {
+            if (key === "variables.executionId") {
+                return {key, value: flat[key], subflow: true};
+            }
+
             if (typeof(flat[key]) === "string") {
                 let date = moment(flat[key], moment.ISO_8601);
                 if (date.isValid()) {
-                    return {key, value: date.format("LLLL")};
+                    return {key, value: flat[key], date: true};
                 }
             }
 

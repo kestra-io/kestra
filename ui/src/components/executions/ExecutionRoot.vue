@@ -8,6 +8,7 @@
                     @click="setTab(tab.tab)"
                     :active="$route.query.tab === tab.tab"
                     :title="tab.title"
+                    :class="tab.class"
                     lazy
                 >
                     <b-card-text>
@@ -22,8 +23,10 @@
                     <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
                 </li>
                 <li v-if="isAllowedEdit" class="nav-item">
-                    <b-button v-b-tooltip.hover.top="'(Ctrl + Shift + e)'" @click="editFlow">
-                        <pencil /> {{ $t('edit flow') }}
+                    <b-button @click="editFlow">
+                        <kicon :tooltip="'(Ctrl + Shift + e)'">
+                            <pencil /> {{ $t('edit flow') }}
+                        </kicon>
                     </b-button>
                 </li>
             </ul>
@@ -33,7 +36,7 @@
 <script>
     import Gantt from "./Gantt";
     import Overview from "./Overview";
-    import Logs from "../logs/Logs";
+    import Logs from "./Logs";
     import Topology from "./Topology";
     import ExecutionOutput from "./ExecutionOutput";
     import Trigger from "vue-material-design-icons/Cogs";
@@ -43,9 +46,9 @@
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
     import Pencil from "vue-material-design-icons/Pencil";
-    import permission from "@/models/permission";
-    import action from "@/models/action";
-
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import Kicon from "../Kicon"
 
     export default {
         mixins: [RouteContext],
@@ -60,6 +63,7 @@
             TriggerFlow,
             ExecutionOutput,
             Pencil,
+            Kicon,
         },
         data() {
             return {
@@ -83,24 +87,20 @@
         },
         methods: {
             follow() {
+                const self = this;
                 this.closeSSE();
-                setTimeout(() => {
-                    this.$store
-                        .dispatch("execution/followExecution", this.$route.params)
-                        .then(sse => {
-                            this.sse = sse;
-                            sse.subscribe("", (data, event) => {
-                                this.$store.commit("execution/setExecution", data);
-                                if (this.$route.query.tab === "topology") {
-                                    this.$store.dispatch("execution/loadTree", data)
-                                }
-                                if (event && event.lastEventId === "end") {
-                                    this.closeSSE();
-                                }
-                            });
-                        });
-                }, 500)
+                this.$store
+                    .dispatch("execution/followExecution", this.$route.params)
+                    .then(sse => {
+                        this.sse = sse
+                        this.sse.onmessage = (event) => {
+                            if (event && event.lastEventId === "end") {
+                                self.closeSSE();
+                            }
 
+                            this.$store.commit("execution/setExecution", JSON.parse(event.data));
+                        }
+                    });
             },
             closeSSE() {
                 if (this.sse) {
@@ -109,6 +109,7 @@
                 }
             },
             setTab(tab) {
+                this.$store.commit("execution/setTaskRun", undefined);
                 this.$store.commit("execution/setTask", undefined);
                 this.$router.push({
                     name: "executionEdit",
@@ -184,7 +185,7 @@
                 return [
                     {
                         tab: "overview",
-                        title: title("overview")
+                        title: title("overview"),
                     },
                     {
                         tab: "gantt",
@@ -196,7 +197,8 @@
                     },
                     {
                         tab: "topology",
-                        title: title("topology")
+                        title: title("topology"),
+                        class: "p-0"
                     },
                     {
                         tab: "execution-output",

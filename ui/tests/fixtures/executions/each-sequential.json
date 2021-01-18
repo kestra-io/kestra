@@ -1,0 +1,571 @@
+{
+  "id": "20CzMipsC3DZvcDOWqkST",
+  "namespace": "org.kestra.tests",
+  "flowId": "each-sequential",
+  "flowRevision": 1,
+  "taskRunList": [
+    {
+      "id": "5I8wRMwFnRvemjsGoHNpgU",
+      "executionId": "20CzMipsC3DZvcDOWqkST",
+      "namespace": "org.kestra.tests",
+      "flowId": "each-sequential",
+      "taskId": "1_each",
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2020-12-26T20:38:11.815052Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2020-12-26T20:38:12.080549Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2020-12-26T20:38:16.466710Z"
+          }
+        ],
+        "duration": 4.651658000,
+        "endDate": "2020-12-26T20:38:16.466710Z",
+        "startDate": "2020-12-26T20:38:11.815052Z"
+      }
+    },
+    {
+      "id": "p9zejsXPuEgCWtx75LSU3",
+      "executionId": "20CzMipsC3DZvcDOWqkST",
+      "namespace": "org.kestra.tests",
+      "flowId": "each-sequential",
+      "taskId": "1-1",
+      "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
+      "value": "value 1",
+      "attempts": [
+        {
+          "metrics": [
+            {
+              "name": "length",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "value": 43.0,
+              "type": "counter"
+            },
+            {
+              "name": "duration",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "type": "timer",
+              "value": 0.018346625
+            }
+          ],
+          "state": {
+            "current": "SUCCESS",
+            "histories": [
+              {
+                "state": "CREATED",
+                "date": "2020-12-26T20:38:12.783467Z"
+              },
+              {
+                "state": "RUNNING",
+                "date": "2020-12-26T20:38:12.783474Z"
+              },
+              {
+                "state": "SUCCESS",
+                "date": "2020-12-26T20:38:12.808638Z"
+              }
+            ],
+            "duration": 0.025171000,
+            "endDate": "2020-12-26T20:38:12.808638Z",
+            "startDate": "2020-12-26T20:38:12.783467Z"
+          }
+        }
+      ],
+      "outputs": {
+        "value": "1-1 > value 1 > 2020-12-26T20:38:12.579069Z"
+      },
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2020-12-26T20:38:12.579069Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2020-12-26T20:38:12.779722Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2020-12-26T20:38:12.822334Z"
+          }
+        ],
+        "duration": 0.243265000,
+        "endDate": "2020-12-26T20:38:12.822334Z",
+        "startDate": "2020-12-26T20:38:12.579069Z"
+      }
+    },
+    {
+      "id": "74gCAfLKHu4a9EXqL7DzAx",
+      "executionId": "20CzMipsC3DZvcDOWqkST",
+      "namespace": "org.kestra.tests",
+      "flowId": "each-sequential",
+      "taskId": "1-2",
+      "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
+      "value": "value 1",
+      "attempts": [
+        {
+          "metrics": [
+            {
+              "name": "length",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "value": 43.0,
+              "type": "counter"
+            },
+            {
+              "name": "duration",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "type": "timer",
+              "value": 0.004816050
+            }
+          ],
+          "state": {
+            "current": "SUCCESS",
+            "histories": [
+              {
+                "state": "CREATED",
+                "date": "2020-12-26T20:38:13.493176Z"
+              },
+              {
+                "state": "RUNNING",
+                "date": "2020-12-26T20:38:13.493179Z"
+              },
+              {
+                "state": "SUCCESS",
+                "date": "2020-12-26T20:38:13.499125Z"
+              }
+            ],
+            "duration": 0.005949000,
+            "endDate": "2020-12-26T20:38:13.499125Z",
+            "startDate": "2020-12-26T20:38:13.493176Z"
+          }
+        }
+      ],
+      "outputs": {
+        "value": "1-2 > value 1 > 2020-12-26T20:38:13.292869Z"
+      },
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2020-12-26T20:38:13.292869Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2020-12-26T20:38:13.490853Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2020-12-26T20:38:13.505448Z"
+          }
+        ],
+        "duration": 0.212579000,
+        "endDate": "2020-12-26T20:38:13.505448Z",
+        "startDate": "2020-12-26T20:38:13.292869Z"
+      }
+    },
+    {
+      "id": "4MuXCa5VCkkWXxRO9BOXwk",
+      "executionId": "20CzMipsC3DZvcDOWqkST",
+      "namespace": "org.kestra.tests",
+      "flowId": "each-sequential",
+      "taskId": "1-1",
+      "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
+      "value": "value 2",
+      "attempts": [
+        {
+          "metrics": [
+            {
+              "name": "length",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "value": 43.0,
+              "type": "counter"
+            },
+            {
+              "name": "duration",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "type": "timer",
+              "value": 0.004785041
+            }
+          ],
+          "state": {
+            "current": "SUCCESS",
+            "histories": [
+              {
+                "state": "CREATED",
+                "date": "2020-12-26T20:38:14.066144Z"
+              },
+              {
+                "state": "RUNNING",
+                "date": "2020-12-26T20:38:14.066149Z"
+              },
+              {
+                "state": "SUCCESS",
+                "date": "2020-12-26T20:38:14.072785Z"
+              }
+            ],
+            "duration": 0.006641000,
+            "endDate": "2020-12-26T20:38:14.072785Z",
+            "startDate": "2020-12-26T20:38:14.066144Z"
+          }
+        }
+      ],
+      "outputs": {
+        "value": "1-1 > value 2 > 2020-12-26T20:38:13.861179Z"
+      },
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2020-12-26T20:38:13.861179Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2020-12-26T20:38:14.063946Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2020-12-26T20:38:14.080290Z"
+          }
+        ],
+        "duration": 0.219111000,
+        "endDate": "2020-12-26T20:38:14.080290Z",
+        "startDate": "2020-12-26T20:38:13.861179Z"
+      }
+    },
+    {
+      "id": "5706Z8X2BI1ZRrEkuEFPen",
+      "executionId": "20CzMipsC3DZvcDOWqkST",
+      "namespace": "org.kestra.tests",
+      "flowId": "each-sequential",
+      "taskId": "1-2",
+      "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
+      "value": "value 2",
+      "attempts": [
+        {
+          "metrics": [
+            {
+              "name": "length",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "value": 43.0,
+              "type": "counter"
+            },
+            {
+              "name": "duration",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "type": "timer",
+              "value": 0.003328988
+            }
+          ],
+          "state": {
+            "current": "SUCCESS",
+            "histories": [
+              {
+                "state": "CREATED",
+                "date": "2020-12-26T20:38:14.743453Z"
+              },
+              {
+                "state": "RUNNING",
+                "date": "2020-12-26T20:38:14.743458Z"
+              },
+              {
+                "state": "SUCCESS",
+                "date": "2020-12-26T20:38:14.747653Z"
+              }
+            ],
+            "duration": 0.004200000,
+            "endDate": "2020-12-26T20:38:14.747653Z",
+            "startDate": "2020-12-26T20:38:14.743453Z"
+          }
+        }
+      ],
+      "outputs": {
+        "value": "1-2 > value 2 > 2020-12-26T20:38:14.548231Z"
+      },
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2020-12-26T20:38:14.548231Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2020-12-26T20:38:14.740714Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2020-12-26T20:38:14.752540Z"
+          }
+        ],
+        "duration": 0.204309000,
+        "endDate": "2020-12-26T20:38:14.752540Z",
+        "startDate": "2020-12-26T20:38:14.548231Z"
+      }
+    },
+    {
+      "id": "3JryMXDuJArQhj8uFmqkRD",
+      "executionId": "20CzMipsC3DZvcDOWqkST",
+      "namespace": "org.kestra.tests",
+      "flowId": "each-sequential",
+      "taskId": "1-1",
+      "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
+      "value": "value 3",
+      "attempts": [
+        {
+          "metrics": [
+            {
+              "name": "length",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "value": 43.0,
+              "type": "counter"
+            },
+            {
+              "name": "duration",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "type": "timer",
+              "value": 0.008318245
+            }
+          ],
+          "state": {
+            "current": "SUCCESS",
+            "histories": [
+              {
+                "state": "CREATED",
+                "date": "2020-12-26T20:38:15.305015Z"
+              },
+              {
+                "state": "RUNNING",
+                "date": "2020-12-26T20:38:15.305019Z"
+              },
+              {
+                "state": "SUCCESS",
+                "date": "2020-12-26T20:38:15.314287Z"
+              }
+            ],
+            "duration": 0.009272000,
+            "endDate": "2020-12-26T20:38:15.314287Z",
+            "startDate": "2020-12-26T20:38:15.305015Z"
+          }
+        }
+      ],
+      "outputs": {
+        "value": "1-1 > value 3 > 2020-12-26T20:38:15.111933Z"
+      },
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2020-12-26T20:38:15.111933Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2020-12-26T20:38:15.301952Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2020-12-26T20:38:15.320734Z"
+          }
+        ],
+        "duration": 0.208801000,
+        "endDate": "2020-12-26T20:38:15.320734Z",
+        "startDate": "2020-12-26T20:38:15.111933Z"
+      }
+    },
+    {
+      "id": "68GkiSkymFFcFXsopKydNF",
+      "executionId": "20CzMipsC3DZvcDOWqkST",
+      "namespace": "org.kestra.tests",
+      "flowId": "each-sequential",
+      "taskId": "1-2",
+      "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
+      "value": "value 3",
+      "attempts": [
+        {
+          "metrics": [
+            {
+              "name": "length",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "value": 43.0,
+              "type": "counter"
+            },
+            {
+              "name": "duration",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+              },
+              "type": "timer",
+              "value": 0.004866406
+            }
+          ],
+          "state": {
+            "current": "SUCCESS",
+            "histories": [
+              {
+                "state": "CREATED",
+                "date": "2020-12-26T20:38:15.991107Z"
+              },
+              {
+                "state": "RUNNING",
+                "date": "2020-12-26T20:38:15.991112Z"
+              },
+              {
+                "state": "SUCCESS",
+                "date": "2020-12-26T20:38:15.996888Z"
+              }
+            ],
+            "duration": 0.005781000,
+            "endDate": "2020-12-26T20:38:15.996888Z",
+            "startDate": "2020-12-26T20:38:15.991107Z"
+          }
+        }
+      ],
+      "outputs": {
+        "value": "1-2 > value 3 > 2020-12-26T20:38:15.785083Z"
+      },
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2020-12-26T20:38:15.785083Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2020-12-26T20:38:15.988104Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2020-12-26T20:38:16.002047Z"
+          }
+        ],
+        "duration": 0.216964000,
+        "endDate": "2020-12-26T20:38:16.002047Z",
+        "startDate": "2020-12-26T20:38:15.785083Z"
+      }
+    },
+    {
+      "id": "4vkpV3Bn4Wjd2l6SvWKm79",
+      "executionId": "20CzMipsC3DZvcDOWqkST",
+      "namespace": "org.kestra.tests",
+      "flowId": "each-sequential",
+      "taskId": "2_end",
+      "attempts": [
+        {
+          "metrics": [
+            {
+              "name": "length",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.startDate}}"
+              },
+              "value": 35.0,
+              "type": "counter"
+            },
+            {
+              "name": "duration",
+              "tags": {
+                "format": "{{task.id}} > {{taskrun.startDate}}"
+              },
+              "type": "timer",
+              "value": 0.003764310
+            }
+          ],
+          "state": {
+            "current": "SUCCESS",
+            "histories": [
+              {
+                "state": "CREATED",
+                "date": "2020-12-26T20:38:17.040143Z"
+              },
+              {
+                "state": "RUNNING",
+                "date": "2020-12-26T20:38:17.040149Z"
+              },
+              {
+                "state": "SUCCESS",
+                "date": "2020-12-26T20:38:17.046017Z"
+              }
+            ],
+            "duration": 0.005874000,
+            "endDate": "2020-12-26T20:38:17.046017Z",
+            "startDate": "2020-12-26T20:38:17.040143Z"
+          }
+        }
+      ],
+      "outputs": {
+        "value": "2_end > 2020-12-26T20:38:16.845018Z"
+      },
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2020-12-26T20:38:16.845018Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2020-12-26T20:38:17.037510Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2020-12-26T20:38:17.051064Z"
+          }
+        ],
+        "duration": 0.206046000,
+        "endDate": "2020-12-26T20:38:17.051064Z",
+        "startDate": "2020-12-26T20:38:16.845018Z"
+      }
+    }
+  ],
+  "state": {
+    "current": "SUCCESS",
+    "histories": [
+      {
+        "state": "CREATED",
+        "date": "2020-12-26T20:38:11.496183Z"
+      },
+      {
+        "state": "RUNNING",
+        "date": "2020-12-26T20:38:11.823665Z"
+      },
+      {
+        "state": "SUCCESS",
+        "date": "2020-12-26T20:38:17.506625Z"
+      }
+    ],
+    "duration": 6.010442000,
+    "endDate": "2020-12-26T20:38:17.506625Z",
+    "startDate": "2020-12-26T20:38:11.496183Z"
+  }
+}

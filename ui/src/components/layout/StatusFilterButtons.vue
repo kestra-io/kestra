@@ -3,24 +3,33 @@
 </template>
 <script>
     import State from "../../utils/state";
-    export default {        
+    export default {
         data() {
-            let states = State.allStates().map(s => s.toLowerCase());
+            let states = State.allStates().map(s => {
+                return {value: s, text: s.toLowerCase().capitalize()}
+            });
+
             return {
-                statuses: ["all"].concat(states),
-                selected: "all"
+                statuses: [{value: undefined, text: ""}].concat(states),
+                selected: undefined
             };
         },
         created() {
             if (this.$route.query.status) {
-                this.selected = this.$route.query.status.toLowerCase();
+                this.selected = this.$route.query.status;
             }
         },
         methods: {
             searchStatus() {
-                const status = this.selected.toUpperCase();
+                const status = this.selected;
                 if (this.$route.query.status !== status) {
-                    this.$router.push({query: {...this.$route.query, status}});
+                    if (status) {
+                        this.$router.push({query: {...this.$route.query, status}});
+                    } else {
+                        let query = this.$route.query
+                        delete query["status"]
+                        this.$router.push({query: query});
+                    }
                     this.$emit("onRefresh");
                 }
             }

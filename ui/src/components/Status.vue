@@ -1,27 +1,32 @@
 <template>
-    <b-button class="status text-white rounded-lg" :class="'btn-' + cls">
+    <b-button class="status text-white rounded-lg" :class="cls">
         <component :is="icon" />
-        {{ status | lower | cap }}
+        <template v-if="label">
+            {{ status | lower | cap }}
+        </template>
     </b-button>
 </template>
-<script>
 
+<script>
     import State from "../utils/state";
-    import PauseCircleOutline from "vue-material-design-icons/PauseCircleOutline";
-    import CheckCircleOutline from "vue-material-design-icons/CheckCircleOutline";
-    import PlayCircleOutline from "vue-material-design-icons/PlayCircleOutline";
-    import CloseCircleOutline from "vue-material-design-icons/CloseCircleOutline";
-    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline";
+    import PauseCircle from "vue-material-design-icons/PauseCircle";
+    import CheckCircle from "vue-material-design-icons/CheckCircle";
+    import PlayCircle from "vue-material-design-icons/PlayCircle";
+    import CloseCircle from "vue-material-design-icons/CloseCircle";
+    import StopCircle from "vue-material-design-icons/StopCircle";
     import Restart from "vue-material-design-icons/Restart";
+    import AlertCircle from "vue-material-design-icons/AlertCircle";
 
     export default {
         components: {
-            PauseCircleOutline,
-            CheckCircleOutline,
-            PlayCircleOutline,
-            CloseCircleOutline,
-            StopCircleOutline,
-            Restart
+            PauseCircle,
+            CheckCircle,
+            PlayCircle,
+            CloseCircle,
+            StopCircle,
+            Restart,
+            AlertCircle
+
         },
         props: {
             status: {
@@ -31,11 +36,18 @@
             size: {
                 type: String,
                 default: ""
+            },
+            label: {
+                type: Boolean,
+                default: true
             }
         },
         computed: {
             cls() {
-                return State.colorClass()[this.status] + (this.size ? " btn-" + this.size : "");
+                return {
+                    ["btn-" + State.colorClass()[this.status] + (this.size ? " btn-" + this.size : "")]: true,
+                    "no-label": !this.label
+                }
             },
             icon () {
                 return State.icon()[this.status];
@@ -47,5 +59,9 @@
 button.status {
     cursor: default !important;
     white-space: nowrap;
+}
+
+.no-label {
+    line-height: 1;
 }
 </style>

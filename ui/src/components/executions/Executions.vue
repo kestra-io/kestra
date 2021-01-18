@@ -1,7 +1,7 @@
 <template>
     <div v-if="ready">
-        <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total">
-            <template v-slot:navbar>
+        <data-table @onPageChanged="onPageChangedOverload" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
+            <template #navbar v-if="embed === false">
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <namespace-select data-type="flow" v-if="$route.name !== 'flowEdit'" @onNamespaceSelect="onNamespaceSelect" />
                 <status-filter-buttons @onRefresh="onStatusChange" />
@@ -9,7 +9,7 @@
                 <refresh-button class="float-right" @onRefresh="loadData" />
             </template>
 
-            <template v-slot:top>
+            <template #top v-if="embed === false">
                 <state-global-chart
                     v-if="daily"
                     :ready="dailyReady"
@@ -17,62 +17,61 @@
                 />
             </template>
 
-            <template v-slot:table>
+            <template #table>
                 <b-table
                     :no-local-sorting="true"
                     @sort-changed="onSort"
-                    responsive="xl"
+                    responsive
                     striped
                     hover
                     bordered
                     :items="executions"
                     :fields="fields"
                     @row-dblclicked="onRowDoubleClick"
+                    show-empty
                 >
                     <template #empty>
                         <span class="text-black-50">{{ $t('no result') }}</span>
                     </template>
 
-                    <template v-slot:cell(details)="row">
+                    <template #cell(details)="row">
                         <router-link :to="{name: 'executionEdit', params: row.item}">
-                            <eye id="edit-action" />
+                            <kicon :tooltip="$t('details')" placement="left">
+                                <eye />
+                            </kicon>
                         </router-link>
                     </template>
-                    <template
-                        v-slot:cell(state.startDate)="row"
-                    >
-                        {{ row.item.state.startDate | date('LLLL') }}
+                    <template #cell(startDate)="row">
+                        <date-ago :date="row.item.state.startDate" />
                     </template>
-                    <template
-                        v-slot:cell(state.endDate)="row"
-                    >
+                    <template #cell(endDate)="row">
                         <span v-if="!isRunning(row.item)">
-                            {{ row.item.state.endDate | date('LLLL') }}
+                            <date-ago :date="row.item.state.endDate" />
                         </span>
                     </template>
-                    <template v-slot:cell(state.current)="row">
+                    <template #cell(current)="row">
                         <status
                             class="status"
                             :status="row.item.state.current"
                             size="sm"
                         />
                     </template>
-                    <template v-slot:cell(state.duration)="row">
+                    <template #cell(duration)="row">
                         <span v-if="isRunning(row.item)">{{ durationFrom(row.item) | humanizeDuration }}</span>
                         <span v-else>{{ row.item.state.duration | humanizeDuration }}</span>
                     </template>
-                    <template v-slot:cell(flowId)="row">
+                    <template #cell(flowId)="row">
                         <router-link
                             :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >
                             {{ row.item.flowId }}
                         </router-link>
                     </template>
-                    <template v-slot:cell(id)="row">
+                    <template #cell(id)="row">
                         <code>{{ row.item.id | id }}</code>
                     </template>
 
-                    <template v-slot:cell(trigger)="row">
+                    <template #cell(trigger)="row">
                         <trigger-avatar @showTriggerDetails="showTriggerDetails" :execution="row.item" />
                     </template>
                 </b-table>
@@ -98,6 +97,8 @@
     import StateGlobalChart from "../../components/stats/StateGlobalChart";
     import FlowTriggerDetailsModal from "../../components/flows/TriggerDetailsModal";
     import TriggerAvatar from "../../components/flows/TriggerAvatar";
+    import DateAgo from "../layout/DateAgo";
+    import Kicon from "../Kicon"
 
     export default {
         mixins: [RouteContext, DataTableActions],
@@ -112,19 +113,49 @@
             StatusFilterButtons,
             StateGlobalChart,
             FlowTriggerDetailsModal,
-            TriggerAvatar
+            TriggerAvatar,
+            DateAgo,
+            Kicon
+        },
+        props: {
+            embed: {
+                type: Boolean,
+                default: false
+            },
+            hidden: {
+                type: Array,
+                default: () => []
+            },
+            statuses: {
+                type: Array,
+                default: () => []
+            },
+            pageSize: {
+                type: Number,
+                default: 25
+            },
+            pageNumber: {
+                type: Number,
+                default: 1
+            },
+        },
+        created() {
+            this.internalPageSize = this.pageSize;
+            this.internalPageNumber = this.pageNumber;
         },
         data() {
             return {
                 dataType: "execution",
                 dailyReady: false,
+                internalPageSize: undefined,
+                internalPageNumber: undefined,
                 flowTriggerDetails: undefined
             };
         },
         beforeCreate() {
             const q = JSON.parse(localStorage.getItem("executionQueries") || "{}")
             q.sort = q.sort ? q.sort :  "state.startDate:desc"
-            q.status = q.status ? q.status : "ALL"
+            q.status = q.status ? q.status : []
             localStorage.setItem("executionQueries", JSON.stringify(q))
         },
         computed: {
@@ -134,23 +165,23 @@
                 const title = title => {
                     return this.$t(title);
                 };
-                return [
+                let fields = [
                     {
                         key: "id",
                         label: title("id")
                     },
                     {
-                        key: "state.startDate",
+                        key: "startDate",
                         label: title("start date"),
                         sortable: true
                     },
                     {
-                        key: "state.endDate",
+                        key: "endDate",
                         label: title("end date"),
                         sortable: true
                     },
                     {
-                        key: "state.duration",
+                        key: "duration",
                         label: title("duration"),
                         sortable: true
                     },
@@ -165,7 +196,7 @@
                         sortable: true
                     },
                     {
-                        key: "state.current",
+                        key: "current",
                         label: title("state"),
                         class: "text-center",
                         sortable: true
@@ -181,6 +212,12 @@
                         class: "row-action"
                     }
                 ];
+
+                this.hidden.forEach(value => {
+                    fields = fields.filter(col => col.key !== value);
+                })
+
+                return fields;
             },
             executionQuery() {
                 let filter;
@@ -204,6 +241,11 @@
             onStatusChange() {
                 this.saveFilters()
                 this.loadData()
+            },
+            onPageChangedOverload(item) {
+                this.internalPageSize = item.size;
+                this.internalPageNumber = item.page;
+                this.onPageChanged(item);
             },
             showTriggerDetails(trigger) {
                 this.flowTriggerDetails = trigger
@@ -236,13 +278,12 @@
                         this.dailyReady = true;
                     });
 
-
                 this.$store.dispatch("execution/findExecutions", {
-                    size: parseInt(this.$route.query.size || 25),
-                    page: parseInt(this.$route.query.page || 1),
+                    size: parseInt(this.$route.query.size || this.internalPageSize),
+                    page: parseInt(this.$route.query.page || this.internalPageNumber),
                     q: this.executionQuery,
                     sort: this.$route.query.sort || "state.startDate:desc",
-                    state: this.$route.query.status
+                    state: this.$route.query.status ? [this.$route.query.status] : this.statuses
                 }).finally(callback);
             },
             durationFrom(item) {

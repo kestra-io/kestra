@@ -21,7 +21,12 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     }
 
     @Override
-    public List<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String TaskId, Level minLevel) {
+    public List<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel) {
         throw new UnsupportedOperationException();
     }
 

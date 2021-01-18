@@ -283,11 +283,11 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     }
 
     @Override
-    public ArrayListTotal<Execution> find(String query, Pageable pageable, @Nullable State.Type state) {
+    public ArrayListTotal<Execution> find(String query, Pageable pageable, List<State.Type> state) {
         BoolQueryBuilder bool = this.defaultFilter()
             .must(QueryBuilders.queryStringQuery(query));
         if (state != null) {
-            bool = bool.must(QueryBuilders.termQuery("state.current", state.name()));
+            bool = bool.must(QueryBuilders.termsQuery("state.current", state));
         }
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
 
@@ -295,13 +295,13 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     }
 
     @Override
-    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, @Nullable State.Type state) {
+    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, @Nullable List<State.Type> state) {
         BoolQueryBuilder filterAggQuery = QueryBuilders
             .boolQuery()
             .filter(QueryBuilders.queryStringQuery(query));
 
         if (state != null) {
-            filterAggQuery = filterAggQuery.must(QueryBuilders.termQuery("taskRunList.state.current", state.name()));
+            filterAggQuery = filterAggQuery.must(QueryBuilders.termsQuery("taskRunList.state.current", state));
         }
 
         NestedAggregationBuilder nestedAgg = AggregationBuilders

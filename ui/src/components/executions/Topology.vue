@@ -1,16 +1,12 @@
 <template>
-    <b-row>
-        <b-col>
-            <topology-tree
-                ref="topology"
-                v-if="execution && dataTree"
-                :data-tree="dataTree"
-                :flow-id="execution.flowId"
-                :namespace="execution.namespace"
-                :label="getLabel"
-            />
-        </b-col>
-    </b-row>
+    <topology-tree
+        ref="topology"
+        v-if="execution && flowGraph"
+        :flow-graph="flowGraph"
+        :flow-id="execution.flowId"
+        :namespace="execution.namespace"
+        :execution="execution"
+    />
 </template>
 <script>
     import TopologyTree from "../graph/TopologyTree";
@@ -20,22 +16,29 @@
             TopologyTree
         },
         computed: {
-            ...mapState("execution", ["execution", "dataTree"])
+            ...mapState("flow", ["flowGraph"]),
+            ...mapState("execution", ["execution"])
         },
-        created() {
-            if (!this.dataTree && this.execution) {
-                this.$store.dispatch("execution/loadTree", this.execution)
+        watch: {
+            execution: function () {
+                if (this.flowGraph === undefined && this.execution) {
+                    this.loadGraph();
+                }
+            },
+        },
+        mounted() {
+            if (this.execution) {
+                this.loadGraph();
             }
         },
         methods: {
-            getLabel(node) {
-                return node.data.taskId;
+            loadGraph() {
+                this.$store.dispatch("flow/loadGraph", {
+                    namespace: this.execution.namespace,
+                    id: this.execution.flowId,
+                    revision: this.execution.flowRevision
+                })
             },
-            update() {
-                if (this.$refs.topology) {
-                    this.$refs.topology.update();
-                }
-            }
         }
     };
 </script>

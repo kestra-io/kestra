@@ -16,9 +16,9 @@ public interface ExecutionRepositoryInterface {
 
     ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable);
 
-    ArrayListTotal<Execution> find(String query, Pageable pageable, State.Type state);
+    ArrayListTotal<Execution> find(String query, Pageable pageable, List<State.Type> state);
 
-    ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, State.Type state);
+    ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, List<State.Type> state);
 
     Integer maxTaskRunSetting();
 

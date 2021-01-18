@@ -4,9 +4,9 @@ export default {
     state: {
         executions: undefined,
         execution: undefined,
+        taskRun: undefined,
         task: undefined,
         total: 0,
-        dataTree: undefined,
         logs: []
     },
     actions: {
@@ -29,6 +29,8 @@ export default {
         loadExecution({commit}, options) {
             return Vue.axios.get(`/api/v1/executions/${options.id}`).then(response => {
                 commit("setExecution", response.data)
+
+                return response.data;
             })
         },
         findExecutions({commit}, options) {
@@ -57,15 +59,10 @@ export default {
             })
         },
         followExecution(_, options) {
-            return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/executions/${options.id}/follow`, {format: "json"})
+            return new EventSource(`${Vue.axios.defaults.baseURL}api/v1/executions/${options.id}/follow`);
         },
         followLogs(_, options) {
-            return Vue.SSE(`${Vue.axios.defaults.baseURL}api/v1/logs/${options.id}/follow`, {format: "json", params: options.params})
-        },
-        loadTree({commit}, execution) {
-            return Vue.axios.get(`/api/v1/executions/${execution.id}/tree`).then(response => {
-                commit("setDataTree", response.data.tasks)
-            })
+            return new EventSource(`${Vue.axios.defaults.baseURL}api/v1/logs/${options.id}/follow`);
         },
         loadLogs({commit}, options) {
             return Vue.axios.get(`/api/v1/logs/${options.executionId}`, {
@@ -85,11 +82,11 @@ export default {
         setTask(state, task) {
             state.task = task
         },
+        setTaskRun(state, taskRun) {
+            state.taskRun = taskRun
+        },
         setTotal(state, total) {
             state.total = total
-        },
-        setDataTree(state, tree) {
-            state.dataTree = tree
         },
         setLogs(state, logs) {
             state.logs = logs

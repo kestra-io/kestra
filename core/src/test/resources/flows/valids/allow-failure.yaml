@@ -1,36 +1,53 @@
 id: allow-failure
 namespace: org.kestra.tests
 
+inputs:
+  - name: crash
+    type: STRING
+
 tasks:
-  - id: 1
+  - id: first
     type: org.kestra.core.tasks.flows.Sequential
     tasks:
-    - id: 1-1-allow-failure
-      type: org.kestra.core.tasks.flows.AllowFailure
-      tasks:
-        - id: 1-1-1_seq
-          type: org.kestra.core.tasks.flows.Sequential
-          tasks:
-            - id: 1-1-1-1
-              type: org.kestra.core.tasks.debugs.Return
-              format: "{{task.id}} > {{taskrun.startDate}}"
-            - id: ko
-              type: org.kestra.core.tasks.scripts.Bash
-              commands:
-                - 'exit 1'
-            - id: 1-1-1-3
-              type: org.kestra.core.tasks.debugs.Return
-              format: "{{task.id}} > {{taskrun.startDate}}"
-      errors:
-        - id: error-t1
-          type: org.kestra.core.tasks.debugs.Return
-          format: "Error Trigger ! {{task.id}}"
-  - id: 2-end
-    type: org.kestra.core.tasks.debugs.Return
-    format: "{{task.id}} > {{taskrun.startDate}}"
+      - id: 1-1-allow-failure
+        type: org.kestra.core.tasks.flows.AllowFailure
+        tasks:
+          - id: 1-1-1_seq
+            type: org.kestra.core.tasks.flows.Sequential
+            tasks:
+              - id: 1-1-1-1
+                type: org.kestra.core.tasks.debugs.Return
+                format: "{{task.id}} > {{taskrun.startDate}}"
+              - id: ko
+                type: org.kestra.core.tasks.scripts.Bash
+                commands:
+                  - 'exit 1'
+              - id: 1-1-1-3
+                type: org.kestra.core.tasks.debugs.Return
+                format: "{{task.id}} > {{taskrun.startDate}}"
+        errors:
+          - id: local-error
+            type: org.kestra.core.tasks.debugs.Return
+            format: "Error Trigger ! {{task.id}}"
+      - id: 1-2-todo
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}} > {{taskrun.startDate}}"
+  - id: switch
+    type: org.kestra.core.tasks.flows.Switch
+    value: "{{ and inputs.crash }}"
+    cases:
+      "true":
+        - id: crash
+          type: org.kestra.core.tasks.scripts.Bash
+          commands:
+            - 'exit 1'
+    defaults:
+      - id: last
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}} > {{taskrun.startDate}}"
 
 
 errors:
-  - id: error-t2
+  - id: global-error
     type: org.kestra.core.tasks.debugs.Return
     format: "Error Trigger ! {{task.id}}"

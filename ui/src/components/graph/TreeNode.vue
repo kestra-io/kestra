@@ -1,89 +1,67 @@
 <template>
-    <div class="node-wrapper">
-        <div class="status-color" v-if="n.taskRun" :class="contentCls" />
+    <div class="node-wrapper" :class="nodeClass">
+        <div class="status-color" v-if="this.execution" :class="statusClass" />
+        <div class="icon">
+            <task-icon :cls="task.type" />
+        </div>
         <div class="task-content">
             <div class="card-header">
-                <div class="icon-wrapper">
-                <!-- <img src=""/> -->
-                </div>
                 <div class="task-title">
-                    <span>{{ task.id | ellipsis(18) }}</span>
+                    <span>{{ task.id }}</span>
                 </div>
-            <!-- <menu-open class="node-action" @click="onSettings" /> -->
             </div>
             <div v-if="task.state" class="status-wrapper">
                 <status :status="state" />
             </div>
             <div class="info-wrapper">
-                <div :title="task.type" v-if="!childrenCount" class="pull task-item">
-                    <console title />
-                </div>
-                <div v-else :title="$t('stream')" class="pull task-item">
-                    <current-ac title />
-                </div>
-                <b-button
-                    v-if="task.description"
-                    :title="`${$t('description')}`"
-                    class="node-action push"
-                >
-                    <markdown-tooltip :id="task.id" :description="task.description" />
-                </b-button>
-
-                <b-button
-                    v-if="childrenCount"
-                    :title="`${$t('display direct sub tasks count')} : ${childrenCount}`"
-                    class="node-action push"
-                    @click="onFilterGroup"
-                >
-                    <graph title />
-                </b-button>
-
-                <b-button
-                    v-if="!isFlow"
-                    :disabled="!hasLogs"
-                    class="node-action"
-                    :title="$t('show task logs')"
-                >
-                    <router-link
-                        :title="$t('show task logs')"
-                        v-if="hasLogs"
-                        class="btn-secondary"
-                        :to="{name:'executionEdit', params: $route.params, query: {tab:'logs', search: task.id}}"
+                <span class="bottom">
+                    <b-badge
+                        v-if="this.execution"
+                        variant="primary"
+                        class="mr-1"
+                        pill
                     >
-                        <format-list-checks title />
-                    </router-link>
-                    <format-list-checks v-else title />
-                </b-button>
-                <b-button
-                    v-if="!isFlow"
-                    :disabled="!hasOutputs"
-                    class="node-action"
-                    :title="$t('show task outputs')"
-                >
-                    <router-link
-                        v-if="hasOutputs"
-                        class="btn-secondary"
-                        :title="$t('show task outputs')"
-                        :to="{name:'executionEdit', params: $route.params, query: {tab:'execution-output', search: taskRunOutputToken(n.taskRun)}}"
+                        {{ taskRuns.length }}
+                    </b-badge>
+
+                    <span v-if="duration">{{ duration | humanizeDuration }}</span>
+                </span>
+
+                <b-btn-group>
+                    <b-button
+                        v-if="task.description"
+                        class="node-action"
                     >
-                        <location-exit title />
-                    </router-link>
-                    <location-exit v-else title />
-                </b-button>
-                <b-button
-                    class="node-action"
-                    size="sm"
-                    v-b-modal="`modal-${hash}`"
-                    :title="$t('show task source')"
-                >
-                    <code-tags />
-                </b-button>
-                <sub-flow-link v-if="task.type === 'org.kestra.core.tasks.flows.Flow'" :execution-id="n.taskRun && n.taskRun.executionId" :namespace="task.namespace" :flow-id="task.flowId" />
+                        <markdown-tooltip :description="task.description" :id="hash" />
+                    </b-button>
+
+                    <b-button
+                        v-if="this.execution"
+                        class="node-action"
+                        :disabled="this.taskRuns.length === 0"
+                        @click="onTaskSelect()"
+                        v-b-modal="`modal-logs-${task.id}`"
+                    >
+                        <kicon :tooltip="$t('show task logs')">
+                            <text-box-search />
+                        </kicon>
+                    </b-button>
+
+                    <b-button
+                        class="node-action"
+                        size="sm"
+                        v-b-modal="`modal-source-${hash}`"
+                    >
+                        <kicon :tooltip="$t('show task source')">
+                            <code-tags />
+                        </kicon>
+                    </b-button>
+                </b-btn-group>
             </div>
         </div>
 
         <b-modal
-            :id="`modal-${hash}`"
+            :id="`modal-source-${hash}`"
             :title="`Task ${task.id}`"
             header-bg-variant="dark"
             header-text-variant="light"
@@ -100,40 +78,62 @@
 
             <editor @onSave="saveTask" v-model="taskYaml" lang="yaml" />
         </b-modal>
+
+        <b-modal
+            :id="`modal-logs-${task.id}`"
+            :title="`Task ${task.id}`"
+            header-bg-variant="dark"
+            header-text-variant="light"
+            hide-backdrop
+            hide-footer
+            modal-class="right"
+            size="xl"
+            v-if="execution"
+        >
+            <b-navbar toggleable="lg" type="light" variant="light">
+                <b-navbar-toggle target="nav-collapse" />
+                <b-collapse id="nav-collapse" is-nav>
+                    <b-nav-form>
+                        <search-field :router="false" ref="searchField" @onSearch="onSearch" class="mr-2" />
+                        <log-level-selector :log-level="logLevel" :router="false" @onChange="onLevelChange" />
+                    </b-nav-form>
+                </b-collapse>
+            </b-navbar>
+            <log-list :task-id="task.id" :filter="this.filter" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" :level="logLevel" />
+        </b-modal>
     </div>
 </template>
 <script>
-    import Console from "vue-material-design-icons/Console";
-    import Graph from "vue-material-design-icons/Graph";
     import CodeTags from "vue-material-design-icons/CodeTags";
-    import FormatListChecks from "vue-material-design-icons/FormatListChecks";
-    import LocationExit from "vue-material-design-icons/LocationExit";
-    import CurrentAc from "vue-material-design-icons/CurrentAc";
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
 
-    import SubFlowLink from "../flows/SubFlowLink"
     import {mapState} from "vuex";
     import Status from "../Status";
-    import md5 from "md5";
     import YamlUtils from "../../utils/yamlUtils";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
     import State from "../../utils/state"
     import Editor from "../../components/inputs/Editor";
     import ContentSave from "vue-material-design-icons/ContentSave";
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
+    import LogList from "../logs/LogList";
+    import LogLevelSelector from "../../components/logs/LogLevelSelector";
+    import SearchField from "../layout/SearchField";
+    import TaskIcon from "../plugins/TaskIcon";
+    import Kicon from "../Kicon"
 
     export default {
         components: {
             MarkdownTooltip,
             Status,
-            Console,
-            Graph,
             CodeTags,
-            FormatListChecks,
-            LocationExit,
-            CurrentAc,
-            SubFlowLink,
+            TextBoxSearch,
             Editor,
             ContentSave,
+            LogList,
+            LogLevelSelector,
+            SearchField,
+            TaskIcon,
+            Kicon
         },
         props: {
             n: {
@@ -148,28 +148,14 @@
                 type: String,
                 required: true
             },
-            isFlow: {
-                type: Boolean,
-                default: false
+            execution: {
+                type: Object,
+                default: undefined
             }
         },
         methods: {
-            d(task) {
-                console.log(task)
-            },
-            taskRunOutputToken(taskRun) {
-                return md5(taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ""));
-            },
-            onFilterGroup() {
-                this.$emit("onFilterGroup", this.task.id);
-            },
-            onSettings() {
-                if (this.node) {
-                    this.$store.dispatch("graph/setNode", undefined);
-                } else {
-                    this.$store.dispatch("graph/setNode", this.n);
-                    this.$emit("onSettings");
-                }
+            onTaskSelect() {
+                this.$store.commit("execution/setTask", this.task);
             },
             saveTask() {
                 let task;
@@ -195,11 +181,19 @@
                     .then((response) => {
                         this.$toast().saved(response.id);
                     })
+            },
+            onSearch(search) {
+                this.filter = search
+            },
+            onLevelChange(level) {
+                this.logLevel = level;
             }
         },
         data() {
             return {
                 taskYaml: undefined,
+                logLevel: "INFO",
+                filter: undefined
             };
         },
         created() {
@@ -208,43 +202,62 @@
         computed: {
             ...mapState("graph", ["node"]),
             ...mapState("auth", ["user"]),
-            hasLogs() {
-                // @TODO
-                return true;
-            // return (
-            //     this.attempts.filter(attempt => attempt.logs.length).length > 0
-            // );
-            },
-            hasOutputs() {
-                return this.n.taskRun && this.n.taskRun.outputs;
-            },
-            attempts() {
-                return this.n.taskRun && this.n.taskRun.attempts
-                    ? this.n.taskRun.attempts
-                    : [];
-            },
             hash() {
-                return this.task.id.hashCode();
+                return this.n.uid.hashCode();
             },
-            childrenCount() {
-                return this.n.children ? this.n.children.length : 0;
+            taskRuns() {
+                return (this.execution && this.execution.taskRunList ? this.execution.taskRunList : [])
+                    .filter(t => t.taskId === this.task.id)
             },
-
             state() {
-                return this.n.taskRun ? this.n.taskRun.state.current : State.SUCCESS;
+                if (!this.taskRuns) {
+                    return  null;
+                }
+
+                if (this.taskRuns.length === 1) {
+                    return this.taskRuns[0].state.current
+                }
+
+                const allStates = this.taskRuns.map(t => t.state.current);
+
+                const SORT_STATUS = [
+                    State.FAILED,
+                    State.KILLED,
+                    State.WARNING,
+                    State.KILLING,
+                    State.RESTARTED,
+                    State.RUNNING,
+                    State.CREATED,
+                    State.SUCCESS
+                ];
+
+                // sorting based on SORT_STATUS array
+                const result = allStates
+                    .map((item) => {
+                        const n = SORT_STATUS.indexOf(item[1]);
+                        SORT_STATUS[n] = undefined;
+                        return [n, item]
+                    })
+                    .sort()
+                    .map((j) => j[1])
+
+                return result[0];
             },
-            contentCls() {
+            duration() {
+                return this.taskRuns ? this.taskRuns.reduce((inc, taskRun) => inc + taskRun.state.duration, 0) : null;
+            },
+            nodeClass() {
                 return {
-                    "is-success": ![State.RUNNING, State.FAILED].includes(this.state),
-                    "is-running": this.state === State.RUNNING,
-                    "is-failed": this.state === State.FAILED
+                    ["task-disabled"]: this.task.disabled,
+                };
+            },
+            statusClass() {
+                return {
+                    ["bg-" + State.colorClass()[this.state]]: true,
                 };
             },
             task() {
                 return this.n.task;
-            },
-            value () {
-                return this.n.taskRun && this.n.taskRun.value
             },
             canSave() {
                 return canSaveFlowTemplate(true, this.user, {namespace:this.namespace}, "flow");
@@ -254,38 +267,57 @@
 </script>
 <style scoped lang="scss">
 @import "../../styles/_variable.scss";
-.wrapper.is-container {
-    border: 2px dashed $purple;
-    border-radius: 2px;
-}
+
 .node-wrapper {
     cursor: pointer;
     display: flex;
+    width: 200px;
+    border: 1px solid $gray-600;
+    &.task-disabled {
+        .card-header .task-title {
+            text-decoration: line-through;
+        }
+    }
+
+    > .icon {
+        width: 35px;
+        height: 51px;
+        background: white;
+        border-right: 1px solid $gray-500;
+        position: relative;
+    }
 
     .status-color {
-        width: 4px;
-        height: 55px;
-        border: 0;
+        width: 10px;
+        height: 51px;
+        border-right: 1px solid $gray-500;
     }
 
     .is-success {
         background-color: $green;
     }
+
     .is-running {
         background-color: $blue;
     }
+
     .is-failed {
         background-color: $red;
+    }
+
+    .bg-undefined {
+        background-color: $gray-400;
     }
 
     .task-content {
         flex-grow: 1;
         background-color: $white;
+        width: 38px;
 
         .card-header {
-            height: 30px;
+            height: 25px;
             padding: 2px;
-            margin: 0px;
+            margin: 0;
             border-bottom: 1px solid $gray-500;
             background: $gray-200;
             flex: 1;
@@ -294,24 +326,26 @@
             .icon-wrapper {
                 display: inline-block;
                 flex-shrink: 2;
-                img {
-                    width: 16px;
-                    height: 16px;
-                }
             }
 
             .task-title {
-                margin-left: 5px;
+                margin-left: 2px;
                 display: inline-block;
                 font-size: $font-size-sm;
                 flex-grow: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+                white-space: nowrap;
             }
+
             .node-action {
                 flex-shrink: 2;
                 padding-top: 18px;
                 padding-right: 18px;
             }
         }
+
         .status-wrapper {
             margin: 10px;
         }
@@ -321,25 +355,33 @@
         top: 50px;
         position: absolute;
     }
+
     .info-wrapper {
         display: flex;
-        justify-content: right;
+        .bottom {
+            padding: 4px 4px;
+            color: $text-muted;
+            font-size: $font-size-xs;
+            flex-grow: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+
+            .badge {
+                padding-bottom: $badge-padding-y;
+                font-weight: bold;
+                font-size: 100%;
+                top: -4px;
+            }
+        }
     }
-    .push {
-        margin-left: auto;
-    }
-    .pull {
-        margin-right: auto;
-    }
+
     .node-action {
-        height: 25px;
+        height: 26px;
         padding-top: 1px;
         padding-right: 5px;
         padding-left: 5px;
-    }
-    .task-item {
-        margin-left: 5px;
-        margin-bottom: 5px;
     }
 }
 </style>

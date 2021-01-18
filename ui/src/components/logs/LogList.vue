@@ -1,25 +1,24 @@
 <template>
     <div v-if="execution" class="log-wrapper text-white">
-        <div v-for="taskItem in execution.taskRunList" :key="taskItem.id">
+        <div v-for="currentTaskRun in execution.taskRunList" :key="currentTaskRun.id">
             <template
-                v-if="(!task || task.id === taskItem.id) && taskItem.attempts"
+                v-if="displayTaskRun(currentTaskRun)"
             >
                 <div class="bg-dark attempt-wrapper">
-                    <template v-for="(attempt, index) in taskItem.attempts">
+                    <template v-for="(attempt, index) in attempts(currentTaskRun)">
                         <div
-                            :id="`attempt-${index}-${taskItem.id}`"
-                            :key="`attempt-${index}-${taskItem.id}`"
+                            :key="`attempt-${index}-${currentTaskRun.id}`"
                         >
                             <b-tooltip
                                 placement="top"
-                                :target="`attempt-${index}-${taskItem.id}`"
+                                :target="`attempt-${index}-${currentTaskRun.id}`"
                                 triggers="hover"
                             >
                                 {{ $t("from") }} :
-                                {{ attempt.state.startDate | date("LLL:ss") }}
+                                {{ attempt.state.startDate | date }}
                                 <br>
                                 {{ $t("to") }} :
-                                {{ attempt.state.endDate | date("LLL:ss") }}
+                                {{ attempt.state.endDate | date }}
                                 <br>
                                 <br>
                                 <clock />
@@ -32,40 +31,60 @@
                                     {{ $t("attempt") }} {{ index + 1 }}
                                 </div>
 
-                                <div class="task-id flex-grow-1">
-                                    <code>{{ taskItem.taskId }}</code>
-                                    <small v-if="taskItem.value">
-                                        {{ taskItem.value }}</small>
+                                <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
+                                    <code>{{ currentTaskRun.taskId }}</code>
+                                    <small v-if="currentTaskRun.value">
+                                        {{ currentTaskRun.value }}
+                                    </small>
+                                </div>
+
+                                <div class="task-id">
+                                    <small class="mr-1">
+                                        <clock />
+                                        {{ attempt.state.duration | humanizeDuration }}
+                                    </small>
+                                </div>
+
+                                <div class="task-status">
+                                    <status
+                                        class="status"
+                                        :status="currentTaskRun.state.current"
+                                        size="sm"
+                                    />
                                 </div>
 
                                 <b-button-group>
+                                    <sub-flow-link
+                                        v-if="currentTaskRun.outputs && currentTaskRun.outputs.executionId"
+                                        tab-execution="gantt"
+                                        :execution-id="currentTaskRun.outputs.executionId"
+                                    />
+
                                     <b-button
-                                        v-if="taskItem.outputs"
-                                        :title="$t('toggle metrics')"
+                                        :disabled="!(attempt.metrics && attempt.metrics.length > 0) "
                                         @click="
-                                            toggleShowMetric(taskItem, index)
+                                            toggleShowMetric(currentTaskRun, index)
                                         "
                                     >
-                                        <chart-areaspline
-                                            :title="$t('toggle metrics')"
-                                        />
+                                        <kicon :tooltip="$t('toggle metrics')">
+                                            <chart-areaspline />
+                                        </kicon>
                                     </b-button>
 
                                     <b-button
-                                        v-if="taskItem.outputs"
-                                        :title="$t('toggle output')"
-                                        @click="toggleShowOutput(taskItem)"
+                                        :disabled="!currentTaskRun.outputs || currentTaskRun.outputs.length ===0"
+                                        @click="toggleShowOutput(currentTaskRun)"
                                     >
-                                        <location-exit
-                                            :title="$t('toggle output')"
-                                        />
+                                        <kicon :tooltip="$t('toggle output')">
+                                            <location-exit />
+                                        </kicon>
                                     </b-button>
 
                                     <restart
                                         :key="`restart-${index}-${attempt.state.startDate}`"
                                         :is-button-group="true"
                                         :execution="execution"
-                                        :task="taskItem"
+                                        :task="currentTaskRun"
                                     />
                                 </b-button-group>
                             </div>
@@ -74,34 +93,35 @@
                         <!-- Log lines -->
                         <template>
                             <template
-                                v-for="(log, i) in findLogs(taskItem.id, index)"
+                                v-for="(log, i) in findLogs(currentTaskRun.id, index)"
                             >
                                 <log-line
                                     :level="level"
                                     :filter="filter"
                                     :log="log"
-                                    :name="`${taskItem.id}-${index}-${i}`"
-                                    :key="`${taskItem.id}-${index}-${i}`"
+                                    :exclude-metas="excludeMetas"
+                                    :name="`${currentTaskRun.id}-${index}-${i}`"
+                                    :key="`${currentTaskRun.id}-${index}-${i}`"
                                 />
                             </template>
                         </template>
 
                         <!-- Metrics -->
                         <vars
-                            v-if="showMetrics[taskItem.id + '-' + index]"
+                            v-if="showMetrics[currentTaskRun.id + '-' + index]"
                             :title="$t('metrics')"
                             :execution="execution"
-                            :key="`metrics-${index}-${taskItem.id}`"
+                            :key="`metrics-${index}-${currentTaskRun.id}`"
                             :data="convertMetric(attempt.metrics)"
                         />
                     </template>
                     <!-- Outputs -->
                     <vars
-                        v-if="showOutputs[taskItem.id]"
+                        v-if="showOutputs[currentTaskRun.id]"
                         :title="$t('outputs')"
                         :execution="execution"
-                        :key="taskItem.id"
-                        :data="taskItem.outputs"
+                        :key="currentTaskRun.id"
+                        :data="currentTaskRun.outputs"
                     />
                 </div>
             </template>
@@ -118,6 +138,9 @@
     import LocationExit from "vue-material-design-icons/LocationExit";
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";
     import State from "../../utils/state";
+    import Status from "../Status";
+    import SubFlowLink from "../flows/SubFlowLink"
+    import Kicon from "../Kicon"
 
     export default {
         components: {
@@ -127,6 +150,9 @@
             LocationExit,
             Vars,
             ChartAreaspline,
+            Status,
+            SubFlowLink,
+            Kicon,
         },
         props: {
             level: {
@@ -141,6 +167,14 @@
                 type: String,
                 default: undefined,
             },
+            taskId: {
+                type: String,
+                default: undefined,
+            },
+            excludeMetas: {
+                type: Array,
+                default: () => [],
+            },
         },
         data() {
             return {
@@ -152,21 +186,36 @@
             level: function () {
                 this.loadLogs();
             },
+            execution: function() {
+                if (this.execution && this.execution.state.current !== State.RUNNING) {
+                    this.closeSSE();
+                }
+            },
         },
         created() {
             this.loadLogs();
         },
         computed: {
-            ...mapState("execution", ["execution", "task", "logs"]),
+            ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
         },
         methods: {
-            toggleShowOutput(task) {
-                this.showOutputs[task.id] = !this.showOutputs[task.id];
+            displayTaskRun(currentTaskRun) {
+                if (this.taskRun && this.taskRun.id !== currentTaskRun.id) {
+                    return false;
+                }
+
+                if (this.task && this.task.id !== currentTaskRun.taskId) {
+                    return false;
+                }
+                return  true;
+            },
+            toggleShowOutput(taskRun) {
+                this.showOutputs[taskRun.id] = !this.showOutputs[taskRun.id];
                 this.$forceUpdate();
             },
-            toggleShowMetric(task, index) {
-                this.showMetrics[task.id + "-" + index] = !this.showMetrics[
-                    task.id + "-" + index
+            toggleShowMetric(taskRun, index) {
+                this.showMetrics[taskRun.id + "-" + index] = !this.showMetrics[
+                    taskRun.id + "-" + index
                 ];
                 this.$forceUpdate();
             },
@@ -177,6 +226,10 @@
                     params.taskRunId = this.taskRunId;
                 }
 
+                if (this.taskId) {
+                    params.taskId = this.taskId;
+                }
+
                 if (this.execution && this.execution.state.current === State.RUNNING) {
                     this.$store
                         .dispatch("execution/followLogs", {
@@ -184,19 +237,36 @@
                             params: params,
                         })
                         .then((sse) => {
+                            const self = this;
                             this.sse = sse;
                             this.$store.commit("execution/setLogs", []);
 
-                            sse.subscribe("", (data) => {
-                                this.$store.commit("execution/appendLogs", data);
-                            });
+                            this.sse.onmessage = (event) => {
+                                if (event && event.lastEventId === "end") {
+                                    self.closeSSE();
+                                }
+
+                                this.$store.commit("execution/appendLogs", JSON.parse(event.data));
+                            }
                         });
                 } else {
                     this.$store.dispatch("execution/loadLogs", {
                         executionId: this.$route.params.id,
                         params: params,
                     });
+                    this.closeSSE();
                 }
+            },
+            closeSSE() {
+                if (this.sse) {
+                    this.sse.close();
+                    this.sse = undefined;
+                }
+            },
+            attempts(taskRun) {
+                return taskRun.attempts || [{
+                    state: taskRun.state
+                }];
             },
             findLogs(taskRunId, attemptNumber) {
                 return (this.logs || []).filter((log) => {
@@ -246,8 +316,16 @@
             background: $primary;
             padding: $btn-padding-y $btn-padding-x;
         }
+
         .task-id {
             padding: $btn-padding-y $btn-padding-x;
+        }
+
+        .task-status {
+            button {
+                height: 100%;
+                border-radius: 0 !important;
+            }
         }
     }
 

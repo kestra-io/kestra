@@ -13,7 +13,6 @@ import VueMoment from "vue-moment"
 import NProgress from "vue-nprogress"
 
 import VueRouter from "vue-router"
-import VueSSE from "vue-sse";
 import VueSidebarMenu from "vue-sidebar-menu"
 import Vuex from "vuex";
 import VueAnalytics from "vue-analytics";
@@ -48,10 +47,14 @@ if (app) {
 
   Vue.use(VueI18n);
 
+  let locale = localStorage.getItem("lang") || "en";
+
   let i18n = new VueI18n({
-    locale: localStorage.getItem("lang") || "en",
+    locale: locale,
     messages: Translations
   });
+
+  moment.locale(locale)
 
   const nprogress = new NProgress()
   Vue.use(NProgress, {
@@ -59,14 +62,13 @@ if (app) {
   })
 
   Vue.use(VueHotkey)
-  Vue.use(VueSSE);
   Vue.use(VueMoment, {moment: extendMoment(moment)});
   Vue.use(VueSidebarMenu);
   Vue.use(BootstrapVue);
 
   Vue.use(Toast)
 
-  Vue.component("v-select", vSelect);
+  Vue.component("VSelect", vSelect);
 
   Vue.config.productionTip = false;
 

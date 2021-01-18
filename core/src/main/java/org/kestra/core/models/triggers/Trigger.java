@@ -37,6 +37,14 @@ public class Trigger extends TriggerContext {
         ));
     }
 
+    public static String uid(Flow flow, AbstractTrigger abstractTrigger) {
+        return String.join("_", Arrays.asList(
+            flow.getNamespace(),
+            flow.getId(),
+            abstractTrigger.getId()
+        ));
+    }
+
     public static Trigger of(Flow flow, AbstractTrigger abstractTrigger) {
         return Trigger.builder()
             .namespace(flow.getNamespace())

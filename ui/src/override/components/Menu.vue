@@ -32,13 +32,13 @@
     import ChartTimeline from "vue-material-design-icons/ChartTimeline";
     import {mapState} from "vuex";
 
-    Vue.component("graph", Graph);
-    Vue.component("settings", Cog);
-    Vue.component("timelineclock", TimelineClock);
-    Vue.component("bookopen", BookOpen);
-    Vue.component("cardtext", CardText);
-    Vue.component("hexagon-multiple", HexagonMultiple);
-    Vue.component("charttimeline", ChartTimeline);
+    Vue.component("Graph", Graph);
+    Vue.component("Settings", Cog);
+    Vue.component("Timelineclock", TimelineClock);
+    Vue.component("Bookopen", BookOpen);
+    Vue.component("Cardtext", CardText);
+    Vue.component("HexagonMultiple", HexagonMultiple);
+    Vue.component("Charttimeline", ChartTimeline);
 
     export default {
         components: {
@@ -61,6 +61,12 @@
                 collapsed: localStorage.getItem("menuCollapsed") === "true"
             };
         },
+        mounted() {
+            this.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                //empty icon name on mouseover
+                e.setAttribute("title","")
+            })
+        },
         computed: {
             ...mapState("misc", ["version"]),
             menu() {
@@ -73,7 +79,7 @@
                         title: this.$t("flows"),
                         icon: {
                             element: "graph",
-                            class: "menu-icon"
+                            class: "menu-icon",
                         }
                     },
                     {

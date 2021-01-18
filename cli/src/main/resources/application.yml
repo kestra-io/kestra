@@ -75,6 +75,13 @@ kestra:
           retention.ms: "-1"
           segment.bytes: "10485760"
 
+      flowlast:
+        name: "kestra_flow_last"
+        properties:
+          cleanup.policy: "compact"
+          retention.ms: "-1"
+          segment.bytes: "10485760"
+
       template:
         name: "kestra_template"
         cls: org.kestra.core.models.templates.Template

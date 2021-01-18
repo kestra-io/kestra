@@ -24,15 +24,15 @@
             :items="outputs"
             class="mb-0"
         >
-            <template v-slot:cell(key)="row">
+            <template #cell(key)="row">
                 <code>{{ row.item.key }}</code>
             </template>
 
-            <template v-slot:cell(value)="row">
+            <template #cell(value)="row">
                 <var>{{ row.item.value }}</var>
             </template>
 
-            <template v-slot:cell(output)="row">
+            <template #cell(output)="row">
                 <var-value :execution="execution" :value="row.item.output" />
             </template>
         </b-table>

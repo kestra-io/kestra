@@ -23,7 +23,6 @@ class PluginScannerTest {
         assertThat(scan.get(0).getManifest().getMainAttributes().getValue("X-Kestra-Group"), is("io.kestra.task.templates"));
     }
 
-
     @Test
     void scanCore() {
         PluginScanner pluginScanner = new PluginScanner(PluginScannerTest.class.getClassLoader());

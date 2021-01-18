@@ -2,7 +2,7 @@
     <span v-if="description">
         <help-circle title="" :id="'tooltip-desc-' + id" />
         <b-popover triggers="hover" :target="'tooltip-desc-' + id" placement="bottom">
-            <markdown :source="description" />
+            <markdown class="markdown-tooltip" :source="description" />
         </b-popover>
     </span>
 </template>
@@ -29,3 +29,11 @@
         }
     };
 </script>
+
+<style lang="scss">
+.markdown-tooltip {
+    *:last-child {
+        margin-bottom: 0;
+    }
+}
+</style>

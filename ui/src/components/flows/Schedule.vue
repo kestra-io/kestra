@@ -7,9 +7,7 @@
                 :schedule="schedule"
                 :index="x"
                 v-for="(schedule, x) in (flow.triggers || []).filter(
-                    (r) =>
-                        r.type ===
-                        'org.kestra.core.models.triggers.types.Schedule'
+                    (r) => r.type ==='org.kestra.core.models.triggers.types.Schedule'
                 )"
                 :key="x"
             />

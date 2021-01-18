@@ -9,12 +9,12 @@
                 ref="dataTable"
                 :total="total"
             >
-                <template v-slot:navbar>
+                <template #navbar>
                     <search-field @onSearch="onSearch" :fields="searchableFields" />
                     <namespace-select :data-type="dataType" @onNamespaceSelect="onNamespaceSelect" />
                 </template>
 
-                <template v-slot:table>
+                <template #table>
                     <b-table
                         :no-local-sorting="true"
                         @row-dblclicked="onRowDoubleClick"
@@ -26,14 +26,21 @@
                         :items="templates"
                         :fields="fields"
                         ref="table"
+                        show-empty
                     >
-                        <template v-slot:cell(actions)="row">
+                        <template #empty>
+                            <span class="text-black-50">{{ $t('no result') }}</span>
+                        </template>
+
+                        <template #cell(actions)="row">
                             <router-link :to="{name: 'templateEdit', params : row.item}">
-                                <eye id="edit-action" />
+                                <kicon :tooltip="$t('details')" placement="left">
+                                    <eye />
+                                </kicon>
                             </router-link>
                         </template>
 
-                        <template v-slot:cell(id)="row">
+                        <template #cell(id)="row">
                             <router-link
                                 :to="{name: `${dataType}Edit`, params: {namespace: row.item.namespace, id: row.item.id}}"
                             >
@@ -49,8 +56,10 @@
                 <li class="nav-item">
                     <router-link :to="{name: 'templateAdd'}">
                         <b-button variant="primary">
-                            <plus />
-                            {{ $t('create') }}
+                            <kicon>
+                                <plus />
+                                {{ $t('create') }}
+                            </kicon>
                         </b-button>
                     </router-link>
                 </li>
@@ -71,6 +80,7 @@
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../layout/DataTable";
     import SearchField from "../layout/SearchField";
+    import Kicon from "../Kicon"
 
     export default {
         mixins: [RouteContext, DataTableActions],
@@ -81,6 +91,7 @@
             DataTable,
             SearchField,
             NamespaceSelect,
+            Kicon
         },
         data() {
             return {

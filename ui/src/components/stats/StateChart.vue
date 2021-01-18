@@ -1,5 +1,5 @@
 <template>
-    <div :id="uuid" :class="'executions-charts' + (this.global ? '' : ' mini')" v-if="dataReady">
+    <div :id="uuid" :class="'executions-charts' + (this.global ? (this.big ? ' big' : '') : ' mini')" v-if="dataReady">
         <current-chart :data="collections" :options="options" />
         <b-tooltip
             custom-class="tooltip-stats"
@@ -18,6 +18,7 @@
     import Utils from "../../utils/utils.js";
     import {tooltip, defaultConfig} from "../../utils/charts.js";
     import State from "../..//utils/state";
+    import humanizeDuration from "humanize-duration";
 
     const CurrentChart = {
         extends: Bar,
@@ -29,7 +30,7 @@
             options: {
                 type: Object,
                 required: true
-            }
+            },
         },
         mounted() {
             setTimeout(() => {
@@ -48,6 +49,10 @@
                 required: true
             },
             global: {
+                type: Boolean,
+                default: () => false
+            },
+            big: {
                 type: Boolean,
                 default: () => false
             }
@@ -77,6 +82,7 @@
                                 accumulator[state] = {
                                     label: state,
                                     backgroundColor: self.backgroundFromState(state),
+                                    yAxisID: "A",
                                     data: []
                                 };
                             }
@@ -87,10 +93,22 @@
                         return accumulator;
                     }, Object.create(null))
 
-
                 return {
                     labels: this.data.map(r => r.startDate),
-                    datasets: Object.values(datasets)
+                    datasets: !this.big ? Object.values(datasets) : [{
+                        type: "line",
+                        label: this.$t("duration"),
+                        backgroundColor: "#c7e7e5",
+                        fill: "start",
+                        pointRadius: 1,
+                        borderWidth: 1,
+                        borderColor: "#1dbaaf",
+                        yAxisID: "B",
+                        data: this.data
+                            .map((value) => {
+                                return value.duration.avg === 0 ? 0 : value.duration.avg;
+                            })
+                    }, ...Object.values(datasets), ]
                 }
             },
             options() {
@@ -103,16 +121,34 @@
                             if (content) {
                                 self.tooltip = content;
                             }
+                        },
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                const dataset = data.datasets[tooltipItem.datasetIndex];
+                                if (dataset.yAxisID === "B") {
+                                    return dataset.label + ": " + humanizeDuration(tooltipItem.yLabel * 1000);
+                                } else {
+                                    return dataset.label + ": " + tooltipItem.value
+                                }
+                            }
                         }
                     },
-
                     scales: {
                         xAxes: [{
                             stacked: true,
                         }],
-                        yAxes: [{
-                            stacked: true,
-                        }]
+                        yAxes: [
+                            {
+                                id: "A",
+                                position: "left",
+                                stacked: true,
+                            },
+                            {
+                                id: "B",
+                                display: false,
+                                position: "right",
+                            }
+                        ]
                     },
                 })
             }

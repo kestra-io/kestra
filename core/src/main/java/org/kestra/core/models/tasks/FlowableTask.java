@@ -6,7 +6,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.NextTaskRun;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.hierarchies.TaskTree;
+import org.kestra.core.models.hierarchies.GraphCluster;
 import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContext;
 
@@ -19,7 +19,7 @@ public interface FlowableTask <T extends Output> {
     )
     List<Task> getErrors();
 
-    List<TaskTree> tasksTree(String parentId, Execution execution, List<String> groups) throws IllegalVariableEvaluationException;
+    GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException;
 
     List<Task> allChildTasks();
 

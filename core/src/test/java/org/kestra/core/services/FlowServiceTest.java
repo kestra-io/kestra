@@ -51,6 +51,7 @@ class FlowServiceTest {
     @Test
     public void sameRevisionWithDeletedSameRevision() {
         Stream<Flow> stream = Stream.of(
+            create("test2", "test2", 1),
             create("test", "test", 1),
             create("test", "test2", 2),
             create("test", "test3", 3),
@@ -61,7 +62,7 @@ class FlowServiceTest {
 
         assertThat(collect.size(), is(1));
         assertThat(collect.get(0).isDeleted(), is(false));
-        assertThat(collect.get(0).getRevision(), is(3));
+        assertThat(collect.get(0).getId(), is("test2"));
     }
 
     @Test

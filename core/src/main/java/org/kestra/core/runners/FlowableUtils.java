@@ -113,7 +113,7 @@ public class FlowableUtils {
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
-            if (execution.hasFailed(tasks, parentTaskRun) || execution.hasWarning(tasks, parentTaskRun)) {
+            if (execution.hasFailed(tasks, parentTaskRun)) {
                 return Optional.of(execution.guessFinalState(tasks, parentTaskRun));
             }
         }

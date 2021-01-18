@@ -1,7 +1,7 @@
 <template>
     <div class="log-panel">
         <div class="log-content">
-            <main-log-filter @onChange="loadData" />
+            <main-log-filter v-if="!embed" @onChange="loadData" />
             <div v-if="logs === undefined">
                 <b-alert variant="light" show>
                     {{ $t('no result') }}
@@ -19,7 +19,7 @@
                 </template>
             </div>
         </div>
-        <pagination :total="total" @onPageChanged="onPageChanged" />
+        <pagination :size="pageSize" :page="pageNumber" :total="total" @onPageChanged="onPageChanged" />
     </div>
 </template>
 
@@ -34,12 +34,34 @@
     export default {
         mixins: [RouteContext],
         components: {LogLine, Pagination, MainLogFilter},
+        props: {
+            logLevel: {
+                type: String,
+                default: "INFO"
+            },
+            embed: {
+                type: Boolean,
+                default: false
+            },
+            pageSize: {
+                type: Number,
+                default: 25
+            },
+            pageNumber: {
+                type: Number,
+                default: 1
+            },
+        },
         data() {
             return {
                 task: undefined,
+                internalPageSize: undefined,
+                internalPageNumber: undefined,
             };
         },
         created() {
+            this.internalPageSize = this.pageSize;
+            this.internalPageNumber = this.pageNumber;
             this.loadData();
         },
         computed: {
@@ -55,13 +77,18 @@
         },
         methods: {
             onPageChanged(pagination) {
-                this.$router.push({
-                    query: {...this.$route.query, ...pagination},
-                });
+                this.internalPageSize = pagination.size;
+                this.internalPageNumber = pagination.page;
+
+                if (!this.embed) {
+                    this.$router.push({
+                        query: {...this.$route.query, ...pagination},
+                    });
+                }
+
                 this.loadData();
             },
             loadData() {
-
                 let q = qb.logQueryBuilder(this.$route);
                 if (this.isFlowEdit) {
                     q += ` AND namespace:${this.$route.params.namespace}`
@@ -70,9 +97,9 @@
 
                 this.$store.dispatch("log/findLogs", {
                     q,
-                    page: this.$route.query.page || 1,
-                    size: this.$route.query.size  || 25,
-                    minLevel: this.$route.query.level || "INFO"
+                    page: this.$route.query.page || this.internalPageNumber,
+                    size: this.$route.query.size  || this.internalPageSize,
+                    minLevel: this.$route.query.level || this.logLevel
                 });
             },
         },

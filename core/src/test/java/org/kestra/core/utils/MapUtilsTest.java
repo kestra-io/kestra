@@ -2,14 +2,13 @@ package org.kestra.core.utils;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.*;
 
 class MapUtilsTest {
     @SuppressWarnings("unchecked")
@@ -22,9 +21,9 @@ class MapUtilsTest {
                 "map_c", "c"
             ),
             "string", "a",
-            "int", 1
+            "int", 1,
+            "lists", Collections.singletonList(1)
         );
-
 
         Map<String, Object> b = Map.of(
             "map", Map.of(
@@ -32,7 +31,8 @@ class MapUtilsTest {
                 "map_d", "d"
             ),
             "string", "b",
-            "float", 1F
+            "float", 1F,
+            "lists", Collections.singletonList(2)
         );
 
         Map<String, Object> merge = MapUtils.merge(a, b);
@@ -42,5 +42,6 @@ class MapUtilsTest {
         assertThat(merge.get("string"), is("b"));
         assertThat(merge.get("int"), is(1));
         assertThat(merge.get("float"), is(1F));
+        assertThat((List<?>) merge.get("lists"), hasSize(2));
     }
 }

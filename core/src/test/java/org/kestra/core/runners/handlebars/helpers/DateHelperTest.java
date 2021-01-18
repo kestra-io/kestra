@@ -87,4 +87,16 @@ class DateHelperTest {
         assertThat(render, containsString(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ISO_LOCAL_DATE)));
         assertThat(render, containsString(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ofPattern("HH:mm"))));
     }
+
+    @Test
+    void add() throws IllegalVariableEvaluationException {
+        String render = VARIABLE_RENDERER.render(
+            "{{ dateAdd zoned -1 \"DAYS\" tz=\"Europe/Paris\" }}",
+            ImmutableMap.of(
+                "zoned", NOW
+            )
+        );
+
+        assertThat(render, is("2013-09-07T17:19:12.123456+02:00"));
+    }
 }

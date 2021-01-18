@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.Helpers;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
-import org.kestra.core.models.hierarchies.FlowTree;
+import org.kestra.core.models.hierarchies.FlowGraph;
 import org.kestra.core.models.tasks.Task;
 import org.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.kestra.core.tasks.debugs.Return;
@@ -37,8 +37,6 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @Client("/")
     RxHttpClient client;
 
-    public static final String TESTS_FLOW_NS = "org.kestra.tests";
-
     @Test
     void id() {
         Flow result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.kestra.tests/full"), Flow.class);
@@ -48,11 +46,13 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void tree() {
-        FlowTree result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.kestra" +
-            ".tests/all-flowable/tree"), FlowTree.class);
+    void graph() {
+        FlowGraph result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/org.kestra" +
+            ".tests/all-flowable/graph"), FlowGraph.class);
 
-        assertThat(result.getTasks().size(), is(20));
+        assertThat(result.getNodes().size(), is(28));
+        assertThat(result.getEdges().size(), is(31));
+        assertThat(result.getClusters().size(), is(6));
     }
 
     @Test

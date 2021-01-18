@@ -1,6 +1,7 @@
 package org.kestra.core.runners;
 
 import io.micronaut.context.ApplicationContext;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.queues.QueueFactoryInterface;
@@ -16,11 +17,11 @@ import javax.inject.Named;
 
 @Slf4j
 public class StandAloneRunner implements RunnerInterface, Closeable {
-    private ExecutorService poolExecutor;
-    protected final int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
-    protected final int executorThreads = 1;
-    protected final int indexerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
-    protected final int schedulerThread = 1; //TODO scale
+    @Setter private ExecutorService poolExecutor;
+    @Setter protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    @Setter protected int executorThreads = 1;
+    @Setter protected int indexerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
+    @Setter protected int schedulerThread = 1; //TODO scale
 
     @Inject
     private ExecutorsUtils executorsUtils;

@@ -1,3 +1,6 @@
+import _merge from "lodash/merge";
+import _cloneDeep from "lodash/cloneDeep";
+
 const iso = date => new Date(parseInt(date)).toISOString()
 
 export default class QueryBuilder {
@@ -15,8 +18,8 @@ export default class QueryBuilder {
         return `(*${query}* OR ${query})`;
     }
 
-    static build(route) {
-        const q = route.query;
+    static build(route, defaults) {
+        const q = _merge(_cloneDeep(route.query), defaults || {});
         const query = []
 
         if (q.namespace) {

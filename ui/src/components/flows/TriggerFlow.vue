@@ -1,7 +1,9 @@
 <template>
     <div class="trigger-flow-wrapper">
         <b-button v-hotkey="keymap" @click="onSubmit" v-b-tooltip.hover.top="'(Ctrl + Enter)'">
-            <flash /> {{ $t('New execution') }}
+            <kicon>
+                <flash /> {{ $t('New execution') }}
+            </kicon>
         </b-button>
         <b-modal size="lg" hide-footer id="trigger-flow" :title="$t('execute the flow')">
             <execution-configuration @onExecutionTrigger="closeModal" :redirect="true" />
@@ -13,11 +15,13 @@
     import ExecutionConfiguration from "./ExecutionConfiguration";
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
+    import Kicon from "../Kicon"
 
     export default {
         components: {
             Flash,
-            ExecutionConfiguration
+            ExecutionConfiguration,
+            Kicon
         },
         props: {
             flowId: {

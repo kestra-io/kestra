@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -68,12 +69,12 @@ class ScheduleTest {
         Schedule trigger = Schedule.builder().cron("0 0 1 * *").build();
 
         ZonedDateTime date = ZonedDateTime.now()
-            .withMonth(ZonedDateTime.now().getMonthValue() - 1)
             .withDayOfMonth(1)
             .withHour(0)
             .withMinute(0)
             .withSecond(0)
-            .truncatedTo(ChronoUnit.SECONDS);
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minus(1, ChronoUnit.MONTHS);
 
         Optional<Execution> evaluate = trigger.evaluate(runContextFactory.of(), context(date, trigger));
 
@@ -165,15 +166,15 @@ class ScheduleTest {
         Schedule trigger = Schedule.builder().cron("30 0 1 * *").build();
 
         ZonedDateTime date = ZonedDateTime.now()
-            .withMonth(ZonedDateTime.now().getMonthValue() - 1)
             .withDayOfMonth(1)
             .withHour(0)
             .withMinute(45)
             .withSecond(0)
-            .truncatedTo(ChronoUnit.SECONDS);
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minus(1, ChronoUnit.MONTHS);
 
         ZonedDateTime expexted = date.withMinute(30)
-            .withMonth(date.getMonthValue() + 1);
+            .plusMonths(1);
 
         Optional<Execution> evaluate = trigger.evaluate(runContextFactory.of(), context(date, trigger));
 

@@ -33,10 +33,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static org.kestra.core.utils.Rethrow.throwSupplier;
 
 @Slf4j
+@Singleton
 public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
@@ -55,7 +57,11 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     private final Map<String, ZonedDateTime> evaluateRunning = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> evaluateRunningCount = new ConcurrentHashMap<>();
 
+    @Getter
     private List<FlowWithTrigger> schedulable = new ArrayList<>();
+
+    @Getter
+    private Map<String, FlowWithPollingTriggerNextDate> schedulableNextDate = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     @Inject
@@ -107,6 +113,8 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     }
 
     private void computeSchedulable(List<Flow> flows) {
+        schedulableNextDate = new HashMap<>();
+
         this.schedulable = flows
             .stream()
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
@@ -139,8 +147,8 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         ZonedDateTime now = now();
 
         synchronized (this) {
-            if (log.isTraceEnabled()) {
-                log.trace(
+            if (log.isDebugEnabled()) {
+                log.debug(
                     "Scheduler next iteration for {} with {} schedulables of {} flows",
                     now,
                     schedulable.size(),
@@ -183,8 +191,8 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-            if (log.isTraceEnabled()) {
-                log.trace(
+            if (log.isDebugEnabled()) {
+                log.debug(
                     "Scheduler will evaluate for {} with {} readyForEvaluate of {} schedulables",
                     now,
                     readyForEvaluate.size(),
@@ -196,9 +204,12 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                 .counter(MetricRegistry.SCHEDULER_EVALUATE_COUNT)
                 .increment(readyForEvaluate.size());
 
+
             // submit ready one to cached thread pool
             readyForEvaluate
                 .forEach(f -> {
+                    schedulableNextDate.put(f.getTriggerContext().uid(), f);
+
                     if (f.getPollingTrigger().getInterval() == null) {
                         this.handleEvaluatePollingTriggerResult(this.evaluatePollingTrigger(f));
                     } else {
@@ -434,7 +445,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     @SuperBuilder
     @Getter
     @NoArgsConstructor
-    private static class FlowWithPollingTriggerNextDate extends FlowWithPollingTrigger {
+    public static class FlowWithPollingTriggerNextDate extends FlowWithPollingTrigger {
         private ZonedDateTime next;
 
         public static FlowWithPollingTriggerNextDate of(FlowWithPollingTrigger f, ZonedDateTime next) {
@@ -442,6 +453,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                 .flow(f.getFlow())
                 .trigger(f.getTrigger())
                 .pollingTrigger(f.getPollingTrigger())
+                .runContext(f.getRunContext())
                 .triggerContext(TriggerContext.builder()
                     .namespace(f.getTriggerContext().getNamespace())
                     .flowId(f.getTriggerContext().getFlowId())
@@ -457,7 +469,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
     @AllArgsConstructor
     @Getter
-    private static class FlowWithTrigger {
+    public static class FlowWithTrigger {
         private final Flow flow;
         private final AbstractTrigger trigger;
         private final RunContext runContext;

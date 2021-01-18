@@ -4,10 +4,11 @@
             @click="restart"
             v-if="enabled"
             :class="!isButtonGroup ? 'rounded-lg btn-info restart mr-1' : ''"
-            :title="$t('restart')"
         >
-            <restart-icon />
-            {{ (isButtonGroup ? '' : $t("restart")) }}
+            <kicon :tooltip="$t('restart')">
+                <restart-icon />
+                {{ (isButtonGroup ? '' : $t("restart")) }}
+            </kicon>
         </b-button>
     </span>
 </template>
@@ -17,9 +18,10 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import State from "../../utils/state";
+    import Kicon from "../Kicon"
 
     export default {
-        components: {RestartIcon},
+        components: {RestartIcon, Kicon},
         props: {
             isButtonGroup: {
                 type: Boolean,

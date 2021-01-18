@@ -55,7 +55,7 @@ public class KafkaAdminService implements AutoCloseable {
 
     @PreDestroy
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (adminClient != null) {
             adminClient.close();
         }

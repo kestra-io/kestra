@@ -18,6 +18,8 @@ import java.util.Collections;
 import javax.validation.ConstraintViolationException;
 
 public class HandleBarDeserializer extends StringDeserializer {
+    private static final long serialVersionUID = 1L;
+
     private static final Handlebars HANDLEBARS = new Handlebars()
         .with(EscapingStrategy.NOOP)
         .startDelimiter("[[")

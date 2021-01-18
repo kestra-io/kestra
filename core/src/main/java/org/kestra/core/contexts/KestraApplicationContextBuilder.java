@@ -31,16 +31,14 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
         super();
     }
 
-    public @Nonnull
-    KestraApplicationContextBuilder classLoader(ClassLoader classLoader) {
+    public @Nonnull KestraApplicationContextBuilder classLoader(ClassLoader classLoader) {
         if (classLoader != null) {
             this.classLoader = classLoader;
         }
         return this;
     }
 
-    public @Nonnull
-    KestraApplicationContextBuilder mainClass(Class mainClass) {
+    public @Nonnull KestraApplicationContextBuilder mainClass(Class<?> mainClass) {
         if (mainClass != null) {
             if (this.classLoader == null) {
                 this.classLoader = mainClass.getClassLoader();
@@ -53,32 +51,28 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
         return this;
     }
 
-    public @Nonnull
-    KestraApplicationContextBuilder packages(@Nullable String... packages) {
+    public @Nonnull KestraApplicationContextBuilder packages(@Nullable String... packages) {
         if (packages != null) {
             this.packages.addAll(Arrays.asList(packages));
         }
         return this;
     }
 
-    public @Nonnull
-    KestraApplicationContextBuilder environments(@Nullable String... environments) {
+    public @Nonnull KestraApplicationContextBuilder environments(@Nullable String... environments) {
         if (environments != null) {
             this.environments.addAll(Arrays.asList(environments));
         }
         return this;
     }
 
-    public @Nonnull
-    KestraApplicationContextBuilder properties(@Nullable Map<String, Object> properties) {
+    public @Nonnull KestraApplicationContextBuilder properties(@Nullable Map<String, Object> properties) {
         if (properties != null) {
             this.properties.putAll(properties);
         }
         return this;
     }
 
-    public @Nonnull
-    KestraApplicationContextBuilder pluginRegistry(@Nullable PluginRegistry pluginRegistry) {
+    public @Nonnull KestraApplicationContextBuilder pluginRegistry(@Nullable PluginRegistry pluginRegistry) {
         if (pluginRegistry != null) {
             this.pluginRegistry = pluginRegistry;
         }
@@ -87,8 +81,7 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
 
 
     @SuppressWarnings("MagicNumber")
-    public @Nonnull
-    ApplicationContext build() {
+    public @Nonnull ApplicationContext build() {
         DefaultApplicationContext applicationContext = new KestraApplicationContext(this, this.pluginRegistry);
         Environment environment = applicationContext.getEnvironment();
 

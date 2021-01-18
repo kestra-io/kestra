@@ -22,6 +22,7 @@ public class TaskDefaultService {
     @Inject
     protected GlobalDefault globalDefault;
 
+    @SuppressWarnings("unchecked")
     public <T extends Task> T injectDefaults(T task, Flow flow) {
         Map<String, Object> taskAsMap = JacksonMapper.toMap(task);
 
@@ -30,7 +31,6 @@ public class TaskDefaultService {
             taskAsMap = defaults(task, taskAsMap, globalDefault.getDefaults());
         }
 
-        //noinspection unchecked
         return (T) JacksonMapper.toMap(taskAsMap, task.getClass());
     }
 

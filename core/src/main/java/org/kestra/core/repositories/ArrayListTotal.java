@@ -10,6 +10,8 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 public class ArrayListTotal<T> extends ArrayList<T> {
+    private static final long serialVersionUID = 1L;
+
     private long total;
 
     public static <T> ArrayListTotal<T> of(Pageable pageable, List<T> list) {

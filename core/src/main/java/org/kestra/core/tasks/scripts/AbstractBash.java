@@ -403,6 +403,8 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
     @Getter
     @Builder
     public static class BashException extends Exception {
+        private static final long serialVersionUID = 1L;
+
         public BashException(int exitCode, List<String> stdOut, List<String> stdErr) {
             super("Command failed with code " + exitCode + " and stdErr '" + String.join("\n", stdErr) + "'");
             this.exitCode = exitCode;

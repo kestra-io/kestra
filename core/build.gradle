@@ -16,7 +16,6 @@ dependencies {
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
 
     // serializers
-    implementation group: "org.apache.avro", name: "avro", version: '1.10.0'
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: '2.12.1'
 
     // utils

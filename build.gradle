@@ -14,7 +14,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.36.0"
 
     // front
-    id 'org.siouan.frontend-jdk11' version '4.0.1' apply false
+    id 'org.siouan.frontend-jdk11' version '5.0.0' apply false
 
     // release
     id "com.jfrog.bintray" version "1.8.5" apply false
@@ -88,7 +88,7 @@ allprojects {
         implementation "javax.annotation:javax.annotation-api"
         implementation "io.micronaut.data:micronaut-data-model"
         implementation "io.micronaut:micronaut-management"
-        implementation "io.micrometer:micrometer-core:1.6.2"
+        implementation "io.micrometer:micrometer-core:1.6.3"
         implementation "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
         api "io.micronaut:micronaut-http-client"
 
@@ -99,10 +99,10 @@ allprojects {
 
 
         // jackson
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.0'
-        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.12.0'
-        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.12.0'
-        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.12.0'
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.1'
+        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.12.1'
+        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.12.1'
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.12.1'
 
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'

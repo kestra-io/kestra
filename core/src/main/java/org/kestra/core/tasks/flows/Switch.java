@@ -1,6 +1,7 @@
 package org.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -79,6 +80,7 @@ import static org.kestra.core.utils.Rethrow.throwPredicate;
         )
     }
 )
+@Introspected
 public class Switch extends Task implements FlowableTask<Switch.Output>, TaskValidationInterface<Switch> {
     @NotBlank
     @NotNull
@@ -88,7 +90,11 @@ public class Switch extends Task implements FlowableTask<Switch.Output>, TaskVal
     @PluginProperty(dynamic = true)
     private String value;
 
-    @Valid
+    // @FIXME: @Valid break on io.micronaut.validation.validator.DefaultValidator#cascadeToOne with "Cannot validate java.util.ArrayList"
+    // @Valid
+    @Schema(
+        title = "The case switch, as map with key the value, value the list of tasks"
+    )
     private Map<String, List<Task>> cases;
 
     @Valid

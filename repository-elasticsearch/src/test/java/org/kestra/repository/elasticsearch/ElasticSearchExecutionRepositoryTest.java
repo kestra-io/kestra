@@ -2,7 +2,7 @@ package org.kestra.repository.elasticsearch;
 
 import com.devskiller.friendly_id.FriendlyId;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;

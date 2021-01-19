@@ -3,6 +3,8 @@ package org.kestra.webserver.controllers;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.kestra.core.utils.VersionProvider;
@@ -22,6 +24,7 @@ public class MiscController {
 
 
     @Get("/api/v1/version")
+    @ExecuteOn(TaskExecutors.IO)
     public Version version() {
         return new Version(versionProvider.getVersion());
     }

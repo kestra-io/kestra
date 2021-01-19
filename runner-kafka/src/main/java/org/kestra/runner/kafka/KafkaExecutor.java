@@ -9,9 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.processor.internals.ProcessorAdapter;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.Stores;
@@ -123,7 +125,7 @@ public class KafkaExecutor extends AbstractExecutor {
             ),
             kafkaAdminService.getTopicName(TOPIC_EXECUTOR_WORKERINSTANCE),
             Consumed.with(Serdes.String(), JsonSerde.of(WorkerInstance.class)),
-            () -> new GlobalStateProcessor<>(WORKERINSTANCE_STATE_STORE_NAME)
+            () -> ProcessorAdapter.adapt(new GlobalStateProcessor<>(WORKERINSTANCE_STATE_STORE_NAME))
         );
 
         // declare ktable & kstream
@@ -882,7 +884,7 @@ public class KafkaExecutor extends AbstractExecutor {
         resultStream.start();
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(
-            resultStream.store("template", QueryableStoreTypes.keyValueStore())
+            resultStream.store(StoreQueryParameters.fromNameAndType("template", QueryableStoreTypes.keyValueStore()))
         ));
     }
 }

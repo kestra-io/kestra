@@ -1,6 +1,6 @@
 package org.kestra.core.schedulers.validations;
 
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.triggers.types.Schedule;
 import org.kestra.core.models.validations.ModelValidator;

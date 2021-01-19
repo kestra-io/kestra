@@ -3,7 +3,7 @@ package org.kestra.cli.commands.flows.namespaces;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
-import io.micronaut.http.client.DefaultHttpClient;
+import io.micronaut.http.client.netty.DefaultHttpClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.cli.AbstractApiCommand;

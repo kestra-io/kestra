@@ -1,7 +1,7 @@
 dependencies {
     // micronaut
     implementation "info.picocli:picocli"
-    implementation "io.micronaut.configuration:micronaut-picocli"
+    implementation "io.micronaut.picocli:micronaut-picocli"
     implementation "io.micronaut:micronaut-management"
     implementation "io.micronaut:micronaut-http-server-netty"
 
@@ -13,7 +13,7 @@ dependencies {
     implementation 'org.eclipse.aether:aether-connector-basic:1.1.0'
     implementation 'org.eclipse.aether:aether-transport-file:1.1.0'
     implementation 'org.eclipse.aether:aether-transport-http:1.1.0'
-    implementation('org.apache.maven:maven-aether-provider:3.1.0') {
+    implementation('org.apache.maven:maven-aether-provider:3.3.9') {
         // sisu dependency injector is not used
         exclude group: 'org.eclipse.sisu'
     }

@@ -1,6 +1,6 @@
 package org.kestra.core.runners;
 
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.kestra.core.utils.TestsUtils;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.runner.memory.MemoryRunner;

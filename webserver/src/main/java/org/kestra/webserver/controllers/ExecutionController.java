@@ -7,6 +7,8 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -77,6 +79,7 @@ public class ExecutionController {
     @Named(QueueFactoryInterface.KILL_NAMED)
     protected QueueInterface<ExecutionKilled> killQueue;
 
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
     public PagedResults<Execution> find(
         @QueryValue(value = "q") String query,
@@ -91,6 +94,7 @@ public class ExecutionController {
         );
     }
 
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "taskruns/search", produces = MediaType.TEXT_JSON)
     public PagedResults<TaskRun> findTaskRun(
         @QueryValue(value = "q") String query,
@@ -105,6 +109,7 @@ public class ExecutionController {
         );
     }
 
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "taskruns/maxTaskRunSetting")
     public Integer maxTaskRunSetting() {
         return executionRepository.maxTaskRunSetting();
@@ -116,6 +121,7 @@ public class ExecutionController {
      * @param executionId The execution identifier
      * @return the flow tree  with the provided identifier
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/graph", produces = MediaType.TEXT_JSON)
     public FlowGraph flowGraph(String executionId) throws IllegalVariableEvaluationException {
         return executionRepository
@@ -140,6 +146,7 @@ public class ExecutionController {
      * @param executionId The execution identifier
      * @return the execution with the provided identifier
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}", produces = MediaType.TEXT_JSON)
     public Execution get(String executionId) {
         return executionRepository
@@ -156,6 +163,7 @@ public class ExecutionController {
      * @param size The number of result by page
      * @return a list of found executions
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions", produces = MediaType.TEXT_JSON)
     public PagedResults<Execution> findByFlowId(
         @QueryValue(value = "namespace") String namespace,
@@ -175,6 +183,7 @@ public class ExecutionController {
      * @param id The flow id
      * @return execution created
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
     public Execution trigger(
         String namespace,
@@ -203,6 +212,7 @@ public class ExecutionController {
      * @param path The file URI to return
      * @return data binary content
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
     public StreamedFile file(
         String executionId,
@@ -235,6 +245,7 @@ public class ExecutionController {
      * @param taskId the reference task id
      * @return the restarted execution
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
     public Execution restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
@@ -251,6 +262,7 @@ public class ExecutionController {
      * @param executionId the execution id to kill
      * @throws IllegalArgumentException if the executions is already finished
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/{executionId}/kill", produces = MediaType.TEXT_JSON)
     public HttpResponse<?> kill(String executionId) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
@@ -273,7 +285,8 @@ public class ExecutionController {
      * @param executionId The execution id to follow
      * @return execution sse event
      */
-    @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_JSON)
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     public Flowable<Event<Execution>> follow(String executionId) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
@@ -310,7 +323,6 @@ public class ExecutionController {
 
                 cancel.set(receive);
             }, BackpressureStrategy.BUFFER)
-            .observeOn(Schedulers.io())
             .doOnCancel(() -> {
                 if (cancel.get() != null) {
                     cancel.get().run();

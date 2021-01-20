@@ -1,6 +1,6 @@
 <template>
     <div v-if="ready">
-        <data-table @onPageChanged="onPageChangedOverload" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
+        <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
             <template #navbar v-if="embed === false">
                 <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
                 <namespace-select data-type="flow" v-if="$route.name !== 'flowEdit'" @onNamespaceSelect="onNamespaceSelect" />
@@ -130,25 +130,11 @@
                 type: Array,
                 default: () => []
             },
-            pageSize: {
-                type: Number,
-                default: 25
-            },
-            pageNumber: {
-                type: Number,
-                default: 1
-            },
-        },
-        created() {
-            this.internalPageSize = this.pageSize;
-            this.internalPageNumber = this.pageNumber;
         },
         data() {
             return {
                 dataType: "execution",
                 dailyReady: false,
-                internalPageSize: undefined,
-                internalPageNumber: undefined,
                 flowTriggerDetails: undefined
             };
         },
@@ -245,11 +231,6 @@
             onStatusChange() {
                 this.saveFilters()
                 this.loadData()
-            },
-            onPageChangedOverload(item) {
-                this.internalPageSize = item.size;
-                this.internalPageNumber = item.page;
-                this.onPageChanged(item);
             },
             showTriggerDetails(trigger) {
                 this.flowTriggerDetails = trigger

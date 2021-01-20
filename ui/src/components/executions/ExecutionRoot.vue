@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-card no-body>
+        <b-card v-if="ready" no-body>
             <b-tabs card>
                 <b-tab
                     v-for="tab in tabs"
@@ -211,6 +211,9 @@
             },
             isAllowedEdit() {
                 return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
+            },
+            ready() {
+                return this.user !== undefined;
             }
         },
         beforeDestroy() {

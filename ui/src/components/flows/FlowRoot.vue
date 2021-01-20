@@ -159,7 +159,7 @@
                 };
             },
             ready() {
-                return this.flow !== undefined;
+                return this.user !== undefined;
             }
         },
         destroyed () {

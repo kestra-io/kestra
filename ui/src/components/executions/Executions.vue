@@ -173,17 +173,20 @@
                     {
                         key: "startDate",
                         label: title("start date"),
-                        sortable: true
+                        sortable: true,
+                        sortKey: "state.startDate"
                     },
                     {
                         key: "endDate",
                         label: title("end date"),
-                        sortable: true
+                        sortable: true,
+                        sortKey: "state.endDate"
                     },
                     {
                         key: "duration",
                         label: title("duration"),
-                        sortable: true
+                        sortable: true,
+                        sortKey: "state.duration"
                     },
                     {
                         key: "namespace",
@@ -199,7 +202,8 @@
                         key: "current",
                         label: title("state"),
                         class: "text-center",
-                        sortable: true
+                        sortable: true,
+                        sortKey: "state.current"
                     },
                     {
                         key: "trigger",

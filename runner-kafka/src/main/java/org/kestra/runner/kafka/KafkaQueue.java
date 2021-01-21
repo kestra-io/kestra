@@ -112,7 +112,6 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
         this.produce(key(message), message);
     }
 
-
     @Override
     public void delete(T message) throws QueueException {
         this.produce(key(message), null);
@@ -167,6 +166,15 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
         return () -> {
             running.set(false);
         };
+    }
+
+    static TopicsConfig topicsConfigByTopicName(ApplicationContext applicationContext, String topicName) {
+        return applicationContext
+            .getBeansOfType(TopicsConfig.class)
+            .stream()
+            .filter(r -> r.getName().equals(topicName))
+            .findFirst()
+            .orElseThrow();
     }
 
     static TopicsConfig topicsConfig(ApplicationContext applicationContext, Class<?> cls) {

@@ -213,7 +213,7 @@
                 return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
             },
             ready() {
-                return this.user !== undefined;
+                return this.execution !== undefined;
             }
         },
         beforeDestroy() {

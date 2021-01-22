@@ -18,6 +18,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.models.triggers.types.Webhook;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
@@ -28,10 +29,7 @@ import org.kestra.webserver.responses.PagedResults;
 
 import java.io.File;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 import javax.inject.Inject;
@@ -85,6 +83,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             Execution.class
         );
     }
+
 
     private MultipartBody createInputsFlowBody() {
         // Trigger execution
@@ -393,5 +392,54 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         ));
 
         assertThat(e.getStatus().getCode(), is(422));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void webhook() {
+        Flow webhook = flowRepositoryInterface.findById(TESTS_FLOW_NS, "webhook").orElseThrow();
+        String key = ((Webhook) webhook.getTriggers().get(0)).getKey();
+
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key,
+                    ImmutableMap.of("a", 1, "b", true)
+                ),
+            Execution.class
+        );
+
+        assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("a"), is(1));
+        assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b"), is(true));
+
+        execution = client.toBlocking().retrieve(
+            HttpRequest
+                .PUT(
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key,
+                    Collections.singletonList(ImmutableMap.of("a", 1, "b", true))
+                ),
+            Execution.class
+        );
+
+        assertThat(((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).get(0).get("a"), is(1));
+        assertThat(((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).get(0).get("b"), is(true));
+
+        execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key,
+                    "bla"
+                ),
+            Execution.class
+        );
+
+        assertThat(execution.getTrigger().getVariables().get("body"), is("bla"));
+
+        execution = client.toBlocking().retrieve(
+            HttpRequest
+                .GET("/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key),
+            Execution.class
+        );
+        assertThat(execution.getTrigger().getVariables().get("body"), is(nullValue()));
     }
 }

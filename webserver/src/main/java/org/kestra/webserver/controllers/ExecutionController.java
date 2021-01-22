@@ -1,6 +1,7 @@
 package org.kestra.webserver.controllers;
 
 import io.micronaut.data.model.Pageable;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
@@ -12,7 +13,6 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import io.reactivex.schedulers.Schedulers;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
@@ -21,6 +21,8 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.FlowGraph;
+import org.kestra.core.models.triggers.AbstractTrigger;
+import org.kestra.core.models.triggers.types.Webhook;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -39,6 +41,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -174,6 +177,97 @@ public class ExecutionController {
             executionRepository
                 .findByFlowId(namespace, flowId, Pageable.from(page, size))
         );
+    }
+
+    /**
+     * Trigger an new execution for a webhook trigger
+     *
+     * @param namespace The flow namespace
+     * @param id The flow id
+     * @param key The webhook trigger uid
+     * @return execution created
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
+    public Execution webhookTriggerPost(
+        String namespace,
+        String id,
+        String key,
+        HttpRequest<String> request
+    ) {
+        return this.webhook(namespace, id, key, request);
+    }
+
+    /**
+     * Trigger an new execution for a webhook trigger
+     *
+     * @param namespace The flow namespace
+     * @param id The flow id
+     * @param key The webhook trigger uid
+     * @return execution created
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "executions/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
+    public Execution webhookTriggerGet(
+        String namespace,
+        String id,
+        String key,
+        HttpRequest<String> request
+    ) {
+        return this.webhook(namespace, id, key, request);
+    }
+
+    /**
+     * Trigger an new execution for a webhook trigger
+     *
+     * @param namespace The flow namespace
+     * @param id The flow id
+     * @param key The webhook trigger uid
+     * @return execution created
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Put(uri = "executions/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
+    public Execution webhookTriggerPut(
+        String namespace,
+        String id,
+        String key,
+        HttpRequest<String> request
+    ) {
+        return this.webhook(namespace, id, key, request);
+    }
+
+    private Execution webhook(
+        String namespace,
+        String id,
+        String key,
+        HttpRequest<String> request
+    ) {
+        Optional<Flow> find = flowRepository.findById(namespace, id);
+        if (find.isEmpty()) {
+            return null;
+        }
+
+        Optional<Webhook> webhook = (find.get().getTriggers() == null ? new ArrayList<AbstractTrigger>() : find.get()
+            .getTriggers())
+            .stream()
+            .filter(o -> o instanceof Webhook)
+            .map(o -> (Webhook) o)
+            .filter(w -> w.getKey().equals(key))
+            .findFirst();
+
+        if (webhook.isEmpty()) {
+            return null;
+        }
+
+        Optional<Execution> execution = webhook.get().evaluate(request, find.get());
+
+        if (execution.isEmpty()) {
+            return null;
+        }
+
+        executionQueue.emit(execution.get());
+
+        return execution.get();
     }
 
     /**

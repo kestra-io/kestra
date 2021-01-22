@@ -1,0 +1,12 @@
+id: webhook
+namespace: org.kestra.tests
+
+tasks:
+  - id: out
+    type: org.kestra.core.tasks.debugs.Return
+    format: "{{json trigger}}"
+
+
+triggers:
+  - id: webhook
+    type: org.kestra.core.models.triggers.types.Webhook

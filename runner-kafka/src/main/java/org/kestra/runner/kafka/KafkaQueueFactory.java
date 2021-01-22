@@ -15,6 +15,7 @@ import org.kestra.core.runners.WorkerInstance;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
 import org.kestra.core.runners.WorkerTaskRunning;
+import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -31,6 +32,13 @@ public class KafkaQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     public QueueInterface<Execution> execution() {
         return new KafkaQueue<>(Execution.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.EXECUTOR_NAMED)
+    public QueueInterface<Execution> executor() {
+        return new KafkaQueue<>(KafkaStreamSourceService.TOPIC_EXECUTOR, Execution.class, applicationContext);
     }
 
     @Override
@@ -94,6 +102,13 @@ public class KafkaQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.TRIGGER_NAMED)
     public QueueInterface<Trigger> trigger() {
         return new KafkaQueue<>(Trigger.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.LOG_NAMED)
+    public QueueInterface<LogEntry> logs() {
+        return new KafkaQueue<>(LogEntry.class, applicationContext);
     }
 
     @Override

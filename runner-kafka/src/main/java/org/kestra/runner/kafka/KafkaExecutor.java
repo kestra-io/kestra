@@ -8,10 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.StoreQueryParameters;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.processor.internals.ProcessorAdapter;
 import org.apache.kafka.streams.state.KeyValueStore;
@@ -40,10 +37,7 @@ import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 import org.kestra.runner.kafka.streams.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -64,7 +58,6 @@ public class KafkaExecutor extends AbstractExecutor {
     QueueInterface<LogEntry> logQueue;
     FlowService flowService;
     KafkaStreamSourceService kafkaStreamSourceService;
-
 
     @Inject
     public KafkaExecutor(
@@ -880,7 +873,13 @@ public class KafkaExecutor extends AbstractExecutor {
         kafkaAdminService.createIfNotExist(LogEntry.class);
         kafkaAdminService.createIfNotExist(Trigger.class);
 
-        KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology());
+        Properties properties = new Properties();
+
+        // hack, we send application context in order to use on exception handler
+        properties.put(StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG, KafkaExecutorProductionExceptionHandler.class);
+        properties.put(KafkaExecutorProductionExceptionHandler.APPLICATION_CONTEXT_CONFIG, applicationContext);
+
+        KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology(), properties);
         resultStream.start();
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(

@@ -13,6 +13,7 @@ import org.kestra.core.runners.WorkerTaskRunning;
 
 public interface QueueFactoryInterface {
     String EXECUTION_NAMED = "executionQueue";
+    String EXECUTOR_NAMED = "executorQueue";
     String WORKERTASK_NAMED = "workerTaskQueue";
     String WORKERTASKRESULT_NAMED = "workerTaskResultQueue";
     String FLOW_NAMED = "flowQueue";
@@ -22,8 +23,11 @@ public interface QueueFactoryInterface {
     String WORKERINSTANCE_NAMED = "workerInstanceQueue";
     String WORKERTASKRUNNING_NAMED = "workerTaskRuninngQueue";
     String TRIGGER_NAMED = "triggerQueue";
+    String LOG_NAMED = "logQueue";
 
     QueueInterface<Execution> execution();
+
+    QueueInterface<Execution> executor();
 
     QueueInterface<WorkerTask> workerTask();
 
@@ -43,5 +47,8 @@ public interface QueueFactoryInterface {
 
     QueueInterface<Trigger> trigger();
 
+    QueueInterface<LogEntry> logs();
+
     WorkerTaskQueueInterface workerTaskQueue();
+
 }

@@ -2,6 +2,7 @@ package org.kestra.runner.memory;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
+import org.apache.commons.lang3.NotImplementedException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.LogEntry;
@@ -28,6 +29,13 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     public QueueInterface<Execution> execution() {
         return new MemoryQueue<>(Execution.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.EXECUTOR_NAMED)
+    public QueueInterface<Execution> executor() {
+        throw new NotImplementedException();
     }
 
     @Override
@@ -91,6 +99,13 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.TRIGGER_NAMED)
     public QueueInterface<Trigger> trigger() {
         return new MemoryQueue<>(Trigger.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.EXECUTOR_NAMED)
+    public QueueInterface<LogEntry> logs() {
+        return new MemoryQueue<>(LogEntry.class, applicationContext);
     }
 
     @Override

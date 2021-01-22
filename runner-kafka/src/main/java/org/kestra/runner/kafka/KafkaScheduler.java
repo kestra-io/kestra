@@ -6,7 +6,6 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.GlobalKTable;
@@ -134,12 +133,12 @@ public class KafkaScheduler extends AbstractScheduler {
         });
 
         this.triggerState =  new KafkaSchedulerTriggerState(
-            stateStream.store(StoreQueryParameters.fromNameAndType("trigger", QueryableStoreTypes.keyValueStore())),
+            stateStream.store("trigger", QueryableStoreTypes.keyValueStore()),
             triggerQueue
         );
 
         this.executionState = new KafkaSchedulerExecutionState(
-            stateStream.store(StoreQueryParameters.fromNameAndType("execution", QueryableStoreTypes.keyValueStore()))
+            stateStream.store("execution", QueryableStoreTypes.keyValueStore())
         );
 
         KafkaStreamService.Stream cleanTriggerStream = kafkaStreamService.of(SchedulerCleaner.class, new SchedulerCleaner().topology());

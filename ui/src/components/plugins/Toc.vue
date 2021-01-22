@@ -9,19 +9,24 @@
             <b-collapse :id="plugin.manifest['X-Kestra-Title']" :visible="index === 0" accordion="my-accordion" role="tabpanel">
                 <b-card-body>
                     <ul class="section-nav toc-h3">
-                        <li v-for="(classes, namespace) in group(plugin.tasks)" :key="namespace">
-                            {{ namespace }}
-                            <ul>
-                                <li v-for="cls in classes" :key="cls">
-                                    <router-link
-                                        @click.native="$emit('routerChange')"
-                                        :to="{name: 'pluginView', params: {cls: namespace + '.' + cls}}"
-                                    >
-                                        <div class="icon">
-                                            <task-icon :only-icon="true" :cls="namespace + '.' + cls" />
-                                        </div>
-                                        {{ cls }}
-                                    </router-link>
+                        <li v-for="(types, namespace) in group(plugin, plugin.tasks)" :key="namespace">
+                            <h6>{{ namespace }}</h6>
+                            <ul class="toc-h4">
+                                <li v-for="(classes, type) in types" :key="type+'-'+ namespace">
+                                    <h6>{{ type | cap }}</h6>
+                                    <ul class="section-nav toc-h5">
+                                        <li v-for="cls in classes" :key="cls">
+                                            <router-link
+                                                @click.native="$emit('routerChange')"
+                                                :to="{name: 'pluginView', params: {cls: namespace + '.' + cls}}"
+                                            >
+                                                <div class="icon">
+                                                    <task-icon :only-icon="true" :cls="namespace + '.' + cls" />
+                                                </div>
+                                                {{ cls }}
+                                            </router-link>
+                                        </li>
+                                    </ul>
                                 </li>
                             </ul>
                         </li>
@@ -51,17 +56,28 @@
             }
         },
         methods: {
-            group(tasks) {
-                return tasks === undefined ? {} : tasks
-                    .map(task => {
-                        return {
-                            namepace: task.substring(0, task.lastIndexOf(".")),
-                            cls: task.substring(task.lastIndexOf(".") + 1)
-                        };
+            group(plugin) {
+                return Object.keys(plugin)
+                    .filter(r => r === "tasks" || r === "triggers" || r === "conditions")
+                    .flatMap(type => {
+                        return (plugin[type] === undefined ? {} : plugin[type])
+                            .map(task => {
+                                return {
+                                    type: type,
+                                    namepace: task.substring(0, task.lastIndexOf(".")),
+                                    cls: task.substring(task.lastIndexOf(".") + 1)
+                                };
+                            })
                     })
                     .reduce((accumulator, value)  => {
-                        accumulator[value.namepace] = accumulator[value.namepace] || [];
-                        accumulator[value.namepace].push(value.cls);
+                        console.log(value, accumulator)
+                        accumulator[value.namepace] = accumulator[value.namepace] || {};
+                        console.log(accumulator)
+                        accumulator[value.namepace][value.type] = accumulator[value.namepace][value.type] || [];
+                        console.log(accumulator)
+                        accumulator[value.namepace][value.type].push(value.cls);
+                        console.log(accumulator)
+
                         return accumulator;
                     }, Object.create(null));
             }
@@ -81,6 +97,14 @@
                 height: $font-size-sm;
                 display: inline-block;
                 position: relative;
+            }
+
+            .toc-h4 {
+                margin-left: $spacer;
+                h6 {
+                    font-size: $h6-font-size * 0.8;
+                    margin-bottom: $spacer / 3;
+                }
             }
         }
     }

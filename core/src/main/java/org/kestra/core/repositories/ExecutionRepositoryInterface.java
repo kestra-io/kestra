@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public interface ExecutionRepositoryInterface {
+public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution> {
     Optional<Execution> findById(String id);
 
     ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable);

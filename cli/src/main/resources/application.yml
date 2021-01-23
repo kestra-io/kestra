@@ -142,7 +142,7 @@ kestra:
         cls: org.kestra.core.models.triggers.Trigger
         name: "${kestra.kafka.defaults.topic-prefix}trigger"
         properties:
-          cleanup.policy: "delete,compact"
+          cleanup.policy: "compact"
 
   elasticsearch:
     defaults:

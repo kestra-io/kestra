@@ -74,12 +74,7 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
         this.elasticClient = elasticClient;
         this.kafkaConsumerService = kafkaConsumerService;
 
-        this.subscriptions = topicsConfig
-            .stream()
-            .filter(t -> t.getCls() == Execution.class || t.getCls() == LogEntry.class || t.getCls() == Trigger.class)
-            .map(TopicsConfig::getName)
-            .collect(Collectors.toSet());
-
+        this.subscriptions = subscriptions(topicsConfig);
         this.mapping = mapTopicToIndices(topicsConfig, indicesConfigs);
 
         trigger = new DurationOrSizeTrigger<>(
@@ -220,7 +215,7 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
             .withBackoff(2, 300, ChronoUnit.SECONDS);
     }
 
-    private Map<String, String> mapTopicToIndices(List<TopicsConfig> topicsConfig, List<IndicesConfig> indicesConfigs) {
+    protected Map<String, String> mapTopicToIndices(List<TopicsConfig> topicsConfig, List<IndicesConfig> indicesConfigs) {
         return topicsConfig
             .stream()
             .filter(topic -> indicesConfigs
@@ -239,7 +234,15 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private String indexName(ConsumerRecord<?, ?> record) {
+    protected Set<String> subscriptions(List<TopicsConfig> topicsConfig) {
+        return topicsConfig
+            .stream()
+            .filter(t -> t.getCls() == Execution.class || t.getCls() == LogEntry.class || t.getCls() == Trigger.class)
+            .map(TopicsConfig::getName)
+            .collect(Collectors.toSet());
+    }
+
+    protected String indexName(ConsumerRecord<?, ?> record) {
         return this.mapping.get(record.topic());
     }
 }

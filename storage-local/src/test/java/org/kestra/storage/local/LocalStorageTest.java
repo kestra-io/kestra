@@ -1,7 +1,7 @@
 package org.kestra.storage.local;
 
 import com.google.common.io.CharStreams;
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.storages.StorageInterface;
 

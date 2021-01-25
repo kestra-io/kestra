@@ -28,8 +28,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -147,6 +146,31 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
         assertThat(e.getCause().getClass(), is(ExecutionException.class));
         assertThat(e.getCause().getCause().getClass(), is(RecordTooLargeException.class));
+    }
+
+    @Test
+    void streamTooLarge() throws TimeoutException {
+        List<LogEntry> logs = new ArrayList<>();
+        workerTaskLogQueue.receive(logs::add);
+
+        char[] chars = new char[1100000];
+        Arrays.fill(chars, 'a');
+
+        Map<String, String> inputs = new HashMap<>(InputsTest.inputs);
+        inputs.put("string", new String(chars));
+
+        Execution execution = runnerUtils.runOne(
+            "org.kestra.tests",
+            "inputs-large",
+            null,
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
+            Duration.ofSeconds(60)
+        );
+
+        assertThat(execution.getTaskRunList(), hasSize(10));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().contains("max.request.size")).count(), greaterThan(0L));
     }
 
     @Test

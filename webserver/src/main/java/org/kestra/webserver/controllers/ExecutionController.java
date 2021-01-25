@@ -1,16 +1,18 @@
 package org.kestra.webserver.controllers;
 
 import io.micronaut.data.model.Pageable;
+import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
 import io.micronaut.http.sse.Event;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import io.reactivex.schedulers.Schedulers;
 import org.apache.commons.io.FilenameUtils;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
@@ -19,6 +21,8 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.FlowGraph;
+import org.kestra.core.models.triggers.AbstractTrigger;
+import org.kestra.core.models.triggers.types.Webhook;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -37,6 +41,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,6 +82,7 @@ public class ExecutionController {
     @Named(QueueFactoryInterface.KILL_NAMED)
     protected QueueInterface<ExecutionKilled> killQueue;
 
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
     public PagedResults<Execution> find(
         @QueryValue(value = "q") String query,
@@ -91,6 +97,7 @@ public class ExecutionController {
         );
     }
 
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "taskruns/search", produces = MediaType.TEXT_JSON)
     public PagedResults<TaskRun> findTaskRun(
         @QueryValue(value = "q") String query,
@@ -105,6 +112,7 @@ public class ExecutionController {
         );
     }
 
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "taskruns/maxTaskRunSetting")
     public Integer maxTaskRunSetting() {
         return executionRepository.maxTaskRunSetting();
@@ -116,6 +124,7 @@ public class ExecutionController {
      * @param executionId The execution identifier
      * @return the flow tree  with the provided identifier
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/graph", produces = MediaType.TEXT_JSON)
     public FlowGraph flowGraph(String executionId) throws IllegalVariableEvaluationException {
         return executionRepository
@@ -140,6 +149,7 @@ public class ExecutionController {
      * @param executionId The execution identifier
      * @return the execution with the provided identifier
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}", produces = MediaType.TEXT_JSON)
     public Execution get(String executionId) {
         return executionRepository
@@ -156,6 +166,7 @@ public class ExecutionController {
      * @param size The number of result by page
      * @return a list of found executions
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions", produces = MediaType.TEXT_JSON)
     public PagedResults<Execution> findByFlowId(
         @QueryValue(value = "namespace") String namespace,
@@ -169,12 +180,104 @@ public class ExecutionController {
     }
 
     /**
+     * Trigger an new execution for a webhook trigger
+     *
+     * @param namespace The flow namespace
+     * @param id The flow id
+     * @param key The webhook trigger uid
+     * @return execution created
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
+    public Execution webhookTriggerPost(
+        String namespace,
+        String id,
+        String key,
+        HttpRequest<String> request
+    ) {
+        return this.webhook(namespace, id, key, request);
+    }
+
+    /**
+     * Trigger an new execution for a webhook trigger
+     *
+     * @param namespace The flow namespace
+     * @param id The flow id
+     * @param key The webhook trigger uid
+     * @return execution created
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "executions/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
+    public Execution webhookTriggerGet(
+        String namespace,
+        String id,
+        String key,
+        HttpRequest<String> request
+    ) {
+        return this.webhook(namespace, id, key, request);
+    }
+
+    /**
+     * Trigger an new execution for a webhook trigger
+     *
+     * @param namespace The flow namespace
+     * @param id The flow id
+     * @param key The webhook trigger uid
+     * @return execution created
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Put(uri = "executions/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
+    public Execution webhookTriggerPut(
+        String namespace,
+        String id,
+        String key,
+        HttpRequest<String> request
+    ) {
+        return this.webhook(namespace, id, key, request);
+    }
+
+    private Execution webhook(
+        String namespace,
+        String id,
+        String key,
+        HttpRequest<String> request
+    ) {
+        Optional<Flow> find = flowRepository.findById(namespace, id);
+        if (find.isEmpty()) {
+            return null;
+        }
+
+        Optional<Webhook> webhook = (find.get().getTriggers() == null ? new ArrayList<AbstractTrigger>() : find.get()
+            .getTriggers())
+            .stream()
+            .filter(o -> o instanceof Webhook)
+            .map(o -> (Webhook) o)
+            .filter(w -> w.getKey().equals(key))
+            .findFirst();
+
+        if (webhook.isEmpty()) {
+            return null;
+        }
+
+        Optional<Execution> execution = webhook.get().evaluate(request, find.get());
+
+        if (execution.isEmpty()) {
+            return null;
+        }
+
+        executionQueue.emit(execution.get());
+
+        return execution.get();
+    }
+
+    /**
      * Trigger an new execution for current flow
      *
      * @param namespace The flow namespace
      * @param id The flow id
      * @return execution created
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
     public Execution trigger(
         String namespace,
@@ -203,6 +306,7 @@ public class ExecutionController {
      * @param path The file URI to return
      * @return data binary content
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
     public StreamedFile file(
         String executionId,
@@ -235,6 +339,7 @@ public class ExecutionController {
      * @param taskId the reference task id
      * @return the restarted execution
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
     public Execution restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
@@ -251,6 +356,7 @@ public class ExecutionController {
      * @param executionId the execution id to kill
      * @throws IllegalArgumentException if the executions is already finished
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/{executionId}/kill", produces = MediaType.TEXT_JSON)
     public HttpResponse<?> kill(String executionId) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
@@ -273,7 +379,8 @@ public class ExecutionController {
      * @param executionId The execution id to follow
      * @return execution sse event
      */
-    @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_JSON)
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     public Flowable<Event<Execution>> follow(String executionId) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
@@ -310,7 +417,6 @@ public class ExecutionController {
 
                 cancel.set(receive);
             }, BackpressureStrategy.BUFFER)
-            .observeOn(Schedulers.io())
             .doOnCancel(() -> {
                 if (cancel.get() != null) {
                     cancel.get().run();

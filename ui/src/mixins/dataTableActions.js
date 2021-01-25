@@ -2,6 +2,9 @@ import qb from "../utils/queryBuilder";
 import State from "../utils/state";
 export default {
     created() {
+        this.internalPageSize = this.pageSize;
+        this.internalPageNumber = this.pageNumber;
+
         this.loadFilters()
         this.query = qb.build(this.$route, this.filters);
         this.loadData(this.onDataLoaded);
@@ -11,12 +14,22 @@ export default {
             query: "*",
             sort: "",
             ready: false,
+            internalPageSize: undefined,
+            internalPageNumber: undefined,
         };
     },
     props: {
         filters: {
             type: Object,
             default: () => {}
+        },
+        pageSize: {
+            type: Number,
+            default: 25
+        },
+        pageNumber: {
+            type: Number,
+            default: 1
         },
     },
     computed: {
@@ -58,6 +71,9 @@ export default {
             this.$router.push({name: this.dataType + "Edit", params: item});
         },
         onPageChanged(item) {
+            this.internalPageSize = item.size;
+            this.internalPageNumber = item.page;
+
             if (!this.embed) {
                 this.$router.push({
                     query: {

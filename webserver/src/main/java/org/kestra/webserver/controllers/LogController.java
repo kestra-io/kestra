@@ -6,6 +6,8 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.sse.Event;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -44,6 +46,7 @@ public class LogController {
      * @param sort The sort of current page
      * @return Paged log result
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/search", produces = MediaType.TEXT_JSON)
     public PagedResults<LogEntry> find(
         @QueryValue(value = "q") String query,
@@ -64,6 +67,7 @@ public class LogController {
 
      * @return Paged log result
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/{executionId}", produces = MediaType.TEXT_JSON)
     public List<LogEntry> findByExecution(
         String executionId,
@@ -86,7 +90,8 @@ public class LogController {
      * @param executionId The execution id to follow
      * @return execution log sse event
      */
-    @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_JSON)
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     public Flowable<Event<LogEntry>> follow(String executionId, @Nullable @QueryValue(value = "minLevel") Level minLevel) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
         List<Level> levels = LogEntry.findLevelsByMin(minLevel);
@@ -110,7 +115,6 @@ public class LogController {
 
                 cancel.set(receive);
             }, BackpressureStrategy.BUFFER)
-            .observeOn(Schedulers.io())
             .doOnCancel(() -> {
                 if (cancel.get() != null) {
                     cancel.get().run();

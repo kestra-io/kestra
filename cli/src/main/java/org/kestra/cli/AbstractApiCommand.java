@@ -2,7 +2,7 @@ package org.kestra.cli;
 
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
-import io.micronaut.http.client.DefaultHttpClient;
+import io.micronaut.http.client.netty.DefaultHttpClient;
 import picocli.CommandLine;
 
 import java.net.URL;

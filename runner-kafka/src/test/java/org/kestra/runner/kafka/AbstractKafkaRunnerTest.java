@@ -1,6 +1,6 @@
 package org.kestra.runner.kafka;
 
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.RunnerUtils;

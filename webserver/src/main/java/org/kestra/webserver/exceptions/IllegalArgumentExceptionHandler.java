@@ -12,6 +12,7 @@ import javax.inject.Singleton;
 @Produces(value = MediaType.TEXT_PLAIN)
 @Singleton
 @Requires(classes = {IllegalArgumentException.class, ExceptionHandler.class})
+@SuppressWarnings("rawtypes")
 public class IllegalArgumentExceptionHandler implements ExceptionHandler<IllegalArgumentException, HttpResponse> {
     @Override
     public HttpResponse handle(HttpRequest request, IllegalArgumentException exception) {

@@ -9,6 +9,7 @@ import io.micronaut.http.server.exceptions.ExceptionHandler;
 
 import javax.inject.Singleton;
 
+@SuppressWarnings("rawtypes")
 @Produces(value = MediaType.TEXT_PLAIN)
 @Singleton
 @Requires(classes = {IllegalStateException.class, ExceptionHandler.class})

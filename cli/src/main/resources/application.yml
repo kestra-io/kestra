@@ -31,6 +31,8 @@ endpoints:
     sensitive: false
   health:
     details-visible: ANONYMOUS
+  loggers:
+    write-sensitive: false
 
 kestra:
   kafka:

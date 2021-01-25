@@ -62,5 +62,6 @@ public class ExecutionNextsDeduplicationTransformer implements ValueTransformerW
     @Getter
     @NoArgsConstructor
     public static class Store extends ArrayList<String> {
+        private static final long serialVersionUID = 1L;
     }
 }

@@ -1,6 +1,6 @@
 package org.kestra.repository.memory;
 
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.kestra.core.repositories.AbstractFlowRepositoryTest;
 
 import javax.inject.Inject;

@@ -5,6 +5,8 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.exceptions.InternalException;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -38,6 +41,7 @@ public class FlowController {
      * @param id        The flow id
      * @return flow tree found
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
     public FlowGraph flowGraph(String namespace, String id, Optional<Integer> revision) throws IllegalVariableEvaluationException {
         return flowRepository
@@ -51,6 +55,7 @@ public class FlowController {
      * @param id        The flow id
      * @return flow found
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     public Flow index(String namespace, String id) {
         return flowRepository
@@ -63,17 +68,19 @@ public class FlowController {
      * @param id The flow id
      * @return flow revisions found
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/revisions", produces = MediaType.TEXT_JSON)
     public List<Flow> revisions(String namespace, String id) {
         return flowRepository.findRevisions(namespace, id);
     }
 
     /**
-     * @param query The flow query that is a lucen string
+     * @param query The flow query that is a lucene string
      * @param page  Page in flow pagination
      * @param size  Element count in pagination selection
      * @return flow list
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
     public PagedResults<Flow> find(
         @QueryValue(value = "q") String query, //Search by namespace using lucene
@@ -88,8 +95,9 @@ public class FlowController {
      * @param flow The flow content
      * @return flow created
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Post(produces = MediaType.TEXT_JSON)
-    public HttpResponse<Flow> create(@Body Flow flow) throws ConstraintViolationException {
+    public HttpResponse<Flow> create(@Body @Valid Flow flow) throws ConstraintViolationException {
         if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
                 "Flow id already exists",
@@ -109,8 +117,9 @@ public class FlowController {
      *                  Flow in repository but not in {@code flows} will also be deleted
      * @return flows created or updated
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON)
-    public List<Flow> updateNamespace(String namespace, @Body List<Flow> flows) throws ConstraintViolationException {
+    public List<Flow> updateNamespace(String namespace, @Body @Valid  List<Flow> flows) throws ConstraintViolationException {
         // control namespace to update
         Set<ManualConstraintViolation<Flow>> invalids = flows
             .stream()
@@ -178,7 +187,8 @@ public class FlowController {
      * @return flow updated
      */
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
-    public HttpResponse<Flow> update(String namespace, String id, @Body Flow flow) throws ConstraintViolationException {
+    @ExecuteOn(TaskExecutors.IO)
+    public HttpResponse<Flow> update(String namespace, String id, @Body @Valid Flow flow) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
 
         if (existingFlow.isEmpty()) {
@@ -195,6 +205,7 @@ public class FlowController {
      * @return flow updated
      */
     @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)
+    @ExecuteOn(TaskExecutors.IO)
     public HttpResponse<Flow> updateTask(String namespace, String id, String taskId, @Body Task task) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
 
@@ -223,6 +234,7 @@ public class FlowController {
      * @return Http 204 on delete or Http 404 when not found
      */
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
+    @ExecuteOn(TaskExecutors.IO)
     public HttpResponse<Void> delete(String namespace, String id) {
         Optional<Flow> flow = flowRepository.findById(namespace, id);
         if (flow.isPresent()) {
@@ -236,6 +248,7 @@ public class FlowController {
     /**
      * @return The flow's namespaces set
      */
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "distinct-namespaces", produces = MediaType.TEXT_JSON)
     public List<String> listDistinctNamespace() {
         return flowRepository.findDistinctNamespace();

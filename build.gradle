@@ -7,19 +7,19 @@ plugins {
     id "application"
 
     // test
-    id 'com.adarshr.test-logger' version '2.1.0'
-    id 'org.gradle.test-retry' version '1.1.9'
+    id 'com.adarshr.test-logger' version '2.1.1'
+    id 'org.gradle.test-retry' version '1.2.0'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.33.0"
+    id "com.github.ben-manes.versions" version "0.36.0"
 
     // front
-    id 'org.siouan.frontend' version '1.3.0' apply false
+    id 'org.siouan.frontend-jdk11' version '5.0.0' apply false
 
     // release
     id "com.jfrog.bintray" version "1.8.5" apply false
     id 'net.researchgate.release' version '2.8.1'
-    id "com.gorylenko.gradle-git-properties" version "2.2.3"
+    id "com.gorylenko.gradle-git-properties" version "2.2.4"
 }
 
 idea {
@@ -63,6 +63,14 @@ allprojects {
         developmentOnly // for dependencies that are needed for development only
     }
 
+    //
+    configurations.all {
+        resolutionStrategy {
+            force("org.apache.kafka:kafka-clients:" + kafkaVersion)
+            force("org.apache.kafka:kafka-streams:" + kafkaVersion)
+        }
+    }
+
     // dependencies
     dependencies {
         // lombok
@@ -78,35 +86,33 @@ allprojects {
         implementation "io.micronaut:micronaut-validation"
         implementation "io.micronaut:micronaut-runtime"
         implementation "javax.annotation:javax.annotation-api"
-        implementation 'io.micronaut:micronaut-views'
         implementation "io.micronaut.data:micronaut-data-model"
         implementation "io.micronaut:micronaut-management"
-        implementation "io.micronaut.configuration:micronaut-micrometer-core"
         implementation "io.micrometer:micrometer-core:1.6.1"
-        implementation "io.micronaut.configuration:micronaut-micrometer-registry-prometheus"
+        implementation "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
         api "io.micronaut:micronaut-http-client"
 
         // logs
         runtime "ch.qos.logback:logback-classic:1.2.3"
-        runtime group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.12.1'
+        runtime group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.14.0'
         runtime group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.30'
 
 
         // jackson
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
-        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.10.1'
-        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.10.1'
-        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.10.1'
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.1'
+        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.12.1'
+        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.12.1'
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.12.1'
 
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
         implementation 'com.github.jknack:handlebars:4.2.0'
-        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20191208'
+        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20201123'
 
         // exposed utils
-        api group: 'com.google.guava', name: 'guava', version: '28.1-jre'
-        api group: 'commons-io', name: 'commons-io', version: '2.6'
-        api group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+        api group: 'com.google.guava', name: 'guava', version: '30.1-jre'
+        api group: 'commons-io', name: 'commons-io', version: '2.8.0'
+        api group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
         api "io.swagger.core.v3:swagger-annotations"
     }
 }
@@ -163,6 +169,17 @@ subprojects {
 /**********************************************************************************************************************\
  * Micronaut
  **********************************************************************************************************************/
+allprojects {
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.encoding = "UTF-8"
+            options.compilerArgs.add("-parameters")
+            options.compilerArgs.add("-Xlint:all")
+            options.compilerArgs.add("-Xlint:-processing")
+        }
+    }
+}
+
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")

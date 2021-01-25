@@ -1,7 +1,7 @@
 package org.kestra.core.serializers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.tasks.Task;
@@ -42,6 +42,14 @@ class YamlFlowParserTest {
         assertThat(optionals.getRetry().getType(), is("constant"));
         assertThat(optionals.getRetry().getMaxAttempt(), is(5));
         assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds(), is(900L));
+    }
+
+    @Test
+    void allFlowable() {
+        Flow flow = this.parse("flows/valids/all-flowable.yaml");
+
+        assertThat(flow.getId(), is("all-flowable"));
+        assertThat(flow.getTasks().size(), is(4));
     }
 
     @Test
@@ -92,14 +100,14 @@ class YamlFlowParserTest {
 
     @Test
     void listeners() {
-        ConstraintViolationException exception = assertThrows(
-            ConstraintViolationException.class,
-            () -> this.parse("flows/invalids/listener.yaml")
-        );
+         ConstraintViolationException exception = assertThrows(
+             ConstraintViolationException.class,
+             () -> this.parse("flows/invalids/listener.yaml")
+         );
 
-        assertThat(exception.getConstraintViolations().size(), is(2));
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("must not be empty"));
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage(), is("must not be empty"));
+         assertThat(exception.getConstraintViolations().size(), is(2));
+         assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("must not be empty"));
+         assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage(), is("must not be empty"));
     }
 
     @Test

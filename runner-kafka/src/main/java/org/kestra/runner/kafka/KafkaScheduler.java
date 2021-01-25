@@ -1,6 +1,7 @@
 package org.kestra.runner.kafka;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.Trigger;
-import org.kestra.core.queues.AbstractQueue;
+import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.schedulers.AbstractScheduler;
@@ -31,7 +32,7 @@ import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 import javax.inject.Singleton;
 
 @KafkaQueueEnabled
-@Singleton
+@Prototype
 @Slf4j
 @Replaces(DefaultScheduler.class)
 public class KafkaScheduler extends AbstractScheduler {
@@ -40,6 +41,7 @@ public class KafkaScheduler extends AbstractScheduler {
     private final QueueInterface<Trigger> triggerQueue;
     private final ConditionService conditionService;
     private final KafkaStreamSourceService kafkaStreamSourceService;
+    private final QueueService queueService;
 
     @SuppressWarnings("unchecked")
     public KafkaScheduler(
@@ -56,6 +58,7 @@ public class KafkaScheduler extends AbstractScheduler {
         this.kafkaStreamService = applicationContext.getBean(KafkaStreamService.class);
         this.conditionService = applicationContext.getBean(ConditionService.class);
         this.kafkaStreamSourceService = applicationContext.getBean(KafkaStreamSourceService.class);
+        this.queueService = applicationContext.getBean(QueueService.class);
     }
 
     public class SchedulerCleaner {
@@ -85,7 +88,7 @@ public class KafkaScheduler extends AbstractScheduler {
                     (execution, trigger) -> trigger.resetExecution(),
                     Named.as("cleanTrigger-join")
                 )
-                .selectKey((key, value) -> AbstractQueue.key(value))
+                .selectKey((key, value) -> queueService.key(value))
                 .to(
                     kafkaAdminService.getTopicName(Trigger.class),
                     Produced.with(Serdes.String(), JsonSerde.of(Trigger.class))

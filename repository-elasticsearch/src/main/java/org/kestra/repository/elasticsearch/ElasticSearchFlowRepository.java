@@ -1,5 +1,6 @@
 package org.kestra.repository.elasticsearch;
 
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
@@ -9,6 +10,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.kestra.core.events.CrudEvent;
+import org.kestra.core.events.CrudEventType;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.models.validations.ModelValidator;
@@ -18,7 +21,6 @@ import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.services.FlowService;
 import org.kestra.core.utils.ExecutorsUtils;
-import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,20 +38,23 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
     private final QueueInterface<Flow> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Inject
     public ElasticSearchFlowRepository(
         RestHighLevelClient client,
-        List<IndicesConfig> indicesConfigs,
+        ElasticSearchIndicesService elasticSearchIndicesService,
         ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue,
-        @Named(QueueFactoryInterface.TRIGGER_NAMED) QueueInterface<Trigger> triggerQueue
+        @Named(QueueFactoryInterface.TRIGGER_NAMED) QueueInterface<Trigger> triggerQueue,
+        ApplicationEventPublisher eventPublisher
     ) {
-        super(client, indicesConfigs, modelValidator, executorsUtils, Flow.class);
+        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Flow.class);
 
         this.flowQueue = flowQueue;
         this.triggerQueue = triggerQueue;
+        this.eventPublisher = eventPublisher;
     }
 
     private static String flowId(Flow flow) {
@@ -153,7 +158,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        return this.save(flow);
+        return this.save(flow, CrudEventType.CREATE);
     }
 
     public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
@@ -167,7 +172,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        Flow saved = this.save(flow);
+        Flow saved = this.save(flow, CrudEventType.UPDATE);
 
         FlowService
             .findRemovedTrigger(flow, previous)
@@ -176,7 +181,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         return saved;
     }
 
-    public Flow save(Flow flow) throws ConstraintViolationException {
+    public Flow save(Flow flow, CrudEventType crudEventType) throws ConstraintViolationException {
         modelValidator
             .isValid(flow)
             .ifPresent(s -> {
@@ -201,6 +206,8 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
         flowQueue.emit(flow);
 
+        eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
+
         return flow;
     }
 
@@ -211,6 +218,8 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         flowQueue.emit(deleted);
         this.deleteRequest(INDEX_NAME, flowId(deleted));
         this.putRequest(REVISIONS_NAME, deleted.uid(), deleted);
+
+        eventPublisher.publishEvent(new CrudEvent<>(flow, CrudEventType.DELETE));
 
         return deleted;
     }

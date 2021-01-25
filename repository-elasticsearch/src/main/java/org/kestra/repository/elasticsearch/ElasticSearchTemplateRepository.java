@@ -1,10 +1,13 @@
 package org.kestra.repository.elasticsearch;
 
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.kestra.core.events.CrudEvent;
+import org.kestra.core.events.CrudEventType;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.queues.QueueFactoryInterface;
@@ -12,7 +15,6 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.TemplateRepositoryInterface;
 import org.kestra.core.utils.ExecutorsUtils;
-import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,19 +27,23 @@ import javax.validation.ConstraintViolationException;
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchTemplateRepository extends AbstractElasticSearchRepository<Template> implements TemplateRepositoryInterface {
     private static final String INDEX_NAME = "templates";
+
     private final QueueInterface<Template> templateQueue;
+    private ApplicationEventPublisher eventPublisher;
 
     @Inject
     public ElasticSearchTemplateRepository(
         RestHighLevelClient client,
-        List<IndicesConfig> indicesConfigs,
+        ElasticSearchIndicesService elasticSearchIndicesService,
         ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
-        @Named(QueueFactoryInterface.TEMPLATE_NAMED) QueueInterface<Template> templateQueue
+        @Named(QueueFactoryInterface.TEMPLATE_NAMED) QueueInterface<Template> templateQueue,
+        ApplicationEventPublisher eventPublisher
     ) {
-        super(client, indicesConfigs, modelValidator, executorsUtils, Template.class);
+        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Template.class);
 
         this.templateQueue = templateQueue;
+        this.eventPublisher = eventPublisher;
     }
 
     private static String templateId(Template template) {
@@ -84,7 +90,7 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     }
 
     public Template create(Template template) throws ConstraintViolationException {
-        return this.save(template);
+        return this.save(template, CrudEventType.CREATE);
     }
 
     public Template update(Template template, Template previous) throws ConstraintViolationException {
@@ -97,13 +103,15 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
                 throw s;
             });
 
-        return this.save(template);
+        return this.save(template, CrudEventType.UPDATE);
     }
 
-    public Template save(Template template) {
+    public Template save(Template template, CrudEventType crudEventType) {
         this.putRequest(INDEX_NAME, template.getId(), template);
 
         templateQueue.emit(template);
+
+        eventPublisher.publishEvent(new CrudEvent<>(template, crudEventType));
 
         return template;
     }
@@ -111,6 +119,8 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     @Override
     public void delete(Template template) {
         this.deleteRequest(INDEX_NAME, templateId(template));
+
+        eventPublisher.publishEvent(new CrudEvent<>(template, CrudEventType.DELETE));
     }
 
     public List<String> findDistinctNamespace() {

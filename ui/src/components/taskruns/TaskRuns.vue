@@ -25,7 +25,7 @@
                 <b-table
                     :no-local-sorting="true"
                     @sort-changed="onSort"
-                    responsive="xl"
+                    responsive
                     striped
                     hover
                     bordered

@@ -10,12 +10,13 @@ import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.repositories.LogRepositoryInterface;
 import org.kestra.core.repositories.SaveRepositoryInterface;
+import org.kestra.core.repositories.TriggerRepositoryInterface;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 @Prototype
-@Requires(beans = {ExecutionRepositoryInterface.class, LogRepositoryInterface.class})
+@Requires(beans = {ExecutionRepositoryInterface.class, LogRepositoryInterface.class, TriggerRepositoryInterface.class})
 public class Indexer implements IndexerInterface {
     private final ExecutionRepositoryInterface executionRepository;
     private final QueueInterface<Execution> executionQueue;
@@ -29,6 +30,8 @@ public class Indexer implements IndexerInterface {
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         LogRepositoryInterface logRepository,
         @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
+        LogRepositoryInterface triggerRepository,
+        @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> triggerQueue,
         MetricRegistry metricRegistry
     ) {
         this.executionRepository = executionRepository;

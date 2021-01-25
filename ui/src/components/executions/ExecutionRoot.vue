@@ -3,7 +3,7 @@
         <b-card v-if="ready" no-body>
             <b-tabs card>
                 <b-tab
-                    v-for="tab in tabs"
+                    v-for="tab in tabs()"
                     :key="tab.tab"
                     @click="setTab(tab.tab)"
                     :active="$route.query.tab === tab.tab"
@@ -19,15 +19,18 @@
         </b-card>
         <bottom-line>
             <ul class="navbar-nav ml-auto" v-hotkey="keymap">
-                <li v-if="isAllowedTrigger" class="nav-item">
-                    <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
-                </li>
-                <li v-if="isAllowedEdit" class="nav-item">
-                    <b-button @click="editFlow">
-                        <kicon :tooltip="'(Ctrl + Shift + e)'">
-                            <pencil /> {{ $t('edit flow') }}
-                        </kicon>
-                    </b-button>
+                <li class="nav-item">
+                    <template v-if="isAllowedTrigger">
+                        <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
+                    </template>
+
+                    <template v-if="isAllowedEdit">
+                        <b-button @click="editFlow">
+                            <kicon :tooltip="'(Ctrl + Shift + e)'">
+                                <pencil /> {{ $t('edit flow') }}
+                            </kicon>
+                        </b-button>
+                    </template>
                 </li>
             </ul>
         </bottom-line>
@@ -108,6 +111,32 @@
                     this.sse = undefined;
                 }
             },
+            tabs() {
+                const title = title => this.$t(title);
+                return [
+                    {
+                        tab: "overview",
+                        title: title("overview"),
+                    },
+                    {
+                        tab: "gantt",
+                        title: title("gantt")
+                    },
+                    {
+                        tab: "logs",
+                        title: title("logs")
+                    },
+                    {
+                        tab: "topology",
+                        title: title("topology"),
+                        class: "p-0"
+                    },
+                    {
+                        tab: "execution-output",
+                        title: title("output")
+                    }
+                ];
+            },
             setTab(tab) {
                 this.$store.commit("execution/setTaskRun", undefined);
                 this.$store.commit("execution/setTask", undefined);
@@ -179,32 +208,6 @@
                         }
                     ]
                 };
-            },
-            tabs() {
-                const title = title => this.$t(title);
-                return [
-                    {
-                        tab: "overview",
-                        title: title("overview"),
-                    },
-                    {
-                        tab: "gantt",
-                        title: title("gantt")
-                    },
-                    {
-                        tab: "logs",
-                        title: title("logs")
-                    },
-                    {
-                        tab: "topology",
-                        title: title("topology"),
-                        class: "p-0"
-                    },
-                    {
-                        tab: "execution-output",
-                        title: title("output")
-                    }
-                ];
             },
             isAllowedTrigger() {
                 return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);

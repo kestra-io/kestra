@@ -173,6 +173,12 @@ kestra:
         cls: org.kestra.core.models.executions.LogEntry
         mapping-file: log
 
+  indexer:
+    models:
+      - org.kestra.core.models.executions.Execution
+      - org.kestra.core.models.triggers.Trigger
+      - org.kestra.core.models.executions.LogEntry
+
   plugins:
     repositories:
       central:

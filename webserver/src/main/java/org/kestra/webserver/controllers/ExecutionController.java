@@ -1,5 +1,6 @@
 package org.kestra.webserver.controllers;
 
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -14,6 +15,8 @@ import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import org.apache.commons.io.FilenameUtils;
+import org.kestra.core.events.CrudEvent;
+import org.kestra.core.events.CrudEventType;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
@@ -54,7 +57,6 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @Validated
 @Controller("/api/v1/")
-
 public class ExecutionController {
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -81,6 +83,9 @@ public class ExecutionController {
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
     protected QueueInterface<ExecutionKilled> killQueue;
+
+    @Inject
+    private ApplicationEventPublisher eventPublisher;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
@@ -266,6 +271,7 @@ public class ExecutionController {
         }
 
         executionQueue.emit(execution.get());
+        eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.CREATE));
 
         return execution.get();
     }
@@ -296,6 +302,7 @@ public class ExecutionController {
         );
 
         executionQueue.emit(current);
+        eventPublisher.publishEvent(new CrudEvent<>(current, CrudEventType.CREATE));
 
         return current;
     }
@@ -347,7 +354,10 @@ public class ExecutionController {
             return null;
         }
 
-        return executionService.restart(execution.get(), taskId);
+        Execution restart = executionService.restart(execution.get(), taskId);
+        eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
+
+        return restart;
     }
 
     /**

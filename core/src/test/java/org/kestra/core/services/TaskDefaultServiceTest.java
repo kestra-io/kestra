@@ -1,6 +1,7 @@
 package org.kestra.core.services;
 
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -28,6 +29,9 @@ import static org.hamcrest.Matchers.is;
 class TaskDefaultServiceTest {
     @Inject
     private TaskDefaultService taskDefaultService;
+
+    @Inject
+    private ApplicationContext applicationContext;
 
     @Test
     public void injectFlowAndGlobals() {

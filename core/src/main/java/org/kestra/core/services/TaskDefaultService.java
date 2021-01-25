@@ -1,7 +1,5 @@
 package org.kestra.core.services;
 
-import io.micronaut.context.annotation.ConfigurationProperties;
-import lombok.Getter;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.TaskDefault;
 import org.kestra.core.models.tasks.Task;
@@ -20,7 +18,7 @@ import javax.inject.Singleton;
 public class TaskDefaultService {
     @Nullable
     @Inject
-    protected GlobalDefault globalDefault;
+    protected TaskGlobalDefaultConfiguration globalDefault;
 
     @SuppressWarnings("unchecked")
     public <T extends Task> T injectDefaults(T task, Flow flow) {
@@ -53,9 +51,4 @@ public class TaskDefaultService {
         return MapUtils.merge(task, defaults);
     }
 
-    @ConfigurationProperties(value = "kestra.tasks")
-    @Getter
-    public static class GlobalDefault {
-        List<TaskDefault> defaults;
-    }
 }

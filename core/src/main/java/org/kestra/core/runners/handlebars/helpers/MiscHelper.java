@@ -21,7 +21,7 @@ public enum MiscHelper implements Helper<Object> {
     firstDefined {
         @Override
         public Object apply(final Object value, final Options options) {
-            Object result = null;
+            Object result = value;
 
             int i = 0;
             while (result == null && i < options.params.length) {

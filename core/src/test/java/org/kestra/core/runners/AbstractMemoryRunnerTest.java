@@ -1,6 +1,7 @@
 package org.kestra.core.runners;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.kestra.core.contexts.KestraClassLoader;
 import org.kestra.core.utils.TestsUtils;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.runner.memory.MemoryRunner;
@@ -23,6 +24,10 @@ abstract public class AbstractMemoryRunnerTest {
 
     @BeforeEach
     protected void init() throws IOException, URISyntaxException {
+        if (!KestraClassLoader.isInit()) {
+            KestraClassLoader.create(AbstractMemoryRunnerTest.class.getClassLoader());
+        }
+
         if (!runner.isRunning()) {
             TestsUtils.loads(repositoryLoader);
             runner.run();

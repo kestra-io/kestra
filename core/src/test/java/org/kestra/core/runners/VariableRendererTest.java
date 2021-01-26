@@ -74,10 +74,16 @@ class VariableRendererTest {
 
         assertThat(render, is("awesome"));
 
+        render = VARIABLE_RENDERER.render("{{ firstDefined block.test.child inner.bla }}", vars);
+
+        assertThat(render, is("awesome"));
+
+
         assertThrows(HandlebarsException.class, () -> {
             VARIABLE_RENDERER.render("{{ firstDefined missing missing2 }}", vars);
         });
     }
+
 
     @Test
     void firstDefinedEval() throws IllegalVariableEvaluationException {

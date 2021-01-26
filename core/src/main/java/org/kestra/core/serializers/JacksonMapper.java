@@ -32,6 +32,7 @@ abstract public class JacksonMapper {
                 .configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
                 .configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER, false)
                 .configure(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID, false)
+                .configure(YAMLGenerator.Feature.SPLIT_LINES, false)
         )
     );
 

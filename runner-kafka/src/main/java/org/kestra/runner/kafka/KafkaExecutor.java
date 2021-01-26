@@ -10,6 +10,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.kstream.internals.TimeWindow;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.Stores;
@@ -36,6 +37,7 @@ import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 import org.kestra.runner.kafka.streams.*;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -46,6 +48,7 @@ import javax.inject.Inject;
 public class KafkaExecutor extends AbstractExecutor {
     private static final String WORKERTASK_DEDUPLICATION_STATE_STORE_NAME = "workertask_deduplication";
     private static final String TRIGGER_DEDUPLICATION_STATE_STORE_NAME = "trigger_deduplication";
+    private static final String TRIGGER_MULTIPLE_STATE_STORE_NAME = "trigger_multipleflow";
     private static final String NEXTS_DEDUPLICATION_STATE_STORE_NAME = "next_deduplication";
     public static final String WORKER_RUNNING_STATE_STORE_NAME = "worker_running";
     public static final String WORKERINSTANCE_STATE_STORE_NAME = "worker_instance";
@@ -107,6 +110,18 @@ public class KafkaExecutor extends AbstractExecutor {
         // trigger deduplication
         builder.addStateStore(Stores.keyValueStoreBuilder(
             Stores.persistentKeyValueStore(TRIGGER_DEDUPLICATION_STATE_STORE_NAME),
+            Serdes.String(),
+            Serdes.String()
+        ));
+
+        // trigger multiple flow
+        builder.addStateStore(Stores.windowStoreBuilder(
+            Stores.persistentWindowStore(
+                TRIGGER_MULTIPLE_STATE_STORE_NAME,
+                Duration.ofDays(7),
+                Duration.ofDays(7),
+                false
+            ),
             Serdes.String(),
             Serdes.String()
         ));
@@ -474,8 +489,12 @@ public class KafkaExecutor extends AbstractExecutor {
             )
             .filter((key, value) -> value != null, Named.as("handleFlowTrigger-dedupNull-filter"))
             .transformValues(
-                () -> new FlowTriggerTransformer(flowService),
-                Named.as("handleFlowTrigger-trigger-transform")
+                () -> new FlowTriggerTransformer(
+                    TRIGGER_MULTIPLE_STATE_STORE_NAME,
+                    flowService
+                ),
+                Named.as("handleFlowTrigger-trigger-transform"),
+                TRIGGER_MULTIPLE_STATE_STORE_NAME
             )
             .flatMap(
                 (key, value) -> value

@@ -38,6 +38,7 @@ public class MemoryExecutor extends AbstractExecutor {
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private final QueueInterface<LogEntry> logQueue;
     private final FlowService flowService;
+    private final MemoryMultipleConditionStorage multipleConditionStorage;
 
     private static final ConcurrentHashMap<String, ExecutionState> executions = new ConcurrentHashMap<>();
     private List<Flow> allFlows;
@@ -53,7 +54,8 @@ public class MemoryExecutor extends AbstractExecutor {
         MetricRegistry metricRegistry,
         FlowService flowService,
         ConditionService conditionService,
-        TaskDefaultService taskDefaultService
+        TaskDefaultService taskDefaultService,
+        MemoryMultipleConditionStorage multipleConditionStorage
     ) {
         super(runContextFactory, metricRegistry, conditionService, taskDefaultService);
 
@@ -64,6 +66,7 @@ public class MemoryExecutor extends AbstractExecutor {
         this.logQueue = logQueue;
         this.flowService = flowService;
         this.conditionService = conditionService;
+        this.multipleConditionStorage = multipleConditionStorage;
     }
 
     @Override
@@ -142,11 +145,22 @@ public class MemoryExecutor extends AbstractExecutor {
                 this.executionQueue.emit(execution);
             }
 
-            // Flow Trigger
             if (conditionService.isTerminatedWithListeners(flow, execution)) {
+                // multiple conditions storage
+                multipleConditionStorage.save(
+                    flowService
+                        .multipleFlowTrigger(allFlows.stream(), flow, execution)
+                );
+
+                // Flow Trigger
                 flowService
                     .flowTriggerExecution(allFlows.stream(), execution)
                     .forEach(this.executionQueue::emit);
+
+                // Trigger is done, remove matching multiple condition
+                flowService
+                    .multipleFlowToDelete(allFlows.stream())
+                    .forEach(multipleConditionStorage::delete);
             }
         }
     }

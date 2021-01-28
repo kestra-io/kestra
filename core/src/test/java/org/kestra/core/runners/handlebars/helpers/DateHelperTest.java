@@ -57,9 +57,9 @@ class DateHelperTest {
     }
 
     @Test
-    void instantnamo() throws IllegalVariableEvaluationException {
+    void instantnano() throws IllegalVariableEvaluationException {
         String render = VARIABLE_RENDERER.render(
-            "{{ namotimestamp zoned tz=\"Europe/Paris\" }}",
+            "{{ nanotimestamp zoned tz=\"Europe/Paris\" }}",
             ImmutableMap.of(
                 "zoned", NOW
             )

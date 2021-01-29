@@ -1,6 +1,7 @@
 package org.kestra.runner.kafka.services;
 
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
+import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.*;
@@ -36,6 +37,9 @@ public class KafkaConsumerService {
     @Inject
     private MetricRegistry metricRegistry;
 
+    @Value("${kestra.server.metrics.kafka.consumer:true}")
+    protected Boolean metricsEnabled;
+
     public <V> org.apache.kafka.clients.consumer.Consumer<String, V> of(Class<?> group, Serde<V> serde) {
         return of(group, serde, null, null);
     }
@@ -59,7 +63,7 @@ public class KafkaConsumerService {
             props.putAll(properties);
         }
 
-        return new Consumer<>(props, serde, metricRegistry, consumerRebalanceListener);
+        return new Consumer<>(props, serde, metricsEnabled ? metricRegistry : null, consumerRebalanceListener);
     }
 
     public static <T> Map<TopicPartition, OffsetAndMetadata> maxOffsets(ConsumerRecords<String, T> records) {
@@ -89,14 +93,16 @@ public class KafkaConsumerService {
 
     public static class Consumer<V> extends KafkaConsumer<String, V> {
         protected Logger logger = LoggerFactory.getLogger(KafkaConsumerService.class);
-        private final KafkaClientMetrics metrics;
+        private KafkaClientMetrics metrics;
         private final ConsumerRebalanceListener consumerRebalanceListener;
 
         private Consumer(Properties properties, Serde<V> valueSerde, MetricRegistry meterRegistry, ConsumerRebalanceListener consumerRebalanceListener) {
             super(properties, new StringDeserializer(), valueSerde.deserializer());
 
-            metrics = new KafkaClientMetrics(this);
-            meterRegistry.bind(metrics);
+            if (meterRegistry != null) {
+                metrics = new KafkaClientMetrics(this);
+                meterRegistry.bind(metrics);
+            }
 
             this.consumerRebalanceListener = consumerRebalanceListener;
         }
@@ -138,13 +144,19 @@ public class KafkaConsumerService {
 
         @Override
         public void close() {
-            metrics.close();
+            if (metrics != null) {
+                metrics.close();
+            }
+
             super.close();
         }
 
         @Override
         public void close(Duration timeout) {
-            metrics.close();
+            if (metrics != null) {
+                metrics.close();
+            }
+
             super.close(timeout);
         }
     }

@@ -1,14 +1,16 @@
 package org.kestra.core.runners;
 
+import io.micronaut.context.ApplicationContext;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
-import org.kestra.core.models.triggers.multipleflows.TriggerExecutionWindow;
+import org.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -34,7 +36,7 @@ public class MultipleConditionTriggerCaseTest {
     protected FlowRepositoryInterface flowRepository;
 
     @Inject
-    protected MultipleConditionStorageInterface multipleConditionStorage;
+    protected ApplicationContext applicationContext;
 
     public void trigger() throws InterruptedException, TimeoutException {
         CountDownLatch countDownLatch = new CountDownLatch(3);
@@ -54,7 +56,7 @@ public class MultipleConditionTriggerCaseTest {
         });
 
         // first one
-        Execution execution = runnerUtils.runOne("org.kestra.tests", "trigger-multiplecondition-flow-a");
+        Execution execution = runnerUtils.runOne("org.kestra.tests", "trigger-multiplecondition-flow-a", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
@@ -62,12 +64,14 @@ public class MultipleConditionTriggerCaseTest {
         countDownLatch.await(1, TimeUnit.SECONDS);
         assertThat(ended.size(), is(1));
 
+        MultipleConditionStorageInterface multipleConditionStorage = applicationContext.getBean(MultipleConditionStorageInterface.class);
+
         // storage is filed
-        TriggerExecutionWindow multiple = multipleConditionStorage.get(flow, "multiple").orElseThrow();
+        MultipleConditionWindow multiple = multipleConditionStorage.get(flow, "multiple").orElseThrow();
         assertThat(multiple.getResults().get("flow-a"), is(true));
 
         // second one
-        execution = runnerUtils.runOne("org.kestra.tests", "trigger-multiplecondition-flow-b");
+        execution = runnerUtils.runOne("org.kestra.tests", "trigger-multiplecondition-flow-b", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size(), is(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 

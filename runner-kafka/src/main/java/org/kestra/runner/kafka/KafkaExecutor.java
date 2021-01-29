@@ -9,10 +9,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
+import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.kstream.internals.TimeWindow;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
@@ -23,6 +25,8 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.models.triggers.Trigger;
+import org.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
+import org.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
@@ -30,6 +34,7 @@ import org.kestra.core.runners.*;
 import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowService;
 import org.kestra.core.services.TaskDefaultService;
+import org.kestra.core.utils.Await;
 import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -37,6 +42,8 @@ import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 import org.kestra.runner.kafka.streams.*;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,10 +52,10 @@ import javax.inject.Inject;
 @KafkaQueueEnabled
 @Prototype
 @Slf4j
-public class KafkaExecutor extends AbstractExecutor {
+public class KafkaExecutor extends AbstractExecutor implements Closeable {
     private static final String WORKERTASK_DEDUPLICATION_STATE_STORE_NAME = "workertask_deduplication";
     private static final String TRIGGER_DEDUPLICATION_STATE_STORE_NAME = "trigger_deduplication";
-    private static final String TRIGGER_MULTIPLE_STATE_STORE_NAME = "trigger_multipleflow";
+    public static final String TRIGGER_MULTIPLE_STATE_STORE_NAME = "trigger_multiplecondition";
     private static final String NEXTS_DEDUPLICATION_STATE_STORE_NAME = "next_deduplication";
     public static final String WORKER_RUNNING_STATE_STORE_NAME = "worker_running";
     public static final String WORKERINSTANCE_STATE_STORE_NAME = "worker_instance";
@@ -61,6 +68,9 @@ public class KafkaExecutor extends AbstractExecutor {
     FlowService flowService;
     KafkaStreamSourceService kafkaStreamSourceService;
     QueueService queueService;
+
+    KafkaStreamService.Stream resultStream;
+    boolean ready = false;
 
     @Inject
     public KafkaExecutor(
@@ -115,16 +125,13 @@ public class KafkaExecutor extends AbstractExecutor {
         ));
 
         // trigger multiple flow
-        builder.addStateStore(Stores.windowStoreBuilder(
-            Stores.persistentWindowStore(
-                TRIGGER_MULTIPLE_STATE_STORE_NAME,
-                Duration.ofDays(7),
-                Duration.ofDays(7),
-                false
-            ),
-            Serdes.String(),
-            Serdes.String()
-        ));
+        builder.addStateStore(
+            Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(TRIGGER_MULTIPLE_STATE_STORE_NAME),
+                Serdes.String(),
+                JsonSerde.of(MultipleConditionWindow.class)
+            )
+        );
 
         // worker instance global state store
         builder.addGlobalStore(
@@ -900,11 +907,44 @@ public class KafkaExecutor extends AbstractExecutor {
         properties.put(StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG, KafkaExecutorProductionExceptionHandler.class);
         properties.put(KafkaExecutorProductionExceptionHandler.APPLICATION_CONTEXT_CONFIG, applicationContext);
 
-        KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology(), properties);
+        resultStream = kafkaStreamService.of(this.getClass(), this.topology(), properties);
         resultStream.start();
 
-        applicationContext.registerSingleton(new KafkaTemplateExecutor(
-            resultStream.store("template", QueryableStoreTypes.keyValueStore())
-        ));
+        awaitState(() -> {
+            ReadOnlyKeyValueStore<String, Template> store = resultStream.store("template", QueryableStoreTypes.keyValueStore());
+            applicationContext.registerSingleton(new KafkaTemplateExecutor(store));
+        });
+
+        awaitState(() -> {
+            ReadOnlyKeyValueStore<String, MultipleConditionWindow> store = resultStream.store(TRIGGER_MULTIPLE_STATE_STORE_NAME, QueryableStoreTypes.keyValueStore());
+            applicationContext.registerSingleton(new KafkaMultipleConditionStorage(store));
+        });
+
+        System.out.println("sdfsdfsdfsdfsfd !!!!!!!!!!!!!!!!!!!!!");
     }
+
+    private void awaitState(Runnable run) {
+        Await.until(
+            () -> {
+                try {
+                    run.run();
+                    return true;
+                } catch (InvalidStateStoreException e) {
+                    log.warn("Wait for state store '{}'", e.getMessage());
+
+                    return false;
+                }
+            },
+            Duration.ofSeconds(60)
+        );
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (this.resultStream != null) {
+            this.resultStream.close();
+            this.resultStream = null;
+        }
+    }
+
 }

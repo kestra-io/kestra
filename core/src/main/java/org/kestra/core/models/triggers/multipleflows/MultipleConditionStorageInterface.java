@@ -7,11 +7,11 @@ import java.util.HashMap;
 import java.util.Optional;
 
 public interface MultipleConditionStorageInterface {
-    Optional<TriggerExecutionWindow> get(Flow flow, String conditionId);
+    Optional<MultipleConditionWindow> get(Flow flow, String conditionId);
 
-    default TriggerExecutionWindow getOrCreate(Flow flow, MultipleCondition multipleCondition) {
+    default MultipleConditionWindow getOrCreate(Flow flow, MultipleCondition multipleCondition) {
         return this.get(flow, multipleCondition.getId())
-            .orElseGet(() -> TriggerExecutionWindow.builder()
+            .orElseGet(() -> MultipleConditionWindow.builder()
                 .namespace(flow.getNamespace())
                 .flowId(flow.getId())
                 .conditionId(multipleCondition.getId())

@@ -1,5 +1,6 @@
 package org.kestra.runner.kafka;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
@@ -22,11 +23,14 @@ import org.kestra.core.models.tasks.Task;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.*;
+import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.tasks.flows.Parallel;
+import org.kestra.core.utils.IdUtils;
 import org.kestra.core.utils.TestsUtils;
 import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
+import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -43,6 +47,9 @@ import static org.hamcrest.Matchers.*;
 @MicronautTest
 @Slf4j
 class KafkaExecutorTest {
+    @Inject
+    ApplicationContext applicationContext;
+
     @Inject
     KafkaExecutor stream;
 
@@ -71,6 +78,14 @@ class KafkaExecutorTest {
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "unit-test");
 
         testTopology = new TopologyTestDriver(stream.topology(), properties);
+
+        applicationContext.registerSingleton(new KafkaTemplateExecutor(
+            testTopology.getKeyValueStore("template")
+        ));
+
+        applicationContext.registerSingleton(new KafkaMultipleConditionStorage(
+             testTopology.getKeyValueStore(KafkaExecutor.TRIGGER_MULTIPLE_STATE_STORE_NAME)
+        ));
     }
 
     @AfterEach
@@ -368,6 +383,42 @@ class KafkaExecutorTest {
     }
 
     @Test
+    void multipleTrigger() {
+        Flow flowA = flowRepository.findById("org.kestra.tests", "trigger-multiplecondition-flow-a").orElseThrow();
+        this.flowInput().pipeInput(flowA.uid(), flowA);
+
+        Flow flowB = flowRepository.findById("org.kestra.tests", "trigger-multiplecondition-flow-b").orElseThrow();
+        this.flowInput().pipeInput(flowB.uid(), flowB);
+
+        Flow triggerFlow = flowRepository.findById("org.kestra.tests", "trigger-multiplecondition-listener").orElseThrow();
+        this.flowInput().pipeInput(triggerFlow.uid(), triggerFlow);
+
+        // first
+        createExecution(flowA);
+        runningAndSuccessSequential(flowA, 0);
+
+        TestRecord<String, Execution> executionA = executionOutput().readRecord();
+        assertThat(executionA.value().getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // second
+        createExecution(flowB);
+        runningAndSuccessSequential(flowB, 0);
+
+        TestRecord<String, Execution> executionB = executionOutput().readRecord();
+        assertThat(executionB.value().getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // trigger start
+        TestRecord<String, Execution> triggerExecution = executionOutput().readRecord();
+        assertThat(triggerExecution.value().getState().getCurrent(), is(State.Type.CREATED));
+
+        runningAndSuccessSequential(triggerFlow, 0);
+
+        triggerExecution = executionOutput().readRecord();
+        assertThat(triggerExecution.value().getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+
+    @Test
     void workerRebalanced() {
         Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
@@ -398,14 +449,14 @@ class KafkaExecutorTest {
 
     private void createExecution(Flow flow) {
         Execution execution = Execution.builder()
-            .id("unittest")
+            .id(IdUtils.create())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
             .state(new State())
             .build();
 
-        this.executionInput().pipeInput("unittest", execution);
+        this.executionInput().pipeInput(execution.getId(), execution);
     }
 
     private void createKilled(Execution execution) {

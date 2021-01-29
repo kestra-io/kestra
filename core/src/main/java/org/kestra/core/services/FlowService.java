@@ -1,5 +1,6 @@
 package org.kestra.core.services;
 
+import io.micronaut.context.ApplicationContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -8,7 +9,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.AbstractTrigger;
 import org.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
-import org.kestra.core.models.triggers.multipleflows.TriggerExecutionWindow;
+import org.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import org.kestra.core.runners.RunContextFactory;
 import org.kestra.core.utils.ListUtils;
 
@@ -30,6 +31,8 @@ public class FlowService {
     ConditionService conditionService;
 
     @Inject
+    ApplicationContext applicationContext;
+
     MultipleConditionStorageInterface multipleConditionStorage;
 
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {
@@ -93,6 +96,11 @@ public class FlowService {
     }
 
     private Stream<FlowWithFlowTriggerAndMultipleCondition> multipleFlowStream(Stream<Flow> flowStream) {
+        // lazy init on kafka, we can't inject it
+        if (this.multipleConditionStorage == null) {
+            this.multipleConditionStorage = applicationContext.getBean(MultipleConditionStorageInterface.class);
+        }
+
         return flowStream
             .filter(f -> f.getTriggers() != null && f.getTriggers().size() > 0)
             .flatMap(f -> f.getTriggers()
@@ -122,7 +130,7 @@ public class FlowService {
             );
     }
 
-    public List<TriggerExecutionWindow> multipleFlowTrigger(Stream<Flow> flowStream, Flow flow, Execution execution) {
+    public List<MultipleConditionWindow> multipleFlowTrigger(Stream<Flow> flowStream, Flow flow, Execution execution) {
          return multipleFlowStream(flowStream)
             .map(f -> {
                 Map<String, Boolean> results = f.getMultipleCondition()
@@ -135,21 +143,21 @@ public class FlowService {
                     ))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-                return f.getTriggerExecutionWindow().with(results);
+                return f.getMultipleConditionWindow().with(results);
             })
              .collect(Collectors.toList());
     }
 
-    public List<TriggerExecutionWindow> multipleFlowToDelete(Stream<Flow> flowStream) {
+    public List<MultipleConditionWindow> multipleFlowToDelete(Stream<Flow> flowStream) {
         return multipleFlowStream(flowStream)
-            .filter(f -> f.getMultipleCondition().getConditions().size() == f.getTriggerExecutionWindow()
+            .filter(f -> f.getMultipleCondition().getConditions().size() == f.getMultipleConditionWindow()
                 .getResults()
                 .entrySet()
                 .stream()
                 .filter(Map.Entry::getValue)
                 .count()
             )
-            .map(FlowWithFlowTriggerAndMultipleCondition::getTriggerExecutionWindow)
+            .map(FlowWithFlowTriggerAndMultipleCondition::getMultipleConditionWindow)
             .collect(Collectors.toList());
     }
 
@@ -184,7 +192,7 @@ public class FlowService {
     @ToString
     private static class FlowWithFlowTriggerAndMultipleCondition {
         private final Flow flow;
-        private final TriggerExecutionWindow triggerExecutionWindow;
+        private final MultipleConditionWindow multipleConditionWindow;
         private final org.kestra.core.models.triggers.types.Flow trigger;
         private final MultipleCondition multipleCondition;
     }

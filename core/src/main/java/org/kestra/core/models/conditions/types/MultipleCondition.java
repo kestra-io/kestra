@@ -13,7 +13,7 @@ import org.kestra.core.models.conditions.ConditionContext;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
-import org.kestra.core.models.triggers.multipleflows.TriggerExecutionWindow;
+import org.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import org.kestra.core.services.FlowService;
 import org.slf4j.Logger;
 
@@ -90,7 +90,7 @@ public class MultipleCondition extends Condition {
             .getApplicationContext()
             .getBean(MultipleConditionStorageInterface.class);
 
-        Optional<TriggerExecutionWindow> triggerExecutionWindow = multipleConditionStorage.get(conditionContext.getFlow(), this.getId());
+        Optional<MultipleConditionWindow> triggerExecutionWindow = multipleConditionStorage.get(conditionContext.getFlow(), this.getId());
 
         Map<String, Boolean> results = conditions
             .keySet()

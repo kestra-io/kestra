@@ -22,11 +22,13 @@ import org.kestra.core.models.tasks.Task;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.*;
+import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.tasks.flows.Parallel;
 import org.kestra.core.utils.TestsUtils;
 import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
+import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -487,6 +489,35 @@ class KafkaExecutorTest {
 
     }
 
+    @Test
+    void parrallelCase() throws IOException {
+        // create flow to init topic & clean up
+        this.standard();
+
+        for (int i = 0; i <12; i++) {
+            executorOutput().readRecord();
+        }
+
+        // inject flow & start the right one
+        Flow flow = JacksonMapper.ofYaml().readValue(
+            KafkaExecutorTest.class.getClassLoader().getResource("executions/aggclient_daily.yaml"),
+            Flow.class
+        );
+        this.flowInput().pipeInput(flow.uid(), flow);
+
+        Execution execution = JacksonMapper.ofJson().readValue(
+            KafkaExecutorTest.class.getClassLoader().getResource("executions/aggclient_daily.json"),
+            Execution.class
+        );
+
+        this.executorInput().pipeInput(execution.getId(), execution);
+
+
+        TestRecord<String, Execution> stringExecutionTestRecord = executorOutput().readRecord();
+
+        System.out.println(stringExecutionTestRecord);
+    }
+
     private TestInputTopic<String, Flow> flowInput() {
         return this.testTopology
             .createInputTopic(
@@ -500,6 +531,15 @@ class KafkaExecutorTest {
         return this.testTopology
             .createInputTopic(
                 kafkaAdminService.getTopicName(Execution.class),
+                Serdes.String().serializer(),
+                JsonSerde.of(Execution.class).serializer()
+            );
+    }
+
+    private TestInputTopic<String, Execution> executorInput() {
+        return this.testTopology
+            .createInputTopic(
+                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
                 Serdes.String().serializer(),
                 JsonSerde.of(Execution.class).serializer()
             );
@@ -549,6 +589,17 @@ class KafkaExecutorTest {
                 JsonSerde.of(Execution.class).deserializer()
             );
     }
+
+
+    private TestOutputTopic<String, Execution> executorOutput() {
+        return this.testTopology
+            .createOutputTopic(
+                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
+                Serdes.String().deserializer(),
+                JsonSerde.of(Execution.class).deserializer()
+            );
+    }
+
 
     private TestOutputTopic<String, WorkerTaskRunning> workerTaskRunningOutput() {
         return this.testTopology

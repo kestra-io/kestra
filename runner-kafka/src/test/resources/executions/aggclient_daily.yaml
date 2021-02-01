@@ -1,0 +1,22 @@
+id: aggclient_daily
+namespace: org.kestra.tests
+revision: 1
+tasks:
+  - id: segment
+    type: org.kestra.core.tasks.flows.Parallel
+    tasks:
+      - id: segment_kitchen_customer
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}}"
+      - id: segment_bathroom_customer
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}}"
+      - id: segment_delivered_customer
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}}"
+      - id: segment_clickcollect_customer
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}}"
+      - id: segment_global_store_customer
+        type: org.kestra.core.tasks.debugs.Return
+        format: "{{task.id}}"

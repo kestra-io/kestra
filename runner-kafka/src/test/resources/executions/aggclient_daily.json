@@ -1,0 +1,214 @@
+{
+  "id": "1OKIhFnRZNIZAzSNgRvmme",
+  "namespace": "org.kestra.tests",
+  "flowId": "aggclient_daily",
+  "flowRevision": 1,
+  "taskRunList": [
+    {
+      "id": "3YViDT1cDxiwj0rQUzY4wm",
+      "executionId": "1OKIhFnRZNIZAzSNgRvmme",
+      "namespace": "org.kestra.tests",
+      "flowId": "aggclient_daily",
+      "taskId": "segment",
+      "state": {
+        "current": "RUNNING",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2021-01-27T17:44:44.831497Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2021-01-27T17:44:45.260547Z"
+          }
+        ],
+        "duration": 0.42905,
+        "startDate": "2021-01-27T17:44:44.831497Z"
+      }
+    },
+    {
+      "id": "1ReYyvc9dvAD9PyGUfy8HB",
+      "executionId": "1OKIhFnRZNIZAzSNgRvmme",
+      "namespace": "org.kestra.tests",
+      "flowId": "aggclient_daily",
+      "taskId": "segment_kitchen_customer",
+      "parentTaskRunId": "3YViDT1cDxiwj0rQUzY4wm",
+      "attempts": [
+        {
+          "metrics": [],
+          "state": {
+            "current": "SUCCESS",
+            "histories": [
+              {
+                "state": "CREATED",
+                "date": "2021-01-27T17:44:47.310103Z"
+              },
+              {
+                "state": "RUNNING",
+                "date": "2021-01-27T17:44:47.310104Z"
+              },
+              {
+                "state": "SUCCESS",
+                "date": "2021-01-27T17:44:50.095472Z"
+              }
+            ],
+            "endDate": "2021-01-27T17:44:50.095472Z",
+            "duration": 2.785369,
+            "startDate": "2021-01-27T17:44:47.310103Z"
+          }
+        }
+      ],
+      "outputs": {
+
+      },
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2021-01-27T17:44:46.565115Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2021-01-27T17:44:47.304144Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2021-01-27T17:44:50.109960Z"
+          }
+        ],
+        "endDate": "2021-01-27T17:44:50.109960Z",
+        "duration": 3.544845,
+        "startDate": "2021-01-27T17:44:46.565115Z"
+      }
+    },
+    {
+      "id": "ppq3RtTYJ02E33OA19kjQ",
+      "executionId": "1OKIhFnRZNIZAzSNgRvmme",
+      "namespace": "org.kestra.tests",
+      "flowId": "aggclient_daily",
+      "taskId": "segment_bathroom_customer",
+      "parentTaskRunId": "3YViDT1cDxiwj0rQUzY4wm",
+      "attempts": [
+        {
+          "metrics": [],
+          "state": {
+            "current": "SUCCESS",
+            "histories": [
+              {
+                "state": "CREATED",
+                "date": "2021-01-27T17:44:48.607746Z"
+              },
+              {
+                "state": "RUNNING",
+                "date": "2021-01-27T17:44:48.607747Z"
+              },
+              {
+                "state": "SUCCESS",
+                "date": "2021-01-27T17:44:51.212738Z"
+              }
+            ],
+            "endDate": "2021-01-27T17:44:51.212738Z",
+            "duration": 2.604992,
+            "startDate": "2021-01-27T17:44:48.607746Z"
+          }
+        }
+      ],
+      "outputs": {
+
+      },
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2021-01-27T17:44:47.959567Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2021-01-27T17:44:48.602571Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2021-01-27T17:44:51.260281Z"
+          }
+        ],
+        "endDate": "2021-01-27T17:44:51.260281Z",
+        "duration": 3.300714,
+        "startDate": "2021-01-27T17:44:47.959567Z"
+      }
+    },
+    {
+      "id": "7Jiev7CtVMpPxmBlcCCfPG",
+      "executionId": "1OKIhFnRZNIZAzSNgRvmme",
+      "namespace": "org.kestra.tests",
+      "flowId": "aggclient_daily",
+      "taskId": "segment_delivered_customer",
+      "parentTaskRunId": "3YViDT1cDxiwj0rQUzY4wm",
+      "attempts": [
+        {
+          "metrics": [],
+          "state": {
+            "current": "SUCCESS",
+            "histories": [
+              {
+                "state": "CREATED",
+                "date": "2021-01-27T17:44:50.258233Z"
+              },
+              {
+                "state": "RUNNING",
+                "date": "2021-01-27T17:44:50.258234Z"
+              },
+              {
+                "state": "SUCCESS",
+                "date": "2021-01-27T17:44:53.108561Z"
+              }
+            ],
+            "endDate": "2021-01-27T17:44:53.108561Z",
+            "duration": 2.850328,
+            "startDate": "2021-01-27T17:44:50.258233Z"
+          }
+        }
+      ],
+      "outputs": {
+
+      },
+      "state": {
+        "current": "SUCCESS",
+        "histories": [
+          {
+            "state": "CREATED",
+            "date": "2021-01-27T17:44:49.572239Z"
+          },
+          {
+            "state": "RUNNING",
+            "date": "2021-01-27T17:44:50.176856Z"
+          },
+          {
+            "state": "SUCCESS",
+            "date": "2021-01-27T17:44:53.133889Z"
+          }
+        ],
+        "endDate": "2021-01-27T17:44:53.133889Z",
+        "duration": 3.56165,
+        "startDate": "2021-01-27T17:44:49.572239Z"
+      }
+    }
+  ],
+  "state": {
+    "current": "RUNNING",
+    "histories": [
+      {
+        "state": "CREATED",
+        "date": "2021-01-27T17:44:44.581708Z"
+      },
+      {
+        "state": "RUNNING",
+        "date": "2021-01-27T17:44:44.845502Z"
+      }
+    ],
+    "duration": 0.263794,
+    "startDate": "2021-01-27T17:44:44.581708Z"
+  },
+  "deleted": false
+}

@@ -9,12 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
-import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.kstream.internals.TimeWindow;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
-import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import org.apache.kafka.streams.state.Stores;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.Execution;
@@ -25,7 +22,6 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.models.triggers.Trigger;
-import org.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import org.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.QueueFactoryInterface;
@@ -34,7 +30,6 @@ import org.kestra.core.runners.*;
 import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowService;
 import org.kestra.core.services.TaskDefaultService;
-import org.kestra.core.utils.Await;
 import org.kestra.core.utils.Either;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -44,7 +39,6 @@ import org.kestra.runner.kafka.streams.*;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -153,6 +147,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
         GlobalKTable<String, WorkerTaskRunning> workerTaskRunningKTable = this.workerTaskRunningKStream(builder);
         KStream<String, WorkerInstance> workerInstanceKStream = this.workerInstanceKStream(builder);
+        KStream<String, FlowTriggerWithExecution> flowWithTriggerStream = this.flowWithTriggerStream(builder);
         this.templateKTable(builder);
 
         // logs
@@ -179,7 +174,9 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         this.handleWorkerTask(stream);
         this.handleWorkerTaskResult(stream);
 
-        this.handleFlowTrigger(stream);
+        // trigger
+        this.handleExecutorFlowTriggerTopic(stream);
+        this.handleFlowTrigger(flowWithTriggerStream);
 
         this.purgeExecutor(stream);
 
@@ -253,6 +250,14 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             .stream(
                 kafkaAdminService.getTopicName(WorkerInstance.class),
                 Consumed.with(Serdes.String(), JsonSerde.of(WorkerInstance.class))
+            );
+    }
+
+    private KStream<String, FlowTriggerWithExecution> flowWithTriggerStream(StreamsBuilder builder) {
+        return builder
+            .stream(
+                kafkaAdminService.getTopicName(FlowTriggerWithExecution.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(FlowTriggerWithExecution.class))
             );
     }
 
@@ -479,11 +484,11 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
     }
 
-    private void handleFlowTrigger(KStream<String, ExecutionWithFlow> stream) {
+    private void handleExecutorFlowTriggerTopic(KStream<String, ExecutionWithFlow> stream) {
         stream
             .filter(
                 (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
-                Named.as("handleFlowTrigger-terminated-filter")
+                Named.as("handleExecutorFlowTriggerTopic-terminated-filter")
             )
             .transformValues(
                 () -> new DeduplicationTransformer<>(
@@ -491,12 +496,26 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                     (key, value) -> value.getExecution().getId(),
                     (key, value) -> value.getExecution().getId()
                 ),
-                Named.as("handleFlowTrigger-deduplication-transform"),
+                Named.as("handleExecutorFlowTriggerTopic-deduplication-transform"),
                 TRIGGER_DEDUPLICATION_STATE_STORE_NAME
             )
-            .filter((key, value) -> value != null, Named.as("handleFlowTrigger-dedupNull-filter"))
+            .filter((key, value) -> value != null, Named.as("handleExecutorFlowTriggerTopic-dedupNull-filter"))
+            .flatTransform(
+                () -> new FlowWithTriggerTransformer(
+                    flowService
+                ),
+                Named.as("handleExecutorFlowTriggerTopic-trigger-transform")
+            )
+            .to(
+                kafkaAdminService.getTopicName(FlowTriggerWithExecution.class),
+                Produced.with(Serdes.String(), JsonSerde.of(FlowTriggerWithExecution.class))
+            );
+    }
+
+    private void handleFlowTrigger(KStream<String, FlowTriggerWithExecution> stream) {
+        stream
             .transformValues(
-                () -> new FlowTriggerTransformer(
+                () -> new FlowTriggerWithExecutionTransformer(
                     TRIGGER_MULTIPLE_STATE_STORE_NAME,
                     flowService
                 ),
@@ -900,6 +919,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         kafkaAdminService.createIfNotExist(Template.class);
         kafkaAdminService.createIfNotExist(LogEntry.class);
         kafkaAdminService.createIfNotExist(Trigger.class);
+        kafkaAdminService.createIfNotExist(FlowTriggerWithExecution.class);
 
         Properties properties = new Properties();
 
@@ -910,33 +930,9 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         resultStream = kafkaStreamService.of(this.getClass(), this.topology(), properties);
         resultStream.start();
 
-        awaitState(() -> {
-            ReadOnlyKeyValueStore<String, Template> store = resultStream.store("template", QueryableStoreTypes.keyValueStore());
-            applicationContext.registerSingleton(new KafkaTemplateExecutor(store));
-        });
-
-        awaitState(() -> {
-            ReadOnlyKeyValueStore<String, MultipleConditionWindow> store = resultStream.store(TRIGGER_MULTIPLE_STATE_STORE_NAME, QueryableStoreTypes.keyValueStore());
-            applicationContext.registerSingleton(new KafkaMultipleConditionStorage(store));
-        });
-
-        System.out.println("sdfsdfsdfsdfsfd !!!!!!!!!!!!!!!!!!!!!");
-    }
-
-    private void awaitState(Runnable run) {
-        Await.until(
-            () -> {
-                try {
-                    run.run();
-                    return true;
-                } catch (InvalidStateStoreException e) {
-                    log.warn("Wait for state store '{}'", e.getMessage());
-
-                    return false;
-                }
-            },
-            Duration.ofSeconds(60)
-        );
+        applicationContext.registerSingleton(new KafkaTemplateExecutor(
+            resultStream.store("template", QueryableStoreTypes.keyValueStore())
+        ));
     }
 
     @Override

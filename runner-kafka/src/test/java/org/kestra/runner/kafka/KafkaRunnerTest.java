@@ -164,7 +164,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
             "inputs-large",
             null,
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
-            Duration.ofSeconds(60)
+            Duration.ofSeconds(120)
         );
 
         assertThat(execution.getTaskRunList(), hasSize(10));

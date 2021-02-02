@@ -9,10 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.inject.Singleton;
 
-@Singleton
-@MemoryQueueEnabled
 public class MemoryMultipleConditionStorage implements MultipleConditionStorageInterface {
     private final Map<String, Map<String, Map<String, MultipleConditionWindow>>> map = new ConcurrentHashMap<>();
 

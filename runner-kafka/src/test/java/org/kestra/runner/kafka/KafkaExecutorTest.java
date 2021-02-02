@@ -34,10 +34,7 @@ import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.ListIterator;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -76,15 +73,12 @@ class KafkaExecutorTest {
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "unit-test");
+        properties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kafka-stream-unit/" + UUID.randomUUID());
 
         testTopology = new TopologyTestDriver(stream.topology(), properties);
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(
             testTopology.getKeyValueStore("template")
-        ));
-
-        applicationContext.registerSingleton(new KafkaMultipleConditionStorage(
-             testTopology.getKeyValueStore(KafkaExecutor.TRIGGER_MULTIPLE_STATE_STORE_NAME)
         ));
     }
 
@@ -464,7 +458,7 @@ class KafkaExecutorTest {
             .executionId(execution.getId())
             .build();
 
-        this.executionKilledInput().pipeInput("unittest", executionKilled);
+        this.executionKilledInput().pipeInput(executionKilled.getExecutionId(), executionKilled);
     }
 
     private static WorkerInstance workerInstance() {

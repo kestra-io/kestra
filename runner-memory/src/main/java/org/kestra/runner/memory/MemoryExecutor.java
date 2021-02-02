@@ -38,7 +38,7 @@ public class MemoryExecutor extends AbstractExecutor {
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private final QueueInterface<LogEntry> logQueue;
     private final FlowService flowService;
-    private final MemoryMultipleConditionStorage multipleConditionStorage;
+    private static final MemoryMultipleConditionStorage multipleConditionStorage = new MemoryMultipleConditionStorage();
 
     private static final ConcurrentHashMap<String, ExecutionState> executions = new ConcurrentHashMap<>();
     private List<Flow> allFlows;
@@ -54,8 +54,7 @@ public class MemoryExecutor extends AbstractExecutor {
         MetricRegistry metricRegistry,
         FlowService flowService,
         ConditionService conditionService,
-        TaskDefaultService taskDefaultService,
-        MemoryMultipleConditionStorage multipleConditionStorage
+        TaskDefaultService taskDefaultService
     ) {
         super(runContextFactory, metricRegistry, conditionService, taskDefaultService);
 
@@ -66,7 +65,6 @@ public class MemoryExecutor extends AbstractExecutor {
         this.logQueue = logQueue;
         this.flowService = flowService;
         this.conditionService = conditionService;
-        this.multipleConditionStorage = multipleConditionStorage;
     }
 
     @Override
@@ -149,17 +147,17 @@ public class MemoryExecutor extends AbstractExecutor {
                 // multiple conditions storage
                 multipleConditionStorage.save(
                     flowService
-                        .multipleFlowTrigger(allFlows.stream(), flow, execution)
+                        .multipleFlowTrigger(allFlows.stream(), flow, execution, multipleConditionStorage)
                 );
 
                 // Flow Trigger
                 flowService
-                    .flowTriggerExecution(allFlows.stream(), execution)
+                    .flowTriggerExecution(allFlows.stream(), execution, multipleConditionStorage)
                     .forEach(this.executionQueue::emit);
 
                 // Trigger is done, remove matching multiple condition
                 flowService
-                    .multipleFlowToDelete(allFlows.stream())
+                    .multipleFlowToDelete(allFlows.stream(), multipleConditionStorage)
                     .forEach(multipleConditionStorage::delete);
             }
         }

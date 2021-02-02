@@ -33,8 +33,6 @@ public class FlowService {
     @Inject
     ApplicationContext applicationContext;
 
-    MultipleConditionStorageInterface multipleConditionStorage;
-
     public Stream<Flow> keepLastVersion(Stream<Flow> stream) {
         return keepLastVersionCollector(stream);
     }
@@ -67,7 +65,23 @@ public class FlowService {
             .filter(Objects::nonNull);
     }
 
-    public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution) {
+    public List<FlowWithFlowTrigger> flowWithFlowTrigger(Stream<Flow> flowStream) {
+        return flowStream
+            .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
+            .flatMap(flow -> flow.getTriggers()
+                .stream()
+                .map(trigger -> new FlowWithTrigger(flow, trigger))
+            )
+            .filter(f -> f.getTrigger() instanceof org.kestra.core.models.triggers.types.Flow)
+            .map(f -> new FlowWithFlowTrigger(
+                    f.getFlow(),
+                    (org.kestra.core.models.triggers.types.Flow) f.getTrigger()
+                )
+            )
+            .collect(Collectors.toList());
+    }
+
+    public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
         return flowStream
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
             .flatMap(flow -> flow.getTriggers()
@@ -77,7 +91,8 @@ public class FlowService {
             .filter(f -> conditionService.isValid(
                 f.getTrigger(),
                 f.getFlow(),
-                execution
+                execution,
+                multipleConditionStorage
             ))
             .filter(f -> f.getTrigger() instanceof org.kestra.core.models.triggers.types.Flow)
             .map(f -> new FlowWithFlowTrigger(
@@ -95,12 +110,7 @@ public class FlowService {
             .collect(Collectors.toList());
     }
 
-    private Stream<FlowWithFlowTriggerAndMultipleCondition> multipleFlowStream(Stream<Flow> flowStream) {
-        // lazy init on kafka, we can't inject it
-        if (this.multipleConditionStorage == null) {
-            this.multipleConditionStorage = applicationContext.getBean(MultipleConditionStorageInterface.class);
-        }
-
+    private Stream<FlowWithFlowTriggerAndMultipleCondition> multipleFlowStream(Stream<Flow> flowStream, MultipleConditionStorageInterface multipleConditionStorage) {
         return flowStream
             .filter(f -> f.getTriggers() != null && f.getTriggers().size() > 0)
             .flatMap(f -> f.getTriggers()
@@ -130,8 +140,8 @@ public class FlowService {
             );
     }
 
-    public List<MultipleConditionWindow> multipleFlowTrigger(Stream<Flow> flowStream, Flow flow, Execution execution) {
-         return multipleFlowStream(flowStream)
+    public List<MultipleConditionWindow> multipleFlowTrigger(Stream<Flow> flowStream, Flow flow, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
+         return multipleFlowStream(flowStream, multipleConditionStorage)
             .map(f -> {
                 Map<String, Boolean> results = f.getMultipleCondition()
                     .getConditions()
@@ -148,8 +158,8 @@ public class FlowService {
              .collect(Collectors.toList());
     }
 
-    public List<MultipleConditionWindow> multipleFlowToDelete(Stream<Flow> flowStream) {
-        return multipleFlowStream(flowStream)
+    public List<MultipleConditionWindow> multipleFlowToDelete(Stream<Flow> flowStream, MultipleConditionStorageInterface multipleConditionStorage) {
+        return multipleFlowStream(flowStream, multipleConditionStorage)
             .filter(f -> f.getMultipleCondition().getConditions().size() == f.getMultipleConditionWindow()
                 .getResults()
                 .entrySet()
@@ -182,7 +192,7 @@ public class FlowService {
     @AllArgsConstructor
     @Getter
     @ToString
-    private static class FlowWithFlowTrigger {
+    public static class FlowWithFlowTrigger {
         private final Flow flow;
         private final org.kestra.core.models.triggers.types.Flow trigger;
     }

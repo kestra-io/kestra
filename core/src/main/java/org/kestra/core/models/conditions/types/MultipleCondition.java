@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -78,7 +79,7 @@ public class MultipleCondition extends Condition {
 
     /**
      * This conditions will only validate previously calculated value on
-     * {@link FlowService#multipleFlowTrigger(Stream, Flow, Execution)} and save on {@link MultipleConditionStorageInterface}
+     * {@link FlowService#multipleFlowTrigger(Stream, Flow, Execution, MultipleConditionStorageInterface)}} and save on {@link MultipleConditionStorageInterface}
      * by the executor.
      * The real validation is done here.
      */
@@ -86,9 +87,8 @@ public class MultipleCondition extends Condition {
     public boolean test(ConditionContext conditionContext) {
         Logger logger = conditionContext.getRunContext().logger();
 
-        MultipleConditionStorageInterface multipleConditionStorage = conditionContext.getRunContext()
-            .getApplicationContext()
-            .getBean(MultipleConditionStorageInterface.class);
+        MultipleConditionStorageInterface multipleConditionStorage = conditionContext.getMultipleConditionStorage();
+        Objects.requireNonNull(multipleConditionStorage);
 
         Optional<MultipleConditionWindow> triggerExecutionWindow = multipleConditionStorage.get(conditionContext.getFlow(), this.getId());
 

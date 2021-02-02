@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import org.kestra.core.services.ConditionService;
 import org.kestra.core.utils.TestsUtils;
+import org.kestra.runner.memory.MemoryMultipleConditionStorage;
 
 import java.util.Collections;
 import javax.inject.Inject;
@@ -19,9 +19,6 @@ import static org.hamcrest.Matchers.is;
 class MultipleConditionTest {
     @Inject
     ConditionService conditionService;
-
-    @Inject
-    MultipleConditionStorageInterface multipleConditionStorage;
 
     @Test
     void simple() {
@@ -40,9 +37,9 @@ class MultipleConditionTest {
             ))
             .build();
 
-        boolean test = conditionService.isValid(build, flow, execution);
+        boolean test = conditionService.isValid(build, flow, execution, new MemoryMultipleConditionStorage());
 
-        
+
         assertThat(test, is(false));
     }
 }

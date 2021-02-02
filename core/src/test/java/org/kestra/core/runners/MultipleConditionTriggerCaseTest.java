@@ -4,8 +4,6 @@ import io.micronaut.context.ApplicationContext;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
-import org.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
-import org.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.FlowRepositoryInterface;
@@ -64,12 +62,6 @@ public class MultipleConditionTriggerCaseTest {
         countDownLatch.await(1, TimeUnit.SECONDS);
         assertThat(ended.size(), is(1));
 
-        MultipleConditionStorageInterface multipleConditionStorage = applicationContext.getBean(MultipleConditionStorageInterface.class);
-
-        // storage is filed
-        MultipleConditionWindow multiple = multipleConditionStorage.get(flow, "multiple").orElseThrow();
-        assertThat(multiple.getResults().get("flow-a"), is(true));
-
         // second one
         execution = runnerUtils.runOne("org.kestra.tests", "trigger-multiplecondition-flow-b", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size(), is(1));
@@ -91,10 +83,6 @@ public class MultipleConditionTriggerCaseTest {
 
         assertThat(triggerExecution.getTrigger().getVariables().get("executionId"), is(execution.getId()));
         assertThat(triggerExecution.getTrigger().getVariables().get("namespace"), is("org.kestra.tests"));
-        assertThat(triggerExecution.getTrigger().getVariables().get("flowId"), is("flowId -> trigger-multiplecondition-flow-b"));
-
-        // control that storage was reset to avoid multiple execution
-        multiple = multipleConditionStorage.get(flow, "multiple").orElseThrow();
-        assertThat(multiple.getResults().size(), is(1));
+        assertThat(triggerExecution.getTrigger().getVariables().get("flowId"), is("trigger-multiplecondition-flow-b"));
     }
 }

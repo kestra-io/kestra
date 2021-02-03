@@ -19,13 +19,13 @@ import org.kestra.core.runners.FlowableUtils;
 import org.kestra.core.runners.RunContextLogger;
 import org.kestra.core.utils.MapUtils;
 
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 @Value
 @Builder
@@ -528,49 +528,39 @@ public class Execution implements DeletedInterface {
 
         for (TaskRun current : this.taskRunList) {
             if (current.getOutputs() != null) {
-                result = MapUtils.merge(result, outputs(current));
+                result = MapUtils.merge(result, taskRunToTree(current));
             }
         }
 
         return result;
     }
 
-    private Map<String, Object> outputs(TaskRun taskRun) {
-        List<TaskRun> childs = findChilds(taskRun)
-            .stream()
-            .filter(r -> r.getValue() != null)
-            .collect(Collectors.toList());
-
-        if (childs.size() == 0) {
+    private Map<String, Object> taskRunToTree(TaskRun taskRun) {
+        Map<String, Object> result = new HashMap<>();
+        var children = new HashMap<String, TaskRun>();
+        for (TaskRun t: this.taskRunList) {
+            children.put(t.getId(), t);
+        }
+        taskRunBranches(result, children, taskRun);
+        if (result.keySet().size() <= 1) {
             if (taskRun.getValue() == null) {
                 return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
             } else {
                 return Map.of(taskRun.getTaskId(), Map.of(taskRun.getValue(), taskRun.getOutputs()));
             }
         }
-
-        Map<String, Object> result = new HashMap<>();
-        Map<String, Object> current = result;
-
-        for (TaskRun t : childs) {
-            if (t.getValue() != null) {
-                HashMap<String, Object> item = new HashMap<>();
-                current.put(t.getValue(), item);
-                current = item;
-            }
-        }
-
-        if (taskRun.getOutputs() != null) {
-            if (taskRun.getValue() != null) {
-                current.put(taskRun.getValue(), taskRun.getOutputs());
-            } else {
-                current.putAll(taskRun.getOutputs());
-            }
-        }
-
         return Map.of(taskRun.getTaskId(), result);
+
     }
 
+    private void taskRunBranches(Map<String, Object> result, HashMap<String, TaskRun> children, TaskRun taskRun) {
+        var currentTask = children.getOrDefault(taskRun.getParentTaskRunId(), null);
+        if (currentTask != null && currentTask.getValue() != null) {
+            var leave = new HashMap<String, Object>();
+            taskRunBranches(leave, children, currentTask);
+            result.put(currentTask.getValue(), leave);
+        }
+    }
 
     public List<Map<String, Object>> parents(TaskRun taskRun) {
         List<Map<String, Object>> result = new ArrayList<>();
@@ -605,33 +595,23 @@ public class Execution implements DeletedInterface {
      * @param taskRun current child
      * @return List of parent {@link TaskRun}
      */
-    public List<TaskRun> findChilds(TaskRun taskRun) {
+    private List<TaskRun> findChilds(TaskRun taskRun) {
+        var tasks = new ArrayList<TaskRun>();
         if (taskRun.getParentTaskRunId() == null) {
-            return new ArrayList<>();
+            return tasks;
         }
-
-        ArrayList<TaskRun> result = new ArrayList<>();
-
-        boolean ended = false;
-
-        while (!ended) {
-            final TaskRun finalTaskRun = taskRun;
-            Optional<TaskRun> find = this.taskRunList
-                .stream()
-                .filter(t -> t.getId().equals(finalTaskRun.getParentTaskRunId()))
-                .findFirst();
-
-            if (find.isPresent()) {
-                result.add(find.get());
-                taskRun = find.get();
-            } else {
-                ended = true;
+        var children = new HashMap<String, TaskRun>();
+        for (TaskRun t: this.taskRunList) {
+            children.put(t.getId(), t);
+        }
+        TaskRun currentTask = taskRun;
+        while (currentTask != null) {
+            currentTask = children.getOrDefault(currentTask.getParentTaskRunId(), null);
+            if (currentTask != null) {
+                tasks.add(0, currentTask);
             }
         }
-
-        Collections.reverse(result);
-
-        return result;
+        return tasks;
     }
 
     public List<String> findChildsValues(TaskRun taskRun, boolean withCurrent) {

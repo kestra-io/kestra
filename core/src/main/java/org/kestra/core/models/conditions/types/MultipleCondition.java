@@ -8,6 +8,7 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.annotations.Example;
 import org.kestra.core.models.annotations.Plugin;
+import org.kestra.core.models.annotations.PluginProperty;
 import org.kestra.core.models.conditions.Condition;
 import org.kestra.core.models.conditions.ConditionContext;
 import org.kestra.core.models.executions.Execution;
@@ -42,14 +43,29 @@ import javax.validation.constraints.Pattern;
     examples = {
         @Example(
             full = true,
+            title = "A flow that is waiting for 2 flows that is successful in 1 days",
             code = {
-                "- conditions:",
-                "    - type: org.kestra.core.models.conditions.types.MultipleFlowCondition",
-                "      window: PT1D",
-                "      windowAdvance: PT16H",
-                "      flows:",
-                "      - namespace: org.kestra.tests",
-                "        flowId: my-current-flow"
+                "triggers:" +
+                "  - id: multiple-listen-flow" +
+                "    type: org.kestra.core.models.triggers.types.Flow" +
+                "    conditions:" +
+                "      - id: multiple" +
+                "        type: org.kestra.core.models.conditions.types.MultipleCondition" +
+                "        window: P1D" +
+                "        windowAdvance: P0D" +
+                "        conditions:" +
+                "          success:" +
+                "            type: org.kestra.core.models.conditions.types.ExecutionStatusCondition" +
+                "            in:" +
+                "              - SUCCESS" +
+                "          flow-a:" +
+                "            type: org.kestra.core.models.conditions.types.ExecutionFlowCondition" +
+                "            namespace: org.kestra.tests" +
+                "            flowId: trigger-multiplecondition-flow-a" +
+                "          flow-b:" +
+                "            type: org.kestra.core.models.conditions.types.ExecutionFlowCondition" +
+                "            namespace: org.kestra.tests" +
+                "            flowId: trigger-multiplecondition-flow-b"
             }
         )
     }
@@ -68,13 +84,20 @@ public class MultipleCondition extends Condition {
     @NotNull
     @Schema(
         title = "The window advance duration",
-        description = "Allow to specify the start hour for example of the window\n" +
-        "example: windowStart=2020-09-08T16:00:00+02 and windowAdvance=PT16H will look at execution between execution 16:00 every day")
+        description = "Allow to specify the start hour for example of the window" +
+        "example: windowStart=2020-09-08T16:00:00+02 and windowAdvance=PT16H will look at execution between execution at 16:00 every day")
     private Duration windowAdvance;
 
     @NotNull
     @NotEmpty
-    @Schema(title = "The list of conditions to wait for")
+    @Schema(
+        title = "The list of conditions to wait for",
+        description = "The key must be unique for a trigger since it will be use to store previous result."
+    )
+    @PluginProperty(
+        dynamic = false,
+        additionalProperties = Condition.class
+    )
     private Map<String, Condition> conditions;
 
     /**

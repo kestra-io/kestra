@@ -37,6 +37,10 @@ public class MultipleConditionWindow {
         ));
     }
 
+    public boolean isValid(ZonedDateTime now) {
+        return now.isAfter(this.getStart()) && now.isBefore(this.getEnd());
+    }
+
     public MultipleConditionWindow with(Map<String, Boolean> newResult) {
         Map<String, Boolean> finalResults = new HashMap<>(results);
 

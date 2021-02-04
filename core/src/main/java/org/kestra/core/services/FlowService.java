@@ -110,19 +110,12 @@ public class FlowService {
             .collect(Collectors.toList());
     }
 
-    private Stream<FlowWithFlowTriggerAndMultipleCondition> multipleFlowStream(Stream<Flow> flowStream, MultipleConditionStorageInterface multipleConditionStorage) {
-        return flowStream
-            .filter(f -> f.getTriggers() != null && f.getTriggers().size() > 0)
-            .flatMap(f -> f.getTriggers()
-                .stream()
-                .map(trigger -> new FlowWithTrigger(f, trigger))
-            )
-            .filter(f -> f.getTrigger() instanceof org.kestra.core.models.triggers.types.Flow)
-            .map(e -> new FlowWithFlowTrigger(
-                    e.getFlow(),
-                    (org.kestra.core.models.triggers.types.Flow) e.getTrigger()
-                )
-            )
+    private Stream<FlowWithFlowTriggerAndMultipleCondition> multipleFlowStream(
+        Stream<Flow> flowStream,
+        MultipleConditionStorageInterface multipleConditionStorage
+    ) {
+        return flowWithFlowTrigger(flowStream)
+            .stream()
             .flatMap(e -> e.getTrigger()
                 .getConditions()
                 .stream()
@@ -140,7 +133,12 @@ public class FlowService {
             );
     }
 
-    public List<MultipleConditionWindow> multipleFlowTrigger(Stream<Flow> flowStream, Flow flow, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
+    public List<MultipleConditionWindow> multipleFlowTrigger(
+        Stream<Flow> flowStream,
+        Flow flow,
+        Execution execution,
+        MultipleConditionStorageInterface multipleConditionStorage
+    ) {
          return multipleFlowStream(flowStream, multipleConditionStorage)
             .map(f -> {
                 Map<String, Boolean> results = f.getMultipleCondition()
@@ -158,16 +156,23 @@ public class FlowService {
              .collect(Collectors.toList());
     }
 
-    public List<MultipleConditionWindow> multipleFlowToDelete(Stream<Flow> flowStream, MultipleConditionStorageInterface multipleConditionStorage) {
-        return multipleFlowStream(flowStream, multipleConditionStorage)
-            .filter(f -> f.getMultipleCondition().getConditions().size() == f.getMultipleConditionWindow()
-                .getResults()
-                .entrySet()
-                .stream()
-                .filter(Map.Entry::getValue)
-                .count()
+    public List<MultipleConditionWindow> multipleFlowToDelete(
+        Stream<Flow> flowStream,
+        MultipleConditionStorageInterface multipleConditionStorage
+    ) {
+        return Stream
+            .concat(
+                multipleFlowStream(flowStream, multipleConditionStorage)
+                    .filter(f -> f.getMultipleCondition().getConditions().size() == f.getMultipleConditionWindow()
+                        .getResults()
+                        .entrySet()
+                        .stream()
+                        .filter(Map.Entry::getValue)
+                        .count()
+                    )
+                    .map(FlowWithFlowTriggerAndMultipleCondition::getMultipleConditionWindow),
+                multipleConditionStorage.expired().stream()
             )
-            .map(FlowWithFlowTriggerAndMultipleCondition::getMultipleConditionWindow)
             .collect(Collectors.toList());
     }
 

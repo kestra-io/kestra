@@ -4,11 +4,13 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import org.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class MemoryMultipleConditionStorage implements MultipleConditionStorageInterface {
     private final Map<String, Map<String, Map<String, MultipleConditionWindow>>> map = new ConcurrentHashMap<>();
@@ -33,6 +35,20 @@ public class MemoryMultipleConditionStorage implements MultipleConditionStorageI
             .flatMap(byCondition -> byCondition.containsKey(conditionId) ?
                 Optional.of(byCondition.get(conditionId)) :
                 Optional.empty());
+    }
+
+    @Override
+    public List<MultipleConditionWindow> expired() {
+        ZonedDateTime now = ZonedDateTime.now();
+
+        return map
+            .entrySet()
+            .stream()
+            .flatMap(e -> e.getValue().entrySet().stream())
+            .flatMap(e -> e.getValue().entrySet().stream())
+            .map(Map.Entry::getValue)
+            .filter(e -> !e.isValid(now))
+            .collect(Collectors.toList());
     }
 
     public synchronized void save(List<MultipleConditionWindow> multipleConditionWindows) {

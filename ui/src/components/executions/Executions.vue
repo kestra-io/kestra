@@ -42,11 +42,11 @@
                         </router-link>
                     </template>
                     <template #cell(startDate)="row">
-                        <date-ago :date="row.item.state.startDate" />
+                        <date-renderer :date="row.item.state.startDate" />
                     </template>
                     <template #cell(endDate)="row">
                         <span v-if="!isRunning(row.item)">
-                            <date-ago :date="row.item.state.endDate" />
+                            <date-renderer :date="row.item.state.endDate" />
                         </span>
                     </template>
                     <template #cell(current)="row">
@@ -97,7 +97,7 @@
     import StateGlobalChart from "../../components/stats/StateGlobalChart";
     import FlowTriggerDetailsModal from "../../components/flows/TriggerDetailsModal";
     import TriggerAvatar from "../../components/flows/TriggerAvatar";
-    import DateAgo from "../layout/DateAgo";
+    import DateRenderer from "../renderers/DateRenderer"
     import Kicon from "../Kicon"
 
     export default {
@@ -114,7 +114,7 @@
             StateGlobalChart,
             FlowTriggerDetailsModal,
             TriggerAvatar,
-            DateAgo,
+            DateRenderer,
             Kicon
         },
         props: {

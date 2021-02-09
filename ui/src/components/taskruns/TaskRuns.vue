@@ -47,11 +47,11 @@
                         </router-link>
                     </template>
                     <template #cell(startDate)="row">
-                        <date-ago :date="row.item.state.startDate" />
+                        <date-renderer :date="row.item.state.startDate" />
                     </template>
                     <template #cell(endDate)="row">
                         <span v-if="!isRunning(row.item)">
-                            <date-ago :date="row.item.state.endDate" />
+                            <date-renderer :date="row.item.state.endDate" />
                         </span>
                     </template>
                     <template #cell(current)="row">
@@ -104,7 +104,7 @@
     import RefreshButton from "../layout/RefreshButton";
     import StatusFilterButtons from "../layout/StatusFilterButtons";
     import StateGlobalChart from "../../components/stats/StateGlobalChart";
-    import DateAgo from "../layout/DateAgo";
+    import DateRenderer from "../renderers/DateRenderer"
     import Kicon from "../Kicon"
 
     export default {
@@ -119,7 +119,7 @@
             RefreshButton,
             StatusFilterButtons,
             StateGlobalChart,
-            DateAgo,
+            DateRenderer,
             Kicon
         },
         data() {

@@ -334,8 +334,9 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         ZonedDateTime now = now();
 
         if (executionWithTrigger.getExecution().getTrigger() != null) {
-            ZonedDateTime next = ZonedDateTime.
-                parse((CharSequence) executionWithTrigger.getExecution().getTrigger().getVariables().get("next"));
+            Object nextVariable = executionWithTrigger.getExecution().getTrigger().getVariables().get("next");
+
+            ZonedDateTime next = (nextVariable != null) ? ZonedDateTime.parse((CharSequence) nextVariable) : null;
 
             // Exclude backfills
             // FIXME : "late" are not excluded and can increase delay value (false positive)

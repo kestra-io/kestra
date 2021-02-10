@@ -58,9 +58,12 @@ abstract public class JacksonMapper {
         }
     }
 
-    private static final ObjectMapper ION_MAPPER = JacksonMapper.configure(
-        new IonObjectMapper()
-    );
+    private static final ObjectMapper ION_MAPPER = JacksonMapper
+        .configure(
+            new IonObjectMapper()
+        )
+        .setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS)
+        .setSerializationInclusion(JsonInclude.Include.ALWAYS);
 
     public static ObjectMapper ofIon() {
         return ION_MAPPER;

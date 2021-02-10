@@ -14,6 +14,7 @@ import java.time.ZonedDateTime;
 import java.util.TimeZone;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 class JacksonMapperTest {
@@ -34,7 +35,8 @@ class JacksonMapperTest {
         return new Pojo(
             "te\n\nst",
             Instant.parse("2013-09-08T16:19:12Z"),
-            ZonedDateTime.parse("2013-09-08T16:19:12+03:00")
+            ZonedDateTime.parse("2013-09-08T16:19:12+03:00"),
+            null
         );
     }
 
@@ -57,8 +59,8 @@ class JacksonMapperTest {
         Pojo original = pojo();
 
         String s = mapper.writeValueAsString(original);
+        assertThat(s, containsString("nullable:null"));
         Pojo deserialize = mapper.readValue(s, Pojo.class);
-
         test(original, deserialize);
     }
 
@@ -77,5 +79,6 @@ class JacksonMapperTest {
         private String string;
         private Instant instant;
         private ZonedDateTime zonedDateTime;
+        private String nullable;
     }
 }

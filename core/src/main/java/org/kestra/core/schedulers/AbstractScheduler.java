@@ -333,17 +333,19 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
         ZonedDateTime now = now();
 
-        ZonedDateTime next = ZonedDateTime.
-            parse((CharSequence) executionWithTrigger.getExecution().getTrigger().getVariables().get("next"));
+        if (executionWithTrigger.getExecution().getTrigger() != null) {
+            ZonedDateTime next = ZonedDateTime.
+                parse((CharSequence) executionWithTrigger.getExecution().getTrigger().getVariables().get("next"));
 
-        // Exclude backfills
-        // FIXME : late are not excluded and can increase delay value (false positive)
-        if (next != null && now.isBefore(next)) {
-            metricRegistry
-                .timer(MetricRegistry.SCHEDULER_TRIGGER_DELAY_DURATION, metricRegistry.tags(executionWithTrigger))
-                .record(Duration.between(
-                    executionWithTrigger.getTriggerContext().getDate(), now
-                ));
+            // Exclude backfills
+            // FIXME : "late" are not excluded and can increase delay value (false positive)
+            if (next != null && now.isBefore(next)) {
+                metricRegistry
+                    .timer(MetricRegistry.SCHEDULER_TRIGGER_DELAY_DURATION, metricRegistry.tags(executionWithTrigger))
+                    .record(Duration.between(
+                        executionWithTrigger.getTriggerContext().getDate(), now
+                    ));
+            }
         }
 
         log.info(

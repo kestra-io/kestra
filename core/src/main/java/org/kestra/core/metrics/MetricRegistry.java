@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 @Slf4j
 public class MetricRegistry {
     public final static String METRIC_WORKER_RUNNING_COUNT = "worker.running.count";
+    public final static String METRIC_WORKER_QUEUED_DURATION = "worker.queued.duration";
     public final static String METRIC_WORKER_STARTED_COUNT = "worker.started.count";
     public final static String METRIC_WORKER_RETRYED_COUNT = "worker.retryed.count";
     public final static String METRIC_WORKER_ENDED_COUNT = "worker.ended.count";
@@ -42,6 +43,7 @@ public class MetricRegistry {
 
     public final static String SCHEDULER_LOOP_COUNT = "scheduler.loop.count";
     public final static String SCHEDULER_TRIGGER_COUNT = "scheduler.trigger.count";
+    public final static String SCHEDULER_TRIGGER_DELAY_DURATION = "scheduler.trigger.delay.duration";
     public final static String SCHEDULER_EVALUATE_RUNNING_COUNT = "scheduler.evaluate.running.count";
     public final static String SCHEDULER_EVALUATE_COUNT = "scheduler.evaluate.count";
     public final static String SCHEDULER_EVALUATE_DURATION = "scheduler.evaluate.duration";
@@ -75,10 +77,10 @@ public class MetricRegistry {
     /**
      * Register a gauge that reports the value of the {@link Number}.
      *
-     * @param name Name of the gauge being registered.
+     * @param name   Name of the gauge being registered.
      * @param number Thread-safe implementation of {@link Number} used to access the value.
-     * @param tags Sequence of dimensions for breaking down the name.
-     * @param <T> The type of the number from which the gauge value is extracted.
+     * @param tags   Sequence of dimensions for breaking down the name.
+     * @param <T>    The type of the number from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */

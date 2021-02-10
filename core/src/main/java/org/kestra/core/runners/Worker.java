@@ -24,6 +24,9 @@ import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.slf4j.Logger;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -90,10 +93,22 @@ public class Worker implements Runnable {
         );
     }
 
+    private static ZonedDateTime now() {
+        return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+    }
+
     private void run(WorkerTask workerTask) throws QueueException {
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, metricRegistry.tags(workerTask))
             .increment();
+
+        if (workerTask.getTaskRun().getState().getCurrent() == State.Type.CREATED) {
+            metricRegistry
+                .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, metricRegistry.tags(workerTask))
+                .record(Duration.between(
+                    workerTask.getTaskRun().getState().getStartDate(), now()
+                ));
+        }
 
         workerTask.logger().info(
             "[namespace: {}] [flow: {}] [task: {}] [execution: {}] [taskrun: {}] [value: {}] Type {} started",

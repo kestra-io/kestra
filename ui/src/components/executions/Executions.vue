@@ -42,11 +42,11 @@
                         </router-link>
                     </template>
                     <template #cell(startDate)="row">
-                        <date-ago :date="row.item.state.startDate" />
+                        <date-ago :inverted="true" :date="row.item.state.startDate" />
                     </template>
                     <template #cell(endDate)="row">
                         <span v-if="!isRunning(row.item)">
-                            <date-ago :date="row.item.state.endDate" />
+                            <date-ago :inverted="true" :date="row.item.state.endDate" />
                         </span>
                     </template>
                     <template #cell(current)="row">

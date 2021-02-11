@@ -25,6 +25,9 @@ import org.kestra.core.services.FlowListenersInterface;
 import org.kestra.core.utils.Await;
 import org.kestra.core.utils.ExecutorsUtils;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -32,8 +35,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import static org.kestra.core.utils.Rethrow.throwSupplier;
 
@@ -84,7 +85,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
     @Override
     public void run() {
-        ScheduledFuture<?> handle  = scheduleExecutor.scheduleAtFixedRate(
+        ScheduledFuture<?> handle = scheduleExecutor.scheduleAtFixedRate(
             this::handle,
             0,
             1,
@@ -330,12 +331,31 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
             .counter(MetricRegistry.SCHEDULER_TRIGGER_COUNT, metricRegistry.tags(executionWithTrigger))
             .increment();
 
+        ZonedDateTime now = now();
+
+        if (executionWithTrigger.getExecution().getTrigger() != null) {
+            Object nextVariable = executionWithTrigger.getExecution().getTrigger().getVariables().get("next");
+
+            ZonedDateTime next = (nextVariable != null) ? ZonedDateTime.parse((CharSequence) nextVariable) : null;
+
+            // Exclude backfills
+            // FIXME : "late" are not excluded and can increase delay value (false positive)
+            if (next != null && now.isBefore(next)) {
+                metricRegistry
+                    .timer(MetricRegistry.SCHEDULER_TRIGGER_DELAY_DURATION, metricRegistry.tags(executionWithTrigger))
+                    .record(Duration.between(
+                        executionWithTrigger.getTriggerContext().getDate(), now
+                    ));
+            }
+        }
+
         log.info(
-            "Schedule execution '{}' for flow '{}.{}' started at '{}' for trigger [{}]",
+            "Scheduled execution '{}' for flow '{}.{}' at '{}' started at '{}' for trigger [{}]",
             executionWithTrigger.getExecution().getId(),
             executionWithTrigger.getExecution().getNamespace(),
             executionWithTrigger.getExecution().getFlowId(),
             executionWithTrigger.getTriggerContext().getDate(),
+            now,
             executionWithTrigger.getTriggerContext().getTriggerId()
         );
     }

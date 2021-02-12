@@ -116,7 +116,6 @@
         },
         created() {
             this.orientation = localStorage.getItem("topology-orientation") === "1";
-            this.$store.dispatch("plugin/icons").then(() => this.ready = true)
         },
         mounted: function () {
             this.generateGraph();

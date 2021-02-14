@@ -10,7 +10,7 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
-import org.kestra.core.queues.AbstractQueue;
+import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.utils.ExecutorsUtils;
@@ -32,11 +32,14 @@ import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
 
 @Slf4j
-public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, AutoCloseable {
+public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     private Class<T> cls;
     private final AdminClient adminClient;
     private final KafkaConsumerService kafkaConsumerService;
     private final List<org.apache.kafka.clients.consumer.Consumer<String, T>> kafkaConsumers = new ArrayList<>();
+    private final QueueService queueService;
+    private final KafkaQueueService kafkaQueueService;
+
     private static ExecutorService poolExecutor;
 
     private KafkaProducer<String, T> kafkaProducer;
@@ -52,6 +55,8 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
 
         this.adminClient = kafkaAdminService.of();
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
+        this.queueService = applicationContext.getBean(QueueService.class);
+        this.kafkaQueueService = applicationContext.getBean(KafkaQueueService.class);
     }
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
@@ -77,16 +82,8 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
         kafkaAdminService.createIfNotExist(topicKey);
     }
 
-    static <T> void log(TopicsConfig topicsConfig, T object, String message) {
-        if (log.isTraceEnabled()) {
-            log.trace("{} on  topic '{}', value {}", message, topicsConfig.getName(), object);
-        } else if (log.isDebugEnabled()) {
-            log.trace("{} on topic '{}', key {}", message, topicsConfig.getName(), key(object));
-        }
-    }
-
     private void produce(String key, T message) {
-        KafkaQueue.log(topicsConfig, message, "Outgoing messsage");
+        this.kafkaQueueService.log(log, topicsConfig, message, "Outgoing messsage");
 
         try {
             kafkaProducer
@@ -109,12 +106,12 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
 
     @Override
     public void emit(T message) throws QueueException {
-        this.produce(key(message), message);
+        this.produce(this.queueService.key(message), message);
     }
 
     @Override
     public void delete(T message) throws QueueException {
-        this.produce(key(message), null);
+        this.produce(this.queueService.key(message), null);
     }
 
     @Override
@@ -144,7 +141,7 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
                 ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofSeconds(1));
 
                 records.forEach(record -> {
-                    KafkaQueue.log(topicsConfig, record.value(), "Incoming messsage");
+                    this.kafkaQueueService.log(log, topicsConfig, record.value(), "Incoming messsage");
 
                     consumer.accept(record.value());
 

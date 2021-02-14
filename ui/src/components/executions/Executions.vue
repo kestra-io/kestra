@@ -23,11 +23,12 @@
                     @sort-changed="onSort"
                     responsive
                     striped
-                    hover
                     bordered
+                    hover
                     :items="executions"
                     :fields="fields"
                     @row-dblclicked="onRowDoubleClick"
+                    ref="table"
                     show-empty
                 >
                     <template #empty>
@@ -174,16 +175,24 @@
                         sortable: true,
                         sortKey: "state.duration"
                     },
-                    {
-                        key: "namespace",
-                        label: title("namespace"),
-                        sortable: true
-                    },
-                    {
-                        key: "flowId",
-                        label: title("flow"),
-                        sortable: true
-                    },
+                ]
+
+                if (this.$route.name !== "flowEdit") {
+                    fields.push(
+                        {
+                            key: "namespace",
+                            label: title("namespace"),
+                            sortable: true
+                        },
+                        {
+                            key: "flowId",
+                            label: title("flow"),
+                            sortable: true
+                        },
+                    )
+                }
+
+                fields.push(
                     {
                         key: "current",
                         label: title("state"),
@@ -201,7 +210,7 @@
                         label: "",
                         class: "row-action"
                     }
-                ];
+                );
 
                 this.hidden.forEach(value => {
                     fields = fields.filter(col => col.key !== value);

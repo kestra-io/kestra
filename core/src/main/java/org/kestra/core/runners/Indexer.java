@@ -9,53 +9,52 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.ExecutionRepositoryInterface;
 import org.kestra.core.repositories.LogRepositoryInterface;
+import org.kestra.core.repositories.SaveRepositoryInterface;
+import org.kestra.core.repositories.TriggerRepositoryInterface;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 @Prototype
-@Requires(beans = {ExecutionRepositoryInterface.class, LogRepositoryInterface.class})
+@Requires(beans = {ExecutionRepositoryInterface.class, LogRepositoryInterface.class, TriggerRepositoryInterface.class})
 public class Indexer implements IndexerInterface {
-    private ExecutionRepositoryInterface executionRepository;
-    private LogRepositoryInterface logRepository;
-    private QueueInterface<Execution> executionQueue;
-    private QueueInterface<LogEntry> logQueue;
-    private MetricRegistry metricRegistry;
+    private final ExecutionRepositoryInterface executionRepository;
+    private final QueueInterface<Execution> executionQueue;
+    private final LogRepositoryInterface logRepository;
+    private final QueueInterface<LogEntry> logQueue;
+    private final MetricRegistry metricRegistry;
 
     @Inject
     public Indexer(
-        @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         ExecutionRepositoryInterface executionRepository,
+        @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         LogRepositoryInterface logRepository,
+        @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
+        LogRepositoryInterface triggerRepository,
+        @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> triggerQueue,
         MetricRegistry metricRegistry
     ) {
-        this.executionQueue = executionQueue;
-        this.logQueue = logQueue;
         this.executionRepository = executionRepository;
+        this.executionQueue = executionQueue;
         this.logRepository = logRepository;
+        this.logQueue = logQueue;
         this.metricRegistry = metricRegistry;
     }
 
     @Override
     public void run() {
-        executionQueue.receive(Indexer.class, execution -> {
-            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT).increment();
-            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT).increment();
+        this.send(executionQueue, executionRepository);
+        this.send(logQueue, logRepository);
+    }
 
-            this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION).record(() -> {
-                executionRepository.save(execution);
-                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT).increment();
-            });
-        });
+    protected <T> void send(QueueInterface<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
+        queueInterface.receive(Indexer.class, item -> {
+            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT, "type", item.getClass().getName()).increment();
+            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, "type", item.getClass().getName()).increment();
 
-        logQueue.receive(Indexer.class, logEntry -> {
-            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT).increment();
-            this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT).increment();
-
-            this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION).record(() -> {
-                logRepository.save(logEntry);
-                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT).increment();
+            this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, "type", item.getClass().getName()).record(() -> {
+                saveRepositoryInterface.save(item);
+                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, "type", item.getClass().getName()).increment();
             });
         });
     }

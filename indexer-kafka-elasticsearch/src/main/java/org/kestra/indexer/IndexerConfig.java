@@ -5,10 +5,12 @@ import lombok.Getter;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @ConfigurationProperties("kestra.indexer")
 @Getter
 public class IndexerConfig {
-    private final int batchSize = 500;
-    private final Duration batchDuration = Duration.of(1, ChronoUnit.SECONDS);
+    Integer batchSize = 500;
+    Duration batchDuration = Duration.of(1, ChronoUnit.SECONDS);
+    List<Class<?>> models;
 }

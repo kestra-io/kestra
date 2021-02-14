@@ -1,12 +1,11 @@
 <template>
     <div v-if="revisions && revisions.length > 1">
         <b-row>
-            <b-col md="12">
+            <b-col md="12 mb-3">
                 <b-form-select v-model="displayType" :options="displayTypes" />
-                <hr>
             </b-col>
 
-            <b-col md="6">
+            <b-col md="6 mb-3">
                 <b-input-group>
                     <b-form-select v-model="revisionLeft" :options="options" />
                     <b-btn @click="seeRevision(revisionLeft, revisionLeftText)">
@@ -15,8 +14,10 @@
                         </kicon>
                     </b-btn>
                 </b-input-group>
+
+                <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionLeft)}" />
             </b-col>
-            <b-col md="6">
+            <b-col md="6 mb-3">
                 <b-input-group>
                     <b-form-select v-model="revisionRight" :options="options" />
                     <b-btn @click="seeRevision(revisionRight, revisionRightText)">
@@ -25,9 +26,10 @@
                         </kicon>
                     </b-btn>
                 </b-input-group>
+
+                <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionRight)}" />
             </b-col>
             <b-col md="12">
-                <br>
                 <code-diff
                     :output-format="displayType"
                     :old-string="revisionLeftText"
@@ -62,9 +64,10 @@
     import Editor from "../../components/inputs/Editor";
     import FileCode from "vue-material-design-icons/FileCode";
     import Kicon from "../Kicon"
+    import Crud from "Override/components/auth/Crud";
 
     export default {
-        components: {CodeDiff, Editor, FileCode, Kicon},
+        components: {CodeDiff, Editor, FileCode, Kicon, Crud},
         created() {
             this.$store
                 .dispatch("flow/loadRevisions", this.$route.params)
@@ -103,11 +106,13 @@
                     }
                 }
             },
-
+            revisionNumber(index) {
+                return this.revisions[index].revision;
+            },
             seeRevision(index, revision) {
                 this.revisionId = index
                 this.revisionYaml = revision
-                this.revision = this.revisions[index].revision
+                this.revision = this.revisionNumber(index)
                 setTimeout(() => {
                     this.$bvModal.show(`modal-source-${index}`)
                 })

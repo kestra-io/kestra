@@ -122,4 +122,4 @@ kestra:
         cls: org.kestra.core.models.triggers.Trigger
         name: "unit_${kestra.prefix}_kestra_trigger"
         properties:
-          cleanup.policy: "delete,compact"
+          cleanup.policy: "compact"

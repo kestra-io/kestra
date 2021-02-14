@@ -24,9 +24,6 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -68,17 +65,16 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     protected static final ObjectMapper mapper = JacksonMapper.ofJson();
     protected Class<T> cls;
-
     protected RestHighLevelClient client;
+    protected ModelValidator modelValidator;
+    protected ElasticSearchIndicesService elasticSearchIndicesService;
 
     protected Map<String, IndicesConfig> indicesConfigs;
-
-    protected ModelValidator modelValidator;
 
     @Inject
     public AbstractElasticSearchRepository(
         RestHighLevelClient client,
-        List<IndicesConfig> indicesConfigs,
+        ElasticSearchIndicesService elasticSearchIndicesService,
         ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         Class<T> cls
@@ -88,12 +84,9 @@ abstract public class AbstractElasticSearchRepository<T> {
         this.client = client;
         this.cls = cls;
         this.modelValidator = modelValidator;
+        this.elasticSearchIndicesService = elasticSearchIndicesService;
 
-        this.indicesConfigs = indicesConfigs
-            .stream()
-            .filter(r -> r.getCls() == this.cls)
-            .map(r -> new AbstractMap.SimpleEntry<>(r.getName(), r))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        this.indicesConfigs = elasticSearchIndicesService.findConfig(cls);
     }
 
     private synchronized void startExecutor(ExecutorsUtils executorsUtils) {
@@ -413,40 +406,10 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     @PostConstruct
     public void initMapping() {
-        this.createIndice();
-        this.updateMapping();
+        this.elasticSearchIndicesService.createIndice(this.indicesConfigs);
+        this.elasticSearchIndicesService.updateMapping(this.indicesConfigs);
     }
 
-    private void createIndice() {
-        try {
-            for (Map.Entry<String, IndicesConfig> index : this.indicesConfigs.entrySet()) {
-                GetIndexRequest exists = new GetIndexRequest(index.getValue().getIndex());
-                if (!client.indices().exists(exists, RequestOptions.DEFAULT)) {
-                    CreateIndexRequest request = new CreateIndexRequest(index.getValue().getIndex());
-                    request.settings(index.getValue().getSettingsContent(), XContentType.JSON);
-
-                    client.indices().create(request, RequestOptions.DEFAULT);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void updateMapping() {
-        for (Map.Entry<String, IndicesConfig> index : this.indicesConfigs.entrySet()) {
-            if (index.getValue().getMappingContent() != null) {
-                try {
-                    PutMappingRequest request = new PutMappingRequest(index.getValue().getIndex());
-                    request.source(index.getValue().getMappingContent(), XContentType.JSON);
-
-                    client.indices().putMapping(request, RequestOptions.DEFAULT);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-    }
 
     protected List<String> findDistinctNamespace(String index) {
         BoolQueryBuilder query = this.defaultFilter();

@@ -9,7 +9,6 @@ import org.kestra.core.models.triggers.TriggerContext;
 import org.kestra.core.models.validations.ModelValidator;
 import org.kestra.core.repositories.TriggerRepositoryInterface;
 import org.kestra.core.utils.ExecutorsUtils;
-import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,11 +23,11 @@ public class ElasticsearchTriggerRepository extends AbstractElasticSearchReposit
     @Inject
     public ElasticsearchTriggerRepository(
         RestHighLevelClient client,
-        List<IndicesConfig> indicesConfigs,
+        ElasticSearchIndicesService elasticSearchIndicesService,
         ModelValidator modelValidator,
         ExecutorsUtils executorsUtils
     ) {
-        super(client, indicesConfigs, modelValidator, executorsUtils, Trigger.class);
+        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Trigger.class);
     }
 
     public Optional<Trigger> findLast(TriggerContext trigger) {

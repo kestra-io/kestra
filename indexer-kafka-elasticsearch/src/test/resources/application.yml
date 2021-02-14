@@ -37,3 +37,9 @@ kestra:
         cls: org.kestra.core.models.executions.LogEntry
         name: "unit_kestra_logs"
 
+  indexer:
+    batchSize: 100
+    models:
+      - org.kestra.core.models.executions.Execution
+      - org.kestra.core.models.triggers.Trigger
+      - org.kestra.core.models.executions.LogEntry

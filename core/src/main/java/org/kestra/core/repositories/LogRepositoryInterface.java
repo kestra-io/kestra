@@ -6,7 +6,7 @@ import org.slf4j.event.Level;
 
 import java.util.List;
 
-public interface LogRepositoryInterface {
+public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry> {
     List<LogEntry> findByExecutionId(String id, Level minLevel);
 
     List<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel);

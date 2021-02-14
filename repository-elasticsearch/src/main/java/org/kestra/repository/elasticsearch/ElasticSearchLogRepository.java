@@ -13,7 +13,6 @@ import org.kestra.core.repositories.ArrayListTotal;
 import org.kestra.core.repositories.LogRepositoryInterface;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.core.utils.IdUtils;
-import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import org.slf4j.event.Level;
 
 import java.util.List;
@@ -29,11 +28,11 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     @Inject
     public ElasticSearchLogRepository(
         RestHighLevelClient client,
-        List<IndicesConfig> indicesConfigs,
+        ElasticSearchIndicesService elasticSearchIndicesService,
         ModelValidator modelValidator,
         ExecutorsUtils executorsUtils
     ) {
-        super(client, indicesConfigs, modelValidator, executorsUtils, LogEntry.class);
+        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, LogEntry.class);
     }
 
     @Override

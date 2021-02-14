@@ -22,7 +22,7 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.models.triggers.Trigger;
-import org.kestra.core.queues.AbstractQueue;
+import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.runners.*;
@@ -57,6 +57,7 @@ public class KafkaExecutor extends AbstractExecutor {
     QueueInterface<LogEntry> logQueue;
     FlowService flowService;
     KafkaStreamSourceService kafkaStreamSourceService;
+    QueueService queueService;
 
     @Inject
     public KafkaExecutor(
@@ -69,7 +70,8 @@ public class KafkaExecutor extends AbstractExecutor {
         FlowService flowService,
         ConditionService conditionService,
         KafkaStreamSourceService kafkaStreamSourceService,
-        TaskDefaultService taskDefaultService
+        TaskDefaultService taskDefaultService,
+        QueueService queueService
     ) {
         super(runContextFactory, metricRegistry, conditionService, taskDefaultService);
 
@@ -79,6 +81,7 @@ public class KafkaExecutor extends AbstractExecutor {
         this.logQueue = logQueue;
         this.flowService = flowService;
         this.kafkaStreamSourceService = kafkaStreamSourceService;
+        this.queueService = queueService;
     }
 
     public Topology topology() {
@@ -558,11 +561,11 @@ public class KafkaExecutor extends AbstractExecutor {
                 Named.as("handleWorkerTask-isFlowableToRunning-mapValues")
             )
             .map(
-                (key, value) -> new KeyValue<>(AbstractQueue.key(value), value),
+                (key, value) -> new KeyValue<>(queueService.key(value), value),
                 Named.as("handleWorkerTask-isFlowable-map")
             )
             .selectKey(
-                (key, value) -> AbstractQueue.key(value),
+                (key, value) -> queueService.key(value),
                 Named.as("handleWorkerTask-isFlowable-selectKey")
             );
 
@@ -583,9 +586,9 @@ public class KafkaExecutor extends AbstractExecutor {
 
         KStream<String, WorkerTask> resultNotFlowable = dedupWorkerTask
             .filter((key, value) -> !value.getTask().isFlowable(), Named.as("handleWorkerTask-notFlowable-filter"))
-            .map((key, value) -> new KeyValue<>(AbstractQueue.key(value), value), Named.as("handleWorkerTask-notFlowableKeyValue-map"))
+            .map((key, value) -> new KeyValue<>(queueService.key(value), value), Named.as("handleWorkerTask-notFlowableKeyValue-map"))
             .selectKey(
-                (key, value) -> AbstractQueue.key(value),
+                (key, value) -> queueService.key(value),
                 Named.as("handleWorkerTask-notFlowableKeyValue-selectKey")
             );
 

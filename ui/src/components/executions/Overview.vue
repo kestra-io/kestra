@@ -1,13 +1,16 @@
 <template>
     <div v-if="execution">
-        <b-row class="mb-3 text-right">
-            <b-col>
+        <b-row class="mb-3">
+            <b-col class="crud-align">
+                <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
+            </b-col>
+            <b-col class="text-right">
                 <restart :execution="execution" @restart="restart" />
                 <kill :execution="execution" />
                 <status :status="execution.state.current" />
             </b-col>
         </b-row>
-        <b-table responsive="xl" striped hover bordered :items="freshItems" class="mb-0">
+        <b-table responsive striped hover bordered :items="freshItems" class="mb-0">
             <template #cell(value)="row">
                 <router-link
                     v-if="row.item.link"
@@ -28,6 +31,7 @@
                 </span>
             </template>
         </b-table>
+
 
         <div v-if="execution.trigger" class="mt-4">
             <h5>{{ $t('trigger') }}</h5>
@@ -54,6 +58,7 @@
     import Kill from "./Kill";
     import State from "../../utils/state";
     import DateAgo from "../layout/DateAgo";
+    import Crud from "Override/components/auth/Crud";
 
     const ts = date => new Date(date).getTime();
 
@@ -63,7 +68,8 @@
             Restart,
             Vars,
             Kill,
-            DateAgo
+            DateAgo,
+            Crud
         },
         data() {
             return {
@@ -172,5 +178,11 @@
 <style scoped lang="scss">
 /deep/ thead {
     display: none;
+}
+
+
+.crud-align {
+    display: flex;
+    align-items: center;
 }
 </style>

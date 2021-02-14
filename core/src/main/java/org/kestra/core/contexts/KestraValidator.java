@@ -86,10 +86,13 @@ public class KestraValidator extends DefaultValidator {
 
                     PluginRegistry pluginRegistry;
 
+                    // class loader may be not ready, mostly for unit test
                     try {
                         pluginRegistry = KestraClassLoader.instance().getPluginRegistry();
                     } catch (IllegalStateException e) {
-                        log.error(e.getMessage());
+                        if (log.isDebugEnabled()) {
+                            log.debug(e.getMessage());
+                        }
 
                         return introspectionMap;
                     }

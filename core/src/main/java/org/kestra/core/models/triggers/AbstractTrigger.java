@@ -25,7 +25,7 @@ abstract public class AbstractTrigger {
     @NotNull
     @NotBlank
     @Pattern(regexp="[a-zA-Z0-9_-]+")
-    @Schema(title = "A unique id for the while flow")
+    @Schema(title = "A unique id for the whole flow")
     protected String id;
 
     @NotNull

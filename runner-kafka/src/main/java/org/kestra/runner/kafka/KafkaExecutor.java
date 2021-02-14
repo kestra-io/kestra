@@ -22,6 +22,7 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.models.triggers.Trigger;
+import org.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
@@ -36,6 +37,8 @@ import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 import org.kestra.runner.kafka.streams.*;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -43,9 +46,10 @@ import javax.inject.Inject;
 @KafkaQueueEnabled
 @Prototype
 @Slf4j
-public class KafkaExecutor extends AbstractExecutor {
+public class KafkaExecutor extends AbstractExecutor implements Closeable {
     private static final String WORKERTASK_DEDUPLICATION_STATE_STORE_NAME = "workertask_deduplication";
     private static final String TRIGGER_DEDUPLICATION_STATE_STORE_NAME = "trigger_deduplication";
+    public static final String TRIGGER_MULTIPLE_STATE_STORE_NAME = "trigger_multiplecondition";
     private static final String NEXTS_DEDUPLICATION_STATE_STORE_NAME = "next_deduplication";
     public static final String WORKER_RUNNING_STATE_STORE_NAME = "worker_running";
     public static final String WORKERINSTANCE_STATE_STORE_NAME = "worker_instance";
@@ -58,6 +62,9 @@ public class KafkaExecutor extends AbstractExecutor {
     FlowService flowService;
     KafkaStreamSourceService kafkaStreamSourceService;
     QueueService queueService;
+
+    KafkaStreamService.Stream resultStream;
+    boolean ready = false;
 
     @Inject
     public KafkaExecutor(
@@ -111,6 +118,15 @@ public class KafkaExecutor extends AbstractExecutor {
             Serdes.String()
         ));
 
+        // trigger multiple flow
+        builder.addStateStore(
+            Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(TRIGGER_MULTIPLE_STATE_STORE_NAME),
+                Serdes.String(),
+                JsonSerde.of(MultipleConditionWindow.class)
+            )
+        );
+
         // worker instance global state store
         builder.addGlobalStore(
             Stores.keyValueStoreBuilder(
@@ -131,6 +147,7 @@ public class KafkaExecutor extends AbstractExecutor {
         GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
         GlobalKTable<String, WorkerTaskRunning> workerTaskRunningKTable = this.workerTaskRunningKStream(builder);
         KStream<String, WorkerInstance> workerInstanceKStream = this.workerInstanceKStream(builder);
+        KStream<String, ExecutorFlowTrigger> flowWithTriggerStream = this.flowWithTriggerStream(builder);
         this.templateKTable(builder);
 
         // logs
@@ -157,7 +174,9 @@ public class KafkaExecutor extends AbstractExecutor {
         this.handleWorkerTask(stream);
         this.handleWorkerTaskResult(stream);
 
-        this.handleFlowTrigger(stream);
+        // trigger
+        this.handleExecutorFlowTriggerTopic(stream);
+        this.handleFlowTrigger(flowWithTriggerStream);
 
         this.purgeExecutor(stream);
 
@@ -232,6 +251,15 @@ public class KafkaExecutor extends AbstractExecutor {
                 kafkaAdminService.getTopicName(WorkerInstance.class),
                 Consumed.with(Serdes.String(), JsonSerde.of(WorkerInstance.class))
             );
+    }
+
+    private KStream<String, ExecutorFlowTrigger> flowWithTriggerStream(StreamsBuilder builder) {
+        return builder
+            .stream(
+                kafkaAdminService.getTopicName(ExecutorFlowTrigger.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(ExecutorFlowTrigger.class))
+            )
+            .filter((key, value) -> value != null, Named.as("flowWithTriggerStream-notNull-filter"));
     }
 
     private KTable<String, Execution> joinExecutionKilled(StreamsBuilder builder, KTable<String, Execution> executionKTable) {
@@ -457,11 +485,11 @@ public class KafkaExecutor extends AbstractExecutor {
             );
     }
 
-    private void handleFlowTrigger(KStream<String, ExecutionWithFlow> stream) {
+    private void handleExecutorFlowTriggerTopic(KStream<String, ExecutionWithFlow> stream) {
         stream
             .filter(
                 (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
-                Named.as("handleFlowTrigger-terminated-filter")
+                Named.as("handleExecutorFlowTriggerTopic-terminated-filter")
             )
             .transformValues(
                 () -> new DeduplicationTransformer<>(
@@ -469,24 +497,49 @@ public class KafkaExecutor extends AbstractExecutor {
                     (key, value) -> value.getExecution().getId(),
                     (key, value) -> value.getExecution().getId()
                 ),
-                Named.as("handleFlowTrigger-deduplication-transform"),
+                Named.as("handleExecutorFlowTriggerTopic-deduplication-transform"),
                 TRIGGER_DEDUPLICATION_STATE_STORE_NAME
             )
-            .filter((key, value) -> value != null, Named.as("handleFlowTrigger-dedupNull-filter"))
+            .filter((key, value) -> value != null, Named.as("handleExecutorFlowTriggerTopic-dedupNull-filter"))
+            .flatTransform(
+                () -> new FlowWithTriggerTransformer(
+                    flowService
+                ),
+                Named.as("handleExecutorFlowTriggerTopic-trigger-transform")
+            )
+            .to(
+                kafkaAdminService.getTopicName(ExecutorFlowTrigger.class),
+                Produced.with(Serdes.String(), JsonSerde.of(ExecutorFlowTrigger.class))
+            );
+    }
+
+    private void handleFlowTrigger(KStream<String, ExecutorFlowTrigger> stream) {
+        stream
             .transformValues(
-                () -> new FlowTriggerTransformer(flowService),
-                Named.as("handleFlowTrigger-trigger-transform")
+                () -> new FlowTriggerWithExecutionTransformer(
+                    TRIGGER_MULTIPLE_STATE_STORE_NAME,
+                    flowService
+                ),
+                Named.as("handleFlowTrigger-trigger-transform"),
+                TRIGGER_MULTIPLE_STATE_STORE_NAME
             )
             .flatMap(
                 (key, value) -> value
                     .stream()
-                .map(execution -> new KeyValue<>(execution.getId(), execution))
-                .collect(Collectors.toList()),
+                    .map(execution -> new KeyValue<>(execution.getId(), execution))
+                    .collect(Collectors.toList()),
                 Named.as("handleFlowTrigger-execution-flapMap")
             )
             .to(
                 kafkaAdminService.getTopicName(Execution.class),
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
+            );
+
+        stream
+            .mapValues((readOnlyKey, value) -> (ExecutorFlowTrigger)null)
+            .to(
+                kafkaAdminService.getTopicName(ExecutorFlowTrigger.class),
+                Produced.with(Serdes.String(), JsonSerde.of(ExecutorFlowTrigger.class))
             );
     }
 
@@ -874,6 +927,7 @@ public class KafkaExecutor extends AbstractExecutor {
         kafkaAdminService.createIfNotExist(Template.class);
         kafkaAdminService.createIfNotExist(LogEntry.class);
         kafkaAdminService.createIfNotExist(Trigger.class);
+        kafkaAdminService.createIfNotExist(ExecutorFlowTrigger.class);
 
         Properties properties = new Properties();
 
@@ -881,11 +935,20 @@ public class KafkaExecutor extends AbstractExecutor {
         properties.put(StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG, KafkaExecutorProductionExceptionHandler.class);
         properties.put(KafkaExecutorProductionExceptionHandler.APPLICATION_CONTEXT_CONFIG, applicationContext);
 
-        KafkaStreamService.Stream resultStream = kafkaStreamService.of(this.getClass(), this.topology(), properties);
+        resultStream = kafkaStreamService.of(this.getClass(), this.topology(), properties);
         resultStream.start();
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(
             resultStream.store("template", QueryableStoreTypes.keyValueStore())
         ));
     }
+
+    @Override
+    public void close() throws IOException {
+        if (this.resultStream != null) {
+            this.resultStream.close();
+            this.resultStream = null;
+        }
+    }
+
 }

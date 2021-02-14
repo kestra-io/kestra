@@ -6,8 +6,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
+import org.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import org.kestra.core.runners.RunContext;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @Builder
@@ -22,4 +24,7 @@ public class ConditionContext {
 
     @NotNull
     private RunContext runContext;
+
+    @Nullable
+    private MultipleConditionStorageInterface multipleConditionStorage;
 }

@@ -29,7 +29,7 @@ public class RestartCaseTest {
     public void restart() throws Exception {
         Flow flow = flowRepository.findById("org.kestra.tests", "restart_last_failed").orElseThrow();
 
-        Execution firstExecution = runnerUtils.runOne(flow.getNamespace(), flow.getId());
+        Execution firstExecution = runnerUtils.runOne(flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
 
         assertThat(firstExecution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(firstExecution.getTaskRunList(), hasSize(3));
@@ -49,7 +49,7 @@ public class RestartCaseTest {
                 assertThat(restartedExec.getState().getCurrent(), is(State.Type.RUNNING));
 
             }),
-            Duration.ofSeconds(15)
+            Duration.ofSeconds(60)
         );
 
         assertThat(finishedRestartedExecution, notNullValue());

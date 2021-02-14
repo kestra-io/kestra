@@ -15,6 +15,7 @@ import org.kestra.core.serializers.JacksonMapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class FlowableUtils {
@@ -141,7 +142,8 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
-        TaskRun parentTaskRun
+        TaskRun parentTaskRun,
+        Integer concurrency
     ) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
             tasks,
@@ -161,15 +163,29 @@ public class FlowableUtils {
             )
             .collect(Collectors.toList());
 
+        // find all running and deal concurrency
+        long runningCount = taskRuns
+            .stream()
+            .filter(taskRun -> taskRun.getState().isRunning())
+            .count();
+
+        if (concurrency > 0 && runningCount > concurrency) {
+            return new ArrayList<>();
+        }
+
         // first created, leave
         Optional<TaskRun> lastCreated = execution.findLastByState(currentTasks, State.Type.CREATED, parentTaskRun);
 
         if (notFinds.size() > 0 && lastCreated.isEmpty()) {
-            return notFinds
+            Stream<NextTaskRun> nextTaskRunStream = notFinds
                 .stream()
-                .map(resolvedTask -> resolvedTask.toNextTaskRun(execution))
-                .limit(1)
-                .collect(Collectors.toList());
+                .map(resolvedTask -> resolvedTask.toNextTaskRun(execution));
+
+            if (concurrency > 0) {
+                nextTaskRunStream = nextTaskRunStream.limit(concurrency - runningCount);
+            }
+
+            return nextTaskRunStream.collect(Collectors.toList());
         }
 
         return new ArrayList<>();

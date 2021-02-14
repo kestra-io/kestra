@@ -1,10 +1,7 @@
 package org.kestra.core.tasks.flows;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.annotations.Example;
@@ -80,6 +77,15 @@ import javax.validation.constraints.NotNull;
 public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @NotNull
     @NotBlank
+    @Builder.Default
+    @Schema(
+        title = "Number of concurrent parrallels tasks",
+        description = "If the value is `0`, no limit exist and all the tasks will start at the same time"
+    )
+    private final Integer concurrent = 0;
+
+    @NotNull
+    @NotBlank
     private String value;
 
     @Valid
@@ -127,7 +133,8 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
             execution,
             FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.value),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
-            parentTaskRun
+            parentTaskRun,
+            this.concurrent
         );
     }
 }

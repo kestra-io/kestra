@@ -164,11 +164,12 @@ class KafkaExecutorTest {
 
         executionRecord = executionOutput().readRecord();
         executionRecord = executionOutput().readRecord();
+        executionRecord = executionOutput().readRecord();
 
         assertThat(executionRecord.value().getTaskRunList(), hasSize(2));
         assertThat(executionRecord.value().getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
 
-        assertThat(executionOutput().readRecord().value().getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(executionRecord.value().getState().getCurrent(), is(State.Type.KILLED));
         assertThat(executionOutput().isEmpty(), is(true));
     }
 
@@ -218,16 +219,12 @@ class KafkaExecutorTest {
 
         // first child > RUNNING
         executionRecord = executionOutput().readRecord().value();
-        assertThat(executionRecord.getTaskRunList(), hasSize(2));
+        assertThat(executionRecord.getTaskRunList(), hasSize(7));
         assertThat(executionRecord.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.CREATED));
 
         this.changeStatus(firstChild, executionRecord.getTaskRunList().get(1), State.Type.RUNNING);
         executionRecord = executionOutput().readRecord().value();
         assertThat(executionRecord.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.RUNNING));
-
-        // second child > CREATED
-        executionRecord = executionOutput().readRecord().value();
-        assertThat(executionRecord.getTaskRunList(), hasSize(3));
         assertThat(executionRecord.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.CREATED));
 
         // killed execution
@@ -235,32 +232,34 @@ class KafkaExecutorTest {
         executionRecord = executionOutput().readRecord().value();
         executionRecord = executionOutput().readRecord().value();
         assertThat(executionRecord.getState().getCurrent(), is(State.Type.KILLING));
+
+
+        // killed all the creation and killing the parent
+        for (int i = 0; i < 17; i++) {
+            executionRecord = executionOutput().readRecord().value();
+        }
+
         assertThat(executionRecord.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLING));
 
-        // change second child to RUNNING
-        this.changeStatus(secondChild, executionRecord.getTaskRunList().get(2), State.Type.RUNNING);
-        executionRecord = executionOutput().readRecord().value();
-        assertThat(executionRecord.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.RUNNING));
+        for (int i = 2; i < 5; i++) {
+            assertThat(executionRecord.getTaskRunList().get(i).getState().getCurrent(), is(State.Type.KILLED));
+        }
 
-        // kill the first & second child
+        // kill the first child
         if (killed) {
             this.changeStatus(firstChild, executionRecord.getTaskRunList().get(1), State.Type.KILLED);
-            this.changeStatus(secondChild, executionRecord.getTaskRunList().get(2), State.Type.KILLED);
         } else {
             this.changeStatus(firstChild, executionRecord.getTaskRunList().get(1), State.Type.SUCCESS);
-            this.changeStatus(secondChild, executionRecord.getTaskRunList().get(2), State.Type.SUCCESS);
         }
 
         // killing state
-        executionRecord = executionOutput().readRecord().value();
-        executionRecord = executionOutput().readRecord().value();
-        executionRecord = executionOutput().readRecord().value();
-        executionRecord = executionOutput().readRecord().value();
+        for (int i = 0; i < 4; i++) {
+            executionRecord = executionOutput().readRecord().value();
+        }
 
         // control
         assertThat(executionRecord.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLED));
         assertThat(executionRecord.getTaskRunList().get(1).getState().getCurrent(), is(killed ? State.Type.KILLED : State.Type.SUCCESS));
-        assertThat(executionRecord.getTaskRunList().get(2).getState().getCurrent(), is(killed ? State.Type.KILLED : State.Type.SUCCESS));
         assertThat(executionRecord.getState().getCurrent(), is(State.Type.KILLED));
 
         assertThat(executionOutput().isEmpty(), is(true));
@@ -285,15 +284,16 @@ class KafkaExecutorTest {
         assertThat(executionRecord.value().getTaskRunList(), hasSize(1));
         assertThat(executionRecord.value().getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
 
+
+        executionRecord = executionOutput().readRecord();
+        assertThat(executionRecord.value().getTaskRunList(), hasSize(7));
+
         // Task > all RUNNING
         for (ListIterator<Task> it = parent.getTasks().listIterator(); it.hasNext(); ) {
             int index = it.nextIndex();
             Task next = it.next();
 
-            executionRecord = executionOutput().readRecord();
-
             // Task > CREATED
-            assertThat(executionRecord.value().getTaskRunList(), hasSize(index + 2));
             assertThat(executionRecord.value().getTaskRunList().get(index + 1).getState().getCurrent(), is(State.Type.CREATED));
 
             // Task > RUNNING

@@ -9,6 +9,7 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
+import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.queues.WorkerTaskQueueInterface;
@@ -42,6 +43,8 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
     private final KafkaProducer<String, WorkerTaskRunning> kafkaProducer;
     private final KafkaConsumerService kafkaConsumerService;
     private final KafkaConfigService kafkaConfigService;
+    private final QueueService queueService;
+    private final KafkaQueueService kafkaQueueService;
     private final AtomicReference<WorkerInstance> workerInstance = new AtomicReference<>();
     private final UUID workerUuid;
 
@@ -57,6 +60,8 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
         this.topicsConfigWorkerTaskRunning = KafkaQueue.topicsConfig(applicationContext, WorkerTaskRunning.class);
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
         this.kafkaConfigService = applicationContext.getBean(KafkaConfigService.class);
+        this.queueService = applicationContext.getBean(QueueService.class);
+        this.kafkaQueueService = applicationContext.getBean(KafkaQueueService.class);
         this.workerInstanceQueue = (QueueInterface<WorkerInstance>) applicationContext.getBean(
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.WORKERINSTANCE_NAMED)
@@ -85,7 +90,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                 kafkaProducer.beginTransaction();
 
                 records.forEach(record -> {
-                    KafkaQueue.log(this.topicsConfigWorkerTask, record.value(), "Incoming messsage");
+                    this.kafkaQueueService.log(log, this.topicsConfigWorkerTask, record.value(), "Incoming messsage");
 
                     if (workerInstance.get() == null) {
                         Await.until(() -> workerInstance.get() != null);
@@ -95,11 +100,11 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
 
                     this.kafkaProducer.send(new ProducerRecord<>(
                         topicsConfigWorkerTaskRunning.getName(),
-                        KafkaQueue.key(workerTaskRunning),
+                        this.queueService.key(workerTaskRunning),
                         workerTaskRunning
                     ));
 
-                    KafkaQueue.log(this.topicsConfigWorkerTaskRunning, workerTaskRunning, "Outgoing messsage");
+                    this.kafkaQueueService.log(log, this.topicsConfigWorkerTaskRunning, workerTaskRunning, "Outgoing messsage");
                 });
 
                 // we commit first all offset before submit task to worker

@@ -16,7 +16,7 @@
         </b-navbar>
 
         <b-table
-            responsive="xl"
+            responsive
             striped
             hover
             bordered

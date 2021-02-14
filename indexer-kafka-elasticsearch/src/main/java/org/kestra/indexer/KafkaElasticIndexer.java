@@ -17,16 +17,10 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.kestra.core.metrics.MetricRegistry;
-import org.kestra.core.models.executions.Execution;
-import org.kestra.core.models.executions.LogEntry;
-import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.runners.Indexer;
 import org.kestra.core.runners.IndexerInterface;
 import org.kestra.core.utils.DurationOrSizeTrigger;
-import org.kestra.repository.elasticsearch.ElasticSearchExecutionRepository;
-import org.kestra.repository.elasticsearch.ElasticSearchLogRepository;
-import org.kestra.repository.elasticsearch.ElasticSearchRepositoryEnabled;
-import org.kestra.repository.elasticsearch.ElasticsearchTriggerRepository;
+import org.kestra.repository.elasticsearch.*;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import org.kestra.runner.kafka.KafkaQueueEnabled;
 import org.kestra.runner.kafka.configs.TopicsConfig;
@@ -43,7 +37,7 @@ import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 
 @Prototype
-@Replaces(org.kestra.core.runners.Indexer.class)
+@Replaces(Indexer.class)
 @ElasticSearchRepositoryEnabled
 @KafkaQueueEnabled
 @Slf4j
@@ -65,21 +59,14 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
         IndexerConfig indexerConfig,
         List<TopicsConfig> topicsConfig,
         List<IndicesConfig> indicesConfigs,
-        KafkaConsumerService kafkaConsumerService,
-        ElasticSearchExecutionRepository executionRepository,
-        ElasticSearchLogRepository logRepository,
-        ElasticsearchTriggerRepository triggerRepository
+        ElasticSearchIndicesService elasticSearchIndicesService,
+        KafkaConsumerService kafkaConsumerService
     ) {
         this.metricRegistry = metricRegistry;
         this.elasticClient = elasticClient;
         this.kafkaConsumerService = kafkaConsumerService;
 
-        this.subscriptions = topicsConfig
-            .stream()
-            .filter(t -> t.getCls() == Execution.class || t.getCls() == LogEntry.class || t.getCls() == Trigger.class)
-            .map(TopicsConfig::getName)
-            .collect(Collectors.toSet());
-
+        this.subscriptions = subscriptions(topicsConfig, indexerConfig);
         this.mapping = mapTopicToIndices(topicsConfig, indicesConfigs);
 
         trigger = new DurationOrSizeTrigger<>(
@@ -87,14 +74,13 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
             indexerConfig.getBatchSize()
         );
 
-        logRepository.initMapping();
-        executionRepository.initMapping();
-        triggerRepository.initMapping();
+        elasticSearchIndicesService.createIndice(null);
+        elasticSearchIndicesService.updateMapping(null);
     }
 
-    @Override
     public void run() {
-        org.apache.kafka.clients.consumer.Consumer<String, String> kafkaConsumer = kafkaConsumerService.of(Indexer.class, Serdes.String());
+        org.apache.kafka.clients.consumer.Consumer<String, String> kafkaConsumer = kafkaConsumerService.of(Indexer.class, Serdes
+            .String());
         kafkaConsumer.subscribe(this.subscriptions);
 
         List<ConsumerRecord<String, String>> rows = new ArrayList<>();
@@ -220,7 +206,7 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
             .withBackoff(2, 300, ChronoUnit.SECONDS);
     }
 
-    private Map<String, String> mapTopicToIndices(List<TopicsConfig> topicsConfig, List<IndicesConfig> indicesConfigs) {
+    protected Map<String, String> mapTopicToIndices(List<TopicsConfig> topicsConfig, List<IndicesConfig> indicesConfigs) {
         return topicsConfig
             .stream()
             .filter(topic -> indicesConfigs
@@ -239,7 +225,15 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private String indexName(ConsumerRecord<?, ?> record) {
+    protected Set<String> subscriptions(List<TopicsConfig> topicsConfig, IndexerConfig indexerConfig) {
+        return topicsConfig
+            .stream()
+            .filter(t -> indexerConfig.getModels().contains(t.getCls()))
+            .map(TopicsConfig::getName)
+            .collect(Collectors.toSet());
+    }
+
+    protected String indexName(ConsumerRecord<?, ?> record) {
         return this.mapping.get(record.topic());
     }
 }

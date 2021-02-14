@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.hash.Hashing;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
-import org.kestra.core.queues.AbstractQueue;
+import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
@@ -19,9 +19,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 @Slf4j
-public class MemoryQueue<T> extends AbstractQueue implements QueueInterface<T> {
+public class MemoryQueue<T> implements QueueInterface<T> {
     private static final ObjectMapper mapper = JacksonMapper.ofJson();
     private static ExecutorService poolExecutor;
+
+    private final QueueService queueService;
 
     private final Class<T> cls;
     private final Map<String, List<Consumer<T>>> consumers = new ConcurrentHashMap<>();
@@ -32,6 +34,7 @@ public class MemoryQueue<T> extends AbstractQueue implements QueueInterface<T> {
             poolExecutor = executorsUtils.cachedThreadPool("memory-queue");
         }
 
+        this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;
     }
 
@@ -78,12 +81,12 @@ public class MemoryQueue<T> extends AbstractQueue implements QueueInterface<T> {
 
     @Override
     public void emit(T message) {
-        this.produce(key(message), message);
+        this.produce(queueService.key(message), message);
     }
 
     @Override
     public void delete(T message) throws QueueException {
-        this.produce(key(message), null);
+        this.produce(queueService.key(message), null);
     }
 
     @Override

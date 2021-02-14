@@ -11,8 +11,11 @@ import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskResult;
 import org.kestra.core.runners.WorkerTaskRunning;
 
-public abstract class AbstractQueue {
-    public static String key(Object object) {
+import javax.inject.Singleton;
+
+@Singleton
+public class QueueService {
+    public String key(Object object) {
         if (object.getClass() == Execution.class) {
             return ((Execution) object).getId();
         } else if (object.getClass() == WorkerTask.class) {

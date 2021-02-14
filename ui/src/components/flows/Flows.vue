@@ -27,7 +27,7 @@
                         :no-local-sorting="true"
                         @row-dblclicked="onRowDoubleClick"
                         @sort-changed="onSort"
-                        responsive="xl"
+                        responsive
                         striped
                         bordered
                         hover

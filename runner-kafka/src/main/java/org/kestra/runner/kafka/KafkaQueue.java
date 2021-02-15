@@ -10,9 +10,9 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
-import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.queues.QueueService;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
@@ -21,9 +21,8 @@ import org.kestra.runner.kafka.services.KafkaConsumerService;
 import org.kestra.runner.kafka.services.KafkaProducerService;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -123,6 +122,14 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     public Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
         AtomicBoolean running = new AtomicBoolean(true);
 
+        // no consumer groups, we fetch actual offset and block until the response id ready
+        // we need to be sure to get from actual time, so consume last 1 sec must enough
+        Map<TopicPartition, Long> offsets = null;
+        if (consumerGroup == null) {
+            offsets = this.offsetForTime(Instant.now().minus(Duration.ofSeconds(1)));
+        }
+        Map<TopicPartition, Long> finalOffsets = offsets;
+
         poolExecutor.execute(() -> {
             org.apache.kafka.clients.consumer.Consumer<String, T> kafkaConsumer = kafkaConsumerService.of(
                 consumerGroup,
@@ -134,7 +141,8 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             if (consumerGroup != null) {
                 kafkaConsumer.subscribe(Collections.singleton(topicsConfig.getName()));
             } else {
-                kafkaConsumer.assign(this.getTopicPartition());
+                kafkaConsumer.assign(new ArrayList<>(finalOffsets.keySet()));
+                finalOffsets.forEach(kafkaConsumer::seek);
             }
 
             while (running.get()) {
@@ -192,19 +200,53 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             .orElseThrow();
     }
 
-    private List<TopicPartition> getTopicPartition() {
+    private List<TopicPartition> listTopicPartition() throws ExecutionException, InterruptedException {
+        return this.adminClient
+            .describeTopics(Collections.singleton(topicsConfig.getName()))
+            .all()
+            .get()
+            .entrySet()
+            .stream()
+            .flatMap(e -> e.getValue().partitions()
+                .stream()
+                .map(i -> new TopicPartition(e.getValue().name(), i.partition()))
+            )
+            .collect(Collectors.toList());
+    }
+
+    private Map<TopicPartition, Long> offsetForTime(
+        Instant instant
+    ) {
+        org.apache.kafka.clients.consumer.Consumer<String, T> consumer = kafkaConsumerService.of(
+            null,
+            JsonSerde.of(this.cls)
+        );
+
         try {
-            return this.adminClient
-                .describeTopics(Collections.singleton(topicsConfig.getName()))
-                .all()
-                .get()
+            List<TopicPartition> topicPartitions = this.listTopicPartition();
+            Map<TopicPartition, Long> result = consumer.endOffsets(topicPartitions);
+
+            result.putAll(consumer
+                .offsetsForTimes(
+                    topicPartitions
+                        .stream()
+                        .map(e -> new AbstractMap.SimpleEntry<>(
+                            e,
+                            instant.toEpochMilli()
+                        ))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                )
                 .entrySet()
                 .stream()
-                .flatMap(e -> e.getValue().partitions()
-                    .stream()
-                    .map(i -> new TopicPartition(e.getValue().name(), i.partition()))
-                )
-                .collect(Collectors.toList());
+                .filter(e -> e.getValue() != null)
+                .map(e -> new AbstractMap.SimpleEntry<>(
+                    e.getKey(),
+                    e.getValue().offset()
+                ))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+            );
+
+            return result;
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }

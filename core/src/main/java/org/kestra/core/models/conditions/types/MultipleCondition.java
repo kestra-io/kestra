@@ -120,9 +120,11 @@ public class MultipleCondition extends Condition {
             .stream()
             .map(condition -> new AbstractMap.SimpleEntry<>(
                 condition,
-                (triggerExecutionWindow.isPresent() && triggerExecutionWindow.get()
-                    .getResults()
-                    .containsKey(condition) && triggerExecutionWindow.get().getResults().get(condition))
+                (triggerExecutionWindow.isPresent() &&
+                    triggerExecutionWindow.get().getResults() != null &&
+                    triggerExecutionWindow.get().getResults().containsKey(condition) &&
+                    triggerExecutionWindow.get().getResults().get(condition)
+                )
             ))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 

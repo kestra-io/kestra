@@ -163,12 +163,15 @@ public class FlowService {
         return Stream
             .concat(
                 multipleFlowStream(flowStream, multipleConditionStorage)
-                    .filter(f -> f.getMultipleCondition().getConditions().size() == f.getMultipleConditionWindow()
-                        .getResults()
-                        .entrySet()
-                        .stream()
-                        .filter(Map.Entry::getValue)
-                        .count()
+                    .filter(f -> f.getMultipleCondition().getConditions().size() ==
+                        (f.getMultipleConditionWindow().getResults() == null ? 0 :
+                            f.getMultipleConditionWindow()
+                                .getResults()
+                                .entrySet()
+                                .stream()
+                                .filter(Map.Entry::getValue)
+                                .count()
+                        )
                     )
                     .map(FlowWithFlowTriggerAndMultipleCondition::getMultipleConditionWindow),
                 multipleConditionStorage.expired().stream()

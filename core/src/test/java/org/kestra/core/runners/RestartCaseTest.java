@@ -6,6 +6,7 @@ import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.services.ExecutionService;
+import org.kestra.core.utils.Await;
 
 import java.time.Duration;
 import javax.inject.Inject;
@@ -35,20 +36,18 @@ public class RestartCaseTest {
         assertThat(firstExecution.getTaskRunList(), hasSize(3));
         assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.FAILED));
 
+        // restart
+        Execution restartedExec = executionService.restart(firstExecution, null);
+        assertThat(restartedExec, notNullValue());
+        assertThat(restartedExec.getId(), is(firstExecution.getId()));
+        assertThat(restartedExec.getParentId(), nullValue());
+        assertThat(restartedExec.getTaskRunList().size(), is(3));
+        assertThat(restartedExec.getState().getCurrent(), is(State.Type.RUNNING));
+
+        // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
-            flow,
-            firstExecution,
-            throwRunnable(() -> {
-                Thread.sleep(100);
-                Execution restartedExec = executionService.restart(firstExecution, null);
-
-                assertThat(restartedExec, notNullValue());
-                assertThat(restartedExec.getId(), is(firstExecution.getId()));
-                assertThat(restartedExec.getParentId(), nullValue());
-                assertThat(restartedExec.getTaskRunList().size(), is(3));
-                assertThat(restartedExec.getState().getCurrent(), is(State.Type.RUNNING));
-
-            }),
+            execution -> execution.getState().getCurrent() == State.Type.SUCCESS,
+            () -> {},
             Duration.ofSeconds(60)
         );
 

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.schedulers.AbstractScheduler;
 import org.kestra.core.schedulers.AbstractSchedulerTest;
@@ -16,8 +17,10 @@ import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaProducerService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 
@@ -35,12 +38,14 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
     protected FlowRepositoryInterface flowRepositoryInterface;
 
     protected KafkaQueue<Execution> executorQueue;
+    protected KafkaQueue<Trigger> triggerQueue;
     protected KafkaProducer<String, Execution> executorProducer;
     private TopicsConfig topicsConfig;
 
     @BeforeEach
     private void init() {
         this.executorQueue = new KafkaQueue<>(KafkaStreamSourceService.TOPIC_EXECUTOR, Execution.class, applicationContext);
+        this.triggerQueue = new KafkaQueue<>(Trigger.class, applicationContext);
         this.executorProducer = applicationContext.getBean(KafkaProducerService.class).of(Execution.class, JsonSerde.of(Execution.class));
         this.topicsConfig = KafkaQueue.topicsConfig(applicationContext, KafkaStreamSourceService.TOPIC_EXECUTOR);
     }
@@ -74,7 +79,7 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
             // wait for execution
             executionQueue.receive(KafkaSchedulerTest.class, execution -> {
                 last.set(execution);
-
+                System.out.println(execution);
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executorQueue.emit(execution.withState(State.Type.SUCCESS));
                     queueCount.countDown();
@@ -89,8 +94,12 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
                 assertThat(execution.getFlowId(), is(flow.getId()));
             });
 
+            triggerQueue.receive(trigger -> {
+                triggerQueue.emit(trigger.resetExecution());
+            });
+
             scheduler.run();
-            queueCount.await();
+            queueCount.await(60, TimeUnit.SECONDS);
 
             assertThat(last.get().getVariables().get("counter"), is(3));
         }

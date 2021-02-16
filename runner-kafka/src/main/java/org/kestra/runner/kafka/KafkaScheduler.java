@@ -9,39 +9,46 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.GlobalKTable;
-import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.Named;
-import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.state.Stores;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.Trigger;
-import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.queues.QueueService;
 import org.kestra.core.schedulers.AbstractScheduler;
 import org.kestra.core.schedulers.DefaultScheduler;
+import org.kestra.core.schedulers.SchedulerExecutionWithTrigger;
 import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowListenersInterface;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
+import org.kestra.runner.kafka.streams.GlobalStateLockProcessor;
+import org.kestra.runner.kafka.streams.GlobalStateProcessor;
 
-import javax.inject.Singleton;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @KafkaQueueEnabled
 @Prototype
 @Slf4j
 @Replaces(DefaultScheduler.class)
 public class KafkaScheduler extends AbstractScheduler {
+    private static final String STATESTORE_EXECUTOR = "schedulerexecutor";
+    private static final String STATESTORE_TRIGGER = "schedulertrigger";
+
     private final KafkaAdminService kafkaAdminService;
     private final KafkaStreamService kafkaStreamService;
     private final QueueInterface<Trigger> triggerQueue;
     private final ConditionService conditionService;
     private final KafkaStreamSourceService kafkaStreamSourceService;
     private final QueueService queueService;
+
+    private Map<String, Trigger> triggerLock = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
     public KafkaScheduler(
@@ -109,9 +116,29 @@ public class KafkaScheduler extends AbstractScheduler {
         public Topology topology() {
             StreamsBuilder builder = new StreamsBuilder();
 
-            // globalKTable to be consumed
-            kafkaStreamSourceService.executorGlobalKTable(builder);
-            kafkaStreamSourceService.triggerGlobalKTable(builder);
+            // executor global state store
+            builder.addGlobalStore(
+                Stores.keyValueStoreBuilder(
+                    Stores.persistentKeyValueStore(STATESTORE_EXECUTOR),
+                    Serdes.String(),
+                    JsonSerde.of(Execution.class)
+                ),
+                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
+                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)),
+                () -> new GlobalStateProcessor<>(STATESTORE_EXECUTOR)
+            );
+
+            // trigger global state store
+            builder.addGlobalStore(
+                Stores.keyValueStoreBuilder(
+                    Stores.persistentKeyValueStore(STATESTORE_TRIGGER),
+                    Serdes.String(),
+                    JsonSerde.of(Trigger.class)
+                ),
+                kafkaAdminService.getTopicName(Trigger.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(Trigger.class)),
+                () -> new GlobalStateLockProcessor<>(STATESTORE_TRIGGER, triggerLock)
+            );
 
             // build
             Topology topology = builder.build();
@@ -122,6 +149,22 @@ public class KafkaScheduler extends AbstractScheduler {
 
             return topology;
         }
+    }
+
+    /**
+     * We saved the trigger in a local hash map that will be clean by {@link GlobalStateProcessor}.
+     * The scheduler trust the STATESTORE_TRIGGER to know if a running execution exists. Since the store is filled async,
+     * this can lead to empty trigger and launch of concurrent job.
+     *
+     * @param executionWithTrigger the execution trigger to save
+     * @return Trigger saved
+     */
+    protected synchronized Trigger saveLastTrigger(SchedulerExecutionWithTrigger executionWithTrigger) {
+
+        Trigger trigger = super.saveLastTrigger(executionWithTrigger);
+        this.triggerLock.put(trigger.uid(), trigger);
+
+        return trigger;
     }
 
     @Override
@@ -136,12 +179,13 @@ public class KafkaScheduler extends AbstractScheduler {
         });
 
         this.triggerState =  new KafkaSchedulerTriggerState(
-            stateStream.store("trigger", QueryableStoreTypes.keyValueStore()),
-            triggerQueue
+            stateStream.store(STATESTORE_TRIGGER, QueryableStoreTypes.keyValueStore()),
+            triggerQueue,
+            triggerLock
         );
 
         this.executionState = new KafkaSchedulerExecutionState(
-            stateStream.store("execution", QueryableStoreTypes.keyValueStore())
+            stateStream.store(STATESTORE_EXECUTOR, QueryableStoreTypes.keyValueStore())
         );
 
         KafkaStreamService.Stream cleanTriggerStream = kafkaStreamService.of(SchedulerCleaner.class, new SchedulerCleaner().topology());

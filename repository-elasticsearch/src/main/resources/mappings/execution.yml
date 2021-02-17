@@ -126,5 +126,14 @@ properties:
                 type: date
               state:
                 type: keyword
+  trigger:
+    properties:
+      id:
+        type: keyword
+      type:
+        type: keyword
+      variables:
+        type: object
+        properties: {}
   deleted:
     type: boolean

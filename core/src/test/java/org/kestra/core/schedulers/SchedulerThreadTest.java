@@ -42,7 +42,7 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
     void thread() throws Exception {
         // mock flow listeners
         MemoryFlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        SchedulerExecutionStateInterface executionRepositorySpy = spy(this.executionState);
+        SchedulerExecutionStateInterface schedulerExecutionStateSpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(2);
 
         Flow flow = createThreadFlow();
@@ -53,14 +53,14 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
 
         // mock the backfill execution is ended
         doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
-            .when(executionRepositorySpy)
+            .when(schedulerExecutionStateSpy)
             .findById(any());
 
         // scheduler
         try (AbstractScheduler scheduler = new DefaultScheduler(
             applicationContext,
             flowListenersServiceSpy,
-            executionRepositorySpy,
+            schedulerExecutionStateSpy,
             triggerState
         )) {
 
@@ -69,8 +69,13 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
             // wait for execution
             executionQueue.receive(SchedulerThreadTest.class, execution -> {
                 last.set(execution);
-                queueCount.countDown();
+
                 assertThat(execution.getFlowId(), is(flow.getId()));
+
+                if (execution.getState().getCurrent() != State.Type.SUCCESS) {
+                    executionQueue.emit(execution.withState(State.Type.SUCCESS));
+                    queueCount.countDown();
+                }
             });
 
             scheduler.run();

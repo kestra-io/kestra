@@ -76,7 +76,7 @@ public class KafkaAdminService implements AutoCloseable {
             .stream()
             .filter(r -> r.getCls() == cls)
             .findFirst()
-            .orElseThrow();
+            .orElseThrow(() -> new NoSuchElementException("Invalid class '" + cls.getName() + "'"));
     }
 
     private TopicsConfig getTopicConfig(String key) {
@@ -84,7 +84,7 @@ public class KafkaAdminService implements AutoCloseable {
             .stream()
             .filter(r -> r.getKey().equals(key))
             .findFirst()
-            .orElseThrow();
+            .orElseThrow(() -> new NoSuchElementException("Invalid key '" + key + "'"));
     }
 
     public void createIfNotExist(String key) {

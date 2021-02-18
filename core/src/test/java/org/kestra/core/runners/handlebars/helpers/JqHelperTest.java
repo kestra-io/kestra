@@ -32,7 +32,8 @@ class JqHelperTest {
             "vars", ImmutableMap.of("second", ImmutableMap.of(
                 "a", 1,
                 "b", 2,
-                "c", 3
+                "c", 3,
+                "d", "4"
             ))
         );
 
@@ -42,6 +43,9 @@ class JqHelperTest {
 
         render = VARIABLE_RENDERER.render("{{ jq vars \".second.a\" true}}", vars);
         assertThat(render, is("1"));
+
+        render = VARIABLE_RENDERER.render("{{ jq vars \".second.d\" true}}", vars);
+        assertThat(render, is("4"));
     }
 
     @Test

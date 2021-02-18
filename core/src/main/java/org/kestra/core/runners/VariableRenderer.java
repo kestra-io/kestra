@@ -2,6 +2,7 @@ package org.kestra.core.runners;
 
 import com.github.jknack.handlebars.EscapingStrategy;
 import com.github.jknack.handlebars.Handlebars;
+import com.github.jknack.handlebars.HandlebarsException;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;

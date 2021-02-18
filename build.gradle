@@ -396,6 +396,7 @@ release {
     newVersionCommitMessage = 'update snapshot version'
     tagTemplate = 'v${version}'
     pushReleaseVersionBranch = 'master'
+    buildTasks = ['classes']
 
     git {
         requireBranch = 'release'

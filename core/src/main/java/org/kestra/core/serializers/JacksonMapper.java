@@ -32,6 +32,7 @@ abstract public class JacksonMapper {
                 .configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
                 .configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER, false)
                 .configure(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID, false)
+                .configure(YAMLGenerator.Feature.SPLIT_LINES, false)
         )
     );
 
@@ -57,9 +58,12 @@ abstract public class JacksonMapper {
         }
     }
 
-    private static final ObjectMapper ION_MAPPER = JacksonMapper.configure(
-        new IonObjectMapper()
-    );
+    private static final ObjectMapper ION_MAPPER = JacksonMapper
+        .configure(
+            new IonObjectMapper()
+        )
+        .setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS)
+        .setSerializationInclusion(JsonInclude.Include.ALWAYS);
 
     public static ObjectMapper ofIon() {
         return ION_MAPPER;

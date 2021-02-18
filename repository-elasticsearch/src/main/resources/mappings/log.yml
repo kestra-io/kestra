@@ -13,7 +13,7 @@ properties:
   attemptNumber:
     type: integer
   triggerId:
-    type: integer
+    type: keyword
   level:
     type: keyword
   message:

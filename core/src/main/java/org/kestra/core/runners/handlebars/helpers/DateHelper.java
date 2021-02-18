@@ -82,7 +82,7 @@ public enum DateHelper implements Helper<Object> {
         }
     },
 
-    namotimestamp {
+    nanotimestamp {
         @Override
         public CharSequence apply(final Object value, final Options options) {
             ZonedDateTime date = zonedDateTime(value, DateHelper.zoneId(options));

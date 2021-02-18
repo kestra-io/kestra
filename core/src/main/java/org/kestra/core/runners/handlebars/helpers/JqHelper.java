@@ -1,6 +1,7 @@
 package org.kestra.core.runners.handlebars.helpers;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.github.jknack.handlebars.Helper;
 import com.github.jknack.handlebars.Options;
 import lombok.SneakyThrows;
@@ -54,7 +55,11 @@ public class JqHelper implements Helper<Object> {
 
         if (first) {
             if (out.size() > 0) {
-                return JacksonMapper.ofJson().writeValueAsString(out.get(0));
+                if (out.get(0).getNodeType() == JsonNodeType.STRING) {
+                    return out.get(0).asText();
+                } else {
+                    return JacksonMapper.ofJson().writeValueAsString(out.get(0));
+                }
             } else {
                 return JacksonMapper.ofJson().writeValueAsString(out);
             }

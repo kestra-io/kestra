@@ -4,7 +4,9 @@ import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.runtime.server.EmbeddedServer;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.kestra.core.contexts.KestraClassLoader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;

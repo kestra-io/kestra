@@ -41,7 +41,7 @@
             }
 
             this.displayApp()
-
+            this.loadGeneralRessources()
             this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
         },
         methods: {
@@ -51,6 +51,9 @@
             displayApp() {
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
+            },
+            loadGeneralRessources() {
+                this.$store.dispatch("plugin/icons")
             }
         }
     };

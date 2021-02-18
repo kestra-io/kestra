@@ -37,6 +37,7 @@ endpoints:
 kestra:
   kafka:
     defaults:
+      topic-prefix: "kestra_"
       topic:
         partitions: 16
         replication-factor: 1
@@ -63,14 +64,14 @@ kestra:
 
     topics:
       execution:
-        name: "kestra_execution"
+        name: "${kestra.kafka.defaults.topic-prefix}execution"
         cls: org.kestra.core.models.executions.Execution
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
       flow:
-        name: "kestra_flow"
+        name: "${kestra.kafka.defaults.topic-prefix}flow"
         cls: org.kestra.core.models.flows.Flow
         properties:
           cleanup.policy: "compact"
@@ -78,14 +79,14 @@ kestra:
           segment.bytes: "10485760"
 
       flowlast:
-        name: "kestra_flow_last"
+        name: "${kestra.kafka.defaults.topic-prefix}flow_last"
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
           segment.bytes: "10485760"
 
       template:
-        name: "kestra_template"
+        name: "${kestra.kafka.defaults.topic-prefix}template"
         cls: org.kestra.core.models.templates.Template
         properties:
           cleanup.policy: "compact"
@@ -93,80 +94,82 @@ kestra:
           segment.bytes: "10485760"
 
       executor:
-        name: "kestra_executor"
+        name: "${kestra.kafka.defaults.topic-prefix}executor"
         properties:
           cleanup.policy: "delete,compact"
 
       killed:
-        name: "kestra_executor_killed"
+        name: "${kestra.kafka.defaults.topic-prefix}executor_killed"
         cls: org.kestra.core.models.executions.ExecutionKilled
         properties:
           cleanup.policy: "delete,compact"
 
       workertask:
-        name: "kestra_workertask"
+        name: "${kestra.kafka.defaults.topic-prefix}workertask"
         cls: org.kestra.core.runners.WorkerTask
         partitions: 64
         properties:
           cleanup.policy: "delete,compact"
 
       workertaskresult:
-        name: "kestra_workertaskresult"
+        name: "${kestra.kafka.defaults.topic-prefix}workertaskresult"
         cls: org.kestra.core.runners.WorkerTaskResult
         properties:
           cleanup.policy: "delete,compact"
 
       workerinstance:
         cls: org.kestra.core.runners.WorkerInstance
-        name: "kestra_workerinstance"
+        name: "${kestra.kafka.defaults.topic-prefix}workerinstance"
         properties:
           cleanup.policy: "compact"
 
       executorworkerinstance:
-        name: "kestra_executor_workerinstance"
+        name: "${kestra.kafka.defaults.topic-prefix}executor_workerinstance"
         properties:
           cleanup.policy: "compact"
 
       workertaskrunning:
         cls: org.kestra.core.runners.WorkerTaskRunning
-        name: "kestra_workertaskrunning"
+        name: "${kestra.kafka.defaults.topic-prefix}workertaskrunning"
         properties:
           cleanup.policy: "delete,compact"
 
       logentry:
         cls: org.kestra.core.models.executions.LogEntry
-        name: "kestra_logs"
+        name: "${kestra.kafka.defaults.topic-prefix}logs"
 
       trigger:
         cls: org.kestra.core.models.triggers.Trigger
-        name: "kestra_trigger"
+        name: "${kestra.kafka.defaults.topic-prefix}trigger"
         properties:
           cleanup.policy: "delete,compact"
 
   elasticsearch:
+    defaults:
+      indice-prefix: "kestra_"
     indices:
       flows:
-        index: "kestra_flows"
+        index: "${kestra.elasticsearch.defaults.indice-prefix}flows"
         cls: org.kestra.core.models.flows.Flow
         mapping-file: flow
       flows-revisions:
-        index: "kestra_flows_revisions"
+        index: "${kestra.elasticsearch.defaults.indice-prefix}flows_revisions"
         cls: org.kestra.core.models.flows.Flow
         mapping-file: flow
       executions:
-        index: "kestra_executions"
+        index: "${kestra.elasticsearch.defaults.indice-prefix}executions"
         cls: org.kestra.core.models.executions.Execution
         mapping-file: execution
       templates:
-        index: "kestra_templates"
+        index: "${kestra.elasticsearch.defaults.indice-prefix}templates"
         cls: org.kestra.core.models.templates.Template
         mapping-file: template
       triggers:
-        index: "kestra_triggers"
+        index: "${kestra.elasticsearch.defaults.indice-prefix}triggers"
         cls: org.kestra.core.models.triggers.Trigger
         mapping-file: trigger
       logs:
-        index: "kestra_logs"
+        index: "${kestra.elasticsearch.defaults.indice-prefix}logs"
         cls: org.kestra.core.models.executions.LogEntry
         mapping-file: log
 

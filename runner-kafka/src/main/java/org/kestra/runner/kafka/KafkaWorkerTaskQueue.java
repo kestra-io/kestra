@@ -100,13 +100,16 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                     ));
 
                     KafkaQueue.log(this.topicsConfigWorkerTaskRunning, workerTaskRunning, "Outgoing messsage");
-
-                    consumer.accept(record.value());
                 });
 
+                // we commit first all offset before submit task to worker
                 kafkaProducer.sendOffsetsToTransaction(KafkaConsumerService.maxOffsets(records), kafkaConfigService.getConsumerGroupName(consumerGroup));
-
                 kafkaProducer.commitTransaction();
+
+                // now, we can submit to worker to be sure we don't have a WorkerTaskResult before commiting the offset!
+                records.forEach(record -> {
+                    consumer.accept(record.value());
+                });
             }
         }
 

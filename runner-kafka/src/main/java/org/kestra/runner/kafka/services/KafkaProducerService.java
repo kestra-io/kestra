@@ -2,6 +2,7 @@ package org.kestra.runner.kafka.services;
 
 import com.google.common.collect.ImmutableMap;
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
+import io.micronaut.context.annotation.Value;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.Serde;
@@ -31,6 +32,9 @@ public class KafkaProducerService {
     @Inject
     private MetricRegistry metricRegistry;
 
+    @Value("${kestra.server.metrics.kafka.producer:true}")
+    protected Boolean metricsEnabled;
+
     public <V> KafkaProducerService.Producer<V> of(Class<?> name, Serde<V> serde) {
         return this.of(name, serde, ImmutableMap.of());
     }
@@ -47,28 +51,36 @@ public class KafkaProducerService {
 
         props.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConfigService.getConsumerGroupName(name));
 
-        return new Producer<>(props, serde, metricRegistry);
+        return new Producer<>(props, serde, metricsEnabled ? metricRegistry : null);
     }
 
     public static class Producer<V> extends KafkaProducer<String, V> {
-        private final KafkaClientMetrics metrics;
+        private KafkaClientMetrics metrics;
 
         private Producer(Properties properties, Serde<V> valueSerde, MetricRegistry meterRegistry) {
             super(properties, new StringSerializer(), valueSerde.serializer());
 
-            metrics = new KafkaClientMetrics(this);
-            meterRegistry.bind(metrics);
+            if (metrics != null) {
+                metrics = new KafkaClientMetrics(this);
+                meterRegistry.bind(metrics);
+            }
         }
 
         @Override
         public void close() {
-            metrics.close();
+            if (metrics != null) {
+                metrics.close();
+            }
+
             super.close();
         }
 
         @Override
         public void close(Duration timeout) {
-            metrics.close();
+            if (metrics != null) {
+                metrics.close();
+            }
+
             super.close(timeout);
         }
     }

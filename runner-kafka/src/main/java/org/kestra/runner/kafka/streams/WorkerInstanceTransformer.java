@@ -84,8 +84,8 @@ public class WorkerInstanceTransformer implements ValueTransformerWithKey<String
                             "[namespace: {}] [flow: {}] [execution: {}] [taskrun: {}] WorkerTask is being resend",
                             workerTask.getTaskRun().getNamespace(),
                             workerTask.getTaskRun().getFlowId(),
-                            workerTask.getTaskRun().getId(),
-                            workerTask.getTaskRun().getExecutionId()
+                            workerTask.getTaskRun().getExecutionId(),
+                            workerTask.getTaskRun().getId()
                         )
                     );
 

@@ -1,6 +1,7 @@
 package org.kestra.runner.kafka.services;
 
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
+import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClient;
@@ -39,6 +40,9 @@ public class KafkaAdminService implements AutoCloseable {
 
     private KafkaClientMetrics kafkaClientMetrics;
 
+    @Value("${kestra.server.metrics.kafka.admin:true}")
+    protected Boolean metricsEnabled;
+
     public AdminClient of() {
         if (this.adminClient == null) {
             Properties properties = new Properties();
@@ -46,8 +50,10 @@ public class KafkaAdminService implements AutoCloseable {
 
             adminClient = AdminClient.create(properties);
 
-            kafkaClientMetrics = new KafkaClientMetrics(adminClient);
-            metricRegistry.bind(kafkaClientMetrics);
+            if (metricsEnabled) {
+                kafkaClientMetrics = new KafkaClientMetrics(adminClient);
+                metricRegistry.bind(kafkaClientMetrics);
+            }
         }
 
         return adminClient;

@@ -1,6 +1,7 @@
 package org.kestra.runner.kafka.services;
 
 import io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics;
+import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.TopicPartition;
@@ -15,6 +16,7 @@ import org.kestra.runner.kafka.configs.StreamDefaultsConfig;
 
 import java.time.Duration;
 import java.util.Properties;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
@@ -35,6 +37,9 @@ public class KafkaStreamService {
     @Inject
     private MetricRegistry metricRegistry;
 
+    @Value("${kestra.server.metrics.kafka.stream:true}")
+    protected Boolean metricsEnabled;
+
     public KafkaStreamService.Stream of(Class<?> group, Topology topology) {
         return this.of(group, topology, new Properties());
     }
@@ -49,17 +54,19 @@ public class KafkaStreamService {
         properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
 
-        return new Stream(topology, properties, metricRegistry);
+        return new Stream(topology, properties, metricsEnabled ? metricRegistry : null);
     }
 
     public static class Stream extends KafkaStreams {
-        private final KafkaStreamsMetrics metrics;
+        private KafkaStreamsMetrics metrics;
 
         private Stream(Topology topology, Properties props, MetricRegistry meterRegistry) {
             super(topology, props);
 
-            metrics = new KafkaStreamsMetrics(this);
-            meterRegistry.bind(metrics);
+            if (meterRegistry != null) {
+                metrics = new KafkaStreamsMetrics(this);
+                meterRegistry.bind(metrics);
+            }
         }
 
         public synchronized void start(final KafkaStreams.StateListener listener) throws IllegalStateException, StreamsException {
@@ -94,13 +101,19 @@ public class KafkaStreamService {
 
         @Override
         public void close() {
-            metrics.close();
+            if (metrics != null) {
+                metrics.close();
+            }
+
             super.close();
         }
 
         @Override
         public boolean close(Duration timeout) {
-            metrics.close();
+            if (metrics != null) {
+                metrics.close();
+            }
+
             return super.close(timeout);
         }
     }

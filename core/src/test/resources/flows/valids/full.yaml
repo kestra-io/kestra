@@ -22,7 +22,7 @@ tasks:
 - id: t3
   type: org.kestra.core.tasks.debugs.Echo
   format: third all optional args {{ outputs.t2.value }}
-  timeout: 1000
+  timeout: PT60M
   retry:
     maxAttempt: 5
     type: constant

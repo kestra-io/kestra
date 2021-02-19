@@ -13,9 +13,9 @@ import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.tasks.retrys.AbstractRetry;
 import org.kestra.core.runners.RunContext;
 
+import java.time.Duration;
 import java.util.Optional;
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -44,8 +44,7 @@ abstract public class Task {
     @Valid
     protected AbstractRetry retry;
 
-    @Min(0)
-    protected Integer timeout;
+    protected Duration timeout;
 
     @Builder.Default
     protected Boolean disabled = false;

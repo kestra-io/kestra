@@ -36,18 +36,19 @@ public class RestartCaseTest {
         assertThat(firstExecution.getTaskRunList(), hasSize(3));
         assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.FAILED));
 
-        // restart
-        Execution restartedExec = executionService.restart(firstExecution, null);
-        assertThat(restartedExec, notNullValue());
-        assertThat(restartedExec.getId(), is(firstExecution.getId()));
-        assertThat(restartedExec.getParentId(), nullValue());
-        assertThat(restartedExec.getTaskRunList().size(), is(3));
-        assertThat(restartedExec.getState().getCurrent(), is(State.Type.RUNNING));
-
         // wait
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             execution -> execution.getState().getCurrent() == State.Type.SUCCESS,
-            () -> {},
+            throwRunnable(() -> {
+                Thread.sleep(200);
+                Execution restartedExec = executionService.restart(firstExecution, null);
+
+                assertThat(restartedExec, notNullValue());
+                assertThat(restartedExec.getId(), is(firstExecution.getId()));
+                assertThat(restartedExec.getParentId(), nullValue());
+                assertThat(restartedExec.getTaskRunList().size(), is(3));
+                assertThat(restartedExec.getState().getCurrent(), is(State.Type.RUNNING));
+            }),
             Duration.ofSeconds(60)
         );
 

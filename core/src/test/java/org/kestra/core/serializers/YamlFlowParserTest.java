@@ -13,6 +13,7 @@ import org.kestra.core.utils.TestsUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import javax.inject.Inject;
@@ -38,7 +39,7 @@ class YamlFlowParserTest {
 
         // third with all optionals
         Task optionals = flow.getTasks().get(2);
-        assertThat(optionals.getTimeout(), is(1000));
+        assertThat(optionals.getTimeout(), is(Duration.ofMinutes(60)));
         assertThat(optionals.getRetry().getType(), is("constant"));
         assertThat(optionals.getRetry().getMaxAttempt(), is(5));
         assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds(), is(900L));

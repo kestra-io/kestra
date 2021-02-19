@@ -79,7 +79,6 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
             // wait for execution
             executionQueue.receive(KafkaSchedulerTest.class, execution -> {
                 last.set(execution);
-                System.out.println(execution);
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executorQueue.emit(execution.withState(State.Type.SUCCESS));
                     queueCount.countDown();

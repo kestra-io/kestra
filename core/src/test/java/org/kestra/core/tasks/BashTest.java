@@ -59,7 +59,7 @@ class BashTest {
         RunContext runContext = runContextFactory.of();
 
         Bash bash = Bash.builder()
-            .outputsFiles(Arrays.asList("xml", "csv"))
+            .outputFiles(Arrays.asList("xml", "csv"))
             .inputFiles(ImmutableMap.of("files/in/in.txt", "I'm here"))
             .commands(new String[]{
                 "echo '::{\"outputs\": {\"extract\":\"'$(cat files/in/in.txt)'\"}}::'",
@@ -77,7 +77,7 @@ class BashTest {
         assertThat(run.getStdOutLineCount(), is(1));
         assertThat(run.getVars().get("extract"), is("I'm here"));
 
-        InputStream get = storageInterface.get(run.getFiles().get("xml"));
+        InputStream get = storageInterface.get(run.getOutputFiles().get("xml"));
 
         assertThat(
             CharStreams.toString(new InputStreamReader(get)),
@@ -210,7 +210,7 @@ class BashTest {
             .interpreter("/bin/bash")
             .commands(commands.toArray(String[]::new))
             .inputFiles(files)
-            .outputsFiles(Collections.singletonList("out"))
+            .outputFiles(Collections.singletonList("out"))
             .build();
 
         Bash.Output run = bash.run(runContext);

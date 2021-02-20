@@ -11,47 +11,53 @@
                     </tr>
                 </thead>
                 <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
-                    <tr>
-                        <th :id="`task-title-wrapper-${currentTaskRun.id}`">
-                            <code>{{ currentTaskRun.name }}</code>
-                            <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
-                            <b-tooltip
-                                placement="right"
-                                :target="`task-title-wrapper-${currentTaskRun.id}`"
-                            >
+                    <template v-if="!allFoldables[currentTaskRun.name]">
+                        <tr>
+                            <th :id="`task-title-wrapper-${currentTaskRun.id}`">
+                                <span v-if="hasChildren[currentTaskRun.name]">
+                                    <unfold-more v-if="foldables[currentTaskRun.name]" @click="fold(currentTaskRun)" class="pointer foldable" />
+                                    <unfold-less v-else @click="fold(currentTaskRun)" class="pointer foldable" />
+                                </span>
                                 <code>{{ currentTaskRun.name }}</code>
-                                <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
-                            </b-tooltip>
-                        </th>
-                        <td :colspan="dates.length">
-                            <b-tooltip
-                                :target="`task-progress-${currentTaskRun.id}`"
-                                placement="left"
-                            >
-                                <span v-html="currentTaskRun.tooltip" />
-                            </b-tooltip>
-                            <div
-                                :style="{left: Math.max(1, (currentTaskRun.start - 1)) + '%', width: currentTaskRun.width - 1 + '%'}"
-                                class="task-progress"
-                                @click="onTaskSelect(currentTaskRun.task)"
-                                :id="`task-progress-${currentTaskRun.id}`"
-                            >
-                                <div class="progress">
-                                    <div
-                                        class="progress-bar"
-                                        :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
-                                        :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped' : '')"
-                                        role="progressbar"
-                                    />
+                                <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
+                                <b-tooltip
+                                    placement="right"
+                                    :target="`task-title-wrapper-${currentTaskRun.id}`"
+                                >
+                                    <code>{{ currentTaskRun.name }}</code>
+                                    <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
+                                </b-tooltip>
+                            </th>
+                            <td :colspan="dates.length">
+                                <b-tooltip
+                                    :target="`task-progress-${currentTaskRun.id}`"
+                                    placement="left"
+                                >
+                                    <span v-html="currentTaskRun.tooltip" />
+                                </b-tooltip>
+                                <div
+                                    :style="{left: Math.max(1, (currentTaskRun.start - 1)) + '%', width: currentTaskRun.width - 1 + '%'}"
+                                    class="task-progress"
+                                    @click="onTaskSelect(currentTaskRun.task)"
+                                    :id="`task-progress-${currentTaskRun.id}`"
+                                >
+                                    <div class="progress">
+                                        <div
+                                            class="progress-bar"
+                                            :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
+                                            :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped' : '')"
+                                            role="progressbar"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr v-if="taskRun && taskRun.id === currentTaskRun.id">
-                        <td :colspan="dates.length + 1">
-                            <log-list :task-run-id="taskRun.id" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" level="TRACE" />
-                        </td>
-                    </tr>
+                            </td>
+                        </tr>
+                        <tr v-if="taskRun && taskRun.id === currentTaskRun.id">
+                            <td :colspan="dates.length + 1">
+                                <log-list :task-run-id="taskRun.id" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" level="TRACE" />
+                            </td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
         </div>
@@ -62,11 +68,17 @@
     import {mapState} from "vuex";
     import humanizeDuration from "humanize-duration";
     import State from "../../utils/state";
+    import UnfoldLess from "vue-material-design-icons/UnfoldLessHorizontal";
+    import UnfoldMore from "vue-material-design-icons/UnfoldMoreHorizontal";
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50
     export default {
-        components: {LogList},
+        components: {
+            LogList,
+            UnfoldLess,
+            UnfoldMore
+        },
         data() {
             return {
                 colors: State.colorClass(),
@@ -75,6 +87,8 @@
                 dates: [],
                 duration: undefined,
                 usePartialSerie: true,
+                foldables: {},
+                allFoldables: {},
             };
         },
         watch: {
@@ -83,7 +97,10 @@
             },
             $route() {
                 this.compute()
-            }
+            },
+        },
+        created() {
+            this.loadGraph()
         },
         mounted() {
             const repaint = () => {
@@ -100,6 +117,25 @@
         },
         computed: {
             ...mapState("execution", ["taskRun", "execution"]),
+            ...mapState("flow", ["flow", "flowGraph"]),
+            hasChildren() {
+                if (!this.flowGraph) {
+                    return {}
+                }
+                const hasChildren = {}
+                for (let node of (this.flowGraph.nodes || [])) {
+                    if (node.task) {
+                        if (node.task.tasks && node.task.tasks.length > 0) {
+                            hasChildren[node.task.id] = true
+                        }
+                        if (node.task.cases && Object.keys(node.task.cases).length > 0) {
+                            hasChildren[node.task.id] = true
+                        }
+                    }
+                }
+                console.log("haschildren", hasChildren)
+                return hasChildren
+            },
             taskRunsCount() {
                 return this.execution && this.execution.taskRunList ? this.execution.taskRunList.length : 0
             },
@@ -151,13 +187,52 @@
                 }
                 childrenSort(rootTasks)
                 return sortedTasks
-            }
+            },
         },
         methods: {
+            fold (currentTaskRun) {
+                const addNestedTasks = (task, allFoldables) => {
+                    for (let t of (task.tasks || [])) {
+                        allFoldables[t.id] = true
+                        addNestedTasks(t, allFoldables)
+                    }
+                    for (let c in (task.cases || [])) {
+                        for (let t of (task.cases[c] || [])) {
+                            allFoldables[t.id] = true
+                            addNestedTasks(t, allFoldables)
+                        }
+                    }
+                }
+                this.foldables[currentTaskRun.name] = !this.foldables[currentTaskRun.name]
+                const allFoldables = {}
+                for (let name in this.foldables) {
+                    if (this.foldables[name]) {
+                        for (let node of this.flowGraph.nodes) {
+                            if (node.task && node.task.id === name) {
+                                addNestedTasks(node.task, allFoldables)
+                            }
+                        }
+                    }
+                }
+                this.allFoldables = allFoldables
+                console.log("all foldable", allFoldables, this.foldables)
+                this.$forceUpdate()
+            },
             compute() {
                 this.computeSeries();
                 this.computeDates();
                 this.computeDuration();
+            },
+            loadGraph() {
+                if (!this.flow) {
+                    this.$store.dispatch("flow/loadFlow", {
+                        id: this.$route.params.flowId,
+                        namespace: this.$route.params.namespace
+                    }).finally(this.loadGraph)
+                }
+                if (!this.flowGraph && this.flow) {
+                    this.$store.dispatch("flow/loadGraph", this.flow).finally( () => console.log(this.hasChildren))
+                }
             },
             delta() {
                 return this.stop() - this.start;
@@ -325,4 +400,7 @@ table {
     margin-bottom: 0;
 }
 
+.foldable {
+    margin-right: 5px;
+}
 </style>

@@ -42,7 +42,11 @@ public class MultipleConditionWindow {
     }
 
     public MultipleConditionWindow with(Map<String, Boolean> newResult) {
-        Map<String, Boolean> finalResults = new HashMap<>(results);
+        Map<String, Boolean> finalResults = new HashMap<>();
+
+        if (results != null) {
+            finalResults.putAll(results);
+        }
 
         newResult
             .entrySet()

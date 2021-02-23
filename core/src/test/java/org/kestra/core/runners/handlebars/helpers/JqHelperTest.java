@@ -1,6 +1,7 @@
 package org.kestra.core.runners.handlebars.helpers;
 
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.runners.VariableRenderer;
@@ -12,7 +13,7 @@ import javax.inject.Inject;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-
+@MicronautTest
 class JqHelperTest {
     @Inject
     VariableRenderer variableRenderer;

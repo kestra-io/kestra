@@ -1,5 +1,6 @@
 package org.kestra.core.utils;
 
+import java.util.concurrent.Callable;
 import java.util.function.*;
 
 public final class Rethrow {
@@ -31,6 +32,11 @@ public final class Rethrow {
     @FunctionalInterface
     public interface RunnableChecked<E extends Exception> {
         void run() throws E;
+    }
+
+    @FunctionalInterface
+    public interface CallableChecked<R, E extends Exception> {
+        R call() throws E;
     }
 
     public static <T, E extends Exception> Consumer<T> throwConsumer(ConsumerChecked<T, E> consumer) throws E {
@@ -88,6 +94,16 @@ public final class Rethrow {
         return () -> {
             try {
                 runnable.run();
+            } catch (Exception exception) {
+                throw throwException(exception);
+            }
+        };
+    }
+
+    public static <R, E extends Exception> Callable<R> throwCallable(CallableChecked<R, E> runnable) throws E {
+        return () -> {
+            try {
+                return runnable.call();
             } catch (Exception exception) {
                 throw throwException(exception);
             }

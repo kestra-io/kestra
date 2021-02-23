@@ -2,16 +2,16 @@ package org.kestra.core.runners;
 
 import com.github.jknack.handlebars.EscapingStrategy;
 import com.github.jknack.handlebars.Handlebars;
-import com.github.jknack.handlebars.HandlebarsException;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
+import io.micronaut.context.ApplicationContext;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.runners.handlebars.helpers.*;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
@@ -20,7 +20,9 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
 public class VariableRenderer {
     private final Handlebars handlebars;
 
-    public VariableRenderer() {
+    @SuppressWarnings("unchecked")
+    @Inject
+    public VariableRenderer(ApplicationContext applicationContext) {
         this.handlebars = new Handlebars()
             .with(EscapingStrategy.NOOP)
             .registerHelpers(ConditionalHelpers.class)
@@ -37,6 +39,14 @@ public class VariableRenderer {
             .registerHelper("jq", new JqHelper())
             .registerHelperMissing((context, options) -> {
                 throw new IllegalStateException("Missing variable: " + options.helperName);
+            });
+
+        applicationContext.getBeansOfType(VariableRendererPlugins.class)
+            .forEach(variableRendererPlugins -> {
+                this.handlebars.registerHelper(
+                    variableRendererPlugins.name(),
+                    variableRendererPlugins.helper()
+                );
             });
     }
 

@@ -7,11 +7,15 @@ import org.kestra.core.runners.VariableRenderer;
 
 import java.util.Arrays;
 
+import javax.inject.Inject;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+
 class JqHelperTest {
-    private final static VariableRenderer VARIABLE_RENDERER = new VariableRenderer();
+    @Inject
+    VariableRenderer variableRenderer;
 
     @Test
     void simple() throws IllegalVariableEvaluationException {
@@ -21,7 +25,7 @@ class JqHelperTest {
             "third", "{{end}}"
         );
 
-        String render = VARIABLE_RENDERER.render("{{ jq first \".second.third\" }}", vars);
+        String render = variableRenderer.render("{{ jq first \".second.third\" }}", vars);
 
         assertThat(render, is("[\"awesome\"]"));
     }
@@ -37,14 +41,14 @@ class JqHelperTest {
             ))
         );
 
-        String render = VARIABLE_RENDERER.render("{{ jq vars \".second.a\"}}", vars);
+        String render = variableRenderer.render("{{ jq vars \".second.a\"}}", vars);
         assertThat(render, is("[1]"));
 
 
-        render = VARIABLE_RENDERER.render("{{ jq vars \".second.a\" true}}", vars);
+        render = variableRenderer.render("{{ jq vars \".second.a\" true}}", vars);
         assertThat(render, is("1"));
 
-        render = VARIABLE_RENDERER.render("{{ jq vars \".second.d\" true}}", vars);
+        render = variableRenderer.render("{{ jq vars \".second.d\" true}}", vars);
         assertThat(render, is("4"));
     }
 
@@ -54,7 +58,7 @@ class JqHelperTest {
             "vars", ImmutableMap.of("second", Arrays.asList(1, 2, 3))
         );
 
-        String render = VARIABLE_RENDERER.render("{{ jq vars \".second[]\"}}", vars);
+        String render = variableRenderer.render("{{ jq vars \".second[]\"}}", vars);
         assertThat(render, is("[1,2,3]"));
     }
 }

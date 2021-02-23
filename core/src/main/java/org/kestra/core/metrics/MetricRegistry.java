@@ -48,6 +48,8 @@ public class MetricRegistry {
     public final static String SCHEDULER_EVALUATE_RUNNING_COUNT = "scheduler.evaluate.running.count";
     public final static String SCHEDULER_EVALUATE_COUNT = "scheduler.evaluate.count";
     public final static String SCHEDULER_EVALUATE_DURATION = "scheduler.evaluate.duration";
+    public final static String SCHEDULER_EXECUTION_RUNNING_DURATION = "scheduler.execution.running.duration";
+    public final static String SCHEDULER_EXECUTION_MISSING_DURATION = "scheduler.execution.missing.duration";
 
     public final static String TAG_TASK_ID = "task_id";
     public final static String TAG_TASK_TYPE = "task_type";

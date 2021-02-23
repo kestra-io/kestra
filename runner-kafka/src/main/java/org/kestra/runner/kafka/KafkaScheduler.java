@@ -1,10 +1,13 @@
 package org.kestra.runner.kafka;
 
+import com.google.common.collect.ImmutableMap;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -23,8 +26,11 @@ import org.kestra.core.schedulers.DefaultScheduler;
 import org.kestra.core.schedulers.SchedulerExecutionWithTrigger;
 import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowListenersInterface;
+import org.kestra.core.utils.IdUtils;
+import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
+import org.kestra.runner.kafka.services.KafkaProducerService;
 import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 import org.kestra.runner.kafka.streams.GlobalStateLockProcessor;
@@ -47,8 +53,11 @@ public class KafkaScheduler extends AbstractScheduler {
     private final ConditionService conditionService;
     private final KafkaStreamSourceService kafkaStreamSourceService;
     private final QueueService queueService;
+    private final KafkaProducer<String, Object> kafkaProducer;
+    private final TopicsConfig topicsConfigTrigger;
+    private final TopicsConfig topicsConfigExecution;
 
-    private Map<String, Trigger> triggerLock = new ConcurrentHashMap<>();
+    private final Map<String, Trigger> triggerLock = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
     public KafkaScheduler(
@@ -66,6 +75,15 @@ public class KafkaScheduler extends AbstractScheduler {
         this.conditionService = applicationContext.getBean(ConditionService.class);
         this.kafkaStreamSourceService = applicationContext.getBean(KafkaStreamSourceService.class);
         this.queueService = applicationContext.getBean(QueueService.class);
+        this.kafkaProducer = applicationContext.getBean(KafkaProducerService.class).of(
+            KafkaScheduler.class,
+            JsonSerde.of(Object.class),
+            ImmutableMap.of("transactional.id", IdUtils.create())
+        );
+        this.topicsConfigTrigger = KafkaQueue.topicsConfig(applicationContext, Trigger.class);
+        this.topicsConfigExecution = KafkaQueue.topicsConfig(applicationContext, Execution.class);
+
+        this.kafkaProducer.initTransactions();
     }
 
     public class SchedulerCleaner {
@@ -157,14 +175,31 @@ public class KafkaScheduler extends AbstractScheduler {
      * this can lead to empty trigger and launch of concurrent job.
      *
      * @param executionWithTrigger the execution trigger to save
-     * @return Trigger saved
      */
-    protected synchronized Trigger saveLastTrigger(SchedulerExecutionWithTrigger executionWithTrigger) {
+    protected synchronized void saveLastTriggerAndEmitExecution(SchedulerExecutionWithTrigger executionWithTrigger) {
+        Trigger trigger = Trigger.of(
+            executionWithTrigger.getTriggerContext(),
+            executionWithTrigger.getExecution()
+        );
 
-        Trigger trigger = super.saveLastTrigger(executionWithTrigger);
+        kafkaProducer.beginTransaction();
+
+        this.kafkaProducer.send(new ProducerRecord<>(
+            topicsConfigTrigger.getName(),
+            this.queueService.key(trigger),
+            trigger
+        ));
+
+
+        this.kafkaProducer.send(new ProducerRecord<>(
+            topicsConfigExecution.getName(),
+            this.queueService.key(executionWithTrigger.getExecution()),
+            executionWithTrigger.getExecution()
+        ));
+
         this.triggerLock.put(trigger.uid(), trigger);
 
-        return trigger;
+        kafkaProducer.commitTransaction();
     }
 
     @Override

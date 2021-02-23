@@ -5,7 +5,9 @@ import lombok.experimental.SuperBuilder;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.flows.Flow;
 
+import java.time.Instant;
 import java.util.Arrays;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @SuperBuilder
@@ -16,6 +18,9 @@ import javax.validation.constraints.NotNull;
 public class Trigger extends TriggerContext {
     @NotNull
     private String executionId;
+
+    @Nullable
+    private Instant updatedDate;
 
     public String uid() {
         return uid(this);
@@ -60,8 +65,9 @@ public class Trigger extends TriggerContext {
             .flowId(triggerContext.getFlowId())
             .flowRevision(triggerContext.getFlowRevision())
             .triggerId(triggerContext.getTriggerId())
-            .executionId(execution.getId())
             .date(triggerContext.getDate())
+            .executionId(execution.getId())
+            .updatedDate(Instant.now())
             .build();
     }
 

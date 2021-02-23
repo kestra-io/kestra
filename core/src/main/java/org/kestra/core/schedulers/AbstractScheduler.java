@@ -265,9 +265,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         Stream.of(result)
             .filter(Objects::nonNull)
             .peek(this::log)
-            .peek(this::saveLastTrigger)
-            .map(SchedulerExecutionWithTrigger::getExecution)
-            .forEach(this::emitExecution);
+            .forEach(this::saveLastTriggerAndEmitExecution);
     }
 
     private void addToRunning(TriggerContext triggerContext, ZonedDateTime now) {
@@ -418,19 +416,14 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         return result;
     }
 
-    protected synchronized Trigger saveLastTrigger(SchedulerExecutionWithTrigger executionWithTrigger) {
+    protected synchronized void saveLastTriggerAndEmitExecution(SchedulerExecutionWithTrigger executionWithTrigger) {
         Trigger trigger = Trigger.of(
             executionWithTrigger.getTriggerContext(),
             executionWithTrigger.getExecution()
         );
 
         this.triggerState.save(trigger);
-
-        return trigger;
-    }
-
-    protected synchronized void emitExecution(Execution execution) {
-        this.executionQueue.emit(execution);
+        this.executionQueue.emit(executionWithTrigger.getExecution());
     }
 
     private static ZonedDateTime now() {

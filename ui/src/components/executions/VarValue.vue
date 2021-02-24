@@ -3,10 +3,10 @@
         v-if="isFile(value)"
         target="_blank"
         :href="itemUrl(value)"
-        @mouseenter="getSize(value)"
     >
-        <kicon placement="left" :tooltip="humanSize">
+        <kicon placement="left">
             <download /> {{ $t('download') }}
+            <span v-if="humanSize">({{ humanSize }})</span>
         </kicon>
     </b-link>
     <span v-else v-html="value" />
@@ -35,10 +35,21 @@
             itemUrl(value) {
                 return `${apiRoot}executions/${this.execution.id}/file?path=${value}`;
             },
-            getSize(value) {
-                this.$http(`${apiRoot}executions/${this.execution.id}/filemetas?path=${value}`).then(
-                    r => this.humanSize = Utils.humanFileSize(r.data.size)
+
+        },
+        created() {
+            if (this.isFile(this.value)) {
+                this.$http(
+                    `${apiRoot}executions/${this.execution.id}/file/metas?path=${this.value}`,
+                    {
+                        validateStatus: (status) => {
+                            return status === 200 || status === 404;
+                        }
+                    }
                 )
+                    .then(
+                        r => this.humanSize = Utils.humanFileSize(r.data.size)
+                    )
             }
         },
         props: {

@@ -9,5 +9,5 @@ import javax.validation.constraints.NotNull;
 @Builder
 public class FileMetas {
     @NotNull
-    private long size;
+    long size;
 }

@@ -386,7 +386,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(file, containsString("micronaut:"));
 
         FileMetas metas = client.retrieve(
-            HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/filemetas?path=" + path),
+            HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file/metas?path=" + path),
             FileMetas.class
         ).blockingFirst();
 

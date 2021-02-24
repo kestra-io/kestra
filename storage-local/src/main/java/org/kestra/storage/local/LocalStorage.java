@@ -4,6 +4,7 @@ import org.kestra.core.storages.StorageInterface;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.inject.Inject;
@@ -44,10 +45,15 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public InputStream get(URI uri) throws FileNotFoundException {
-        return new BufferedInputStream(new FileInputStream(new File(getPath(URI.create(uri.getPath()))
+        return new BufferedInputStream(new FileInputStream(getPath(URI.create(uri.getPath()))
             .toAbsolutePath()
-            .toString()
-        )));
+            .toString())
+        );
+    }
+
+    @Override
+    public Long size(URI uri) throws IOException {
+        return Files.size(getPath(URI.create(uri.getPath())));
     }
 
     @Override

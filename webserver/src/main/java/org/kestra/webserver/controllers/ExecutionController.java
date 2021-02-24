@@ -21,6 +21,7 @@ import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.TaskRun;
+import org.kestra.core.models.storage.FileMetas;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
 import org.kestra.core.models.hierarchies.FlowGraph;
@@ -39,19 +40,16 @@ import org.kestra.webserver.responses.PagedResults;
 import org.kestra.webserver.utils.PageableUtils;
 import org.reactivestreams.Publisher;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
 
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
@@ -307,6 +305,22 @@ public class ExecutionController {
         return current;
     }
 
+    protected void validateFile(String executionId, URI path) {
+        Optional<Execution> execution = executionRepository.findById(executionId);
+        if (execution.isEmpty()) {
+            throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
+        }
+
+        Optional<Flow> flow = flowRepository.findById(execution.get().getNamespace(), execution.get().getFlowId());
+        if (flow.isEmpty()) {
+            throw new NoSuchElementException("Unable to find flow id '" + executionId + "'");
+        }
+
+        String prefix = storageInterface.executionPrefix(flow.get(), execution.get());
+        if (!path.getPath().substring(1).startsWith(prefix)) {
+            throw new IllegalArgumentException("Invalid prefix path");
+        }
+    }
     /**
      * Download file binary from uri parameter
      *
@@ -319,24 +333,28 @@ public class ExecutionController {
         String executionId,
         @QueryValue(value = "path") URI path
     ) throws IOException, URISyntaxException {
-        Optional<Execution> execution = executionRepository.findById(executionId);
-        if (execution.isEmpty()) {
-            return null;
-        }
-
-        Optional<Flow> flow = flowRepository.findById(execution.get().getNamespace(), execution.get().getFlowId());
-        if (flow.isEmpty()) {
-            return null;
-        }
-
-        String prefix = storageInterface.executionPrefix(flow.get(), execution.get());
-        if (!path.getPath().substring(1).startsWith(prefix)) {
-            throw new IllegalArgumentException("Invalid prefix path");
-        }
+        this.validateFile(executionId, path);
 
         InputStream fileHandler = storageInterface.get(path);
         return new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
             .attach(FilenameUtils.getName(path.toString()));
+    }
+
+    /**
+     * Get file meta information from given path
+     *
+     * @param path The file URI to gather metas values
+     * @return meta data about given file
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "executions/{executionId}/file/metas", produces = MediaType.TEXT_JSON)
+    public FileMetas filesize(
+        String executionId,
+        @QueryValue(value = "path") URI path
+    ) throws IOException {
+        this.validateFile(executionId, path);
+
+        return FileMetas.builder().size(storageInterface.size(path)).build();
     }
 
     /**

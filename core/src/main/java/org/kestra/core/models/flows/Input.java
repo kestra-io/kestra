@@ -25,6 +25,8 @@ public class Input {
     @Valid
     private Type type;
 
+    private String description;
+
     @NotNull
     private Boolean required = true;
 

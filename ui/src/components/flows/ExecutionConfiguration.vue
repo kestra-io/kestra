@@ -51,6 +51,7 @@
                     :state="Boolean(input.value)"
                     :placeholder="$t('choose file')"
                 />
+                <small v-if="input.description" class="form-text text-muted">{{ input.description }}</small>
             </b-form-group>
             <b-form-group class="text-right mb-0">
                 <b-button type="submit" variant="primary" v-b-tooltip.hover.top="'(Ctrl + Enter)'">

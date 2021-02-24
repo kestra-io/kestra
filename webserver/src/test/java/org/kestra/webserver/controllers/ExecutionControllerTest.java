@@ -325,7 +325,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             flow.get(),
             firstExecution, throwRunnable(() -> {
-                Thread.sleep(100);
+                Thread.sleep(1000);
 
                 Execution restartedExec = client.toBlocking().retrieve(
                     HttpRequest

@@ -40,7 +40,7 @@ public class RestartCaseTest {
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             execution -> execution.getState().getCurrent() == State.Type.SUCCESS,
             throwRunnable(() -> {
-                Thread.sleep(200);
+                Thread.sleep(1000);
                 Execution restartedExec = executionService.restart(firstExecution, null);
 
                 assertThat(restartedExec, notNullValue());

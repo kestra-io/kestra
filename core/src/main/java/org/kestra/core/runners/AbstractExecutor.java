@@ -143,13 +143,13 @@ public abstract class AbstractExecutor implements Runnable {
 
     private Optional<WorkerTaskResult> childWorkerTaskTypeToWorkerTask(
         Optional<State.Type> findState,
-        Task parentTask,
-        TaskRun parentTaskRun
+        Task task,
+        TaskRun taskRun
     ) {
         return findState
             .map(throwFunction(type -> new WorkerTaskResult(
-                parentTaskRun.withState(type),
-                parentTask
+                taskRun.withState(type),
+                task
             )))
             .stream()
             .peek(workerTaskResult -> {
@@ -305,11 +305,17 @@ public abstract class AbstractExecutor implements Runnable {
             return Optional.of(nexts);
         }
 
+
         return Optional.empty();
     }
 
     protected Optional<List<WorkerTaskResult>> doWorkerTaskResult(Execution execution, Flow flow) throws InternalException {
         List<WorkerTaskResult> nexts;
+
+        nexts = this.handleChildWorkerKilling(execution, flow);
+        if (nexts.size() > 0) {
+            return Optional.of(nexts);
+        }
 
         nexts = this.handleChildWorkerTaskResult(execution, flow);
         if (nexts.size() > 0) {
@@ -371,6 +377,30 @@ public abstract class AbstractExecutor implements Runnable {
             .map(Optional::get)
             .collect(Collectors.toList());
     }
+
+    private List<WorkerTaskResult> handleChildWorkerKilling(Execution execution, Flow flow) throws InternalException {
+        if (execution.getTaskRunList() == null || execution.getState().getCurrent() != State.Type.KILLING) {
+            return new ArrayList<>();
+        }
+
+        return execution
+            .getTaskRunList()
+            .stream()
+            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.CREATED)
+            .map(throwFunction(t -> {
+                Task task = flow.findTaskByTaskId(t.getTaskId());
+
+                return childWorkerTaskTypeToWorkerTask(
+                    Optional.of(State.Type.KILLED),
+                    task,
+                    t
+                );
+            }))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+    }
+
 
     private List<TaskRun> handleListeners(Execution execution, Flow flow) {
         if (!execution.getState().isTerninated()) {

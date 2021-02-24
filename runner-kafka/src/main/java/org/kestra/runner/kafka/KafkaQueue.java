@@ -10,9 +10,9 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
-import org.kestra.core.queues.AbstractQueue;
 import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.queues.QueueService;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
@@ -21,9 +21,8 @@ import org.kestra.runner.kafka.services.KafkaConsumerService;
 import org.kestra.runner.kafka.services.KafkaProducerService;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,11 +31,14 @@ import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
 
 @Slf4j
-public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, AutoCloseable {
+public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     private Class<T> cls;
     private final AdminClient adminClient;
     private final KafkaConsumerService kafkaConsumerService;
     private final List<org.apache.kafka.clients.consumer.Consumer<String, T>> kafkaConsumers = new ArrayList<>();
+    private final QueueService queueService;
+    private final KafkaQueueService kafkaQueueService;
+
     private static ExecutorService poolExecutor;
 
     private KafkaProducer<String, T> kafkaProducer;
@@ -52,6 +54,8 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
 
         this.adminClient = kafkaAdminService.of();
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
+        this.queueService = applicationContext.getBean(QueueService.class);
+        this.kafkaQueueService = applicationContext.getBean(KafkaQueueService.class);
     }
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
@@ -77,16 +81,8 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
         kafkaAdminService.createIfNotExist(topicKey);
     }
 
-    static <T> void log(TopicsConfig topicsConfig, T object, String message) {
-        if (log.isTraceEnabled()) {
-            log.trace("{} on  topic '{}', value {}", message, topicsConfig.getName(), object);
-        } else if (log.isDebugEnabled()) {
-            log.trace("{} on topic '{}', key {}", message, topicsConfig.getName(), key(object));
-        }
-    }
-
     private void produce(String key, T message) {
-        KafkaQueue.log(topicsConfig, message, "Outgoing messsage");
+        this.kafkaQueueService.log(log, topicsConfig, message, "Outgoing messsage");
 
         try {
             kafkaProducer
@@ -109,12 +105,12 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
 
     @Override
     public void emit(T message) throws QueueException {
-        this.produce(key(message), message);
+        this.produce(this.queueService.key(message), message);
     }
 
     @Override
     public void delete(T message) throws QueueException {
-        this.produce(key(message), null);
+        this.produce(this.queueService.key(message), null);
     }
 
     @Override
@@ -125,6 +121,14 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
     @Override
     public Runnable receive(Class<?> consumerGroup, Consumer<T> consumer) {
         AtomicBoolean running = new AtomicBoolean(true);
+
+        // no consumer groups, we fetch actual offset and block until the response id ready
+        // we need to be sure to get from actual time, so consume last 1 sec must enough
+        Map<TopicPartition, Long> offsets = null;
+        if (consumerGroup == null) {
+            offsets = this.offsetForTime(Instant.now().minus(Duration.ofSeconds(1)));
+        }
+        Map<TopicPartition, Long> finalOffsets = offsets;
 
         poolExecutor.execute(() -> {
             org.apache.kafka.clients.consumer.Consumer<String, T> kafkaConsumer = kafkaConsumerService.of(
@@ -137,14 +141,15 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
             if (consumerGroup != null) {
                 kafkaConsumer.subscribe(Collections.singleton(topicsConfig.getName()));
             } else {
-                kafkaConsumer.assign(this.getTopicPartition());
+                kafkaConsumer.assign(new ArrayList<>(finalOffsets.keySet()));
+                finalOffsets.forEach(kafkaConsumer::seek);
             }
 
             while (running.get()) {
                 ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofSeconds(1));
 
                 records.forEach(record -> {
-                    KafkaQueue.log(topicsConfig, record.value(), "Incoming messsage");
+                    this.kafkaQueueService.log(log, topicsConfig, record.value(), "Incoming messsage");
 
                     consumer.accept(record.value());
 
@@ -195,19 +200,53 @@ public class KafkaQueue<T> extends AbstractQueue implements QueueInterface<T>, A
             .orElseThrow();
     }
 
-    private List<TopicPartition> getTopicPartition() {
+    private List<TopicPartition> listTopicPartition() throws ExecutionException, InterruptedException {
+        return this.adminClient
+            .describeTopics(Collections.singleton(topicsConfig.getName()))
+            .all()
+            .get()
+            .entrySet()
+            .stream()
+            .flatMap(e -> e.getValue().partitions()
+                .stream()
+                .map(i -> new TopicPartition(e.getValue().name(), i.partition()))
+            )
+            .collect(Collectors.toList());
+    }
+
+    private Map<TopicPartition, Long> offsetForTime(
+        Instant instant
+    ) {
+        org.apache.kafka.clients.consumer.Consumer<String, T> consumer = kafkaConsumerService.of(
+            null,
+            JsonSerde.of(this.cls)
+        );
+
         try {
-            return this.adminClient
-                .describeTopics(Collections.singleton(topicsConfig.getName()))
-                .all()
-                .get()
+            List<TopicPartition> topicPartitions = this.listTopicPartition();
+            Map<TopicPartition, Long> result = consumer.endOffsets(topicPartitions);
+
+            result.putAll(consumer
+                .offsetsForTimes(
+                    topicPartitions
+                        .stream()
+                        .map(e -> new AbstractMap.SimpleEntry<>(
+                            e,
+                            instant.toEpochMilli()
+                        ))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                )
                 .entrySet()
                 .stream()
-                .flatMap(e -> e.getValue().partitions()
-                    .stream()
-                    .map(i -> new TopicPartition(e.getValue().name(), i.partition()))
-                )
-                .collect(Collectors.toList());
+                .filter(e -> e.getValue() != null)
+                .map(e -> new AbstractMap.SimpleEntry<>(
+                    e.getKey(),
+                    e.getValue().offset()
+                ))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+            );
+
+            return result;
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }

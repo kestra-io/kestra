@@ -2,10 +2,13 @@ package org.kestra.core.repositories;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
+import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.Helpers;
+import org.kestra.core.events.CrudEvent;
+import org.kestra.core.events.CrudEventType;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.Input;
 import org.kestra.core.models.triggers.Trigger;
@@ -20,9 +23,11 @@ import org.kestra.core.utils.TestsUtils;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +53,7 @@ public abstract class AbstractFlowRepositoryTest {
     @BeforeEach
     private void init() throws IOException, URISyntaxException {
         TestsUtils.loads(repositoryLoader);
+        FlowListener.reset();
     }
 
     private static Flow.FlowBuilder builder() {
@@ -282,5 +288,28 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(updated.getTriggers(), is(nullValue()));
 
         flowRepository.delete(save);
+
+        assertThat(FlowListener.getEmits().size(), is(3));
+        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count(), is(1L));
+        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.UPDATE).count(), is(1L));
+        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count(), is(1L));
+    }
+
+    @Singleton
+    public static class FlowListener implements ApplicationEventListener<CrudEvent<Flow>> {
+        private static List<CrudEvent<Flow>> emits = new ArrayList<>();
+
+        @Override
+        public void onApplicationEvent(CrudEvent<Flow> event) {
+            emits.add(event);
+        }
+
+        public static List<CrudEvent<Flow>> getEmits() {
+            return emits;
+        }
+
+        public static void reset() {
+            emits = new ArrayList<>();
+        }
     }
 }

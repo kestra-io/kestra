@@ -1,0 +1,35 @@
+id: trigger-multiplecondition-listener
+namespace: org.kestra.tests
+#
+#inputs:
+#  - name: from-parent
+#    type: STRING
+
+tasks:
+  - id: only-listener
+    type: org.kestra.core.tasks.debugs.Return
+    format: "childs"
+
+triggers:
+  - id: multiple-listen-flow
+    type: org.kestra.core.models.triggers.types.Flow
+#    inputs:
+#      from-parent: '{{ outputs.only.value }}'
+    conditions:
+      - id: multiple
+        type: org.kestra.core.models.conditions.types.MultipleCondition
+        window: P1D
+        windowAdvance: P0D
+        conditions:
+          success:
+            type: org.kestra.core.models.conditions.types.ExecutionStatusCondition
+            in:
+              - SUCCESS
+          flow-a:
+            type: org.kestra.core.models.conditions.types.ExecutionFlowCondition
+            namespace: org.kestra.tests
+            flowId: trigger-multiplecondition-flow-a
+          flow-b:
+            type: org.kestra.core.models.conditions.types.ExecutionFlowCondition
+            namespace: org.kestra.tests
+            flowId: trigger-multiplecondition-flow-b

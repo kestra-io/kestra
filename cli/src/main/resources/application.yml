@@ -104,6 +104,12 @@ kestra:
         properties:
           cleanup.policy: "delete,compact"
 
+      executorflowtrigger:
+        name: "${kestra.kafka.defaults.topic-prefix}executor_flowtrigger"
+        cls: org.kestra.runner.kafka.streams.ExecutorFlowTrigger
+        properties:
+          cleanup.policy: "delete,compact"
+
       workertask:
         name: "${kestra.kafka.defaults.topic-prefix}workertask"
         cls: org.kestra.core.runners.WorkerTask
@@ -142,7 +148,7 @@ kestra:
         cls: org.kestra.core.models.triggers.Trigger
         name: "${kestra.kafka.defaults.topic-prefix}trigger"
         properties:
-          cleanup.policy: "delete,compact"
+          cleanup.policy: "compact"
 
   elasticsearch:
     defaults:
@@ -172,6 +178,12 @@ kestra:
         index: "${kestra.elasticsearch.defaults.indice-prefix}logs"
         cls: org.kestra.core.models.executions.LogEntry
         mapping-file: log
+
+  indexer:
+    models:
+      - org.kestra.core.models.executions.Execution
+      - org.kestra.core.models.triggers.Trigger
+      - org.kestra.core.models.executions.LogEntry
 
   plugins:
     repositories:

@@ -1,15 +1,24 @@
 package org.kestra.core.schedulers;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Prototype;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
+import org.kestra.core.models.executions.Execution;
+import org.kestra.core.models.triggers.Trigger;
+import org.kestra.core.queues.QueueFactoryInterface;
+import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.services.FlowListenersInterface;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @Slf4j
-@Singleton
+@Prototype
 public class DefaultScheduler extends AbstractScheduler {
+    private final Map<String, Trigger> watchingTrigger = new ConcurrentHashMap<>();
+
     @Inject
     public DefaultScheduler(
         ApplicationContext applicationContext,
@@ -21,5 +30,28 @@ public class DefaultScheduler extends AbstractScheduler {
         this.triggerState = triggerState;
         this.executionState = executionState;
         this.isReady = true;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void run() {
+        QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
+        QueueInterface<Trigger> triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
+
+        executionQueue.receive(execution -> {
+            if (execution.getState().getCurrent().isTerninated() && this.watchingTrigger.containsKey(execution.getId())) {
+                Trigger trigger = watchingTrigger.get(execution.getId());
+                triggerQueue.emit(trigger.resetExecution());
+                triggerState.save(trigger.resetExecution());
+            }
+        });
+
+        triggerQueue.receive(trigger -> {
+            if (trigger.getExecutionId() != null) {
+                this.watchingTrigger.put(trigger.getExecutionId(), trigger);
+            }
+        });
+
+        super.run();
     }
 }

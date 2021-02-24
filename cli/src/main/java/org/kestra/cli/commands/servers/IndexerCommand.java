@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.kestra.cli.AbstractCommand;
 import org.kestra.core.models.ServerType;
 import org.kestra.core.runners.Indexer;
+import org.kestra.core.runners.IndexerInterface;
 import org.kestra.core.utils.Await;
 import picocli.CommandLine;
 
@@ -36,7 +37,7 @@ public class IndexerCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        Indexer indexer = applicationContext.getBean(Indexer.class);
+        IndexerInterface indexer = applicationContext.getBean(IndexerInterface.class);
         indexer.run();
 
         log.info("Indexer started");

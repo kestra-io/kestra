@@ -1,5 +1,6 @@
 package org.kestra.runner.kafka;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
@@ -22,18 +23,18 @@ import org.kestra.core.models.tasks.Task;
 import org.kestra.core.repositories.FlowRepositoryInterface;
 import org.kestra.core.repositories.LocalFlowRepositoryLoader;
 import org.kestra.core.runners.*;
+import org.kestra.core.serializers.JacksonMapper;
 import org.kestra.core.tasks.flows.Parallel;
+import org.kestra.core.utils.IdUtils;
 import org.kestra.core.utils.TestsUtils;
 import org.kestra.runner.kafka.configs.ClientConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
+import org.kestra.runner.kafka.services.KafkaStreamSourceService;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.ListIterator;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -43,6 +44,9 @@ import static org.hamcrest.Matchers.*;
 @MicronautTest
 @Slf4j
 class KafkaExecutorTest {
+    @Inject
+    ApplicationContext applicationContext;
+
     @Inject
     KafkaExecutor stream;
 
@@ -69,8 +73,13 @@ class KafkaExecutorTest {
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "unit-test");
+        properties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kafka-stream-unit/" + UUID.randomUUID());
 
         testTopology = new TopologyTestDriver(stream.topology(), properties);
+
+        applicationContext.registerSingleton(new KafkaTemplateExecutor(
+            testTopology.getKeyValueStore("template")
+        ));
     }
 
     @AfterEach
@@ -164,11 +173,12 @@ class KafkaExecutorTest {
 
         executionRecord = executionOutput().readRecord();
         executionRecord = executionOutput().readRecord();
+        executionRecord = executionOutput().readRecord();
 
         assertThat(executionRecord.value().getTaskRunList(), hasSize(2));
         assertThat(executionRecord.value().getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
 
-        assertThat(executionOutput().readRecord().value().getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(executionRecord.value().getState().getCurrent(), is(State.Type.KILLED));
         assertThat(executionOutput().isEmpty(), is(true));
     }
 
@@ -218,16 +228,12 @@ class KafkaExecutorTest {
 
         // first child > RUNNING
         executionRecord = executionOutput().readRecord().value();
-        assertThat(executionRecord.getTaskRunList(), hasSize(2));
+        assertThat(executionRecord.getTaskRunList(), hasSize(7));
         assertThat(executionRecord.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.CREATED));
 
         this.changeStatus(firstChild, executionRecord.getTaskRunList().get(1), State.Type.RUNNING);
         executionRecord = executionOutput().readRecord().value();
         assertThat(executionRecord.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.RUNNING));
-
-        // second child > CREATED
-        executionRecord = executionOutput().readRecord().value();
-        assertThat(executionRecord.getTaskRunList(), hasSize(3));
         assertThat(executionRecord.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.CREATED));
 
         // killed execution
@@ -235,32 +241,34 @@ class KafkaExecutorTest {
         executionRecord = executionOutput().readRecord().value();
         executionRecord = executionOutput().readRecord().value();
         assertThat(executionRecord.getState().getCurrent(), is(State.Type.KILLING));
+
+
+        // killed all the creation and killing the parent
+        for (int i = 0; i < 17; i++) {
+            executionRecord = executionOutput().readRecord().value();
+        }
+
         assertThat(executionRecord.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLING));
 
-        // change second child to RUNNING
-        this.changeStatus(secondChild, executionRecord.getTaskRunList().get(2), State.Type.RUNNING);
-        executionRecord = executionOutput().readRecord().value();
-        assertThat(executionRecord.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.RUNNING));
+        for (int i = 2; i < 5; i++) {
+            assertThat(executionRecord.getTaskRunList().get(i).getState().getCurrent(), is(State.Type.KILLED));
+        }
 
-        // kill the first & second child
+        // kill the first child
         if (killed) {
             this.changeStatus(firstChild, executionRecord.getTaskRunList().get(1), State.Type.KILLED);
-            this.changeStatus(secondChild, executionRecord.getTaskRunList().get(2), State.Type.KILLED);
         } else {
             this.changeStatus(firstChild, executionRecord.getTaskRunList().get(1), State.Type.SUCCESS);
-            this.changeStatus(secondChild, executionRecord.getTaskRunList().get(2), State.Type.SUCCESS);
         }
 
         // killing state
-        executionRecord = executionOutput().readRecord().value();
-        executionRecord = executionOutput().readRecord().value();
-        executionRecord = executionOutput().readRecord().value();
-        executionRecord = executionOutput().readRecord().value();
+        for (int i = 0; i < 4; i++) {
+            executionRecord = executionOutput().readRecord().value();
+        }
 
         // control
         assertThat(executionRecord.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLED));
         assertThat(executionRecord.getTaskRunList().get(1).getState().getCurrent(), is(killed ? State.Type.KILLED : State.Type.SUCCESS));
-        assertThat(executionRecord.getTaskRunList().get(2).getState().getCurrent(), is(killed ? State.Type.KILLED : State.Type.SUCCESS));
         assertThat(executionRecord.getState().getCurrent(), is(State.Type.KILLED));
 
         assertThat(executionOutput().isEmpty(), is(true));
@@ -285,15 +293,16 @@ class KafkaExecutorTest {
         assertThat(executionRecord.value().getTaskRunList(), hasSize(1));
         assertThat(executionRecord.value().getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
 
+
+        executionRecord = executionOutput().readRecord();
+        assertThat(executionRecord.value().getTaskRunList(), hasSize(7));
+
         // Task > all RUNNING
         for (ListIterator<Task> it = parent.getTasks().listIterator(); it.hasNext(); ) {
             int index = it.nextIndex();
             Task next = it.next();
 
-            executionRecord = executionOutput().readRecord();
-
             // Task > CREATED
-            assertThat(executionRecord.value().getTaskRunList(), hasSize(index + 2));
             assertThat(executionRecord.value().getTaskRunList().get(index + 1).getState().getCurrent(), is(State.Type.CREATED));
 
             // Task > RUNNING
@@ -368,6 +377,42 @@ class KafkaExecutorTest {
     }
 
     @Test
+    void multipleTrigger() {
+        Flow flowA = flowRepository.findById("org.kestra.tests", "trigger-multiplecondition-flow-a").orElseThrow();
+        this.flowInput().pipeInput(flowA.uid(), flowA);
+
+        Flow flowB = flowRepository.findById("org.kestra.tests", "trigger-multiplecondition-flow-b").orElseThrow();
+        this.flowInput().pipeInput(flowB.uid(), flowB);
+
+        Flow triggerFlow = flowRepository.findById("org.kestra.tests", "trigger-multiplecondition-listener").orElseThrow();
+        this.flowInput().pipeInput(triggerFlow.uid(), triggerFlow);
+
+        // first
+        createExecution(flowA);
+        runningAndSuccessSequential(flowA, 0);
+
+        TestRecord<String, Execution> executionA = executionOutput().readRecord();
+        assertThat(executionA.value().getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // second
+        createExecution(flowB);
+        runningAndSuccessSequential(flowB, 0);
+
+        TestRecord<String, Execution> executionB = executionOutput().readRecord();
+        assertThat(executionB.value().getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // trigger start
+        TestRecord<String, Execution> triggerExecution = executionOutput().readRecord();
+        assertThat(triggerExecution.value().getState().getCurrent(), is(State.Type.CREATED));
+
+        runningAndSuccessSequential(triggerFlow, 0);
+
+        triggerExecution = executionOutput().readRecord();
+        assertThat(triggerExecution.value().getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+
+    @Test
     void workerRebalanced() {
         Flow flow = flowRepository.findById("org.kestra.tests", "logs").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
@@ -398,14 +443,14 @@ class KafkaExecutorTest {
 
     private void createExecution(Flow flow) {
         Execution execution = Execution.builder()
-            .id("unittest")
+            .id(IdUtils.create())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
             .state(new State())
             .build();
 
-        this.executionInput().pipeInput("unittest", execution);
+        this.executionInput().pipeInput(execution.getId(), execution);
     }
 
     private void createKilled(Execution execution) {
@@ -413,7 +458,7 @@ class KafkaExecutorTest {
             .executionId(execution.getId())
             .build();
 
-        this.executionKilledInput().pipeInput("unittest", executionKilled);
+        this.executionKilledInput().pipeInput(executionKilled.getExecutionId(), executionKilled);
     }
 
     private static WorkerInstance workerInstance() {

@@ -1,7 +1,10 @@
 package org.kestra.repository.memory;
 
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
+import org.kestra.core.events.CrudEvent;
+import org.kestra.core.events.CrudEventType;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.triggers.Trigger;
 import org.kestra.core.models.validations.ModelValidator;
@@ -31,6 +34,9 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     @Inject
     @Named(QueueFactoryInterface.TRIGGER_NAMED)
     private QueueInterface<Trigger> triggerQueue;
+
+    @Inject
+    private ApplicationEventPublisher eventPublisher;
 
     @Inject
     private ModelValidator modelValidator;
@@ -105,7 +111,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 throw s;
             });
 
-        return this.save(flow);
+        return this.save(flow, CrudEventType.CREATE);
     }
 
     public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
@@ -119,7 +125,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 throw s;
             });
 
-        Flow saved = this.save(flow);
+        Flow saved = this.save(flow, CrudEventType.UPDATE);
 
         FlowService
             .findRemovedTrigger(flow, previous)
@@ -128,7 +134,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return saved;
     }
 
-    private Flow save(Flow flow) throws ConstraintViolationException {
+    private Flow save(Flow flow, CrudEventType crudEventType) throws ConstraintViolationException {
         // validate the flow
         modelValidator
             .isValid(flow)
@@ -154,6 +160,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         this.revisions.put(flow.uid(), flow);
 
         flowQueue.emit(flow);
+        eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
         return flow;
     }
@@ -169,6 +176,8 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         flowQueue.emit(deleted);
         this.flows.remove(flowId(deleted));
         this.revisions.put(deleted.uid(), deleted);
+
+        eventPublisher.publishEvent(new CrudEvent<>(flow, CrudEventType.DELETE));
 
         return deleted;
     }

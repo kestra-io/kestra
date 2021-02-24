@@ -2,6 +2,7 @@ package org.kestra.core.schedulers;
 
 import com.google.common.util.concurrent.*;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Prototype;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -39,7 +40,7 @@ import java.util.stream.Stream;
 import static org.kestra.core.utils.Rethrow.throwSupplier;
 
 @Slf4j
-@Singleton
+@Prototype
 public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
@@ -266,7 +267,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
             .peek(this::log)
             .peek(this::saveLastTrigger)
             .map(SchedulerExecutionWithTrigger::getExecution)
-            .forEach(this.executionQueue::emit);
+            .forEach(this::emitExecution);
     }
 
     private void addToRunning(TriggerContext triggerContext, ZonedDateTime now) {
@@ -298,7 +299,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
         Optional<Execution> execution = executionState.findById(lastTrigger.getExecutionId());
 
-        // indexer hasn't received the execution, we skip
+        // executionState hasn't received the execution, we skip
         if (execution.isEmpty()) {
             log.warn("Execution '{}' for flow '{}.{}' is not found, schedule is blocked",
                 lastTrigger.getExecutionId(),
@@ -309,11 +310,8 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
             return false;
         }
 
-        // execution is terminated, we can do other backfill
-        if (execution.get().getState().isTerninated()) {
-            return true;
-        }
-
+        // we need to have {@code lastTrigger.getExecutionId() == null} to be tell the execution is not running.
+        // the scheduler will clean the execution from the trigger and we don't keep only terminated state as an end.
         if (log.isDebugEnabled()) {
             log.debug("Execution '{}' for flow '{}.{}' is still '{}', waiting for next backfill",
                 lastTrigger.getExecutionId(),
@@ -407,13 +405,19 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         return result;
     }
 
-    private void saveLastTrigger(SchedulerExecutionWithTrigger executionWithTrigger) {
+    protected synchronized Trigger saveLastTrigger(SchedulerExecutionWithTrigger executionWithTrigger) {
         Trigger trigger = Trigger.of(
             executionWithTrigger.getTriggerContext(),
             executionWithTrigger.getExecution()
         );
 
         this.triggerState.save(trigger);
+
+        return trigger;
+    }
+
+    protected synchronized void emitExecution(Execution execution) {
+        this.executionQueue.emit(execution);
     }
 
     private static ZonedDateTime now() {

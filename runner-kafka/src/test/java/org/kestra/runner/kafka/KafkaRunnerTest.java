@@ -10,10 +10,7 @@ import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.repositories.TemplateRepositoryInterface;
-import org.kestra.core.runners.FlowTriggerCaseTest;
-import org.kestra.core.runners.InputsTest;
-import org.kestra.core.runners.ListenersTest;
-import org.kestra.core.runners.RestartCaseTest;
+import org.kestra.core.runners.*;
 import org.kestra.core.tasks.flows.EachSequentialTest;
 import org.kestra.core.tasks.flows.TemplateTest;
 import org.kestra.core.utils.TestsUtils;
@@ -38,6 +35,9 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Inject
     private FlowTriggerCaseTest flowTriggerCaseTest;
+
+    @Inject
+    private MultipleConditionTriggerCaseTest multipleConditionTriggerCaseTest;
 
     @Inject
     private TemplateRepositoryInterface templateRepository;
@@ -164,7 +164,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
             "inputs-large",
             null,
             (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs),
-            Duration.ofSeconds(60)
+            Duration.ofSeconds(120)
         );
 
         assertThat(execution.getTaskRunList(), hasSize(10));
@@ -193,7 +193,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
         );
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(logs.size(), is(131));
+        assertThat(logs.stream().filter(logEntry -> logEntry.getExecutionId().equals(execution.getId())).count(), is(131L));
     }
 
     @Test
@@ -219,6 +219,11 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Test
     void flowTrigger() throws Exception {
         flowTriggerCaseTest.trigger();
+    }
+
+    @Test
+    void multipleConditionTrigger() throws Exception {
+        multipleConditionTriggerCaseTest.trigger();
     }
 
     @Test

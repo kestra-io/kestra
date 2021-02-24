@@ -85,6 +85,12 @@ kestra:
         properties:
           cleanup.policy: "delete,compact"
 
+      executorflowtrigger:
+        name: "unit_${kestra.prefix}_kestra_executor_flowtrigger"
+        cls: org.kestra.runner.kafka.streams.ExecutorFlowTrigger
+        properties:
+          cleanup.policy: "delete,compact"
+
       workertask:
         name: "unit_${kestra.prefix}_kestra_workertask"
         cls: org.kestra.core.runners.WorkerTask
@@ -122,4 +128,4 @@ kestra:
         cls: org.kestra.core.models.triggers.Trigger
         name: "unit_${kestra.prefix}_kestra_trigger"
         properties:
-          cleanup.policy: "delete,compact"
+          cleanup.policy: "compact"

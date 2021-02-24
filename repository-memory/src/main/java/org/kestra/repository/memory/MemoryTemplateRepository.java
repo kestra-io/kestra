@@ -1,7 +1,10 @@
 package org.kestra.repository.memory;
 
+import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
+import org.kestra.core.events.CrudEvent;
+import org.kestra.core.events.CrudEventType;
 import org.kestra.core.models.templates.Template;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
@@ -22,6 +25,9 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     @Inject
     @Named(QueueFactoryInterface.TEMPLATE_NAMED)
     private QueueInterface<Template> templateQueue;
+
+    @Inject
+    private ApplicationEventPublisher eventPublisher;
 
     @Override
     public Optional<Template> findById(String namespace, String id) {
@@ -60,6 +66,8 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
         templates.put(template.getId(), template);
         templateQueue.emit(template);
 
+        eventPublisher.publishEvent(new CrudEvent<>(template, CrudEventType.CREATE));
+
         return template;
     }
 
@@ -77,6 +85,8 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
         templates.put(template.getId(), template);
         templateQueue.emit(template);
 
+        eventPublisher.publishEvent(new CrudEvent<>(template, CrudEventType.UPDATE));
+
         return template;
     }
 
@@ -88,6 +98,8 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
 
         this.templates.remove(template.getId());
         templateQueue.emit(template.toDeleted());
+
+        eventPublisher.publishEvent(new CrudEvent<>(template, CrudEventType.DELETE));
     }
 
     @Override

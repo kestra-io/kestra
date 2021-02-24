@@ -70,13 +70,9 @@
                             })
                     })
                     .reduce((accumulator, value)  => {
-                        console.log(value, accumulator)
                         accumulator[value.namepace] = accumulator[value.namepace] || {};
-                        console.log(accumulator)
                         accumulator[value.namepace][value.type] = accumulator[value.namepace][value.type] || [];
-                        console.log(accumulator)
                         accumulator[value.namepace][value.type].push(value.cls);
-                        console.log(accumulator)
 
                         return accumulator;
                     }, Object.create(null));

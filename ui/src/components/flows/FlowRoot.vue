@@ -113,7 +113,7 @@
                     });
                 }
 
-                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
+                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
                     tabs.push({
                         tab: "logs",
                         title: this.$t("logs")

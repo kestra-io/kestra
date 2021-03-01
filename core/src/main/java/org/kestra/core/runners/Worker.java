@@ -9,6 +9,8 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
 import lombok.Synchronized;
 import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.Timeout;
+import org.kestra.core.exceptions.TimeoutExceededException;
 import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.models.executions.ExecutionKilled;
 import org.kestra.core.models.executions.TaskRunAttempt;
@@ -236,7 +238,7 @@ public class Worker implements Runnable {
 
         metricRunningCount.incrementAndGet();
 
-        WorkerThread workerThread = new WorkerThread(logger, workerTask, task, runContext);
+        WorkerThread workerThread = new WorkerThread(logger, workerTask, task, runContext, metricRegistry);
         workerThread.start();
 
         // emit attempts
@@ -323,12 +325,13 @@ public class Worker implements Runnable {
         WorkerTask workerTask;
         RunnableTask<?> task;
         RunContext runContext;
+        MetricRegistry metricRegistry;
 
         Output taskOutput;
         org.kestra.core.models.flows.State.Type taskState;
         boolean killed = false;
 
-        public WorkerThread(Logger logger, WorkerTask workerTask, RunnableTask<?> task, RunContext runContext) {
+        public WorkerThread(Logger logger, WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
             super("WorkerThread");
             this.setUncaughtExceptionHandler(this::exceptionHandler);
 
@@ -336,13 +339,38 @@ public class Worker implements Runnable {
             this.workerTask = workerTask;
             this.task = task;
             this.runContext = runContext;
+            this.metricRegistry = metricRegistry;
         }
 
         @Override
         public void run() {
             try {
-                taskOutput = task.run(runContext);
+                // timeout
+                if (workerTask.getTask().getTimeout() != null) {
+                    Failsafe
+                        .with(Timeout
+                            .<WorkerTask>of(workerTask.getTask().getTimeout())
+                            .withCancel(true)
+                            .onFailure(event -> metricRegistry
+                                .counter(
+                                    MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT,
+                                    metricRegistry.tags(
+                                        this.workerTask,
+                                        MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(event.getAttemptCount())
+                                    )
+                                )
+                                .increment()
+                            )
+                        )
+                        .run(() -> taskOutput = task.run(runContext));
+
+                } else {
+                    taskOutput = task.run(runContext);
+                }
+
                 taskState = org.kestra.core.models.flows.State.Type.SUCCESS;
+            } catch (net.jodah.failsafe.TimeoutExceededException e) {
+                this.exceptionHandler(this, new TimeoutExceededException(workerTask.getTask().getTimeout(), e));
             } catch (Exception e) {
                 this.exceptionHandler(this, e);
             }

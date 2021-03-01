@@ -17,6 +17,8 @@ import java.util.Arrays;
 public interface StorageInterface {
     InputStream get(URI uri) throws FileNotFoundException;
 
+    Long size(URI uri) throws IOException;
+
     URI put(URI uri, InputStream data) throws IOException;
 
     boolean delete(URI uri) throws IOException;

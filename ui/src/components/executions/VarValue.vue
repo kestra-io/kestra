@@ -4,7 +4,10 @@
         target="_blank"
         :href="itemUrl(value)"
     >
-        <download /> {{ $t('download') }}
+        <kicon placement="left">
+            <download /> {{ $t('download') }}
+            <span v-if="humanSize">({{ humanSize }})</span>
+        </kicon>
     </b-link>
     <span v-else v-html="value" />
 </template>
@@ -12,10 +15,18 @@
 <script>
     import {apiRoot} from "../../http";
     import Download from "vue-material-design-icons/Download";
+    import Kicon from "../Kicon"
+    import Utils from "../../utils/utils";
 
     export default {
         components: {
-            Download
+            Download,
+            Kicon
+        },
+        data () {
+            return {
+                humanSize: ""
+            }
         },
         methods: {
             isFile(value) {
@@ -24,6 +35,22 @@
             itemUrl(value) {
                 return `${apiRoot}executions/${this.execution.id}/file?path=${value}`;
             },
+
+        },
+        created() {
+            if (this.isFile(this.value)) {
+                this.$http(
+                    `${apiRoot}executions/${this.execution.id}/file/metas?path=${this.value}`,
+                    {
+                        validateStatus: (status) => {
+                            return status === 200 || status === 404;
+                        }
+                    }
+                )
+                    .then(
+                        r => this.humanSize = Utils.humanFileSize(r.data.size)
+                    )
+            }
         },
         props: {
             value: {

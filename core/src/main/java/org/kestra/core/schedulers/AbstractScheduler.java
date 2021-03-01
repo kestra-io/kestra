@@ -26,9 +26,8 @@ import org.kestra.core.services.FlowListenersInterface;
 import org.kestra.core.utils.Await;
 import org.kestra.core.utils.ExecutorsUtils;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -36,6 +35,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
 
 import static org.kestra.core.utils.Rethrow.throwSupplier;
 
@@ -265,9 +265,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         Stream.of(result)
             .filter(Objects::nonNull)
             .peek(this::log)
-            .peek(this::saveLastTrigger)
-            .map(SchedulerExecutionWithTrigger::getExecution)
-            .forEach(this::emitExecution);
+            .forEach(this::saveLastTriggerAndEmitExecution);
     }
 
     private void addToRunning(TriggerContext triggerContext, ZonedDateTime now) {
@@ -301,6 +299,12 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
         // executionState hasn't received the execution, we skip
         if (execution.isEmpty()) {
+            if (lastTrigger.getUpdatedDate() != null) {
+                metricRegistry
+                    .timer(MetricRegistry.SCHEDULER_EXECUTION_MISSING_DURATION, metricRegistry.tags(lastTrigger))
+                    .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
+            }
+
             log.warn("Execution '{}' for flow '{}.{}' is not found, schedule is blocked",
                 lastTrigger.getExecutionId(),
                 lastTrigger.getNamespace(),
@@ -313,6 +317,12 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         // we need to have {@code lastTrigger.getExecutionId() == null} to be tell the execution is not running.
         // the scheduler will clean the execution from the trigger and we don't keep only terminated state as an end.
         if (log.isDebugEnabled()) {
+            if (lastTrigger.getUpdatedDate() != null) {
+                metricRegistry
+                    .timer(MetricRegistry.SCHEDULER_EXECUTION_RUNNING_DURATION, metricRegistry.tags(lastTrigger))
+                    .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
+            }
+
             log.debug("Execution '{}' for flow '{}.{}' is still '{}', waiting for next backfill",
                 lastTrigger.getExecutionId(),
                 lastTrigger.getNamespace(),
@@ -373,6 +383,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                         .flowRevision(f.getFlow().getRevision())
                         .namespace(f.getFlow().getNamespace())
                         .triggerId(f.getTriggerContext().getTriggerId())
+                        .updatedDate(Instant.now())
                         .build();
                 }
             );
@@ -405,19 +416,14 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         return result;
     }
 
-    protected synchronized Trigger saveLastTrigger(SchedulerExecutionWithTrigger executionWithTrigger) {
+    protected synchronized void saveLastTriggerAndEmitExecution(SchedulerExecutionWithTrigger executionWithTrigger) {
         Trigger trigger = Trigger.of(
             executionWithTrigger.getTriggerContext(),
             executionWithTrigger.getExecution()
         );
 
         this.triggerState.save(trigger);
-
-        return trigger;
-    }
-
-    protected synchronized void emitExecution(Execution execution) {
-        this.executionQueue.emit(execution);
+        this.executionQueue.emit(executionWithTrigger.getExecution());
     }
 
     private static ZonedDateTime now() {

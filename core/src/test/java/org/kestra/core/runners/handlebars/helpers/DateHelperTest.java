@@ -1,6 +1,7 @@
 package org.kestra.core.runners.handlebars.helpers;
 
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.kestra.core.exceptions.IllegalVariableEvaluationException;
 import org.kestra.core.runners.VariableRenderer;
@@ -10,13 +11,18 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
+import javax.inject.Inject;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
+@MicronautTest
 class DateHelperTest {
-    private final static VariableRenderer VARIABLE_RENDERER = new VariableRenderer();
     public static final ZonedDateTime NOW = ZonedDateTime.parse("2013-09-08T16:19:12.123456+01");
+
+    @Inject
+    private VariableRenderer variableRenderer;
 
     @Test
     void dateFormat() throws IllegalVariableEvaluationException {
@@ -27,7 +33,7 @@ class DateHelperTest {
             "local", NOW.toLocalDateTime()
         );
 
-        String render = VARIABLE_RENDERER.render(
+        String render = variableRenderer.render(
             "{{ dateFormat date iso tz=\"Europe/Paris\"}}\n" +
                 "{{ dateFormat instant \"iso_sec\" tz=\"Europe/Paris\" }}\n" +
                 "{{ dateFormat zoned \"iso\" tz=\"Europe/Paris\" }}\n" +
@@ -46,7 +52,7 @@ class DateHelperTest {
 
     @Test
     void timestamp() throws IllegalVariableEvaluationException {
-        String render = VARIABLE_RENDERER.render(
+        String render = variableRenderer.render(
             "{{ timestamp zoned tz=\"Europe/Paris\" }}",
             ImmutableMap.of(
                 "zoned", NOW
@@ -58,7 +64,7 @@ class DateHelperTest {
 
     @Test
     void instantnano() throws IllegalVariableEvaluationException {
-        String render = VARIABLE_RENDERER.render(
+        String render = variableRenderer.render(
             "{{ nanotimestamp zoned tz=\"Europe/Paris\" }}",
             ImmutableMap.of(
                 "zoned", NOW
@@ -70,7 +76,7 @@ class DateHelperTest {
 
     @Test
     void instantmicro() throws IllegalVariableEvaluationException {
-        String render = VARIABLE_RENDERER.render(
+        String render = variableRenderer.render(
             "{{ microtimestamp zoned tz=\"Europe/Paris\" }}",
             ImmutableMap.of(
                 "zoned", NOW
@@ -82,7 +88,7 @@ class DateHelperTest {
 
     @Test
     void now() throws IllegalVariableEvaluationException {
-        String render = VARIABLE_RENDERER.render("{{ now tz=\"Europe/Lisbon\" }}", ImmutableMap.of());
+        String render = variableRenderer.render("{{ now tz=\"Europe/Lisbon\" }}", ImmutableMap.of());
 
         assertThat(render, containsString(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ISO_LOCAL_DATE)));
         assertThat(render, containsString(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ofPattern("HH:mm"))));
@@ -90,7 +96,7 @@ class DateHelperTest {
 
     @Test
     void add() throws IllegalVariableEvaluationException {
-        String render = VARIABLE_RENDERER.render(
+        String render = variableRenderer.render(
             "{{ dateAdd zoned -1 \"DAYS\" tz=\"Europe/Paris\" }}",
             ImmutableMap.of(
                 "zoned", NOW

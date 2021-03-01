@@ -22,6 +22,7 @@ public class MetricRegistry {
     public final static String METRIC_WORKER_QUEUED_DURATION = "worker.queued.duration";
     public final static String METRIC_WORKER_STARTED_COUNT = "worker.started.count";
     public final static String METRIC_WORKER_RETRYED_COUNT = "worker.retryed.count";
+    public final static String METRIC_WORKER_TIMEOUT_COUNT = "worker.timeout.count";
     public final static String METRIC_WORKER_ENDED_COUNT = "worker.ended.count";
     public final static String METRIC_WORKER_ENDED_DURATION = "worker.ended.duration";
 
@@ -47,6 +48,8 @@ public class MetricRegistry {
     public final static String SCHEDULER_EVALUATE_RUNNING_COUNT = "scheduler.evaluate.running.count";
     public final static String SCHEDULER_EVALUATE_COUNT = "scheduler.evaluate.count";
     public final static String SCHEDULER_EVALUATE_DURATION = "scheduler.evaluate.duration";
+    public final static String SCHEDULER_EXECUTION_RUNNING_DURATION = "scheduler.execution.running.duration";
+    public final static String SCHEDULER_EXECUTION_MISSING_DURATION = "scheduler.execution.missing.duration";
 
     public final static String TAG_TASK_ID = "task_id";
     public final static String TAG_TASK_TYPE = "task_type";

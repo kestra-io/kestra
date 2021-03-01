@@ -18,6 +18,7 @@ import org.kestra.core.models.executions.Execution;
 import org.kestra.core.models.executions.TaskRun;
 import org.kestra.core.models.flows.Flow;
 import org.kestra.core.models.flows.State;
+import org.kestra.core.models.storage.FileMetas;
 import org.kestra.core.models.triggers.types.Webhook;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
@@ -27,13 +28,13 @@ import org.kestra.core.runners.InputsTest;
 import org.kestra.core.utils.IdUtils;
 import org.kestra.webserver.responses.PagedResults;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.File;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
-import javax.inject.Inject;
-import javax.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -325,7 +326,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
             flow.get(),
             firstExecution, throwRunnable(() -> {
-                Thread.sleep(100);
+                Thread.sleep(1000);
 
                 Execution restartedExec = client.toBlocking().retrieve(
                     HttpRequest
@@ -383,6 +384,13 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(file, containsString("micronaut:"));
+
+        FileMetas metas = client.retrieve(
+            HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file/metas?path=" + path),
+            FileMetas.class
+        ).blockingFirst();
+
+        assertThat(metas.getSize(), equalTo(288L));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path.replace(execution.getId(),

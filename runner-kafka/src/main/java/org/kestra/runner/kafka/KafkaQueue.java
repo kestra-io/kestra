@@ -179,7 +179,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             .stream()
             .filter(r -> r.getName().equals(topicName))
             .findFirst()
-            .orElseThrow();
+            .orElseThrow(() -> new IllegalArgumentException("Invalid topic name '" + topicName + "'"));
     }
 
     static TopicsConfig topicsConfig(ApplicationContext applicationContext, Class<?> cls) {
@@ -188,7 +188,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             .stream()
             .filter(r -> r.getCls() == cls)
             .findFirst()
-            .orElseThrow();
+            .orElseThrow(() -> new IllegalArgumentException("Invalid topic class '" + cls.getName() + "'"));
     }
 
     static TopicsConfig topicsConfig(ApplicationContext applicationContext, String name) {
@@ -197,7 +197,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             .stream()
             .filter(r -> r.getKey().equals(name))
             .findFirst()
-            .orElseThrow();
+            .orElseThrow(() -> new IllegalArgumentException("Invalid topic key '" + name + "'"));
     }
 
     private List<TopicPartition> listTopicPartition() throws ExecutionException, InterruptedException {

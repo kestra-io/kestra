@@ -98,7 +98,7 @@ public class RunnerUtils {
             .getInputs()
             .stream()
             .map((Function<Input, Optional<AbstractMap.SimpleEntry<String, Object>>>) input -> {
-                String current = in.get(input.getName());
+                String current = in == null ? null : in.get(input.getName());
 
                 if (input.getRequired() && current == null) {
                     throw new MissingRequiredInput("Missing required input value '" + input.getName() + "'");

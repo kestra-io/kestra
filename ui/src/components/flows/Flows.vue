@@ -153,7 +153,8 @@
                 const title = title => {
                     return this.$t(title);
                 };
-                return [
+
+                let fields = [
                     {
                         key: "id",
                         label: title("flow"),
@@ -164,18 +165,27 @@
                         label: title("namespace"),
                         sortable: true
                     },
-                    {
-                        key: "state",
-                        label: title("execution statistics"),
-                        sortable: false,
-                        class: "row-graph"
-                    },
-                    {
-                        key: "duration",
-                        label: title("duration"),
-                        sortable: false,
-                        class: "row-graph"
-                    },
+                ]
+
+                if (this.user.hasAny(permission.EXECUTION)) {
+                    fields.push(
+                        {
+                            key: "state",
+                            label: title("execution statistics"),
+                            sortable: false,
+                            class: "row-graph"
+                        },
+                        {
+                            key: "duration",
+                            label: title("duration"),
+                            sortable: false,
+                            class: "row-graph"
+                        }
+                    );
+                }
+
+
+                fields.push(
                     {
                         key: "triggers",
                         label: title("triggers"),
@@ -186,7 +196,9 @@
                         label: "",
                         class: "row-action"
                     }
-                ];
+                )
+
+                return fields;
             },
             endDate() {
                 return new Date();
@@ -211,15 +223,18 @@
             },
             loadData(callback) {
                 this.dailyReady = false;
-                this.$store
-                    .dispatch("stat/daily", {
-                        q: this.query.replace("id:" , "flowId:"),
-                        startDate: this.$moment(this.startDate).format("YYYY-MM-DD"),
-                        endDate: this.$moment(this.endDate).format("YYYY-MM-DD")
-                    })
-                    .then(() => {
-                        this.dailyReady = true;
-                    });
+
+                if (this.user.hasAny(permission.EXECUTION)) {
+                    this.$store
+                        .dispatch("stat/daily", {
+                            q: this.query.replace("id:", "flowId:"),
+                            startDate: this.$moment(this.startDate).format("YYYY-MM-DD"),
+                            endDate: this.$moment(this.endDate).format("YYYY-MM-DD")
+                        })
+                        .then(() => {
+                            this.dailyReady = true;
+                        });
+                }
 
                 this.$store
                     .dispatch("flow/findFlows", {
@@ -237,15 +252,17 @@
                                 .map(flow => "flowId:" + flow.id + " AND namespace:" + flow.namespace)
                                 .join(") OR (") + "))"
 
-                            this.$store
-                                .dispatch("stat/dailyGroupByFlow", {
-                                    q: query,
-                                    startDate: this.$moment(this.startDate).format("YYYY-MM-DD"),
-                                    endDate: this.$moment(this.endDate).format("YYYY-MM-DD")
-                                })
-                                .then(() => {
-                                    this.dailyGroupByFlowReady = true
-                                })
+                            if (this.user && this.user.hasAny(permission.EXECUTION)) {
+                                this.$store
+                                    .dispatch("stat/dailyGroupByFlow", {
+                                        q: query,
+                                        startDate: this.$moment(this.startDate).format("YYYY-MM-DD"),
+                                        endDate: this.$moment(this.endDate).format("YYYY-MM-DD")
+                                    })
+                                    .then(() => {
+                                        this.dailyGroupByFlowReady = true
+                                    })
+                            }
                         }
                     })
             }

@@ -39,7 +39,7 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
         @Example(
             title = "Bash command that generate file in storage accessible through outputs",
             code = {
-                "outputsFiles:",
+                "outputFiles:",
                 "- first",
                 "- second",
                 "commands:",

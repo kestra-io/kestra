@@ -79,7 +79,6 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
 
             // wait for execution
             executionQueue.receive(SchedulerScheduleTest.class, execution -> {
-                System.out.println(execution);
                 queueCount.countDown();
                 assertThat(execution.getFlowId(), is(flow.getId()));
             });

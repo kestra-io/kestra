@@ -52,8 +52,8 @@ import static org.kestra.core.utils.Rethrow.throwFunction;
                 "id: template",
                 "namespace: org.kestra.tests",
                 "",
-                "inputs:" +
-                "  - name: with-string" +
+                "inputs:",
+                "  - name: with-string",
                 "    type: STRING",
                 "",
                 "tasks:",

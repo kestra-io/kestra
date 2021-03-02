@@ -146,7 +146,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             }
 
             while (running.get()) {
-                ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofSeconds(1));
+                ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofMillis(100));
 
                 records.forEach(record -> {
                     this.kafkaQueueService.log(log, topicsConfig, record.value(), "Incoming messsage");

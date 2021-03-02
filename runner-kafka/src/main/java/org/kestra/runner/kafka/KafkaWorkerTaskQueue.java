@@ -85,36 +85,38 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
             kafkaConsumer.subscribe(Collections.singleton(topicsConfigWorkerTask.getName()));
 
             while (running.get()) {
-                ConsumerRecords<String, WorkerTask> records = kafkaConsumer.poll(Duration.ofSeconds(1));
+                ConsumerRecords<String, WorkerTask> records = kafkaConsumer.poll(Duration.ofMillis(100));
 
-                kafkaProducer.beginTransaction();
+                if (!records.isEmpty()) {
+                    kafkaProducer.beginTransaction();
 
-                records.forEach(record -> {
-                    this.kafkaQueueService.log(log, this.topicsConfigWorkerTask, record.value(), "Incoming messsage");
+                    records.forEach(record -> {
+                        this.kafkaQueueService.log(log, this.topicsConfigWorkerTask, record.value(), "Incoming messsage");
 
-                    if (workerInstance.get() == null) {
-                        Await.until(() -> workerInstance.get() != null);
-                    }
+                        if (workerInstance.get() == null) {
+                            Await.until(() -> workerInstance.get() != null);
+                        }
 
-                    WorkerTaskRunning workerTaskRunning = WorkerTaskRunning.of(record.value(), workerInstance.get(), record.partition());
+                        WorkerTaskRunning workerTaskRunning = WorkerTaskRunning.of(record.value(), workerInstance.get(), record.partition());
 
-                    this.kafkaProducer.send(new ProducerRecord<>(
-                        topicsConfigWorkerTaskRunning.getName(),
-                        this.queueService.key(workerTaskRunning),
-                        workerTaskRunning
-                    ));
+                        this.kafkaProducer.send(new ProducerRecord<>(
+                            topicsConfigWorkerTaskRunning.getName(),
+                            this.queueService.key(workerTaskRunning),
+                            workerTaskRunning
+                        ));
 
-                    this.kafkaQueueService.log(log, this.topicsConfigWorkerTaskRunning, workerTaskRunning, "Outgoing messsage");
-                });
+                        this.kafkaQueueService.log(log, this.topicsConfigWorkerTaskRunning, workerTaskRunning, "Outgoing messsage");
+                    });
 
-                // we commit first all offset before submit task to worker
-                kafkaProducer.sendOffsetsToTransaction(KafkaConsumerService.maxOffsets(records), kafkaConfigService.getConsumerGroupName(consumerGroup));
-                kafkaProducer.commitTransaction();
+                    // we commit first all offset before submit task to worker
+                    kafkaProducer.sendOffsetsToTransaction(KafkaConsumerService.maxOffsets(records), kafkaConfigService.getConsumerGroupName(consumerGroup));
+                    kafkaProducer.commitTransaction();
 
-                // now, we can submit to worker to be sure we don't have a WorkerTaskResult before commiting the offset!
-                records.forEach(record -> {
-                    consumer.accept(record.value());
-                });
+                    // now, we can submit to worker to be sure we don't have a WorkerTaskResult before commiting the offset!
+                    records.forEach(record -> {
+                        consumer.accept(record.value());
+                    });
+                }
             }
         }
 

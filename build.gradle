@@ -88,7 +88,7 @@ allprojects {
         implementation "javax.annotation:javax.annotation-api"
         implementation "io.micronaut.data:micronaut-data-model"
         implementation "io.micronaut:micronaut-management"
-        implementation "io.micrometer:micrometer-core:1.6.1"
+        implementation "io.micrometer:micrometer-core:1.6.4"
         implementation "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
         api "io.micronaut:micronaut-http-client"
 
@@ -112,7 +112,7 @@ allprojects {
         // exposed utils
         api group: 'com.google.guava', name: 'guava', version: '30.1-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.8.0'
-        api group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
+        api group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
         api "io.swagger.core.v3:swagger-annotations"
     }
 }

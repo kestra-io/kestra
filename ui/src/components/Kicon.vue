@@ -1,5 +1,5 @@
 <template>
-    <div v-b-tooltip="{title:tooltip, placement}">
+    <div v-b-tooltip="{title:tooltip, placement, html: true}">
         <slot />
     </div>
 </template>

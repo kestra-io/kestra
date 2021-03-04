@@ -154,7 +154,20 @@
         "link to sub flow": "Go to sub flow",
         "New execution": "New execution",
         "execute the flow": "Trigger the flow",
-        "execute flow now ?": "Do you want to execute this flow ?"
+        "execute flow now ?": "Do you want to execute this flow ?",
+        "Default route":"Default route",
+        "route extra query string (leave empty if not sure)": "Route extra query string (leave empty if not sure)",
+        "flowsList":"Flow list",
+        "flowsAdd":"Add flow",
+        "flowEdit":"Edit flow",
+        "executionsList":"Execution list",
+        "executionEdit":"Execution edition",
+        "taskRunList":"TaskRun list",
+        "plugin":"Plugin",
+        "pluginView":"Plugin view",
+        "templateList":"Template list",
+        "templateAdd":"Add Template",
+        "templateEdit":"Edit Template"
     },
     "fr": {
         "id": "Identifiant",
@@ -312,6 +325,19 @@
         "link to sub flow": "Lien vers le sous flow",
         "New execution": "Nouvelle execution",
         "execute the flow": "Créer une exécution",
-        "execute flow now ?": "Voulez-vous executer ce flow ?"
+        "execute flow now ?": "Voulez-vous executer ce flow ?",
+        "Default route":"Route par défaut",
+        "route extra query string (leave empty if not sure)": "Paramètres d'url supplémentaires (laisser vide en cas de doute)",
+        "flowsList":"List de flows",
+        "flowsAdd":"Ajouter des flows",
+        "flowEdit":"Editer des flows",
+        "executionsList":"Liste d'executions",
+        "executionEdit":"Edition d'executions",
+        "taskRunList":"Liste de tasksRun",
+        "plugin":"Plugin",
+        "pluginView":"Vue plugin",
+        "templateList":"Liste de templates",
+        "templateAdd":"Ajouter Template",
+        "templateEdit":"Editer Template"
     }
 }

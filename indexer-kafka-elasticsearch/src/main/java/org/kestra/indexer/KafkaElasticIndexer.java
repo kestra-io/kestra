@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.RetryPolicy;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.Serdes;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -20,7 +21,9 @@ import org.kestra.core.metrics.MetricRegistry;
 import org.kestra.core.runners.Indexer;
 import org.kestra.core.runners.IndexerInterface;
 import org.kestra.core.utils.DurationOrSizeTrigger;
-import org.kestra.repository.elasticsearch.*;
+import org.kestra.core.utils.ExecutorsUtils;
+import org.kestra.repository.elasticsearch.ElasticSearchIndicesService;
+import org.kestra.repository.elasticsearch.ElasticSearchRepositoryEnabled;
 import org.kestra.repository.elasticsearch.configs.IndicesConfig;
 import org.kestra.runner.kafka.KafkaQueueEnabled;
 import org.kestra.runner.kafka.configs.TopicsConfig;
@@ -30,6 +33,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -45,12 +49,15 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
     private final MetricRegistry metricRegistry;
     private final RestHighLevelClient elasticClient;
     private final KafkaConsumerService kafkaConsumerService;
+    private final ExecutorService poolExecutor;
 
     private final Map<String, String> mapping;
     private final Set<String> subscriptions;
 
     private final AtomicBoolean running = new AtomicBoolean(true);;
     private final DurationOrSizeTrigger<ConsumerRecord<String, String>> trigger;
+
+    private org.apache.kafka.clients.consumer.Consumer<String, String> kafkaConsumer;
 
     @Inject
     public KafkaElasticIndexer(
@@ -60,16 +67,18 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
         List<TopicsConfig> topicsConfig,
         List<IndicesConfig> indicesConfigs,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        KafkaConsumerService kafkaConsumerService
+        KafkaConsumerService kafkaConsumerService,
+        ExecutorsUtils executorsUtils
     ) {
         this.metricRegistry = metricRegistry;
         this.elasticClient = elasticClient;
         this.kafkaConsumerService = kafkaConsumerService;
+        this.poolExecutor = executorsUtils.cachedThreadPool("kakfa-elastic-indexer");
 
         this.subscriptions = subscriptions(topicsConfig, indexerConfig);
         this.mapping = mapTopicToIndices(topicsConfig, indicesConfigs);
 
-        trigger = new DurationOrSizeTrigger<>(
+        this.trigger = new DurationOrSizeTrigger<>(
             indexerConfig.getBatchDuration(),
             indexerConfig.getBatchSize()
         );
@@ -79,33 +88,41 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
     }
 
     public void run() {
-        org.apache.kafka.clients.consumer.Consumer<String, String> kafkaConsumer = kafkaConsumerService.of(Indexer.class, Serdes
-            .String());
-        kafkaConsumer.subscribe(this.subscriptions);
+        poolExecutor.execute(() -> {
+            kafkaConsumer = kafkaConsumerService.of(Indexer.class, Serdes.String());
+            kafkaConsumer.subscribe(this.subscriptions);
 
-        List<ConsumerRecord<String, String>> rows = new ArrayList<>();
+            List<ConsumerRecord<String, String>> rows = new ArrayList<>();
 
-        while (running.get()) {
-            List<ConsumerRecord<String, String>> records = StreamSupport
-                .stream(kafkaConsumer.poll(Duration.ofMillis(100)).spliterator(), false)
-                .collect(Collectors.toList());
+            while (running.get()) {
+                try {
+                    List<ConsumerRecord<String, String>> records = StreamSupport
+                        .stream(kafkaConsumer.poll(Duration.ofMillis(100)).spliterator(), false)
+                        .collect(Collectors.toList());
 
-            records
-                .stream()
-                .collect(Collectors.groupingBy(ConsumerRecord::topic))
-                .forEach((topic, consumerRecords) -> {
-                    this.metricRegistry
-                        .counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, "topic", topic)
-                        .increment(consumerRecords.size());
-                });
+                    records
+                        .stream()
+                        .collect(Collectors.groupingBy(ConsumerRecord::topic))
+                        .forEach((topic, consumerRecords) -> {
+                            this.metricRegistry
+                                .counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, "topic", topic)
+                                .increment(consumerRecords.size());
+                        });
 
-            for (ConsumerRecord<String, String> record : records) {
-                rows.add(record);
-                this.send(rows, kafkaConsumer);
+                    for (ConsumerRecord<String, String> record : records) {
+                        rows.add(record);
+                        this.send(rows, kafkaConsumer);
+                    }
+
+                    this.send(rows, kafkaConsumer);
+                } catch (WakeupException e) {
+                    log.debug("Received Wakeup on {}", this.getClass().getName());
+                    running.set(false);
+                }
             }
 
-            this.send(rows, kafkaConsumer);
-        }
+            this.kafkaConsumer.close();
+        });
     }
 
     private void send(List<ConsumerRecord<String, String>> rows, org.apache.kafka.clients.consumer.Consumer<String, String> consumer) {
@@ -235,5 +252,12 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
 
     protected String indexName(ConsumerRecord<?, ?> record) {
         return this.mapping.get(record.topic());
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (kafkaConsumer != null) {
+            this.kafkaConsumer.wakeup();
+        }
     }
 }

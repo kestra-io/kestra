@@ -42,6 +42,8 @@ public class IndexerCommand extends AbstractCommand {
 
         log.info("Indexer started");
 
+        this.shutdownHook(indexer::close);
+
         Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;

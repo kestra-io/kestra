@@ -12,6 +12,7 @@ import org.kestra.core.repositories.LogRepositoryInterface;
 import org.kestra.core.repositories.SaveRepositoryInterface;
 import org.kestra.core.repositories.TriggerRepositoryInterface;
 
+import java.io.IOException;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -30,8 +31,6 @@ public class Indexer implements IndexerInterface {
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         LogRepositoryInterface logRepository,
         @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
-        LogRepositoryInterface triggerRepository,
-        @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> triggerQueue,
         MetricRegistry metricRegistry
     ) {
         this.executionRepository = executionRepository;
@@ -57,5 +56,11 @@ public class Indexer implements IndexerInterface {
                 this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, "type", item.getClass().getName()).increment();
             });
         });
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.executionQueue.close();
+        this.logQueue.close();
     }
 }

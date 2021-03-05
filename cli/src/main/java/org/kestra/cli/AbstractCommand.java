@@ -12,6 +12,7 @@ import org.kestra.core.contexts.KestraClassLoader;
 import org.kestra.core.plugins.PluginRegistry;
 import org.kestra.core.plugins.PluginScanner;
 import org.kestra.core.plugins.RegisteredPlugin;
+import org.kestra.core.utils.Rethrow;
 import picocli.CommandLine;
 
 import java.io.FileInputStream;
@@ -144,6 +145,18 @@ abstract public class AbstractCommand implements Callable<Integer> {
                     log.info("Server Running: {}", server.getURL());
                 }
             });
+    }
+
+    protected void shutdownHook(Rethrow.RunnableChecked<Exception> run) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.warn("Receiving shutdown ! Try to graceful exit");
+
+            try {
+                run.run();
+            } catch (Exception e) {
+                log.error("Failed to close gracefully!", e);
+            }
+        }));
     }
 
     @SuppressWarnings({"unused"})

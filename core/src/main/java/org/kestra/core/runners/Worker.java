@@ -8,6 +8,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
 import lombok.Synchronized;
+import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.Timeout;
 import org.kestra.core.exceptions.TimeoutExceededException;
@@ -23,19 +24,24 @@ import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.queues.WorkerTaskQueueInterface;
 import org.kestra.core.serializers.JacksonMapper;
+import org.kestra.core.utils.Await;
 import org.kestra.core.utils.ExecutorsUtils;
 import org.slf4j.Logger;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Worker implements Runnable {
+@Slf4j
+public class Worker implements Runnable, Closeable {
     private final ApplicationContext applicationContext;
     private final WorkerTaskQueueInterface workerTaskQueue;
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
@@ -317,6 +323,49 @@ public class Worker implements Runnable {
                 new AtomicInteger(0),
                 metricRegistry.tags(workerTask)
             ));
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @Override
+    public void close() throws IOException {
+        workerTaskQueue.close();
+        executionKilledQueue.close();
+        new Thread(
+            () -> {
+            try {
+                this.executors.shutdown();
+                this.executors.awaitTermination(5, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                log.error("Failed to shutdown workers executors", e);
+            }
+        },
+            "worker-shutdown"
+        ).start();
+
+        Await.until(
+            () -> {
+                if (this.executors.isTerminated() && this.getWorkerThreadReferences().size() == 0) {
+                    log.info("No more workers busy, shutting down!");
+
+                    // we ensure that last produce message are send
+                    try {
+                        this.workerTaskResultQueue.close();
+                    } catch (IOException e) {
+                        log.error("Failed to close workerTaskResultQueue", e);
+                    }
+
+                    return true;
+                }
+
+                log.warn(
+                    "Waiting worker with still {} thread(s) running, waiting!",
+                    this.getWorkerThreadReferences().size()
+                );
+
+                return false;
+            },
+            Duration.ofSeconds(1)
+        );
     }
 
     @Getter

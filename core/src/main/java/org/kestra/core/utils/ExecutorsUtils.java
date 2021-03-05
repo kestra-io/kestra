@@ -35,6 +35,15 @@ public class ExecutorsUtils {
         );
     }
 
+    public ExecutorService singleThreadExecutor(String name) {
+        return this.wrap(
+            name,
+            Executors.newSingleThreadExecutor(
+                threadFactoryBuilder.build(name + "_%d")
+            )
+        );
+    }
+
     private ExecutorService wrap(String name, ExecutorService executorService) {
         return ExecutorServiceMetrics.monitor(
             meterRegistry,

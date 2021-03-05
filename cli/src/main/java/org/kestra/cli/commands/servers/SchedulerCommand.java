@@ -41,6 +41,8 @@ public class SchedulerCommand extends AbstractCommand {
 
         log.info("Scheduler started");
 
+        this.shutdownHook(scheduler::close);
+
         Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;

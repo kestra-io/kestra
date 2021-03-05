@@ -18,7 +18,7 @@
     import CustomToast from "./components/customToast";
     import NprogressContainer from "vue-nprogress/src/NprogressContainer";
     import {mapState} from "vuex";
-
+    import Utils from "./utils/utils"
     export default {
         name: "App",
         components: {
@@ -37,7 +37,7 @@
         },
         created() {
             if (this.$route.path === "/") {
-                this.$router.push({name: "flowsList"});
+                this.$router.push({name: localStorage.getItem("defaultRoute") || "flowsList", query: Utils.parseQuery(localStorage.getItem("defaultExtraQueryString") || "")});
             }
 
             this.displayApp()

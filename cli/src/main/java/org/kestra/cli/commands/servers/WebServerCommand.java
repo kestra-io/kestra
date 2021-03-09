@@ -35,6 +35,12 @@ public class WebServerCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
+        log.info("Webserver started");
+
+        this.shutdownHook(() -> {
+            this.applicationContext.close();
+        });
+
         Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;

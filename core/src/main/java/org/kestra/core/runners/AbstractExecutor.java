@@ -16,6 +16,7 @@ import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.TaskDefaultService;
 import org.slf4j.Logger;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 import static org.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
-public abstract class AbstractExecutor implements Runnable {
+public abstract class AbstractExecutor implements Runnable, Closeable {
     protected RunContextFactory runContextFactory;
     protected MetricRegistry metricRegistry;
     protected ConditionService conditionService;

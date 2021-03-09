@@ -16,7 +16,6 @@ import org.kestra.runner.kafka.configs.StreamDefaultsConfig;
 
 import java.time.Duration;
 import java.util.Properties;
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
@@ -86,10 +85,6 @@ public class KafkaStreamService {
                     listener.onChange(newState, oldState);
                 }
             });
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                this.close(Duration.ofSeconds(10));
-            }));
 
             super.start();
         }

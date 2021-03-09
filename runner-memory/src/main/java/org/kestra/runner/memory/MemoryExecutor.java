@@ -19,6 +19,7 @@ import org.kestra.core.services.ConditionService;
 import org.kestra.core.services.FlowService;
 import org.kestra.core.services.TaskDefaultService;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -329,5 +330,13 @@ public class MemoryExecutor extends AbstractExecutor {
 
             return this;
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        executionQueue.close();
+        workerTaskQueue.close();
+        workerTaskResultQueue.close();
+        logQueue.close();
     }
 }

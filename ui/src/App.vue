@@ -13,7 +13,7 @@
 </template>
 
 <script>
-    import Menu from "Override/components/Menu.vue";
+    import Menu from "override/components/Menu.vue";
     import TopNavBar from "./components/layout/TopNavBar";
     import CustomToast from "./components/customToast";
     import NprogressContainer from "vue-nprogress/src/NprogressContainer";

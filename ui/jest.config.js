@@ -12,6 +12,9 @@ module.exports = {
     transformIgnorePatterns: [
         "/node_modules/(?!vue-material-design-icons)"
     ],
+    modulePaths: [
+        "<rootDir>/src/"
+    ],
     moduleNameMapper: {
         "^.+\\.(css|styl|less|sass|scss|png|jpg|ttf|woff|woff2)$": "jest-transform-stub"
     },

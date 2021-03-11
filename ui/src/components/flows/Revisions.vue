@@ -64,7 +64,7 @@
     import Editor from "../../components/inputs/Editor";
     import FileCode from "vue-material-design-icons/FileCode";
     import Kicon from "../Kicon"
-    import Crud from "Override/components/auth/Crud";
+    import Crud from "override/components/auth/Crud";
 
     export default {
         components: {Editor, FileCode, Kicon, Crud},

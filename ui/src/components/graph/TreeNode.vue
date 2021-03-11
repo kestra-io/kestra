@@ -104,7 +104,7 @@
     import SearchField from "../layout/SearchField";
     import TaskIcon from "../plugins/TaskIcon";
     import Kicon from "../Kicon"
-    import TaskEdit from "Override/components/flows/TaskEdit.vue";
+    import TaskEdit from "override/components/flows/TaskEdit.vue";
 
     export default {
         components: {

@@ -9,7 +9,7 @@ module.exports = {
         devtool: process.env.NODE_ENV !== "production" ? "eval-source-map" : false,
         resolve: {
             alias: {
-                Override: path.resolve(__dirname, "src/override/"),
+                override: path.resolve(__dirname, "src/override/"),
                 "monaco-editor$": "monaco-editor"
             }
         },

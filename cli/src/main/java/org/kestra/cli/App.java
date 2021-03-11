@@ -11,6 +11,7 @@ import org.kestra.cli.commands.servers.ServerCommand;
 import org.kestra.cli.commands.sys.SysCommand;
 import org.kestra.core.contexts.KestraApplicationContextBuilder;
 import org.kestra.core.contexts.KestraClassLoader;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import picocli.CommandLine;
 
 import java.lang.reflect.InvocationTargetException;
@@ -47,6 +48,10 @@ public class App implements Callable<Integer> {
     }
 
     protected static void execute(Class<?> cls, String... args) {
+        // Log Bridge
+        SLF4JBridgeHandler.removeHandlersForRootLogger();
+        SLF4JBridgeHandler.install();
+
         // Register a ClassLoader with isolation for plugins
         Thread.currentThread().setContextClassLoader(KestraClassLoader.create(Thread.currentThread().getContextClassLoader()));
 
@@ -54,7 +59,6 @@ public class App implements Callable<Integer> {
         ApplicationContext applicationContext = App.applicationContext(cls, args);
 
         // Call Picocli command
-
         int exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
 
         applicationContext.close();

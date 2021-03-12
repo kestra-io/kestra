@@ -6,6 +6,9 @@
         <b-form-group :label="$t('Fold auto')" label-cols-sm="3">
             <b-checkbox v-model="autofoldTextEditor" value="1" unchecked-value="0" />
         </b-form-group>
+        <b-form-group :label="$t('Default namespace')" label-cols-sm="3">
+            <b-input v-model="defaultNamespace" />
+        </b-form-group>
     </div>
 </template>
 
@@ -48,7 +51,18 @@
                     return localStorage.getItem("autofoldTextEditor")
                 }
             },
-
+            defaultNamespace: {
+                set(value) {
+                    if (value) {
+                        localStorage.setItem("defaultNamespace", value)
+                    } else {
+                        localStorage.removeItem("defaultNamespace")
+                    }
+                },
+                get() {
+                    return localStorage.getItem("defaultNamespace") || ""
+                }
+            }
         }
     };
 </script>

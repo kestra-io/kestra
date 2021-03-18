@@ -2,27 +2,27 @@
   "nodes": [
     {
       "uid": "iPEGVh8eo6L2eJvAZ7yZ7_root",
-      "type": "org.kestra.core.models.hierarchies.GraphClusterRoot"
+      "type": "io.kestra.core.models.hierarchies.GraphClusterRoot"
     },
     {
       "uid": "21OCHso6nuOEOy2f6LA1tu_end",
-      "type": "org.kestra.core.models.hierarchies.GraphClusterEnd"
+      "type": "io.kestra.core.models.hierarchies.GraphClusterEnd"
     },
     {
       "uid": "1_each_6PrKjf95xBLmWqrejmv8aH_root",
-      "type": "org.kestra.core.models.hierarchies.GraphClusterRoot",
+      "type": "io.kestra.core.models.hierarchies.GraphClusterRoot",
       "task": {
         "id": "1_each",
-        "type": "org.kestra.core.tasks.flows.EachSequential",
+        "type": "io.kestra.core.tasks.flows.EachSequential",
         "tasks": [
           {
             "id": "1-1",
-            "type": "org.kestra.core.tasks.debugs.Return",
+            "type": "io.kestra.core.tasks.debugs.Return",
             "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
           },
           {
             "id": "1-2",
-            "type": "org.kestra.core.tasks.debugs.Return",
+            "type": "io.kestra.core.tasks.debugs.Return",
             "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
           }
         ],
@@ -32,19 +32,19 @@
     },
     {
       "uid": "1_each_4fwiMSrBsSia67rYJlnuuL_end",
-      "type": "org.kestra.core.models.hierarchies.GraphClusterEnd",
+      "type": "io.kestra.core.models.hierarchies.GraphClusterEnd",
       "task": {
         "id": "1_each",
-        "type": "org.kestra.core.tasks.flows.EachSequential",
+        "type": "io.kestra.core.tasks.flows.EachSequential",
         "tasks": [
           {
             "id": "1-1",
-            "type": "org.kestra.core.tasks.debugs.Return",
+            "type": "io.kestra.core.tasks.debugs.Return",
             "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
           },
           {
             "id": "1-2",
-            "type": "org.kestra.core.tasks.debugs.Return",
+            "type": "io.kestra.core.tasks.debugs.Return",
             "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
           }
         ],
@@ -54,30 +54,30 @@
     },
     {
       "uid": "1-1",
-      "type": "org.kestra.core.models.hierarchies.GraphTask",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "1-1",
-        "type": "org.kestra.core.tasks.debugs.Return",
+        "type": "io.kestra.core.tasks.debugs.Return",
         "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
       },
       "relationType": "SEQUENTIAL"
     },
     {
       "uid": "1-2",
-      "type": "org.kestra.core.models.hierarchies.GraphTask",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "1-2",
-        "type": "org.kestra.core.tasks.debugs.Return",
+        "type": "io.kestra.core.tasks.debugs.Return",
         "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
       },
       "relationType": "SEQUENTIAL"
     },
     {
       "uid": "2_end",
-      "type": "org.kestra.core.models.hierarchies.GraphTask",
+      "type": "io.kestra.core.models.hierarchies.GraphTask",
       "task": {
         "id": "2_end",
-        "type": "org.kestra.core.tasks.debugs.Return",
+        "type": "io.kestra.core.tasks.debugs.Return",
         "format": "{{task.id}} > {{taskrun.startDate}}"
       },
       "relationType": "SEQUENTIAL"
@@ -131,19 +131,19 @@
     {
       "cluster": {
         "uid": "1_each",
-        "type": "org.kestra.core.models.hierarchies.GraphCluster",
+        "type": "io.kestra.core.models.hierarchies.GraphCluster",
         "task": {
           "id": "1_each",
-          "type": "org.kestra.core.tasks.flows.EachSequential",
+          "type": "io.kestra.core.tasks.flows.EachSequential",
           "tasks": [
             {
               "id": "1-1",
-              "type": "org.kestra.core.tasks.debugs.Return",
+              "type": "io.kestra.core.tasks.debugs.Return",
               "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
             },
             {
               "id": "1-2",
-              "type": "org.kestra.core.tasks.debugs.Return",
+              "type": "io.kestra.core.tasks.debugs.Return",
               "format": "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
             }
           ],

@@ -1,9 +1,9 @@
 id: each-object
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 tasks:
   - id: 1_each
-    type: org.kestra.core.tasks.flows.EachSequential
+    type: io.kestra.core.tasks.flows.EachSequential
     value: |
       [
         "value 1",
@@ -13,18 +13,18 @@ tasks:
 
     tasks:
       - id: is-json
-        type: org.kestra.core.tasks.flows.Switch
+        type: io.kestra.core.tasks.flows.Switch
         value: "{{isJson taskrun.value}}"
         cases:
           "false":
             - id: not-json
-              type: org.kestra.core.tasks.debugs.Return
+              type: io.kestra.core.tasks.debugs.Return
               format: "{{task.id}} > STRING > {{parent.taskrun.value}}"
         defaults:
         - id: json
-          type: org.kestra.core.tasks.debugs.Return
+          type: io.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > JSON > {{jq parent.taskrun.value '.key'}} > {{jq parent.taskrun.value '.value'}}"
 
   - id: 2_end
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

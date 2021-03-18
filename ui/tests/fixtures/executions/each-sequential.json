@@ -1,13 +1,13 @@
 {
   "id": "20CzMipsC3DZvcDOWqkST",
-  "namespace": "org.kestra.tests",
+  "namespace": "io.kestra.tests",
   "flowId": "each-sequential",
   "flowRevision": 1,
   "taskRunList": [
     {
       "id": "5I8wRMwFnRvemjsGoHNpgU",
       "executionId": "20CzMipsC3DZvcDOWqkST",
-      "namespace": "org.kestra.tests",
+      "namespace": "io.kestra.tests",
       "flowId": "each-sequential",
       "taskId": "1_each",
       "state": {
@@ -34,7 +34,7 @@
     {
       "id": "p9zejsXPuEgCWtx75LSU3",
       "executionId": "20CzMipsC3DZvcDOWqkST",
-      "namespace": "org.kestra.tests",
+      "namespace": "io.kestra.tests",
       "flowId": "each-sequential",
       "taskId": "1-1",
       "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
@@ -108,7 +108,7 @@
     {
       "id": "74gCAfLKHu4a9EXqL7DzAx",
       "executionId": "20CzMipsC3DZvcDOWqkST",
-      "namespace": "org.kestra.tests",
+      "namespace": "io.kestra.tests",
       "flowId": "each-sequential",
       "taskId": "1-2",
       "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
@@ -182,7 +182,7 @@
     {
       "id": "4MuXCa5VCkkWXxRO9BOXwk",
       "executionId": "20CzMipsC3DZvcDOWqkST",
-      "namespace": "org.kestra.tests",
+      "namespace": "io.kestra.tests",
       "flowId": "each-sequential",
       "taskId": "1-1",
       "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
@@ -256,7 +256,7 @@
     {
       "id": "5706Z8X2BI1ZRrEkuEFPen",
       "executionId": "20CzMipsC3DZvcDOWqkST",
-      "namespace": "org.kestra.tests",
+      "namespace": "io.kestra.tests",
       "flowId": "each-sequential",
       "taskId": "1-2",
       "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
@@ -330,7 +330,7 @@
     {
       "id": "3JryMXDuJArQhj8uFmqkRD",
       "executionId": "20CzMipsC3DZvcDOWqkST",
-      "namespace": "org.kestra.tests",
+      "namespace": "io.kestra.tests",
       "flowId": "each-sequential",
       "taskId": "1-1",
       "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
@@ -404,7 +404,7 @@
     {
       "id": "68GkiSkymFFcFXsopKydNF",
       "executionId": "20CzMipsC3DZvcDOWqkST",
-      "namespace": "org.kestra.tests",
+      "namespace": "io.kestra.tests",
       "flowId": "each-sequential",
       "taskId": "1-2",
       "parentTaskRunId": "5I8wRMwFnRvemjsGoHNpgU",
@@ -478,7 +478,7 @@
     {
       "id": "4vkpV3Bn4Wjd2l6SvWKm79",
       "executionId": "20CzMipsC3DZvcDOWqkST",
-      "namespace": "org.kestra.tests",
+      "namespace": "io.kestra.tests",
       "flowId": "each-sequential",
       "taskId": "2_end",
       "attempts": [

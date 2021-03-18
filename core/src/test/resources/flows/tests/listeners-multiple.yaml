@@ -1,17 +1,17 @@
 id: listeners-multiple
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 listeners:
   - tasks:
       - id: l1
-        type: org.kestra.core.tasks.debugs.Return
+        type: io.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
   - tasks:
       - id: l2
-        type: org.kestra.core.tasks.debugs.Return
+        type: io.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
 
 tasks:
   - id: first
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

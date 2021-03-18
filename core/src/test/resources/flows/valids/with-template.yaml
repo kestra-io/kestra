@@ -1,5 +1,5 @@
 id: with-template
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 inputs:
   - name: with-string
@@ -14,14 +14,14 @@ variables:
 
 tasks:
   - id: 1-return
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"
   - id: 2-template
-    type: org.kestra.core.tasks.flows.Template
-    namespace: org.kestra.tests
+    type: io.kestra.core.tasks.flows.Template
+    namespace: io.kestra.tests
     templateId: template
     args:
       my-forward: "{{ inputs.with-string }}"
   - id: 3-end
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

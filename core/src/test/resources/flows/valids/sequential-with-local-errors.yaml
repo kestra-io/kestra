@@ -1,31 +1,31 @@
 id: sequential-with-local-errors
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 tasks:
   - id: parent-seq
-    type: org.kestra.core.tasks.flows.Sequential
+    type: io.kestra.core.tasks.flows.Sequential
     tasks:
       - id: t1
-        type: org.kestra.core.tasks.debugs.Return
+        type: io.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
       - id: t2_seq
-        type: org.kestra.core.tasks.flows.Sequential
+        type: io.kestra.core.tasks.flows.Sequential
         tasks:
           - id: t2-t1
-            type: org.kestra.core.tasks.scripts.Bash
+            type: io.kestra.core.tasks.scripts.Bash
             commands:
               - 'exit 1'
           - id: t2-t2
-            type: org.kestra.core.tasks.debugs.Return
+            type: io.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
           - id: t2-t3
-            type: org.kestra.core.tasks.debugs.Return
+            type: io.kestra.core.tasks.debugs.Return
             format: "{{task.id}} > {{taskrun.id}}"
 
         errors:
           - id: error-t1
-            type: org.kestra.core.tasks.debugs.Return
+            type: io.kestra.core.tasks.debugs.Return
             format: "Error Trigger ! {{task.id}}"
           - id: error-t2
-            type: org.kestra.core.tasks.debugs.Return
+            type: io.kestra.core.tasks.debugs.Return
             format: "Error Trigger ! {{task.id}}"

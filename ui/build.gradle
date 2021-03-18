@@ -2,7 +2,7 @@ plugins {
     id 'org.siouan.frontend-jdk11'
 }
 
-bintrayUpload.enabled = false
+publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
 
 frontend {
     nodeVersion = '14.15.4'

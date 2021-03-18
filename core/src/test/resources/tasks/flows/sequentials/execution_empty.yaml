@@ -1,5 +1,5 @@
 id: execution_empty
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 flowId: sequential
 flowRevision: 1
 taskRunList: []

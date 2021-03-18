@@ -1,40 +1,40 @@
 id: parallel
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 tasks:
   - id: parent
-    type: org.kestra.core.tasks.flows.Parallel
+    type: io.kestra.core.tasks.flows.Parallel
     tasks:
       - id: t1
-        type: org.kestra.core.tasks.scripts.Bash
+        type: io.kestra.core.tasks.scripts.Bash
         commands:
           - 'echo "{{task.id}} > $(date +"%T.%N")"'
 #          - 'sleep 10'
       - id: t2
-        type: org.kestra.core.tasks.scripts.Bash
+        type: io.kestra.core.tasks.scripts.Bash
         commands:
           - 'echo "{{task.id}} > $(date +"%T.%N")"'
 #          - 'sleep 10'
       - id: t3
-        type: org.kestra.core.tasks.scripts.Bash
+        type: io.kestra.core.tasks.scripts.Bash
         commands:
           - 'echo "{{task.id}} > $(date +"%T.%N")"'
 #          - 'sleep 10'
       - id: t4
-        type: org.kestra.core.tasks.scripts.Bash
+        type: io.kestra.core.tasks.scripts.Bash
         commands:
           - 'echo "{{task.id}} > $(date +"%T.%N")"'
 #          - 'sleep 10'
       - id: t5
-        type: org.kestra.core.tasks.scripts.Bash
+        type: io.kestra.core.tasks.scripts.Bash
         commands:
           - 'echo "{{task.id}} > $(date +"%T.%N")"'
 #          - 'sleep 10'
       - id: t6
-        type: org.kestra.core.tasks.scripts.Bash
+        type: io.kestra.core.tasks.scripts.Bash
         commands:
           - 'echo "{{task.id}} > $(date +"%T.%N")"'
 #          - 'sleep 10'
   - id: last
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

@@ -1,0 +1,39 @@
+package io.kestra.runner.memory;
+
+import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+@Singleton
+@MemoryQueueEnabled
+public class MemorySchedulerTriggerState implements SchedulerTriggerStateInterface {
+    private final Map<String, Trigger> triggers = new HashMap<>();
+
+    @Inject
+    @Named(QueueFactoryInterface.TRIGGER_NAMED)
+    QueueInterface<Trigger> triggerQueue;
+
+    @Override
+    public Optional<Trigger> findLast(TriggerContext context) {
+        return triggers.containsKey(context.uid()) ?
+            Optional.of(triggers.get(context.uid())) :
+            Optional.empty();
+    }
+
+    @Override
+    public Trigger save(Trigger trigger) {
+        triggers.put(trigger.uid(), trigger);
+        triggerQueue.emit(trigger);
+
+        return trigger;
+    }
+}

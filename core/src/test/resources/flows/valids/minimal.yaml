@@ -1,8 +1,8 @@
 id: minimal
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 revision: 2
 
 tasks:
 - id: date
-  type: org.kestra.core.tasks.debugs.Return
+  type: io.kestra.core.tasks.debugs.Return
   format: "{{taskrun.startDate}}"

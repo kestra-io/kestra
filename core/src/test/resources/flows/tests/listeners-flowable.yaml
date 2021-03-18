@@ -1,5 +1,5 @@
 id: listeners-flowable
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 inputs:
   - name: string
@@ -8,19 +8,19 @@ inputs:
 listeners:
   - tasks:
       - id: parent-seq
-        type: org.kestra.core.tasks.flows.Switch
+        type: io.kestra.core.tasks.flows.Switch
         value: "{{inputs.string}}"
         cases:
           flow:
             - id: flow
-              type: org.kestra.core.tasks.debugs.Return
+              type: io.kestra.core.tasks.debugs.Return
               format: "{{flow.revision}}"
           execution:
             - id: execution
-              type: org.kestra.core.tasks.debugs.Return
+              type: io.kestra.core.tasks.debugs.Return
               format: "{{execution.taskRunList.1.id}}"
 
 tasks:
   - id: first
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

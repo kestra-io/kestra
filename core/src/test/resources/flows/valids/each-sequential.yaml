@@ -1,17 +1,17 @@
 id: each-sequential
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 tasks:
   - id: 1_each
-    type: org.kestra.core.tasks.flows.EachSequential
+    type: io.kestra.core.tasks.flows.EachSequential
     value: '["value 1", "value 2", "value 3"]'
     tasks:
       - id: 1-1
-        type: org.kestra.core.tasks.debugs.Return
+        type: io.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
       - id: 1-2
-        type: org.kestra.core.tasks.debugs.Return
+        type: io.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
   - id: 2_end
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

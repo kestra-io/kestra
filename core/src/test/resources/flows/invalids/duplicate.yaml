@@ -1,29 +1,29 @@
 id: duplicate
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 listeners:
   - tasks:
       - id: date
-        type: org.kestra.core.tasks.debugs.Return
+        type: io.kestra.core.tasks.debugs.Return
         format: "{{taskrun.startDate}}"
 
 tasks:
   - id: date
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{taskrun.startDate}}"
 
   - id: seq
-    type: org.kestra.core.tasks.flows.Sequential
+    type: io.kestra.core.tasks.flows.Sequential
     tasks:
       - id: date
-        type: org.kestra.core.tasks.debugs.Return
+        type: io.kestra.core.tasks.debugs.Return
         format: "{{taskrun.startDate}}"
     errors:
       - id: date
-        type: org.kestra.core.tasks.debugs.Return
+        type: io.kestra.core.tasks.debugs.Return
         format: "{{taskrun.startDate}}"
 
 errors:
   - id: date
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{taskrun.startDate}}"

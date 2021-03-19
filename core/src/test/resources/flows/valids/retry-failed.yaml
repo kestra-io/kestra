@@ -1,9 +1,9 @@
 id: retry-failed
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 tasks:
 - id: failed
-  type: org.kestra.core.tasks.scripts.Bash
+  type: io.kestra.core.tasks.scripts.Bash
   commands:
   - 'exit 1'
   retry:
@@ -14,5 +14,5 @@ tasks:
 
 errors:
   - id: t2
-    type: org.kestra.core.tasks.debugs.Echo
+    type: io.kestra.core.tasks.debugs.Echo
     format: second {{task.id}}

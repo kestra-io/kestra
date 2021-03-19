@@ -401,7 +401,7 @@
                 }
             },
             isEdgeNode(node) {
-                return node.task !== undefined && (node.type === "org.kestra.core.models.hierarchies.GraphTask" || node.type === "org.kestra.core.models.hierarchies.GraphClusterRoot")
+                return node.task !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTask" || node.type === "io.kestra.core.models.hierarchies.GraphClusterRoot")
             },
         },
         computed: {

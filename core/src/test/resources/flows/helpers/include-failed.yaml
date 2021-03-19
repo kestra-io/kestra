@@ -1,10 +1,10 @@
 id: include-failed
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 tasks:
 - id: t1
-  type: org.kestra.core.tasks.debugs.Return
+  type: io.kestra.core.tasks.debugs.Return
   format: "[[> ./unknown.txt ]]"
 - id: t2
-  type: org.kestra.core.tasks.debugs.Return
+  type: io.kestra.core.tasks.debugs.Return
   format: "[[> ./unknown-2.txt ]]"

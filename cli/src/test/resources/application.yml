@@ -8,7 +8,5 @@ kestra:
     repositories:
       central:
         url: https://repo.maven.apache.org/maven2/
-      jcenter:
-        url: https://jcenter.bintray.com/
-      kestra:
-        url: https://dl.bintray.com/kestra/maven
+      sonatype:
+        url: https://s01.oss.sonatype.org/content/repositories/snapshots/

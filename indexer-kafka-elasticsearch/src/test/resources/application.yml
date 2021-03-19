@@ -11,7 +11,7 @@ kestra:
     indices:
       executions:
         index: "unit_kestra_executions"
-        cls: org.kestra.core.models.executions.Execution
+        cls: io.kestra.core.models.executions.Execution
         mapping-file: execution
         settings: &settings |
           {
@@ -19,7 +19,7 @@ kestra:
           }
       logs:
         index: "unit_kestra_logs"
-        cls: org.kestra.core.models.executions.LogEntry
+        cls: io.kestra.core.models.executions.LogEntry
         mapping-file: log
         settings: *settings
 
@@ -31,15 +31,15 @@ kestra:
     topics:
       execution:
         name: "unit_kestra_execution"
-        cls: org.kestra.core.models.executions.Execution
+        cls: io.kestra.core.models.executions.Execution
 
       logentry:
-        cls: org.kestra.core.models.executions.LogEntry
+        cls: io.kestra.core.models.executions.LogEntry
         name: "unit_kestra_logs"
 
   indexer:
     batchSize: 100
     models:
-      - org.kestra.core.models.executions.Execution
-      - org.kestra.core.models.triggers.Trigger
-      - org.kestra.core.models.executions.LogEntry
+      - io.kestra.core.models.executions.Execution
+      - io.kestra.core.models.triggers.Trigger
+      - io.kestra.core.models.executions.LogEntry

@@ -1,7 +1,7 @@
 id: minimal-bis
-namespace: org.kestra.tests.minimal.bis
+namespace: io.kestra.tests.minimal.bis
 
 tasks:
   - id: date
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{taskrun.startDate}}"

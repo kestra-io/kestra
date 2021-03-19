@@ -1,18 +1,18 @@
 id: listeners-multiple-failed
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 listeners:
   - tasks:
       - id: ko
-        type: org.kestra.core.tasks.scripts.Bash
+        type: io.kestra.core.tasks.scripts.Bash
         commands:
           - 'exit 1'
   - tasks:
       - id: l2
-        type: org.kestra.core.tasks.debugs.Return
+        type: io.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.startDate}}"
 
 tasks:
   - id: first
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

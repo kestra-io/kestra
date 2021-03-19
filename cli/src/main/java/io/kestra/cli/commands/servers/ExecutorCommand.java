@@ -1,0 +1,50 @@
+package io.kestra.cli.commands.servers;
+
+import com.google.common.collect.ImmutableMap;
+import io.micronaut.context.ApplicationContext;
+import lombok.extern.slf4j.Slf4j;
+import io.kestra.cli.AbstractCommand;
+import io.kestra.core.models.ServerType;
+import io.kestra.core.runners.AbstractExecutor;
+import io.kestra.core.utils.Await;
+import picocli.CommandLine;
+
+import java.util.Map;
+import javax.inject.Inject;
+
+@CommandLine.Command(
+    name = "executor",
+    description = "start an executor"
+)
+@Slf4j
+public class ExecutorCommand extends AbstractCommand {
+    @Inject
+    private ApplicationContext applicationContext;
+
+    public ExecutorCommand() {
+        super(true);
+    }
+
+    @SuppressWarnings("unused")
+    public static Map<String, Object> propertiesOverrides() {
+        return ImmutableMap.of(
+            "kestra.server-type", ServerType.EXECUTOR
+        );
+    }
+
+    @Override
+    public Integer call() throws Exception {
+        super.call();
+
+        AbstractExecutor abstractExecutor = applicationContext.getBean(AbstractExecutor.class);
+        abstractExecutor.run();
+
+        log.info("Executor started");
+
+        this.shutdownHook(abstractExecutor::close);
+
+        Await.until(() -> !this.applicationContext.isRunning());
+
+        return 0;
+    }
+}

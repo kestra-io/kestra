@@ -1,6 +1,6 @@
 id: my#flow
 namespace: MY$NAMESPACE
 tasks:
-- type: org.kestra.core.tasks.scripts.Bash
+- type: io.kestra.core.tasks.scripts.Bash
   commands:
   - echo "bla"

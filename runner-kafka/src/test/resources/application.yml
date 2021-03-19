@@ -46,14 +46,14 @@ kestra:
     topics:
       execution:
         name: "unit_${kestra.prefix}_kestra_execution"
-        cls: org.kestra.core.models.executions.Execution
+        cls: io.kestra.core.models.executions.Execution
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
       flow:
         name: "unit_${kestra.prefix}_kestra_flow"
-        cls: org.kestra.core.models.flows.Flow
+        cls: io.kestra.core.models.flows.Flow
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
@@ -68,7 +68,7 @@ kestra:
 
       template:
         name: "unit_${kestra.prefix}_kestra_template"
-        cls: org.kestra.core.models.templates.Template
+        cls: io.kestra.core.models.templates.Template
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
@@ -81,30 +81,30 @@ kestra:
 
       killed:
         name: "unit_${kestra.prefix}_kestra_executor_killed"
-        cls: org.kestra.core.models.executions.ExecutionKilled
+        cls: io.kestra.core.models.executions.ExecutionKilled
         properties:
           cleanup.policy: "delete,compact"
 
       executorflowtrigger:
         name: "unit_${kestra.prefix}_kestra_executor_flowtrigger"
-        cls: org.kestra.runner.kafka.streams.ExecutorFlowTrigger
+        cls: io.kestra.runner.kafka.streams.ExecutorFlowTrigger
         properties:
           cleanup.policy: "delete,compact"
 
       workertask:
         name: "unit_${kestra.prefix}_kestra_workertask"
-        cls: org.kestra.core.runners.WorkerTask
+        cls: io.kestra.core.runners.WorkerTask
         properties:
           cleanup.policy: "delete,compact"
 
       workertaskresult:
         name: "unit_${kestra.prefix}_kestra_workertaskresult"
-        cls: org.kestra.core.runners.WorkerTaskResult
+        cls: io.kestra.core.runners.WorkerTaskResult
         properties:
           cleanup.policy: "delete,compact"
 
       workerinstance:
-        cls: org.kestra.core.runners.WorkerInstance
+        cls: io.kestra.core.runners.WorkerInstance
         name: "unit_${kestra.prefix}_kestra_workerinstance"
         properties:
           cleanup.policy: "compact"
@@ -115,17 +115,17 @@ kestra:
           cleanup.policy: "compact"
 
       workertaskrunning:
-        cls: org.kestra.core.runners.WorkerTaskRunning
+        cls: io.kestra.core.runners.WorkerTaskRunning
         name: "unit_${kestra.prefix}_kestra_workertaskrunning"
         properties:
           cleanup.policy: "delete,compact"
 
       logentry:
-        cls: org.kestra.core.models.executions.LogEntry
+        cls: io.kestra.core.models.executions.LogEntry
         name: "unit_${kestra.prefix}_kestra_logs"
 
       trigger:
-        cls: org.kestra.core.models.triggers.Trigger
+        cls: io.kestra.core.models.triggers.Trigger
         name: "unit_${kestra.prefix}_kestra_trigger"
         properties:
           cleanup.policy: "compact"

@@ -29,13 +29,11 @@ import org.kestra.core.services.FlowListenersInterface;
 import org.kestra.core.utils.IdUtils;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
-import org.kestra.runner.kafka.services.KafkaAdminService;
-import org.kestra.runner.kafka.services.KafkaProducerService;
-import org.kestra.runner.kafka.services.KafkaStreamService;
-import org.kestra.runner.kafka.services.KafkaStreamSourceService;
+import org.kestra.runner.kafka.services.*;
 import org.kestra.runner.kafka.streams.GlobalStateLockProcessor;
 import org.kestra.runner.kafka.streams.GlobalStateProcessor;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -58,6 +56,9 @@ public class KafkaScheduler extends AbstractScheduler {
     private final TopicsConfig topicsConfigExecution;
 
     private final Map<String, Trigger> triggerLock = new ConcurrentHashMap<>();
+
+    private KafkaStreamService.Stream stateStream;
+    private KafkaStreamService.Stream cleanTriggerStream;
 
     @SuppressWarnings("unchecked")
     public KafkaScheduler(
@@ -88,7 +89,7 @@ public class KafkaScheduler extends AbstractScheduler {
 
     public class SchedulerCleaner {
         private Topology topology() {
-            StreamsBuilder builder = new StreamsBuilder();
+            StreamsBuilder builder = new KafkaStreamsBuilder();
 
             KStream<String, Execution> executorKStream = kafkaStreamSourceService.executorKStream(builder);
             GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
@@ -132,7 +133,7 @@ public class KafkaScheduler extends AbstractScheduler {
 
     public class SchedulerState {
         public Topology topology() {
-            StreamsBuilder builder = new StreamsBuilder();
+            StreamsBuilder builder = new KafkaStreamsBuilder();
 
             // executor global state store
             builder.addGlobalStore(
@@ -208,8 +209,8 @@ public class KafkaScheduler extends AbstractScheduler {
         kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_EXECUTOR);
         kafkaAdminService.createIfNotExist(Trigger.class);
 
-        KafkaStreamService.Stream stateStream = kafkaStreamService.of(SchedulerState.class, new SchedulerState().topology());
-        stateStream.start((newState, oldState) -> {
+        this.stateStream = kafkaStreamService.of(SchedulerState.class, new SchedulerState().topology());
+        this.stateStream.start((newState, oldState) -> {
             this.isReady = newState == KafkaStreams.State.RUNNING;
         });
 
@@ -223,9 +224,22 @@ public class KafkaScheduler extends AbstractScheduler {
             stateStream.store(STATESTORE_EXECUTOR, QueryableStoreTypes.keyValueStore())
         );
 
-        KafkaStreamService.Stream cleanTriggerStream = kafkaStreamService.of(SchedulerCleaner.class, new SchedulerCleaner().topology());
-        cleanTriggerStream.start();
+        this.cleanTriggerStream = kafkaStreamService.of(SchedulerCleaner.class, new SchedulerCleaner().topology());
+        this.cleanTriggerStream.start();
 
         super.run();
+    }
+
+    @Override
+    public void close() {
+        if (stateStream != null) {
+            stateStream.close(Duration.ofSeconds(10));
+        }
+
+        if (cleanTriggerStream != null) {
+            cleanTriggerStream.close(Duration.ofSeconds(10));
+        }
+
+        super.close();
     }
 }

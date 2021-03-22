@@ -1,5 +1,7 @@
 package org.kestra.core.runners;
 
-public interface IndexerInterface extends Runnable {
+import java.io.Closeable;
+
+public interface IndexerInterface extends Runnable, Closeable {
 
 }

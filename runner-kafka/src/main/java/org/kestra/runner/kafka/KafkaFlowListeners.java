@@ -22,6 +22,7 @@ import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
+import org.kestra.runner.kafka.services.KafkaStreamsBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,7 +76,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
 
     public class FlowListenerBuild {
         public Topology topology() {
-            StreamsBuilder builder = new StreamsBuilder();
+            StreamsBuilder builder = new KafkaStreamsBuilder();
 
             KStream<String, Flow> stream = builder
                 .stream(
@@ -160,7 +161,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
 
     public class FlowListener {
         public Topology topology() {
-            StreamsBuilder builder = new StreamsBuilder();
+            StreamsBuilder builder = new KafkaStreamsBuilder();
 
             builder
                 .table(

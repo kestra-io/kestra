@@ -41,6 +41,8 @@ public class ExecutorCommand extends AbstractCommand {
 
         log.info("Executor started");
 
+        this.shutdownHook(abstractExecutor::close);
+
         Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;

@@ -35,10 +35,12 @@ import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
 import org.kestra.runner.kafka.services.KafkaStreamService;
 import org.kestra.runner.kafka.services.KafkaStreamSourceService;
+import org.kestra.runner.kafka.services.KafkaStreamsBuilder;
 import org.kestra.runner.kafka.streams.*;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -92,7 +94,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
     }
 
     public Topology topology() {
-        StreamsBuilder builder = new StreamsBuilder();
+        StreamsBuilder builder = new KafkaStreamsBuilder();
 
         // copy execution to be done on executor queue
         this.executionToExecutor(builder);
@@ -946,7 +948,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
     @Override
     public void close() throws IOException {
         if (this.resultStream != null) {
-            this.resultStream.close();
+            this.resultStream.close(Duration.ofSeconds(10));
             this.resultStream = null;
         }
     }

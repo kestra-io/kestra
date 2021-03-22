@@ -172,6 +172,13 @@ mark {
     }
 }
 
+
+.modal {
+    .b-overlay {
+        min-height: 50px;
+    }
+}
+
 .modal.left,
 .modal.right {
     .modal-dialog {
@@ -191,19 +198,32 @@ mark {
     }
 }
 
-$modal-size: ("sm": $modal-sm, "md": $modal-md, "lg": $modal-lg, $modal-xl: $modal-xl);
+.modal.left {
+    .modal-dialog {
+        left: 0;
+    }
+}
+
+.modal.right {
+    .modal-dialog {
+        right: 0;
+    }
+}
+
+
+$modal-size: ("sm": $modal-sm, "md": $modal-md, "lg": $modal-lg, "xl": $modal-xl);
 
 @each $name, $size in $modal-size {
     .modal.left,
     .modal.right {
-        .modal-dialog {
+        .modal-dialog.modal-#{$name} {
             width: $size;
         }
     }
 
     .modal.left {
         &.fade {
-            .modal-dialog{
+            .modal-dialog.modal-#{$name} {
                 left: -$size;
                 transition: opacity 0.3s linear, left 0.3s ease-out;
             }
@@ -212,7 +232,7 @@ $modal-size: ("sm": $modal-sm, "md": $modal-md, "lg": $modal-lg, $modal-xl: $mod
 
     .modal.right {
         &.fade {
-            .modal-dialog{
+            .modal-dialog.modal-#{$name} {
                 right: -$size;
                 transition: opacity 0.3s linear, right 0.3s ease-out;
             }
@@ -221,21 +241,17 @@ $modal-size: ("sm": $modal-sm, "md": $modal-md, "lg": $modal-lg, $modal-xl: $mod
 }
 
 .modal.left {
-    &.fade {
-        &.show {
-            .modal-dialog {
-                left: 0;
-            }
+    &.show {
+        .modal-dialog {
+            left: 0 !important;
         }
     }
 }
 
 .modal.right {
-    &.fade {
-        &.show {
-            .modal-dialog {
-                right: 0;
-            }
+    &.show {
+        .modal-dialog {
+            right: 0 !important;
         }
     }
 }

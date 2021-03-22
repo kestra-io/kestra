@@ -46,6 +46,8 @@ public class WorkerCommand extends AbstractCommand {
 
         log.info("Workers started with {} thread(s)", this.thread);
 
+        this.shutdownHook(worker::close);
+
         Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;

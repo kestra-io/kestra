@@ -58,7 +58,7 @@
     import Kill from "./Kill";
     import State from "../../utils/state";
     import DateAgo from "../layout/DateAgo";
-    import Crud from "Override/components/auth/Crud";
+    import Crud from "override/components/auth/Crud";
 
     const ts = date => new Date(date).getTime();
 

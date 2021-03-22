@@ -20,7 +20,7 @@
 <script>
     import {mapState} from "vuex";
     import Home from "vue-material-design-icons/Home";
-    import Auth from "Override/components/auth/Auth";
+    import Auth from "override/components/auth/Auth";
 
     export default {
         components: {

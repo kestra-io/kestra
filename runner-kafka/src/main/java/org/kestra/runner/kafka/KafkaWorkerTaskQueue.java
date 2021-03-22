@@ -5,18 +5,21 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
-import org.kestra.core.queues.QueueService;
+import org.apache.kafka.common.errors.WakeupException;
 import org.kestra.core.queues.QueueFactoryInterface;
 import org.kestra.core.queues.QueueInterface;
+import org.kestra.core.queues.QueueService;
 import org.kestra.core.queues.WorkerTaskQueueInterface;
 import org.kestra.core.runners.WorkerInstance;
 import org.kestra.core.runners.WorkerTask;
 import org.kestra.core.runners.WorkerTaskRunning;
 import org.kestra.core.utils.Await;
+import org.kestra.core.utils.ExecutorsUtils;
 import org.kestra.runner.kafka.configs.TopicsConfig;
 import org.kestra.runner.kafka.serializers.JsonSerde;
 import org.kestra.runner.kafka.services.KafkaAdminService;
@@ -27,6 +30,7 @@ import org.kestra.runner.kafka.services.KafkaProducerService;
 import java.net.InetAddress;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -48,8 +52,16 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
     private final AtomicReference<WorkerInstance> workerInstance = new AtomicReference<>();
     private final UUID workerUuid;
 
+    private static ExecutorService poolExecutor;
+    private final List<org.apache.kafka.clients.consumer.Consumer<String, WorkerTask>> kafkaConsumers = new ArrayList<>();
+
     @SuppressWarnings("unchecked")
     public KafkaWorkerTaskQueue(ApplicationContext applicationContext) {
+        if (poolExecutor == null) {
+            ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
+            poolExecutor = executorsUtils.cachedThreadPool("kakfa-workertask-queue");
+        }
+
         this.workerUuid = UUID.randomUUID();
         this.kafkaProducer = applicationContext.getBean(KafkaProducerService.class).of(
             WorkerTaskRunning.class,
@@ -73,50 +85,80 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
     public Runnable receive(Class<?> consumerGroup, Consumer<WorkerTask> consumer) {
         AtomicBoolean running = new AtomicBoolean(true);
 
-        kafkaProducer.initTransactions();
+        poolExecutor.execute(() -> {
+            kafkaProducer.initTransactions();
 
-        // then we consume
-        try (org.apache.kafka.clients.consumer.Consumer<String, WorkerTask> kafkaConsumer = kafkaConsumerService.of(
-            consumerGroup,
-            JsonSerde.of(WorkerTask.class),
-            ImmutableMap.of("client.id", this.workerUuid.toString()),
-            consumerRebalanceListener()
-        )) {
+            org.apache.kafka.clients.consumer.Consumer<String, WorkerTask> kafkaConsumer = kafkaConsumerService.of(
+                consumerGroup,
+                JsonSerde.of(WorkerTask.class),
+                ImmutableMap.of("client.id", this.workerUuid.toString()),
+                consumerRebalanceListener()
+            );
+
+            kafkaConsumers.add(kafkaConsumer);
+
             kafkaConsumer.subscribe(Collections.singleton(topicsConfigWorkerTask.getName()));
 
             while (running.get()) {
-                ConsumerRecords<String, WorkerTask> records = kafkaConsumer.poll(Duration.ofSeconds(1));
+                try {
+                    ConsumerRecords<String, WorkerTask> records = kafkaConsumer.poll(Duration.ofMillis(100));
 
-                kafkaProducer.beginTransaction();
+                    if (!records.isEmpty()) {
+                        kafkaProducer.beginTransaction();
 
-                records.forEach(record -> {
-                    this.kafkaQueueService.log(log, this.topicsConfigWorkerTask, record.value(), "Incoming messsage");
+                        records.forEach(record -> {
+                            this.kafkaQueueService.log(
+                                log,
+                                this.topicsConfigWorkerTask,
+                                record.value(),
+                                "Incoming messsage"
+                            );
 
-                    if (workerInstance.get() == null) {
-                        Await.until(() -> workerInstance.get() != null);
+                            if (workerInstance.get() == null) {
+                                Await.until(() -> workerInstance.get() != null);
+                            }
+
+                            WorkerTaskRunning workerTaskRunning = WorkerTaskRunning.of(
+                                record.value(),
+                                workerInstance.get(),
+                                record.partition()
+                            );
+
+                            this.kafkaProducer.send(new ProducerRecord<>(
+                                topicsConfigWorkerTaskRunning.getName(),
+                                this.queueService.key(workerTaskRunning),
+                                workerTaskRunning
+                            ));
+
+                            this.kafkaQueueService.log(
+                                log,
+                                this.topicsConfigWorkerTaskRunning,
+                                workerTaskRunning,
+                                "Outgoing messsage"
+                            );
+                        });
+
+                        // we commit first all offset before submit task to worker
+                        kafkaProducer.sendOffsetsToTransaction(
+                            KafkaConsumerService.maxOffsets(records),
+                            kafkaConfigService.getConsumerGroupName(consumerGroup)
+                        );
+                        kafkaProducer.commitTransaction();
+
+                        // now, we can submit to worker to be sure we don't have a WorkerTaskResult before commiting the offset!
+                        records.forEach(record -> {
+                            consumer.accept(record.value());
+                        });
                     }
-
-                    WorkerTaskRunning workerTaskRunning = WorkerTaskRunning.of(record.value(), workerInstance.get(), record.partition());
-
-                    this.kafkaProducer.send(new ProducerRecord<>(
-                        topicsConfigWorkerTaskRunning.getName(),
-                        this.queueService.key(workerTaskRunning),
-                        workerTaskRunning
-                    ));
-
-                    this.kafkaQueueService.log(log, this.topicsConfigWorkerTaskRunning, workerTaskRunning, "Outgoing messsage");
-                });
-
-                // we commit first all offset before submit task to worker
-                kafkaProducer.sendOffsetsToTransaction(KafkaConsumerService.maxOffsets(records), kafkaConfigService.getConsumerGroupName(consumerGroup));
-                kafkaProducer.commitTransaction();
-
-                // now, we can submit to worker to be sure we don't have a WorkerTaskResult before commiting the offset!
-                records.forEach(record -> {
-                    consumer.accept(record.value());
-                });
+                } catch (WakeupException e) {
+                    log.debug("Received Wakeup on {}!", this.getClass().getName());
+                    running.set(false);
+                }
             }
-        }
+
+            kafkaConsumers.remove(kafkaConsumer);
+            kafkaConsumer.close();
+        });
 
         return () -> running.set(false);
     }
@@ -156,5 +198,6 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
     @PreDestroy
     public void close() {
         kafkaProducer.close();
+        kafkaConsumers.forEach(org.apache.kafka.clients.consumer.Consumer::wakeup);
     }
 }

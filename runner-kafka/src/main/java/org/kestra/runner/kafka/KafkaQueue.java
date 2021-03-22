@@ -10,6 +10,7 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.WakeupException;
 import org.kestra.core.queues.QueueException;
 import org.kestra.core.queues.QueueInterface;
 import org.kestra.core.queues.QueueService;
@@ -146,22 +147,27 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             }
 
             while (running.get()) {
-                ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofSeconds(1));
+                try {
+                    ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofMillis(100));
 
-                records.forEach(record -> {
-                    this.kafkaQueueService.log(log, topicsConfig, record.value(), "Incoming messsage");
+                    records.forEach(record -> {
+                        this.kafkaQueueService.log(log, topicsConfig, record.value(), "Incoming messsage");
 
-                    consumer.accept(record.value());
+                        consumer.accept(record.value());
 
-                    if (consumerGroup != null) {
-                        kafkaConsumer.commitSync(
-                            ImmutableMap.of(
-                                new TopicPartition(record.topic(), record.partition()),
-                                new OffsetAndMetadata(record.offset() + 1)
-                            )
-                        );
-                    }
-                });
+                        if (consumerGroup != null) {
+                            kafkaConsumer.commitSync(
+                                ImmutableMap.of(
+                                    new TopicPartition(record.topic(), record.partition()),
+                                    new OffsetAndMetadata(record.offset() + 1)
+                                )
+                            );
+                        }
+                    });
+                } catch (WakeupException e) {
+                    log.debug("Received Wakeup on {} with type {}!", this.getClass().getName(), this.cls.getName());
+                    running.set(false);
+                }
             }
 
             kafkaConsumers.remove(kafkaConsumer);
@@ -256,6 +262,6 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     @Override
     public void close() {
         kafkaProducer.close();
-        kafkaConsumers.forEach(org.apache.kafka.clients.consumer.Consumer::close);
+        kafkaConsumers.forEach(org.apache.kafka.clients.consumer.Consumer::wakeup);
     }
 }

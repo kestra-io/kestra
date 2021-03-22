@@ -29,12 +29,12 @@
 
                 <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionRight)}" />
             </b-col>
-            <b-col md="12">
-                <code-diff
-                    :output-format="displayType"
-                    :old-string="revisionLeftText"
-                    :new-string="revisionRightText"
-                    :context="10"
+            <b-col md="12" ref="editorContainer" class="editor-wrap">
+                <Editor
+                    :diff-editor="true"
+                    :value="revisionRightText"
+                    :original="revisionLeftText"
+                    lang="yaml"
                 />
             </b-col>
         </b-row>
@@ -45,6 +45,7 @@
             header-bg-variant="dark"
             header-text-variant="light"
             hide-backdrop
+            hide-footer
             modal-class="right"
             size="xl"
         >
@@ -60,14 +61,13 @@
 <script>
     import {mapState} from "vuex";
     import YamlUtils from "../../utils/yamlUtils";
-    import CodeDiff from "vue-code-diff";
     import Editor from "../../components/inputs/Editor";
     import FileCode from "vue-material-design-icons/FileCode";
     import Kicon from "../Kicon"
-    import Crud from "Override/components/auth/Crud";
+    import Crud from "override/components/auth/Crud";
 
     export default {
-        components: {CodeDiff, Editor, FileCode, Kicon, Crud},
+        components: {Editor, FileCode, Kicon, Crud},
         created() {
             this.$store
                 .dispatch("flow/loadRevisions", this.$route.params)

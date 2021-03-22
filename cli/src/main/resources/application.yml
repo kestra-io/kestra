@@ -47,20 +47,27 @@ kestra:
           isolation.level: "read_committed"
           auto.offset.reset: "earliest"
           enable.auto.commit: "false"
+          max.poll.records: 50
 
       producer:
         properties:
           acks: "all"
           compression.type: "lz4"
           max.request.size: "10485760"
+          max.poll.records: 50
+          linger.ms: 0
 
       stream:
         properties:
-          processing.guarantee: "exactly_once"
+          processing.guarantee: "exactly_once_beta"
           replication.factor: "${kestra.kafka.defaults.topic.replication-factor}"
           acks: "all"
           compression.type: "lz4"
           max.request.size: "10485760"
+          poll.ms: 50
+          producer.linger.ms: 0
+          commit.interval.ms: 50
+          consumer.max.poll.records: 50
 
     topics:
       execution:

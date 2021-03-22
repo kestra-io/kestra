@@ -60,24 +60,12 @@
             </div>
         </div>
 
-        <b-modal
-            :id="`modal-source-${hash}`"
-            :title="`Task ${task.id}`"
-            header-bg-variant="dark"
-            header-text-variant="light"
-            hide-backdrop
-            modal-class="right"
-            size="xl"
-        >
-            <template #modal-footer>
-                <b-button @click="saveTask" v-if="canSave">
-                    <content-save />
-                    <span>{{ $t('save') }}</span>
-                </b-button>
-            </template>
-
-            <editor @onSave="saveTask" v-model="taskYaml" lang="yaml" />
-        </b-modal>
+        <task-edit
+            :modal-id="`modal-source-${hash}`"
+            :task="task"
+            :flow-id="flowId"
+            :namespace="namespace"
+        />
 
         <b-modal
             :id="`modal-logs-${task.id}`"
@@ -109,17 +97,14 @@
 
     import {mapState} from "vuex";
     import Status from "../Status";
-    import YamlUtils from "../../utils/yamlUtils";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
     import State from "../../utils/state"
-    import Editor from "../../components/inputs/Editor";
-    import ContentSave from "vue-material-design-icons/ContentSave";
-    import {canSaveFlowTemplate} from "../../utils/flowTemplate";
     import LogList from "../logs/LogList";
     import LogLevelSelector from "../../components/logs/LogLevelSelector";
     import SearchField from "../layout/SearchField";
     import TaskIcon from "../plugins/TaskIcon";
     import Kicon from "../Kicon"
+    import TaskEdit from "override/components/flows/TaskEdit.vue";
 
     export default {
         components: {
@@ -127,13 +112,12 @@
             Status,
             CodeTags,
             TextBoxSearch,
-            Editor,
-            ContentSave,
             LogList,
             LogLevelSelector,
             SearchField,
             TaskIcon,
-            Kicon
+            Kicon,
+            TaskEdit
         },
         props: {
             n: {
@@ -157,31 +141,6 @@
             onTaskSelect() {
                 this.$store.commit("execution/setTask", this.task);
             },
-            saveTask() {
-                let task;
-                try {
-                    task = YamlUtils.parse(this.taskYaml);
-                } catch (err) {
-                    this.$toast().warning(
-                        err.message,
-                        this.$t("invalid yaml"),
-                    );
-
-                    return;
-                }
-
-                return this.$store
-                    .dispatch("flow/updateFlowTask", {
-                        flow: {
-                            id: this.flowId,
-                            namespace: this.namespace
-                        },
-                        task: task
-                    })
-                    .then((response) => {
-                        this.$toast().saved(response.id);
-                    })
-            },
             onSearch(search) {
                 this.filter = search
             },
@@ -191,13 +150,9 @@
         },
         data() {
             return {
-                taskYaml: undefined,
                 logLevel: "INFO",
                 filter: undefined
             };
-        },
-        created() {
-            this.taskYaml = YamlUtils.stringify(this.n.task);
         },
         computed: {
             ...mapState("graph", ["node"]),
@@ -259,9 +214,6 @@
             task() {
                 return this.n.task;
             },
-            canSave() {
-                return canSaveFlowTemplate(true, this.user, {namespace:this.namespace}, "flow");
-            }
         }
     };
 </script>

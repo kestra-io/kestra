@@ -2,6 +2,8 @@ package io.kestra.repository.elasticsearch;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.tasks.Task;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import lombok.SneakyThrows;
@@ -159,17 +161,12 @@ abstract public class AbstractElasticSearchRepository<T> {
         }
     }
 
-    protected IndexResponse putRequest(String index, String id, T source) {
+    protected IndexResponse putRequest(String index, String id, String json) {
         IndexRequest request = new IndexRequest(this.indicesConfigs.get(index).getIndex());
         request.id(id);
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
-        try {
-            String json = mapper.writeValueAsString(source);
-            request.source(json, XContentType.JSON);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        request.source(json, XContentType.JSON);
 
         try {
             IndexResponse response = client.index(request, RequestOptions.DEFAULT);
@@ -177,6 +174,34 @@ abstract public class AbstractElasticSearchRepository<T> {
 
             return response;
         } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String cacheElasticData(T source) throws JsonProcessingException {
+        /*
+        This is cache purpose operation to save
+        all nested tasks ids in a keyword field
+        to perform simple and efficient searches
+        on flow update / insert operation.
+         */
+        if (source.getClass().equals(Flow.class)) {
+            var item = JacksonMapper.toMap(source);
+            var tasks = new ArrayList<String>();
+            for (Task task: ((Flow)source).getTasks()) {
+                tasks.add(task.getType());
+            }
+            item.put("taskIdList", tasks);
+            return mapper.writeValueAsString(item);
+        }
+        return mapper.writeValueAsString(source);
+    }
+
+    protected IndexResponse putRequest(String index, String id, T source) {
+        try {
+            String json = cacheElasticData(source);
+            return this.putRequest(index, id, json);
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }

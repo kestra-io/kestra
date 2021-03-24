@@ -1,4 +1,4 @@
-bintrayUpload.enabled = false
+publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
 
 dependencies {
     annotationProcessor "io.micronaut.openapi:micronaut-openapi"

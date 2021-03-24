@@ -1,44 +1,44 @@
 id: each-switch
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 tasks:
   - id: t1
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"
   - id: 2_each
-    type: org.kestra.core.tasks.flows.EachSequential
+    type: io.kestra.core.tasks.flows.EachSequential
     value: '["a", "b"]'
     tasks:
       # Switch
       - id: 2-1_switch
-        type: org.kestra.core.tasks.flows.Switch
+        type: io.kestra.core.tasks.flows.Switch
         value: "{{taskrun.value}}"
         cases:
           a:
             - id: 2-1_switch-letter-a
-              type: org.kestra.core.tasks.debugs.Return
+              type: io.kestra.core.tasks.debugs.Return
               format: "{{task.id}}"
           b:
             - id: 2-1_switch-letter-b
-              type: org.kestra.core.tasks.debugs.Return
+              type: io.kestra.core.tasks.debugs.Return
               format: "{{task.id}}"
 
             - id: 2-1_each
-              type: org.kestra.core.tasks.flows.EachSequential
+              type: io.kestra.core.tasks.flows.EachSequential
               value: '["1", "2"]'
               tasks:
               - id: 2-1-1_switch
-                type: org.kestra.core.tasks.flows.Switch
+                type: io.kestra.core.tasks.flows.Switch
                 value: "{{taskrun.value}}"
                 cases:
                   1:
                     - id: 2-1-1_switch-number-1
-                      type: org.kestra.core.tasks.debugs.Return
+                      type: io.kestra.core.tasks.debugs.Return
                       format: "{{parents.[0].taskrun.value}}"
                   2:
                     - id: 2-1-1_switch-number-2
-                      type: org.kestra.core.tasks.debugs.Return
+                      type: io.kestra.core.tasks.debugs.Return
                       format: "{{parents.[0].taskrun.value}} {{parents.[1].taskrun.value}}"
   - id: 2_end
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

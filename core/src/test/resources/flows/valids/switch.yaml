@@ -1,5 +1,5 @@
 id: switch
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 inputs:
   - name: string
@@ -7,33 +7,33 @@ inputs:
 
 tasks:
   - id: parent-seq
-    type: org.kestra.core.tasks.flows.Switch
+    type: io.kestra.core.tasks.flows.Switch
     value: "{{inputs.string}}"
     cases:
       FIRST:
         - id: t1
-          type: org.kestra.core.tasks.debugs.Return
+          type: io.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
       SECOND:
         - id: t2
-          type: org.kestra.core.tasks.debugs.Return
+          type: io.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
         - id: t2_sub
-          type: org.kestra.core.tasks.debugs.Return
+          type: io.kestra.core.tasks.debugs.Return
           format: "{{task.id}} > {{taskrun.startDate}}"
       THIRD:
         - id: t3
-          type: org.kestra.core.tasks.flows.Sequential
+          type: io.kestra.core.tasks.flows.Sequential
           tasks:
             - id: failed
-              type: org.kestra.core.tasks.scripts.Bash
+              type: io.kestra.core.tasks.scripts.Bash
               commands:
               - 'exit 1'
           errors:
             - id: error-t1
-              type: org.kestra.core.tasks.debugs.Return
+              type: io.kestra.core.tasks.debugs.Return
               format: "Error Trigger ! {{task.id}}"
     defaults:
       - id: default
-        type: org.kestra.core.tasks.debugs.Return
+        type: io.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.startDate}}"

@@ -1,5 +1,5 @@
 id: inputs
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 inputs:
 - name: string
@@ -21,17 +21,17 @@ inputs:
 
 tasks:
 - id: string
-  type: org.kestra.core.tasks.debugs.Return
+  type: io.kestra.core.tasks.debugs.Return
   format: "{{inputs.string}}"
 - id: int
-  type: org.kestra.core.tasks.debugs.Return
+  type: io.kestra.core.tasks.debugs.Return
   format: "{{inputs.int}}"
 - id: float
-  type: org.kestra.core.tasks.debugs.Return
+  type: io.kestra.core.tasks.debugs.Return
   format: "{{inputs.float}}"
 - id: instant
-  type: org.kestra.core.tasks.debugs.Return
+  type: io.kestra.core.tasks.debugs.Return
   format: "{{inputs.instant}}"
 - id: file
-  type: org.kestra.core.tasks.debugs.Return
+  type: io.kestra.core.tasks.debugs.Return
   format: "{{inputs.file}}"

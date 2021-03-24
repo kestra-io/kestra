@@ -1,0 +1,31 @@
+package io.kestra.runner.memory;
+
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.runners.StandAloneRunner;
+import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.utils.Await;
+
+import java.time.Duration;
+import javax.inject.Singleton;
+
+@Slf4j
+@Singleton
+public class MemoryRunner extends StandAloneRunner {
+    @SneakyThrows
+    @Override
+    public void run() {
+        super.run();
+
+        // @FIXME: Ugly hack to wait that all threads is created and ready to listen
+        Await.until(
+            () -> ((MemoryQueue<Execution>) this.executionQueue).getSubscribersCount() == executorThreads + indexerThread + schedulerThread &&
+                ((MemoryQueue<WorkerTask>) this.workerTaskQueue).getSubscribersCount() == 1 &&
+                ((MemoryQueue<WorkerTaskResult>) this.workerTaskResultQueue).getSubscribersCount() == executorThreads,
+            null,
+            Duration.ofSeconds(5)
+        );
+    }
+}

@@ -1,29 +1,29 @@
 id: errors
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 tasks:
 - id: failed
-  type: org.kestra.core.tasks.scripts.Bash
+  type: io.kestra.core.tasks.scripts.Bash
   commands:
   - 'exit 1'
 errors:
   - id: t2
-    type: org.kestra.core.tasks.debugs.Echo
+    type: io.kestra.core.tasks.debugs.Echo
     format: second {{task.id}}
 
   - id: t3
-    type: org.kestra.core.tasks.flows.Parallel
+    type: io.kestra.core.tasks.flows.Parallel
     tasks:
       - id: t3-t1
-        type: org.kestra.core.tasks.flows.Parallel
+        type: io.kestra.core.tasks.flows.Parallel
         tasks:
           - id: t3-t1-t1
-            type: org.kestra.core.tasks.flows.Parallel
+            type: io.kestra.core.tasks.flows.Parallel
             tasks:
               - id: t3-t1-t1-t1
-                type: org.kestra.core.tasks.flows.Parallel
+                type: io.kestra.core.tasks.flows.Parallel
                 tasks:
                   - id: t3-t1-t1-t1-last
-                    type: org.kestra.core.tasks.scripts.Bash
+                    type: io.kestra.core.tasks.scripts.Bash
                     commands:
                       - 'echo "t3-t1-t1-t1-last : {{task.id}}"'

@@ -1,7 +1,7 @@
 id: trigger-multiplecondition-flow-b
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 tasks:
   - id: only
-    type: org.kestra.core.tasks.debugs.Return
+    type: io.kestra.core.tasks.debugs.Return
     format: "from parents: {{execution.id}}"

@@ -11,7 +11,7 @@ kestra:
     indices:
       flows:
         index: "unit_kestra_flows"
-        cls: org.kestra.core.models.flows.Flow
+        cls: io.kestra.core.models.flows.Flow
         mapping-file: flow
         settings: &settings |
           {
@@ -20,30 +20,30 @@ kestra:
 
       flows-revisions:
         index: "unit_kestra_flows_revisions"
-        cls: org.kestra.core.models.flows.Flow
+        cls: io.kestra.core.models.flows.Flow
         mapping-file: flow
         settings: *settings
 
       executions:
         index: "unit_kestra_executions"
-        cls: org.kestra.core.models.executions.Execution
+        cls: io.kestra.core.models.executions.Execution
         mapping-file: execution
         settings: *settings
 
       templates:
         index: "unit_kestra_templates"
-        cls: org.kestra.core.models.templates.Template
+        cls: io.kestra.core.models.templates.Template
         mapping-file: template
         settings: *settings
 
       triggers:
         index: "unit_kestra_triggers"
-        cls: org.kestra.core.models.triggers.Trigger
+        cls: io.kestra.core.models.triggers.Trigger
         mapping-file: trigger
         settings: *settings
 
       logs:
         index: "unit_kestra_logs"
-        cls: org.kestra.core.models.executions.LogEntry
+        cls: io.kestra.core.models.executions.LogEntry
         mapping-file: log
         settings: *settings

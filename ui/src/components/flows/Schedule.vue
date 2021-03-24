@@ -7,7 +7,7 @@
                 :schedule="schedule"
                 :index="x"
                 v-for="(schedule, x) in (flow.triggers || []).filter(
-                    (r) => r.type ==='org.kestra.core.models.triggers.types.Schedule'
+                    (r) => r.type ==='io.kestra.core.models.triggers.types.Schedule'
                 )"
                 :key="x"
             />
@@ -72,7 +72,7 @@
                 this.$store.commit("flow/addTrigger", {
                     id: "schedule",
                     cron: "0 4 * * 1,4",
-                    type: "org.kestra.core.models.triggers.types.Schedule",
+                    type: "io.kestra.core.models.triggers.types.Schedule",
                 });
             },
         },

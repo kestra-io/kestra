@@ -17,9 +17,12 @@ plugins {
     id 'org.siouan.frontend-jdk11' version '5.0.0' apply false
 
     // release
-    id "com.jfrog.bintray" version "1.8.5" apply false
+    id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
     id 'net.researchgate.release' version '2.8.1'
     id "com.gorylenko.gradle-git-properties" version "2.2.4"
+    id 'signing'
+    id 'ru.vyarus.pom' version '2.1.0' apply false
+    id 'ru.vyarus.github-info' version '1.2.0' apply false
 }
 
 idea {
@@ -32,7 +35,7 @@ idea {
 /**********************************************************************************************************************\
  * Main
  **********************************************************************************************************************/
-mainClassName = "org.kestra.cli.App"
+mainClassName = "io.kestra.cli.App"
 sourceCompatibility = 11
 
 dependencies {
@@ -44,7 +47,7 @@ dependencies {
  * Dependencies
  **********************************************************************************************************************/
 allprojects {
-    group "org.kestra"
+    group "io.kestra"
 
     sourceCompatibility = 11
 
@@ -305,12 +308,22 @@ task runStandalone(type: JavaExec) {
 /**********************************************************************************************************************\
  * Publish
  **********************************************************************************************************************/
-subprojects {
-    def isBuildSnapshot = version.toString().endsWith("-SNAPSHOT")
-
-    if (isBuildSnapshot) {
-        project.version = project.version.replaceAll(/-SNAPSHOT$/, "")
+nexusPublishing {
+    repositoryDescription = "${project.group}:${rootProject.name}:${project.version}"
+    useStaging = !project.version.endsWith("-SNAPSHOT")
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
     }
+}
+
+subprojects {
+    apply plugin: "maven-publish"
+    apply plugin: 'signing'
+    apply plugin: 'ru.vyarus.pom'
+    apply plugin: 'ru.vyarus.github-info'
 
     javadoc {
         options {
@@ -329,16 +342,31 @@ subprojects {
         from javadoc
     }
 
-    apply plugin: "maven-publish"
-    apply plugin: "com.jfrog.bintray"
+    github {
+        user 'kestra-io'
+        license 'Apache'
+        repository 'kestra'
+        site 'https://kestra.io'
+    }
+
+    pom {
+        description 'The modern, scalable orchestrator & scheduler open source platform'
+
+        developers {
+            developer {
+                id "tchiotludo"
+                name "Ludovic Dehon"
+            }
+        }
+    }
 
     publishing {
         publications {
-            BintrayMavenPublication(MavenPublication) {
+            sonatypePublication(MavenPublication) {
                 version project.version
 
                 if (project.name.contains('cli')) {
-                    groupId "org.kestra"
+                    groupId "io.kestra"
                     artifactId "kestra"
 
                     artifact shadowJar
@@ -352,36 +380,13 @@ subprojects {
                     artifact sourcesJar
                     artifact javadocJar
                 }
-
             }
-
         }
     }
 
-    bintray {
-        user = System.getenv('BINTRAY_USER')
-        key = System.getenv('BINTRAY_KEY')
-        publications = ['BintrayMavenPublication']
-        publish = true
-        dryRun = false
-        override = isBuildSnapshot
-        pkg {
-            userOrg = 'kestra'
-            name = project.name.contains('cli') ? "kestra" : project.name
-            repo = isBuildSnapshot ? 'maven-snapshot' : 'maven'
-            websiteUrl = 'https://kestra.io'
-            issueTrackerUrl = 'https://github.com/kestra-io/kestra/issues'
-            vcsUrl = 'https://github.com/kestra-io/kestra'
-            licenses = ['Apache-2.0']
-            publicDownloadNumbers = true
-            githubRepo = 'kestra-io/kestra'
-            githubReleaseNotesFile = 'README.md'
-            version {
-                name = project.version
-                released = new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-                vcsTag = "v" + project.version
-            }
-        }
+    signing {
+        // required { !project.version.endsWith("-SNAPSHOT") && !project.hasProperty("skipSigning") }
+        sign publishing.publications.sonatypePublication
     }
 }
 

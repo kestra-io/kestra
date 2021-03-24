@@ -1,5 +1,5 @@
 id: inputs-large
-namespace: org.kestra.tests
+namespace: io.kestra.tests
 
 inputs:
 - name: string
@@ -7,9 +7,9 @@ inputs:
 
 tasks:
   - id: 1_each
-    type: org.kestra.core.tasks.flows.EachSequential
+    type: io.kestra.core.tasks.flows.EachSequential
     value: '["1", "2", "3", "4", "5", "6", "7", "8", "9"]'
     tasks:
     - id: string
-      type: org.kestra.core.tasks.debugs.Return
+      type: io.kestra.core.tasks.debugs.Return
       format: "{{inputs.string}}"

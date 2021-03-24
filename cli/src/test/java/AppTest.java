@@ -2,7 +2,7 @@ import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.junit.jupiter.api.Test;
-import org.kestra.cli.App;
+import io.kestra.cli.App;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;

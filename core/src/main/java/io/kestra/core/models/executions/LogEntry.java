@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @Value
@@ -22,14 +23,19 @@ public class LogEntry implements DeletedInterface {
     @NotNull
     private String flowId;
 
+    @Nullable
     private String taskId;
 
+    @Nullable
     private String executionId;
 
+    @Nullable
     private String taskRunId;
 
+    @Nullable
     private Integer attemptNumber;
 
+    @Nullable
     private String triggerId;
 
     private Instant timestamp;

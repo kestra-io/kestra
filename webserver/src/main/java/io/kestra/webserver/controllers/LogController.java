@@ -106,7 +106,7 @@ public class LogController {
 
                 // consume in realtime
                 Runnable receive = this.logQueue.receive(current -> {
-                    if (current.getExecutionId().equals(executionId)) {
+                    if (current.getExecutionId() != null && current.getExecutionId().equals(executionId)) {
                         if (levels.contains(current.getLevel())) {
                             emitter.onNext(Event.of(current).id("progress"));
                         }

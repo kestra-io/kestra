@@ -385,7 +385,6 @@ subprojects {
     }
 
     signing {
-        // required { !project.version.endsWith("-SNAPSHOT") && !project.hasProperty("skipSigning") }
         sign publishing.publications.sonatypePublication
     }
 }

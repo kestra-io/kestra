@@ -249,12 +249,12 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         public void onFailure(Throwable e) {
             scheduler.removeFromRunning(flowWithPollingTriggerNextDate.getTriggerContext());
 
-            log.warn(
-                "Evaluate failed for flow '{}.{}' started at '{}' for trigger [{}] with error '{}",
+            this.flowWithPollingTriggerNextDate.getRunContext().logger().warn(
+                "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
                 flowWithPollingTriggerNextDate.getFlow().getNamespace(),
                 flowWithPollingTriggerNextDate.getFlow().getId(),
-                flowWithPollingTriggerNextDate.getTriggerContext().getDate(),
                 flowWithPollingTriggerNextDate.getTriggerContext().getTriggerId(),
+                flowWithPollingTriggerNextDate.getTriggerContext().getDate(),
                 e.getMessage(),
                 e
             );

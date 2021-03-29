@@ -82,7 +82,7 @@ public class RunContextLogger {
             return logEntry(event, event.getFormattedMessage(), null, logEntry);
         }
 
-        List<LogEntry> result = new ArrayList<>(logEntry(event, event.getMessage(), null, logEntry));
+        List<LogEntry> result = new ArrayList<>(logEntry(event, event.getFormattedMessage(), null, logEntry));
 
         if (Throwables.getCausalChain(throwable).size() > 1) {
             result.addAll(logEntry(

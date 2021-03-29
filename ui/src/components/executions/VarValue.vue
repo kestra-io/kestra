@@ -43,7 +43,7 @@
                     `${apiRoot}executions/${this.execution.id}/file/metas?path=${this.value}`,
                     {
                         validateStatus: (status) => {
-                            return status === 200 || status === 404;
+                            return status === 200 || status === 404 || status === 422;
                         }
                     }
                 )

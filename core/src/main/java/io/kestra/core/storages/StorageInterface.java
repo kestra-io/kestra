@@ -12,6 +12,9 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Introspected
 public interface StorageInterface {
@@ -33,6 +36,17 @@ public interface StorageInterface {
                 execution.getId()
             )
         );
+    }
+
+    default Optional<String> extractExecutionId(URI path) {
+        Pattern pattern = Pattern.compile("^/(.+)/executions/([^/]+)/", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(path.getPath());
+
+        if (!matcher.find() || matcher.group(2).isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(matcher.group(2));
     }
 
     default URI uri(Flow flow, Execution execution, String inputName, String file) throws  URISyntaxException {

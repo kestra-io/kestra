@@ -392,14 +392,18 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(metas.getSize(), equalTo(288L));
 
+        String newExecutionId = IdUtils.create();
+
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/executions/" + execution.getId() + "/file?path=" + path.replace(execution.getId(),
-                IdUtils.create()
+                newExecutionId
             )),
             String.class
         ));
 
-        assertThat(e.getStatus().getCode(), is(422));
+        // we redirect to good execution (that doesn't exist, so 404)
+        assertThat(e.getStatus().getCode(), is(404));
+        assertThat(e.getMessage(), containsString("execution id '" +  newExecutionId + "'"));
     }
 
     @SuppressWarnings("unchecked")

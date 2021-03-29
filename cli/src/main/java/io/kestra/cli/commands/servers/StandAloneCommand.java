@@ -60,7 +60,9 @@ public class StandAloneCommand extends AbstractCommand {
         StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
         standAloneRunner.run();
 
-        Await.until(() -> !standAloneRunner.isRunning());
+        this.shutdownHook(standAloneRunner::close);
+
+        Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

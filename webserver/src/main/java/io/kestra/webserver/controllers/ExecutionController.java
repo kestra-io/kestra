@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
@@ -56,6 +57,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Validated
 @Controller("/api/v1/")
 public class ExecutionController {
+    @Nullable
+    @Value("${micronaut.server.context-path}")
+    protected String basePath;
+
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -305,7 +310,7 @@ public class ExecutionController {
         return current;
     }
 
-    protected void validateFile(String executionId, URI path) {
+    protected <T> HttpResponse<T> validateFile(String executionId, URI path, String redirect) {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
             throw new NoSuchElementException("Unable to find execution id '" + executionId + "'");
@@ -316,10 +321,21 @@ public class ExecutionController {
             throw new NoSuchElementException("Unable to find flow id '" + executionId + "'");
         }
 
+        // maybe redirect to correct execution
         String prefix = storageInterface.executionPrefix(flow.get(), execution.get());
         if (!path.getPath().substring(1).startsWith(prefix)) {
+            Optional<String> redirectedExecution = storageInterface.extractExecutionId(path);
+
+            if (redirectedExecution.isPresent()) {
+                return HttpResponse.redirect(URI.create((basePath != null? basePath : "") +
+                    redirect.replace("{executionId}", redirectedExecution.get()))
+                );
+            }
+
             throw new IllegalArgumentException("Invalid prefix path");
         }
+
+        return null;
     }
     /**
      * Download file binary from uri parameter
@@ -329,15 +345,19 @@ public class ExecutionController {
      */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
-    public StreamedFile file(
+    public HttpResponse<StreamedFile> file(
         String executionId,
         @QueryValue(value = "path") URI path
     ) throws IOException, URISyntaxException {
-        this.validateFile(executionId, path);
+        HttpResponse<StreamedFile> httpResponse = this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file?path=" + path);
+        if (httpResponse != null) {
+            return httpResponse;
+        }
 
         InputStream fileHandler = storageInterface.get(path);
-        return new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
-            .attach(FilenameUtils.getName(path.toString()));
+        return HttpResponse.ok(new StreamedFile(fileHandler, MediaType.APPLICATION_OCTET_STREAM_TYPE)
+            .attach(FilenameUtils.getName(path.toString()))
+        );
     }
 
     /**
@@ -348,13 +368,19 @@ public class ExecutionController {
      */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/file/metas", produces = MediaType.TEXT_JSON)
-    public FileMetas filesize(
+    public HttpResponse<FileMetas> filesize(
         String executionId,
         @QueryValue(value = "path") URI path
     ) throws IOException {
-        this.validateFile(executionId, path);
+        HttpResponse<FileMetas> httpResponse =this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file/metas?path=" + path);
+        if (httpResponse != null) {
+            return httpResponse;
+        }
 
-        return FileMetas.builder().size(storageInterface.size(path)).build();
+        return HttpResponse.ok(FileMetas.builder()
+            .size(storageInterface.size(path))
+            .build()
+        );
     }
 
     /**

@@ -10,7 +10,7 @@ import io.kestra.core.models.DeletedInterface;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
-
+/*
 @Introspected
 @Singleton
 public class DeletedSerializer extends BeanSerializerModifier {
@@ -29,3 +29,4 @@ public class DeletedSerializer extends BeanSerializerModifier {
             .collect(Collectors.toList());
     }
 }
+*/

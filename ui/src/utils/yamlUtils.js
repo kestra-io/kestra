@@ -7,6 +7,10 @@ export default class YamlUtils {
             return "";
         }
 
+        if (value.deleted !== undefined) {
+            delete value.deleted
+        }
+
         return JsYaml.dump(YamlUtils._transform(_cloneDeep(value)), {
             lineWidth: -1,
             noCompatMode: true,

@@ -154,7 +154,8 @@
         "link to sub flow": "Go to sub flow",
         "New execution": "New execution",
         "execute the flow": "Trigger the flow",
-        "execute flow now ?": "Do you want to execute this flow ?"
+        "execute flow now ?": "Do you want to execute this flow ?",
+        "Default namespace": "Default namespace"
     },
     "fr": {
         "id": "Identifiant",
@@ -312,6 +313,7 @@
         "link to sub flow": "Lien vers le sous flow",
         "New execution": "Nouvelle execution",
         "execute the flow": "Créer une exécution",
-        "execute flow now ?": "Voulez-vous executer ce flow ?"
+        "execute flow now ?": "Voulez-vous executer ce flow ?",
+        "Default namespace": "Espace de nom par défaut"
     }
 }

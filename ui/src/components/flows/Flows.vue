@@ -12,7 +12,7 @@
                 <template #navbar>
                     <search-field />
                     <namespace-select
-                        :data-type="dataType"
+                        data-type="flow"
                         :value="$route.query.namespace"
                         @input="onDataTableValue('namespace', $event)"
                     />
@@ -143,7 +143,7 @@
         },
         data() {
             return {
-                dataType: "flow",
+                isDefaultNamespaceAllow: true,
                 permission: permission,
                 action: action,
                 dailyGroupByFlowReady: false,

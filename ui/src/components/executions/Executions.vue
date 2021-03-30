@@ -150,6 +150,7 @@
         },
         data() {
             return {
+                isDefaultNamespaceAllow: true,
                 dailyReady: false,
                 dblClickRouteName: "executions/update",
                 flowTriggerDetails: undefined

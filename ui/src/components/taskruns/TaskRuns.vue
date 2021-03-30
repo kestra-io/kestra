@@ -136,7 +136,8 @@
         },
         data() {
             return {
-                dailyReady: false
+                dailyReady: false,
+                isDefaultNamespaceAllow: true,
             };
         },
         beforeMount() {

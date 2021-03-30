@@ -7,22 +7,43 @@
             <b-checkbox v-model="autofoldTextEditor" value="1" unchecked-value="0" />
         </b-form-group>
         <b-form-group :label="$t('Default namespace')" label-cols-sm="3">
-            <b-input v-model="defaultNamespace" />
+            <namespace-select data-type="flow" :value="defaultNamespace" @input="onNamespaceSelect" />
         </b-form-group>
     </div>
 </template>
 
 <script>
     import RouteContext from "../../mixins/routeContext";
+    import NamespaceSelect from "../../components/namespace/NamespaceSelect";
+
     export default {
         mixins: [RouteContext],
+        components: {
+            NamespaceSelect,
+        },
         data() {
             return {
                 langOptions: [
                     {value: "en", text: "English"},
                     {value: "fr", text: "Français"}
-                ]
+                ],
+                defaultNamespace: undefined
             };
+        },
+        created() {
+            this.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
+        },
+        methods: {
+            onNamespaceSelect(value) {
+                this.defaultNamespace = value;
+
+                if (value) {
+                    localStorage.setItem("defaultNamespace", value)
+                } else {
+                    localStorage.removeItem("defaultNamespace")
+                }
+                this.$toast().saved();
+            },
         },
         computed: {
             routeInfo() {
@@ -49,18 +70,6 @@
                 },
                 get() {
                     return localStorage.getItem("autofoldTextEditor")
-                }
-            },
-            defaultNamespace: {
-                set(value) {
-                    if (value) {
-                        localStorage.setItem("defaultNamespace", value)
-                    } else {
-                        localStorage.removeItem("defaultNamespace")
-                    }
-                },
-                get() {
-                    return localStorage.getItem("defaultNamespace") || ""
                 }
             }
         }

@@ -33,7 +33,6 @@
                 .then(() => {
                     this.groupedNamespaces = this.groupNamespaces(this.namespaces);
                 });
-
         },
         computed: {
             ...mapState("namespace", ["namespaces"])

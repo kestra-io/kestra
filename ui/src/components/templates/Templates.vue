@@ -10,8 +10,12 @@
                 :total="total"
             >
                 <template #navbar>
-                    <search-field @onSearch="onSearch" :fields="searchableFields" />
-                    <namespace-select :data-type="dataType" @onNamespaceSelect="onNamespaceSelect" />
+                    <search-field />
+                    <namespace-select
+                        :data-type="dataType"
+                        :value="$route.query.namespace"
+                        @input="onDataTableValue('namespace', $event)"
+                    />
                 </template>
 
                 <template #table>
@@ -33,7 +37,7 @@
                         </template>
 
                         <template #cell(actions)="row">
-                            <router-link :to="{name: 'templateEdit', params : row.item}">
+                            <router-link :to="{name: 'templates/update', params : row.item}">
                                 <kicon :tooltip="$t('details')" placement="left">
                                     <eye />
                                 </kicon>
@@ -42,7 +46,7 @@
 
                         <template #cell(id)="row">
                             <router-link
-                                :to="{name: `${dataType}Edit`, params: {namespace: row.item.namespace, id: row.item.id}}"
+                                :to="{name: `${dataType}s/update`, params: {namespace: row.item.namespace, id: row.item.id}}"
                             >
                                 {{ row.item.id }}
                             </router-link>
@@ -54,7 +58,7 @@
         <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <router-link :to="{name: 'templateAdd'}">
+                    <router-link :to="{name: 'templates/create'}">
                         <b-button variant="primary">
                             <kicon>
                                 <plus />
@@ -81,6 +85,7 @@
     import DataTable from "../layout/DataTable";
     import SearchField from "../layout/SearchField";
     import Kicon from "../Kicon"
+    import qb from "../../utils/queryBuilder";
 
     export default {
         mixins: [RouteContext, DataTableActions],
@@ -104,6 +109,11 @@
             ...mapState("template", ["templates", "total"]),
             ...mapState("stat", ["dailyGroupByFlow", "daily"]),
             ...mapState("auth", ["user"]),
+            routeInfo() {
+                return {
+                    title: this.$t("templates")
+                };
+            },
             fields() {
                 const title = (title) => {
                     return this.$t(title);
@@ -128,10 +138,24 @@
             },
         },
         methods: {
+            loadQuery() {
+                let filter = []
+                let query = this.queryWithFilter();
+
+                if (query.namespace) {
+                    filter.push(`namespace:${query.namespace}*`)
+                }
+
+                if (query.q) {
+                    filter.push(qb.toLucene(query.q));
+                }
+
+                return filter.join(" AND ") || "*"
+            },
             loadData(callback) {
                 this.$store
                     .dispatch("template/findTemplates", {
-                        q: this.query,
+                        q: this.loadQuery(),
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         sort: this.$route.query.sort,

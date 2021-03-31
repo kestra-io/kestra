@@ -37,7 +37,7 @@
         },
         created() {
             if (this.$route.path === "/") {
-                this.$router.push({name: "flowsList"});
+                this.$router.push({name: "flows/list"});
             }
 
             this.displayApp()

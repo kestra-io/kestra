@@ -58,7 +58,7 @@
         },
         computed : {
             routeName () {
-                return this.executionId ? "executionEdit" : "flowEdit"
+                return this.executionId ? "executions/update" : "flows/update"
             },
 
             query () {

@@ -82,7 +82,7 @@
                 <b-navbar-toggle target="nav-collapse" />
                 <b-collapse id="nav-collapse" is-nav>
                     <b-nav-form>
-                        <search-field :router="false" ref="searchField" @onSearch="onSearch" class="mr-2" />
+                        <search-field :router="false" @search="onSearch" class="mr-2" />
                         <log-level-selector :log-level="logLevel" :router="false" @onChange="onLevelChange" />
                     </b-nav-form>
                 </b-collapse>

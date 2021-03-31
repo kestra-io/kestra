@@ -10,8 +10,12 @@
                 :total="total"
             >
                 <template #navbar>
-                    <search-field @onSearch="onSearch" :fields="searchableFields" />
-                    <namespace-select :data-type="dataType" @onNamespaceSelect="onNamespaceSelect" />
+                    <search-field />
+                    <namespace-select
+                        :data-type="dataType"
+                        :value="$route.query.namespace"
+                        @input="onDataTableValue('namespace', $event)"
+                    />
                 </template>
 
                 <template #top>
@@ -41,7 +45,7 @@
                         </template>
 
                         <template #cell(actions)="row">
-                            <router-link :to="{name: 'flowEdit', params : row.item}">
+                            <router-link :to="{name: 'flows/update', params : row.item}">
                                 <kicon :tooltip="$t('details')" placement="left">
                                     <eye />
                                 </kicon>
@@ -64,7 +68,7 @@
 
                         <template #cell(id)="row">
                             <router-link
-                                :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
+                                :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
                             >
                                 {{ row.item.id }}
                             </router-link>
@@ -84,7 +88,7 @@
         <bottom-line v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <router-link :to="{name: 'flowsAdd'}">
+                    <router-link :to="{name: 'flows/create'}">
                         <b-button variant="primary">
                             <kicon>
                                 <plus />
@@ -108,6 +112,7 @@
     import BottomLine from "../layout/BottomLine";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
+    import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable";
     import SearchField from "../layout/SearchField";
     import StateChart from "../stats/StateChart";
@@ -117,9 +122,10 @@
     import TriggerAvatar from "./TriggerAvatar";
     import MarkdownTooltip from "../layout/MarkdownTooltip"
     import Kicon from "../Kicon"
+    import qb from "../../utils/queryBuilder";
 
     export default {
-        mixins: [RouteContext, DataTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             NamespaceSelect,
             BottomLine,
@@ -149,6 +155,11 @@
             ...mapState("flow", ["flows", "total"]),
             ...mapState("stat", ["dailyGroupByFlow", "daily"]),
             ...mapState("auth", ["user"]),
+            routeInfo() {
+                return {
+                    title: this.$t("flows")
+                };
+            },
             fields() {
                 const title = title => {
                     return this.$t(title);
@@ -221,13 +232,27 @@
                     return [];
                 }
             },
+            loadQuery() {
+                let filter = []
+                let query = this.queryWithFilter();
+
+                if (query.namespace) {
+                    filter.push(`namespace:${query.namespace}*`)
+                }
+
+                if (query.q) {
+                    filter.push(qb.toLucene(query.q));
+                }
+
+                return filter.join(" AND ") || "*"
+            },
             loadData(callback) {
                 this.dailyReady = false;
 
                 if (this.user.hasAny(permission.EXECUTION)) {
                     this.$store
                         .dispatch("stat/daily", {
-                            q: this.query.replace("id:", "flowId:"),
+                            q: this.loadQuery(),
                             startDate: this.$moment(this.startDate).format("YYYY-MM-DD"),
                             endDate: this.$moment(this.endDate).format("YYYY-MM-DD")
                         })
@@ -238,7 +263,7 @@
 
                 this.$store
                     .dispatch("flow/findFlows", {
-                        q: this.query,
+                        q: this.loadQuery(),
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         sort: this.$route.query.sort

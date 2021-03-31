@@ -1,39 +1,70 @@
 <template>
     <div class="log-panel">
         <div class="log-content">
-            <main-log-filter v-if="!embed" @onChange="loadData" />
-            <div v-if="logs === undefined">
-                <b-alert variant="light" show>
-                    {{ $t('no result') }}
-                </b-alert>
-            </div>
-            <div class="bg-dark text-white">
-                <template v-for="(log, i) in logs">
-                    <log-line
-                        level="TRACE"
-                        filter=""
-                        :exclude-metas="isFlowEdit ? ['namespace', 'flowId'] : []"
-                        :log="log"
-                        :key="`${log.taskRunId}-${i}`"
+            <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
+                <template #navbar v-if="embed === false">
+                    <search-field />
+                    <namespace-select
+                        data-type="flow"
+                        v-if="$route.name !== 'flows/update'"
+                        :value="$route.query.namespace"
+                        @input="onDataTableValue('namespace', $event)"
                     />
+                    <log-level-selector
+                        :value="$route.query.level"
+                        @input="onDataTableValue('level', $event)"
+                    />
+                    <date-range
+                        :start="$route.query.start"
+                        @start="onDataTableValue('start', $event)"
+                        :end="$route.query.end"
+                        @end="onDataTableValue('end', $event)"
+                    />
+                    <refresh-button class="float-right" @onRefresh="load" />
                 </template>
-            </div>
+
+                <template #table>
+                    <b-overlay :show="isLoading" variant="transparent">
+                        <div v-if="logs === undefined">
+                            <b-alert variant="light" show>
+                                {{ $t('no result') }}
+                            </b-alert>
+                        </div>
+                        <div class="bg-dark text-white mb-2">
+                            <template v-for="(log, i) in logs">
+                                <log-line
+                                    level="TRACE"
+                                    filter=""
+                                    :exclude-metas="isFlowEdit ? ['namespace', 'flowId'] : []"
+                                    :log="log"
+                                    :key="`${log.taskRunId}-${i}`"
+                                />
+                            </template>
+                        </div>
+                    </b-overlay>
+                </template>
+            </data-table>
         </div>
-        <pagination :size="pageSize" :page="pageNumber" :total="total" @onPageChanged="onPageChanged" />
     </div>
 </template>
 
 <script>
     import LogLine from "../logs/LogLine";
-    import Pagination from "../layout/Pagination";
     import {mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
-    import MainLogFilter from "./MainLogFilter";
     import qb from "../../utils/queryBuilder";
+    import RestoreUrl from "../../mixins/restoreUrl";
+    import DataTableActions from "../../mixins/dataTableActions";
+    import NamespaceSelect from "../namespace/NamespaceSelect";
+    import SearchField from "../layout/SearchField";
+    import DateRange from "../layout/DateRange";
+    import LogLevelSelector from "./LogLevelSelector";
+    import DataTable from "../../components/layout/DataTable";
+    import RefreshButton from "../../components/layout/RefreshButton";
 
     export default {
-        mixins: [RouteContext],
-        components: {LogLine, Pagination, MainLogFilter},
+        mixins: [RouteContext, RestoreUrl, DataTableActions],
+        components: {DataTable, LogLine, NamespaceSelect, DateRange, SearchField, LogLevelSelector, RefreshButton},
         props: {
             logLevel: {
                 type: String,
@@ -43,26 +74,12 @@
                 type: Boolean,
                 default: false
             },
-            pageSize: {
-                type: Number,
-                default: 25
-            },
-            pageNumber: {
-                type: Number,
-                default: 1
-            },
         },
         data() {
             return {
                 task: undefined,
-                internalPageSize: undefined,
-                internalPageNumber: undefined,
+                isLoading: false
             };
-        },
-        created() {
-            this.internalPageSize = this.pageSize;
-            this.internalPageNumber = this.pageNumber;
-            this.loadData();
         },
         computed: {
             ...mapState("log", ["logs", "total", "level"]),
@@ -72,35 +89,50 @@
                 };
             },
             isFlowEdit() {
-                return this.$route.name === "flowEdit"
+                return this.$route.name === "flows/update"
             }
         },
         methods: {
-            onPageChanged(pagination) {
-                this.internalPageSize = pagination.size;
-                this.internalPageNumber = pagination.page;
+            loadQuery() {
+                let filter = []
+                let query = this.queryWithFilter();
 
-                if (!this.embed) {
-                    this.$router.push({
-                        query: {...this.$route.query, ...pagination},
-                    });
+                if (query.namespace) {
+                    filter.push(`namespace:${query.namespace}*`)
                 }
 
-                this.loadData();
-            },
-            loadData() {
-                let q = qb.logQueryBuilder(this.$route);
+                if (query.start) {
+                    filter.push(`timestamp:[${query.start} TO *]`)
+                }
+
+                if (query.end) {
+                    filter.push(`timestamp:[* TO ${query.end}]`)
+                }
+
+                if (query.q) {
+                    filter.push(qb.toLucene(query.q));
+                }
+
                 if (this.isFlowEdit) {
-                    q += ` AND namespace:${this.$route.params.namespace}`
-                    q += ` AND flowId:${this.$route.params.id}`
+                    filter.push(`namespace:${this.$route.params.namespace}`)
+                    filter.push(`flowId:${this.$route.params.id}`)
                 }
 
-                this.$store.dispatch("log/findLogs", {
-                    q,
-                    page: this.$route.query.page || this.internalPageNumber,
-                    size: this.$route.query.size  || this.internalPageSize,
-                    minLevel: this.$route.query.level || this.logLevel
-                });
+                return filter.join(" AND ") || "*"
+            },
+            load() {
+                this.isLoading = true
+                this.$store
+                    .dispatch("log/findLogs", {
+                        q: this.loadQuery(),
+                        page: this.$route.query.page || this.internalPageNumber,
+                        size: this.$route.query.size || this.internalPageSize,
+                        minLevel: this.$route.query.level || this.logLevel
+                    })
+                    .finally(() => {
+                        this.isLoading = false
+                        this.saveRestoreUrl();
+                    });
             },
         },
     };

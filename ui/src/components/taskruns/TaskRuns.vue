@@ -2,15 +2,24 @@
     <div v-if="ready">
         <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
             <template #navbar>
-                <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
+                <search-field />
                 <namespace-select
                     data-type="flow"
-                    v-if="$route.name !== 'flowEdit'"
-                    @onNamespaceSelect="onNamespaceSelect"
+                    v-if="$route.name !== 'flows/update'"
+                    :value="$route.query.namespace"
+                    @input="onDataTableValue('namespace', $event)"
                 />
-                <status-filter-buttons @onRefresh="loadData" />
-                <date-range @onDate="onSearch" />
-                <refresh-button class="float-right" @onRefresh="loadData" />
+                <status-filter-buttons
+                    :value="$route.query.status"
+                    @input="onDataTableValue('status', $event)"
+                />
+                <date-range
+                    :start="$route.query.start"
+                    @start="onDataTableValue('start', $event)"
+                    :end="$route.query.end"
+                    @end="onDataTableValue('end', $event)"
+                />
+                <refresh-button class="float-right" @onRefresh="load" />
             </template>
 
             <template #top>
@@ -39,7 +48,7 @@
                     </template>
                     <template #cell(details)="row">
                         <router-link
-                            :to="{name: 'executionEdit', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.executionId},query: {tab:'gantt'}}"
+                            :to="{name: 'executions/update', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.executionId},query: {tab:'gantt'}}"
                         >
                             <kicon :tooltip="$t('details')" placement="left">
                                 <eye />
@@ -71,7 +80,7 @@
                     </template>
                     <template #cell(flowId)="row">
                         <router-link
-                            :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.flowId}}"
+                            :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >
                             {{ row.item.flowId }}
                         </router-link>
@@ -106,9 +115,12 @@
     import StateGlobalChart from "../../components/stats/StateGlobalChart";
     import DateAgo from "../layout/DateAgo";
     import Kicon from "../Kicon"
+    import RestoreUrl from "../../mixins/restoreUrl";
+    import State from "../../utils/state";
+    import qb from "../../utils/queryBuilder";
 
     export default {
-        mixins: [RouteContext, DataTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             Status,
             Eye,
@@ -124,21 +136,24 @@
         },
         data() {
             return {
-                dataType: "taskrun",
                 dailyReady: false
             };
         },
-        beforeCreate() {
-            const queries = JSON.parse(
-                localStorage.getItem("taskrunQueries") || "{}"
-            );
-            queries.sort = queries.sort ? queries.sort : "taskRunList.state.startDate:desc";
-            queries.status = this.$route.query.status || queries.status || [];
-            localStorage.setItem("taskrunQueries", JSON.stringify(queries));
+        beforeMount() {
+            if (this.$route.query.sort === undefined) {
+                this.$router.push({
+                    query: {...this.$route.query, ...{sort: "taskRunList.state.startDate:desc"}}
+                });
+            }
         },
         computed: {
             ...mapState("taskrun", ["taskruns", "total", "maxTaskRunSetting"]),
             ...mapState("stat", ["taskRunDaily"]),
+            routeInfo() {
+                return {
+                    title: this.$t("taskruns")
+                };
+            },
             fields() {
                 const title = title => {
                     return this.$t(title);
@@ -154,7 +169,7 @@
                     },
                     {
                         key: "executionId",
-                        label: title("execution")
+                        label: title("execution"),
                     },
                     {
                         key: "startDate",
@@ -200,12 +215,6 @@
                     }
                 ];
             },
-            executionQuery() {
-                let query = this.query.replace("namespace:", "taskRunList.namespace:");
-                query = query.replace("state.startDate:", "taskRunList.state.startDate:");
-                query = query.replace("state.endDate:", "taskRunList.state.endDate:");
-                return query;
-            },
             endDate() {
                 return new Date();
             },
@@ -216,17 +225,42 @@
             }
         },
         methods: {
+            isRunning(item){
+                return State.isRunning(item.state.current);
+            },
             onRowDoubleClick(item) {
                 this.$router.push({
-                    name: "executionEdit",
+                    name: "executions/update",
                     params: {namespace: item.namespace, flowId: item.flowId, id: item.executionId},
                     query: {tab: "gantt"}
                 });
             },
+            loadQuery() {
+                let filter = []
+                let query = this.queryWithFilter();
+
+                if (query.namespace) {
+                    filter.push(`taskRunList.namespace:${query.namespace}*`)
+                }
+
+                if (query.q) {
+                    filter.push(qb.toLucene(query.q));
+                }
+
+                if (query.start) {
+                    filter.push(`taskRunList.state.startDate:[${query.start} TO *]`)
+                }
+
+                if (query.end) {
+                    filter.push(`taskRunList.state.endDate:[* TO ${query.end}]`)
+                }
+
+                return filter.join(" AND ") || "*"
+            },
             loadData(callback) {
                 this.$store
                     .dispatch("stat/taskRunDaily", {
-                        q: this.executionQuery,
+                        q: this.loadQuery(),
                         startDate: this.$moment(this.startDate).format("YYYY-MM-DD"),
                         endDate: this.$moment(this.endDate).format("YYYY-MM-DD")
                     })
@@ -240,7 +274,7 @@
                     .dispatch("taskrun/findTaskRuns", {
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
-                        q: this.executionQuery,
+                        q: this.loadQuery(),
                         sort: this.$route.query.sort,
                         state: this.$route.query.status
                     })

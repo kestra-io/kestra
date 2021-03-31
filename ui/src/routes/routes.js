@@ -17,28 +17,28 @@ export default {
     routes: [
         //Flows
         {name: "home", path: "/", component: Flows},
-        {name: "flowsList", path: "/flows", component: Flows},
-        {name: "flowsAdd", path: "/flows/new", component: FlowEdit},
-        {name: "flowEdit", path: "/flows/edit/:namespace/:id", component: FlowRoot},
+        {name: "flows/list", path: "/flows", component: Flows},
+        {name: "flows/create", path: "/flows/new", component: FlowEdit},
+        {name: "flows/update", path: "/flows/edit/:namespace/:id", component: FlowRoot},
 
         //Executions
-        {name: "executionsList", path: "/executions", component: Executions},
-        {name: "executionEdit", path: "/executions/:namespace/:flowId/:id", component: ExecutionRoot},
-        
+        {name: "executions/list", path: "/executions", component: Executions},
+        {name: "executions/update", path: "/executions/:namespace/:flowId/:id", component: ExecutionRoot},
+
         //TaskRuns
-        {name: "taskRunList", path: "/taskruns", component: TaskRuns},
+        {name: "taskruns/list", path: "/taskruns", component: TaskRuns},
 
         //Documentation
-        {name: "plugin", path: "/plugins", component: Plugin},
-        {name: "pluginView", path: "/plugins/:cls", component: Plugin},
+        {name: "plugins/list", path: "/plugins", component: Plugin},
+        {name: "plugins/view", path: "/plugins/:cls", component: Plugin},
 
         //Templates
-        {name: "templateList", path: "/templates", component: Templates},
-        {name: "templateAdd", path: "/templates/new", component: TemplateEdit},
-        {name: "templateEdit", path: "/templates/edit/:namespace/:id", component: TemplateEdit},
+        {name: "templates/list", path: "/templates", component: Templates},
+        {name: "templates/create", path: "/templates/new", component: TemplateEdit},
+        {name: "templates/update", path: "/templates/edit/:namespace/:id", component: TemplateEdit},
 
         //Settings
-        {name: "logs", path: "/logs", component: LogsWrapper},
+        {name: "logs/list", path: "/logs", component: LogsWrapper},
 
         //Settings
         {name: "settings", path: "/settings", component: Settings},

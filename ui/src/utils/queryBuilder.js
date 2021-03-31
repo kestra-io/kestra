@@ -1,8 +1,3 @@
-import _merge from "lodash/merge";
-import _cloneDeep from "lodash/cloneDeep";
-
-const iso = date => new Date(parseInt(date)).toISOString()
-
 export default class QueryBuilder {
     static toLucene(q) {
         let query = q;
@@ -18,37 +13,7 @@ export default class QueryBuilder {
         return `(*${query}* OR ${query})`;
     }
 
-    static build(route, defaults) {
-        const q = _merge(_cloneDeep(route.query), defaults || {});
-        const query = []
-
-        if (q.namespace) {
-            query.push(`namespace:${q.namespace}*`)
-        }
-
-        if (q.start) {
-            query.push(`state.startDate:[${iso(q.start)} TO *]`)
-        }
-
-        if (q.end) {
-            query.push(`state.endDate:[* TO ${iso(q.end)}]`)
-        }
-        if (q.q) {
-            query.push(QueryBuilder.toLucene(q.q));
-        }
-
-        return query.join(" AND ") || "*"
-    }
-
-    static logQueryBuilder(route) {
-        const q = route.query
-        const start = q.start ? iso(q.start) : "*"
-        const end = q.end ? iso(q.end) : "*"
-        const namespace = q.namespace ? q.namespace + "*": "";
-        return [
-            `${q.q ? QueryBuilder.toLucene(q.q) : "*"}`,
-            `timestamp:[${start} TO ${end}]`,
-            `namespace:${namespace || "*"}`,
-        ].join(" AND ")
+    static iso(date) {
+        return new Date(parseInt(date)).toISOString();
     }
 }

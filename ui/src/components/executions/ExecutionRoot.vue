@@ -141,13 +141,13 @@
                 this.$store.commit("execution/setTaskRun", undefined);
                 this.$store.commit("execution/setTask", undefined);
                 this.$router.push({
-                    name: "executionEdit",
+                    name: "executions/update",
                     params: this.$route.params,
                     query: {tab}
                 });
             },
             editFlow() {
-                this.$router.push({name:"flowEdit", params: {
+                this.$router.push({name:"flows/update", params: {
                     namespace: this.$route.params.namespace,
                     id: this.$route.params.flowId
                 }, query:{
@@ -171,7 +171,7 @@
                         {
                             label: this.$t("flows"),
                             link: {
-                                name: "flowsList",
+                                name: "flows/list",
                                 query: {
                                     namespace: ns
                                 }
@@ -180,7 +180,7 @@
                         {
                             label: `${ns}.${this.$route.params.flowId}`,
                             link: {
-                                name: "flowEdit",
+                                name: "flows/update",
                                 params: {
                                     namespace: ns,
                                     id: this.$route.params.flowId
@@ -190,7 +190,7 @@
                         {
                             label: this.$t("executions"),
                             link: {
-                                name: "flowEdit",
+                                name: "flows/update",
                                 params: {
                                     namespace: ns,
                                     id: this.$route.params.flowId
@@ -203,7 +203,7 @@
                         {
                             label: this.$route.params.id,
                             link: {
-                                name: "executionEdit"
+                                name: "executions/update"
                             }
                         }
                     ]

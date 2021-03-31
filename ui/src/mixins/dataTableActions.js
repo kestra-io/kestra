@@ -1,18 +1,21 @@
-import qb from "../utils/queryBuilder";
-import State from "../utils/state";
+import _merge from "lodash/merge";
+import _cloneDeep from "lodash/cloneDeep";
+
 export default {
     created() {
         this.internalPageSize = this.pageSize;
         this.internalPageNumber = this.pageNumber;
 
-        this.loadFilters()
-        this.query = qb.build(this.$route, this.filters);
-        this.loadData(this.onDataLoaded);
+        // @TODO: ugly hack from restoreUrl
+        if (this.loadInit) {
+            this.load(this.onDataLoaded);
+        }
     },
     data() {
         return {
-            query: "*",
             sort: "",
+            dblClickRouteName: undefined,
+            loadInit: true,
             ready: false,
             internalPageSize: undefined,
             internalPageNumber: undefined,
@@ -32,28 +35,14 @@ export default {
             default: 1
         },
     },
-    computed: {
-        routeInfo() {
-            return {
-                title: this.$t(this.dataType + "s")
-            };
-        },
-        storageName() {
-            return `${this.dataType}Queries`
-        },
-        searchableFields() {
-            return this.fields.filter(f => f.sortable);
-        },
-        isBasePage() {
-            return ["executionsList", "flowsList"].includes(this.$route.name)
+    watch: {
+        $route(to, from) {
+            if (to.query !== from.query) {
+                this.load(this.onDataLoaded);
+            }
         }
     },
     methods: {
-        onSearch() {
-            this.query = qb.build(this.$route, this.filters);
-            this.loadData(this.onDataLoaded);
-            this.saveFilters()
-        },
         onSort(sortItem) {
             if (!this.embed) {
                 const sort = [
@@ -63,12 +52,26 @@ export default {
                     query: {...this.$route.query, sort}
                 });
             }
-
-            this.loadData(this.onDataLoaded);
-            this.saveFilters()
         },
         onRowDoubleClick(item) {
-            this.$router.push({name: this.dataType + "Edit", params: item});
+            this.$router.push({
+                name: this.dblClickRouteName || this.$route.name.replace("/list", "/update"),
+                params: item
+            });
+        },
+        onDataTableValue(key, value) {
+            let query = {...this.$route.query};
+
+            if (value === undefined || value === "" || value === null) {
+                delete query[key]
+            } else {
+                query[key] = value;
+            }
+
+            delete query.page;
+            this.internalPageNumber = 1
+
+            this.$router.push({query: query})
         },
         onPageChanged(item) {
             this.internalPageSize = item.size;
@@ -82,52 +85,32 @@ export default {
                         page: item.page
                     }
                 });
-                this.saveFilters()
+            } else {
+                this.load();
             }
-
-            this.loadData(this.onDataLoaded);
         },
-        onNamespaceSelect() {
-            if (!this.embed) {
-                this.query = qb.build(this.$route, this.filters);
-                this.$router.push({query: {...this.$route.query, page: 1}})
+        queryWithFilter() {
+            return _merge(_cloneDeep(this.$route.query), this.filters || {});
+        },
+        load(callback) {
+            if (this.$refs.dataTable) {
+                this.$refs.dataTable.isLoading = true;
             }
 
-            this.loadData(this.onDataLoaded);
-            this.saveFilters()
+            this.loadData(callback || this.onDataLoaded);
         },
         onDataLoaded () {
             this.ready = true
-        },
-        saveFilters() {
-            if (this.isBasePage && !this.embed) {
-                localStorage.setItem(
-                    this.storageName,
-                    JSON.stringify(this.$route.query)
-                );
-            }
-        },
-        loadFilters () {
-            if (!this.embed) {
-                const query = {...this.$route.query}
-                let change = false
-                if (this.isBasePage) {
-                    const userPreferences = JSON.parse(localStorage.getItem(this.storageName) || "{}")
-                    for (const key in userPreferences) {
-                        if (!query[key] && userPreferences[key]) {
-                            query[key] = userPreferences[key]
-                            change = true
-                        }
-                    }
-                }
+            this.loadInit = true;
 
-                if (change) {
-                    this.$router.push({query: query});
-                }
+
+            if (this.saveRestoreUrl) {
+                this.saveRestoreUrl()
+            }
+
+            if (this.$refs.dataTable) {
+                this.$refs.dataTable.isLoading = false;
             }
         },
-        isRunning(item){
-            return State.isRunning(item.state.current);
-        }
     }
 }

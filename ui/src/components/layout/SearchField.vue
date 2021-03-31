@@ -1,13 +1,11 @@
 <template>
-    <b-nav-form @submit.prevent>
-        <b-form-input
-            :label="$t('search')"
-            size="sm"
-            @input="onSearch"
-            v-model="search"
-            :placeholder="$t('search')"
-        />
-    </b-nav-form>
+    <b-form-input
+        :label="$t('search')"
+        size="sm"
+        @input="onInput"
+        v-model="search"
+        :placeholder="$t('search')"
+    />
 </template>
 <script>
     import {debounce} from "throttle-debounce";
@@ -17,7 +15,15 @@
                 this.search = this.$route.query.q;
             }
             this.searchDebounce = debounce(300, () => {
-                this.$emit("onSearch", this.search);
+                this.$emit("search", this.search);
+
+                if (this.router) {
+                    const query = {...this.$route.query, q: this.search, page: 1};
+                    if (!this.search) {
+                        delete query.q;
+                    }
+                    this.$router.push({query});
+                }
             });
         },
         props: {
@@ -32,14 +38,7 @@
             };
         },
         methods: {
-            onSearch() {
-                if (this.router) {
-                    const query = {...this.$route.query, q: this.search, page: 1};
-                    if (!this.search) {
-                        delete query.q;
-                    }
-                    this.$router.push({query});
-                }
+            onInput() {
                 this.searchDebounce();
             },
         },

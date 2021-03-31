@@ -27,8 +27,8 @@
     import ExecutionConfiguration from "./ExecutionConfiguration";
     import BottomLine from "../layout/BottomLine";
     import FlowActions from "./FlowActions";
-    import Logs from "../logs/LogsWrapper";
-    import Executions from "../executions/Executions";
+    import FlowLogs from "./FlowLogs";
+    import FlowExecutions from "./FlowExecutions";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
@@ -42,10 +42,10 @@
             BottomLine,
             DataSource,
             FlowActions,
-            Executions,
+            FlowExecutions,
             ExecutionConfiguration,
             Revisions,
-            Logs
+            FlowLogs
         },
         watch: {
             $route() {
@@ -65,7 +65,7 @@
             },
             setTab(tab) {
                 this.$router.push({
-                    name: "flowEdit",
+                    name: "flows/update",
                     params: this.$route.params,
                     query: {tab}
                 });
@@ -81,7 +81,7 @@
 
                 if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
                     tabs.push({
-                        tab: "executions",
+                        tab: "flow-executions",
                         title: this.$t("executions")
                     });
                 }
@@ -115,7 +115,7 @@
 
                 if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
                     tabs.push({
-                        tab: "logs",
+                        tab: "flow-logs",
                         title: this.$t("logs")
                     });
                 }
@@ -133,13 +133,13 @@
                         {
                             label: this.$t("flows"),
                             link: {
-                                name: "flowsList"
+                                name: "flows/list"
                             }
                         },
                         {
                             label: this.$route.params.namespace,
                             link: {
-                                name: "flowsList",
+                                name: "flows/list",
                                 query: {
                                     namespace: this.$route.params.namespace
                                 }
@@ -148,7 +148,7 @@
                         {
                             label: this.$route.params.id,
                             link: {
-                                name: "flowEdit",
+                                name: "flows/update",
                                 params: {
                                     namespace: this.$route.params.namespace,
                                     id: this.$route.params.id

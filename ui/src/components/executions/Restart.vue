@@ -48,7 +48,7 @@
                             })
                             .then(response => {
                                 this.$store.commit("execution/setExecution", response.data);
-                                this.$router.push({name: "executionEdit", params: response.data});
+                                this.$router.push({name: "executions/update", params: response.data});
                                 this.$emit("restart")
                             })
                             .then(() => {

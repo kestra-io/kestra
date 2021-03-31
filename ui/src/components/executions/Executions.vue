@@ -2,11 +2,24 @@
     <div v-if="ready">
         <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
             <template #navbar v-if="embed === false">
-                <search-field ref="searchField" @onSearch="onSearch" :fields="searchableFields" />
-                <namespace-select data-type="flow" v-if="$route.name !== 'flowEdit'" @onNamespaceSelect="onNamespaceSelect" />
-                <status-filter-buttons @onRefresh="onStatusChange" />
-                <date-range @onDate="onSearch" />
-                <refresh-button class="float-right" @onRefresh="loadData" />
+                <search-field />
+                <namespace-select
+                    data-type="flow"
+                    v-if="$route.name !== 'flows/update'"
+                    :value="$route.query.namespace"
+                    @input="onDataTableValue('namespace', $event)"
+                />
+                <status-filter-buttons
+                    :value="$route.query.status"
+                    @input="onDataTableValue('status', $event)"
+                />
+                <date-range
+                    :start="$route.query.start"
+                    @start="onDataTableValue('start', $event)"
+                    :end="$route.query.end"
+                    @end="onDataTableValue('end', $event)"
+                />
+                <refresh-button class="float-right" @onRefresh="load" />
             </template>
 
             <template #top v-if="embed === false">
@@ -36,7 +49,7 @@
                     </template>
 
                     <template #cell(details)="row">
-                        <router-link :to="{name: 'executionEdit', params: row.item}">
+                        <router-link :to="{name: 'executions/update', params: row.item}">
                             <kicon :tooltip="$t('details')" placement="left">
                                 <eye />
                             </kicon>
@@ -63,7 +76,7 @@
                     </template>
                     <template #cell(flowId)="row">
                         <router-link
-                            :to="{name: 'flowEdit', params: {namespace: row.item.namespace, id: row.item.flowId}}"
+                            :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >
                             {{ row.item.flowId }}
                         </router-link>
@@ -100,9 +113,12 @@
     import TriggerAvatar from "../../components/flows/TriggerAvatar";
     import DateAgo from "../layout/DateAgo";
     import Kicon from "../Kicon"
+    import RestoreUrl from "../../mixins/restoreUrl";
+    import State from "../../utils/state";
+    import qb from "../../utils/queryBuilder";
 
     export default {
-        mixins: [RouteContext, DataTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             Status,
             Eye,
@@ -134,20 +150,26 @@
         },
         data() {
             return {
-                dataType: "execution",
                 dailyReady: false,
+                dblClickRouteName: "executions/update",
                 flowTriggerDetails: undefined
             };
         },
-        beforeCreate() {
-            const q = JSON.parse(localStorage.getItem("executionQueries") || "{}")
-            q.sort = q.sort ? q.sort :  "state.startDate:desc"
-            q.status = q.status ? q.status : []
-            localStorage.setItem("executionQueries", JSON.stringify(q))
+        beforeMount() {
+            if (this.$route.query.sort === undefined) {
+                this.$router.push({
+                    query: {...this.$route.query, ...{sort: "state.startDate:desc"}}
+                });
+            }
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),
             ...mapState("stat", ["daily"]),
+            routeInfo() {
+                return {
+                    title: this.$t("executions")
+                };
+            },
             fields() {
                 const title = title => {
                     return this.$t(title);
@@ -177,7 +199,7 @@
                     },
                 ]
 
-                if (this.$route.name !== "flowEdit") {
+                if (this.$route.name !== "flows/update") {
                     fields.push(
                         {
                             key: "namespace",
@@ -218,15 +240,6 @@
 
                 return fields;
             },
-            executionQuery() {
-                let filter;
-
-                if (this.$route.name === "flowEdit") {
-                    filter = `namespace:${this.$route.params.namespace} AND flowId:${this.$route.params.id}`;
-                }
-
-                return this.query + (filter ? " AND " + filter : "");
-            },
             endDate() {
                 return new Date();
             },
@@ -237,9 +250,12 @@
             }
         },
         methods: {
+            isRunning(item){
+                return State.isRunning(item.state.current);
+            },
             onStatusChange() {
-                this.saveFilters()
-                this.loadData()
+
+                this.load(this.onDataLoaded);
             },
             showTriggerDetails(trigger) {
                 this.flowTriggerDetails = trigger
@@ -260,22 +276,53 @@
                         this.$toast().success(this.$t("triggered done", {name: execution.id}));
                     })
             },
+            loadQuery() {
+                let filter = [];
+                let query = this.queryWithFilter();
+
+                if (query.namespace) {
+                    filter.push(`namespace:${query.namespace}*`)
+                }
+
+                if (query.q) {
+                    filter.push(qb.toLucene(query.q));
+                }
+
+                if (query.start) {
+                    filter.push(`state.startDate:[${query.start} TO *]`)
+                }
+
+                if (query.end) {
+                    filter.push(`state.endDate:[* TO ${query.end}]`)
+                    filter.push(`state.endDate:[* TO ${query.end}]`)
+                }
+
+                if (this.$route.name === "flows/update") {
+                    filter.push(`namespace:${this.$route.params.namespace}`);
+                    filter.push(`flowId:${this.$route.params.id}`);
+                }
+
+                return filter.join(" AND ") || "*"
+            },
             loadData(callback) {
-                this.dailyReady = false;
-                this.$store
-                    .dispatch("stat/daily", {
-                        q: this.executionQuery,
-                        startDate: this.$moment(this.startDate).format("YYYY-MM-DD"),
-                        endDate: this.$moment(this.endDate).format("YYYY-MM-DD")
-                    })
-                    .then(() => {
-                        this.dailyReady = true;
-                    });
+                if (this.embed === false) {
+                    this.dailyReady = false;
+
+                    this.$store
+                        .dispatch("stat/daily", {
+                            q: this.loadQuery(),
+                            startDate: this.$moment(this.startDate).format("YYYY-MM-DD"),
+                            endDate: this.$moment(this.endDate).format("YYYY-MM-DD")
+                        })
+                        .then(() => {
+                            this.dailyReady = true;
+                        });
+                }
 
                 this.$store.dispatch("execution/findExecutions", {
                     size: parseInt(this.$route.query.size || this.internalPageSize),
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
-                    q: this.executionQuery,
+                    q: this.loadQuery(),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.status ? [this.$route.query.status] : this.statuses
                 }).finally(callback);

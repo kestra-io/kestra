@@ -1,7 +1,7 @@
 <template>
     <v-select
-        v-model="selectedNamespace"
-        @input="onNamespaceSelect"
+        :value="value"
+        @input="onInput"
         :placeholder="$t('Select namespace')"
         :options="groupedNamespaces"
         :reduce="namespace => namespace.code"
@@ -21,6 +21,10 @@
             dataType: {
                 type: String,
                 required: true
+            },
+            value: {
+                type: String,
+                default: undefined
             }
         },
         created() {
@@ -29,26 +33,19 @@
                 .then(() => {
                     this.groupedNamespaces = this.groupNamespaces(this.namespaces);
                 });
-            this.selectedNamespace = this.$route.query.namespace || "";
+
         },
         computed: {
             ...mapState("namespace", ["namespaces"])
         },
         data() {
             return {
-                selectedNamespace: "",
                 groupedNamespaces: [],
             };
         },
         methods: {
-            onNamespaceSelect() {
-                const query = {...this.$route.query};
-                query.namespace = this.selectedNamespace;
-                if (!this.selectedNamespace) {
-                    delete query.namespace;
-                }
-                this.$router.push({query});
-                this.$emit("onNamespaceSelect");
+            onInput(value) {
+                this.$emit("input", value);
             },
             groupNamespaces(namespaces){
                 let res = [];

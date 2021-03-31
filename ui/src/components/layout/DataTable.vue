@@ -9,10 +9,12 @@
             </b-collapse>
         </b-navbar>
 
-        <slot name="top" />
+        <b-overlay :show="isLoading" variant="transparent">
+            <slot name="top" />
 
-        <slot name="table" />
-        <pagination :size="size" :page="page" :total="total" :max="max" @onPageChanged="onPageChanged" />
+            <slot name="table" />
+            <pagination :size="size" :page="page" :total="total" :max="max" @onPageChanged="onPageChanged" />
+        </b-overlay>
     </div>
 </template>
 
@@ -24,6 +26,11 @@
             hasNavBar() {
                 return !!this.$slots["navbar"];
             },
+        },
+        data() {
+            return {
+                isLoading: false,
+            };
         },
         props: {
             total: {type: Number, required: true},

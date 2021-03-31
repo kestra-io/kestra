@@ -26,7 +26,7 @@ export const executeTask = (submitor, flow, options) => {
         .then(response => {
             submitor.$store.commit("execution/setExecution", response.data)
             if (options.redirect) {
-                submitor.$router.push({name: "executionEdit", params: response.data, query: {tab: "gantt"}})
+                submitor.$router.push({name: "executions/update", params: response.data, query: {tab: "gantt"}})
             }
 
             return response.data;

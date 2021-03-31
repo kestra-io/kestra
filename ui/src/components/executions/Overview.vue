@@ -14,7 +14,7 @@
             <template #cell(value)="row">
                 <router-link
                     v-if="row.item.link"
-                    :to="{name: 'executionEdit', params: row.item.link}"
+                    :to="{name: 'executions/update', params: row.item.link}"
                 >
                     {{ row.item.value }}
                 </router-link>
@@ -24,7 +24,7 @@
                 <span v-else>
                     <span v-if="row.item.key === $t('revision')">
                         <router-link
-                            :to="{name: 'flowEdit', params: {id: $route.params.flowId, namespace: $route.params.namespace}, query: {tab: 'revisions', revisionRight: row.item.value}}"
+                            :to="{name: 'flows/update', params: {id: $route.params.flowId, namespace: $route.params.namespace}, query: {tab: 'revisions', revisionRight: row.item.value}}"
                         >{{ row.item.value }}</router-link>
                     </span>
                     <span v-else>{{ row.item.value }}</span>

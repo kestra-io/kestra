@@ -31,7 +31,7 @@ export default {
         ...mapGetters("flow", ["flow"]),
         isEdit() {
             return (
-                this.$route.name === `${this.dataType}Edit` &&
+                this.$route.name === `${this.dataType}s/update` &&
                 (this.dataType === "template" || this.$route.query.tab === "data-source")
             );
         },
@@ -88,7 +88,7 @@ export default {
                             .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item)
                             .then(() => {
                                 return this.$router.push({
-                                    name: this.dataType + "List"
+                                    name: this.dataType + "s/list"
                                 });
                             })
                             .then(() => {
@@ -141,7 +141,7 @@ export default {
                     .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: item})
                     .then(() => {
                         this.$router.push({
-                            name: `${this.dataType}Edit`,
+                            name: `${this.dataType}s/update`,
                             params: item,
                             query: {tab: "data-source"}
                         });

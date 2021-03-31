@@ -46,7 +46,7 @@
         },
         methods: {
             reload() {
-                if (this.$route.name === "templateEdit") {
+                if (this.$route.name === "templates/update") {
                     this.$store
                         .dispatch("template/loadTemplate", this.$route.params)
                         .then(this.loadFile);

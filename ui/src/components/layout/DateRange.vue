@@ -1,16 +1,16 @@
 <template>
     <div class="date-range">
         <date-picker
-            @input="onDate"
-            v-model="start"
+            @input="onDate('start', $event)"
+            :value="startDate"
             :required="false"
             type="datetime"
             class="sm"
             :placeholder="$t('start datetime')"
         />
         <date-picker
-            @input="onDate"
-            v-model="end"
+            @input="onDate('end', $event)"
+            :value="endDate"
             :required="false"
             type="datetime"
             class="sm"
@@ -22,33 +22,27 @@
     import DatePicker from "vue2-datepicker";
     export default {
         components: {DatePicker},
-        data() {
-            return {
-                start: null,
-                end: null
-            };
-        },
-        created() {
-            if (this.$route.query.start) {
-                this.start = new Date(parseInt(this.$route.query.start));
-            }
-            if (this.$route.query.end) {
-                this.end = new Date(parseInt(this.$route.query.end));
+        props: {
+            start: {
+                type: String,
+                default: undefined
+            },
+            end: {
+                type: String,
+                default: undefined
             }
         },
         methods: {
-            onDate() {
-                const start = this.start,
-                      end = this.end;
-                const dateRange = {
-                    start: start ? start.toISOString() : null,
-                    end: end ? end.toISOString() : null
-                };
-                const query = {...this.$route.query};
-                query.start = start ? start.getTime() : undefined;
-                query.end = end ? end.getTime() : undefined;
-                this.$router.push({query});
-                this.$emit("onDate", dateRange);
+            onDate(event, value) {
+                this.$emit(event, value ? value.toISOString() : undefined);
+            }
+        },
+        computed: {
+            startDate() {
+                return new Date(this.start);
+            },
+            endDate() {
+                return new Date(this.end);
             }
         }
     };

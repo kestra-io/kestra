@@ -1,10 +1,10 @@
 <template>
     <b-form-select
         id="input-level"
-        v-model="level"
+        :value="value"
         class="form-control"
         size="sm"
-        @input="onChange"
+        @input="onInput"
         :options="levelOptions"
     />
 </template>
@@ -12,7 +12,6 @@
     export default {
         data() {
             return {
-                level: "INFO",
                 levelOptions: [
                     "TRACE",
                     "DEBUG",
@@ -28,22 +27,14 @@
                 type: Boolean,
                 default: true
             },
-            logLevel: {
+            value: {
                 type: String,
                 default: "INFO"
             }
         },
-        created() {
-            this.level = this.logLevel;
-        },
         methods: {
-            onChange() {
-                if (this.router) {
-                    const query = {...this.$route.query, level: this.level};
-                    this.$router.push({query});
-                }
-
-                this.$emit("onChange", this.level);
+            onInput(value) {
+                this.$emit("input", value);
             },
         },
     };

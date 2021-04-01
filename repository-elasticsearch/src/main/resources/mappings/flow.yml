@@ -31,3 +31,6 @@ properties:
         type: keyword
   deleted:
     type: boolean
+  sourceCode:
+    type: text
+    term_vector: with_positions_offsets

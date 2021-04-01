@@ -1,5 +1,6 @@
 package io.kestra.repository.memory;
 
+import io.kestra.core.models.SearchResult;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
@@ -13,6 +14,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
+import org.apache.commons.lang3.NotImplementedException;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -102,6 +104,11 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         }
 
         return ArrayListTotal.of(pageable, this.findAll());
+    }
+
+    @Override
+    public ArrayListTotal<SearchResult<Flow>> findSourceCode(String query, Pageable pageable) {
+        throw new NotImplementedException();
     }
 
     public Flow create(Flow flow) throws ConstraintViolationException {

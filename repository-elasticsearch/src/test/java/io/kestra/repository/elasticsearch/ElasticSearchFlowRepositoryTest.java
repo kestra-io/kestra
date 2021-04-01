@@ -1,26 +1,24 @@
 package io.kestra.repository.elasticsearch;
 
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.Helpers;
+import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.AbstractFlowRepositoryTest;
 import io.kestra.repository.elasticsearch.configs.IndicesConfig;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
+import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 
 @MicronautTest
 class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
@@ -47,32 +45,12 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
     }
 
     @Test
-    void computeTasksTypesKeyword() throws IOException {
-        var flow = flowRepository.findById("org.kestra.tests", "all-flowable").get();
-        String id = String.join("_", Arrays.asList(
-            flow.getNamespace(),
-            flow.getId()
-        ));
-        elasticSearchFlowRepository.putRequest("flows", id, flow);
-        for (Task task: flow.getTasks()) {
-            task.getType();
-        }
-        GetRequest getRequest = new GetRequest(
-            this.indicesConfigs.get(0).getIndex(),
-            id
-        );
-        GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
+    void findSourceCode() {
+        List<SearchResult<Flow>> search = flowRepository.findSourceCode("*types.MultipleCondition*", Pageable.from(1, 10, Sort.UNSORTED));
 
-        var response = getResponse.getSourceAsMap();
-
-        var resultFlow = elasticSearchFlowRepository.rawGetRequest("flows", id).get();
-        int count = 0;
-        for (Task t: flow.getTasks()) {
-            count++;
-            assertThat(t.getType(), in(resultFlow.getTaskIdList()));
-        }
-        assertThat(count, equalTo(resultFlow.getTaskIdList().size()));
-        assertThat(count, greaterThan(0));
+        assertThat((long) search.size(), is(1L));
+        assertThat(search.get(0).getModel().getId(), is("trigger-multiplecondition-listener"));
+        assertThat(search.get(0).getFragments().get(0), containsString("types.MultipleCondition</mark>"));
     }
 
     @AfterEach

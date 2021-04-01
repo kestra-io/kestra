@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.models.SearchResult;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -89,6 +90,23 @@ public class FlowController {
         @Nullable @QueryValue(value = "sort") List<String> sort
     ) throws HttpStatusException {
         return PagedResults.of(flowRepository.find(query, PageableUtils.from(page, size, sort)));
+    }
+
+    /**
+     * @param query The flow query that is a lucene string
+     * @param page  Page in flow pagination
+     * @param size  Element count in pagination selection
+     * @return flow search list
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/source", produces = MediaType.TEXT_JSON)
+    public PagedResults<SearchResult<Flow>> source(
+        @QueryValue(value = "q") String query, //Search by namespace using lucene
+        @QueryValue(value = "page", defaultValue = "1") int page,
+        @QueryValue(value = "size", defaultValue = "10") int size,
+        @Nullable @QueryValue(value = "sort") List<String> sort
+    ) throws HttpStatusException {
+        return PagedResults.of(flowRepository.findSourceCode(query, PageableUtils.from(page, size, sort)));
     }
 
     /**

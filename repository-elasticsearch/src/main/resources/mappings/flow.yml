@@ -31,5 +31,5 @@ properties:
         type: keyword
   deleted:
     type: boolean
-  taskIdList:
-    type: keyword
+  sourceCode:
+    type: text

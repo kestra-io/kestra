@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.models.SearchResult;
 import io.micronaut.data.model.Pageable;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -41,6 +42,8 @@ public interface FlowRepositoryInterface {
     List<Flow> findByNamespace(String namespace);
 
     ArrayListTotal<Flow> find(String query, Pageable pageable);
+
+    ArrayListTotal<SearchResult<Flow>> findSourceCode(String query, Pageable pageable);
 
     List<String> findDistinctNamespace();
 

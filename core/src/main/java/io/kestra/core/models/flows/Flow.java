@@ -1,7 +1,6 @@
 package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
@@ -79,13 +78,9 @@ public class Flow implements DeletedInterface {
 
     private List<TaskDefault> taskDefaults;
 
-    @JsonIgnoreProperties(allowSetters = true, allowGetters = false)
-    private ArrayList<String> taskIdList;
-
     @Builder.Default
     @NotNull
     private boolean deleted = false;
-
 
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);
@@ -265,7 +260,6 @@ public class Flow implements DeletedInterface {
             this.listeners,
             this.triggers,
             this.taskDefaults,
-            this.taskIdList,
             true
         );
     }

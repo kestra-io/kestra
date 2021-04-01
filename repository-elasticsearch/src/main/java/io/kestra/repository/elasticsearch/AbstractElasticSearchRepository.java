@@ -2,8 +2,12 @@ package io.kestra.repository.elasticsearch;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.repository.elasticsearch.configs.IndicesConfig;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import lombok.SneakyThrows;
@@ -42,22 +46,16 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.*;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.repository.elasticsearch.configs.IndicesConfig;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
@@ -178,28 +176,9 @@ abstract public class AbstractElasticSearchRepository<T> {
         }
     }
 
-    private String cacheElasticData(T source) throws JsonProcessingException {
-        /*
-        This is cache purpose operation to save
-        all nested tasks ids in a keyword field
-        to perform simple and efficient searches
-        on flow update / insert operation.
-         */
-        if (source.getClass().equals(Flow.class)) {
-            var item = JacksonMapper.toMap(source);
-            var tasks = new ArrayList<String>();
-            for (Task task: ((Flow)source).getTasks()) {
-                tasks.add(task.getType());
-            }
-            item.put("taskIdList", tasks);
-            return mapper.writeValueAsString(item);
-        }
-        return mapper.writeValueAsString(source);
-    }
-
     protected IndexResponse putRequest(String index, String id, T source) {
         try {
-            String json = cacheElasticData(source);
+            String json = mapper.writeValueAsString(source);
             return this.putRequest(index, id, json);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

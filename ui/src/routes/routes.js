@@ -9,6 +9,7 @@ import Plugin from "../components/plugins/Plugin.vue"
 import Settings from "../components/settings/Settings.vue"
 import TemplateEdit from "../components/templates/TemplateEdit.vue"
 import Templates from "../components/templates/Templates.vue"
+import FlowsSearch from "../components/flows/FlowsSearch";
 
 export default {
     mode: "history",
@@ -18,6 +19,7 @@ export default {
         //Flows
         {name: "home", path: "/", component: Flows},
         {name: "flows/list", path: "/flows", component: Flows},
+        {name: "flows/search", path: "/flows/search", component: FlowsSearch},
         {name: "flows/create", path: "/flows/new", component: FlowEdit},
         {name: "flows/update", path: "/flows/edit/:namespace/:id", component: FlowRoot},
 

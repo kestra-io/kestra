@@ -4,6 +4,7 @@ export default {
     state: {
         flows: undefined,
         flow: undefined,
+        search: undefined,
         total: 0,
         flowGraph: undefined,
         revisions: undefined,
@@ -17,6 +18,18 @@ export default {
                 params: options
             }).then(response => {
                 commit("setFlows", response.data.results)
+                commit("setTotal", response.data.total)
+
+                return response.data;
+            })
+        },
+        searchFlows({commit}, options) {
+            const sortString = options.sort ? `?sort=${options.sort}` : ""
+            delete options.sort
+            return Vue.axios.get(`/api/v1/flows/source${sortString}`, {
+                params: options
+            }).then(response => {
+                commit("setSearch", response.data.results)
                 commit("setTotal", response.data.total)
 
                 return response.data;
@@ -89,6 +102,9 @@ export default {
     mutations: {
         setFlows(state, flows) {
             state.flows = flows
+        },
+        setSearch(state, search) {
+            state.search = search
         },
         setRevisions(state, revisions) {
             state.revisions = revisions

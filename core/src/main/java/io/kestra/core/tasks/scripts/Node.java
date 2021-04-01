@@ -113,7 +113,7 @@ public class Node extends AbstractBash implements RunnableTask<AbstractBash.Outp
         }
 
         this.inputFiles.put("kestra.js", IOUtils.toString(
-            Objects.requireNonNull(this.getClass().getClassLoader().getResourceAsStream("scripts/kestra.js")),
+            Objects.requireNonNull(Node.class.getClassLoader().getResourceAsStream("scripts/kestra.js")),
             Charsets.UTF_8
         ));
 

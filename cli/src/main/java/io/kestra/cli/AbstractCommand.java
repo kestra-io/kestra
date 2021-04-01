@@ -105,7 +105,14 @@ abstract public class AbstractCommand implements Callable<Integer> {
         ((LoggerContext) org.slf4j.LoggerFactory.getILoggerFactory())
             .getLoggerList()
             .stream()
-            .filter(logger -> (this.internalLog && logger.getName().startsWith("io.kestra")) || logger.getName().startsWith("flow"))
+            .filter(logger ->
+                (
+                    this.internalLog && (
+                        logger.getName().startsWith("io.kestra") &&
+                            !logger.getName().startsWith("io.kestra.runner.kafka.services"))
+                )
+                    || logger.getName().startsWith("flow")
+            )
             .forEach(
                 logger -> logger.setLevel(ch.qos.logback.classic.Level.valueOf(this.logLevel.name()))
             );

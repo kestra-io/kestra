@@ -45,26 +45,26 @@ import javax.validation.constraints.Pattern;
             full = true,
             title = "A flow that is waiting for 2 flows that is successful in 1 days",
             code = {
-                "triggers:" +
-                "  - id: multiple-listen-flow" +
-                "    type: io.kestra.core.models.triggers.types.Flow" +
-                "    conditions:" +
-                "      - id: multiple" +
-                "        type: io.kestra.core.models.conditions.types.MultipleCondition" +
-                "        window: P1D" +
-                "        windowAdvance: P0D" +
-                "        conditions:" +
-                "          success:" +
-                "            type: io.kestra.core.models.conditions.types.ExecutionStatusCondition" +
-                "            in:" +
-                "              - SUCCESS" +
-                "          flow-a:" +
-                "            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition" +
-                "            namespace: io.kestra.tests" +
-                "            flowId: trigger-multiplecondition-flow-a" +
-                "          flow-b:" +
-                "            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition" +
-                "            namespace: io.kestra.tests" +
+                "triggers:",
+                "  - id: multiple-listen-flow",
+                "    type: io.kestra.core.models.triggers.types.Flow",
+                "    conditions:",
+                "      - id: multiple",
+                "        type: io.kestra.core.models.conditions.types.MultipleCondition",
+                "        window: P1D",
+                "        windowAdvance: P0D",
+                "        conditions:",
+                "          success:",
+                "            type: io.kestra.core.models.conditions.types.ExecutionStatusCondition",
+                "            in:",
+                "              - SUCCESS",
+                "          flow-a:",
+                "            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition",
+                "            namespace: io.kestra.tests",
+                "            flowId: trigger-multiplecondition-flow-a",
+                "          flow-b:",
+                "            type: io.kestra.core.models.conditions.types.ExecutionFlowCondition",
+                "            namespace: io.kestra.tests",
                 "            flowId: trigger-multiplecondition-flow-b"
             }
         )

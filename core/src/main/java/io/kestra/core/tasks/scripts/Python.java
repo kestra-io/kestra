@@ -1,9 +1,13 @@
 package io.kestra.core.tasks.scripts;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.reflect.ClassPath;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -11,7 +15,12 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Path;
+import java.security.CodeSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +28,10 @@ import java.util.Objects;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
+import static com.google.common.base.StandardSystemProperty.JAVA_CLASS_PATH;
+import static com.google.common.base.StandardSystemProperty.PATH_SEPARATOR;
 import static io.kestra.core.utils.Rethrow.throwFunction;
+import static java.util.logging.Level.WARNING;
 
 @SuperBuilder
 @ToString
@@ -74,6 +86,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         )
     }
 )
+@Slf4j
 public class Python extends AbstractBash implements RunnableTask<AbstractBash.Output> {
     @Builder.Default
     @Schema(
@@ -99,14 +112,74 @@ public class Python extends AbstractBash implements RunnableTask<AbstractBash.Ou
     @PluginProperty(dynamic = true)
     private String[] requirements;
 
+    private static ImmutableList<URL> getClassLoaderUrls(ClassLoader classloader) {
+        if (classloader instanceof URLClassLoader) {
+            return ImmutableList.copyOf(((URLClassLoader) classloader).getURLs());
+        }
+        if (classloader.equals(ClassLoader.getSystemClassLoader())) {
+            return parseJavaClassPath();
+        }
+        return ImmutableList.of();
+    }
+    static ImmutableList<URL> parseJavaClassPath() {
+        ImmutableList.Builder<URL> urls = ImmutableList.builder();
+        for (String entry : Splitter.on(PATH_SEPARATOR.value()).split(JAVA_CLASS_PATH.value())) {
+            try {
+                try {
+                    urls.add(new File(entry).toURI().toURL());
+                } catch (SecurityException e) { // File.toURI checks to see if the file is a directory
+                    urls.add(new URL("file", null, new File(entry).getAbsolutePath()));
+                }
+            } catch (MalformedURLException e) {
+                log.warn("malformed classpath entry: " + entry, e);
+            }
+        }
+        return urls.build();
+    }
+
+
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
         if (!inputFiles.containsKey("main.py")) {
             throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.py key with python code value.");
         }
 
+        Class clazz = this.getClass();
+        StringBuffer results = new StringBuffer();
+
+        ClassLoader cl = clazz.getClassLoader();
+        results.append("\n" + clazz.getName() + "(" +
+            Integer.toHexString(clazz.hashCode()) + ").ClassLoader=" + cl);
+        ClassLoader parent = cl;
+
+        while (parent != null) {
+            results.append("\n.."+parent);
+            List<URL> urls = getClassLoaderUrls(parent);
+
+            int length = urls != null ? urls.size() : 0;
+            for(int u = 0; u < length; u ++) {
+                results.append("\n...."+ urls.get(u));
+            }
+
+//            if (showParentClassLoaders == false) {
+//                break;
+//            }
+            if (parent != null) {
+                parent = parent.getParent();
+            }
+        }
+
+        CodeSource clazzCS = clazz.getProtectionDomain().getCodeSource();
+        if (clazzCS != null) {
+            results.append("\n++++CodeSource: "+clazzCS);
+        } else {
+            results.append("\n++++Null CodeSource");
+        }
+
+        System.out.println(results);
+
         this.inputFiles.put("kestra.py", IOUtils.toString(
-            Objects.requireNonNull(this.getClass().getClassLoader().getResourceAsStream("scripts/kestra.py")),
+            Objects.requireNonNull(Python.class.getClassLoader().getResourceAsStream("scripts/kestra.py")),
             Charsets.UTF_8
         ));
 

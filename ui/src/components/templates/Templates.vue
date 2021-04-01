@@ -12,7 +12,7 @@
                 <template #navbar>
                     <search-field />
                     <namespace-select
-                        :data-type="dataType"
+                        data-type="template"
                         :value="$route.query.namespace"
                         @input="onDataTableValue('namespace', $event)"
                     />
@@ -46,7 +46,7 @@
 
                         <template #cell(id)="row">
                             <router-link
-                                :to="{name: `${dataType}s/update`, params: {namespace: row.item.namespace, id: row.item.id}}"
+                                :to="{name: `templates/update`, params: {namespace: row.item.namespace, id: row.item.id}}"
                             >
                                 {{ row.item.id }}
                             </router-link>
@@ -86,9 +86,10 @@
     import SearchField from "../layout/SearchField";
     import Kicon from "../Kicon"
     import qb from "../../utils/queryBuilder";
+    import RestoreUrl from "../../mixins/restoreUrl";
 
     export default {
-        mixins: [RouteContext, DataTableActions],
+        mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             BottomLine,
             Plus,
@@ -100,7 +101,7 @@
         },
         data() {
             return {
-                dataType: "template",
+                isDefaultNamespaceAllow: true,
                 permission: permission,
                 action: action,
             };

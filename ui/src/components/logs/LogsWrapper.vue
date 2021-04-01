@@ -77,6 +77,7 @@
         },
         data() {
             return {
+                isDefaultNamespaceAllow: true,
                 task: undefined,
                 isLoading: false
             };

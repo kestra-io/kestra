@@ -6,9 +6,7 @@ export default {
         },
     },
     created() {
-        if (Object.keys(this.$route.query).length === 0 &&
-            Object.keys(this.localStorage).length > 0
-        ) {
+        if (Object.keys(this.$route.query).length === 0) {
             this.loadInit = false;
             this.goToRestoreUrl();
         }
@@ -18,8 +16,12 @@ export default {
             return `${this.$route.name.replace("/", "_")}_restore_url`
         },
 
-        localStorage() {
-            return JSON.parse(localStorage.getItem(this.localStorageName) || "{}")
+        localStorageValue() {
+            if (localStorage.getItem(this.localStorageName)) {
+                return JSON.parse(localStorage.getItem(this.localStorageName))
+            } else {
+                return null;
+            }
         },
     },
     methods: {
@@ -38,19 +40,28 @@ export default {
                 return;
             }
 
+            const localExist = this.localStorageValue !== null;
+
             const query = {...this.$route.query}
+            const local = this.localStorageValue === null ? {} : {...this.localStorageValue};
 
             let change = false
 
-            for (const key in this.localStorage) {
-                if (!query[key] && this.localStorage[key]) {
-                    query[key] = this.localStorage[key]
+            if (!localExist && this.isDefaultNamespaceAllow && localStorage.getItem("defaultNamespace")) {
+                local["namespace"] = localStorage.getItem("defaultNamespace");
+            }
+
+            for (const key in local) {
+                if (!query[key] && local[key]) {
+                    query[key] = local[key]
                     change = true
                 }
             }
 
             if (change) {
                 this.$router.replace({query: query});
+            } else {
+                this.loadInit = true;
             }
         }
     }

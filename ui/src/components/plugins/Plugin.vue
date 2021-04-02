@@ -37,7 +37,7 @@
                         {
                             label: this.$t("plugins.names"),
                             link: {
-                                name: "plugin"
+                                name: "plugins/list"
                             }
                         }
                     ]

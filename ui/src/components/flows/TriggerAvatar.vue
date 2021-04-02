@@ -33,7 +33,7 @@
                 return (this.flow ? this.flow.namespace + "-" + this.flow.id : this.execution.namespace + "-" + this.execution.flowId) + "-" + trigger.id
             },
             name(trigger) {
-                let split = trigger.id.split(".");
+                let split = trigger.type.split(".");
 
                 return split[split.length - 1].substr(0, 1).toUpperCase();
             },

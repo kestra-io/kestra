@@ -18,7 +18,7 @@
                                         <li v-for="cls in classes" :key="cls">
                                             <router-link
                                                 @click.native="$emit('routerChange')"
-                                                :to="{name: 'pluginView', params: {cls: namespace + '.' + cls}}"
+                                                :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
                                             >
                                                 <div class="icon">
                                                     <task-icon :only-icon="true" :cls="namespace + '.' + cls" />

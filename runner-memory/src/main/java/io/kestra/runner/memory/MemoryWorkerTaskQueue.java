@@ -29,6 +29,11 @@ public class MemoryWorkerTaskQueue implements WorkerTaskQueueInterface {
     }
 
     @Override
+    public void pause() {
+
+    }
+
+    @Override
     public void close() {
 
     }

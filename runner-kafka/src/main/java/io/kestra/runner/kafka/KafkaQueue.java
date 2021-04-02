@@ -2,15 +2,6 @@ package io.kestra.runner.kafka;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.context.ApplicationContext;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.errors.WakeupException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
@@ -20,6 +11,15 @@ import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
 import io.kestra.runner.kafka.services.KafkaConsumerService;
 import io.kestra.runner.kafka.services.KafkaProducerService;
+import io.micronaut.context.ApplicationContext;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.WakeupException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -166,7 +166,13 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
                     });
                 } catch (WakeupException e) {
                     log.debug("Received Wakeup on {} with type {}!", this.getClass().getName(), this.cls.getName());
-                    running.set(false);
+
+                    // first call, we want to shutdown, so pause the consumer, will be closed after properly on second call
+                    if (kafkaConsumer.paused().size() == 0) {
+                        kafkaConsumer.pause(kafkaConsumer.assignment());
+                    } else {
+                        running.set(false);
+                    }
                 }
             }
 
@@ -258,10 +264,23 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         }
     }
 
+    @Override
+    public void pause() {
+        this.wakeup();
+    }
+
     @PreDestroy
     @Override
     public void close() {
         kafkaProducer.close();
-        kafkaConsumers.forEach(org.apache.kafka.clients.consumer.Consumer::wakeup);
+        this.wakeup();
+    }
+
+    @SuppressWarnings("ForLoopReplaceableByForEach")
+    private void wakeup() {
+        for (Iterator<org.apache.kafka.clients.consumer.Consumer<String, T>> it = kafkaConsumers.iterator(); it.hasNext(); ) {
+            org.apache.kafka.clients.consumer.Consumer<String, T> kafkaConsumer = it.next();
+            kafkaConsumer.wakeup();
+        }
     }
 }

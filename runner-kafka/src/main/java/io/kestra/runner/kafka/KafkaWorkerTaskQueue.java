@@ -152,7 +152,13 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                     }
                 } catch (WakeupException e) {
                     log.debug("Received Wakeup on {}!", this.getClass().getName());
-                    running.set(false);
+
+                    // first call, we want to shutdown, so pause the consumer, will be closed after properly on second call
+                    if (kafkaConsumer.paused().size() == 0) {
+                        kafkaConsumer.pause(kafkaConsumer.assignment());
+                    } else {
+                        running.set(false);
+                    }
                 }
             }
 
@@ -195,9 +201,20 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
         };
     }
 
-    @PreDestroy
+    public void pause() {
+        this.wakeup();
+    }
+
     public void close() {
         kafkaProducer.close();
-        kafkaConsumers.forEach(org.apache.kafka.clients.consumer.Consumer::wakeup);
+        this.wakeup();
+    }
+
+    @SuppressWarnings("ForLoopReplaceableByForEach")
+    private void wakeup() {
+        for (Iterator<org.apache.kafka.clients.consumer.Consumer<String, WorkerTask>> it = kafkaConsumers.iterator(); it.hasNext(); ) {
+            org.apache.kafka.clients.consumer.Consumer<String, WorkerTask> kafkaConsumer = it.next();
+            kafkaConsumer.wakeup();
+        }
     }
 }

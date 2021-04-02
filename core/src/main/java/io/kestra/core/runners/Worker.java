@@ -328,8 +328,8 @@ public class Worker implements Runnable, Closeable {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void close() throws IOException {
-        workerTaskQueue.close();
-        executionKilledQueue.close();
+        workerTaskQueue.pause();
+        executionKilledQueue.pause();
         new Thread(
             () -> {
             try {
@@ -366,6 +366,10 @@ public class Worker implements Runnable, Closeable {
             },
             Duration.ofSeconds(1)
         );
+
+        workerTaskQueue.close();
+        executionKilledQueue.close();
+        workerTaskResultQueue.close();
     }
 
     @Getter

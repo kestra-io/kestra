@@ -6,12 +6,13 @@ import ContentSave from "vue-material-design-icons/ContentSave";
 import Delete from "vue-material-design-icons/Delete";
 import Editor from "../components/inputs/Editor";
 import RouteContext from "./routeContext";
+import UnsavedChange from "./unsavedChange";
 import YamlUtils from "../utils/yamlUtils";
 import action from "../models/action";
 import permission from "../models/permission";
 
 export default {
-    mixins: [RouteContext],
+    mixins: [RouteContext, UnsavedChange],
     components: {
         Editor,
         ContentSave,
@@ -21,6 +22,7 @@ export default {
     data() {
         return {
             content: "",
+            previousContent: "",
             readOnlyEditFields: {},
             permission: permission,
             action: action
@@ -73,6 +75,7 @@ export default {
     methods: {
         loadFile() {
             this.content = YamlUtils.stringify(this.item);
+            this.previousContent = this.content;
             if (this.isEdit) {
                 this.readOnlyEditFields = {
                     id: this.item.id,
@@ -97,6 +100,9 @@ export default {
                     });
             }
         },
+        hasUnsavedChanged() {
+            return this.previousContent !== this.content;
+        },
         save() {
             if (this.item) {
                 let item;
@@ -119,7 +125,7 @@ export default {
                         }
                     }
                 }
-
+                this.previousContent = YamlUtils.stringify(this.item);
                 saveFlowTemplate(this, item, this.dataType)
                     .then(() => {
                         this.loadFile();

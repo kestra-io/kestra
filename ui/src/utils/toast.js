@@ -7,7 +7,7 @@ export default {
                 _wrap: function(message) {
                     return [self.$createElement("span", {domProps: {innerHTML: message}})];
                 },
-                confirm: function(message, callback) {
+                confirm: function(message, callback, cancel) {
                     return self.$bvModal
                         .msgBoxConfirm(
                             this._wrap(message || self.$t("toast confirm")),
@@ -16,6 +16,8 @@ export default {
                         .then(confirm => {
                             if (confirm) {
                                 callback()
+                            } else if (cancel) {
+                                cancel()
                             }
                         })
                 },
@@ -59,7 +61,15 @@ export default {
                         toaster: "b-toaster-top-right",
                         variant: "danger"
                     })
-                }
+                },
+                unsavedConfirm(ok, ko) {
+                    self.$toast()
+                        .confirm(
+                            self.$t("unsaved changed ?"),
+                            () => {ok()},
+                            () => {ko()}
+                        );
+                },
             }
         }
     }

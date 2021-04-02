@@ -156,7 +156,8 @@
         "New execution": "New execution",
         "execute the flow": "Trigger the flow",
         "execute flow now ?": "Do you want to execute this flow ?",
-        "Default namespace": "Default namespace"
+        "Default namespace": "Default namespace",
+        "unsaved changed ?": "You have unsaved changed, do you want to leave this page ?"
     },
     "fr": {
         "id": "Identifiant",
@@ -316,6 +317,7 @@
         "New execution": "Nouvelle execution",
         "execute the flow": "Créer une exécution",
         "execute flow now ?": "Voulez-vous executer ce flow ?",
-        "Default namespace": "Espace de nom par défaut"
+        "Default namespace": "Espace de nom par défaut",
+        "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?"
     }
 }

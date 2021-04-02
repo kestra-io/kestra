@@ -1,18 +1,17 @@
 <template>
     <div>
         <b-card v-if="ready" no-body>
-            <b-tabs card>
+            <b-tabs card @activate-tab="onTabChange">
                 <b-tab
                     v-for="tab in tabs()"
                     :key="tab.tab"
-                    @click="setTab(tab.tab)"
                     :active="$route.query.tab === tab.tab"
                     :title="tab.title"
                     :class="tab.class"
                     lazy
                 >
                     <b-card-text>
-                        <div :is="tab.tab" :prevent-route-info="true" />
+                        <div :is="tab.tab" ref="currentTab" :prevent-route-info="true" />
                     </b-card-text>
                 </b-tab>
             </b-tabs>
@@ -47,6 +46,12 @@
             Revisions,
             FlowLogs
         },
+        data() {
+            return {
+                tabIndex: undefined,
+                checkUnsaved: true,
+            };
+        },
         watch: {
             $route() {
                 this.load()
@@ -63,12 +68,16 @@
                     }
                 });
             },
-            setTab(tab) {
-                this.$router.push({
-                    name: "flows/update",
-                    params: this.$route.params,
-                    query: {tab}
-                });
+            navigateTab(index) {
+                this.$router
+                    .push({
+                        name: "flows/update",
+                        params: this.$route.params,
+                        query: {tab: this.tabs()[index].tab}
+                    })
+                    .finally(() => {
+                        this.checkUnsaved = true;
+                    })
             },
             tabs() {
                 const tabs = [
@@ -121,7 +130,31 @@
                 }
 
                 return tabs;
-            }
+            },
+            hasUnsavedChanged() {
+                return this.$refs.currentTab &&
+                    this.$refs.currentTab[0].$children &&
+                    this.$refs.currentTab[0].$children[0] &&
+                    this.$refs.currentTab[0].$children[0].hasUnsavedChanged &&
+                    this.$refs.currentTab[0].$children[0].hasUnsavedChanged();
+            },
+            onTabChange(newTabIndex, prevTabIndex, bvEvent) {
+                if (this.checkUnsaved === true && this.hasUnsavedChanged()) {
+                    bvEvent.preventDefault();
+
+                    this.$toast().unsavedConfirm(
+                        () => {
+                            this.checkUnsaved = false;
+                            this.navigateTab(newTabIndex)
+                        },
+                        () => {
+                            this.checkUnsaved = true;
+                        }
+                    )
+                } else if (this.checkUnsaved !== false) {
+                    this.navigateTab(newTabIndex)
+                }
+            },
         },
         computed: {
             ...mapState("flow", ["flow"]),

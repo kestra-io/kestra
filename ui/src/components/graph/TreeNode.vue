@@ -35,6 +35,13 @@
                         <markdown-tooltip :description="task.description" :id="hash" />
                     </b-button>
 
+                    <sub-flow-link
+                        v-if="task.type === 'io.kestra.core.tasks.flows.Flow'"
+                        :execution-id="taskRunsFlowExecutionId"
+                        :namespace="task.namespace"
+                        :flow-id="task.flowId"
+                    />
+
                     <b-button
                         v-if="this.execution"
                         class="node-action"
@@ -105,6 +112,7 @@
     import TaskIcon from "../plugins/TaskIcon";
     import Kicon from "../Kicon"
     import TaskEdit from "override/components/flows/TaskEdit.vue";
+    import SubFlowLink from "../flows/SubFlowLink"
 
     export default {
         components: {
@@ -117,7 +125,8 @@
             SearchField,
             TaskIcon,
             Kicon,
-            TaskEdit
+            TaskEdit,
+            SubFlowLink
         },
         props: {
             n: {
@@ -163,6 +172,12 @@
             taskRuns() {
                 return (this.execution && this.execution.taskRunList ? this.execution.taskRunList : [])
                     .filter(t => t.taskId === this.task.id)
+            },
+            taskRunsFlowExecutionId() {
+                const task = this.taskRuns
+                    .find(r => r.outputs.executionId)
+
+                return task !== undefined ? task.outputs.executionId : undefined;
             },
             state() {
                 if (!this.taskRuns) {

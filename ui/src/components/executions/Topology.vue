@@ -19,9 +19,15 @@
             ...mapState("flow", ["flowGraph"]),
             ...mapState("execution", ["execution"])
         },
+        data() {
+            return {
+                previousExecutionId: undefined
+            };
+        },
         watch: {
             execution: function () {
-                if (this.flowGraph === undefined && this.execution) {
+                if (this.execution && (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id)) {
+                    this.previousExecutionId = this.execution.id;
                     this.loadGraph();
                 }
             },

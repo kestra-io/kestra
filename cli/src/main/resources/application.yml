@@ -23,6 +23,7 @@ micronaut:
 jackson:
   serialization:
     writeDatesAsTimestamps: false
+    writeDurationsAsTimestamps: false
 
 endpoints:
   all:

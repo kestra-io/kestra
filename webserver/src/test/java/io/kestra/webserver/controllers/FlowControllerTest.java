@@ -1,6 +1,8 @@
 package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableList;
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.tasks.flows.Sequential;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -221,17 +223,15 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void updateTaskFlow() {
+    void updateTaskFlow() throws InternalException {
         String flowId = IdUtils.create();
 
-        Flow flow = generateFlow(flowId, "io.kestra.unittest", "a");
+        Flow flow = generateFlowWithFlowable(flowId, "io.kestra.unittest", "a");
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
-
         assertThat(result.getId(), is(flow.getId()));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
 
-        Task task = generateTask("test", "updated task");
+        Task task = generateTask("test2", "updated task");
 
         Flow get = client.toBlocking().retrieve(
             PATCH("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "/" + task.getId(), task),
@@ -239,11 +239,19 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         );
 
         assertThat(get.getId(), is(flow.getId()));
-        assertThat(((Return) get.getTasks().get(0)).getFormat(), is("updated task"));
+        assertThat(((Return) get.findTaskByTaskId("test2")).getFormat(), is("updated task"));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().retrieve(
-                PATCH("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "/test2", task),
+                PATCH("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "/test6", task),
+                Flow.class
+            );
+        });
+        assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
+
+        e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(
+                PATCH("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "/test6", generateTask("test6", "updated task")),
                 Flow.class
             );
         });
@@ -295,6 +303,23 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .namespace(namespace)
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name(inputName).build()))
             .tasks(Collections.singletonList(generateTask("test", "test")))
+            .build();
+    }
+
+    private Flow generateFlowWithFlowable(String friendlyId, String namespace, String format) {
+        return Flow.builder()
+            .id(friendlyId)
+            .namespace(namespace)
+            .tasks(Collections.singletonList(
+                Sequential.builder()
+                    .id("seq")
+                    .type(Sequential.class.getName())
+                    .tasks(Arrays.asList(
+                        generateTask("test1", "test"),
+                        generateTask("test2", format)
+                    ))
+                    .build()
+            ))
             .build();
     }
 

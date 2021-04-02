@@ -1,5 +1,8 @@
 package io.kestra.core.models.flows;
 
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.tasks.debugs.Return;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.serializers.YamlFlowParser;
@@ -54,6 +57,22 @@ class FlowTest {
         assertThat(validate.get().getConstraintViolations().size(), is(1));
 
         assertThat(validate.get().getMessage(), containsString("switch.tasks: No task defined"));
+    }
+
+    @Test
+    void updateTask() throws InternalException {
+        Flow flow = this.parse("flows/valids/each-sequential-nested.yaml");
+
+        Flow updated = flow.updateTask("1-2-2_return", Return.builder()
+            .id("1-2-2_return")
+            .type(Return.class.getName())
+            .format("{{task.id}}")
+            .build()
+        );
+
+        Task findUpdated = updated.findTaskByTaskId("1-2-2_return");
+
+        assertThat(((Return) findUpdated).getFormat(), is("{{task.id}}"));
     }
 
     private Flow parse(String path) {

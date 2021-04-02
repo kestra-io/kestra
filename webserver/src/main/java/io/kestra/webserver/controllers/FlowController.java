@@ -224,27 +224,25 @@ public class FlowController {
      */
     @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
-    public HttpResponse<Flow> updateTask(String namespace, String id, String taskId, @Body Task task) throws ConstraintViolationException {
+    public HttpResponse<Flow> updateTask(String namespace, String id, String taskId, @Valid @Body Task task) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
 
         if (existingFlow.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
 
+        if (!taskId.equals(task.getId())) {
+            throw new IllegalArgumentException("Invalid taskId, previous '" + taskId + "' & current '" + task.getId() + "'");
+        }
+
         Flow flow = existingFlow.get();
-        Task previousTask;
         try {
-            previousTask = flow.findTaskByTaskId(taskId);
+            Flow newValue = flow.updateTask(taskId, task);
+            return HttpResponse.ok(flowRepository.update(newValue, flow));
         } catch (InternalException e) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-
-        int index = flow.getTasks().indexOf(previousTask);
-        flow.getTasks().set(index, task);
-
-        return HttpResponse.ok(flowRepository.update(flow, flowRepository.findById(namespace, id).get()));
     }
-
 
     /**
      * @param namespace flow namespace

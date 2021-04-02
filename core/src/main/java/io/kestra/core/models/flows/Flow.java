@@ -144,6 +144,44 @@ public class Flow implements DeletedInterface {
             .orElseThrow(() -> new InternalException("Can't find task with id '" + id + "' on flow '" + this.id + "'"));
     }
 
+    public Flow updateTask(String taskId, Task newValue) throws InternalException {
+        Task task = this.findTaskByTaskId(taskId);
+        Map<String, Object> map = JacksonMapper.toMap(this);
+
+        return JacksonMapper.toMap(
+            recursiveUpdate(map, task, newValue),
+            Flow.class
+        );
+    }
+
+    private static Object recursiveUpdate(Object object, Task previous, Task newValue) {
+        if (object instanceof Map) {
+            Map<?, ?> value = (Map<?, ?>) object;
+            if (value.containsKey("id") && value.get("id").equals(previous.getId()) &&
+                value.containsKey("type") && value.get("type").equals(previous.getType())
+            ) {
+                return JacksonMapper.toMap(newValue);
+            } else {
+                return value
+                    .entrySet()
+                    .stream()
+                    .map(e -> new AbstractMap.SimpleEntry<>(
+                        e.getKey(),
+                        recursiveUpdate(e.getValue(), previous, newValue)
+                    ))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            }
+        } else if (object instanceof Collection) {
+            Collection<?> value = (Collection<?>) object;
+            return value
+                .stream()
+                .map(r -> recursiveUpdate(r, previous, newValue))
+                .collect(Collectors.toList());
+        } else {
+            return object;
+        }
+    }
+
     private List<Task> listenersTasks() {
         if (this.getListeners() == null) {
             return new ArrayList<>();

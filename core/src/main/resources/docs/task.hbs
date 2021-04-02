@@ -8,10 +8,10 @@ description: {{ description }}
 
 {{!-- {{                 function                 }} --}}
 {{~#*inline "body"~}}
-{{~#if values~}}
+{{~#if enum~}}
     * **Possible Values:**
-    {{~#each values as | current |}}
-    * {{current}}
+    {{~#each enum as | current |}}
+    * `{{current}}`
     {{~/each~}}
 {{/if}}
 {{#if title}}

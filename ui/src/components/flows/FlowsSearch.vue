@@ -33,12 +33,11 @@
                                 </router-link>
                             </template>
                             <template v-for="(fragment, j) in item.fragments">
-                                <small :key="`pre-${i}-${j}`" >
-                                    <pre class="mb-1 text-sm-left" v-html="fragment"></pre>
+                                <small :key="`pre-${i}-${j}`">
+                                    <pre class="mb-1 text-sm-left" v-html="fragment" />
                                 </small>
                             </template>
                         </b-card>
-
                     </template>
                 </template>
             </data-table>

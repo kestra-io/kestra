@@ -1,7 +1,10 @@
 package io.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -11,6 +14,10 @@ import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.hateoas.Link;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintViolationException;
@@ -21,6 +28,50 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> jsonError(HttpRequest<?> request, JsonParseException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
+    }
+
+    @SuppressWarnings("unchecked")
+    @Error(global = true)
+    public HttpResponse<JsonError> invalidTypeIdException(HttpRequest<?> request, ConversionErrorException e) {
+        if (e.getConversionError().getCause() instanceof InvalidTypeIdException) {
+            try {
+                InvalidTypeIdException invalidTypeIdException = ((InvalidTypeIdException) e.getConversionError()
+                    .getCause());
+
+                Field pathField = JsonMappingException.class.getDeclaredField("_path");
+                pathField.setAccessible(true);
+                LinkedList<JsonMappingException.Reference> path = (LinkedList< JsonMappingException.Reference>) pathField.get(invalidTypeIdException);
+
+                Field typeField = InvalidTypeIdException.class.getDeclaredField("_typeId");
+                typeField.setAccessible(true);
+                Object typeClass = typeField.get(invalidTypeIdException);
+
+                JsonError error = new JsonError("Invalid type: " + typeClass)
+                    .link(Link.SELF, Link.of(request.getUri()))
+                    .embedded(
+                        "errors",
+                        Arrays.asList(
+                            new JsonError("Invalid type: " + typeClass)
+                                .path(path
+                                    .stream()
+                                    .map(JsonMappingException.Reference::getDescription)
+                                    .collect(Collectors.joining(" > "))
+                                ),
+                            new JsonError(e.getMessage())
+                                .path(path
+                                    .stream()
+                                    .map(JsonMappingException.Reference::getDescription)
+                                    .collect(Collectors.joining(" > "))
+                                )
+                        )
+                    );
+
+                return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
+            } catch (Exception ignored) {
+            }
+        }
+
+        return jsonError(request, e, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
     }
 
     @Error(global = true)

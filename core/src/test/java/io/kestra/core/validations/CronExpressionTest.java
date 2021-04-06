@@ -1,4 +1,4 @@
-package io.kestra.core.schedulers.validations;
+package io.kestra.core.validations;
 
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ class CronExpressionTest {
     private ModelValidator modelValidator;
 
     @Test
-    void CronValidation() throws Exception {
+    void cronValidation() throws Exception {
         Schedule build = Schedule.builder()
             .id(IdUtils.create())
             .type(Schedule.class.getName())

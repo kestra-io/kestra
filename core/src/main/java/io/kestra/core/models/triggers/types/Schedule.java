@@ -19,7 +19,7 @@ import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.schedulers.validations.CronExpression;
+import io.kestra.core.validations.CronExpression;
 import io.kestra.core.utils.IdUtils;
 
 import java.time.Duration;

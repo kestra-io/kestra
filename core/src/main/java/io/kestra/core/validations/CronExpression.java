@@ -1,4 +1,4 @@
-package io.kestra.core.schedulers.validations;
+package io.kestra.core.validations;
 
 import javax.validation.Constraint;
 import java.lang.annotation.*;

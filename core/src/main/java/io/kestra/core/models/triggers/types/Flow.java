@@ -55,7 +55,7 @@ import javax.validation.constraints.NotNull;
             "    inputs:\n" +
             "      from-parent: '{{ outputs.my-task.uri }}'\n" +
             "    conditions:\n" +
-            "      - type: io.kestra.core.models.conditions.types.FlowCondition\n" +
+            "      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition\n" +
             "        namespace: io.kestra.tests\n" +
             "        flowId: trigger-flow\n" +
             "      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition\n" +

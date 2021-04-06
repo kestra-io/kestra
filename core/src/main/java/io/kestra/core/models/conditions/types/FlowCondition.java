@@ -34,6 +34,7 @@ import javax.validation.constraints.NotNull;
         )
     }
 )
+@Deprecated
 public class FlowCondition extends Condition {
     @NotNull
     @Schema(title = "The namespace of the flow")

@@ -1,5 +1,6 @@
 import Vue from "vue"
 import humanizeDuration from "humanize-duration";
+import moment from "moment";
 
 Vue.filter("id", value => value ? value.toString().substr(0, 8) : "");
 
@@ -19,6 +20,12 @@ Vue.filter("humanizeDuration", (value, options) => {
         s: () => "s",
         ms: () => "ms",
     }
+
+    if (typeof (value) !== "number") {
+        const duration1 = moment.duration(value, moment.ISO_8601);
+        value = duration1.asSeconds()
+    }
+
     return humanizeDuration(value * 1000, options)
 });
 

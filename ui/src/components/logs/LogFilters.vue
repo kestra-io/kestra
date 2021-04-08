@@ -7,10 +7,10 @@
             >
                 <b-form-input
                     id="input-1"
-                    v-model="filter"
+                    :value="filter"
                     required
                     size="sm"
-                    @input="onChange"
+                    @input="onChange('filter', $event)"
                     :placeholder="$t('search') + '...'"
                 />
             </b-form-group>
@@ -20,7 +20,7 @@
                 :label="$t('filter by log level')"
                 label-for="input-level"
             >
-                <log-level-selector @onChange="onChange" />
+                <log-level-selector :value="level" @input="onChange('level', $event)" />
             </b-form-group>
         </b-col>
     </b-row>
@@ -29,16 +29,19 @@
     import LogLevelSelector from "./LogLevelSelector";
     export default {
         components: {LogLevelSelector},
-        data() {
-            return {
-                filter: "",
-            };
+        props: {
+            filter: {
+                type: String,
+                default: undefined
+            },
+            level: {
+                type: String,
+                default: "INFO"
+            }
         },
         methods: {
-            onChange() {
-                const query = {...this.$route.query, q: this.filter, page: 1};
-                this.$router.push({query});
-                this.$emit("onChange");
+            onChange(type, value) {
+                this.$emit("input", {[type]: value});
             },
         },
     };

@@ -1,5 +1,5 @@
 <template>
-    <executions :restore-url="false" />
+    <executions :restore-url="false" :prevent-route-info="true" />
 </template>
 
 <script>

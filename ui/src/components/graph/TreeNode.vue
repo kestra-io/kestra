@@ -90,7 +90,7 @@
                 <b-collapse id="nav-collapse" is-nav>
                     <b-nav-form>
                         <search-field :router="false" @search="onSearch" class="mr-2" />
-                        <log-level-selector :log-level="logLevel" :router="false" @onChange="onLevelChange" />
+                        <log-level-selector :log-level="logLevel" @input="onLevelChange" />
                     </b-nav-form>
                 </b-collapse>
             </b-navbar>

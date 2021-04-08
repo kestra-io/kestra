@@ -1,6 +1,6 @@
 <template>
     <div>
-        <log-filters />
+        <log-filters @input="onChange" :filter="filterTerm" :level="level" />
         <log-list :level="level" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" :filter="filterTerm" />
     </div>
 </template>
@@ -19,5 +19,10 @@
                 return this.$route.query.level || "INFO";
             },
         },
+        methods: {
+            onChange(event) {
+                this.$router.push({query: {...this.$route.query, q: event.filter, level: event.level, page: 1}});
+            }
+        }
     };
 </script>

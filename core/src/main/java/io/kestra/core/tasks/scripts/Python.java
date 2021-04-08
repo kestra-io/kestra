@@ -112,71 +112,12 @@ public class Python extends AbstractBash implements RunnableTask<AbstractBash.Ou
     @PluginProperty(dynamic = true)
     private String[] requirements;
 
-    private static ImmutableList<URL> getClassLoaderUrls(ClassLoader classloader) {
-        if (classloader instanceof URLClassLoader) {
-            return ImmutableList.copyOf(((URLClassLoader) classloader).getURLs());
-        }
-        if (classloader.equals(ClassLoader.getSystemClassLoader())) {
-            return parseJavaClassPath();
-        }
-        return ImmutableList.of();
-    }
-    static ImmutableList<URL> parseJavaClassPath() {
-        ImmutableList.Builder<URL> urls = ImmutableList.builder();
-        for (String entry : Splitter.on(PATH_SEPARATOR.value()).split(JAVA_CLASS_PATH.value())) {
-            try {
-                try {
-                    urls.add(new File(entry).toURI().toURL());
-                } catch (SecurityException e) { // File.toURI checks to see if the file is a directory
-                    urls.add(new URL("file", null, new File(entry).getAbsolutePath()));
-                }
-            } catch (MalformedURLException e) {
-                log.warn("malformed classpath entry: " + entry, e);
-            }
-        }
-        return urls.build();
-    }
-
 
     @Override
     public Bash.Output run(RunContext runContext) throws Exception {
         if (!inputFiles.containsKey("main.py")) {
             throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.py key with python code value.");
         }
-
-        Class clazz = this.getClass();
-        StringBuffer results = new StringBuffer();
-
-        ClassLoader cl = clazz.getClassLoader();
-        results.append("\n" + clazz.getName() + "(" +
-            Integer.toHexString(clazz.hashCode()) + ").ClassLoader=" + cl);
-        ClassLoader parent = cl;
-
-        while (parent != null) {
-            results.append("\n.."+parent);
-            List<URL> urls = getClassLoaderUrls(parent);
-
-            int length = urls != null ? urls.size() : 0;
-            for(int u = 0; u < length; u ++) {
-                results.append("\n...."+ urls.get(u));
-            }
-
-//            if (showParentClassLoaders == false) {
-//                break;
-//            }
-            if (parent != null) {
-                parent = parent.getParent();
-            }
-        }
-
-        CodeSource clazzCS = clazz.getProtectionDomain().getCodeSource();
-        if (clazzCS != null) {
-            results.append("\n++++CodeSource: "+clazzCS);
-        } else {
-            results.append("\n++++Null CodeSource");
-        }
-
-        System.out.println(results);
 
         this.inputFiles.put("kestra.py", IOUtils.toString(
             Objects.requireNonNull(Python.class.getClassLoader().getResourceAsStream("scripts/kestra.py")),

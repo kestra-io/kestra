@@ -65,7 +65,7 @@
             collections() {
                 let avgData = this.data
                     .map((value) => {
-                        return value.duration.avg === 0 ? null : value.duration.avg;
+                        return value.duration.avg === 0 ? null : Utils.duration(value.duration.avg);
                     });
 
                 return {

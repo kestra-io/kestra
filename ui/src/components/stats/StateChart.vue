@@ -106,7 +106,7 @@
                         yAxisID: "B",
                         data: this.data
                             .map((value) => {
-                                return value.duration.avg === 0 ? 0 : value.duration.avg;
+                                return value.duration.avg === 0 ? 0 : Utils.duration(value.duration.avg);
                             })
                     }, ...Object.values(datasets), ]
                 }

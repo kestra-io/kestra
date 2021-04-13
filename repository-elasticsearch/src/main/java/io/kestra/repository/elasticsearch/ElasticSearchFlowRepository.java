@@ -165,7 +165,10 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     @Override
     public ArrayListTotal<Flow> find(String query, Pageable pageable) {
         BoolQueryBuilder bool = this.defaultFilter()
-            .must(QueryBuilders.queryStringQuery(query));
+            .must(QueryBuilders.queryStringQuery(query)
+                .field("namespace")
+                .field("id", 2)
+            );
 
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
         sourceBuilder.fetchSource("*", "sourceCode");

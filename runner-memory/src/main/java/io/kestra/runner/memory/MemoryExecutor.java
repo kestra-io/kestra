@@ -167,8 +167,6 @@ public class MemoryExecutor extends AbstractExecutor {
     private void handleFailedExecutionFromExecutor(Execution execution, Exception e) {
         Execution.FailedExecutionWithLog failedExecutionWithLog = execution.failedExecutionFromExecutor(e);
         try {
-            log.error("Failed from executor with '{}'", e.getMessage(), e);
-
             failedExecutionWithLog.getLogs().forEach(logQueue::emit);
 
             this.toExecution(failedExecutionWithLog.getExecution());

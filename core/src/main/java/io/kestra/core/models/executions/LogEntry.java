@@ -59,6 +59,14 @@ public class LogEntry implements DeletedInterface {
             .collect(Collectors.toList());
     }
 
+    public static LogEntry of(Execution execution) {
+        return LogEntry.builder()
+            .namespace(execution.getNamespace())
+            .flowId(execution.getFlowId())
+            .executionId(execution.getId())
+            .build();
+    }
+
     public static LogEntry of(TaskRun taskRun) {
         return LogEntry.builder()
             .namespace(taskRun.getNamespace())

@@ -149,7 +149,7 @@ public class RunnerUtils {
                                 ));
                             }
                         } catch (Exception e) {
-                            throw new MissingRequiredInput("Invalid input for '" + input.getName() + "'", e);
+                            throw new MissingRequiredInput("Invalid input arguments for file on input '" + input.getName() + "'", e);
                         }
 
                     default:

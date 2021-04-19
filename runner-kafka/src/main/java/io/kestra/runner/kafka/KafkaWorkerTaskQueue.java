@@ -53,7 +53,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
     private final UUID workerUuid;
 
     private static ExecutorService poolExecutor;
-    private final List<org.apache.kafka.clients.consumer.Consumer<String, WorkerTask>> kafkaConsumers = new ArrayList<>();
+    private final List<org.apache.kafka.clients.consumer.Consumer<String, WorkerTask>> kafkaConsumers = Collections.synchronizedList(new ArrayList<>());
 
     @SuppressWarnings("unchecked")
     public KafkaWorkerTaskQueue(ApplicationContext applicationContext) {
@@ -210,11 +210,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
         this.wakeup();
     }
 
-    @SuppressWarnings("ForLoopReplaceableByForEach")
     private void wakeup() {
-        for (Iterator<org.apache.kafka.clients.consumer.Consumer<String, WorkerTask>> it = kafkaConsumers.iterator(); it.hasNext(); ) {
-            org.apache.kafka.clients.consumer.Consumer<String, WorkerTask> kafkaConsumer = it.next();
-            kafkaConsumer.wakeup();
-        }
+        kafkaConsumers.forEach(org.apache.kafka.clients.consumer.Consumer::wakeup);
     }
 }

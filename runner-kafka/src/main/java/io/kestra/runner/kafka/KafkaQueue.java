@@ -36,7 +36,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     private Class<T> cls;
     private final AdminClient adminClient;
     private final KafkaConsumerService kafkaConsumerService;
-    private final List<org.apache.kafka.clients.consumer.Consumer<String, T>> kafkaConsumers = new ArrayList<>();
+    private final List<org.apache.kafka.clients.consumer.Consumer<String, T>> kafkaConsumers = Collections.synchronizedList(new ArrayList<>());
     private final QueueService queueService;
     private final KafkaQueueService kafkaQueueService;
 
@@ -276,11 +276,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         this.wakeup();
     }
 
-    @SuppressWarnings("ForLoopReplaceableByForEach")
     private void wakeup() {
-        for (Iterator<org.apache.kafka.clients.consumer.Consumer<String, T>> it = kafkaConsumers.iterator(); it.hasNext(); ) {
-            org.apache.kafka.clients.consumer.Consumer<String, T> kafkaConsumer = it.next();
-            kafkaConsumer.wakeup();
-        }
+        kafkaConsumers.forEach(org.apache.kafka.clients.consumer.Consumer::wakeup);
     }
 }

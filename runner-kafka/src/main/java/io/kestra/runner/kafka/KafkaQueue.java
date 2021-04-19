@@ -12,6 +12,7 @@ import io.kestra.runner.kafka.services.KafkaAdminService;
 import io.kestra.runner.kafka.services.KafkaConsumerService;
 import io.kestra.runner.kafka.services.KafkaProducerService;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.retry.annotation.Retryable;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -19,6 +20,7 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.WakeupException;
 
 import java.time.Duration;
@@ -226,9 +228,14 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             .collect(Collectors.toList());
     }
 
-    private Map<TopicPartition, Long> offsetForTime(
-        Instant instant
-    ) {
+    @Retryable(
+        includes = {
+            TimeoutException.class
+        },
+        attempts = "5",
+        multiplier = "2.0"
+    )
+    Map<TopicPartition, Long> offsetForTime(Instant instant) {
         org.apache.kafka.clients.consumer.Consumer<String, T> consumer = kafkaConsumerService.of(
             null,
             JsonSerde.of(this.cls)

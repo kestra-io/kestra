@@ -217,7 +217,7 @@ public class RunContext {
                 builder.put("inputs", execution.getInputs());
             }
 
-            if (execution.getTrigger() != null) {
+            if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
                 builder.put("trigger", execution.getTrigger().getVariables());
             }
 

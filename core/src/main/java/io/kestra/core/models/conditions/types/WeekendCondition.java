@@ -1,11 +1,13 @@
 package io.kestra.core.models.conditions.types;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -45,15 +47,11 @@ public class WeekendCondition extends Condition {
     public String date = "{{ now \"iso_local_date\" }}";
 
     @Override
-    public boolean test(ConditionContext conditionContext) {
-        try {
-            String render = conditionContext.getRunContext().render(date);
-            LocalDate currentDate = LocalDate.parse(render);
+    public boolean test(ConditionContext conditionContext) throws InternalException {
+        String render = conditionContext.getRunContext().render(date);
+        LocalDate currentDate = DateUtils.parseLocalDate(render);
 
-            return currentDate.getDayOfWeek().equals(DayOfWeek.SATURDAY) ||
-                currentDate.getDayOfWeek().equals(DayOfWeek.SUNDAY);
-        } catch (IllegalVariableEvaluationException e) {
-            throw new IllegalArgumentException(e.getMessage(), e);
-        }
+        return currentDate.getDayOfWeek().equals(DayOfWeek.SATURDAY) ||
+            currentDate.getDayOfWeek().equals(DayOfWeek.SUNDAY);
     }
 }

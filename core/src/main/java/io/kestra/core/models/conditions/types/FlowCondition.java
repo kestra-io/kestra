@@ -1,5 +1,6 @@
 package io.kestra.core.models.conditions.types;
 
+import io.kestra.core.exceptions.InternalException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -45,7 +46,7 @@ public class FlowCondition extends Condition {
     public String flowId;
 
     @Override
-    public boolean test(ConditionContext conditionContext) {
+    public boolean test(ConditionContext conditionContext) throws InternalException {
         return conditionContext.getFlow().getNamespace().equals(this.namespace) && conditionContext.getFlow().getId().equals(this.flowId);
     }
 }

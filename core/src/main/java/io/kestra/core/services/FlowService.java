@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.exceptions.InternalException;
 import io.micronaut.context.ApplicationContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,6 +19,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 /**
  * Provides business logic to manipulate {@link Flow}

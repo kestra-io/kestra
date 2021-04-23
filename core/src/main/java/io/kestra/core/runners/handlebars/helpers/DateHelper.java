@@ -55,8 +55,6 @@ public enum DateHelper implements Helper<Object> {
      * The format option can be specified as a parameter or hash (a.k.a named parameter).
      */
     dateFormat {
-
-
         @Override
         public CharSequence apply(final Object value, final Options options) {
             ZoneId zoneId = DateHelper.zoneId(options);
@@ -71,7 +69,12 @@ public enum DateHelper implements Helper<Object> {
     now {
         @Override
         public Object apply(final Object value, final Options options) throws IOException {
-            return DateHelper.dateFormat.apply(ZonedDateTime.now(DateHelper.zoneId(options)), options);
+            ZoneId zoneId = DateHelper.zoneId(options);
+            ZonedDateTime date = ZonedDateTime.now(DateHelper.zoneId(options));
+            String format = options.param(0, options.hash("format", value instanceof String ? value : "iso"));
+            String localeStr = options.param(1, Locale.getDefault().toString());
+
+            return format(date, format, zoneId, localeStr);
         }
     },
 

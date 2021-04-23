@@ -1,14 +1,6 @@
 package io.kestra.core.schedulers;
 
 import com.google.common.util.concurrent.*;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Prototype;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -25,6 +17,14 @@ import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Prototype;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -161,7 +161,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
             // get all that is ready from evaluation
             List<FlowWithPollingTriggerNextDate> readyForEvaluate = schedulable
                 .stream()
-                .filter(f -> conditionService.isValid(f.getTrigger(), f.getConditionContext()))
+                .filter(f -> conditionService.isValid(f.getFlow(), f.getTrigger(), f.getConditionContext()))
                 .map(flowWithTrigger -> FlowWithPollingTrigger.builder()
                     .flow(flowWithTrigger.getFlow())
                     .trigger(flowWithTrigger.getTrigger())

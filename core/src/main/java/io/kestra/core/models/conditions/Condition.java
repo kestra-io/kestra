@@ -1,6 +1,8 @@
 package io.kestra.core.models.conditions;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.utils.Rethrow;
 import io.micronaut.core.annotation.Introspected;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,7 +19,7 @@ import javax.validation.constraints.Pattern;
 @NoArgsConstructor
 @AllArgsConstructor
 @Introspected
-public abstract class Condition implements Predicate<ConditionContext> {
+public abstract class Condition implements Rethrow.PredicateChecked<ConditionContext, InternalException> {
     @NotNull
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     protected String type;

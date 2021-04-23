@@ -1,5 +1,6 @@
 package io.kestra.core.models.conditions.types;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -16,6 +17,8 @@ import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+
+import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 @SuperBuilder
 @ToString
@@ -50,9 +53,9 @@ public class NotCondition extends Condition {
     private List<Condition> conditions;
 
     @Override
-    public boolean test(ConditionContext conditionContext) {
+    public boolean test(ConditionContext conditionContext) throws InternalException {
         return this.conditions
             .stream()
-            .noneMatch(condition -> condition.test(conditionContext));
+            .noneMatch(throwPredicate(condition -> condition.test(conditionContext)));
     }
 }

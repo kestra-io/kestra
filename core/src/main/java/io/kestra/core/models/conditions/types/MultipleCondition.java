@@ -1,5 +1,6 @@
 package io.kestra.core.models.conditions.types;
 
+import io.kestra.core.exceptions.InternalException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -107,7 +108,7 @@ public class MultipleCondition extends Condition {
      * The real validation is done here.
      */
     @Override
-    public boolean test(ConditionContext conditionContext) {
+    public boolean test(ConditionContext conditionContext) throws InternalException {
         Logger logger = conditionContext.getRunContext().logger();
 
         MultipleConditionStorageInterface multipleConditionStorage = conditionContext.getMultipleConditionStorage();

@@ -1,17 +1,16 @@
 package io.kestra.core.models.conditions.types;
 
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.conditions.ConditionContext;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.conditions.Condition;
-import io.kestra.core.models.conditions.ConditionContext;
-import org.slf4j.Logger;
 
 import javax.validation.constraints.NotNull;
 
@@ -42,16 +41,8 @@ public class VariableCondition extends Condition {
     public String expression;
 
     @Override
-    public boolean test(ConditionContext conditionContext) {
-        Logger logger = conditionContext.getRunContext().logger();
-
-        try {
-            String render = conditionContext.getRunContext().render(expression);
-            return !(render.isBlank() || render.isEmpty() || render.trim().equals("false"));
-        } catch (IllegalVariableEvaluationException e) {
-            logger.warn("Illegal variable expression", e);
-
-            return false;
-        }
+    public boolean test(ConditionContext conditionContext) throws InternalException {
+        String render = conditionContext.getRunContext().render(expression);
+        return !(render.isBlank() || render.isEmpty() || render.trim().equals("false"));
     }
 }

@@ -1,11 +1,14 @@
 package io.kestra.core.models.conditions.types;
 
+import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -52,22 +55,19 @@ public class DateTimeBetweenCondition extends Condition {
     public ZonedDateTime before;
 
     @Override
-    public boolean test(ConditionContext conditionContext) {
-        try {
-            String render = conditionContext.getRunContext().render(date);
-            ZonedDateTime currentDate = ZonedDateTime.parse(render);
+    public boolean test(ConditionContext conditionContext) throws InternalException {
+        String render = conditionContext.getRunContext().render(date);
+        ZonedDateTime currentDate = DateUtils.parseZonedDateTime(render);
 
-            if (this.before != null && this.after != null) {
-                return currentDate.isAfter(after) && currentDate.isBefore(before);
-            } else if (this.before != null) {
-                return currentDate.isBefore(before);
-            } else if (this.after != null) {
-                return currentDate.isAfter(after);
-            } else {
-                throw  new IllegalArgumentException("Invalid condition with no before nor after");
-            }
-        } catch (IllegalVariableEvaluationException e) {
-            throw new IllegalArgumentException(e.getMessage(), e);
+        if (this.before != null && this.after != null) {
+            return currentDate.isAfter(after) && currentDate.isBefore(before);
+        } else if (this.before != null) {
+            return currentDate.isBefore(before);
+        } else if (this.after != null) {
+            return currentDate.isAfter(after);
+        } else {
+            throw new IllegalConditionEvaluation("Invalid condition with no before nor after");
         }
+
     }
 }

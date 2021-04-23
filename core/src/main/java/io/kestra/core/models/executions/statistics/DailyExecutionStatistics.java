@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions.statistics;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Value;
@@ -20,6 +21,7 @@ public class DailyExecutionStatistics {
     private Duration duration;
 
     @Builder.Default
+    @JsonInclude
     private Map<State.Type, Long> executionCounts = new HashMap<>(Map.of(
         State.Type.CREATED, 0L,
         State.Type.RUNNING, 0L,

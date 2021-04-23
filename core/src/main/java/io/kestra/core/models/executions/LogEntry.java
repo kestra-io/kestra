@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Value;
 import io.kestra.core.models.DeletedInterface;
@@ -33,6 +34,7 @@ public class LogEntry implements DeletedInterface {
     private String taskRunId;
 
     @Nullable
+    @JsonInclude
     private Integer attemptNumber;
 
     @Nullable

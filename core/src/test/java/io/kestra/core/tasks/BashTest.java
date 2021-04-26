@@ -2,6 +2,7 @@ package io.kestra.core.tasks;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import io.kestra.core.tasks.scripts.ScriptOutput;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
@@ -47,7 +48,7 @@ class BashTest {
             .commands(new String[]{"sleep 1", "curl {{ upper input.url }} > /dev/null", "echo 0", "sleep 1", "echo 1"})
             .build();
 
-        Bash.Output run = bash.run(runContext);
+        ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOutLineCount(), is(2));
@@ -69,7 +70,7 @@ class BashTest {
             })
             .build();
 
-        Bash.Output run = bash.run(runContext);
+        ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdErrLineCount(), is(0));
@@ -107,8 +108,8 @@ class BashTest {
 
 
         assertThat(bashException.getExitCode(), is(66));
-        assertThat(bashException.getStdOut().size(), is(0));
-        assertThat(bashException.getStdErr().size(), is(1));
+        assertThat(bashException.getStdOutSize(), is(0));
+        assertThat(bashException.getStdErrSize(), is(1));
     }
 
     @Test
@@ -125,8 +126,8 @@ class BashTest {
         });
 
         assertThat(bashException.getExitCode(), is(127));
-        assertThat(bashException.getStdOut().size(), is(0));
-        assertThat(bashException.getStdErr().size(), is(1));
+        assertThat(bashException.getStdOutSize(), is(0));
+        assertThat(bashException.getStdErrSize(), is(1));
     }
 
     @Test
@@ -139,7 +140,7 @@ class BashTest {
             .exitOnFailed(false)
             .build();
 
-        Bash.Output run = bash.run(runContext);
+        ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOutLineCount(), is(1));
@@ -159,7 +160,7 @@ class BashTest {
             .commands(commands.toArray(String[]::new))
             .build();
 
-        Bash.Output run = bash.run(runContext);
+        ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOutLineCount(), is(2));
@@ -182,7 +183,7 @@ class BashTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = bash.run(runContext);
+        ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getVars().get("extract"), is("testbash"));
@@ -213,7 +214,7 @@ class BashTest {
             .outputFiles(Collections.singletonList("out"))
             .build();
 
-        Bash.Output run = bash.run(runContext);
+        ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         InputStream get = storageInterface.get(run.getOutputFiles().get("out"));
@@ -222,7 +223,7 @@ class BashTest {
         assertThat(outputContent, is(fileContent));
     }
 
-    static void controlOutputs(RunContext runContext, Bash.Output run) {
+    static void controlOutputs(RunContext runContext, ScriptOutput run) {
         assertThat(run.getVars().get("test"), is("value"));
         assertThat(run.getVars().get("int"), is(2));
         assertThat(run.getVars().get("bool"), is(true));

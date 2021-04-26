@@ -344,7 +344,7 @@ public class RunContext {
      * @throws IOException If the temporary file can't be read
      */
     public URI putTempFile(File file) throws IOException {
-        return this.putTempFile(file, this.storageOutputPrefix.toString());
+        return this.putTempFile(file, this.storageOutputPrefix.toString(), (String) null);
     }
 
     public URI putTempFile(File file, String executionId, AbstractTrigger trigger) throws IOException {
@@ -358,13 +358,14 @@ public class RunContext {
                     "trigger",
                     Slugify.of(trigger.getId())
                 )
-            )
+            ),
+            (String) null
         );
     }
 
-    private URI putTempFile(File file, String prefix) throws IOException {
+    private URI putTempFile(File file, String prefix, String name) throws IOException {
         URI uri = URI.create(prefix);
-        URI resolve = uri.resolve(uri.getPath() + "/" + file.getName());
+        URI resolve = uri.resolve(uri.getPath() + "/" + (name != null ? name : file.getName()));
 
         URI put = this.storageInterface.put(resolve, new BufferedInputStream(new FileInputStream(file)));
 
@@ -374,6 +375,34 @@ public class RunContext {
         }
 
         return put;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String taskStateFilePathPrefix(Task task) {
+        return "/" + String.join(
+            "/",
+            Arrays.asList(
+                "tasks",
+                ((Map<String, String>) this.getVariables().get("flow")).get("namespace"),
+                ((Map<String, String>) this.getVariables().get("flow")).get("id"),
+                task.getId()
+            )
+        );
+    }
+
+    public InputStream getTaskStateFile(Task task, String name) throws IOException {
+        URI uri = URI.create(this.taskStateFilePathPrefix(task));
+        URI resolve = uri.resolve(uri.getPath() + "/" + name);
+
+       return this.storageInterface.get(resolve);
+    }
+
+    public URI putTaskStateFile(File file, Task task, String name) throws IOException {
+        return this.putTempFile(
+            file,
+            this.taskStateFilePathPrefix(task),
+            name
+        );
     }
 
     public List<AbstractMetricEntry<?>> metrics() {

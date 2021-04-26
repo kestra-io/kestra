@@ -1,23 +1,23 @@
 package io.kestra.core.tasks.scripts;
 
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.runners.RunContext;
 
 import java.util.ArrayList;
 import java.util.List;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.Rethrow.throwSupplier;
 
 @SuperBuilder
 @ToString
@@ -59,7 +59,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         )
     }
 )
-public class Bash extends AbstractBash implements RunnableTask<AbstractBash.Output> {
+public class Bash extends AbstractBash implements RunnableTask<ScriptOutput> {
     @Schema(
         title = "The commands to run",
         description = "Default command will be launched with `/bin/sh -c \"commands\"`"
@@ -70,16 +70,13 @@ public class Bash extends AbstractBash implements RunnableTask<AbstractBash.Outp
     protected String[] commands;
 
     @Override
-    public AbstractBash.Output run(RunContext runContext) throws Exception {
-        return run(runContext, throwFunction((additionalVars) -> {
+    public ScriptOutput run(RunContext runContext) throws Exception {
+        return run(runContext, throwSupplier(() -> {
             // final command
             List<String> renderer = new ArrayList<>();
 
             if (this.exitOnFailed) {
                 renderer.add("set -o errexit");
-                if (this.workingDirectory != null) {
-                    renderer.add("cd " + this.workingDirectory.toAbsolutePath().toString());
-                }
             }
 
             // renderer command

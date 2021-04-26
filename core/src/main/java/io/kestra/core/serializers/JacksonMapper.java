@@ -50,6 +50,10 @@ abstract public class JacksonMapper {
         return MAPPER.convertValue(map, cls);
     }
 
+    public static Map<String, Object> toMap(String json) throws JsonProcessingException {
+        return MAPPER.readValue(json, TYPE_REFERENCE);
+    }
+
     public static <T> String log(T Object) {
         try {
             return YAML_MAPPER.writeValueAsString(Object);

@@ -2,24 +2,24 @@ package io.kestra.core.tasks.scripts;
 
 import com.google.common.base.Charsets;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
-import static io.kestra.core.utils.Rethrow.throwSupplier;
 
 @SuperBuilder
 @ToString
@@ -75,16 +75,16 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
     }
 )
 @Slf4j
-public class Python extends AbstractPython implements RunnableTask<ScriptOutput> {
+public class AbstractPython extends AbstractBash {
+    @Builder.Default
     @Schema(
-        title = "The commands to run",
-        description = "Default command will be launched with `./bin/python main.py {{args}}`"
+        title = "The python interpreter to use",
+        description = "Set the python interpreter path to use"
     )
     @PluginProperty(dynamic = true)
     @NotNull
     @NotEmpty
-    @Builder.Default
-    protected List<String> commands = Collections.singletonList("./bin/python main.py");
+    private final String pythonPath = "/usr/bin/python3";
 
     @Schema(
         title = "Python command args",
@@ -93,28 +93,32 @@ public class Python extends AbstractPython implements RunnableTask<ScriptOutput>
     @PluginProperty(dynamic = true)
     private List<String> args;
 
-    @Override
-    public ScriptOutput run(RunContext runContext) throws Exception {
-        if (!inputFiles.containsKey("main.py") && this.commands.size() == 1 && this.commands.get(0).equals("./bin/python main.py")) {
-            throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.py key with python code value.");
+    @Schema(
+        title = "Requirements are python dependencies to add to the python execution process",
+        description = "Python dependencies list to setup in the virtualenv, in the same format than requirements.txt"
+    )
+    @PluginProperty(dynamic = true)
+    protected List<String> requirements;
+
+    protected String virtualEnvCommand(RunContext runContext, List<String> requirements) throws IllegalVariableEvaluationException, IOException {
+        List<String> renderer = new ArrayList<>();
+        Path workingDirectory = this.tmpWorkingDirectory();
+
+        if (this.exitOnFailed) {
+            renderer.add("set -o errexit");
         }
 
-        this.inputFiles.put("kestra.py", IOUtils.toString(
-            Objects.requireNonNull(AbstractPython.class.getClassLoader().getResourceAsStream("scripts/kestra.py")),
-            Charsets.UTF_8
+        String requirementsAsString = "";
+        if (requirements != null) {
+            requirementsAsString = "./bin/pip install " + runContext.render(String.join(" ", requirements), additionalVars) + " > /dev/null";
+        }
+
+        renderer.addAll(Arrays.asList(
+            this.pythonPath + " -m virtualenv " + workingDirectory + " -p " + this.pythonPath + " > /dev/null",
+            "./bin/pip install pip --upgrade > /dev/null",
+            requirementsAsString
         ));
 
-        return run(runContext, throwSupplier(() -> {
-            List<String> renderer = new ArrayList<>();
-            renderer.add(this.virtualEnvCommand(runContext, requirements));
-
-            for (String command : commands) {
-                String argsString = args == null ? "" : " " + runContext.render(String.join(" ", args), additionalVars);
-
-                renderer.add(runContext.render(command, additionalVars) + argsString);
-            }
-
-            return String.join("\n", renderer);
-        }));
+        return String.join("\n", renderer);
     }
 }

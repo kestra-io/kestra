@@ -3,15 +3,15 @@ package io.kestra.core.models.tasks;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.tasks.retrys.AbstractRetry;
+import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.tasks.retrys.AbstractRetry;
-import io.kestra.core.runners.RunContext;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -23,11 +23,11 @@ import javax.validation.constraints.Pattern;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @SuperBuilder
 @Getter
 @NoArgsConstructor
 @Introspected
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 abstract public class Task {
     @NotNull
     @NotBlank

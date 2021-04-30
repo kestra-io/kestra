@@ -44,7 +44,7 @@ public class WeekendCondition extends Condition {
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
-    public String date = "{{ now \"iso_local_date\" }}";
+    private final String date = "{{ now \"iso_local_date\" }}";
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

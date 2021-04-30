@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @SuperBuilder
@@ -38,7 +39,8 @@ import javax.validation.constraints.NotNull;
 )
 public class VariableCondition extends Condition {
     @NotNull
-    public String expression;
+    @NotEmpty
+    private String expression;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

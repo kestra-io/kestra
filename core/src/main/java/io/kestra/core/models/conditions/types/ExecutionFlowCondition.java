@@ -39,11 +39,11 @@ import javax.validation.constraints.NotNull;
 public class ExecutionFlowCondition extends Condition {
     @NotNull
     @Schema(title = "The namespace of the flow")
-    public String namespace;
+    private String namespace;
 
     @NotNull
     @Schema(title = "The flow id")
-    public String flowId;
+    private String flowId;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

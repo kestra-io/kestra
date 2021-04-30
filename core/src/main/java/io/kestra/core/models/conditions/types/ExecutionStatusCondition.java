@@ -41,11 +41,11 @@ import javax.validation.Valid;
 public class ExecutionStatusCondition extends Condition {
     @Valid
     @Schema(title = "List of state that are authorized")
-    public List<State.Type> in;
+    private List<State.Type> in;
 
     @Valid
     @Schema(title = "List of state that aren't authorized")
-    public List<State.Type> notIn;
+    private List<State.Type> notIn;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

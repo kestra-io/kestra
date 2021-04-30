@@ -44,15 +44,15 @@ public class DateTimeBetweenCondition extends Condition {
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
-    public String date = "{{ now }}";
+    private final String date = "{{ now }}";
 
     @Schema(title = "The date must after this one")
     @PluginProperty(dynamic = false)
-    public ZonedDateTime after;
+    private ZonedDateTime after;
 
     @Schema(title = "The date must before this one")
     @PluginProperty(dynamic = false)
-    public ZonedDateTime before;
+    private ZonedDateTime before;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

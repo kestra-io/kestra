@@ -1,6 +1,7 @@
 package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Value;
@@ -21,6 +22,7 @@ import java.util.Optional;
 @Introspected
 public class State {
     @NotNull
+    @JsonInclude
     private Type current;
 
     @Valid

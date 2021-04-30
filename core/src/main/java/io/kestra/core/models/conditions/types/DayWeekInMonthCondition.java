@@ -45,17 +45,17 @@ public class DayWeekInMonthCondition extends Condition {
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
-    public String date = "{{ now \"iso_local_date\" }}";
+    private final String date = "{{ now \"iso_local_date\" }}";
 
     @NotNull
     @Schema(title = "The day of week")
     @PluginProperty(dynamic = false)
-    public DayOfWeek dayOfWeek;
+    private DayOfWeek dayOfWeek;
 
     @NotNull
     @Schema(title = "Are you looking at first or last day in month")
     @PluginProperty(dynamic = false)
-    public DayWeekInMonthCondition.DayInMonth dayInMonth;
+    private DayWeekInMonthCondition.DayInMonth dayInMonth;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

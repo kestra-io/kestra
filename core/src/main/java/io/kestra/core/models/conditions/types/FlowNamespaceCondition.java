@@ -39,14 +39,13 @@ public class FlowNamespaceCondition extends Condition {
     @Schema(
         title = "The namespace of the flow or the prefix if `prefix` is true"
     )
-    public String namespace;
+    private String namespace;
 
-    @Valid
     @Builder.Default
     @Schema(
         title = "If we must look at the flow namespace by prefix (simple startWith case sensitive)"
     )
-    public boolean prefix = false;
+    private final Boolean prefix = false;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {

@@ -115,11 +115,14 @@ abstract public class AbstractBash extends Task {
     protected Map<String, String> env;
 
     @Builder.Default
+    @Getter(AccessLevel.NONE)
     protected transient List<File> cleanupDirectory = new ArrayList<>();
 
+    @Getter(AccessLevel.NONE)
     protected transient Path workingDirectory;
 
     @Builder.Default
+    @Getter(AccessLevel.NONE)
     protected transient Map<String, Object> additionalVars = new HashMap<>();
 
     protected Map<String, String> handleOutputFiles() {
@@ -227,6 +230,7 @@ abstract public class AbstractBash extends Task {
         RunResult runResult = this.run(
             runContext,
             logger,
+            workingDirectory,
             finalCommandsWithInterpreter(commandAsString),
             this.env,
             (inputStream, isStdErr) -> {
@@ -258,12 +262,13 @@ abstract public class AbstractBash extends Task {
             .stdOutLineCount(runResult.getStdOut().getLogsCount())
             .stdErrLineCount(runResult.getStdErr().getLogsCount())
             .vars(outputs)
+            .files(uploaded)
             .outputFiles(uploaded)
             .build();
     }
 
-    protected RunResult run(RunContext runContext, Logger logger, List<String> commandsWithInterpreter, Map<String, String> env,  LogSupplier logSupplier) throws Exception {
-        logger.debug("Starting command [{}]", String.join("\n", commandsWithInterpreter));
+    protected RunResult run(RunContext runContext, Logger logger, Path workingDirectory, List<String> commandsWithInterpreter, Map<String, String> env,  LogSupplier logSupplier) throws Exception {
+        logger.debug("Starting command [{}]", String.join(" ", commandsWithInterpreter));
 
         // start
         ProcessBuilder processBuilder = new ProcessBuilder();

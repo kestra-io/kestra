@@ -54,21 +54,6 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void flowableFlow() throws TimeoutException {
-        Execution execution = runnerUtils.runOne(
-            "io.kestra.tests",
-            "listeners-flowable",
-            null,
-            (f, e) -> ImmutableMap.of("string", "flow")
-        );
-
-        assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("parent-seq"));
-        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("flow"));
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is("1"));
-    }
-
-    @Test
     void flowableExecution() throws TimeoutException {
         Execution execution = runnerUtils.runOne(
             "io.kestra.tests",
@@ -79,8 +64,8 @@ public class ListenersTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList().size(), is(3));
         assertThat(execution.getTaskRunList().get(1).getTaskId(), is("parent-seq"));
-        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("execution"));
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is(execution.getTaskRunList().get(1).getId()));
+        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("execution-success-listener"));
+        assertThat((String) execution.getTaskRunList().get(2).getOutputs().get("value"), containsString(execution.getId()));
     }
 
     @Test

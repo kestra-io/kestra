@@ -11,14 +11,9 @@ listeners:
         type: io.kestra.core.tasks.flows.Switch
         value: "{{inputs.string}}"
         cases:
-          flow:
-            - id: flow
-              type: io.kestra.core.tasks.debugs.Return
-              format: "{{flow.revision}}"
           execution:
-            - id: execution
-              type: io.kestra.core.tasks.debugs.Return
-              format: "{{execution.taskRunList.1.id}}"
+            - id: execution-success-listener
+              type: io.kestra.core.runners.ListenersTestTask
 
 tasks:
   - id: first

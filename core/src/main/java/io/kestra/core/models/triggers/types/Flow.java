@@ -91,6 +91,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                     .namespace(current.getNamespace())
                     .flowId(current.getFlowId())
                     .flowRevision(current.getFlowRevision())
+                    .state(current.getState().getCurrent())
                     .build()
             ));
 
@@ -120,6 +121,10 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Schema(title = "The execution id that trigger the current flow")
         @NotNull
         private String executionId;
+
+        @Schema(title = "The execution state")
+        @NotNull
+        private State.Type state;
 
         @Schema(title = "The namespace of the flow that trigger the current flow")
         @NotNull

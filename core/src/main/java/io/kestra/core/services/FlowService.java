@@ -1,6 +1,5 @@
 package io.kestra.core.services;
 
-import io.kestra.core.exceptions.InternalException;
 import io.micronaut.context.ApplicationContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,9 +18,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import static io.kestra.core.utils.Rethrow.throwFunction;
-import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 /**
  * Provides business logic to manipulate {@link Flow}
@@ -85,8 +81,14 @@ public class FlowService {
             .collect(Collectors.toList());
     }
 
-    public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
+    private static Stream<Flow> removeSelf(Stream<Flow> flowStream, Execution execution) {
+        // we don't allow recursive 
         return flowStream
+            .filter(f -> !f.uidWithoutRevision().equals(Flow.uidWithoutRevision(execution)));
+    }
+
+    public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
+        return removeSelf(flowStream, execution)
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
             .flatMap(flow -> flow.getTriggers()
                 .stream()

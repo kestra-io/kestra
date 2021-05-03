@@ -1,5 +1,7 @@
 package io.kestra.core.models.tasks.retrys;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -14,10 +16,15 @@ import javax.validation.constraints.NotNull;
 @NoArgsConstructor
 public class Exponential extends AbstractRetry {
     @NotNull
+    @JsonInclude
+    @Builder.Default
+    protected String type = "exponential";
+
+    @NotNull
     private Duration interval;
 
     @NotNull
-    private Duration maxDuration;
+    private Duration maxInterval;
 
     private Double delayFactor;
 
@@ -26,9 +33,9 @@ public class Exponential extends AbstractRetry {
         RetryPolicy<T> policy = super.toPolicy();
 
         if (this.delayFactor != null) {
-            policy.withBackoff(this.interval.toMillis(), this.maxDuration.toMillis(), ChronoUnit.MILLIS, this.delayFactor);
+            policy.withBackoff(this.interval.toMillis(), this.maxInterval.toMillis(), ChronoUnit.MILLIS, this.delayFactor);
         } else {
-            policy.withBackoff(this.interval.toMillis(), this.maxDuration.toMillis(), ChronoUnit.MILLIS);
+            policy.withBackoff(this.interval.toMillis(), this.maxInterval.toMillis(), ChronoUnit.MILLIS);
         }
 
         return policy;

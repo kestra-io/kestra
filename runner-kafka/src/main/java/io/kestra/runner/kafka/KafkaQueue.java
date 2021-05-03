@@ -6,13 +6,13 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.utils.RetryUtils;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
 import io.kestra.runner.kafka.services.KafkaConsumerService;
 import io.kestra.runner.kafka.services.KafkaProducerService;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.retry.annotation.Retryable;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -41,6 +41,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     private final List<org.apache.kafka.clients.consumer.Consumer<String, T>> kafkaConsumers = Collections.synchronizedList(new ArrayList<>());
     private final QueueService queueService;
     private final KafkaQueueService kafkaQueueService;
+    private final RetryUtils retryUtils;
 
     private static ExecutorService poolExecutor;
 
@@ -59,6 +60,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
         this.queueService = applicationContext.getBean(QueueService.class);
         this.kafkaQueueService = applicationContext.getBean(KafkaQueueService.class);
+        this.retryUtils = applicationContext.getBean(RetryUtils.class);
     }
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
@@ -228,13 +230,6 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             .collect(Collectors.toList());
     }
 
-    @Retryable(
-        includes = {
-            TimeoutException.class
-        },
-        attempts = "5",
-        multiplier = "2.0"
-    )
     Map<TopicPartition, Long> offsetForTime(Instant instant) {
         org.apache.kafka.clients.consumer.Consumer<String, T> consumer = kafkaConsumerService.of(
             null,
@@ -243,7 +238,10 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
 
         try {
             List<TopicPartition> topicPartitions = this.listTopicPartition();
-            Map<TopicPartition, Long> result = consumer.endOffsets(topicPartitions);
+            Map<TopicPartition, Long> result = retryUtils.<Map<TopicPartition, Long>, TimeoutException>of().run(
+                TimeoutException.class,
+                () -> consumer.endOffsets(topicPartitions)
+            );
 
             result.putAll(consumer
                 .offsetsForTimes(

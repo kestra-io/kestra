@@ -111,6 +111,13 @@ public class Flow implements DeletedInterface {
         ));
     }
 
+    public static String uidWithoutRevision(Execution execution) {
+        return String.join("_", Arrays.asList(
+            execution.getNamespace(),
+            execution.getFlowId()
+        ));
+    }
+
     private Stream<Task> allTasks() {
         return Stream.of(
             this.tasks != null ? this.tasks : new ArrayList<Task>(),
@@ -191,13 +198,6 @@ public class Flow implements DeletedInterface {
             .stream()
             .flatMap(listener -> listener.getTasks().stream())
             .collect(Collectors.toList());
-    }
-
-    public boolean isListenerTask(String id) {
-        return this.listenersTasks()
-            .stream()
-            .flatMap(this::allTasksWithChilds)
-            .anyMatch(task -> task.getId().equals(id));
     }
 
     public boolean equalsWithoutRevision(Flow o) {

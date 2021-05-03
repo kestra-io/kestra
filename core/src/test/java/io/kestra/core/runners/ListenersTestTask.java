@@ -1,5 +1,8 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.tasks.retrys.Exponential;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.utils.RetryUtils;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.executions.Execution;
@@ -7,7 +10,9 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.JacksonMapper;
 
+import java.time.Duration;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @SuperBuilder
 @ToString
@@ -18,7 +23,27 @@ public class ListenersTestTask extends Task implements RunnableTask<ListenersTes
     @SuppressWarnings("unchecked")
     @Override
     public ListenersTestTask.Output run(RunContext runContext) throws Exception {
-        Execution execution = JacksonMapper.toMap((Map<String, Object>) runContext.getVariables().get("execution"), Execution.class);
+        ExecutionRepositoryInterface executionRepository = runContext.getApplicationContext().getBean(ExecutionRepositoryInterface.class);
+        RetryUtils.Instance<Execution, NoSuchElementException> retryInstance = runContext.getApplicationContext().getBean(RetryUtils.class)
+            .of(
+                Exponential.builder()
+                    .delayFactor(2.0)
+                    .interval(Duration.ofSeconds(1))
+                    .maxInterval(Duration.ofSeconds(15))
+                    .maxAttempt(-1)
+                    .maxDuration(Duration.ofMinutes(10))
+                    .build(),
+                runContext.logger()
+            );
+
+        String executionRendererId = runContext.render(runContext.render("{{ execution.id }}"));
+
+        Execution execution = retryInstance.run(
+            NoSuchElementException.class,
+            () -> executionRepository.findById(executionRendererId)
+                .filter(e -> e.getState().getCurrent().isTerninated())
+                .orElseThrow(() -> new NoSuchElementException("Unable to find execution '" + executionRendererId + "'"))
+        );
 
         return Output.builder()
             .value(execution.toString())

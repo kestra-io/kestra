@@ -185,27 +185,19 @@ public class RunContext {
             }
         }
 
-        // special cases for listeners
         if (flow != null && execution != null) {
-            if (task != null && flow.isListenerTask(task.getId())) {
-                builder
-                    .put("flow", JacksonMapper.toMap(flow))
-                    .put("execution", JacksonMapper.toMap(execution));
+            builder
+                .put("flow", ImmutableMap.of(
+                    "id", flow.getId(),
+                    "namespace", flow.getNamespace(),
+                    "revision", flow.getRevision()
+                ));
 
-            } else {
-                builder
-                    .put("flow", ImmutableMap.of(
-                        "id", flow.getId(),
-                        "namespace", flow.getNamespace(),
-                        "revision", flow.getRevision()
-                    ));
-
-                builder
-                    .put("execution", ImmutableMap.of(
-                        "id", execution.getId(),
-                        "startDate", execution.getState().getStartDate()
-                    ));
-            }
+            builder
+                .put("execution", ImmutableMap.of(
+                    "id", execution.getId(),
+                    "startDate", execution.getState().getStartDate()
+                ));
         }
 
         if (execution != null) {
@@ -307,7 +299,8 @@ public class RunContext {
                 .concat(this.variables.entrySet().stream(), variables.entrySet().stream())
                 .collect(Collectors.toMap(
                     Map.Entry::getKey,
-                    Map.Entry::getValue
+                    Map.Entry::getValue,
+                    (o, o2) -> o2
                 ))
         );
     }

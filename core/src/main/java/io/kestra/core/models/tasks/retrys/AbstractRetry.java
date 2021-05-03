@@ -23,8 +23,7 @@ import javax.validation.constraints.NotNull;
 @Introspected
 @SuperBuilder
 public abstract class AbstractRetry {
-    @NotNull
-    protected String type;
+    abstract public String getType();
 
     private Duration maxDuration;
 

@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 @Introspected
 abstract public class AbstractMetricEntry <T> {
+    abstract public String getType();
+
     @NotNull
     protected String name;
 

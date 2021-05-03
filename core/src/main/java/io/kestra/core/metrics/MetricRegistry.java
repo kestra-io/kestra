@@ -121,7 +121,7 @@ public class MetricRegistry {
      * @return The complete metric with prefix
      */
     private String metricName(String name) {
-        return metricConfig.getPrefix() + "." + name;
+        return (metricConfig.getPrefix() != null ? metricConfig.getPrefix() + "." : "") + name;
     }
 
     /**

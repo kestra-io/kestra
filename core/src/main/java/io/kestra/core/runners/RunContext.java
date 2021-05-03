@@ -403,8 +403,17 @@ public class RunContext {
     }
 
     public RunContext metric(AbstractMetricEntry<?> metricEntry) {
-        metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());
         this.metrics.add(metricEntry);
+
+        try {
+            metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());
+        } catch (IllegalArgumentException e) {
+            // https://github.com/micrometer-metrics/micrometer/issues/877
+            // https://github.com/micrometer-metrics/micrometer/issues/2399
+            if (!e.getMessage().contains("Collector already registered")) {
+                throw e;
+            }
+        }
 
         return this;
     }

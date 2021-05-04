@@ -1,9 +1,7 @@
 package io.kestra.core.tasks.scripts;
 
 import com.google.common.base.Charsets;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.reflect.ClassPath;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -15,23 +13,13 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Path;
-import java.security.CodeSource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import static com.google.common.base.StandardSystemProperty.JAVA_CLASS_PATH;
-import static com.google.common.base.StandardSystemProperty.PATH_SEPARATOR;
 import static io.kestra.core.utils.Rethrow.throwFunction;
-import static java.util.logging.Level.WARNING;
+import static io.kestra.core.utils.Rethrow.throwSupplier;
 
 @SuperBuilder
 @ToString
@@ -87,16 +75,16 @@ import static java.util.logging.Level.WARNING;
     }
 )
 @Slf4j
-public class Python extends AbstractBash implements RunnableTask<AbstractBash.Output> {
-    @Builder.Default
+public class Python extends AbstractPython implements RunnableTask<ScriptOutput> {
     @Schema(
-        title = "The python interpreter to use",
-        description = "Set the python interpreter path to use"
+        title = "The commands to run",
+        description = "Default command will be launched with `./bin/python main.py {{args}}`"
     )
     @PluginProperty(dynamic = true)
     @NotNull
     @NotEmpty
-    private final String pythonPath = "/usr/bin/python3";
+    @Builder.Default
+    protected List<String> commands = Collections.singletonList("./bin/python main.py");
 
     @Schema(
         title = "Python command args",
@@ -105,49 +93,26 @@ public class Python extends AbstractBash implements RunnableTask<AbstractBash.Ou
     @PluginProperty(dynamic = true)
     private List<String> args;
 
-    @Schema(
-        title = "Requirements are python dependencies to add to the python execution process",
-        description = "Python dependencies list to setup in the virtualenv, in the same format than requirements.txt"
-    )
-    @PluginProperty(dynamic = true)
-    private String[] requirements;
-
-
     @Override
-    public Bash.Output run(RunContext runContext) throws Exception {
-        if (!inputFiles.containsKey("main.py")) {
+    public ScriptOutput run(RunContext runContext) throws Exception {
+        if (!inputFiles.containsKey("main.py") && this.commands.size() == 1 && this.commands.get(0).equals("./bin/python main.py")) {
             throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.py key with python code value.");
         }
 
         this.inputFiles.put("kestra.py", IOUtils.toString(
-            Objects.requireNonNull(Python.class.getClassLoader().getResourceAsStream("scripts/kestra.py")),
+            Objects.requireNonNull(AbstractPython.class.getClassLoader().getResourceAsStream("scripts/kestra.py")),
             Charsets.UTF_8
         ));
 
-        return run(runContext, throwFunction((additionalVars) -> {
-            Path workingDirectory = this.tmpWorkingDirectory(additionalVars);
-
-            // final command
+        return run(runContext, throwSupplier(() -> {
             List<String> renderer = new ArrayList<>();
+            renderer.add(this.virtualEnvCommand(runContext, requirements));
 
-            if (this.exitOnFailed) {
-                renderer.add("set -o errexit");
+            for (String command : commands) {
+                String argsString = args == null ? "" : " " + runContext.render(String.join(" ", args), additionalVars);
+
+                renderer.add(runContext.render(command, additionalVars) + argsString);
             }
-
-            String requirementsAsString = "";
-            if (requirements != null) {
-                requirementsAsString = "./bin/pip install " + runContext.render(String.join(" ", requirements), additionalVars) + " > /dev/null";
-            }
-
-            String args = getArgs() == null ? "" : " " + runContext.render(String.join(" ", getArgs()), additionalVars);
-
-            renderer.addAll(Arrays.asList(
-                pythonPath + " -m virtualenv " + workingDirectory + " -p " + pythonPath + " > /dev/null",
-                "cd " + workingDirectory,
-                "./bin/pip install pip --upgrade > /dev/null",
-                requirementsAsString,
-                "./bin/python main.py" + args
-            ));
 
             return String.join("\n", renderer);
         }));

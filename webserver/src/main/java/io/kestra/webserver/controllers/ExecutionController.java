@@ -274,7 +274,7 @@ public class ExecutionController {
         }
 
         executionQueue.emit(execution.get());
-        eventPublisher.publishEvent(new CrudEvent<>(execution, CrudEventType.CREATE));
+        eventPublisher.publishEvent(new CrudEvent<>(execution.get(), CrudEventType.CREATE));
 
         return execution.get();
     }

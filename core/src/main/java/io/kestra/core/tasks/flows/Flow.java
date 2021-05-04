@@ -110,11 +110,13 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             }
         }
 
-        io.kestra.core.models.flows.Flow flow = flowRepository.findById(
-            runContext.render(this.namespace),
-            runContext.render(this.flowId),
-            this.revision != null ? Optional.of(this.revision) : Optional.empty()
-        ).orElseThrow();
+        io.kestra.core.models.flows.Flow flow = flowRepository
+            .findById(
+                runContext.render(this.namespace),
+                runContext.render(this.flowId),
+                this.revision != null ? Optional.of(this.revision) : Optional.empty()
+            )
+            .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + this.flowId + "' in namespace '" + this.namespace + "'"));
 
         Execution execution = runnerUtils
             .newExecution(

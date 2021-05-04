@@ -6,6 +6,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.utils.RetryUtils;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
@@ -19,6 +20,7 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.WakeupException;
 
 import java.time.Duration;
@@ -36,9 +38,10 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     private Class<T> cls;
     private final AdminClient adminClient;
     private final KafkaConsumerService kafkaConsumerService;
-    private final List<org.apache.kafka.clients.consumer.Consumer<String, T>> kafkaConsumers = new ArrayList<>();
+    private final List<org.apache.kafka.clients.consumer.Consumer<String, T>> kafkaConsumers = Collections.synchronizedList(new ArrayList<>());
     private final QueueService queueService;
     private final KafkaQueueService kafkaQueueService;
+    private final RetryUtils retryUtils;
 
     private static ExecutorService poolExecutor;
 
@@ -57,6 +60,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
         this.queueService = applicationContext.getBean(QueueService.class);
         this.kafkaQueueService = applicationContext.getBean(KafkaQueueService.class);
+        this.retryUtils = applicationContext.getBean(RetryUtils.class);
     }
 
     public KafkaQueue(Class<T> cls, ApplicationContext applicationContext) {
@@ -226,9 +230,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
             .collect(Collectors.toList());
     }
 
-    private Map<TopicPartition, Long> offsetForTime(
-        Instant instant
-    ) {
+    Map<TopicPartition, Long> offsetForTime(Instant instant) {
         org.apache.kafka.clients.consumer.Consumer<String, T> consumer = kafkaConsumerService.of(
             null,
             JsonSerde.of(this.cls)
@@ -236,7 +238,10 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
 
         try {
             List<TopicPartition> topicPartitions = this.listTopicPartition();
-            Map<TopicPartition, Long> result = consumer.endOffsets(topicPartitions);
+            Map<TopicPartition, Long> result = retryUtils.<Map<TopicPartition, Long>, TimeoutException>of().run(
+                TimeoutException.class,
+                () -> consumer.endOffsets(topicPartitions)
+            );
 
             result.putAll(consumer
                 .offsetsForTimes(
@@ -276,11 +281,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         this.wakeup();
     }
 
-    @SuppressWarnings("ForLoopReplaceableByForEach")
     private void wakeup() {
-        for (Iterator<org.apache.kafka.clients.consumer.Consumer<String, T>> it = kafkaConsumers.iterator(); it.hasNext(); ) {
-            org.apache.kafka.clients.consumer.Consumer<String, T> kafkaConsumer = it.next();
-            kafkaConsumer.wakeup();
-        }
+        kafkaConsumers.forEach(org.apache.kafka.clients.consumer.Consumer::wakeup);
     }
 }

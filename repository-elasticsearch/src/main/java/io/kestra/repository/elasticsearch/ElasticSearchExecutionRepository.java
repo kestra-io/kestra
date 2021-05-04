@@ -36,6 +36,7 @@ import io.kestra.core.utils.ExecutorsUtils;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -242,6 +243,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                 startDate.format(DateTimeFormatter.ofPattern(START_DATE_FORMAT)),
                 endDate.format(DateTimeFormatter.ofPattern(START_DATE_FORMAT))
             ))
+            .timeZone(ZoneId.systemDefault())
             .subAggregation(AggregationBuilders.stats(DURATION_AGG).
                 field((isTaskRun ? "taskRunList." : "") + "state.duration")
             )

@@ -1,6 +1,7 @@
 package io.kestra.core.tasks;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.tasks.scripts.ScriptOutput;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.runners.RunContext;
@@ -10,12 +11,12 @@ import io.kestra.core.tasks.scripts.Bash;
 import io.kestra.core.tasks.scripts.Python;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -39,7 +40,7 @@ class PythonTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = python.run(runContext);
+        ScriptOutput run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOutLineCount(), is(1));
@@ -47,7 +48,7 @@ class PythonTest {
     }
 
     @Test
-    void failed() throws Exception {
+    void failed() {
         RunContext runContext = runContextFactory.of();
         Map<String, String> files = new HashMap<>();
         files.put("main.py", "import sys; sys.exit(1)");
@@ -63,7 +64,7 @@ class PythonTest {
         });
 
         assertThat(pythonException.getExitCode(), is(1));
-        assertThat(pythonException.getStdOut().size(), is(0));
+        assertThat(pythonException.getStdOutSize(), is(0));
     }
 
     @Test
@@ -76,10 +77,10 @@ class PythonTest {
             .id("test-python-task")
             .pythonPath("python3")
             .inputFiles(files)
-            .requirements(new String[]{"requests"})
+            .requirements(Collections.singletonList("requests"))
             .build();
 
-        Bash.Output run = python.run(runContext);
+        ScriptOutput run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getVars().get("extract"), is("200"));
@@ -98,7 +99,7 @@ class PythonTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = python.run(runContext);
+        ScriptOutput run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getVars().get("extract"), is("success"));
@@ -117,7 +118,7 @@ class PythonTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = python.run(runContext);
+        ScriptOutput run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getVars().get("extract"), is("True"));
@@ -137,7 +138,7 @@ class PythonTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = python.run(runContext);
+        ScriptOutput run = python.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getVars().get("extract"), is("OK"));
@@ -156,7 +157,7 @@ class PythonTest {
             .args(Arrays.asList("test", "param", "{{test}}"))
             .build();
 
-        Bash.Output run = python.run(runContext);
+        ScriptOutput run = python.run(runContext);
 
         assertThat(run.getVars().get("extract"), is("main.py test param value"));
     }
@@ -180,7 +181,7 @@ class PythonTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = node.run(runContext);
+        ScriptOutput run = node.run(runContext);
 
         assertThat(run.getVars().get("test"), is("value"));
         assertThat(run.getVars().get("int"), is(2));

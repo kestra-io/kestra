@@ -1,5 +1,7 @@
 package io.kestra.core.models.tasks.retrys;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -12,6 +14,11 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 public class Constant extends AbstractRetry {
+    @NotNull
+    @JsonInclude
+    @Builder.Default
+    protected String type = "constant";
+
     @NotNull
     private Duration interval;
 

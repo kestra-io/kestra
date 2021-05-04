@@ -1,6 +1,7 @@
 package io.kestra.core.tasks;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.tasks.scripts.ScriptOutput;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.runners.RunContext;
@@ -39,7 +40,7 @@ class NodeTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = node.run(runContext);
+        ScriptOutput run = node.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOutLineCount(), is(1));
@@ -64,8 +65,8 @@ class NodeTest {
         });
 
         assertThat(nodeException.getExitCode(), is(1));
-        assertThat(nodeException.getStdOut().size(), is(0));
-        assertThat(nodeException.getStdErr().size(), equalTo(0));
+        assertThat(nodeException.getStdOutSize(), is(0));
+        assertThat(nodeException.getStdErrSize(), equalTo(0));
     }
 
     @Test
@@ -82,7 +83,7 @@ class NodeTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = node.run(runContext);
+        ScriptOutput run = node.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getVars().get("extract"), is("200"));
@@ -101,7 +102,7 @@ class NodeTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = node.run(runContext);
+        ScriptOutput run = node.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getVars().get("extract"), is("success"));
@@ -121,7 +122,7 @@ class NodeTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = node.run(runContext);
+        ScriptOutput run = node.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getVars().get("extract"), is("OK"));
@@ -140,7 +141,7 @@ class NodeTest {
             .args(Arrays.asList("test", "param", "{{test}}"))
             .build();
 
-        Bash.Output run = node.run(runContext);
+        ScriptOutput run = node.run(runContext);
 
         assertThat(run.getVars().get("extract"), is("test param value"));
     }
@@ -163,7 +164,7 @@ class NodeTest {
             .inputFiles(files)
             .build();
 
-        Bash.Output run = node.run(runContext);
+        ScriptOutput run = node.run(runContext);
 
         BashTest.controlOutputs(runContext, run);
     }

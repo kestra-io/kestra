@@ -1,5 +1,6 @@
 package io.kestra.core.models.conditions.types;
 
+import io.kestra.core.exceptions.InternalException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -38,17 +39,16 @@ public class FlowNamespaceCondition extends Condition {
     @Schema(
         title = "The namespace of the flow or the prefix if `prefix` is true"
     )
-    public String namespace;
+    private String namespace;
 
-    @Valid
     @Builder.Default
     @Schema(
         title = "If we must look at the flow namespace by prefix (simple startWith case sensitive)"
     )
-    public boolean prefix = false;
+    private final Boolean prefix = false;
 
     @Override
-    public boolean test(ConditionContext conditionContext) {
+    public boolean test(ConditionContext conditionContext) throws InternalException {
         if (!prefix && conditionContext.getFlow().getNamespace().equals(this.namespace)) {
             return  true;
         }

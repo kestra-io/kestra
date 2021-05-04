@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions.metrics;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,7 @@ public final class Counter extends AbstractMetricEntry<Double> {
     private Double value;
 
     @NotNull
+    @JsonInclude
     protected String type = "counter";
 
     private Counter(@NotNull String name, @NotNull Double value, String... tags) {

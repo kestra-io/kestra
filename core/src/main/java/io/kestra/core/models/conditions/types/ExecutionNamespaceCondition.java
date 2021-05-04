@@ -1,5 +1,7 @@
 package io.kestra.core.models.conditions.types;
 
+import io.kestra.core.exceptions.IllegalConditionEvaluation;
+import io.kestra.core.exceptions.InternalException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -38,19 +40,18 @@ public class ExecutionNamespaceCondition extends Condition {
     @Schema(
         description = "The namespace of the flow or the prefix if `prefix` is true"
     )
-    public String namespace;
+    private String namespace;
 
-    @Valid
     @Builder.Default
     @Schema(
         description = "If we must look at the flow namespace by prefix (simple startWith case sensitive)"
     )
-    public boolean prefix = false;
+    private final Boolean prefix = false;
 
     @Override
-    public boolean test(ConditionContext conditionContext) {
+    public boolean test(ConditionContext conditionContext) throws InternalException {
         if (conditionContext.getExecution() == null) {
-            throw new IllegalArgumentException("Invalid condition with execution null");
+            throw new IllegalConditionEvaluation("Invalid condition with execution null");
         }
 
         if (!prefix && conditionContext.getExecution().getNamespace().equals(this.namespace)) {

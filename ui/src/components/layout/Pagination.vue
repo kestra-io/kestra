@@ -33,7 +33,7 @@
 <script>
     export default {
         props: {
-            total: {type: Number, required: true},
+            total: {type: Number, default: 0},
             max: {type: Number, default: undefined},
             size: {type: Number, required: true},
             page: {type: Number, required: true}

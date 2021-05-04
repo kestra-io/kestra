@@ -128,7 +128,6 @@ class YamlFlowParserTest {
         assertThat(s, containsString("\"deleted\":false"));
     }
 
-
     @Test
     void include() {
         Flow flow = parse("flows/helpers/include.yaml");

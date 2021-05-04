@@ -236,7 +236,6 @@ public class Execution implements DeletedInterface {
             .findFirst();
     }
 
-
     public Optional<TaskRun> findFirstRunning() {
         if (this.taskRunList == null) {
             return Optional.empty();
@@ -246,6 +245,18 @@ public class Execution implements DeletedInterface {
             .stream()
             .filter(t -> t.getState().isRunning())
             .findFirst();
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    public Optional<TaskRun> findLastNotTerminated() {
+        if (this.taskRunList == null) {
+            return Optional.empty();
+        }
+
+        return Streams.findLast(this.taskRunList
+            .stream()
+            .filter(t -> !t.getState().isTerninated())
+        );
     }
 
     @SuppressWarnings("UnstableApiUsage")
@@ -415,8 +426,18 @@ public class Execution implements DeletedInterface {
      * @return a new execution with taskrun failed if possible or execution failed is other case
      */
     public FailedExecutionWithLog failedExecutionFromExecutor(Exception e) {
+        log.warn(
+            "[namespace: {}] [flow: {}] [execution: {}] Flow failed from executor in {} with exception '{}'",
+            this.getNamespace(),
+            this.getFlowId(),
+            this.getId(),
+            this.getState().humanDuration(),
+            e.getMessage(),
+            e
+        );
+
         return this
-            .findFirstRunning()
+            .findLastNotTerminated()
             .map(taskRun -> {
                 TaskRunAttempt lastAttempt = taskRun.lastAttempt();
                 if (lastAttempt == null) {
@@ -438,7 +459,7 @@ public class Execution implements DeletedInterface {
             .filter(Objects::nonNull)
             .orElseGet(() -> new FailedExecutionWithLog(
                 this.state.getCurrent() != State.Type.FAILED ? this.withState(State.Type.FAILED) : this,
-                Collections.emptyList()
+                RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(this))
             )
         );
     }

@@ -1,3 +1,9 @@
+jackson:
+  serialization:
+    writeDatesAsTimestamps: false
+    writeDurationsAsTimestamps: false
+  serialization-inclusion: non_default
+
 kestra:
   url: https://mysuperhost.com/subpath
   repository:

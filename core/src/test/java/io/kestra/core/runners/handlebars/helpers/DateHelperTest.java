@@ -92,6 +92,10 @@ class DateHelperTest {
 
         assertThat(render, containsString(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ISO_LOCAL_DATE)));
         assertThat(render, containsString(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ofPattern("HH:mm"))));
+
+        render = variableRenderer.render("{{ now \"iso_local_date\" }}", ImmutableMap.of());
+
+        assertThat(render, is(ZonedDateTime.now(ZoneId.of("Europe/Lisbon")).format(DateTimeFormatter.ISO_LOCAL_DATE)));
     }
 
     @Test

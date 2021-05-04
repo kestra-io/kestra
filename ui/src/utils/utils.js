@@ -14,7 +14,7 @@ export default class Utils {
                     .keys(child)
                     .map(key => typeof child[key] === "object" ?
                         _flatten(child[key], path.concat([key])) :
-                        ({[path.concat([key]).join(".")] : child[key]})
+                        ({[path.concat([key]).join(".")]: child[key]})
                     )
                 );
         }(object));
@@ -27,19 +27,19 @@ export default class Utils {
 
         const flat = Utils.flatten(data);
 
-        return Object.keys(flat).map(key =>  {
+        return Object.keys(flat).map(key => {
             if (key === "variables.executionId") {
                 return {key, value: flat[key], subflow: true};
             }
 
-            if (typeof(flat[key]) === "string") {
+            if (typeof (flat[key]) === "string") {
                 let date = moment(flat[key], moment.ISO_8601);
                 if (date.isValid()) {
                     return {key, value: flat[key], date: true};
                 }
             }
 
-            if (typeof(flat[key]) === "number") {
+            if (typeof (flat[key]) === "number") {
                 return {key, value: flat[key].toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1 ")};
             }
 
@@ -58,25 +58,29 @@ export default class Utils {
      *
      * @return Formatted string.
      */
-    static humanFileSize (bytes, si=false, dp=1) {
-    const thresh = si ? 1000 : 1024;
+    static humanFileSize(bytes, si = false, dp = 1) {
+        const thresh = si ? 1000 : 1024;
 
-    if (Math.abs(bytes) < thresh) {
-      return bytes + " B";
+        if (Math.abs(bytes) < thresh) {
+            return bytes + " B";
+        }
+
+        const units = si ?
+            ["kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"] :
+            ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
+        let u = -1;
+        const r = 10 ** dp;
+
+        do {
+            bytes /= thresh;
+            ++u;
+        } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
+
+
+        return bytes.toFixed(dp) + " " + units[u];
     }
 
-    const units = si
-      ? ["kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
-      : ["KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
-    let u = -1;
-    const r = 10**dp;
-
-    do {
-      bytes /= thresh;
-      ++u;
-    } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
-
-
-    return bytes.toFixed(dp) + " " + units[u];
-  }
+    static duration(isoString) {
+        return moment.duration(isoString, moment.ISO_8601).asMilliseconds() / 1000
+    }
 }

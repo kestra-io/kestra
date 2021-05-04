@@ -2,6 +2,7 @@ package io.kestra.core.tasks.scripts;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -9,7 +10,6 @@ import org.apache.commons.io.FileUtils;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.AbstractMetricEntry;
-import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -23,20 +23,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import static io.kestra.core.utils.Rethrow.throwBiConsumer;
-import static io.kestra.core.utils.Rethrow.throwConsumer;
+import static io.kestra.core.utils.Rethrow.*;
 
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-abstract public class AbstractBash extends Task implements RunnableTask<AbstractBash.Output> {
+abstract public class AbstractBash extends Task {
     @Builder.Default
     @Schema(
         description = "Interpreter to used"
@@ -104,12 +105,27 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
     )
     protected Map<String, String> inputFiles;
 
-    @Builder.Default
-    protected transient List<File> cleanupDirectory = new ArrayList<>();
-    protected transient Path workingDirectory;
-    protected static transient ObjectMapper mapper = JacksonMapper.ofJson();
+    @Schema(
+        title = "Additional environnements variable to add for current process."
+    )
+    @PluginProperty(
+        additionalProperties = String.class,
+        dynamic = true
+    )
+    protected Map<String, String> env;
 
-    protected Map<String, String> handleOutputFiles(Map<String, Object> additionalVars) throws IOException {
+    @Builder.Default
+    @Getter(AccessLevel.NONE)
+    protected transient List<File> cleanupDirectory = new ArrayList<>();
+
+    @Getter(AccessLevel.NONE)
+    protected transient Path workingDirectory;
+
+    @Builder.Default
+    @Getter(AccessLevel.NONE)
+    protected transient Map<String, Object> additionalVars = new HashMap<>();
+
+    protected Map<String, String> handleOutputFiles() {
         List<String> outputs = new ArrayList<>();
 
         if (this.outputFiles != null && this.outputFiles.size() > 0) {
@@ -140,15 +156,17 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
         return outputFiles;
     }
 
-    protected void handleInputFiles(Map<String, Object> additionalVars, RunContext runContext) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+    protected void handleInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
         if (inputFiles != null && inputFiles.size() > 0) {
+            Path workingDirectory = tmpWorkingDirectory();
+
             for (String fileName : inputFiles.keySet()) {
                 File file = new File(fileName);
 
                 // path with "/", create the subfolders
                 if (file.getParent() != null) {
                     Path subFolder = Paths.get(
-                        tmpWorkingDirectory(additionalVars).toAbsolutePath().toString(),
+                        workingDirectory.toAbsolutePath().toString(),
                         new File(fileName).getParent()
                     );
 
@@ -157,7 +175,7 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
                     }
                 }
 
-                String filePath = tmpWorkingDirectory(additionalVars) + "/" + fileName;
+                String filePath = workingDirectory + "/" + fileName;
                 String render = runContext.render(inputFiles.get(fileName), additionalVars);
 
                 if (render.startsWith("kestra://")) {
@@ -180,54 +198,49 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
         }
     }
 
-    protected AbstractBash.Output run(RunContext runContext, Function<Map<String, Object>, String> function) throws Exception {
-        Logger logger = runContext.logger();
-        Map<String, Object> additionalVars = new HashMap<>();
-
-        Map<String, String> outputFiles = this.handleOutputFiles(additionalVars);
-        this.handleInputFiles(additionalVars, runContext);
-
-        String commandAsString = function.apply(additionalVars);
+    protected List<String> finalCommandsWithInterpreter(String commandAsString) throws IOException {
+        // build the final commands
+        List<String> commandsWithInterpreter = new ArrayList<>(Collections.singletonList(this.interpreter));
 
         File bashTempFiles = null;
         // https://www.in-ulm.de/~mascheck/various/argmax/ MAX_ARG_STRLEN (131072)
         if (commandAsString.length() > 131072) {
-            bashTempFiles = File.createTempFile("bash", ".sh");
+            bashTempFiles = File.createTempFile("bash", ".sh", this.tmpWorkingDirectory().toFile());
             Files.write(bashTempFiles.toPath(), commandAsString.getBytes());
 
-            commandAsString = this.interpreter + " " + bashTempFiles.getAbsolutePath();
-        }
-
-        logger.debug("Starting command [{}]", commandAsString);
-
-        // build the final commands
-        List<String> commands = new ArrayList<>(Collections.singletonList(this.interpreter));
-        commands.addAll(Arrays.asList(this.interpreterArgs));
-        commands.add(commandAsString);
-
-        // start
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command(commands);
-        Process process = processBuilder.start();
-
-        // logs
-        LogThread stdOut = readInput(logger, process.getInputStream(), false);
-        LogThread stdErr = readInput(logger, process.getErrorStream(), true);
-
-        int exitCode = process.waitFor();
-
-        if (exitCode != 0) {
-            stdOut.join();
-            stdErr.join();
-
-            throw new BashException(
-                exitCode,
-                stdOut.getLogs(),
-                stdErr.getLogs()
-            );
+            commandAsString = bashTempFiles.getAbsolutePath();
         } else {
-            logger.debug("Command succeed with code " + exitCode);
+            commandsWithInterpreter.addAll(Arrays.asList(this.interpreterArgs));
         }
+
+        commandsWithInterpreter.add(commandAsString);
+
+        return commandsWithInterpreter;
+    }
+
+    protected ScriptOutput run(RunContext runContext, Supplier<String> supplier) throws Exception {
+        Logger logger = runContext.logger();
+
+        Map<String, String> outputFiles = this.handleOutputFiles();
+        this.handleInputFiles(runContext);
+
+        String commandAsString = supplier.get();
+
+        // run
+        RunResult runResult = this.run(
+            runContext,
+            logger,
+            workingDirectory,
+            finalCommandsWithInterpreter(commandAsString),
+            this.env,
+            (inputStream, isStdErr) -> {
+                AbstractLogThread thread = new LogThread(logger, inputStream, isStdErr, runContext);
+                thread.setName("bash-log-" + (isStdErr ? "-err" : "-out"));
+                thread.start();
+
+                return thread;
+            }
+        );
 
         // upload output files
         Map<String, URI> uploaded = new HashMap<>();
@@ -237,27 +250,68 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
                 uploaded.put(k, runContext.putTempFile(new File(v)));
             }));
 
-        // bash temp files
-        if (bashTempFiles != null) {
-            //noinspection ResultOfMethodCallIgnored
-            bashTempFiles.delete();
-        }
-
         this.cleanup();
 
         Map<String, Object> outputs = new HashMap<>();
-        outputs.putAll(parseOut(runContext, stdOut.getLogs()));
-        outputs.putAll(parseOut(runContext, stdErr.getLogs()));
+        outputs.putAll(runResult.getStdOut().getOutputs());
+        outputs.putAll(runResult.getStdErr().getOutputs());
 
         // output
-        return Output.builder()
-            .exitCode(exitCode)
-            .stdOutLineCount(stdOut.getLogs().size())
-            .stdErrLineCount(stdErr.getLogs().size())
+        return ScriptOutput.builder()
+            .exitCode(runResult.getExitCode())
+            .stdOutLineCount(runResult.getStdOut().getLogsCount())
+            .stdErrLineCount(runResult.getStdErr().getLogsCount())
             .vars(outputs)
             .files(uploaded)
             .outputFiles(uploaded)
             .build();
+    }
+
+    protected RunResult run(RunContext runContext, Logger logger, Path workingDirectory, List<String> commandsWithInterpreter, Map<String, String> env,  LogSupplier logSupplier) throws Exception {
+        logger.debug("Starting command [{}]", String.join(" ", commandsWithInterpreter));
+
+        // start
+        ProcessBuilder processBuilder = new ProcessBuilder();
+
+        if (env != null && env.size() > 0) {
+            Map<String, String> environment = processBuilder.environment();
+
+            environment.putAll(env
+                .entrySet()
+                .stream()
+                .map(throwFunction(r -> new AbstractMap.SimpleEntry<>(
+                        runContext.render(r.getKey()),
+                        runContext.render(r.getValue())
+                    )
+                ))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+            );
+        }
+
+        if (workingDirectory != null) {
+            processBuilder.directory(workingDirectory.toFile());
+        }
+
+        processBuilder.command(commandsWithInterpreter);
+        Process process = processBuilder.start();
+
+        // logs
+        AbstractLogThread stdOut = logSupplier.call(process.getInputStream(), false);
+        AbstractLogThread stdErr = logSupplier.call(process.getErrorStream(), true);
+
+        int exitCode = process.waitFor();
+
+        stdOut.join();
+        stdErr.join();
+        process.destroy();
+
+        if (exitCode != 0) {
+            throw new BashException(exitCode, stdOut.getLogsCount(), stdErr.getLogsCount());
+        } else {
+            logger.debug("Command succeed with code " + exitCode);
+        }
+
+        return new RunResult(exitCode, stdOut, stdErr);
     }
 
     protected void cleanup() throws IOException {
@@ -266,7 +320,7 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
         }
     }
 
-    protected Path tmpWorkingDirectory(Map<String, Object> additionalVars) throws IOException {
+    protected Path tmpWorkingDirectory() throws IOException {
         if (this.workingDirectory == null) {
             this.workingDirectory = Files.createTempDirectory("working-dir");
             this.cleanupDirectory.add(workingDirectory.toFile());
@@ -274,33 +328,6 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
         }
 
         return this.workingDirectory;
-    }
-
-    protected Map<String, Object> parseOut(RunContext runContext, List<String> outs) throws JsonProcessingException {
-        Map<String, Object> outputs = new HashMap<>();
-
-        for (String out : outs) {
-            // captures output per line
-            String pattern = "^::(\\{.*\\})::$";
-
-            Pattern r = Pattern.compile(pattern);
-            Matcher m = r.matcher(out);
-
-            if (m.find()) {
-                BashCommand<?> bashCommand = mapper.readValue(m.group(1), BashCommand.class);
-
-                if (bashCommand.outputs != null) {
-                    outputs.putAll(bashCommand.outputs);
-                }
-
-
-                if (bashCommand.metrics != null) {
-                    bashCommand.metrics.forEach(runContext::metric);
-                }
-            }
-        }
-
-        return outputs;
     }
 
     @NoArgsConstructor
@@ -311,93 +338,57 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
 
     }
 
-    protected LogThread readInput(Logger logger, InputStream inputStream, boolean isStdErr) {
-        LogThread thread = new LogThread(logger, inputStream, isStdErr);
-        thread.setName("bash-log");
-        thread.start();
-
-        return thread;
+    @FunctionalInterface
+    public interface LogSupplier {
+        AbstractLogThread call(InputStream inputStream, boolean isStdErr) throws Exception;
     }
 
-    protected static class LogThread extends Thread {
-        private final Logger logger;
-        private final InputStream inputStream;
-        private final boolean isStdErr;
-        private final List<String> logs = new ArrayList<>();
+    public static class LogThread extends AbstractLogThread {
+        protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+        private static final Pattern PATTERN = Pattern.compile("^::(\\{.*\\})::$");
 
-        protected LogThread(Logger logger, InputStream inputStream, boolean isStdErr) {
+        private final Logger logger;
+        private final boolean isStdErr;
+        private final RunContext runContext;
+
+        public LogThread(Logger logger, InputStream inputStream, boolean isStdErr, RunContext runContext) {
+            super(inputStream);
+
             this.logger = logger;
-            this.inputStream = inputStream;
             this.isStdErr = isStdErr;
+            this.runContext = runContext;
         }
 
-        @Override
-        public void run() {
-            synchronized (this) {
+        protected void call(String line) {
+            this.parseOut(line, logger, runContext);
+
+            if (isStdErr) {
+                logger.warn(line);
+            } else {
+                logger.info(line);
+            }
+        }
+
+        protected void parseOut(String line, Logger logger, RunContext runContext)  {
+            Matcher m = PATTERN.matcher(line);
+
+            if (m.find()) {
                 try {
-                    InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-                    try (BufferedReader bufferedReader = new BufferedReader(inputStreamReader)) {
-                        String line;
-                        while ((line = bufferedReader.readLine()) != null) {
-                            this.logs.add(line);
-                            if (isStdErr) {
-                                logger.warn(line);
-                            } else {
-                                logger.info(line);
-                            }
-                        }
+                    BashCommand<?> bashCommand = MAPPER.readValue(m.group(1), BashCommand.class);
+
+                    if (bashCommand.outputs != null) {
+                        outputs.putAll(bashCommand.outputs);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+
+                    if (bashCommand.metrics != null) {
+                        bashCommand.metrics.forEach(runContext::metric);
+                    }
+                }
+                catch (JsonProcessingException e) {
+                    logger.warn("Invalid outputs '{}'", e.getMessage(), e);
                 }
             }
         }
-
-        public List<String> getLogs() {
-            synchronized (this) {
-                return logs;
-            }
-        }
-    }
-
-    @Builder
-    @Getter
-    public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(
-            title = "The value extract from output of the commands"
-        )
-        private final Map<String, Object> vars;
-
-        @Schema(
-            title = "The standard output line count"
-        )
-        private final int stdOutLineCount;
-
-        @Schema(
-            title = "The standard error line count"
-        )
-        private final int stdErrLineCount;
-
-        @Schema(
-            title = "The exit code of the whole execution"
-        )
-        @NotNull
-        private final int exitCode;
-
-        @Schema(
-            title = "Deprecated output files",
-            description = "use `outputFiles`",
-            deprecated = true
-        )
-        @Deprecated
-        @PluginProperty(additionalProperties = URI.class)
-        private final Map<String, URI> files;
-
-        @Schema(
-            title = "The output files uri in Kestra internal storage"
-        )
-        @PluginProperty(additionalProperties = URI.class)
-        private final Map<String, URI> outputFiles;
     }
 
     @Getter
@@ -405,15 +396,16 @@ abstract public class AbstractBash extends Task implements RunnableTask<Abstract
     public static class BashException extends Exception {
         private static final long serialVersionUID = 1L;
 
-        public BashException(int exitCode, List<String> stdOut, List<String> stdErr) {
-            super("Command failed with code " + exitCode + " and stdErr '" + String.join("\n", stdErr) + "'");
+        private final int exitCode;
+        private final int stdOutSize;
+        private final int stdErrSize;
+
+        public BashException(int exitCode, int stdOutSize, int stdErrSize) {
+            super("Command failed with code " + exitCode);
             this.exitCode = exitCode;
-            this.stdOut = stdOut;
-            this.stdErr = stdErr;
+            this.stdOutSize = stdOutSize;
+            this.stdErrSize = stdErrSize;
         }
 
-        private final int exitCode;
-        private final List<String> stdOut;
-        private final List<String> stdErr;
     }
 }

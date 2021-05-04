@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import com.cronutils.utils.VisibleForTesting;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -34,18 +35,28 @@ public class ConditionService {
             multipleConditionStorage
         );
 
-        return this.valid(Collections.singletonList(condition), conditionContext);
+        return this.valid(flow, Collections.singletonList(condition), conditionContext);
     }
 
-    @VisibleForTesting
     public boolean isValid(Condition condition, Flow flow, @Nullable Execution execution) {
         return this.isValid(condition, flow, execution, null);
     }
 
-    public boolean isValid(AbstractTrigger trigger, ConditionContext conditionContext) {
+    private void logException(Flow flow, Condition condition, ConditionContext conditionContext, InternalException e) {
+        conditionContext.getRunContext().logger().warn(
+            "[namespace: {}] [flow: {}] [condition: {}] Evaluate Condition Failed with error '{}'",
+            flow.getNamespace(),
+            flow.getId(),
+            condition.toString(),
+            e.getMessage(),
+            e
+        );
+    }
+
+    public boolean isValid(Flow flow, AbstractTrigger trigger, ConditionContext conditionContext) {
         List<Condition> conditions = trigger.getConditions() == null ? new ArrayList<>() : trigger.getConditions();
 
-        return this.valid(conditions, conditionContext);
+        return this.valid(flow, conditions, conditionContext);
     }
 
     public boolean isValid(AbstractTrigger trigger, Flow flow, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
@@ -60,7 +71,7 @@ public class ConditionService {
             multipleConditionStorage
         );
 
-        return this.valid(conditions, conditionContext);
+        return this.valid(flow, conditions, conditionContext);
     }
 
     public ConditionContext conditionContext(RunContext runContext, Flow flow, @Nullable Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
@@ -77,10 +88,18 @@ public class ConditionService {
         return this.conditionContext(runContext, flow, execution, null);
     }
 
-    boolean valid(List<Condition> list, ConditionContext conditionContext) {
+    boolean valid(Flow flow, List<Condition> list, ConditionContext conditionContext) {
         return list
             .stream()
-            .allMatch(condition -> condition.test(conditionContext));
+            .allMatch(condition -> {
+                try {
+                    return condition.test(conditionContext);
+                } catch (InternalException e) {
+                    logException(flow, condition, conditionContext, e);
+
+                    return false;
+                }
+            });
     }
 
     public boolean isTerminatedWithListeners(Flow flow, Execution execution) {
@@ -106,7 +125,7 @@ public class ConditionService {
             .getListeners()
             .stream()
             .filter(listener -> listener.getConditions() == null ||
-                this.valid(listener.getConditions(), conditionContext)
+                this.valid(flow, listener.getConditions(), conditionContext)
             )
             .flatMap(listener -> listener.getTasks().stream())
             .map(ResolvedTask::of)

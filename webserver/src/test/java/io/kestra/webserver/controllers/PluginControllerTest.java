@@ -61,6 +61,7 @@ class PluginControllerTest {
     }
 
 
+    @SuppressWarnings("unchecked")
     @Test
     void bash() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {
@@ -74,11 +75,12 @@ class PluginControllerTest {
             assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.scripts.Bash"));
             assertThat(doc.getMarkdown(), containsString("Exit if any non true return value"));
             assertThat(doc.getMarkdown(), containsString("The standard output line count"));
-            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(8));
+            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(9));
             assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(6));
         });
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void docs() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext, embeddedServer) -> {

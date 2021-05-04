@@ -121,7 +121,7 @@ public class FlowController {
                 "Flow id already exists",
                 flow,
                 Flow.class,
-                "namespace.id",
+                "flow.id",
                 flow.getId()
             )));
         }

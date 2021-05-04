@@ -37,7 +37,7 @@ export default class YamlUtils {
 
             return value;
         } else if (value instanceof Object) {
-           return Object.keys(value)
+            return YamlUtils.sort(value)
                .reduce((accumulator, r) => {
                    if (value[r] !== undefined) {
                        accumulator[r] = YamlUtils._transform(value[r])
@@ -48,5 +48,35 @@ export default class YamlUtils {
         }
 
         return value;
+    }
+
+    static sort(value) {
+        const SORT_FIELDS = [
+            "id",
+            "type",
+            "namespace",
+            "description",
+            "revision",
+            "inputs",
+            "variables",
+            "tasks",
+            "errors",
+            "triggers",
+            "listeners",
+        ];
+
+        const keys = Object.keys(value)
+            .sort()
+            .sort((a, b) => {
+                return YamlUtils.index(SORT_FIELDS, a) - YamlUtils.index(SORT_FIELDS, b);
+            });
+
+        return keys;
+    }
+
+    static index(based, value) {
+        const index = based.indexOf(value);
+
+        return index === -1 ? Number.MAX_SAFE_INTEGER : index;
     }
 }

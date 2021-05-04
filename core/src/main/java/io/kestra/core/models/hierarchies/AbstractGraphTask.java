@@ -1,5 +1,6 @@
 package io.kestra.core.models.hierarchies;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
@@ -17,6 +18,7 @@ import java.util.List;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 public abstract class AbstractGraphTask {
     protected final String uid;
+    @JsonInclude
     protected final String type;
     private final Task task;
     private final TaskRun taskRun;

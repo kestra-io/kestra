@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import io.kestra.core.contexts.KestraClassLoader;
 
 import java.util.Map;
 import java.util.TimeZone;
@@ -50,6 +52,10 @@ abstract public class JacksonMapper {
         return MAPPER.convertValue(map, cls);
     }
 
+    public static Map<String, Object> toMap(String json) throws JsonProcessingException {
+        return MAPPER.readValue(json, TYPE_REFERENCE);
+    }
+
     public static <T> String log(T Object) {
         try {
             return YAML_MAPPER.writeValueAsString(Object);
@@ -70,6 +76,12 @@ abstract public class JacksonMapper {
     }
 
     private static ObjectMapper configure(ObjectMapper mapper) {
+        // unit test can be not init
+        if (KestraClassLoader.isInit()) {
+            TypeFactory tf = TypeFactory.defaultInstance().withClassLoader(KestraClassLoader.instance());
+            mapper.setTypeFactory(tf);
+        }
+
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)

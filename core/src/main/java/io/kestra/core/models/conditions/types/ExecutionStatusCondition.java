@@ -1,5 +1,7 @@
 package io.kestra.core.models.conditions.types;
 
+import io.kestra.core.exceptions.IllegalConditionEvaluation;
+import io.kestra.core.exceptions.InternalException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -39,16 +41,16 @@ import javax.validation.Valid;
 public class ExecutionStatusCondition extends Condition {
     @Valid
     @Schema(title = "List of state that are authorized")
-    public List<State.Type> in;
+    private List<State.Type> in;
 
     @Valid
     @Schema(title = "List of state that aren't authorized")
-    public List<State.Type> notIn;
+    private List<State.Type> notIn;
 
     @Override
-    public boolean test(ConditionContext conditionContext) {
+    public boolean test(ConditionContext conditionContext) throws InternalException {
         if (conditionContext.getExecution() == null) {
-            throw new IllegalArgumentException("Invalid condition with execution null");
+            throw new IllegalConditionEvaluation("Invalid condition with execution null");
         }
 
         boolean result = true;

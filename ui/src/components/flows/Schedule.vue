@@ -6,9 +6,7 @@
                 @set="set"
                 :schedule="schedule"
                 :index="x"
-                v-for="(schedule, x) in (flow.triggers || []).filter(
-                    (r) => r.type ==='io.kestra.core.models.triggers.types.Schedule'
-                )"
+                v-for="(schedule, x) in triggers"
                 :key="x"
             />
         </b-list-group>
@@ -57,6 +55,11 @@
             canSave() {
                 return canSaveFlowTemplate(true, this.user, this.flow, "flow");
             },
+            triggers() {
+                return (this.flow.triggers || []).filter(
+                    (r) => r.type.endsWith("core.models.triggers.types.Schedule")
+                )
+            }
         },
         methods: {
             save() {

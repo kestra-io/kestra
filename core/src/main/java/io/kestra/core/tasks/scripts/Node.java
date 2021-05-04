@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.Rethrow.throwSupplier;
 
 @SuperBuilder
 @ToString
@@ -83,7 +84,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         )
     }
 )
-public class Node extends AbstractBash implements RunnableTask<AbstractBash.Output> {
+public class Node extends AbstractBash implements RunnableTask<ScriptOutput> {
     @Builder.Default
     @Schema(
         title = "The node interpreter to use",
@@ -107,7 +108,7 @@ public class Node extends AbstractBash implements RunnableTask<AbstractBash.Outp
     private List<String> args;
 
     @Override
-    public Bash.Output run(RunContext runContext) throws Exception {
+    public ScriptOutput run(RunContext runContext) throws Exception {
         if (!inputFiles.containsKey("main.js")) {
             throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.js key with javascript code value.");
         }
@@ -117,9 +118,7 @@ public class Node extends AbstractBash implements RunnableTask<AbstractBash.Outp
             Charsets.UTF_8
         ));
 
-        return run(runContext, throwFunction((additionalVars) -> {
-            Path workingDirectory = this.tmpWorkingDirectory(additionalVars);
-
+        return run(runContext, throwSupplier(() -> {
             // final command
             List<String> renderer = new ArrayList<>();
 
@@ -133,7 +132,6 @@ public class Node extends AbstractBash implements RunnableTask<AbstractBash.Outp
 
             renderer.addAll(Arrays.asList(
                 "PATH=\"$PATH:" + new File(nodePath).getParent() + "\"",
-                "cd " + workingDirectory,
                 npmInstall,
                 nodePath + " main.js" + args
             ));

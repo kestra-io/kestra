@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions.metrics;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class Timer extends AbstractMetricEntry<java.time.Duration> {
     @NotNull
+    @JsonInclude
     protected String type = "timer";
 
     @NotNull

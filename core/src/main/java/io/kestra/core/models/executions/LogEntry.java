@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @Value
@@ -51,13 +51,14 @@ public class LogEntry implements DeletedInterface {
     @NotNull
     private boolean deleted = false;
 
-    public static List<Level> findLevelsByMin(Level minLevel) {
+    public static List<String> findLevelsByMin(Level minLevel) {
         if (minLevel == null) {
-            return Arrays.asList(Level.values());
+            return Arrays.stream(Level.values()).map(Enum::name).collect(Collectors.toList());
         }
 
         return Arrays.stream(Level.values())
             .filter(level -> level.toInt() >= minLevel.toInt())
+            .map(Enum::name)
             .collect(Collectors.toList());
     }
 

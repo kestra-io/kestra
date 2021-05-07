@@ -9,7 +9,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.runners.RunContext;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @Builder

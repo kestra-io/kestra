@@ -13,7 +13,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import javax.inject.Inject;
 
 @Validated

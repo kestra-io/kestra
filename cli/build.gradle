@@ -5,6 +5,11 @@ dependencies {
     implementation "io.micronaut:micronaut-management"
     implementation "io.micronaut:micronaut-http-server-netty"
 
+    // logs
+    implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.14.1'
+    implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.30'
+    implementation group: 'io.micronaut.gcp', name: 'micronaut-gcp-logging', version: '3.5.0'
+
     // plugins
     implementation 'org.eclipse.aether:aether-api:1.1.0'
     implementation 'org.eclipse.aether:aether-spi:1.1.0'

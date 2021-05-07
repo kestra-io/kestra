@@ -1,14 +1,13 @@
 package io.kestra.core.contexts;
 
+import io.kestra.core.plugins.PluginRegistry;
 import io.micronaut.context.ApplicationContextConfiguration;
 import io.micronaut.context.DefaultApplicationContext;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.inject.BeanDefinitionReference;
-import io.kestra.core.plugins.PluginRegistry;
 
-import javax.annotation.Nonnull;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +24,7 @@ public class KestraApplicationContext extends DefaultApplicationContext {
         return pluginRegistry;
     }
 
-    public KestraApplicationContext(@Nonnull ApplicationContextConfiguration configuration, PluginRegistry pluginRegistry) {
+    public KestraApplicationContext(@NonNull ApplicationContextConfiguration configuration, PluginRegistry pluginRegistry) {
         super(configuration);
         this.pluginRegistry = pluginRegistry;
     }
@@ -44,7 +43,7 @@ public class KestraApplicationContext extends DefaultApplicationContext {
     }
 
     @Override
-    protected @Nonnull List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
+    protected @NonNull List<BeanDefinitionReference> resolveBeanDefinitionReferences() {
         if (resolvedBeanReferences != null) {
             return resolvedBeanReferences;
         }

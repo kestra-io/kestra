@@ -170,6 +170,8 @@ public class RetryUtils {
 
     @Getter
     public static class RetryFailed extends Exception {
+        private static final long serialVersionUID = 1L;
+
         private final int attemptCount;
         private final Duration elapsedTime;
         private final Duration startTime;

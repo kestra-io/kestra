@@ -12,8 +12,8 @@ import io.micronaut.core.io.scan.ClassPathResourceLoader;
 import io.micronaut.core.util.StringUtils;
 import io.kestra.core.plugins.PluginRegistry;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import java.util.*;
 
 /**
@@ -31,14 +31,14 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
         super();
     }
 
-    public @Nonnull KestraApplicationContextBuilder classLoader(ClassLoader classLoader) {
+    public @NonNull KestraApplicationContextBuilder classLoader(ClassLoader classLoader) {
         if (classLoader != null) {
             this.classLoader = classLoader;
         }
         return this;
     }
 
-    public @Nonnull KestraApplicationContextBuilder mainClass(Class<?> mainClass) {
+    public @NonNull KestraApplicationContextBuilder mainClass(Class<?> mainClass) {
         if (mainClass != null) {
             if (this.classLoader == null) {
                 this.classLoader = mainClass.getClassLoader();
@@ -51,28 +51,28 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
         return this;
     }
 
-    public @Nonnull KestraApplicationContextBuilder packages(@Nullable String... packages) {
+    public @NonNull KestraApplicationContextBuilder packages(@Nullable String... packages) {
         if (packages != null) {
             this.packages.addAll(Arrays.asList(packages));
         }
         return this;
     }
 
-    public @Nonnull KestraApplicationContextBuilder environments(@Nullable String... environments) {
+    public @NonNull KestraApplicationContextBuilder environments(@Nullable String... environments) {
         if (environments != null) {
             this.environments.addAll(Arrays.asList(environments));
         }
         return this;
     }
 
-    public @Nonnull KestraApplicationContextBuilder properties(@Nullable Map<String, Object> properties) {
+    public @NonNull KestraApplicationContextBuilder properties(@Nullable Map<String, Object> properties) {
         if (properties != null) {
             this.properties.putAll(properties);
         }
         return this;
     }
 
-    public @Nonnull KestraApplicationContextBuilder pluginRegistry(@Nullable PluginRegistry pluginRegistry) {
+    public @NonNull KestraApplicationContextBuilder pluginRegistry(@Nullable PluginRegistry pluginRegistry) {
         if (pluginRegistry != null) {
             this.pluginRegistry = pluginRegistry;
         }
@@ -81,7 +81,7 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
 
 
     @SuppressWarnings("MagicNumber")
-    public @Nonnull ApplicationContext build() {
+    public @NonNull ApplicationContext build() {
         DefaultApplicationContext applicationContext = new KestraApplicationContext(this, this.pluginRegistry);
         Environment environment = applicationContext.getEnvironment();
 
@@ -99,7 +99,7 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
         return applicationContext;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<String> getEnvironments() {
         return this.environments;
@@ -127,19 +127,19 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public ConversionService<?> getConversionService() {
         return ConversionService.SHARED;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public ClassPathResourceLoader getResourceLoader() {
         return ClassPathResourceLoader.defaultLoader(classLoader);
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public ClassLoader getClassLoader() {
         return this.classLoader;

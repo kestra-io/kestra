@@ -18,7 +18,7 @@ import org.reactivestreams.Publisher;
 import java.io.IOException;
 
 import java.util.Objects;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 
 @Filter("/ui/**")
 public class StaticFilter implements HttpServerFilter {

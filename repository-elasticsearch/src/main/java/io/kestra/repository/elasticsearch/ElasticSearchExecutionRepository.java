@@ -40,7 +40,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -283,12 +283,19 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         );
     }
 
+    private static List<String> stateConvert(List<State.Type> state) {
+        return state
+            .stream()
+            .map(Enum::name)
+            .collect(Collectors.toList());
+    }
+
     @Override
     public ArrayListTotal<Execution> find(String query, Pageable pageable, List<State.Type> state) {
         BoolQueryBuilder bool = this.defaultFilter()
             .must(QueryBuilders.queryStringQuery(query));
         if (state != null) {
-            bool = bool.must(QueryBuilders.termsQuery("state.current", state));
+            bool = bool.must(QueryBuilders.termsQuery("state.current", stateConvert(state)));
         }
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
 
@@ -302,7 +309,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             .filter(QueryBuilders.queryStringQuery(query));
 
         if (state != null) {
-            filterAggQuery = filterAggQuery.must(QueryBuilders.termsQuery("taskRunList.state.current", state));
+            filterAggQuery = filterAggQuery.must(QueryBuilders.termsQuery("taskRunList.state.current", stateConvert(state)));
         }
 
         NestedAggregationBuilder nestedAgg = AggregationBuilders

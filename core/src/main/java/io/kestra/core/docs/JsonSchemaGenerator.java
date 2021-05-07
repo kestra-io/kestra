@@ -20,7 +20,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 
 public class JsonSchemaGenerator {
     public <T> Map<String, Object> properties(Class<T> base, Class<? extends T> cls) {

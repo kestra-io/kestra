@@ -22,7 +22,7 @@ import org.slf4j.event.Level;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -94,20 +94,20 @@ public class LogController {
     @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     public Flowable<Event<LogEntry>> follow(String executionId, @Nullable @QueryValue(value = "minLevel") Level minLevel) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
-        List<Level> levels = LogEntry.findLevelsByMin(minLevel);
+        List<String> levels = LogEntry.findLevelsByMin(minLevel);
 
         return Flowable
             .<Event<LogEntry>>create(emitter -> {
                 // fetch repository first
                 logRepository.findByExecutionId(executionId, minLevel)
                     .stream()
-                    .filter(logEntry -> levels.contains(logEntry.getLevel()))
+                    .filter(logEntry -> levels.contains(logEntry.getLevel().name()))
                     .forEach(logEntry -> emitter.onNext(Event.of(logEntry).id("progress")));
 
                 // consume in realtime
                 Runnable receive = this.logQueue.receive(current -> {
                     if (current.getExecutionId() != null && current.getExecutionId().equals(executionId)) {
-                        if (levels.contains(current.getLevel())) {
+                        if (levels.contains(current.getLevel().name())) {
                             emitter.onNext(Event.of(current).id("progress"));
                         }
                     }

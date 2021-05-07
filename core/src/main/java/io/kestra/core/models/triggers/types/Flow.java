@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @SuperBuilder

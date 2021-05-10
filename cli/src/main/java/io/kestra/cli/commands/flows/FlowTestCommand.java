@@ -30,7 +30,6 @@ import javax.inject.Inject;
     description = "test a flow"
 )
 @Slf4j
-@Prototype
 public class FlowTestCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0", description = "the flow file to test")
     private Path file;

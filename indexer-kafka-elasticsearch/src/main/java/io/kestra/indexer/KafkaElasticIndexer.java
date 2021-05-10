@@ -1,7 +1,17 @@
 package io.kestra.indexer;
 
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.runners.Indexer;
+import io.kestra.core.runners.IndexerInterface;
+import io.kestra.core.utils.DurationOrSizeTrigger;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.repository.elasticsearch.ElasticSearchIndicesService;
+import io.kestra.repository.elasticsearch.ElasticSearchRepositoryEnabled;
+import io.kestra.repository.elasticsearch.configs.IndicesConfig;
+import io.kestra.runner.kafka.KafkaQueueEnabled;
+import io.kestra.runner.kafka.configs.TopicsConfig;
+import io.kestra.runner.kafka.services.KafkaConsumerService;
 import io.micrometer.core.instrument.Timer;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Replaces;
 import lombok.extern.slf4j.Slf4j;
 import net.jodah.failsafe.Failsafe;
@@ -17,17 +27,6 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.runners.Indexer;
-import io.kestra.core.runners.IndexerInterface;
-import io.kestra.core.utils.DurationOrSizeTrigger;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.repository.elasticsearch.ElasticSearchIndicesService;
-import io.kestra.repository.elasticsearch.ElasticSearchRepositoryEnabled;
-import io.kestra.repository.elasticsearch.configs.IndicesConfig;
-import io.kestra.runner.kafka.KafkaQueueEnabled;
-import io.kestra.runner.kafka.configs.TopicsConfig;
-import io.kestra.runner.kafka.services.KafkaConsumerService;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -39,8 +38,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-@Prototype
+@Singleton
 @Replaces(Indexer.class)
 @ElasticSearchRepositoryEnabled
 @KafkaQueueEnabled

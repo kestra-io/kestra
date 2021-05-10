@@ -1,23 +1,22 @@
 package io.kestra.core.metrics;
 
-import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micronaut.configuration.metrics.aggregator.MeterRegistryConfigurer;
 import io.micronaut.context.annotation.Requires;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-@SuppressWarnings("rawtypes")
 @Singleton
 @Requires(beans = MetricConfig.class)
-public class GlobalTagsConfigurer implements MeterRegistryConfigurer {
+public class GlobalTagsConfigurer implements MeterRegistryConfigurer<SimpleMeterRegistry> {
     @Inject
     MetricConfig metricConfig;
 
     @Override
-    public void configure(MeterRegistry meterRegistry) {
+    public void configure(SimpleMeterRegistry meterRegistry) {
         if (metricConfig.getTags() != null) {
             meterRegistry
                 .config()
@@ -33,7 +32,13 @@ public class GlobalTagsConfigurer implements MeterRegistryConfigurer {
     }
 
     @Override
-    public boolean supports(MeterRegistry meterRegistry) {
+    public boolean supports(SimpleMeterRegistry meterRegistry) {
         return true;
     }
+
+    @Override
+    public Class<SimpleMeterRegistry> getType() {
+        return SimpleMeterRegistry.class;
+    }
+
 }

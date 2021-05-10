@@ -53,7 +53,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 

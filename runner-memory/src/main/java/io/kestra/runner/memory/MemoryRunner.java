@@ -21,9 +21,9 @@ public class MemoryRunner extends StandAloneRunner {
 
         // @FIXME: Ugly hack to wait that all threads is created and ready to listen
         Await.until(
-            () -> ((MemoryQueue<Execution>) this.executionQueue).getSubscribersCount() == executorThreads + indexerThread + schedulerThread &&
+            () -> ((MemoryQueue<Execution>) this.executionQueue).getSubscribersCount() == 1 + 1 + 1 && // executorThreads + indexerThread + schedulerThread &&
                 ((MemoryQueue<WorkerTask>) this.workerTaskQueue).getSubscribersCount() == 1 &&
-                ((MemoryQueue<WorkerTaskResult>) this.workerTaskResultQueue).getSubscribersCount() == executorThreads,
+                ((MemoryQueue<WorkerTaskResult>) this.workerTaskResultQueue).getSubscribersCount() == 1, // executorThreads,
             null,
             Duration.ofSeconds(5)
         );

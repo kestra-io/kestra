@@ -1,7 +1,5 @@
 package io.kestra.runner.memory;
 
-import io.micronaut.context.annotation.Prototype;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -18,6 +16,7 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -28,9 +27,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 @Slf4j
-@Prototype
+@Singleton
 @MemoryQueueEnabled
 public class MemoryExecutor extends AbstractExecutor {
     private final FlowRepositoryInterface flowRepository;

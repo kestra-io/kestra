@@ -18,7 +18,6 @@ import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Prototype;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -36,11 +35,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static io.kestra.core.utils.Rethrow.throwSupplier;
 
 @Slf4j
-@Prototype
+@Singleton
 public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;

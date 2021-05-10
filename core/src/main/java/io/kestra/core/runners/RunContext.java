@@ -185,27 +185,19 @@ public class RunContext {
             }
         }
 
-        // special cases for listeners
         if (flow != null && execution != null) {
-            if (task != null && flow.isListenerTask(task.getId())) {
-                builder
-                    .put("flow", JacksonMapper.toMap(flow))
-                    .put("execution", JacksonMapper.toMap(execution));
+            builder
+                .put("flow", ImmutableMap.of(
+                    "id", flow.getId(),
+                    "namespace", flow.getNamespace(),
+                    "revision", flow.getRevision()
+                ));
 
-            } else {
-                builder
-                    .put("flow", ImmutableMap.of(
-                        "id", flow.getId(),
-                        "namespace", flow.getNamespace(),
-                        "revision", flow.getRevision()
-                    ));
-
-                builder
-                    .put("execution", ImmutableMap.of(
-                        "id", execution.getId(),
-                        "startDate", execution.getState().getStartDate()
-                    ));
-            }
+            builder
+                .put("execution", ImmutableMap.of(
+                    "id", execution.getId(),
+                    "startDate", execution.getState().getStartDate()
+                ));
         }
 
         if (execution != null) {
@@ -307,7 +299,8 @@ public class RunContext {
                 .concat(this.variables.entrySet().stream(), variables.entrySet().stream())
                 .collect(Collectors.toMap(
                     Map.Entry::getKey,
-                    Map.Entry::getValue
+                    Map.Entry::getValue,
+                    (o, o2) -> o2
                 ))
         );
     }
@@ -410,8 +403,17 @@ public class RunContext {
     }
 
     public RunContext metric(AbstractMetricEntry<?> metricEntry) {
-        metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());
         this.metrics.add(metricEntry);
+
+        try {
+            metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());
+        } catch (IllegalArgumentException e) {
+            // https://github.com/micrometer-metrics/micrometer/issues/877
+            // https://github.com/micrometer-metrics/micrometer/issues/2399
+            if (!e.getMessage().contains("Collector already registered")) {
+                throw e;
+            }
+        }
 
         return this;
     }

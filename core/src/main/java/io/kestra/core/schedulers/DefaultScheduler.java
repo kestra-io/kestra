@@ -1,21 +1,21 @@
 package io.kestra.core.schedulers;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Prototype;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.FlowListenersInterface;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Slf4j
-@Prototype
+@Singleton
 public class DefaultScheduler extends AbstractScheduler {
     private final Map<String, Trigger> watchingTrigger = new ConcurrentHashMap<>();
 

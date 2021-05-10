@@ -25,7 +25,7 @@ public abstract class AbstractKafkaRunnerTest {
     @BeforeEach
     private void init() throws IOException, URISyntaxException {
         TestsUtils.loads(repositoryLoader);
-        runner.setSchedulerThread(0);
+        runner.setSchedulerEnabled(false);
         runner.run();
     }
 }

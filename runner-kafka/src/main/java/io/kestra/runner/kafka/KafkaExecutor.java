@@ -1,18 +1,5 @@
 package io.kestra.runner.kafka;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Prototype;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.streams.*;
-import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.QueryableStoreTypes;
-import org.apache.kafka.streams.state.Stores;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -23,9 +10,9 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
@@ -37,6 +24,21 @@ import io.kestra.runner.kafka.services.KafkaStreamService;
 import io.kestra.runner.kafka.services.KafkaStreamSourceService;
 import io.kestra.runner.kafka.services.KafkaStreamsBuilder;
 import io.kestra.runner.kafka.streams.*;
+import io.micronaut.context.ApplicationContext;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.state.Stores;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -44,9 +46,10 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @KafkaQueueEnabled
-@Prototype
+@Singleton
 @Slf4j
 public class KafkaExecutor extends AbstractExecutor implements Closeable {
     private static final String WORKERTASK_DEDUPLICATION_STATE_STORE_NAME = "workertask_deduplication";

@@ -1,20 +1,6 @@
 package io.kestra.runner.kafka;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Prototype;
-import io.micronaut.context.annotation.Replaces;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.QueryableStoreTypes;
-import org.apache.kafka.streams.state.Stores;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
@@ -32,13 +18,27 @@ import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.*;
 import io.kestra.runner.kafka.streams.GlobalStateLockProcessor;
 import io.kestra.runner.kafka.streams.GlobalStateProcessor;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Replaces;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.QueryableStoreTypes;
+import org.apache.kafka.streams.state.Stores;
 
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Singleton;
 
 @KafkaQueueEnabled
-@Prototype
+@Singleton
 @Slf4j
 @Replaces(DefaultScheduler.class)
 public class KafkaScheduler extends AbstractScheduler {

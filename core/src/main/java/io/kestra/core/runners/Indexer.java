@@ -1,7 +1,5 @@
 package io.kestra.core.runners;
 
-import io.micronaut.context.annotation.Prototype;
-import io.micronaut.context.annotation.Requires;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -11,12 +9,14 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.SaveRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.micronaut.context.annotation.Requires;
 
 import java.io.IOException;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
-@Prototype
+@Singleton
 @Requires(beans = {ExecutionRepositoryInterface.class, LogRepositoryInterface.class, TriggerRepositoryInterface.class})
 public class Indexer implements IndexerInterface {
     private final ExecutionRepositoryInterface executionRepository;

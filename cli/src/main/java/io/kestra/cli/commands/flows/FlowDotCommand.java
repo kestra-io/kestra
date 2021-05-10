@@ -1,15 +1,13 @@
 package io.kestra.cli.commands.flows;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Prototype;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.Graph2DotService;
 import io.kestra.core.services.GraphService;
+import io.micronaut.context.ApplicationContext;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -21,7 +19,6 @@ import javax.inject.Inject;
     description = "generate a dot graph from a file"
 )
 @Slf4j
-@Prototype
 public class FlowDotCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0", description = "the flow file to display")
     private Path file;

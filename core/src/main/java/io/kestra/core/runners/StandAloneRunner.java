@@ -19,9 +19,7 @@ import javax.inject.Named;
 public class StandAloneRunner implements RunnerInterface, Closeable {
     @Setter private ExecutorService poolExecutor;
     @Setter protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
-    @Setter protected int executorThreads = 1;
-    @Setter protected int indexerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
-    @Setter protected int schedulerThread = 1; //TODO scale
+    @Setter protected boolean schedulerEnabled = true;
 
     @Inject
     private ExecutorsUtils executorsUtils;
@@ -49,22 +47,18 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
 
-        for (int i = 0; i < executorThreads; i++) {
-            poolExecutor.execute(applicationContext.getBean(AbstractExecutor.class));
-        }
+        poolExecutor.execute(applicationContext.getBean(AbstractExecutor.class));
 
         Worker worker = new Worker(applicationContext, workerThread);
         applicationContext.registerSingleton(worker);
         poolExecutor.execute(worker);
 
-        for (int i = 0; i < schedulerThread; i++) {
+        if (schedulerEnabled) {
             poolExecutor.execute(applicationContext.getBean(AbstractScheduler.class));
         }
 
         if (applicationContext.containsBean(IndexerInterface.class)) {
-            for (int i = 0; i < indexerThread; i++) {
-                poolExecutor.execute(applicationContext.getBean(IndexerInterface.class));
-            }
+            poolExecutor.execute(applicationContext.getBean(IndexerInterface.class));
         }
     }
 

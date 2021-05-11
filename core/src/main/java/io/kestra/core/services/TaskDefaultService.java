@@ -2,15 +2,12 @@ package io.kestra.core.services;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.TaskDefault;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.MapUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import io.micronaut.core.annotation.Nullable;
+
+import java.util.*;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -20,35 +17,97 @@ public class TaskDefaultService {
     @Inject
     protected TaskGlobalDefaultConfiguration globalDefault;
 
-    @SuppressWarnings("unchecked")
-    public <T extends Task> T injectDefaults(T task, Flow flow) {
-        Map<String, Object> taskAsMap = JacksonMapper.toMap(task);
+    /**
+     * @param flow the flow to extract default
+     * @return list of {@code TaskDefault} order by most important first
+     */
+    protected List<TaskDefault> mergeAllDefaults(Flow flow) {
+        List<TaskDefault> list = new ArrayList<>();
 
-        taskAsMap = defaults(task, taskAsMap, flow.getTaskDefaults());
-        if (globalDefault != null) {
-            taskAsMap = defaults(task, taskAsMap, globalDefault.getDefaults());
+        if (globalDefault != null && globalDefault.getDefaults() != null) {
+            list.addAll(globalDefault.getDefaults());
         }
 
-        return (T) JacksonMapper.toMap(taskAsMap, task.getClass());
+        if (flow.getTaskDefaults() != null) {
+            list.addAll(flow.getTaskDefaults());
+        }
+
+        return list;
     }
 
-    protected <T extends Task> List<TaskDefault> find(T task, List<TaskDefault> defaults) {
-        return (defaults == null ? new ArrayList<TaskDefault>() : defaults)
+    private static Map<String, Map<String, Object>> taskDefaultsToMap(List<TaskDefault> taskDefaults) {
+        return taskDefaults
             .stream()
-            .filter(t -> t.getType().equals(task.getType()))
-            .collect(Collectors.toList());
+            .map(taskDefault -> new AbstractMap.SimpleEntry<>(
+                taskDefault.getType(),
+                taskDefault.getValues()
+            ))
+            .collect(Collectors.toMap(
+                AbstractMap.SimpleEntry::getKey,
+                AbstractMap.SimpleEntry::getValue,
+                MapUtils::merge
+            ));
     }
 
-    protected <T extends Task> Map<String, Object> defaults(T task, Map<String, Object> taskAsMap, List<TaskDefault> defaults) {
-        for (TaskDefault current : find(task, defaults)) {
-            taskAsMap = defaults(current.getValues(), taskAsMap);
+    @SuppressWarnings("unchecked")
+    public Flow injectDefaults(Flow flow) {
+        Map<String, Object> flowAsMap = JacksonMapper.toMap(flow);
+
+        Map<String, Map<String, Object>> defaults = taskDefaultsToMap(mergeAllDefaults(flow));
+
+        Object taskDefaults = flowAsMap.get("taskDefaults");
+        if (taskDefaults != null) {
+            flowAsMap.remove("taskDefaults");
         }
 
-        return taskAsMap;
+        Map<String, Object> flowAsMapWithDefault = (Map<String, Object>) recursiveDefaults(flowAsMap, defaults);
+
+        if (taskDefaults != null) {
+            flowAsMapWithDefault.put("taskDefaults", taskDefaults);
+        }
+
+        return JacksonMapper.toMap(flowAsMapWithDefault, Flow.class);
     }
 
-    protected Map<String, Object> defaults(Map<String, Object> task, Map<String, Object> defaults) {
-        return MapUtils.merge(task, defaults);
+    private static Object recursiveDefaults(Object object, Map<String, Map<String, Object>> defaults) {
+        if (object instanceof Map) {
+            Map<?, ?> value = (Map<?, ?>) object;
+            if (value.containsKey("type")) {
+                value = defaults(value, defaults);
+            }
+
+            return value
+                .entrySet()
+                .stream()
+                .map(e -> new AbstractMap.SimpleEntry<>(
+                    e.getKey(),
+                    recursiveDefaults(e.getValue(), defaults)
+                ))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        } else if (object instanceof Collection) {
+            Collection<?> value = (Collection<?>) object;
+            return value
+                .stream()
+                .map(r -> recursiveDefaults(r, defaults))
+                .collect(Collectors.toList());
+        } else {
+            return object;
+        }
     }
 
+    @SuppressWarnings("unchecked")
+    protected static Map<?, ?> defaults(Map<?, ?> task, Map<String, Map<String, Object>> defaults) {
+        Object type = task.get("type");
+        if (!(type instanceof String)) {
+            return task;
+        }
+
+        String taskType = (String) type;
+
+        if (!defaults.containsKey(taskType)) {
+            return task;
+        }
+
+        return MapUtils.merge(defaults.get(taskType), (Map<String, Object>) task);
+    }
 }

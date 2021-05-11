@@ -75,7 +75,7 @@ class KafkaExecutorTest {
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "unit-test");
         properties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kafka-stream-unit/" + UUID.randomUUID());
 
-        testTopology = new TopologyTestDriver(stream.topology(), properties);
+        testTopology = new TopologyTestDriver(stream.topology().build(), properties);
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(
             testTopology.getKeyValueStore("template")

@@ -39,6 +39,8 @@ public class MemoryExecutor extends AbstractExecutor {
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     private final QueueInterface<LogEntry> logQueue;
     private final FlowService flowService;
+    private final TaskDefaultService taskDefaultService;
+
     private static final MemoryMultipleConditionStorage multipleConditionStorage = new MemoryMultipleConditionStorage();
 
     private static final ConcurrentHashMap<String, ExecutionState> executions = new ConcurrentHashMap<>();
@@ -57,7 +59,7 @@ public class MemoryExecutor extends AbstractExecutor {
         ConditionService conditionService,
         TaskDefaultService taskDefaultService
     ) {
-        super(runContextFactory, metricRegistry, conditionService, taskDefaultService);
+        super(runContextFactory, metricRegistry, conditionService);
 
         this.flowRepository = flowRepository;
         this.executionQueue = executionQueue;
@@ -66,6 +68,7 @@ public class MemoryExecutor extends AbstractExecutor {
         this.logQueue = logQueue;
         this.flowService = flowService;
         this.conditionService = conditionService;
+        this.taskDefaultService = taskDefaultService;
     }
 
     @Override
@@ -87,20 +90,20 @@ public class MemoryExecutor extends AbstractExecutor {
                 log.debug("Execution in with {}: {}", state.execution.toCrc32State(), state.execution.toStringState());
             }
 
-            Flow flow = this.flowRepository.findByExecution(state.execution);
+            Flow flow = taskDefaultService.injectDefaults(this.flowRepository.findByExecution(state.execution));
 
             Execution execution = state.execution;
 
             Optional<Execution> main = this.doMain(execution, flow);
             if (main.isPresent()) {
-                this.toExecution(main.get());
+                this.toExecution(main.get(), flow);
                 return;
             }
 
             try {
                 Optional<List<TaskRun>> nexts = this.doNexts(execution, flow);
                 if (nexts.isPresent() && deduplicateNexts(execution, nexts.get())) {
-                    this.toExecution(this.onNexts(flow, execution, nexts.get()));
+                    this.toExecution(this.onNexts(flow, execution, nexts.get()), flow);
                     return;
                 }
 
@@ -135,7 +138,7 @@ public class MemoryExecutor extends AbstractExecutor {
                     return;
                 }
             } catch (Exception e) {
-                handleFailedExecutionFromExecutor(execution, e);
+                handleFailedExecutionFromExecutor(execution, flow, e);
                 return;
             }
 
@@ -164,12 +167,12 @@ public class MemoryExecutor extends AbstractExecutor {
         }
     }
 
-    private void handleFailedExecutionFromExecutor(Execution execution, Exception e) {
+    private void handleFailedExecutionFromExecutor(Execution execution, Flow flow, Exception e) {
         Execution.FailedExecutionWithLog failedExecutionWithLog = execution.failedExecutionFromExecutor(e);
         try {
             failedExecutionWithLog.getLogs().forEach(logQueue::emit);
 
-            this.toExecution(failedExecutionWithLog.getExecution());
+            this.toExecution(failedExecutionWithLog.getExecution(), flow);
         } catch (Exception ex) {
             log.error("Failed to produce {}", e.getMessage(), ex);
         }
@@ -188,9 +191,7 @@ public class MemoryExecutor extends AbstractExecutor {
         return queued;
     }
 
-    private void toExecution(Execution execution) {
-        Flow flow = this.flowRepository.findByExecution(execution);
-
+    private void toExecution(Execution execution, Flow flow) {
         if (log.isDebugEnabled()) {
             log.debug("Execution out with {}: {}", execution.toCrc32State(), execution.toStringState());
         }
@@ -234,13 +235,10 @@ public class MemoryExecutor extends AbstractExecutor {
                 }
             });
 
-            this.toExecution(executions.get(message.getTaskRun().getExecutionId()).execution);
+            Flow flow = taskDefaultService.injectDefaults(this.flowRepository.findByExecution(executions.get(message.getTaskRun().getExecutionId()).execution));
+
+            this.toExecution(executions.get(message.getTaskRun().getExecutionId()).execution, flow);
         }
-    }
-
-    private void handleFlowTrigger(Execution execution) {
-
-
     }
 
     private boolean deduplicateWorkerTask(Execution execution, TaskRun taskRun) {

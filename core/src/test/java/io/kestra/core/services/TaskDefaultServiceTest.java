@@ -1,7 +1,12 @@
 package io.kestra.core.services;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.context.ApplicationContext;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.TaskDefault;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.VoidOutput;
+import io.kestra.core.runners.RunContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -9,12 +14,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.TaskDefault;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.VoidOutput;
-import io.kestra.core.runners.RunContext;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,9 +28,6 @@ import static org.hamcrest.Matchers.is;
 class TaskDefaultServiceTest {
     @Inject
     private TaskDefaultService taskDefaultService;
-
-    @Inject
-    private ApplicationContext applicationContext;
 
     @Test
     public void injectFlowAndGlobals() {
@@ -50,17 +46,17 @@ class TaskDefaultServiceTest {
             ))))
             .build();
 
-        DefaultTester injected = taskDefaultService.injectDefaults(task, flow);
+        Flow injected = taskDefaultService.injectDefaults(flow);
 
-        assertThat(injected.getValue(), is(1));
-        assertThat(injected.getSet(), is(666));
-        assertThat(injected.getDoubleValue(), is(19D));
-        assertThat(injected.getArrays().size(), is(2));
-        assertThat(injected.getArrays(), containsInAnyOrder(1, 2));
-        assertThat(injected.getProperty().getHere(), is("me"));
-        assertThat(injected.getProperty().getLists().size(), is(1));
-        assertThat(injected.getProperty().getLists().get(0).getVal().size(), is(1));
-        assertThat(injected.getProperty().getLists().get(0).getVal().get("key"), is("test"));
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getValue(), is(1));
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(666));
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getDoubleValue(), is(19D));
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getArrays().size(), is(2));
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getArrays(), containsInAnyOrder(1, 2));
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getHere(), is("me"));
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().size(), is(1));
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().size(), is(1));
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().get("key"), is("test"));
     }
 
     @SuperBuilder

@@ -1,25 +1,25 @@
 package io.kestra.core.runners;
 
-import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.utils.TestsUtils;
+import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
+import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -32,6 +32,9 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> workerTaskLogQueue;
+
+    @Inject
+    TaskDefaultsCaseTest taskDefaultsCaseTest;
 
     @Test
     void logs() throws TimeoutException {
@@ -90,5 +93,11 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(length.getValue(), is(7.0D));
         assertThat(duration.getValue().getNano(), is(greaterThan(0)));
         assertThat(duration.getTags().get("format"), is("{{task.id}}"));
+    }
+
+    @Test
+    void taskDefaults() throws TimeoutException, IOException, URISyntaxException {
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/task-defaults.yaml")));
+        taskDefaultsCaseTest.taskDefaults();
     }
 }

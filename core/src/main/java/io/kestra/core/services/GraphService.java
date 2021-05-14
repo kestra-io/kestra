@@ -76,13 +76,23 @@ public class GraphService {
         Iterator<Task> iterator = tasks.iterator();
         AbstractGraphTask previous = graph.getRoot();
 
+        boolean isFirst = true;
         while (iterator.hasNext()) {
             Task currentTask = iterator.next();
             for (TaskRun currentTaskRun : findTaskRuns(currentTask, execution, parent)) {
                 AbstractGraphTask currentGraph;
                 List<String> parentValues = null;
+
+                // we use the graph relation type by default but we change it to pass relation for case below
+                RelationType newRelation = graph.getRelationType();
+                if (relationType == RelationType.ERROR) {
+                    newRelation = relationType;
+                } else if ((!isFirst && relationType != RelationType.PARALLEL && graph.getRelationType() != RelationType.DYNAMIC)) {
+                    newRelation = relationType;
+                }
+
                 Relation relation = new Relation(
-                    relationType == RelationType.ERROR ? relationType : graph.getRelationType(),
+                    newRelation,
                     currentTaskRun == null ? value : currentTaskRun.getValue()
                 );
 
@@ -123,6 +133,8 @@ public class GraphService {
                         new Relation()
                     );
                 }
+
+                isFirst = false;
 
                 if (!iterator.hasNext() && !isAllLinkToEnd(relationType)) {
                     graph.getGraph().addEdge(

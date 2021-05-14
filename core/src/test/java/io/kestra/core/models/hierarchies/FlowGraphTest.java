@@ -117,6 +117,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         assertThat(edge(flowGraph, "parent-seq_.*_root", "t1").getRelation().getValue(), is("FIRST"));
         assertThat(edge(flowGraph, "parent-seq_.*_root", "default").getRelation().getRelationType(), is(RelationType.CHOICE));
         assertThat(edge(flowGraph, "parent-seq_.*_root", "default").getRelation().getValue(), is("defaults"));
+        assertThat(edge(flowGraph, "t2", "t2_sub").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));
     }
 
     @Test

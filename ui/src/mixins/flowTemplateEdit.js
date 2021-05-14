@@ -127,7 +127,9 @@ export default {
                 }
                 this.previousContent = YamlUtils.stringify(this.item);
                 saveFlowTemplate(this, item, this.dataType)
-                    .then(() => {
+                    .then((flow) => {
+                        this.previousContent = YamlUtils.stringify(flow);
+
                         this.loadFile();
                     });
             } else {
@@ -145,7 +147,9 @@ export default {
 
                 this.$store
                     .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: item})
-                    .then(() => {
+                    .then((flow) => {
+                        this.previousContent = YamlUtils.stringify(flow);
+
                         this.$router.push({
                             name: `${this.dataType}s/update`,
                             params: item,

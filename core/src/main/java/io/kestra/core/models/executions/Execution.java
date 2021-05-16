@@ -528,7 +528,7 @@ public class Execution implements DeletedInterface {
      * @param e the current execption
      * @return the {@link ILoggingEvent} waited to generate {@link LogEntry}
      */
-    private static ILoggingEvent loggingEventFromException(Exception e) {
+    public static ILoggingEvent loggingEventFromException(Exception e) {
         LoggingEvent loggingEvent = new LoggingEvent();
         loggingEvent.setLevel(ch.qos.logback.classic.Level.ERROR);
         loggingEvent.setThrowableProxy(new ThrowableProxy(e));

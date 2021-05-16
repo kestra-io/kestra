@@ -1,7 +1,12 @@
 package io.kestra.core.services;
 
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.TaskDefault;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -9,6 +14,7 @@ import io.micronaut.core.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 @Singleton
@@ -16,6 +22,10 @@ public class TaskDefaultService {
     @Nullable
     @Inject
     protected TaskGlobalDefaultConfiguration globalDefault;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    protected QueueInterface<LogEntry> logQueue;
 
     /**
      * @param flow the flow to extract default
@@ -49,8 +59,22 @@ public class TaskDefaultService {
             ));
     }
 
+    public Flow injectDefaults(Flow flow, Execution execution) {
+        try {
+            return this.injectDefaults(flow);
+        } catch (Exception e) {
+            RunContextLogger
+                .logEntries(
+                    Execution.loggingEventFromException(e),
+                    LogEntry.of(execution)
+                )
+                .forEach(logQueue::emit);
+            return flow;
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    public Flow injectDefaults(Flow flow) {
+    Flow injectDefaults(Flow flow) {
         Map<String, Object> flowAsMap = JacksonMapper.toMap(flow);
 
         Map<String, Map<String, Object>> defaults = taskDefaultsToMap(mergeAllDefaults(flow));

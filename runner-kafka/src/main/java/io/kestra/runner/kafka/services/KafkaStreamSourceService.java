@@ -1,17 +1,20 @@
 package io.kestra.runner.kafka.services;
 
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.TaskDefaultService;
+import io.kestra.runner.kafka.KafkaExecutor;
+import io.kestra.runner.kafka.serializers.JsonSerde;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.runner.kafka.KafkaExecutor;
-import io.kestra.runner.kafka.serializers.JsonSerde;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -28,6 +31,10 @@ public class KafkaStreamSourceService {
 
     @Inject
     private TaskDefaultService taskDefaultService;
+
+    @Inject
+    @javax.inject.Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    private QueueInterface<LogEntry> logQueue;
 
     public GlobalKTable<String, Flow> flowGlobalKTable(StreamsBuilder builder) {
         return builder
@@ -93,8 +100,7 @@ public class KafkaStreamSourceService {
                         return new KafkaExecutor.ExecutionWithFlow(flow, execution);
                     }
 
-                    Flow flowWithDefaults = taskDefaultService.injectDefaults(flow);
-
+                    Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, execution);
                     return new KafkaExecutor.ExecutionWithFlow(flowWithDefaults, execution);
                 },
                 Named.as("withFlow-join")

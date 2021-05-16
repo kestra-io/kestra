@@ -9,10 +9,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.AbstractExecutor;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.WorkerTask;
-import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.core.runners.*;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
@@ -90,7 +87,8 @@ public class MemoryExecutor extends AbstractExecutor {
                 log.debug("Execution in with {}: {}", state.execution.toCrc32State(), state.execution.toStringState());
             }
 
-            Flow flow = taskDefaultService.injectDefaults(this.flowRepository.findByExecution(state.execution));
+            Flow flow = this.flowRepository.findByExecution(state.execution);
+            flow = taskDefaultService.injectDefaults(flow, state.execution);
 
             Execution execution = state.execution;
 
@@ -235,7 +233,9 @@ public class MemoryExecutor extends AbstractExecutor {
                 }
             });
 
-            Flow flow = taskDefaultService.injectDefaults(this.flowRepository.findByExecution(executions.get(message.getTaskRun().getExecutionId()).execution));
+
+            Flow flow = this.flowRepository.findByExecution(executions.get(message.getTaskRun().getExecutionId()).execution);
+            flow = taskDefaultService.injectDefaults(flow, executions.get(message.getTaskRun().getExecutionId()).execution);
 
             this.toExecution(executions.get(message.getTaskRun().getExecutionId()).execution, flow);
         }

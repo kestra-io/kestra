@@ -62,7 +62,6 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
     protected ApplicationContext applicationContext;
     protected KafkaStreamService kafkaStreamService;
     protected KafkaAdminService kafkaAdminService;
-    protected QueueInterface<LogEntry> logQueue;
     protected FlowService flowService;
     protected KafkaStreamSourceService kafkaStreamSourceService;
     protected QueueService queueService;
@@ -76,7 +75,6 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         RunContextFactory runContextFactory,
         KafkaStreamService kafkaStreamService,
         KafkaAdminService kafkaAdminService,
-        @javax.inject.Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRegistry metricRegistry,
         FlowService flowService,
         ConditionService conditionService,
@@ -88,7 +86,6 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         this.applicationContext = applicationContext;
         this.kafkaStreamService = kafkaStreamService;
         this.kafkaAdminService = kafkaAdminService;
-        this.logQueue = logQueue;
         this.flowService = flowService;
         this.kafkaStreamSourceService = kafkaStreamSourceService;
         this.queueService = queueService;

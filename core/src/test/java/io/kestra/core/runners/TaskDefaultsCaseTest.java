@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.hierarchies.GraphCluster;
@@ -9,6 +10,8 @@ import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.GraphService;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -18,23 +21,28 @@ import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @Singleton
 public class TaskDefaultsCaseTest {
     @Inject
     private RunnerUtils runnerUtils;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    private QueueInterface<LogEntry> logQueue;
 
     public void taskDefaults() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "task-defaults", Duration.ofSeconds(60));
@@ -54,6 +62,16 @@ public class TaskDefaultsCaseTest {
         assertThat(execution.getTaskRunList().get(5).getOutputs().get("def"), is("2"));
         assertThat(execution.getTaskRunList().get(6).getTaskId(), is("err-third"));
         assertThat(execution.getTaskRunList().get(6).getOutputs().get("def"), is("3"));
+    }
+
+    public void invalidTaskDefaults() throws TimeoutException {
+        List<LogEntry> logs = new ArrayList<>();
+        logQueue.receive(logs::add);
+
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "invalid-task-defaults", Duration.ofSeconds(60));
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().contains("Unrecognized field \"invalid\"")).count(), greaterThan(0L));
     }
 
     @SuperBuilder

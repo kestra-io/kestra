@@ -4,9 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import lombok.NoArgsConstructor;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
@@ -18,9 +15,11 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Slugify;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import lombok.NoArgsConstructor;
 
 import java.io.*;
 import java.net.URI;
@@ -396,6 +395,10 @@ public class RunContext {
             this.taskStateFilePathPrefix(task),
             name
         );
+    }
+
+    public List<URI> purgeStorageExecution() throws IOException {
+        return this.storageInterface.deleteByPrefix(this.storageOutputPrefix);
     }
 
     public List<AbstractMetricEntry<?>> metrics() {

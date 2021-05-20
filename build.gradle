@@ -90,7 +90,7 @@ allprojects {
         implementation "javax.annotation:javax.annotation-api"
         implementation "io.micronaut.data:micronaut-data-model"
         implementation "io.micronaut:micronaut-management"
-        implementation "io.micrometer:micrometer-core:1.6.4"
+        implementation "io.micrometer:micrometer-core"
         implementation "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
         api "io.micronaut:micronaut-http-client"
 

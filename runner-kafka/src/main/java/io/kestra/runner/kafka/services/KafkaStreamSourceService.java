@@ -1,14 +1,13 @@
 package io.kestra.runner.kafka.services;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.runner.kafka.KafkaExecutor;
 import io.kestra.runner.kafka.serializers.JsonSerde;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -32,15 +31,11 @@ public class KafkaStreamSourceService {
     @Inject
     private TaskDefaultService taskDefaultService;
 
-    @Inject
-    @javax.inject.Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
-
     public GlobalKTable<String, Flow> flowGlobalKTable(StreamsBuilder builder) {
         return builder
             .globalTable(
                 kafkaAdminService.getTopicName(Flow.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)),
+                Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)).withName("GlobalKTable.Flow"),
                 Materialized.<String, Flow, KeyValueStore<Bytes, byte[]>>as("flow")
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(Flow.class))
@@ -51,26 +46,27 @@ public class KafkaStreamSourceService {
         return builder
             .stream(
                 kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
-                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class))
+                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("KStream.Executor")
             );
     }
 
-    public KTable<String, Execution> executorKTable(StreamsBuilder builder) {
+    public KTable<String, KafkaExecutor.Executor> executorKTable(StreamsBuilder builder) {
         return builder
             .table(
                 kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
-                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)),
+                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("KTable.Executor"),
                 Materialized.<String, Execution, KeyValueStore<Bytes, byte[]>>as("execution")
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(Execution.class))
-            );
+            )
+            .mapValues((readOnlyKey, value) -> new KafkaExecutor.Executor(value));
     }
 
     public GlobalKTable<String, Execution> executorGlobalKTable(StreamsBuilder builder) {
         return builder
             .globalTable(
                 kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
-                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)),
+                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("GlobalKTable.Executor"),
                 Materialized.<String, Execution, KeyValueStore<Bytes, byte[]>>as("execution")
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(Execution.class))
@@ -81,40 +77,54 @@ public class KafkaStreamSourceService {
         return builder
             .globalTable(
                 kafkaAdminService.getTopicName(Trigger.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Trigger.class)),
+                Consumed.with(Serdes.String(), JsonSerde.of(Trigger.class)).withName("GlobalKTable.Trigger"),
                 Materialized.<String, Trigger, KeyValueStore<Bytes, byte[]>>as("trigger")
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(Trigger.class))
             );
     }
 
-    public KStream<String, KafkaExecutor.ExecutionWithFlow> withFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, Execution> executionKStream, boolean injectDefaults) {
+    public KStream<String, KafkaExecutor.ExecutorWithFlow> executorWithFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, KafkaExecutor.Executor> executionKStream) {
         return executionKStream
             .filter(
-                (key, value) -> value != null, Named.as("withFlow-notNull-filter"))
+                (key, value) -> value != null, Named.as("ExecutorWithFlow.notNullFilter"))
             .join(
                 flowGlobalKTable,
-                (key, value) -> Flow.uid(value),
-                (execution, flow) -> {
-                    if (!injectDefaults) {
-                        return new KafkaExecutor.ExecutionWithFlow(flow, execution);
-                    }
-
-                    Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, execution);
-                    return new KafkaExecutor.ExecutionWithFlow(flowWithDefaults, execution);
+                (key, executor) -> Flow.uid(executor.getExecution()),
+                (executor, flow) -> {
+                    Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, executor.getExecution());
+                    return new KafkaExecutor.ExecutorWithFlow(executor, flowWithDefaults);
                 },
-                Named.as("withFlow-join")
+                Named.as("ExecutorWithFlow.join")
             );
     }
 
+    public KStream<String, ExecutorWithFlow> withFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, Execution> executionKStream) {
+        return executionKStream
+            .filter(
+                (key, value) -> value != null, Named.as("WithFlow.filterNotNull"))
+            .join(
+                flowGlobalKTable,
+                (key, value) -> Flow.uid(value),
+                (execution, flow) -> new ExecutorWithFlow(flow, execution),
+                Named.as("WithFlow.join")
+            );
+    }
 
     public static <T> KStream<String, T> logIfEnabled(KStream<String, T> stream, ForeachAction<String, T> action, String name) {
         if (log.isDebugEnabled()) {
             return stream
-                .filter((key, value) -> value != null, Named.as(name + "-null-filter"))
-                .peek(action, Named.as(name + "-peek"));
+                .filter((key, value) -> value != null, Named.as(name + "Log.filterNotNull"))
+                .peek(action, Named.as(name + "Log.peek"));
         } else {
             return stream;
         }
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class ExecutorWithFlow {
+        Flow flow;
+        Execution execution;
     }
 }

@@ -138,7 +138,7 @@ public class Execution implements DeletedInterface {
             .findFirst();
 
         if (find.isEmpty()) {
-            throw new InternalException("Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' " + this.toString(true));
+            throw new InternalException("Can't find taskrun with taskrunId '" + id + "' on execution '" + this.id + "' " + this.toStringState());
         }
 
         return find.get();
@@ -151,7 +151,7 @@ public class Execution implements DeletedInterface {
             .findFirst();
 
         if (find.isEmpty()) {
-            throw new InternalException("Can't find taskrun with taskrunId '" + id + "' & value '" + values + "' on execution '" + this.id + "' " + this.toString(true));
+            throw new InternalException("Can't find taskrun with taskrunId '" + id + "' & value '" + values + "' on execution '" + this.id + "' " + this.toStringState());
         }
 
         return find.get();

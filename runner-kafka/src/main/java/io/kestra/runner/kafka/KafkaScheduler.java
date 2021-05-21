@@ -26,6 +26,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
@@ -93,11 +94,8 @@ public class KafkaScheduler extends AbstractScheduler {
 
             KStream<String, Execution> executorKStream = kafkaStreamSourceService.executorKStream(builder);
             GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
-            KStream<String, KafkaExecutor.ExecutionWithFlow> executionWithFlowKStream = kafkaStreamSourceService.withFlow(
-                flowKTable,
-                executorKStream,
-                false
-            );
+            KStream<String, KafkaStreamSourceService.ExecutorWithFlow> executionWithFlowKStream = kafkaStreamSourceService
+                .withFlow(flowKTable, executorKStream);
             GlobalKTable<String, Trigger> triggerGlobalKTable = kafkaStreamSourceService.triggerGlobalKTable(builder);
 
             executionWithFlowKStream
@@ -216,13 +214,13 @@ public class KafkaScheduler extends AbstractScheduler {
         });
 
         this.triggerState =  new KafkaSchedulerTriggerState(
-            stateStream.store(STATESTORE_TRIGGER, QueryableStoreTypes.keyValueStore()),
+            stateStream.store(StoreQueryParameters.fromNameAndType(STATESTORE_TRIGGER, QueryableStoreTypes.keyValueStore())),
             triggerQueue,
             triggerLock
         );
 
         this.executionState = new KafkaSchedulerExecutionState(
-            stateStream.store(STATESTORE_EXECUTOR, QueryableStoreTypes.keyValueStore())
+            stateStream.store(StoreQueryParameters.fromNameAndType(STATESTORE_EXECUTOR, QueryableStoreTypes.keyValueStore()))
         );
 
         this.cleanTriggerStream = kafkaStreamService.of(SchedulerCleaner.class, new SchedulerCleaner().topology());

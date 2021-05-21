@@ -38,6 +38,7 @@ class RestoreQueueCommandTest {
             .build();
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void run() throws InterruptedException {
         final int COUNT = 5;

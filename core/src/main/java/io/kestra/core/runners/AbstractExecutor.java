@@ -39,7 +39,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         this.conditionService = conditionService;
     }
 
-    protected Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
+    public Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
         if (log.isTraceEnabled()) {
             log.trace(
                 "[namespace: {}] [flow: {}] [execution: {}] Found {} next(s) {}",
@@ -269,7 +269,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         return this.handleKilling(execution, flow);
     }
 
-    protected Optional<List<TaskRun>> doNexts(Execution execution, Flow flow) throws InternalException {
+    public Optional<List<TaskRun>> doNexts(Execution execution, Flow flow) throws InternalException {
         List<TaskRun> nexts;
 
         // killing, so no more nexts
@@ -294,7 +294,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         return Optional.empty();
     }
 
-    protected Optional<List<WorkerTask>> doWorkerTask(Execution execution, Flow flow) throws InternalException {
+    public Optional<List<WorkerTask>> doWorkerTask(Execution execution, Flow flow) throws InternalException {
         List<WorkerTask> nexts;
 
         nexts = this.handleWorkerTask(execution, flow);
@@ -309,7 +309,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
     protected Optional<List<WorkerTaskResult>> doWorkerTaskResult(Execution execution, Flow flow) throws InternalException {
         List<WorkerTaskResult> nexts;
 
-        nexts = this.handleChildWorkerKilling(execution, flow);
+        nexts = this.handleChildWorkerCreatedKilling(execution, flow);
         if (nexts.size() > 0) {
             return Optional.of(nexts);
         }
@@ -365,17 +365,23 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
             return new ArrayList<>();
         }
 
-        return execution
-            .getTaskRunList()
-            .stream()
-            .filter(taskRun -> taskRun.getState().isRunning())
-            .map(throwFunction(taskRun -> this.childWorkerTaskResult(flow, execution, taskRun)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toList());
+        List<WorkerTaskResult> list = new ArrayList<>();
+
+        for (TaskRun taskRun : execution.getTaskRunList()) {
+            if (taskRun.getState().isRunning()) {
+                Optional<WorkerTaskResult> workerTaskResult = this.childWorkerTaskResult(
+                    flow,
+                    execution,
+                    taskRun
+                );
+
+                workerTaskResult.ifPresent(list::add);
+            }
+        }
+        return list;
     }
 
-    private List<WorkerTaskResult> handleChildWorkerKilling(Execution execution, Flow flow) throws InternalException {
+    private List<WorkerTaskResult> handleChildWorkerCreatedKilling(Execution execution, Flow flow) throws InternalException {
         if (execution.getTaskRunList() == null || execution.getState().getCurrent() != State.Type.KILLING) {
             return new ArrayList<>();
         }

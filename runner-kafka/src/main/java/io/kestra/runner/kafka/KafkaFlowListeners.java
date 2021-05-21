@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
@@ -62,7 +63,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         stream.start((newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING) {
                 try {
-                    this.store = stream.store("flow", QueryableStoreTypes.keyValueStore());
+                    this.store = stream.store(StoreQueryParameters.fromNameAndType("flow", QueryableStoreTypes.keyValueStore()));
                     this.send(this.flows());
                 } catch (InvalidStateStoreException e) {
                     this.store = null;

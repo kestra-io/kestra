@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class FlowWithTriggerTransformer implements Transformer<String, KafkaExecutor.ExecutionWithFlow, Iterable<KeyValue<String, ExecutorFlowTrigger>>> {
+public class FlowWithTriggerTransformer implements Transformer<String, KafkaExecutor.ExecutorWithFlow, Iterable<KeyValue<String, ExecutorFlowTrigger>>> {
     private final FlowService flowService;
 
     private KeyValueStore<String, ValueAndTimestamp<Flow>> flowStore;
@@ -33,7 +33,7 @@ public class FlowWithTriggerTransformer implements Transformer<String, KafkaExec
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
-    public Iterable<KeyValue<String, ExecutorFlowTrigger>> transform(String key, KafkaExecutor.ExecutionWithFlow value) {
+    public Iterable<KeyValue<String, ExecutorFlowTrigger>> transform(String key, KafkaExecutor.ExecutorWithFlow value) {
         try (KeyValueIterator<String, ValueAndTimestamp<Flow>> flows = this.flowStore.all()) {
             List<Flow> allFlows = flowService
                 .keepLastVersion(

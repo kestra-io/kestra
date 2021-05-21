@@ -148,7 +148,7 @@ subprojects {
     test {
         useJUnitPlatform()
 
-        maxHeapSize = "2048m"
+        maxHeapSize = "4048m"
 
         retry {
             maxRetries = 5

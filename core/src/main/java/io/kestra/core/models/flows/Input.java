@@ -3,33 +3,37 @@ package io.kestra.core.models.flows;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
-@Value
-@Builder
+@SuperBuilder
+@Getter
+@NoArgsConstructor
 @Introspected
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class Input {
     @NotNull
     @NotBlank
     @Pattern(regexp="[a-zA-Z0-9_-]+")
-    private String name;
+    String name;
 
     @NotBlank
     @NotNull
     @Valid
-    private Type type;
+    Type type;
 
-    private String description;
+    String description;
 
-    @NotNull
-    private Boolean required = true;
+    @Builder.Default
+    Boolean required = true;
 
+    @Introspected
     public enum Type {
         STRING,
         INT,

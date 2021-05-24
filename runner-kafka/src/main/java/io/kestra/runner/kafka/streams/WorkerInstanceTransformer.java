@@ -39,7 +39,7 @@ public class WorkerInstanceTransformer implements ValueTransformerWithKey<String
 
     @Override
     public List<Result> transform(final String key, final WorkerInstance value) {
-        log.debug("Incoming instance: {} {}", key, value);
+        log.trace("Incoming instance: {} {}", key, value);
 
         if (value == null) {
             return Collections.emptyList();
@@ -75,9 +75,13 @@ public class WorkerInstanceTransformer implements ValueTransformerWithKey<String
                 } else {
                     // no more partitions for this WorkerInstance, this one doesn't exist any more.
                     // we delete this one and resend all the running tasks
-                    log.warn("Detected evicted worker: {}", updated);
-
                     List<WorkerTask> workerTasks = this.listRunningForWorkerInstance(updated);
+
+                    if (workerTasks.size() > 0) {
+                        log.warn("Detected evicted worker: {}", updated);
+                    } else {
+                        log.debug("Detected evicted worker: {}", updated);
+                    }
 
                     workerTasks.forEach(workerTask ->
                         log.warn(

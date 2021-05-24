@@ -37,11 +37,12 @@ kestra:
 
       stream:
         properties:
-          processing.guarantee: "exactly_once"
+          processing.guarantee: "exactly_once_beta"
           acks: "all"
-          state.dir: "/tmp/kafka-stream-unit/${kestra.prefix}"
           compression.type: "lz4"
           max.request.size: "10485760"
+          cache.max.bytes.buffering: 0
+          state.dir: "/tmp/kafka-stream-unit/${kestra.prefix}"
 
     topics:
       execution:

@@ -13,6 +13,7 @@ import io.kestra.core.tasks.flows.Parallel;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.runner.kafka.configs.ClientConfig;
+import io.kestra.runner.kafka.configs.StreamDefaultsConfig;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
 import io.micronaut.context.ApplicationContext;
@@ -53,6 +54,9 @@ class KafkaExecutorTest {
     ClientConfig clientConfig;
 
     @Inject
+    StreamDefaultsConfig streamConfig;
+
+    @Inject
     KafkaAdminService kafkaAdminService;
 
     @Inject
@@ -71,8 +75,12 @@ class KafkaExecutorTest {
 
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
+        properties.putAll(streamConfig.getProperties());
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "unit-test");
         properties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kafka-stream-unit/" + UUID.randomUUID());
+
+        // @TODO
+        properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE);
 
         Topology topology = stream.topology().build();
 
@@ -287,7 +295,6 @@ class KafkaExecutorTest {
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
-
 
     @Test
     void parallel() {

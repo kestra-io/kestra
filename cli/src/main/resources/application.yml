@@ -66,10 +66,7 @@ kestra:
           acks: "all"
           compression.type: "lz4"
           max.request.size: "10485760"
-          poll.ms: 50
-          producer.linger.ms: 0
-          commit.interval.ms: 50
-          consumer.max.poll.records: 50
+          cache.max.bytes.buffering: 0
 
     topics:
       execution:

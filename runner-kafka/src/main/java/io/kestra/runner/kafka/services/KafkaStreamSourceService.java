@@ -50,29 +50,6 @@ public class KafkaStreamSourceService {
             );
     }
 
-    public KTable<String, KafkaExecutor.Executor> executorKTable(StreamsBuilder builder) {
-        return builder
-            .table(
-                kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
-                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("KTable.Executor"),
-                Materialized.<String, Execution, KeyValueStore<Bytes, byte[]>>as("execution")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(Execution.class))
-            )
-            .mapValues((readOnlyKey, value) -> new KafkaExecutor.Executor(value));
-    }
-
-    public GlobalKTable<String, Execution> executorGlobalKTable(StreamsBuilder builder) {
-        return builder
-            .globalTable(
-                kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
-                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("GlobalKTable.Executor"),
-                Materialized.<String, Execution, KeyValueStore<Bytes, byte[]>>as("execution")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(Execution.class))
-            );
-    }
-
     public GlobalKTable<String, Trigger> triggerGlobalKTable(StreamsBuilder builder) {
         return builder
             .globalTable(
@@ -86,8 +63,6 @@ public class KafkaStreamSourceService {
 
     public KStream<String, KafkaExecutor.ExecutorWithFlow> executorWithFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, KafkaExecutor.Executor> executionKStream) {
         return executionKStream
-            .filter(
-                (key, value) -> value != null, Named.as("ExecutorWithFlow.notNullFilter"))
             .join(
                 flowGlobalKTable,
                 (key, executor) -> Flow.uid(executor.getExecution()),

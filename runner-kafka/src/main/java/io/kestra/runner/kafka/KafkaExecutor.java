@@ -1,5 +1,6 @@
 package io.kestra.runner.kafka;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -12,6 +13,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.runners.*;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Either;
@@ -27,16 +29,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.Stores;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
@@ -137,7 +142,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
 
         // declare ktable & kstream
         KStream<String, WorkerTaskResult> workerTaskResultKStream = this.workerTaskResultKStream(builder);
-        KTable<String, KafkaExecutor.Executor> executorKTable = kafkaStreamSourceService.executorKTable(builder);
+        KTable<String, KafkaExecutor.Executor> executorKTable = this.executorKTable(builder);
         KTable<String, WorkerTaskResultState> workerTaskResultKTable = this.workerTaskResultKTable(workerTaskResultKStream);
         GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
         GlobalKTable<String, WorkerTaskRunning> workerTaskRunningKTable = this.workerTaskRunningKStream(builder);
@@ -149,10 +154,10 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         KafkaStreamSourceService.logIfEnabled(
             executorKTable.toStream(Named.as("ExecutionIn.toStream")),
             (key, value) -> log.debug(
-                "Execution in '{}' with checksum '{}' and hashCode {}: {}",
+                "Execution << IN [key='{}', crc='{}', offset='{}']\n{}",
                 value.getExecution().getId(),
                 value.getExecution().toCrc32State(),
-                value.getExecution().hashCode(),
+                value.getOffset(),
                 value.getExecution().toStringState()
             ),
             "ExecutionIn"
@@ -204,6 +209,43 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
     }
 
+    public KTable<String, KafkaExecutor.Executor> executorKTable(StreamsBuilder builder) {
+        return builder
+            .table(
+                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
+                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("KTable.Executor"),
+                Materialized.<String, Execution, KeyValueStore<Bytes, byte[]>>as("execution")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(JsonSerde.of(Execution.class))
+            )
+            .transformValues(() -> new ValueTransformerWithKey<String, Execution, KafkaExecutor.Executor>() {
+                ProcessorContext context;
+                @Override
+                public void init(ProcessorContext context) {
+                    this.context = context;
+                }
+
+                @Override
+                public KafkaExecutor.Executor transform(String readOnlyKey, Execution value) {
+                    if (value == null) {
+                        return null;
+                    }
+
+                    this.context.headers().remove("from");
+                    this.context.headers().remove("offset");
+
+                    return new KafkaExecutor.Executor(
+                        value,
+                        this.context.offset()
+                    );
+                }
+
+                @Override
+                public void close() {
+
+                }
+            });
+    }
 
     private GlobalKTable<String, Template> templateKTable(StreamsBuilder builder) {
         return builder
@@ -267,7 +309,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                         Execution newExecution = executor.getExecution().withState(State.Type.KILLING);
 
                         if (log.isDebugEnabled()) {
-                            log.debug("Killed in: {}", newExecution.toStringState());
+                            log.debug("Killed << IN\n{}", newExecution.toStringState());
                         }
 
                         return executor.withExecution(newExecution, "joinExecutionKilled");
@@ -300,7 +342,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 WorkerTaskResultState::new,
                 (key, newValue, aggregate) -> {
                     if (log.isDebugEnabled()) {
-                        log.debug("Aggregate in: {}", newValue.getTaskRun().toStringState());
+                        log.debug("Aggregate << IN : {}", newValue.getTaskRun().toStringState());
                     }
 
                     aggregate
@@ -346,11 +388,13 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                             Execution newExecution = executor.getExecution().withTaskRun(workerTaskResult.getTaskRun());
 
                             if (log.isDebugEnabled()) {
-                                log.debug("WorkerTaskResult in: {}", newExecution.toStringState());
-                            }
-
-                            if (log.isDebugEnabled()) {
-                                log.debug("WorkerTaskResult in: {}", newExecution.toStringState());
+                                log.debug(
+                                    "WorkerTaskResult << IN [key='{}', crc='{}', offset='{}']\n{}",
+                                    newExecution.getId(),
+                                    newExecution.toCrc32State(),
+                                    executor.getOffset(),
+                                    newExecution.toStringState()
+                                );
                             }
 
                             executor = executor.withExecution(newExecution, "joinWorkerResult");
@@ -386,6 +430,10 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         return stream
             .mapValues(
                 (readOnlyKey, executorWithFlow) -> {
+//                    if (executorWithFlow.hasChanged()) {
+//                        return executorWithFlow;
+//                    }
+
                     Optional<Execution> main = this.doMain(executorWithFlow.getExecution(), executorWithFlow.getFlow());
 
                     return main
@@ -558,17 +606,17 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
     private KStream<String, ExecutorWithFlow> handleWorkerTask(KStream<String, ExecutorWithFlow> stream) {
         KStream<String, Either<WithException, Pair<ExecutorWithFlow, List<WorkerTask>>>> streamEither = stream
             .mapValues(
-                (readOnlyKey, value) -> {
+                (readOnlyKey, executorWithFlow) -> {
                     try {
                         return Either.right(
                             Pair.of(
-                                value,
-                                this.doWorkerTask(value.getExecution(), value.getFlow()).orElse(null)
+                                executorWithFlow,
+                                this.doWorkerTask(executorWithFlow.getExecution(), executorWithFlow.getFlow()).orElse(null)
                             )
 
                         );
                     } catch (Exception e) {
-                        return Either.left(new WithException(value, e));
+                        return Either.left(new WithException(executorWithFlow, e));
                     }
                 },
                 Named.as("HandleWorkerTask.mapToWorkerTaskList")
@@ -611,7 +659,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 KStream<String, WorkerTaskResult> workerTaskResultKStream = KafkaStreamSourceService.logIfEnabled(
                     resultFlowable,
                     (key, value) -> log.debug(
-                        "WorkerTaskResult out: {}",
+                        "WorkerTaskResult >> OUT : {}",
                         value.getTaskRun().toStringState()
                     ),
                     "HandleWorkerTaskFlowable"
@@ -634,7 +682,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 KStream<String, WorkerTask> workerTaskKStream = KafkaStreamSourceService.logIfEnabled(
                     resultNotFlowable,
                     (key, value) -> log.debug(
-                        "WorkerTask out: {}",
+                        "WorkerTaskResult >> OUT : {}",
                         value.getTaskRun().toStringState()
                     ),
                     "HandleWorkerTaskNotFlowable"
@@ -692,7 +740,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 KafkaStreamSourceService.logIfEnabled(
                     WorkerTaskResult,
                     (key, value) -> log.debug(
-                        "WorkerTaskResult out : {}",
+                        "WorkerTaskResult >> OUT : {}",
                         value.getTaskRun().toStringState()
                     ),
                     "HandleWorkerTaskResult"
@@ -748,7 +796,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         KafkaStreamSourceService.logIfEnabled(
             resultWorkerTask,
             (key, value) -> log.debug(
-                "WorkerTask resend out: {}",
+                "WorkerTask resend >> OUT : {}",
                 value.getTaskRun().toStringState()
             ),
             "DetectNewWorkerTask"
@@ -787,7 +835,11 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
     }
 
-    private <T> KStream<String, ExecutorWithFlow> branchException(KStream<String, Either<WithException, Pair<ExecutorWithFlow, T>>> stream, Consumer<KStream<String, T>> consumer, String methodName) {
+    private <T> KStream<String, ExecutorWithFlow> branchException(
+        KStream<String, Either<WithException, Pair<ExecutorWithFlow, T>>> stream,
+        Consumer<KStream<String, T>> consumer,
+        String methodName
+    ) {
         String finalMethodName = methodName + "BranchException";
 
         consumer.accept(
@@ -819,16 +871,49 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
 
     private void toExecution(KStream<String, ExecutorWithFlow> stream) {
         KStream<String, ExecutorWithFlow> streamFrom = stream
-            .filter((key, value) -> value.getFrom() != null, Named.as("ToExecution.haveFrom"));
+            .transformValues(() -> new ValueTransformer<ExecutorWithFlow, ExecutorWithFlow>() {
+                ProcessorContext context;
+
+                @Override
+                public void init(ProcessorContext context) {
+                    this.context = context;
+                }
+
+                @Override
+                public ExecutorWithFlow transform(ExecutorWithFlow value) {
+                    try {
+                        this.context.headers().add(
+                            "from",
+                            JacksonMapper.ofJson().writeValueAsString(value.getFrom()).getBytes(StandardCharsets.UTF_8)
+                        );
+
+                        this.context.headers().add(
+                            "offset",
+                            JacksonMapper.ofJson().writeValueAsString(value.getOffset()).getBytes(StandardCharsets.UTF_8)
+                        );
+                    } catch (JsonProcessingException e) {
+                        log.warn("Unable to add headers", e);
+                    }
+
+                    return value;
+                }
+
+                @Override
+                public void close() {
+
+                }
+            })
+            .filter((key, value) -> value.getFrom().size() > 0, Named.as("ToExecution.haveFrom"));
 
 
         streamFrom = KafkaStreamSourceService.logIfEnabled(
             streamFrom,
             (key, value) -> log.debug(
-                "Execution out '{}' with checksum '{}' and from '{}': {}",
+                "Execution >> OUT [key='{}', crc='{}', from='{}', offset='{}']\n{}",
                 value.getExecution().getId(),
                 value.getExecution().toCrc32State(),
                 value.getFrom(),
+                value.getOffset(),
                 value.getExecution().toStringState()
             ),
             "ToExecution"
@@ -887,27 +972,29 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
     @AllArgsConstructor
     public static class Executor {
         Execution execution;
-        Integer hashCode;
-        Execution old;
         Exception exception;
-        String from;
+        List<String> from = new ArrayList<>();
+        Long offset;
 
-        public Executor(Execution execution) {
+        public Executor(Execution execution, Long offset) {
             this.execution = execution;
-            this.old = execution;
-            this.hashCode = execution.hashCode();
+            this.offset = offset;
+        }
+
+        public boolean hasChanged() {
+            return this.from.size() > 0 || this.exception != null;
         }
 
         public Executor withExecution(Execution execution, String from) {
             this.execution = execution;
-            this.from = from;
+            this.from.add(from);
 
             return this;
         }
 
         public Executor withException(Exception exception, String from) {
             this.exception = exception;
-            this.from = from;
+            this.from.add(from);
 
             return this;
         }
@@ -918,20 +1005,20 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         Flow flow;
 
         public ExecutorWithFlow(Executor executor, Flow flow) {
-            super(executor.getExecution(), executor.getHashCode(), executor.getOld(), executor.getException(), executor.getFrom());
+            super(executor.getExecution(), executor.getException(), executor.getFrom(), executor.getOffset());
             this.flow = flow;
         }
 
         public ExecutorWithFlow withExecution(Execution execution, String from) {
             this.execution = execution;
-            this.from = from;
+            this.from.add(from);
 
             return this;
         }
 
         public ExecutorWithFlow withException(Exception exception, String from) {
             this.exception = exception;
-            this.from = from;
+            this.from.add(from);
 
             return this;
         }

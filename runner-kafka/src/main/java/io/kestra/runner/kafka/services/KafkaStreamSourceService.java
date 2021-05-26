@@ -3,6 +3,7 @@ package io.kestra.runner.kafka.services;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.runners.AbstractExecutor;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.runner.kafka.KafkaExecutor;
 import io.kestra.runner.kafka.serializers.JsonSerde;
@@ -61,14 +62,14 @@ public class KafkaStreamSourceService {
             );
     }
 
-    public KStream<String, KafkaExecutor.ExecutorWithFlow> executorWithFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, KafkaExecutor.Executor> executionKStream) {
+    public KStream<String, KafkaExecutor.Executor> executorWithFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, AbstractExecutor.Executor> executionKStream) {
         return executionKStream
             .join(
                 flowGlobalKTable,
                 (key, executor) -> Flow.uid(executor.getExecution()),
                 (executor, flow) -> {
                     Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, executor.getExecution());
-                    return new KafkaExecutor.ExecutorWithFlow(executor, flowWithDefaults);
+                    return executor.withFlow(flowWithDefaults);
                 },
                 Named.as("ExecutorWithFlow.join")
             );

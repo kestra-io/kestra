@@ -16,10 +16,8 @@ import io.kestra.core.services.TaskDefaultService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -91,53 +89,45 @@ public class MemoryExecutor extends AbstractExecutor {
             flow = taskDefaultService.injectDefaults(flow, state.execution);
 
             Execution execution = state.execution;
+            Executor executor = new Executor(execution, null).withFlow(flow);
 
-            Optional<Execution> main = this.doMain(execution, flow);
-            if (main.isPresent()) {
-                this.toExecution(main.get(), flow);
-                return;
+            executor = this.process(executor);
+
+            if (executor.getNexts().size() > 0 && deduplicateNexts(execution, executor.getNexts())) {
+                executor.withExecution(
+                    this.onNexts(executor.getFlow(), executor.getExecution(), executor.getNexts()),
+                    "onNexts"
+                );
             }
 
-            try {
-                Optional<List<TaskRun>> nexts = this.doNexts(execution, flow);
-                if (nexts.isPresent() && deduplicateNexts(execution, nexts.get())) {
-                    this.toExecution(this.onNexts(flow, execution, nexts.get()), flow);
-                    return;
-                }
+            if (executor.getException() != null) {
+                handleFailedExecutionFromExecutor(executor, executor.getException());
+            } else if (executor.isExecutionUpdated()) {
+                toExecution(executor);
+            }
 
-                Optional<List<WorkerTask>> workerTasks = this.doWorkerTask(execution, flow);
-                if (workerTasks.isPresent()) {
-                    List<WorkerTask> workerTasksDedup = workerTasks.stream()
-                        .flatMap(Collection::stream)
-                        .filter(workerTask -> this.deduplicateWorkerTask(execution, workerTask.getTaskRun()))
-                        .collect(Collectors.toList());
+            if (executor.getWorkerTasks().size() > 0){
+                List<WorkerTask> workerTasksDedup = executor.getWorkerTasks().stream()
+                    .filter(workerTask -> this.deduplicateWorkerTask(execution, workerTask.getTaskRun()))
+                    .collect(Collectors.toList());
 
-                    // WorkerTask not flowable to workerTask
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> !workerTask.getTask().isFlowable())
-                        .forEach(workerTaskQueue::emit);
+                // WorkerTask not flowable to workerTask
+                workerTasksDedup
+                    .stream()
+                    .filter(workerTask -> !workerTask.getTask().isFlowable())
+                    .forEach(workerTaskQueue::emit);
 
-                    // WorkerTask not flowable to workerTaskResult as Running
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> workerTask.getTask().isFlowable())
-                        .map(workerTask -> new WorkerTaskResult(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING))))
-                        .forEach(workerTaskResultQueue::emit);
-                    return;
-                }
+                // WorkerTask not flowable to workerTaskResult as Running
+                workerTasksDedup
+                    .stream()
+                    .filter(workerTask -> workerTask.getTask().isFlowable())
+                    .map(workerTask -> new WorkerTaskResult(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING))))
+                    .forEach(workerTaskResultQueue::emit);
+            }
 
-                Optional<List<WorkerTaskResult>> workerTaskResults = this.doWorkerTaskResult(execution, flow);
-                if (workerTaskResults.isPresent()) {
-                    workerTaskResults.stream()
-                        .flatMap(Collection::stream)
-                        .forEach(workerTaskResultQueue::emit);
-
-                    return;
-                }
-            } catch (Exception e) {
-                handleFailedExecutionFromExecutor(execution, flow, e);
-                return;
+            if (executor.getWorkerTaskResults().size() > 0) {
+                executor.getWorkerTaskResults()
+                    .forEach(workerTaskResultQueue::emit);
             }
 
             // Listeners need the last emit
@@ -165,12 +155,12 @@ public class MemoryExecutor extends AbstractExecutor {
         }
     }
 
-    private void handleFailedExecutionFromExecutor(Execution execution, Flow flow, Exception e) {
-        Execution.FailedExecutionWithLog failedExecutionWithLog = execution.failedExecutionFromExecutor(e);
+    private void handleFailedExecutionFromExecutor(Executor executor, Exception e) {
+        Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
         try {
             failedExecutionWithLog.getLogs().forEach(logQueue::emit);
 
-            this.toExecution(failedExecutionWithLog.getExecution(), flow);
+            this.toExecution(executor.withExecution(failedExecutionWithLog.getExecution(), "exception"));
         } catch (Exception ex) {
             log.error("Failed to produce {}", e.getMessage(), ex);
         }
@@ -189,20 +179,20 @@ public class MemoryExecutor extends AbstractExecutor {
         return queued;
     }
 
-    private void toExecution(Execution execution, Flow flow) {
+    private void toExecution(Executor executor) {
         if (log.isDebugEnabled()) {
-            log.debug("Execution out with {}: {}", execution.toCrc32State(), execution.toStringState());
+            log.debug("Execution out with {}: {}", executor.getExecution().toCrc32State(), executor.getExecution().toStringState());
         }
 
         // emit for other consumer than executor
-        this.executionQueue.emit(execution);
+        this.executionQueue.emit(executor.getExecution());
 
         // recursive search for other executor
-        this.handleExecution(saveExecution(execution));
+        this.handleExecution(saveExecution(executor.getExecution()));
 
         // delete if ended
-        if (conditionService.isTerminatedWithListeners(flow, execution)) {
-            executions.remove(execution.getId());
+        if (conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())) {
+            executions.remove(executor.getExecution().getId());
         }
     }
 
@@ -237,7 +227,7 @@ public class MemoryExecutor extends AbstractExecutor {
             Flow flow = this.flowRepository.findByExecution(executions.get(message.getTaskRun().getExecutionId()).execution);
             flow = taskDefaultService.injectDefaults(flow, executions.get(message.getTaskRun().getExecutionId()).execution);
 
-            this.toExecution(executions.get(message.getTaskRun().getExecutionId()).execution, flow);
+            this.toExecution(new Executor(executions.get(message.getTaskRun().getExecutionId()).execution, null).withFlow(flow));
         }
     }
 

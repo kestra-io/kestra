@@ -470,22 +470,57 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         return executor.withWorkerTasks(workerTasks, "handleWorkerTask");
     }
 
+    protected static void log(Logger log, Boolean in, WorkerTask value) {
+        log.debug(
+            "{} {} : {}",
+            in ? "<< IN " : ">> OUT",
+            value.getClass().getSimpleName(),
+            value.getTaskRun().toStringState()
+        );
+    }
+
+    protected static void log(Logger log, Boolean in, WorkerTaskResult value) {
+        log.debug(
+            "{} {} : {}",
+            in ? "<< IN " : ">> OUT",
+            value.getClass().getSimpleName(),
+            value.getTaskRun().toStringState()
+        );
+    }
+
+    protected static void log(Logger log, Boolean in, Executor value) {
+        log.debug(
+            "{} {} [key='{}', from='{}', offset='{}']\n{}",
+            in ? "<< IN " : ">> OUT",
+            value.getClass().getSimpleName(),
+            value.getExecution().getId(),
+            value.getFrom(),
+            value.getOffset(),
+            value.getExecution().toStringState()
+        );
+    }
+
     @Getter
     @AllArgsConstructor
     public static class Executor {
         private Execution execution;
         private Exception exception;
         private final List<String> from = new ArrayList<>();
-        private final Long offset;
+        private Long offset;
         private boolean executionUpdated = false;
         private Flow flow;
         private final List<TaskRun> nexts = new ArrayList<>();
         private final List<WorkerTask> workerTasks = new ArrayList<>();
         private final List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
+        private WorkerTaskResult joined;
 
         public Executor(Execution execution, Long offset) {
             this.execution = execution;
             this.offset = offset;
+        }
+
+        public Executor(WorkerTaskResult workerTaskResult) {
+            this.joined = workerTaskResult;
         }
 
         public Executor withFlow(Flow flow) {
@@ -529,6 +564,13 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
             this.from.add(from);
 
             return this;
+        }
+
+        public Executor serialize() {
+            return new Executor(
+                execution,
+                this.offset
+            );
         }
     }
 }

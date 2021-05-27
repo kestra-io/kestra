@@ -1,5 +1,6 @@
 package io.kestra.runner.kafka;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.TaskRun;
@@ -183,7 +184,6 @@ class KafkaExecutorTest {
         this.changeStatus(task, taskRun, State.Type.SUCCESS);
 
         execution = executionOutput().readValue();
-        execution = executionOutput().readValue();
 
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
@@ -212,7 +212,6 @@ class KafkaExecutorTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
-    @Disabled("Don't work any more :°(, unable to have all killled execution but it's working on true streams")
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void killedParallel(boolean killed) {
@@ -249,13 +248,11 @@ class KafkaExecutorTest {
 
 
         // killed all the creation and killing the parent
-         for (int i = 0; i < 14; i++) {
-             executionRecord = executionOutput().readRecord().value();
-         }
+        for (int i = 0; i < 5; i++) {
+            executionRecord = executionOutput().readRecord().value();
+        }
 
-        // can't catch parent killing here
-        // assertThat(executionRecord.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLING));
-
+        assertThat(executionRecord.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.KILLING));
 
         for (int i = 2; i < 5; i++) {
             assertThat(executionRecord.getTaskRunList().get(i).getState().getCurrent(), is(State.Type.KILLED));
@@ -269,7 +266,7 @@ class KafkaExecutorTest {
         }
 
         // killing state
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 2; i++) {
             executionRecord = executionOutput().readRecord().value();
         }
 
@@ -357,6 +354,62 @@ class KafkaExecutorTest {
 
         // ok
         assertThat(executionRecord.value().getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+    @Test
+    void eachParallelNested() throws InternalException {
+        Flow flow = flowRepository.findById("io.kestra.tests", "each-parallel-nested").orElseThrow();
+        this.flowInput().pipeInput(flow.uid(), flow);
+
+        Execution execution = createExecution(flow);
+
+        for (int i = 0; i < 5; i++) {
+            execution = executionOutput().readRecord().value();
+        }
+
+        for (int i = 0; i <= 3; i++) {
+            assertThat(execution.getTaskRunList().get(i).getState().getCurrent(), is(State.Type.RUNNING));
+        }
+
+        for (int i = 4; i <= 6; i++) {
+            assertThat(execution.getTaskRunList().get(i).getState().getCurrent(), is(State.Type.CREATED));
+
+            this.changeStatus(flow.findTaskByTaskId(execution.getTaskRunList().get(i).getTaskId()), execution.getTaskRunList().get(i), State.Type.RUNNING);
+            this.changeStatus(flow.findTaskByTaskId(execution.getTaskRunList().get(i).getTaskId()), execution.getTaskRunList().get(i), State.Type.SUCCESS);
+        }
+
+        for (int i = 0; i < 6; i++) {
+            execution = executionOutput().readRecord().value();
+        }
+
+        for (int i = 4; i <= 6; i++) {
+            assertThat(execution.getTaskRunList().get(i).getState().getCurrent(), is(State.Type.SUCCESS));
+        }
+
+        for (int i = 7; i <= 9; i++) {
+            assertThat(execution.getTaskRunList().get(i).getState().getCurrent(), is(State.Type.CREATED));
+
+            this.changeStatus(flow.findTaskByTaskId(execution.getTaskRunList().get(i).getTaskId()), execution.getTaskRunList().get(i), State.Type.RUNNING);
+            this.changeStatus(flow.findTaskByTaskId(execution.getTaskRunList().get(i).getTaskId()), execution.getTaskRunList().get(i), State.Type.SUCCESS);
+        }
+
+        for (int i = 0; i < 10; i++) {
+            execution = executionOutput().readRecord().value();
+        }
+
+        for (int i = 7; i <= 9; i++) {
+            assertThat(execution.getTaskRunList().get(i).getState().getCurrent(), is(State.Type.SUCCESS));
+        }
+
+        assertThat(execution.getTaskRunList().get(10).getState().getCurrent(), is(State.Type.CREATED));
+        this.changeStatus(flow.findTaskByTaskId(execution.getTaskRunList().get(10).getTaskId()), execution.getTaskRunList().get(10), State.Type.RUNNING);
+        this.changeStatus(flow.findTaskByTaskId(execution.getTaskRunList().get(10).getTaskId()), execution.getTaskRunList().get(10), State.Type.SUCCESS);
+
+        for (int i = 0; i < 2; i++) {
+            execution = executionOutput().readRecord().value();
+        }
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test

@@ -81,15 +81,15 @@ public class MemoryExecutor extends AbstractExecutor {
 
     private void handleExecution(ExecutionState state) {
         synchronized (this) {
-            if (log.isDebugEnabled()) {
-                log.debug("Execution in with {}: {}", state.execution.toCrc32State(), state.execution.toStringState());
-            }
-
             Flow flow = this.flowRepository.findByExecution(state.execution);
             flow = taskDefaultService.injectDefaults(flow, state.execution);
 
             Execution execution = state.execution;
             Executor executor = new Executor(execution, null).withFlow(flow);
+
+            if (log.isDebugEnabled()) {
+                log(log, true, executor);
+            }
 
             executor = this.process(executor);
 
@@ -181,7 +181,7 @@ public class MemoryExecutor extends AbstractExecutor {
 
     private void toExecution(Executor executor) {
         if (log.isDebugEnabled()) {
-            log.debug("Execution out with {}: {}", executor.getExecution().toCrc32State(), executor.getExecution().toStringState());
+            log(log, false, executor);
         }
 
         // emit for other consumer than executor
@@ -199,7 +199,7 @@ public class MemoryExecutor extends AbstractExecutor {
     private void workerTaskResultQueue(WorkerTaskResult message) {
         synchronized (this) {
             if (log.isDebugEnabled()) {
-                log.debug("WorkerTaskResult: {}", message.getTaskRun().toStringState());
+                log(log, true, message);
             }
 
             metricRegistry
@@ -238,7 +238,7 @@ public class MemoryExecutor extends AbstractExecutor {
         State.Type current = executionState.workerTaskDeduplication.get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.debug("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
+            log.trace("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
             return false;
         } else {
             executionState.workerTaskDeduplication.put(deduplicationKey, taskRun.getState().getCurrent());
@@ -255,7 +255,7 @@ public class MemoryExecutor extends AbstractExecutor {
                 String deduplicationKey = taskRun.getParentTaskRunId() + "-" + taskRun.getTaskId() + "-" + taskRun.getValue();
 
                 if (executionState.childDeduplication.containsKey(deduplicationKey)) {
-                    log.debug("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
+                    log.trace("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
                     return false;
                 } else {
                     executionState.childDeduplication.put(deduplicationKey, taskRun.getId());

@@ -33,11 +33,11 @@ public class ExecutorProcessTransformer implements ValueTransformerWithKey<Strin
     }
 
     @Override
-    public KafkaExecutor.Executor transform(final String key, final KafkaExecutor.Executor Executor) {
-        AbstractExecutor.Executor executor = abstractExecutor.process(Executor);
+    public KafkaExecutor.Executor transform(final String key, final KafkaExecutor.Executor value) {
+        AbstractExecutor.Executor executor = abstractExecutor.process(value);
 
         if (executor.getNexts().size() == 0) {
-            return Executor;
+            return value;
         }
         Store store = this.store.get(key) == null ? new Store() : this.store.get(key);
 
@@ -48,22 +48,22 @@ public class ExecutorProcessTransformer implements ValueTransformerWithKey<Strin
 
         if (groups.get(true).size() > 0) {
             groups.get(true).forEach(s ->
-                log.debug("Duplicate next taskRun for execution '{}', value '{}'", key, s)
+                log.trace("Duplicate next taskRun for execution '{}', value '{}'", key, s)
             );
 
-            return Executor;
+            return value;
         }
 
         store.addAll(groups.get(false));
         this.store.put(key, store);
 
         Execution newExecution = abstractExecutor.onNexts(
-            Executor.getFlow(),
-            Executor.getExecution(),
+            value.getFlow(),
+            value.getExecution(),
             executor.getNexts()
         );
 
-        return Executor.withExecution(newExecution, "onNexts");
+        return value.withExecution(newExecution, "onNexts");
     }
 
     @Override

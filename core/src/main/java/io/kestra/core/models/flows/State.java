@@ -36,7 +36,7 @@ public class State {
 
     public State(Type state, State actual) {
         this.current = state;
-        this.histories = actual.histories;
+        this.histories = new ArrayList<>(actual.histories);
         this.histories.add(new History(this.current, Instant.now()));
     }
 

@@ -10,10 +10,10 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.tasks.flows.EachSequentialTest;
+import io.kestra.core.tasks.flows.FlowCaseTest;
 import io.kestra.core.tasks.flows.TemplateTest;
 import io.kestra.core.utils.TestsUtils;
 import org.apache.kafka.common.errors.RecordTooLargeException;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -45,6 +45,9 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Inject
     private TemplateRepositoryInterface templateRepository;
+
+    @Inject
+    private FlowCaseTest flowCaseTest;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -251,4 +254,16 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
         taskDefaultsCaseTest.invalidTaskDefaults();
     }
+
+    @Test
+    void flowWaitSuccess() throws Exception {
+        flowCaseTest.waitSuccess();
+    }
+
+    @Test
+    void flowWaitFailed() throws Exception {
+        flowCaseTest.waitFailed();
+    }
+
+
 }

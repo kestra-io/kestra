@@ -82,7 +82,7 @@ public class FlowService {
     }
 
     private static Stream<Flow> removeSelf(Stream<Flow> flowStream, Execution execution) {
-        // we don't allow recursive 
+        // we don't allow recursive
         return flowStream
             .filter(f -> !f.uidWithoutRevision().equals(Flow.uidWithoutRevision(execution)));
     }
@@ -159,6 +159,7 @@ public class FlowService {
 
                 return f.getMultipleConditionWindow().with(results);
             })
+            .filter(multipleConditionWindow -> multipleConditionWindow.getResults().size() > 0)
             .collect(Collectors.toList());
     }
 

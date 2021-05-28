@@ -7,6 +7,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
+import io.kestra.core.runners.Executor;
 import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.schedulers.DefaultScheduler;
 import io.kestra.core.schedulers.SchedulerExecutionWithTrigger;
@@ -92,10 +93,10 @@ public class KafkaScheduler extends AbstractScheduler {
         private Topology topology() {
             StreamsBuilder builder = new KafkaStreamsBuilder();
 
-            KStream<String, Execution> executorKStream = kafkaStreamSourceService.executorKStream(builder);
+            KStream<String, Executor> executorKStream = kafkaStreamSourceService.executorKStream(builder);
             GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
-            KStream<String, KafkaStreamSourceService.ExecutorWithFlow> executionWithFlowKStream = kafkaStreamSourceService
-                .withFlow(flowKTable, executorKStream);
+            KStream<String, Executor> executionWithFlowKStream = kafkaStreamSourceService
+                .executorWithFlow(flowKTable, executorKStream, false);
             GlobalKTable<String, Trigger> triggerGlobalKTable = kafkaStreamSourceService.triggerGlobalKTable(builder);
 
             executionWithFlowKStream
@@ -139,10 +140,10 @@ public class KafkaScheduler extends AbstractScheduler {
                 Stores.keyValueStoreBuilder(
                     Stores.persistentKeyValueStore(STATESTORE_EXECUTOR),
                     Serdes.String(),
-                    JsonSerde.of(Execution.class)
+                    JsonSerde.of(Executor.class)
                 ),
-                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
-                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)),
+                kafkaAdminService.getTopicName(Executor.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(Executor.class)),
                 () -> new GlobalStateProcessor<>(STATESTORE_EXECUTOR)
             );
 
@@ -205,7 +206,7 @@ public class KafkaScheduler extends AbstractScheduler {
     @Override
     public void run() {
         kafkaAdminService.createIfNotExist(Flow.class);
-        kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_EXECUTOR);
+        kafkaAdminService.createIfNotExist(Executor.class);
         kafkaAdminService.createIfNotExist(Trigger.class);
 
         this.stateStream = kafkaStreamService.of(SchedulerState.class, new SchedulerState().topology());

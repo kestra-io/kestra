@@ -123,7 +123,29 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             Serdes.String()
         ));
 
-        // trigger multiple flow
+        // declare common stream
+        KStream<String, WorkerTaskResult> workerTaskResultKStream = this.workerTaskResultKStream(builder);
+        KStream<String, Executor> executorKStream = this.executorKStream(builder);
+
+        // join with killed
+        KStream<String, ExecutionKilled> executionKilledKStream = this.executionKilledKStream(builder);
+        KStream<String, Executor> executionWithKilled = this.joinExecutionKilled(executionKilledKStream, executorKStream);
+
+        // join with WorkerResult
+        KStream<String, Executor> executionKStream = this.joinWorkerResult(workerTaskResultKStream, executionWithKilled);
+
+        // handle state on execution
+        GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
+        KStream<String, Executor> stream = kafkaStreamSourceService.executorWithFlow(flowKTable, executionKStream, true);
+
+        stream = this.handleExecutor(stream);
+
+        // save execution
+        this.toExecution(stream);
+        this.toWorkerTask(stream);
+        this.toWorkerTaskResult(stream);
+
+        // trigger
         builder.addStateStore(
             Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(TRIGGER_MULTIPLE_STATE_STORE_NAME),
@@ -132,7 +154,18 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             )
         );
 
-        // worker instance global state store
+        KStream<String, ExecutorFlowTrigger> flowWithTriggerStream = this.flowWithTriggerStream(builder);
+
+        this.toExecutorFlowTriggerTopic(stream);
+        this.handleFlowTrigger(flowWithTriggerStream);
+
+        // purge at end
+        this.purgeExecutor(stream);
+
+        // global KTable
+        this.templateKTable(builder);
+
+        // handle worker running
         builder.addGlobalStore(
             Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(WORKERINSTANCE_STATE_STORE_NAME),
@@ -144,38 +177,9 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             () -> new GlobalStateProcessor<>(WORKERINSTANCE_STATE_STORE_NAME)
         );
 
-        // declare ktable & kstream
-        KStream<String, WorkerTaskResult> workerTaskResultKStream = this.workerTaskResultKStream(builder);
-        KStream<String, Executor> executorKStream = this.executorKStream(builder);
-        GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
-        KStream<String, ExecutionKilled> executionKilledKStream = this.executionKilledKStream(builder);
         GlobalKTable<String, WorkerTaskRunning> workerTaskRunningKTable = this.workerTaskRunningKStream(builder);
         KStream<String, WorkerInstance> workerInstanceKStream = this.workerInstanceKStream(builder);
-        KStream<String, ExecutorFlowTrigger> flowWithTriggerStream = this.flowWithTriggerStream(builder);
-        this.templateKTable(builder);
 
-        // join with killed & worker result
-        KStream<String, Executor> executionWithKilled = this.joinExecutionKilled(executionKilledKStream, executorKStream);
-        KStream<String, Executor> executionKStream = this.joinWorkerResult(workerTaskResultKStream, executionWithKilled);
-
-        // handle state on execution
-        KStream<String, Executor> stream = kafkaStreamSourceService.executorWithFlow(flowKTable, executionKStream);
-
-        stream = this.handleExecutor(stream);
-
-        // save execution
-        this.toExecution(stream);
-        this.toWorkerTask(stream);
-        this.toWorkerTaskResult(stream);
-
-        // trigger
-        this.handleExecutorFlowTriggerTopic(stream);
-        this.handleFlowTrigger(flowWithTriggerStream);
-
-        // purge at end
-        this.purgeExecutor(stream);
-
-        // handle worker
         this.purgeWorkerRunning(workerTaskResultKStream);
         this.detectNewWorker(workerInstanceKStream, workerTaskRunningKTable);
 
@@ -188,6 +192,9 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 kafkaAdminService.getTopicName(Execution.class),
                 Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("Executor.fromExecution")
             )
+            .filter((key, value) -> value != null, Named.as("Executor.filterNotNull"))
+            // don't remove ValueTransformerWithKey<String, Execution, Executor> generic or it crash java compiler
+            // https://bugs.openjdk.java.net/browse/JDK-8217234
             .transformValues(() -> new ValueTransformerWithKey<String, Execution, Executor>() {
                 ProcessorContext context;
 
@@ -202,13 +209,20 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                         return null;
                     }
 
-                    this.context.headers().remove("from");
-                    this.context.headers().remove("offset");
-
-                    return new Executor(
+                    Executor executor = new Executor(
                         value,
                         this.context.offset()
                     );
+
+                    // restart need to be publised
+                    if (executor.getExecution().isJustRestarted()) {
+                        executor = executor.withExecution(value, "restarted");
+                    }
+
+                    this.context.headers().remove("from");
+                    this.context.headers().remove("offset");
+
+                    return executor;
                 }
 
                 @Override
@@ -226,8 +240,6 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
 
         return result;
     }
-
-
 
     private GlobalKTable<String, Template> templateKTable(StreamsBuilder builder) {
         return builder
@@ -362,7 +374,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 Named.as("PurgeExecutor.executionToNull")
             )
             .to(
-                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
+                kafkaAdminService.getTopicName(Executor.class),
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("PurgeExecutor.toExecutor")
             );
 
@@ -425,7 +437,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
     }
 
-    private void handleExecutorFlowTriggerTopic(KStream<String, Executor> stream) {
+    private void toExecutorFlowTriggerTopic(KStream<String, Executor> stream) {
         stream
             .filter(
                 (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
@@ -725,6 +737,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
 
         failedStream
             .flatMapValues(e -> e.getRight().getLogs(), Named.as("ToExecutionException.flatmapLogs"))
+            .selectKey((key, value) -> (String)null, Named.as("ToExecutionException.removeKey"))
             .to(
                 kafkaAdminService.getTopicName(LogEntry.class),
                 Produced.with(Serdes.String(), JsonSerde.of(LogEntry.class)).withName("ToExecutionException.toLogEntry")
@@ -781,7 +794,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         kafkaAdminService.createIfNotExist(WorkerTaskResult.class);
         kafkaAdminService.createIfNotExist(Execution.class);
         kafkaAdminService.createIfNotExist(Flow.class);
-        kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_EXECUTOR);
+        kafkaAdminService.createIfNotExist(Executor.class);
         kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_EXECUTOR_WORKERINSTANCE);
         kafkaAdminService.createIfNotExist(ExecutionKilled.class);
         kafkaAdminService.createIfNotExist(WorkerTaskRunning.class);

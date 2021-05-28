@@ -1,14 +1,10 @@
 package io.kestra.runner.kafka.services;
 
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.runners.AbstractExecutor;
+import io.kestra.core.runners.Executor;
 import io.kestra.core.services.TaskDefaultService;
-import io.kestra.runner.kafka.KafkaExecutor;
 import io.kestra.runner.kafka.serializers.JsonSerde;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -23,7 +19,6 @@ import javax.inject.Singleton;
 @Slf4j
 public class KafkaStreamSourceService {
     public static final String TOPIC_FLOWLAST = "flowlast";
-    public static final String TOPIC_EXECUTOR = "executor";
     public static final String TOPIC_EXECUTOR_WORKERINSTANCE = "executorworkerinstance";
 
     @Inject
@@ -43,11 +38,11 @@ public class KafkaStreamSourceService {
             );
     }
 
-    public KStream<String, Execution> executorKStream(StreamsBuilder builder) {
+    public KStream<String, Executor> executorKStream(StreamsBuilder builder) {
         return builder
             .stream(
-                kafkaAdminService.getTopicName(TOPIC_EXECUTOR),
-                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("KStream.Executor")
+                kafkaAdminService.getTopicName(Executor.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(Executor.class)).withName("KStream.Executor")
             );
     }
 
@@ -62,28 +57,21 @@ public class KafkaStreamSourceService {
             );
     }
 
-    public KStream<String, KafkaExecutor.Executor> executorWithFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, AbstractExecutor.Executor> executionKStream) {
+    public KStream<String, Executor> executorWithFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, Executor> executionKStream, boolean withDefaults) {
         return executionKStream
+            .filter((key, value) -> value != null, Named.as("ExecutorWithFlow.filterNotNull"))
             .join(
                 flowGlobalKTable,
                 (key, executor) -> Flow.uid(executor.getExecution()),
                 (executor, flow) -> {
-                    Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, executor.getExecution());
-                    return executor.withFlow(flowWithDefaults);
+                    if (!withDefaults) {
+                        return executor.withFlow(flow);
+                    } else {
+                        Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, executor.getExecution());
+                        return executor.withFlow(flowWithDefaults);
+                    }
                 },
                 Named.as("ExecutorWithFlow.join")
-            );
-    }
-
-    public KStream<String, ExecutorWithFlow> withFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, Execution> executionKStream) {
-        return executionKStream
-            .filter(
-                (key, value) -> value != null, Named.as("WithFlow.filterNotNull"))
-            .join(
-                flowGlobalKTable,
-                (key, value) -> Flow.uid(value),
-                (execution, flow) -> new ExecutorWithFlow(flow, execution),
-                Named.as("WithFlow.join")
             );
     }
 
@@ -95,12 +83,5 @@ public class KafkaStreamSourceService {
         } else {
             return stream;
         }
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class ExecutorWithFlow {
-        Flow flow;
-        Execution execution;
     }
 }

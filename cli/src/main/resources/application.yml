@@ -40,6 +40,7 @@ kestra:
   kafka:
     defaults:
       topic-prefix: "kestra_"
+      consumer-prefix: "kestra_"
       topic:
         partitions: 16
         replication-factor: 1
@@ -100,7 +101,8 @@ kestra:
           segment.bytes: "10485760"
 
       executor:
-        name: "${kestra.kafka.defaults.topic-prefix}executor"
+        name: "${kestra.kafka.defaults.topic-prefix}executor-executor-changelog"
+        cls: io.kestra.core.runners.Executor
         properties:
           cleanup.policy: "delete,compact"
 

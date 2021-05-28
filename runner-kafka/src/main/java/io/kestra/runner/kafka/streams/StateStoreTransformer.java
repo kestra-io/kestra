@@ -26,12 +26,7 @@ public class StateStoreTransformer<V> implements ValueTransformerWithKey<String,
 
     @Override
     public V transform(final String key, final V value) {
-        if (value == null) {
-            store.delete(key);
-            if (log.isTraceEnabled()) {
-                log.trace("Delete State Store with key '" + key + "'");
-            }
-        } else {
+        if (value != null) {
             store.put(key, serializer.apply(value));
             if (log.isTraceEnabled()) {
                 log.trace("State Store save from '" + value.getClass().getSimpleName() + "' with key '" + key + "'");

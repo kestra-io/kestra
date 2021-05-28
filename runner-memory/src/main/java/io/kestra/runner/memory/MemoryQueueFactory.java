@@ -34,7 +34,7 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Override
     @Singleton
     @Named(QueueFactoryInterface.EXECUTOR_NAMED)
-    public QueueInterface<Execution> executor() {
+    public QueueInterface<Executor> executor() {
         throw new NotImplementedException();
     }
 

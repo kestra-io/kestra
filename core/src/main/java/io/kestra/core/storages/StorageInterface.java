@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 public interface StorageInterface {
     InputStream get(URI uri) throws FileNotFoundException;
 
-    Long size(URI uri) throws IOException;
+    Long size(URI uri) throws FileNotFoundException;
 
     URI put(URI uri, InputStream data) throws IOException;
 

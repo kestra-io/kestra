@@ -6,6 +6,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.*;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
@@ -30,7 +31,6 @@ public class LocalStorage implements StorageInterface {
         return Paths.get(config.getBasePath().toAbsolutePath().toString(), uri.toString());
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     private void createDirectory(URI append) {
         File file;
 
@@ -57,22 +57,26 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public Long size(URI uri) throws IOException {
-        return Files.size(getPath(URI.create(uri.getPath())));
+    public Long size(URI uri) throws FileNotFoundException {
+        try {
+            return Files.size(getPath(URI.create(uri.getPath())));
+        } catch (NoSuchFileException e) {
+            throw new FileNotFoundException("Unable to find file at '" + uri + "'");
+        } catch (IOException e) {
+            throw new FileNotFoundException("Unable to find file at '" + uri + "' with message '" + e.getMessage() + "'");
+        }
     }
 
     @Override
     public URI put(URI uri, InputStream data) throws IOException {
         this.createDirectory(uri);
 
-        try (OutputStream outStream = new FileOutputStream(getPath(uri).toFile())) {
+        try (data; OutputStream outStream = new FileOutputStream(getPath(uri).toFile())) {
             byte[] buffer = new byte[8 * 1024];
             int bytesRead;
             while ((bytesRead = data.read(buffer)) != -1) {
                 outStream.write(buffer, 0, bytesRead);
             }
-        } finally {
-            data.close();
         }
 
         return URI.create("kestra://" + uri.getPath());

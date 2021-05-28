@@ -69,6 +69,10 @@ class LocalStorageTest {
 
         assertThat(storageInterface.size(new URI("/file/storage/put.yml")), is(77L));
 
+        assertThrows(FileNotFoundException.class, () -> {
+            assertThat(storageInterface.size(new URI("/file/storage/muissing.yml")), is(76L));
+        });
+
         boolean delete = storageInterface.delete(put);
         assertThat(delete, is(true));
 

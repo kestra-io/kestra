@@ -1,23 +1,23 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.WorkerTaskExecution;
+import io.kestra.core.runners.WorkerTaskResult;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
@@ -92,16 +92,18 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     @PluginProperty(dynamic = false)
     private final Boolean transmitFailed = false;
 
-    @SuppressWarnings("unchecked")
     @Override
     public Flow.Output run(RunContext runContext) throws Exception {
+        throw new IllegalStateException("This task must not be run by a worker and must be run on executor side!");
+    }
+
+    @SuppressWarnings("unchecked")
+    public Execution createExecution(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
+
+        // @TODO: remove
         FlowRepositoryInterface flowRepository = runContext.getApplicationContext().getBean(FlowRepositoryInterface.class);
-        QueueInterface<Execution> executionQueue = (QueueInterface<Execution>) runContext.getApplicationContext().getBean(
-            QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED)
-        );
 
         Map<String, String> inputs = new HashMap<>();
         if (this.inputs != null) {
@@ -135,9 +137,6 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
                 .build()
             );
 
-        Output.OutputBuilder outputBuilder = Output.builder()
-            .executionId(execution.getId());
-
         logger.debug(
             "Create new execution for flow {}.{} with id {}",
             execution.getNamespace(),
@@ -145,25 +144,30 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             execution.getId()
         );
 
-        if (!wait) {
-            executionQueue.emit(execution);
+        return execution;
+    }
+
+    public WorkerTaskResult createWorkerTaskResult(WorkerTaskExecution workerTaskExecution, Execution execution) {
+        TaskRun taskRun = workerTaskExecution.getTaskRun();
+
+        Output output = Output.builder()
+            .executionId(execution.getId())
+            .state(execution.getState().getCurrent())
+            .build();
+
+        taskRun = taskRun.withOutputs(output.toMap());
+
+        if (transmitFailed &&
+            (execution.getState().isFailed() || execution.getState().getCurrent() == State.Type.KILLED || execution.getState().getCurrent() == State.Type.WARNING)
+        ) {
+            taskRun = taskRun.withState(execution.getState().getCurrent());
         } else {
-            Execution ended = runnerUtils.awaitExecution(
-                runnerUtils.isTerminatedExecution(execution, flow),
-                () -> {
-                    executionQueue.emit(execution);
-                },
-                null
-            );
-
-            outputBuilder.state(ended.getState().getCurrent());
-
-            if (transmitFailed && (ended.getState().isFailed() || ended.getState().getCurrent() == State.Type.KILLED)) {
-                throw new Exception("Execution '" + ended.getId() + "' failed with status '" + ended.getState().getCurrent() + "'");
-            }
+            taskRun = taskRun.withState(State.Type.SUCCESS);
         }
 
-        return outputBuilder
+        return WorkerTaskResult.builder()
+            .task(workerTaskExecution.getTask())
+            .taskRun(taskRun)
             .build();
     }
 
@@ -179,6 +183,6 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             title = "The state of the execution trigger.",
             description = "Only available if the execution is waited with `wait` options"
         )
-        private State.Type state;
+        private final State.Type state;
     }
 }

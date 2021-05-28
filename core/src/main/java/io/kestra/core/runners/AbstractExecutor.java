@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 @Slf4j
 public abstract class AbstractExecutor implements Runnable, Closeable {
@@ -59,6 +60,9 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
             // search for worker task result
             executor = this.handleChildWorkerCreatedKilling(executor);
             executor = this.handleChildWorkerTaskResult(executor);
+
+            // search for flow task
+            executor = this.handleFlowTask(executor);
         } catch (Exception e) {
             return executor.withException(e, "process");
         }
@@ -285,22 +289,21 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
     }
 
     private Executor handleNext(Executor Executor) {
-        List<TaskRun> nexts = this.saveFlowableOutput(
-            FlowableUtils
-                .resolveSequentialNexts(
-                    Executor.getExecution(),
-                    ResolvedTask.of(Executor.getFlow().getTasks()),
-                    ResolvedTask.of(Executor.getFlow().getErrors())
-                ),
-            Executor,
-            null
-        );
+        List<NextTaskRun> nextTaskRuns = FlowableUtils
+            .resolveSequentialNexts(
+                Executor.getExecution(),
+                ResolvedTask.of(Executor.getFlow().getTasks()),
+                ResolvedTask.of(Executor.getFlow().getErrors())
+            );
 
-        if (nexts.size() == 0) {
+        if (nextTaskRuns.size() == 0) {
             return Executor;
         }
 
-        return Executor.withTaskRun(nexts, "handleNext");
+        return Executor.withTaskRun(
+            this.saveFlowableOutput(nextTaskRuns, Executor, null),
+            "handleNext"
+        );
     }
 
     private Executor handleChildNext(Executor executor) throws InternalException {
@@ -468,6 +471,44 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         return executor.withWorkerTasks(workerTasks, "handleWorkerTask");
     }
 
+    private Executor handleFlowTask(Executor executor) throws Exception {
+        List<WorkerTaskExecution> executions = new ArrayList<>();
+        boolean haveFlows = executor.getWorkerTasks()
+            .removeIf(throwPredicate(workerTask -> {
+                if (!(workerTask.getTask() instanceof io.kestra.core.tasks.flows.Flow)) {
+                    return false;
+                }
+
+                io.kestra.core.tasks.flows.Flow flowTask = (io.kestra.core.tasks.flows.Flow) workerTask.getTask();
+                RunContext runContext = runContextFactory.of(
+                    executor.getFlow(),
+                    flowTask,
+                    executor.getExecution(),
+                    workerTask.getTaskRun()
+                );
+
+                Execution execution = flowTask.createExecution(runContext);
+
+                executions.add(
+                    WorkerTaskExecution.builder()
+                        .task(flowTask)
+                        .taskRun(workerTask.getTaskRun())
+                        .runContext(runContext)
+                        .execution(execution)
+                        .build()
+                );
+
+                return flowTask.getWait();
+            }));
+
+        if (!haveFlows) {
+            return executor;
+        }
+
+        return executor
+            .withWorkerTaskExecutions(executions, "handleFlowTask");
+    }
+
     protected static void log(Logger log, Boolean in, WorkerTask value) {
         log.debug(
             "{} {} : {}",
@@ -483,6 +524,16 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
             in ? "<< IN " : ">> OUT",
             value.getClass().getSimpleName(),
             value.getTaskRun().toStringState()
+        );
+    }
+
+    protected static void log(Logger log, Boolean in, Execution value) {
+        log.debug(
+            "{} {} [key='{}']\n{}",
+            in ? "<< IN " : ">> OUT",
+            value.getClass().getSimpleName(),
+            value.getId(),
+            value.toStringState()
         );
     }
 

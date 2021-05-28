@@ -118,6 +118,12 @@ kestra:
         properties:
           cleanup.policy: "delete,compact"
 
+      executorworkertaskexecution:
+        cls: io.kestra.core.runners.WorkerTaskExecution
+        name: "${kestra.kafka.defaults.topic-prefix}executor_workertaskexecution"
+        properties:
+          cleanup.policy: "delete,compact"
+
       workertask:
         name: "${kestra.kafka.defaults.topic-prefix}workertask"
         cls: io.kestra.core.runners.WorkerTask
@@ -157,6 +163,7 @@ kestra:
         name: "${kestra.kafka.defaults.topic-prefix}trigger"
         properties:
           cleanup.policy: "compact"
+
 
   elasticsearch:
     defaults:

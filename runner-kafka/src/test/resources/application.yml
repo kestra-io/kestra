@@ -8,7 +8,7 @@ kestra:
     local:
       base-path: /tmp/unittest
 
-  prefix: "${random.shortuuid}"
+  prefix: "unit_kestra_${random.shortuuid}_"
 
   kafka:
     client:
@@ -16,8 +16,8 @@ kestra:
         bootstrap.servers: "localhost:9092"
 
     defaults:
-
-      consumer-prefix: "unit_${kestra.prefix}"
+      topic-prefix: "${kestra.prefix}"
+      consumer-prefix: "${kestra.prefix}"
       topic:
         partitions: 8
         properties:
@@ -46,14 +46,14 @@ kestra:
 
     topics:
       execution:
-        name: "unit_${kestra.prefix}_kestra_execution"
+        name: "${kestra.kafka.defaults.topic-prefix}execution"
         cls: io.kestra.core.models.executions.Execution
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
 
       flow:
-        name: "unit_${kestra.prefix}_kestra_flow"
+        name: "${kestra.kafka.defaults.topic-prefix}flow"
         cls: io.kestra.core.models.flows.Flow
         properties:
           cleanup.policy: "compact"
@@ -61,14 +61,14 @@ kestra:
           segment.bytes: "10485760"
 
       flowlast:
-        name: "unit_${kestra.prefix}_kestra_flow_last"
+        name: "${kestra.kafka.defaults.topic-prefix}flow_last"
         properties:
           cleanup.policy: "compact"
           retention.ms: "-1"
           segment.bytes: "10485760"
 
       template:
-        name: "unit_${kestra.prefix}_kestra_template"
+        name: "${kestra.kafka.defaults.topic-prefix}template"
         cls: io.kestra.core.models.templates.Template
         properties:
           cleanup.policy: "compact"
@@ -76,57 +76,59 @@ kestra:
           segment.bytes: "10485760"
 
       executor:
-        name: "unit_${kestra.prefix}_kestra_executor"
+        name: "${kestra.kafka.defaults.topic-prefix}executor-executor-changelog"
+        cls: io.kestra.core.runners.Executor
         properties:
           cleanup.policy: "delete,compact"
 
       killed:
-        name: "unit_${kestra.prefix}_kestra_executor_killed"
+        name: "${kestra.kafka.defaults.topic-prefix}executor_killed"
         cls: io.kestra.core.models.executions.ExecutionKilled
         properties:
           cleanup.policy: "delete,compact"
 
       executorflowtrigger:
-        name: "unit_${kestra.prefix}_kestra_executor_flowtrigger"
+        name: "${kestra.kafka.defaults.topic-prefix}executor_flowtrigger"
         cls: io.kestra.runner.kafka.streams.ExecutorFlowTrigger
         properties:
           cleanup.policy: "delete,compact"
 
       workertask:
-        name: "unit_${kestra.prefix}_kestra_workertask"
+        name: "${kestra.kafka.defaults.topic-prefix}workertask"
         cls: io.kestra.core.runners.WorkerTask
+        partitions: 64
         properties:
           cleanup.policy: "delete,compact"
 
       workertaskresult:
-        name: "unit_${kestra.prefix}_kestra_workertaskresult"
+        name: "${kestra.kafka.defaults.topic-prefix}workertaskresult"
         cls: io.kestra.core.runners.WorkerTaskResult
         properties:
           cleanup.policy: "delete,compact"
 
       workerinstance:
         cls: io.kestra.core.runners.WorkerInstance
-        name: "unit_${kestra.prefix}_kestra_workerinstance"
+        name: "${kestra.kafka.defaults.topic-prefix}workerinstance"
         properties:
           cleanup.policy: "compact"
 
       executorworkerinstance:
-        name: "unit_${kestra.prefix}_kestra_executor_workerinstance"
+        name: "${kestra.kafka.defaults.topic-prefix}executor_workerinstance"
         properties:
           cleanup.policy: "compact"
 
       workertaskrunning:
         cls: io.kestra.core.runners.WorkerTaskRunning
-        name: "unit_${kestra.prefix}_kestra_workertaskrunning"
+        name: "${kestra.kafka.defaults.topic-prefix}workertaskrunning"
         properties:
           cleanup.policy: "delete,compact"
 
       logentry:
         cls: io.kestra.core.models.executions.LogEntry
-        name: "unit_${kestra.prefix}_kestra_logs"
+        name: "${kestra.kafka.defaults.topic-prefix}logs"
 
       trigger:
         cls: io.kestra.core.models.triggers.Trigger
-        name: "unit_${kestra.prefix}_kestra_trigger"
+        name: "${kestra.kafka.defaults.topic-prefix}trigger"
         properties:
           cleanup.policy: "compact"

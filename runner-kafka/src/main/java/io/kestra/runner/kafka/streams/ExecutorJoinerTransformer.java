@@ -2,19 +2,18 @@ package io.kestra.runner.kafka.streams;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.runners.AbstractExecutor;
+import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.runner.kafka.KafkaExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 @Slf4j
-public class ExecutorJoinerTransformer implements ValueTransformerWithKey<String, AbstractExecutor.Executor, KafkaExecutor.Executor> {
+public class ExecutorJoinerTransformer implements ValueTransformerWithKey<String, Executor, Executor> {
     private final String storeName;
     private final MetricRegistry metricRegistry;
-    private KeyValueStore<String, AbstractExecutor.Executor> store;
+    private KeyValueStore<String, Executor> store;
     private ProcessorContext context;
 
     public ExecutorJoinerTransformer(String storeName, MetricRegistry metricRegistry) {
@@ -26,11 +25,11 @@ public class ExecutorJoinerTransformer implements ValueTransformerWithKey<String
     @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
         this.context = context;
-        this.store = (KeyValueStore<String, AbstractExecutor.Executor>) context.getStateStore(this.storeName);
+        this.store = (KeyValueStore<String, Executor>) context.getStateStore(this.storeName);
     }
 
     @Override
-    public KafkaExecutor.Executor transform(final String key, final KafkaExecutor.Executor value) {
+    public Executor transform(final String key, final Executor value) {
         if (value.getExecution() != null) {
             return value;
         }
@@ -47,7 +46,7 @@ public class ExecutorJoinerTransformer implements ValueTransformerWithKey<String
             );
         }
 
-        AbstractExecutor.Executor executor = this.store.get(key);
+        Executor executor = this.store.get(key);
 
         if (executor == null) {
             throw new IllegalStateException("Unable to find executor with key '" + key + "'");

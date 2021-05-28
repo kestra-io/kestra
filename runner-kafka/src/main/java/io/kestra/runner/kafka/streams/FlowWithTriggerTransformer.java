@@ -1,6 +1,7 @@
 package io.kestra.runner.kafka.streams;
 
 import com.google.common.collect.Streams;
+import io.kestra.core.runners.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
@@ -10,13 +11,12 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.services.FlowService;
-import io.kestra.runner.kafka.KafkaExecutor;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class FlowWithTriggerTransformer implements Transformer<String, KafkaExecutor.Executor, Iterable<KeyValue<String, ExecutorFlowTrigger>>> {
+public class FlowWithTriggerTransformer implements Transformer<String, Executor, Iterable<KeyValue<String, ExecutorFlowTrigger>>> {
     private final FlowService flowService;
 
     private KeyValueStore<String, ValueAndTimestamp<Flow>> flowStore;
@@ -33,7 +33,7 @@ public class FlowWithTriggerTransformer implements Transformer<String, KafkaExec
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
-    public Iterable<KeyValue<String, ExecutorFlowTrigger>> transform(String key, KafkaExecutor.Executor value) {
+    public Iterable<KeyValue<String, ExecutorFlowTrigger>> transform(String key, Executor value) {
         try (KeyValueIterator<String, ValueAndTimestamp<Flow>> flows = this.flowStore.all()) {
             List<Flow> allFlows = flowService
                 .keepLastVersion(

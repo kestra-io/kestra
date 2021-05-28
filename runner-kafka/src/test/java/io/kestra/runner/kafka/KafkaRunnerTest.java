@@ -13,6 +13,7 @@ import io.kestra.core.tasks.flows.EachSequentialTest;
 import io.kestra.core.tasks.flows.TemplateTest;
 import io.kestra.core.utils.TestsUtils;
 import org.apache.kafka.common.errors.RecordTooLargeException;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

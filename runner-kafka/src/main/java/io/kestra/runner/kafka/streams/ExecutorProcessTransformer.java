@@ -2,7 +2,7 @@ package io.kestra.runner.kafka.streams;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.AbstractExecutor;
-import io.kestra.runner.kafka.KafkaExecutor;
+import io.kestra.core.runners.Executor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class ExecutorProcessTransformer implements ValueTransformerWithKey<String, AbstractExecutor.Executor, KafkaExecutor.Executor> {
+public class ExecutorProcessTransformer implements ValueTransformerWithKey<String, Executor, Executor> {
     private final String storeName;
     private final AbstractExecutor abstractExecutor;
     private KeyValueStore<String, Store> store;
@@ -33,8 +33,8 @@ public class ExecutorProcessTransformer implements ValueTransformerWithKey<Strin
     }
 
     @Override
-    public KafkaExecutor.Executor transform(final String key, final KafkaExecutor.Executor value) {
-        AbstractExecutor.Executor executor = abstractExecutor.process(value);
+    public Executor transform(final String key, final Executor value) {
+        Executor executor = abstractExecutor.process(value);
 
         if (executor.getNexts().size() == 0) {
             return value;

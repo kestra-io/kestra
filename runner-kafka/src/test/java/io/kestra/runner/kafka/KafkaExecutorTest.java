@@ -25,7 +25,6 @@ import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.test.TestRecord;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -122,6 +121,13 @@ class KafkaExecutorTest {
         assertThat(workerTaskRunningOutput().readRecord().value(), is(nullValue()));
         assertThat(workerTaskRunningOutput().readRecord().value(), is(nullValue()));
         assertThat(workerTaskRunningOutput().isEmpty(), is(true));
+
+        // executor topic must be deleted @TODO: 2 null values
+        TestRecord<String, Executor> executor = executorOutput().readRecord();
+        assertThat(executor.value(), is(nullValue()));
+        executor = executorOutput().readRecord();
+        assertThat(executor.value(), is(nullValue()));
+        assertThat(executorOutput().isEmpty(), is(true));
     }
 
     @Test
@@ -651,6 +657,15 @@ class KafkaExecutorTest {
                 kafkaAdminService.getTopicName(Execution.class),
                 Serdes.String().deserializer(),
                 JsonSerde.of(Execution.class).deserializer()
+            );
+    }
+
+    private TestOutputTopic<String, Executor> executorOutput() {
+        return this.testTopology
+            .createOutputTopic(
+                kafkaAdminService.getTopicName(Executor.class),
+                Serdes.String().deserializer(),
+                JsonSerde.of(Executor.class).deserializer()
             );
     }
 

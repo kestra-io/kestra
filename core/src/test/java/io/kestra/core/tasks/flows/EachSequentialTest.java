@@ -20,8 +20,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.StringContains.containsString;
 
 public class EachSequentialTest extends AbstractMemoryRunnerTest {
@@ -88,7 +87,7 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(logs.get(1).getMessage(), Matchers.containsString("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]"));
+        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().contains("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]")).count(), greaterThan(0L));
     }
 
     @Test

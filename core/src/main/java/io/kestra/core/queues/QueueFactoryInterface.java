@@ -4,12 +4,9 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.runners.WorkerInstance;
+import io.kestra.core.runners.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.templates.Template;
-import io.kestra.core.runners.WorkerTask;
-import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.runners.WorkerTaskRunning;
 
 public interface QueueFactoryInterface {
     String EXECUTION_NAMED = "executionQueue";
@@ -27,7 +24,7 @@ public interface QueueFactoryInterface {
 
     QueueInterface<Execution> execution();
 
-    QueueInterface<Execution> executor();
+    QueueInterface<Executor> executor();
 
     QueueInterface<WorkerTask> workerTask();
 

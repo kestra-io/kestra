@@ -265,5 +265,8 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
         flowCaseTest.waitFailed();
     }
 
-
+    @Test
+    public void invalidOutputs() throws Exception {
+        flowCaseTest.invalidOutputs();
+    }
 }

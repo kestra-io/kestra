@@ -18,4 +18,9 @@ public class FlowTest extends AbstractMemoryRunnerTest {
     public void waitFailed() throws Exception {
         flowCaseTest.waitFailed();
     }
+
+    @Test
+    public void invalidOutputs() throws Exception {
+        flowCaseTest.invalidOutputs();
+    }
 }

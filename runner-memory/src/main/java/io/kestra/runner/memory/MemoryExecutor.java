@@ -168,10 +168,11 @@ public class MemoryExecutor extends AbstractExecutor {
             // worker task execution
             if (conditionService.isTerminatedWithListeners(flow, execution) && WORKERTASKEXECUTIONS_WATCHER.containsKey(execution.getId())) {
                 WorkerTaskExecution workerTaskExecution = WORKERTASKEXECUTIONS_WATCHER.get(execution.getId());
+                Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
 
                 WorkerTaskResult workerTaskResult = workerTaskExecution
                     .getTask()
-                    .createWorkerTaskResult(workerTaskExecution, execution);
+                    .createWorkerTaskResult(runContextFactory, workerTaskExecution, workerTaskFlow, execution);
 
                 this.workerTaskResultQueue.emit(workerTaskResult);
 

@@ -636,16 +636,12 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
                 Named.as("HandleWorkerTaskExecution.isTerminated")
             )
-            .join(
-                workerTaskExecutionKTable,
-                (executor, workerTaskExecution) -> workerTaskExecution
-                    .getTask()
-                    .createWorkerTaskResult(workerTaskExecution, executor.getExecution()),
-                Joined.<String, Executor, WorkerTaskExecution>as("HandleWorkerTaskExecution.join")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(Executor.class))
-                    .withOtherValueSerde(JsonSerde.of(WorkerTaskExecution.class))
-            );
+            .transformValues(
+                () -> new WorkerTaskExecutionTransformer(runContextFactory, workerTaskExecutionKTable.queryableStoreName()),
+                 Named.as("HandleWorkerTaskExecution.transform"),
+                workerTaskExecutionKTable.queryableStoreName()
+            )
+            .filter((key, value) -> value != null, Named.as("HandleWorkerTaskExecution.joinNotNullFilter"));
 
         toWorkerTaskResultSend(joinKStream, "HandleWorkerTaskExecution");
     }

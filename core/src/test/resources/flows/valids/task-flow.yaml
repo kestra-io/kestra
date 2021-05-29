@@ -14,3 +14,5 @@ tasks:
       string: "{{ inputs.string }}"
     wait: true
     transmitFailed: true
+    outputs:
+      extracted: "{{ firstDefined outputs.default.value outputs.error-t1.value }}"

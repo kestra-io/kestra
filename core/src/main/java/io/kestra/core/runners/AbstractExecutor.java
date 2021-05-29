@@ -471,8 +471,10 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         return executor.withWorkerTasks(workerTasks, "handleWorkerTask");
     }
 
-    private Executor handleFlowTask(Executor executor) throws Exception {
+    private Executor handleFlowTask(final Executor executor) throws Exception {
         List<WorkerTaskExecution> executions = new ArrayList<>();
+        List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
+
         boolean haveFlows = executor.getWorkerTasks()
             .removeIf(throwPredicate(workerTask -> {
                 if (!(workerTask.getTask() instanceof io.kestra.core.tasks.flows.Flow)) {
@@ -489,24 +491,38 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
 
                 Execution execution = flowTask.createExecution(runContext);
 
-                executions.add(
-                    WorkerTaskExecution.builder()
-                        .task(flowTask)
-                        .taskRun(workerTask.getTaskRun())
-                        .runContext(runContext)
-                        .execution(execution)
-                        .build()
-                );
+                WorkerTaskExecution workerTaskExecution = WorkerTaskExecution.builder()
+                    .task(flowTask)
+                    .taskRun(workerTask.getTaskRun())
+                    .runContext(runContext)
+                    .execution(execution)
+                    .build();
 
-                return flowTask.getWait();
+                executions.add(workerTaskExecution);
+
+                if (!flowTask.getWait()) {
+                    workerTaskResults.add(flowTask.createWorkerTaskResult(
+                        null,
+                        workerTaskExecution,
+                        null,
+                        execution
+                    ));
+                }
+
+                return true;
             }));
 
         if (!haveFlows) {
             return executor;
         }
 
-        return executor
-            .withWorkerTaskExecutions(executions, "handleFlowTask");
+        Executor resultExecutor = executor.withWorkerTaskExecutions(executions, "handleFlowTask");
+
+        if (workerTaskResults.size() > 0) {
+            resultExecutor = executor.withWorkerTaskResults(workerTaskResults, "handleFlowTaskWorkerTaskResults");
+        }
+
+        return resultExecutor;
     }
 
     protected static void log(Logger log, Boolean in, WorkerTask value) {

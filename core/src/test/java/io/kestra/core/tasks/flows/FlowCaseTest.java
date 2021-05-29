@@ -8,6 +8,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunnerUtils;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -16,8 +17,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 @Singleton
 public class FlowCaseTest {
@@ -29,15 +29,19 @@ public class FlowCaseTest {
     protected RunnerUtils runnerUtils;
 
     public void waitSuccess() throws Exception {
-        this.run("OK", State.Type.SUCCESS, 2);
+        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default >");
     }
 
     public void waitFailed() throws Exception {
-        this.run("THIRD", State.Type.FAILED, 4);
+        this.run("THIRD", State.Type.FAILED, State.Type.FAILED, 4, "Error Trigger ! error-t1");
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    void run(String input, State.Type type, int count) throws Exception {
+    public void invalidOutputs() throws Exception {
+        this.run("FIRST", State.Type.FAILED, State.Type.SUCCESS, 2, null);
+    }
+
+    @SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
+    void run(String input, State.Type fromState, State.Type triggerState,  int count, String outputs) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
@@ -59,10 +63,17 @@ public class FlowCaseTest {
         countDownLatch.await(1, TimeUnit.MINUTES);
 
         assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getState().getCurrent(), is(type));
+        assertThat(execution.getState().getCurrent(), is(fromState));
+
+        if (outputs != null) {
+            assertThat(((Map<String, String>) execution.getTaskRunList().get(0).getOutputs().get("outputs")).get("extracted"), containsString(outputs));
+        }
 
         assertThat(execution.getTaskRunList().get(0).getOutputs().get("executionId"), is(triggered.get().getId()));
-        assertThat(execution.getTaskRunList().get(0).getOutputs().get("state"), is(triggered.get().getState().getCurrent().name()));
+
+        if (outputs != null) {
+            assertThat(execution.getTaskRunList().get(0).getOutputs().get("state"), is(triggered.get().getState().getCurrent().name()));
+        }
 
         assertThat(triggered.get().getTrigger().getType(), is(Flow.class.getName()));
         assertThat(triggered.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
@@ -70,6 +81,6 @@ public class FlowCaseTest {
         assertThat(triggered.get().getTrigger().getVariables().get("namespace"), is(execution.getNamespace()));
 
         assertThat(triggered.get().getTaskRunList(), hasSize(count));
-        assertThat(triggered.get().getState().getCurrent(), is(type));
+        assertThat(triggered.get().getState().getCurrent(), is(triggerState));
     }
 }

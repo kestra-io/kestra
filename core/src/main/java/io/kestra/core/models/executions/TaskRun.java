@@ -7,12 +7,13 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.utils.IdUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class TaskRun {
     @NotNull
     private String id;
@@ -103,6 +104,34 @@ public class TaskRun {
             .stream()
             .reduce((a, b) -> b)
             .orElse(null);
+    }
+
+    public TaskRun onRunningResend() {
+        TaskRunBuilder taskRunBuilder = this.toBuilder();
+
+        if (taskRunBuilder.attempts == null || taskRunBuilder.attempts.size() == 0) {
+            taskRunBuilder.attempts = new ArrayList<>();
+
+            taskRunBuilder.attempts.add(TaskRunAttempt.builder()
+                .state(new State(this.state, State.Type.KILLED))
+                .build()
+            );
+        } else {
+            ArrayList<TaskRunAttempt> taskRunAttempts = new ArrayList<>(taskRunBuilder.attempts);
+            TaskRunAttempt lastAttempt = taskRunAttempts.get(taskRunBuilder.attempts.size() - 1);
+            if (!lastAttempt.getState().isTerninated()) {
+                taskRunAttempts.set(taskRunBuilder.attempts.size() - 1, lastAttempt.withState(State.Type.KILLED));
+            } else {
+                taskRunAttempts.add(TaskRunAttempt.builder()
+                    .state(new State().withState(State.Type.KILLED))
+                    .build()
+                );
+            }
+
+            taskRunBuilder.attempts(taskRunAttempts);
+        }
+
+        return taskRunBuilder.build();
     }
 
     public boolean isSame(TaskRun taskRun) {

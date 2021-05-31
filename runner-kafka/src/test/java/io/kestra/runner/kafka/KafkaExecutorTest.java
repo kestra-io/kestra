@@ -495,6 +495,8 @@ class KafkaExecutorTest {
         TestRecord<String, WorkerTask> workerTaskRecord = this.workerTaskOutput().readRecord();
         assertThat(workerTaskRecord.value().getTaskRun().getState().getCurrent(), is(State.Type.CREATED));
         assertThat(workerTaskRecord.value().getTaskRun().getId(), is(taskRunId));
+        assertThat(workerTaskRecord.value().getTaskRun().getAttempts().size(), is(1));
+        assertThat(workerTaskRecord.value().getTaskRun().getAttempts().get(0).getState().getCurrent(), is(State.Type.KILLED));
 
         // running is deleted
         TestRecord<String, WorkerTaskRunning> workerTaskRunningRecord = workerTaskRunningOutput().readRecord();

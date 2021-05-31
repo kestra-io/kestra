@@ -1,10 +1,12 @@
 package io.kestra.repository.elasticsearch;
 
+import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.health.HealthStatus;
 import io.micronaut.management.endpoint.health.HealthEndpoint;
 import io.micronaut.management.health.indicator.HealthIndicator;
 import io.micronaut.management.health.indicator.HealthResult;
+import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthRequest;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
@@ -32,6 +34,7 @@ import static org.elasticsearch.cluster.health.ClusterHealthStatus.YELLOW;
 @Requires(beans = HealthEndpoint.class)
 @ElasticSearchRepositoryEnabled
 @Singleton
+@Slf4j
 public class ElasticsearchHealthIndicator implements HealthIndicator {
     public static final String NAME = "elasticsearch";
     private final RestHighLevelClient esClient;
@@ -47,43 +50,52 @@ public class ElasticsearchHealthIndicator implements HealthIndicator {
 
     @Override
     public Publisher<HealthResult> getResult() {
-        return (subscriber -> esClient.cluster()
-            .healthAsync(new ClusterHealthRequest(),
-                RequestOptions.DEFAULT,
-                new ActionListener<>() {
-                    private final HealthResult.Builder resultBuilder = HealthResult.builder(NAME);
+        return (subscriber -> {
+            try {
+                esClient.cluster()
+                    .healthAsync(
+                        new ClusterHealthRequest(),
+                        RequestOptions.DEFAULT,
+                        new ActionListener<>() {
+                            private final HealthResult.Builder resultBuilder = HealthResult.builder(NAME);
 
-                    @Override
-                    public void onResponse(ClusterHealthResponse response) {
+                            @Override
+                            public void onResponse(ClusterHealthResponse response) {
 
-                        HealthResult result;
+                                HealthResult result;
 
-                        try {
-                            result = resultBuilder
-                                .status(healthResultStatus(response))
-                                .details(healthResultDetails(response))
-                                .build();
-                        } catch (IOException e) {
-                            result = resultBuilder.status(DOWN).exception(e).build();
+                                try {
+                                    result = resultBuilder
+                                        .status(healthResultStatus(response))
+                                        .details(healthResultDetails(response))
+                                        .build();
+                                } catch (IOException e) {
+                                    result = resultBuilder.status(DOWN).exception(e).build();
+                                }
+
+                                subscriber.onNext(result);
+                                subscriber.onComplete();
+                            }
+
+                            @Override
+                            public void onFailure(Exception e) {
+                                subscriber.onNext(resultBuilder.status(DOWN).exception(e).build());
+                                subscriber.onComplete();
+                            }
                         }
-
-                        subscriber.onNext(result);
-                        subscriber.onComplete();
-                    }
-
-                    @Override
-                    public void onFailure(Exception e) {
-                        subscriber.onNext(resultBuilder.status(DOWN).exception(e).build());
-                        subscriber.onComplete();
-                    }
-                }
-            ));
+                    );
+            } catch (Exception e) {
+                HealthResult.Builder resultBuilder = HealthResult.builder(NAME);
+                subscriber.onNext(resultBuilder.status(DOWN).exception(e).build());
+                subscriber.onComplete();
+            }
+        });
     }
 
-    private String healthResultDetails(ClusterHealthResponse response) throws IOException {
+    private Object healthResultDetails(ClusterHealthResponse response) throws IOException {
         XContentBuilder xContentBuilder = XContentFactory.jsonBuilder();
         response.toXContent(xContentBuilder, new ToXContent.MapParams(emptyMap()));
-        return Strings.toString(xContentBuilder);
+        return JacksonMapper.toMap(Strings.toString(xContentBuilder));
     }
 
     private HealthStatus healthResultStatus(ClusterHealthResponse response) {

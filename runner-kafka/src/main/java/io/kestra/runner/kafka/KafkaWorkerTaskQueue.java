@@ -101,7 +101,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
 
             while (running.get()) {
                 try {
-                    ConsumerRecords<String, WorkerTask> records = kafkaConsumer.poll(Duration.ofSeconds(1));
+                    ConsumerRecords<String, WorkerTask> records = kafkaConsumer.poll(Duration.ofMillis(500));
 
                     if (!records.isEmpty()) {
                         kafkaProducer.beginTransaction();

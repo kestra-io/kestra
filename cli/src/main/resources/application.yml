@@ -50,15 +50,12 @@ kestra:
           isolation.level: "read_committed"
           auto.offset.reset: "earliest"
           enable.auto.commit: "false"
-          max.poll.records: 50
 
       producer:
         properties:
           acks: "all"
           compression.type: "lz4"
           max.request.size: "10485760"
-          max.poll.records: 50
-          linger.ms: 0
 
       stream:
         properties:

@@ -153,6 +153,17 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         jsonError = e.getResponse().getBody(JsonError.class).get();
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
         assertThat(jsonError.getMessage(), containsString("flow.id: Duplicate"));
+
+        // cleanup
+        try {
+            client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.othernamespace/invalid1"));
+            for (int i = 1; i <= 7; i++) {
+                client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/f1"));
+            }
+        } catch (Exception ignored) {
+
+        }
+
     }
 
     @Test

@@ -22,5 +22,7 @@ export function saveFlowTemplate(self, file, dataType) {
         .dispatch(`${dataType}/save${dataType.capitalize()}`, {[dataType]: file})
         .then((response) => {
             self.$toast().saved(response.id);
+
+            return response
         })
 }

@@ -16,7 +16,6 @@ import io.kestra.core.queues.QueueService;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.utils.Either;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
@@ -60,15 +59,14 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
     public static final String WORKERINSTANCE_STATE_STORE_NAME = "worker_instance";
     public static final String TOPIC_EXECUTOR_WORKERINSTANCE = "executorworkerinstance";
 
-    ApplicationContext applicationContext;
-    KafkaStreamService kafkaStreamService;
-    KafkaAdminService kafkaAdminService;
-    QueueInterface<LogEntry> logQueue;
-    FlowService flowService;
-    KafkaStreamSourceService kafkaStreamSourceService;
-    QueueService queueService;
+    protected ApplicationContext applicationContext;
+    protected KafkaStreamService kafkaStreamService;
+    protected KafkaAdminService kafkaAdminService;
+    protected FlowService flowService;
+    protected KafkaStreamSourceService kafkaStreamSourceService;
+    protected QueueService queueService;
 
-    KafkaStreamService.Stream resultStream;
+    protected KafkaStreamService.Stream resultStream;
     boolean ready = false;
 
     @Inject
@@ -77,26 +75,23 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         RunContextFactory runContextFactory,
         KafkaStreamService kafkaStreamService,
         KafkaAdminService kafkaAdminService,
-        @javax.inject.Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRegistry metricRegistry,
         FlowService flowService,
         ConditionService conditionService,
         KafkaStreamSourceService kafkaStreamSourceService,
-        TaskDefaultService taskDefaultService,
         QueueService queueService
     ) {
-        super(runContextFactory, metricRegistry, conditionService, taskDefaultService);
+        super(runContextFactory, metricRegistry, conditionService);
 
         this.applicationContext = applicationContext;
         this.kafkaStreamService = kafkaStreamService;
         this.kafkaAdminService = kafkaAdminService;
-        this.logQueue = logQueue;
         this.flowService = flowService;
         this.kafkaStreamSourceService = kafkaStreamSourceService;
         this.queueService = queueService;
     }
 
-    public Topology topology() {
+    public StreamsBuilder topology() {
         StreamsBuilder builder = new KafkaStreamsBuilder();
 
         // copy execution to be done on executor queue
@@ -171,7 +166,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         KStream<String, Execution> executionKStream = this.joinWorkerResult(workerTaskResultKTable, executionNotKilledKTable);
 
         // handle state on execution
-        KStream<String, ExecutionWithFlow> stream = kafkaStreamSourceService.withFlow(flowKTable, executionKStream);
+        KStream<String, ExecutionWithFlow> stream = kafkaStreamSourceService.withFlow(flowKTable, executionKStream, true);
 
         this.handleMain(stream);
         this.handleNexts(stream);
@@ -189,14 +184,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         this.purgeWorkerRunning(workerTaskResultKStream);
         this.detectNewWorker(workerInstanceKStream, workerTaskRunningKTable);
 
-        // build
-        Topology topology = builder.build();
-
-        if (log.isTraceEnabled()) {
-            log.trace(topology.describe().toString());
-        }
-
-        return topology;
+        return builder;
     }
 
     private void executionToExecutor(StreamsBuilder builder) {
@@ -940,7 +928,14 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         properties.put(StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG, KafkaExecutorProductionExceptionHandler.class);
         properties.put(KafkaExecutorProductionExceptionHandler.APPLICATION_CONTEXT_CONFIG, applicationContext);
 
-        resultStream = kafkaStreamService.of(this.getClass(), this.topology(), properties);
+        // build
+        Topology topology = this.topology().build();
+
+        if (log.isTraceEnabled()) {
+            log.trace(topology.describe().toString());
+        }
+
+        resultStream = kafkaStreamService.of(this.getClass(), topology, properties);
         resultStream.start();
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(

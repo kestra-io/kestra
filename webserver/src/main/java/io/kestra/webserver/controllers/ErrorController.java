@@ -14,6 +14,7 @@ import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.hateoas.Link;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
@@ -114,6 +115,11 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> notFound(HttpRequest<?> request, NoSuchElementException e) {
+        return jsonError(request, e, HttpStatus.NOT_FOUND, "Not Found");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> notFound(HttpRequest<?> request, FileNotFoundException e) {
         return jsonError(request, e, HttpStatus.NOT_FOUND, "Not Found");
     }
 

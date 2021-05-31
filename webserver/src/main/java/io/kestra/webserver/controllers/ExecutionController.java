@@ -44,6 +44,7 @@ import org.reactivestreams.Publisher;
 import io.micronaut.core.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -371,7 +372,7 @@ public class ExecutionController {
     public HttpResponse<FileMetas> filesize(
         String executionId,
         @QueryValue(value = "path") URI path
-    ) throws IOException {
+    ) throws FileNotFoundException {
         HttpResponse<FileMetas> httpResponse =this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file/metas?path=" + path);
         if (httpResponse != null) {
             return httpResponse;

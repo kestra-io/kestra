@@ -1,8 +1,6 @@
 package io.kestra.runner.kafka;
 
 import com.google.common.collect.ImmutableMap;
-import org.apache.kafka.common.errors.RecordTooLargeException;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
@@ -14,6 +12,8 @@ import io.kestra.core.runners.*;
 import io.kestra.core.tasks.flows.EachSequentialTest;
 import io.kestra.core.tasks.flows.TemplateTest;
 import io.kestra.core.utils.TestsUtils;
+import org.apache.kafka.common.errors.RecordTooLargeException;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -38,6 +38,9 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Inject
     private MultipleConditionTriggerCaseTest multipleConditionTriggerCaseTest;
+
+    @Inject
+    private TaskDefaultsCaseTest taskDefaultsCaseTest;
 
     @Inject
     private TemplateRepositoryInterface templateRepository;
@@ -234,5 +237,17 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Test
     void withTemplate() throws Exception {
         TemplateTest.withTemplate(runnerUtils, templateRepository);
+    }
+
+    @Test
+    void taskDefaults() throws TimeoutException, IOException, URISyntaxException {
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/task-defaults.yaml")));
+        taskDefaultsCaseTest.taskDefaults();
+    }
+
+    @Test
+    void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
+        taskDefaultsCaseTest.invalidTaskDefaults();
     }
 }

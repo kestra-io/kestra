@@ -1,6 +1,7 @@
 package io.kestra.core.serializers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.models.flows.Input;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.flows.Flow;
@@ -78,7 +79,7 @@ class YamlFlowParserTest {
     }
 
     @Test
-    void inputs() {
+    void inputsFailed() {
         ConstraintViolationException exception = assertThrows(
             ConstraintViolationException.class,
             () -> this.parse("flows/invalids/inputs.yaml")
@@ -87,6 +88,15 @@ class YamlFlowParserTest {
         assertThat(exception.getConstraintViolations().size(), is(2));
         assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].name")).findFirst().orElseThrow().getMessage(), containsString("must match"));
         assertThat(exception.getConstraintViolations().stream().filter(r -> r.getPropertyPath().toString().equals("inputs[0].type")).findFirst().orElseThrow().getMessage(), is("must not be null"));
+    }
+
+    @Test
+    void inputs() {
+        Flow flow = this.parse("flows/valids/inputs.yaml");
+
+        assertThat(flow.getInputs().size(), is(7));
+        assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(5L));
+        assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(2L));
     }
 
     @Test

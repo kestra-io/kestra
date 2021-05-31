@@ -12,6 +12,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,11 +21,13 @@ import java.util.regex.Pattern;
 public interface StorageInterface {
     InputStream get(URI uri) throws FileNotFoundException;
 
-    Long size(URI uri) throws IOException;
+    Long size(URI uri) throws FileNotFoundException;
 
     URI put(URI uri, InputStream data) throws IOException;
 
     boolean delete(URI uri) throws IOException;
+
+    List<URI> deleteByPrefix(URI storagePrefix) throws IOException;
 
     default String executionPrefix(Flow flow, Execution execution) {
         return String.join(

@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -13,7 +12,7 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.TaskDefaultService;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
 import java.io.Closeable;
@@ -29,18 +28,15 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
     protected RunContextFactory runContextFactory;
     protected MetricRegistry metricRegistry;
     protected ConditionService conditionService;
-    protected TaskDefaultService taskDefaultService;
 
     public AbstractExecutor(
         RunContextFactory runContextFactory,
         MetricRegistry metricRegistry,
-        ConditionService conditionService,
-        TaskDefaultService taskDefaultService
+        ConditionService conditionService
     ) {
         this.runContextFactory = runContextFactory;
         this.metricRegistry = metricRegistry;
         this.conditionService = conditionService;
-        this.taskDefaultService = taskDefaultService;
     }
 
     protected Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
@@ -471,12 +467,10 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
             .map(throwFunction(taskRun -> {
                 Task task = flow.findTaskByTaskId(taskRun.getTaskId());
 
-                Task taskWithDefault = taskDefaultService.injectDefaults(task, flow);
-
                 return WorkerTask.builder()
-                    .runContext(runContextFactory.of(flow, taskWithDefault, execution, taskRun))
+                    .runContext(runContextFactory.of(flow, task, execution, taskRun))
                     .taskRun(taskRun)
-                    .task(taskWithDefault)
+                    .task(task)
                     .build();
                 }))
             .collect(Collectors.toList());

@@ -32,7 +32,7 @@
                         v-if="task.description"
                         class="node-action"
                     >
-                        <markdown-tooltip :description="task.description" :id="hash" />
+                        <markdown-tooltip :description="task.description" :id="hash" :modal="true" :title="task.id"/>
                     </b-button>
 
                     <sub-flow-link

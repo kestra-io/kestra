@@ -1,16 +1,20 @@
 package io.kestra.runner.kafka.services;
 
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.services.TaskDefaultService;
+import io.kestra.runner.kafka.KafkaExecutor;
+import io.kestra.runner.kafka.serializers.JsonSerde;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.runner.kafka.KafkaExecutor;
-import io.kestra.runner.kafka.serializers.JsonSerde;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -24,6 +28,13 @@ public class KafkaStreamSourceService {
 
     @Inject
     private KafkaAdminService kafkaAdminService;
+
+    @Inject
+    private TaskDefaultService taskDefaultService;
+
+    @Inject
+    @javax.inject.Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    private QueueInterface<LogEntry> logQueue;
 
     public GlobalKTable<String, Flow> flowGlobalKTable(StreamsBuilder builder) {
         return builder
@@ -77,14 +88,21 @@ public class KafkaStreamSourceService {
             );
     }
 
-    public KStream<String, KafkaExecutor.ExecutionWithFlow> withFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, Execution> executionKStream) {
+    public KStream<String, KafkaExecutor.ExecutionWithFlow> withFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, Execution> executionKStream, boolean injectDefaults) {
         return executionKStream
             .filter(
                 (key, value) -> value != null, Named.as("withFlow-notNull-filter"))
             .join(
                 flowGlobalKTable,
                 (key, value) -> Flow.uid(value),
-                (execution, flow) -> new KafkaExecutor.ExecutionWithFlow(flow, execution),
+                (execution, flow) -> {
+                    if (!injectDefaults) {
+                        return new KafkaExecutor.ExecutionWithFlow(flow, execution);
+                    }
+
+                    Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, execution);
+                    return new KafkaExecutor.ExecutionWithFlow(flowWithDefaults, execution);
+                },
                 Named.as("withFlow-join")
             );
     }

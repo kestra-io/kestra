@@ -29,6 +29,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
     protected RunContextFactory runContextFactory;
     protected MetricRegistry metricRegistry;
     protected ConditionService conditionService;
+    protected FlowExecutorInterface flowExecutorInterface;
 
     public AbstractExecutor(
         RunContextFactory runContextFactory,
@@ -489,7 +490,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
                     workerTask.getTaskRun()
                 );
 
-                Execution execution = flowTask.createExecution(runContext);
+                Execution execution = flowTask.createExecution(runContext, flowExecutorInterface);
 
                 WorkerTaskExecution workerTaskExecution = WorkerTaskExecution.builder()
                     .task(flowTask)

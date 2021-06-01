@@ -37,10 +37,20 @@ public class FlowService {
         return keepLastVersionCollector(stream);
     }
 
+    public Flow keepLastVersion(Stream<Flow> stream, String namespace, String flowId) {
+        return keepLastVersionCollector(
+            stream
+                .filter(flow -> flow.getNamespace().equals(namespace) && flow.getId().equals(flowId))
+        )
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "." + flowId + "'"));
+    }
+
     public Collection<Flow> keepLastVersion(List<Flow> flows) {
         return keepLastVersionCollector(flows.stream())
             .collect(Collectors.toList());
     }
+
     private Stream<Flow> keepLastVersionCollector(Stream<Flow> stream) {
         return stream
             .sorted((left, right) -> left.getRevision() > right.getRevision() ? -1 : (left.getRevision().equals(right.getRevision()) ? 0 : 1))

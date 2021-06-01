@@ -36,6 +36,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.Stores;
+import org.slf4j.event.Level;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -162,8 +163,9 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         // task Flow
         KTable<String, WorkerTaskExecution> workerTaskExecutionKTable = this.workerTaskExecutionStream(builder);
 
-        this.toWorkerTaskExecution(stream);
-        this.workerTaskExecutionToExecution(stream);
+        KStream<String, WorkerTaskExecution> workerTaskExecutionKStream = this.deduplicateWorkerTaskExecution(stream);
+        this.toWorkerTaskExecution(workerTaskExecutionKStream);
+        this.workerTaskExecutionToExecution(workerTaskExecutionKStream);
         this.handleWorkerTaskExecution(workerTaskExecutionKTable, stream);
 
         // purge at end
@@ -586,12 +588,27 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
     }
 
-    private void toWorkerTaskExecution(KStream<String, Executor> stream) {
-        stream
+    private KStream<String, WorkerTaskExecution> deduplicateWorkerTaskExecution(KStream<String, Executor> stream) {
+        return stream
             .flatMapValues(
                 (readOnlyKey, value) -> value.getWorkerTaskExecutions(),
-                Named.as("ToWorkerTaskExecution.flatMap")
+                Named.as("DeduplicateWorkerTaskExecution.flatMap")
             )
+            .transformValues(
+                () -> new DeduplicationTransformer<>(
+                    "DeduplicateWorkerTaskExecution",
+                    WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
+                    (key, value) -> value.getTaskRun().getExecutionId() + "-" + value.getTaskRun().getId(),
+                    (key, value) -> value.getTaskRun().getState().getCurrent().name()
+                ),
+                Named.as("DeduplicateWorkerTaskExecution.deduplication"),
+                WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
+            )
+            .filter((key, value) -> value != null, Named.as("DeduplicateWorkerTaskExecution.notNullFilter"));
+    }
+
+    private void toWorkerTaskExecution(KStream<String, WorkerTaskExecution> stream) {
+        stream
             .selectKey(
                 (key, value) -> value.getExecution().getId(),
                 Named.as("ToWorkerTaskExecution.selectKey")
@@ -602,12 +619,30 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
     }
 
-    private void workerTaskExecutionToExecution(KStream<String, Executor> stream) {
-        KStream<String, Execution> executionKStream = stream
-            .flatMapValues(
-                (readOnlyKey, value) -> value.getWorkerTaskExecutions(),
-                Named.as("WorkerTaskExecutionToExecution.flatMap")
+    private void workerTaskExecutionToExecution(KStream<String, WorkerTaskExecution> stream) {
+        stream
+            .mapValues(
+                value -> {
+                    LogEntry.LogEntryBuilder logEntryBuilder = LogEntry.of(value.getTaskRun()).toBuilder()
+                        .level(Level.INFO)
+                        .message("Create new execution for flow '" +
+                            value.getExecution().getNamespace() + "'." + value.getExecution().getFlowId() +
+                            "' with id '" + value.getExecution().getId() + "'"
+                        )
+                        .timestamp(value.getTaskRun().getState().getStartDate())
+                        .thread(Thread.currentThread().getName());
+
+                    return logEntryBuilder.build();
+                },
+                Named.as("WorkerTaskExecutionToExecution.mapToLog")
             )
+            .selectKey((key, value) -> (String)null, Named.as("WorkerTaskExecutionToExecution.logRemoveKey"))
+            .to(
+                kafkaAdminService.getTopicName(LogEntry.class),
+                Produced.with(Serdes.String(), JsonSerde.of(LogEntry.class)).withName("WorkerTaskExecutionToExecution.toLogEntry")
+            );
+
+        KStream<String, Execution> executionKStream = stream
             .mapValues(
                 (key, value) -> value.getExecution(),
                 Named.as("WorkerTaskExecutionToExecution.map")
@@ -908,6 +943,12 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         applicationContext.registerSingleton(new KafkaTemplateExecutor(
             resultStream.store(StoreQueryParameters.fromNameAndType("template", QueryableStoreTypes.keyValueStore()))
         ));
+
+        this.flowExecutorInterface = new KafkaFlowExecutor(
+            resultStream.store(StoreQueryParameters.fromNameAndType("flow", QueryableStoreTypes.keyValueStore())),
+            flowService
+        );
+        applicationContext.registerSingleton(this.flowExecutorInterface);
     }
 
     @Override

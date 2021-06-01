@@ -104,12 +104,8 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     }
 
     @SuppressWarnings("unchecked")
-    public Execution createExecution(RunContext runContext) throws Exception {
-        Logger logger = runContext.logger();
+    public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface) throws Exception {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
-
-        // @TODO: remove
-        FlowRepositoryInterface flowRepository = runContext.getApplicationContext().getBean(FlowRepositoryInterface.class);
 
         Map<String, String> inputs = new HashMap<>();
         if (this.inputs != null) {
@@ -118,15 +114,13 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             }
         }
 
-        io.kestra.core.models.flows.Flow flow = flowRepository
-            .findById(
-                runContext.render(this.namespace),
-                runContext.render(this.flowId),
-                this.revision != null ? Optional.of(this.revision) : Optional.empty()
-            )
-            .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + this.flowId + "' in namespace '" + this.namespace + "'"));
+        io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findById(
+            runContext.render(this.namespace),
+            runContext.render(this.flowId),
+            this.revision != null ? Optional.of(this.revision) : Optional.empty()
+        );
 
-        Execution execution = runnerUtils
+        return runnerUtils
             .newExecution(
                 flow,
                 (f, e) -> runnerUtils.typedInputs(f, e, inputs)
@@ -142,15 +136,6 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
                 ))
                 .build()
             );
-
-        logger.debug(
-            "Create new execution for flow {}.{} with id {}",
-            execution.getNamespace(),
-            execution.getFlowId(),
-            execution.getId()
-        );
-
-        return execution;
     }
 
     public WorkerTaskResult createWorkerTaskResult(

@@ -54,7 +54,8 @@ public class MemoryExecutor extends AbstractExecutor {
         MetricRegistry metricRegistry,
         FlowService flowService,
         ConditionService conditionService,
-        TaskDefaultService taskDefaultService
+        TaskDefaultService taskDefaultService,
+        FlowExecutorInterface flowExecutorInterface
     ) {
         super(runContextFactory, metricRegistry, conditionService);
 
@@ -66,6 +67,7 @@ public class MemoryExecutor extends AbstractExecutor {
         this.flowService = flowService;
         this.conditionService = conditionService;
         this.taskDefaultService = taskDefaultService;
+        this.flowExecutorInterface = flowExecutorInterface;
     }
 
     @Override

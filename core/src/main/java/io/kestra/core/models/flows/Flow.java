@@ -88,11 +88,7 @@ public class Flow implements DeletedInterface {
 
     @JsonIgnore
     public String uid() {
-        return String.join("_", Arrays.asList(
-            this.getNamespace(),
-            this.getId(),
-            this.getRevision() != null ? String.valueOf(this.getRevision()) : "-1"
-        ));
+        return Flow.uid(this.getNamespace(), this.getId(), Optional.ofNullable(this.revision));
     }
 
     @JsonIgnore
@@ -111,6 +107,14 @@ public class Flow implements DeletedInterface {
         ));
     }
 
+    public static String uid(String namespace, String id, Optional<Integer> revision) {
+        return String.join("_", Arrays.asList(
+            namespace,
+            id,
+            String.valueOf(revision.orElse(-1))
+        ));
+    }
+
     public static String uidWithoutRevision(Execution execution) {
         return String.join("_", Arrays.asList(
             execution.getNamespace(),
@@ -118,7 +122,7 @@ public class Flow implements DeletedInterface {
         ));
     }
 
-    private Stream<Task> allTasks() {
+    public Stream<Task> allTasks() {
         return Stream.of(
             this.tasks != null ? this.tasks : new ArrayList<Task>(),
             this.errors != null ? this.errors : new ArrayList<Task>(),

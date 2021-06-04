@@ -200,7 +200,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
         );
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getExecutionId().equals(execution.getId())).count(), is(131L));
+        assertThat(logs.stream().filter(logEntry -> logEntry.getExecutionId().equals(execution.getId())).count(), is(63L));
     }
 
     @Test

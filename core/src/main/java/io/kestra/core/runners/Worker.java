@@ -282,11 +282,11 @@ public class Worker implements Runnable, Closeable {
 
         // logs
         if (workerThread.getTaskOutput() != null) {
-            logger.debug("Outputs\n{}", JacksonMapper.log(workerThread.getTaskOutput()));
+            log.debug("Outputs\n{}", JacksonMapper.log(workerThread.getTaskOutput()));
         }
 
         if (runContext.metrics().size() > 0) {
-            logger.trace("Metrics\n{}", JacksonMapper.log(runContext.metrics()));
+            log.trace("Metrics\n{}", JacksonMapper.log(runContext.metrics()));
         }
 
         // save outputs

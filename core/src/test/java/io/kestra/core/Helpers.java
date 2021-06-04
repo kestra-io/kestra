@@ -13,6 +13,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
@@ -20,10 +21,26 @@ public class Helpers {
     public static long FLOWS_COUNT = 47;
 
     public static ApplicationContext applicationContext() throws URISyntaxException {
-        return applicationContext(Paths.get(Objects.requireNonNull(Helpers.class.getClassLoader().getResource("plugins")).toURI()));
+        return applicationContext(
+            Paths.get(Objects.requireNonNull(Helpers.class.getClassLoader().getResource("plugins")).toURI())
+        );
+    }
+
+    public static ApplicationContext applicationContext(Map<String, Object> properties) throws URISyntaxException {
+        return applicationContext(
+            Paths.get(Objects.requireNonNull(Helpers.class.getClassLoader().getResource("plugins")).toURI()),
+            properties
+        );
     }
 
     public static ApplicationContext applicationContext(Path pluginsPath) {
+        return applicationContext(
+            pluginsPath,
+            null
+        );
+    }
+
+    public static ApplicationContext applicationContext(Path pluginsPath, Map<String, Object> properties) {
         if (!KestraClassLoader.isInit()) {
             KestraClassLoader.create(Thread.currentThread().getContextClassLoader());
         }
@@ -37,6 +54,7 @@ public class Helpers {
         return new KestraApplicationContextBuilder()
             .mainClass(Helpers.class)
             .environments(Environment.TEST)
+            .properties(properties)
             .classLoader(KestraClassLoader.instance())
             .pluginRegistry(pluginRegistry)
             .build();

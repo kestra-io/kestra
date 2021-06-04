@@ -218,3 +218,9 @@ kestra:
       format: "[Date: {}] [Duration: {} ms] [Method: {}] [Url: {}] [Status: {}] [Length: {}] [Ip: {}] [Port: {}]"
       filters:
         - ".*\\[Url: /api/.*"
+
+  anonymous-usage-report:
+    enabled: true
+    uri: https://api.kestra.io/v1/reports/usages
+    initial-delay: 5m
+    fixed-delay: 1h

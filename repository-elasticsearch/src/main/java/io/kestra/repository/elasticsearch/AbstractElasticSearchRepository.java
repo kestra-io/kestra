@@ -50,6 +50,7 @@ import org.elasticsearch.search.sort.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -363,9 +364,15 @@ abstract public class AbstractElasticSearchRepository<T> {
         }
     }
 
-    protected List<T> scroll(String index, SearchSourceBuilder sourceBuilder) {
+    protected List<T>  scroll(String index, SearchSourceBuilder sourceBuilder) {
         List<T> result = new ArrayList<>();
 
+        this.scroll(index, sourceBuilder, result::add);
+
+        return result;
+    }
+
+    protected void scroll(String index, SearchSourceBuilder sourceBuilder, Consumer<T> consumer) {
         String scrollId = null;
         SearchRequest searchRequest = searchRequest(index, sourceBuilder, true);
         try {
@@ -374,7 +381,8 @@ abstract public class AbstractElasticSearchRepository<T> {
             scrollId = searchResponse.getScrollId();
 
             do {
-                result.addAll(this.map(searchResponse.getHits().getHits()));
+                this.map(searchResponse.getHits().getHits())
+                    .forEach(consumer);
 
                 SearchScrollRequest searchScrollRequest = new SearchScrollRequest()
                     .scrollId(scrollId)
@@ -387,8 +395,6 @@ abstract public class AbstractElasticSearchRepository<T> {
         } finally {
             this.clearScrollId(scrollId);
         }
-
-        return result;
     }
 
     private void clearScrollId(String scrollId) {

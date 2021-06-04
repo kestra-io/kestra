@@ -20,6 +20,7 @@ dependencies {
 
     // utils
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.1'
+    implementation 'com.github.oshi:oshi-core:5.7.3'
 
     // scheduler
     implementation group: 'com.cronutils', name: 'cron-utils', version: '9.1.5'

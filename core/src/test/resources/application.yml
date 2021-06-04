@@ -33,3 +33,7 @@ kestra:
           lists:
           - val:
               key: test
+
+  anonymous-usage-report:
+    enabled: false
+    uri: http://localhost:8080/

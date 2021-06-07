@@ -32,7 +32,7 @@ class ClassPluginDocumentationTest {
 
         assertThat(doc.getDocExamples().size(), is(2));
         assertThat(doc.getIcon(), is(notNullValue()));
-        assertThat(doc.getInputs().size(), is(5));
+        assertThat(doc.getInputs().size(), is(2));
 
         // simple
         assertThat(((Map<String, String>) doc.getInputs().get("format")).get("type"), is("string"));
@@ -41,22 +41,34 @@ class ClassPluginDocumentationTest {
         assertThat(((Map<String, String>) doc.getInputs().get("format")).get("description"), containsString("of this input"));
 
         // enum
-        assertThat(((List<String>) ((Map<String, Object>) doc.getInputs().get("childInput.childEnum")).get("enum")).size(), is(2));
-        assertThat(((List<String>) ((Map<String, Object>) doc.getInputs().get("childInput.childEnum")).get("enum")), containsInAnyOrder("VALUE_1", "VALUE_2"));
+        Map<String, Object> enumProperties = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.ExampleTask-PropertyChildInput")).get("properties")).get("childEnum");
+        assertThat(((List<String>) enumProperties.get("enum")).size(), is(2));
+        assertThat(((List<String>) enumProperties.get("enum")), containsInAnyOrder("VALUE_1", "VALUE_2"));
+
+        Map<String, Object> childInput = (Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.ExampleTask-PropertyChildInput")).get("properties");
 
         // array
-        assertThat((String) ((Map<String, Object>) doc.getInputs().get("childInput.list")).get("type"), is("array"));
-        assertThat((String) ((Map<String, Object>) doc.getInputs().get("childInput.list")).get("title"), is("List of string"));
-        assertThat((Integer) ((Map<String, Object>) doc.getInputs().get("childInput.list")).get("minItems"), is(1));
-        assertThat(((Map<String, String>) ((Map<String, Object>) doc.getInputs().get("childInput.list")).get("items")).get("type"), is("string"));
+        Map<String, Object> childInputList = (Map<String, Object>) childInput.get("list");
+        assertThat((String) (childInputList).get("type"), is("array"));
+        assertThat((String) (childInputList).get("title"), is("List of string"));
+        assertThat((Integer) (childInputList).get("minItems"), is(1));
+        assertThat(((Map<String, String>) (childInputList).get("items")).get("type"), is("string"));
 
         // map
-        assertThat((String) ((Map<String, Object>) doc.getInputs().get("childInput.map")).get("type"), is("object"));
-        assertThat((Boolean) ((Map<String, Object>) doc.getInputs().get("childInput.map")).get("$dynamic"), is(true));
-        assertThat(((Map<String, String>) ((Map<String, Object>) doc.getInputs().get("childInput.map")).get("additionalProperties")).get("type"), is("number"));
+        Map<String, Object> childInputMap = (Map<String, Object>) childInput.get("map");
+        assertThat((String) (childInputMap).get("type"), is("object"));
+        assertThat((Boolean) (childInputMap).get("$dynamic"), is(true));
+        assertThat(((Map<String, String>) (childInputMap).get("additionalProperties")).get("type"), is("number"));
 
-        // map with object
-        assertThat(((Map<String, String>) ((Map<String, Object>) doc.getOutputs().get("childInput.outputChildMap")).get("additionalProperties")).get("type"), is("object"));
-        assertThat((((Map<String, Map<String, Map<String, String>>>) ((Map<String, Object>) doc.getOutputs().get("childInput.outputChildMap")).get("additionalProperties")).get("properties")).get("code").get("type"), is("integer"));
+        // output
+        Map<String, Object> childOutput = (Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.AbstractTask-OutputChild")).get("properties");
+        assertThat(((Map<String, String>) childOutput.get("value")).get("type"), is("string"));
+        assertThat(((Map<String, Object>) childOutput.get("outputChildMap")).get("type"), is("object"));
+        assertThat(((Map<String, String>)((Map<String, Object>) childOutput.get("outputChildMap")).get("additionalProperties")).get("$ref"), containsString("OutputMap"));
+
+        // output ref
+        Map<String, Object> outputMap = ((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.AbstractTask-OutputMap")).get("properties"));
+        assertThat(outputMap.size(), is(2));
+        assertThat(((Map<String, Object>) outputMap.get("code")).get("type"), is("integer"));
     }
 }

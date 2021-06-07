@@ -28,14 +28,22 @@ icon: {{ icon }}
 
 {{~/inline~}}
 
+{{~#*inline "type"~}}
+{{~#if $ref~}}
+[{{~ definitionName (substring $ref 8) ~}}](#{{~ lower (definitionName (substring $ref 8)) ~}})
+{{~else~}}
+{{~ type ~}}
+{{~/if}}
+{{~/inline~}}
+
 {{~#*inline "fieldType" ~}}
     {{~#if $deprecated }}
 🔒 *Deprecated*
     {{~/if}}
 
-* **Type:** =={{ type }}==
+* **Type:** =={{> type }}==
     {{~#if items }}
-* **SubType:** =={{ items.type }}==
+* **SubType:** =={{> type items }}==
     {{~/if~}}
     {{~#if additionalProperties }}
 * **SubType:** =={{ additionalProperties.type }}==
@@ -83,6 +91,10 @@ icon: {{ icon }}
     * **Maximum:** `&lt; {{ exclusiveMaximum }}`
 {{/if~}}
 
+{{~#if format ~}}
+    * **Format:** `{{ format }}`
+{{/if~}}
+
 
 {{~/inline~}}
 {{!-- {{                 Main doc                 }} --}}
@@ -115,7 +127,7 @@ type: "{{cls}}"
 
 
 {{!-- {{                 Inputs                 }} --}}
-## Inputs
+## Properties
 {{#if inputs}}
 {{#each inputs as | input fullName | ~}}
 ### `{{fullName}}`
@@ -135,5 +147,22 @@ type: "{{cls}}"
 {{> fieldType }}
 {{> fieldDetail }}
 {{> body }}
+{{/each ~}}
+{{/if}}
+
+{{!-- {{              Definitions                }} --}}
+{{#if defs}}
+## Definitions
+{{#each defs  as | def fullName | ~}}
+{{#if def.properties}}
+### `{{ definitionName fullName }}`
+
+{{#each def.properties  as | output name | ~}}
+#### `{{ name }}`
+{{> fieldType }}
+{{> fieldDetail }}
+{{> body }}
+{{/each}}
+{{/if}}
 {{/each}}
 {{/if}}

@@ -5,18 +5,19 @@ import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
 import com.google.common.base.Charsets;
-import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
-import lombok.SneakyThrows;
-import org.apache.commons.io.IOUtils;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.handlebars.helpers.DateHelper;
 import io.kestra.core.runners.handlebars.helpers.JsonHelper;
+import io.kestra.core.runners.handlebars.helpers.OtherStringsHelper;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Slugify;
+import lombok.SneakyThrows;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,20 @@ abstract public class DocumentationGenerator {
         .registerHelpers(EachHelper.class)
         .registerHelpers(LogHelper.class)
         .registerHelpers(StringHelpers.class)
+        .registerHelpers(OtherStringsHelper.class)
+        .registerHelper("definitionName", (context, options) -> {
+            String s = StringUtils.substringAfterLast(context.toString(), ".");
+            if (s.contains("-")) {
+                String s1 = StringUtils.substringAfter(s, "-");
+
+                try {
+                    Integer.parseInt(s1);
+                } catch (NumberFormatException e) {
+                    s = s1;
+                }
+            }
+            return s;
+        })
         .registerHelpers(UnlessHelper.class)
         .registerHelpers(WithHelper.class)
         .registerHelpers(DateHelper.class)

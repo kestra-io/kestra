@@ -73,7 +73,8 @@ public class PluginController {
             DocumentationGenerator.render(classPluginDocumentation),
             new Schema(
                 classPluginDocumentation.getPropertiesSchema(),
-                classPluginDocumentation.getOutputsSchema()
+                classPluginDocumentation.getOutputsSchema(),
+                classPluginDocumentation.getDefs()
             )
         );
     }
@@ -139,7 +140,6 @@ public class PluginController {
                 ))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-
             plugin.tasks = className(filter(registeredPlugin.getTasks()).toArray(Class[]::new));
             plugin.triggers = className(filter(registeredPlugin.getTriggers()).toArray(Class[]::new));
             plugin.conditions = className(filter(registeredPlugin.getConditions()).toArray(Class[]::new));
@@ -190,5 +190,6 @@ public class PluginController {
     public static class Schema {
         private Map<String, Object> properties;
         private Map<String, Object> outputs;
+        private Map<String, Object> definitions;
     }
 }

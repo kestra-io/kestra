@@ -89,7 +89,6 @@ class VariableRendererTest {
         });
     }
 
-
     @Test
     void firstDefinedEval() throws IllegalVariableEvaluationException {
         ImmutableMap<String, Object> vars = ImmutableMap.of(
@@ -124,5 +123,29 @@ class VariableRendererTest {
         assertThrows(HandlebarsException.class, () -> {
             variableRenderer.render("{{ get missing }}", vars);
         });
+    }
+
+    @Test
+    void substringBefore() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render("{{ substringBefore 'a.b.c' '.' }}", Map.of());
+        assertThat(render, is("a"));
+    }
+
+    @Test
+    void substringAfter() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render("{{ substringAfter 'a.b.c' '.' }}", Map.of());
+        assertThat(render, is("b.c"));
+    }
+
+    @Test
+    void substringBeforeLast() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render("{{ substringBeforeLast 'a.b.c' '.' }}", Map.of());
+        assertThat(render, is("a.b"));
+    }
+
+    @Test
+    void substringAfterLast() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render("{{ substringAfterLast 'a.b.c' '.' }}", Map.of());
+        assertThat(render, is("c"));
     }
 }

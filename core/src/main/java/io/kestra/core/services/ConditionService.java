@@ -42,7 +42,7 @@ public class ConditionService {
         return this.isValid(condition, flow, execution, null);
     }
 
-    private void logException(Flow flow, Condition condition, ConditionContext conditionContext, InternalException e) {
+    private void logException(Flow flow, Condition condition, ConditionContext conditionContext, Exception e) {
         conditionContext.getRunContext().logger().warn(
             "[namespace: {}] [flow: {}] [condition: {}] Evaluate Condition Failed with error '{}'",
             flow.getNamespace(),
@@ -94,7 +94,7 @@ public class ConditionService {
             .allMatch(condition -> {
                 try {
                     return condition.test(conditionContext);
-                } catch (InternalException e) {
+                } catch (Exception e) {
                     logException(flow, condition, conditionContext, e);
 
                     return false;

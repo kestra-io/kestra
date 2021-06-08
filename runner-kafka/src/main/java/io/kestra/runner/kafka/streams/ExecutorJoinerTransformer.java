@@ -48,8 +48,10 @@ public class ExecutorJoinerTransformer implements ValueTransformerWithKey<String
 
         Executor executor = this.store.get(key);
 
+        // already purge execution ?
         if (executor == null) {
-            throw new IllegalStateException("Unable to find executor with key '" + key + "'");
+            log.warn("Unable to find Executor with key '" + key + "' for WorkerTaskResult id '" + workerTaskResult.getTaskRun().getId() + "' '" + workerTaskResult.getTaskRun().toStringState() + "'");
+            return null;
         }
 
         if (!executor.getExecution().hasTaskRunJoinable(value.getJoined().getTaskRun())) {

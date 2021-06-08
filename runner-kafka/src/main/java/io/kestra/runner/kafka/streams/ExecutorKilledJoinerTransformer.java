@@ -37,7 +37,8 @@ public class ExecutorKilledJoinerTransformer implements ValueTransformerWithKey<
         Executor executor = this.store.get(key);
 
         if (executor == null) {
-            throw new IllegalStateException("Unable to find executor with key '" + key + "'");
+            log.warn("Unable to find Executor with key '" + key + "' for Killed id '" + value.getExecutionId() + "'");
+            return null;
         }
 
         if (executor.getExecution().getState().getCurrent() != State.Type.KILLING &&

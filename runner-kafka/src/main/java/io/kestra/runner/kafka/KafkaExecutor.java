@@ -294,7 +294,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 kafkaAdminService.getTopicName(ExecutorFlowTrigger.class),
                 Consumed.with(Serdes.String(), JsonSerde.of(ExecutorFlowTrigger.class)).withName("KStream.ExecutorFlowTrigger")
             )
-            .filter((key, value) -> value != null, Named.as("flowwithtriggerstream.filterNotNull"));
+            .filter((key, value) -> value != null, Named.as("Flowwithtriggerstream.filterNotNull"));
     }
 
     private KStream<String, Executor> joinExecutionKilled(KStream<String, ExecutionKilled> executionKilledKStream, KStream<String, Executor> executorKStream) {
@@ -345,6 +345,10 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 ),
                 Named.as("JoinWorkerResult.transformValues"),
                 EXECUTOR_STATE_STORE_NAME
+            )
+            .filter(
+                (key, value) -> value != null,
+                Named.as("JoinWorkerResult.notNullFilter")
             );
     }
 

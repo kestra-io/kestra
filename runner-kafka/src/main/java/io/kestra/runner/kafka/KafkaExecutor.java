@@ -427,6 +427,16 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
             );
 
+        taskRunKStream
+            .transformValues(
+                () -> new DeduplicationPurgeTransformer<>(
+                    WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
+                    (key, value) -> "WorkerTaskExecution-" + value.getExecutionId() + "-" + value.getId()
+                ),
+                Named.as("PurgeExecutor.purgeWorkerTaskExecutionDeduplication"),
+                WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
+            );
+
         // clean up Execution Nexts deduplication state
         terminated
             .transformValues(
@@ -602,7 +612,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 () -> new DeduplicationTransformer<>(
                     "DeduplicateWorkerTaskExecution",
                     WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
-                    (key, value) -> value.getTaskRun().getExecutionId() + "-" + value.getTaskRun().getId(),
+                    (key, value) -> "WorkerTaskExecution-" + value.getTaskRun().getExecutionId() + "-" + value.getTaskRun().getId(),
                     (key, value) -> value.getTaskRun().getState().getCurrent().name()
                 ),
                 Named.as("DeduplicateWorkerTaskExecution.deduplication"),
@@ -627,12 +637,16 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         stream
             .mapValues(
                 value -> {
+                    String message = "Create new execution for flow '" +
+                        value.getExecution().getNamespace() + "'." + value.getExecution().getFlowId() +
+                        "' with id '" + value.getExecution().getId() + "' from task '" + value.getTask().getId() +
+                        "' and taskrun '" + value.getTaskRun().getId() +
+                        (value.getTaskRun().getValue() != null  ? " (" +  value.getTaskRun().getValue() + ")" : "") + "'";
+
+                    log.info(message);
                     LogEntry.LogEntryBuilder logEntryBuilder = LogEntry.of(value.getTaskRun()).toBuilder()
                         .level(Level.INFO)
-                        .message("Create new execution for flow '" +
-                            value.getExecution().getNamespace() + "'." + value.getExecution().getFlowId() +
-                            "' with id '" + value.getExecution().getId() + "'"
-                        )
+                        .message(message)
                         .timestamp(value.getTaskRun().getState().getStartDate())
                         .thread(Thread.currentThread().getName());
 

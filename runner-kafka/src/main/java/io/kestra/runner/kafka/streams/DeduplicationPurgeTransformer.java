@@ -31,7 +31,9 @@ public class DeduplicationPurgeTransformer<K, V, SV> implements ValueTransformer
         if (value != null) {
             String storeKey = storeKeyMapper.apply(key, value);
 
-            store.delete(storeKey);
+            if (storeKey != null) {
+                store.delete(storeKey);
+            }
         }
 
         return value;

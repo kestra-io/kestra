@@ -103,13 +103,6 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.EXECUTOR_NAMED)
-    public QueueInterface<LogEntry> logs() {
-        return new MemoryQueue<>(LogEntry.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
     public WorkerTaskQueueInterface workerTaskQueue() {
         return new MemoryWorkerTaskQueue(applicationContext);
     }

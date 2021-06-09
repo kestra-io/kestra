@@ -129,7 +129,7 @@ public class KafkaExecutorProductionExceptionHandler implements org.apache.kafka
 
         logQueue = (KafkaQueue<LogEntry>) applicationContext.getBean(
             QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.LOG_NAMED)
+            Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
         );
     }
 }

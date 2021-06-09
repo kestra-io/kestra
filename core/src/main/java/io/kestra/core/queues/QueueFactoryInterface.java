@@ -44,8 +44,6 @@ public interface QueueFactoryInterface {
 
     QueueInterface<Trigger> trigger();
 
-    QueueInterface<LogEntry> logs();
-
     WorkerTaskQueueInterface workerTaskQueue();
 
 }

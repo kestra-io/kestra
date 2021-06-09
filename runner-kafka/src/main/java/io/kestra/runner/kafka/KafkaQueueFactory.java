@@ -102,13 +102,6 @@ public class KafkaQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.LOG_NAMED)
-    public QueueInterface<LogEntry> logs() {
-        return new KafkaQueue<>(LogEntry.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
     public WorkerTaskQueueInterface workerTaskQueue() {
         return new KafkaWorkerTaskQueue(applicationContext);
     }

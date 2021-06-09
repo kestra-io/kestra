@@ -163,10 +163,10 @@ public class Template extends Task implements FlowableTask<Template.Output> {
 
     @Override
     public Template.Output outputs(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        io.kestra.core.models.templates.Template template = this.findTemplate(runContext.getApplicationContext());
+        Output.OutputBuilder builder = Output.builder();
 
-        return Template.Output.builder()
-            .args(runContext.render(this.args
+        if (this.args != null) {
+            builder.args(runContext.render(this.args
                 .entrySet()
                 .stream()
                 .map(throwFunction(e -> new AbstractMap.SimpleEntry<>(
@@ -174,8 +174,10 @@ public class Template extends Task implements FlowableTask<Template.Output> {
                     runContext.render(e.getValue())
                 )))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-            ))
-            .build();
+            ));
+        }
+
+        return builder.build();
     }
 
     private io.kestra.core.models.templates.Template findTemplate(ApplicationContext applicationContext) throws IllegalVariableEvaluationException {

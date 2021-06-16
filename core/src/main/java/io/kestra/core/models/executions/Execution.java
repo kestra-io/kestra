@@ -268,6 +268,14 @@ public class Execution implements DeletedInterface {
     }
 
     @SuppressWarnings("UnstableApiUsage")
+    public Optional<TaskRun> findLastCreated(List<ResolvedTask> resolvedTasks, TaskRun taskRun) {
+        return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
+            .stream()
+            .filter(t -> t.getState().isCreated())
+        );
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
     public Optional<TaskRun> findLastRunning(List<ResolvedTask> resolvedTasks, TaskRun taskRun) {
         return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
             .stream()
@@ -331,6 +339,22 @@ public class Execution implements DeletedInterface {
         return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
             .anyMatch(taskRun -> taskRun.getState().isFailed());
+    }
+
+    public boolean hasCreated() {
+        return this.taskRunList != null && this.taskRunList
+            .stream()
+            .anyMatch(taskRun -> taskRun.getState().isCreated());
+    }
+
+    public boolean hasCreated(List<ResolvedTask> resolvedTasks) {
+        return this.hasCreated(resolvedTasks, null);
+    }
+
+    public boolean hasCreated(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
+        return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
+            .stream()
+            .anyMatch(taskRun -> taskRun.getState().isCreated());
     }
 
     public boolean hasRunning(List<ResolvedTask> resolvedTasks) {
@@ -398,21 +422,6 @@ public class Execution implements DeletedInterface {
         }
 
         return true;
-    }
-
-    @JsonIgnore
-    public boolean isJustRestarted() {
-        if (state.getHistories().size() < 2) {
-            return false;
-        }
-
-        State.History last = state.getHistories().get(state.getHistories().size() - 2);
-
-        if (last.getState() == State.Type.RESTARTED) {
-            return true;
-        }
-
-        return false;
     }
 
     /**

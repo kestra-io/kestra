@@ -122,16 +122,18 @@ public class ExecutionService {
 
         State state;
 
-        if (taskRunIndex == referenceTaskRunIndex)
-            // The current task run is the reference task run, its default state will be CREATED
-            state = new State();
-        else if (referenceTaskRunAncestors.contains(taskRun.getId()))
+        if (taskRunIndex == referenceTaskRunIndex) {
+            // The current task run is the reference task run, its default state will be RESTARTED
+            state = new State(State.Type.RESTARTED);
+        }
+        else if (referenceTaskRunAncestors.contains(taskRun.getId())) {
             // The current task run is an ascendant of the reference task run
-            state = new State()
-                .withState(State.Type.RESTARTED)
+            state = new State(State.Type.RESTARTED)
                 .withState(State.Type.RUNNING);
-        else
-            state = new State().withState(State.Type.SUCCESS);
+        }
+        else {
+            state = new State(State.Type.SUCCESS);
+        }
 
         return state;
     }
@@ -226,7 +228,6 @@ public class ExecutionService {
             newTaskRuns,
             new State()
                 .withState(State.Type.RESTARTED)
-                .withState(State.Type.CREATED)
         );
     }
 
@@ -265,7 +266,6 @@ public class ExecutionService {
 
         final Execution toRestart = execution
             .withState(State.Type.RESTARTED)
-            .withState(State.Type.RUNNING)
             .withTaskRunList(execution.getTaskRunList().subList(0, (int) refTaskRunIndex + 1));
 
         IntStream
@@ -277,7 +277,9 @@ public class ExecutionService {
                 State state = getRestartState(execution, i, (int) refTaskRunIndex, refTaskRunAncestors);
 
                 if (!originalTaskRun.getState().getCurrent().equals(state.getCurrent())) {
-                    originalTaskRun = originalTaskRun.withState(state.getCurrent());
+                    for (State.History history : state.getHistories()) {
+                        originalTaskRun = originalTaskRun.withState(history.getState());
+                    }
                 }
 
                 toRestart.getTaskRunList().set(i, originalTaskRun);

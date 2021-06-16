@@ -244,7 +244,7 @@ public class RunnerUtils {
     }
 
     private Predicate<Execution> isTerminatedChildExecution(Execution parentExecution, Flow flow) {
-        return e -> e.getParentId().equals(parentExecution.getId()) && conditionService.isTerminatedWithListeners(flow, e);
+        return e -> e.getParentId() != null && e.getParentId().equals(parentExecution.getId()) && conditionService.isTerminatedWithListeners(flow, e);
     }
 
     public Execution newExecution(Flow flow, BiFunction<Flow, Execution, Map<String, Object>> inputs) {

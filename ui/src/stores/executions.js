@@ -17,11 +17,14 @@ export default {
             })
         },
         restartExecution(_, options) {
-            return Vue.axios.post(`/api/v1/executions/${options.id}/restart?taskId=${options.taskId}`, {params: options}, {
-                headers: {
-                    "content-type": "multipart/form-data"
-                }
-            })
+            return Vue.axios.post(
+                `/api/v1/executions/${options.executionId}/restart`,
+                null,
+                {
+                    params: {
+                        taskId: options.taskId
+                    }
+                })
         },
         kill(_, options) {
             return Vue.axios.delete(`/api/v1/executions/${options.id}/kill`);

@@ -34,6 +34,12 @@ public class State {
         this.histories.add(new History(this.current, Instant.now()));
     }
 
+    public State(Type type) {
+        this.current = type;
+        this.histories = new ArrayList<>();
+        this.histories.add(new History(this.current, Instant.now()));
+    }
+
     public State(State state, Type type) {
         this.current = type;
         this.histories = state.histories;
@@ -92,6 +98,11 @@ public class State {
     }
 
     @JsonIgnore
+    public boolean isCreated() {
+        return this.current.isCreated();
+    }
+
+    @JsonIgnore
     public static Type[] runningTypes() {
         return Arrays.stream(Type.values())
             .filter(Type::isRunning)
@@ -118,8 +129,13 @@ public class State {
             return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED;
         }
 
+        public boolean isCreated() {
+            return this == Type.CREATED || this == Type.RESTARTED;
+        }
+
+
         public boolean isRunning() {
-            return this == Type.RUNNING || this == Type.RESTARTED || this == Type.KILLING;
+            return this == Type.RUNNING || this == Type.KILLING;
         }
 
         public boolean isFailed() {

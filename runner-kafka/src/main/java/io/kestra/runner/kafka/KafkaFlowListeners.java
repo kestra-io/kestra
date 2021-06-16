@@ -86,6 +86,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                 );
 
             KStream<String, Flow> result = KafkaStreamSourceService.logIfEnabled(
+                log,
                 stream,
                 (key, value) -> log.trace(
                     "Flow in '{}.{}' with revision {}",
@@ -129,6 +130,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                 .toStream();
 
             KafkaStreamSourceService.logIfEnabled(
+                log,
                 result,
                 (key, value) -> log.trace(
                     "Flow out '{}.{}' with revision {}",

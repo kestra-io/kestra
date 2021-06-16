@@ -13,7 +13,6 @@ import io.kestra.core.runners.*;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,7 +23,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-@Slf4j
 @Singleton
 @MemoryQueueEnabled
 public class MemoryExecutor extends AbstractExecutor {
@@ -78,7 +76,7 @@ public class MemoryExecutor extends AbstractExecutor {
     }
 
     private void executionQueue(Execution message) {
-        if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0 || message.isJustRestarted()) {
+        if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0 || message.getState().isCreated()) {
             this.handleExecution(saveExecution(message));
         }
     }

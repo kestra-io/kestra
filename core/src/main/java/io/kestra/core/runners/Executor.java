@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -16,6 +17,7 @@ public class Executor {
     private Exception exception;
     private final List<String> from = new ArrayList<>();
     private Long offset;
+    @JsonIgnore
     private boolean executionUpdated = false;
     private Flow flow;
     private final List<TaskRun> nexts = new ArrayList<>();
@@ -85,7 +87,7 @@ public class Executor {
 
     public Executor serialize() {
         return new Executor(
-            execution,
+            this.execution,
             this.offset
         );
     }

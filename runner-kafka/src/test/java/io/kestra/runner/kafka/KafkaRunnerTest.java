@@ -219,8 +219,13 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     }
 
     @Test
-    void restart() throws Exception {
-        restartCaseTest.restart();
+    void restartFailed() throws Exception {
+        restartCaseTest.restartFailed();
+    }
+
+    @Test
+    void restartTask() throws Exception {
+        restartCaseTest.restartTask();
     }
 
     @Test

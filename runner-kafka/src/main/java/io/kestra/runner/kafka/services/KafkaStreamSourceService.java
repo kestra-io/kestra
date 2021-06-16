@@ -11,12 +11,12 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
+import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@Slf4j
 public class KafkaStreamSourceService {
     public static final String TOPIC_FLOWLAST = "flowlast";
     public static final String TOPIC_EXECUTOR_WORKERINSTANCE = "executorworkerinstance";
@@ -75,7 +75,7 @@ public class KafkaStreamSourceService {
             );
     }
 
-    public static <T> KStream<String, T> logIfEnabled(KStream<String, T> stream, ForeachAction<String, T> action, String name) {
+    public static <T> KStream<String, T> logIfEnabled(Logger log, KStream<String, T> stream, ForeachAction<String, T> action, String name) {
         if (log.isDebugEnabled()) {
             return stream
                 .filter((key, value) -> value != null, Named.as(name + "Log.filterNotNull"))

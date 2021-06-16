@@ -124,35 +124,4 @@ class ExecutionTest {
             .build()
         ), is(true));
     }
-
-    @Test
-    void isJustRestartedExecution() {
-        Execution execution = Execution.builder()
-            .state(new State()
-                .withState(State.Type.RUNNING)
-                .withState(State.Type.FAILED)
-                .withState(State.Type.RESTARTED)
-                .withState(State.Type.RUNNING)
-            )
-            .build();
-
-        assertThat(execution.isJustRestarted(), is(true));
-    }
-
-    @Test
-    void isJustRestartedFailed() {
-        Execution execution = Execution.builder()
-            .state(new State()
-                .withState(State.Type.RUNNING)
-                .withState(State.Type.FAILED)
-                .withState(State.Type.RESTARTED)
-                .withState(State.Type.RUNNING)
-                .withState(State.Type.FAILED)
-
-            )
-            .build();
-
-        assertThat(execution.isJustRestarted(), is(false));
-    }
-
 }

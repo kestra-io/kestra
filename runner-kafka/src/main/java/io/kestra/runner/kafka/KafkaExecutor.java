@@ -1,6 +1,5 @@
 package io.kestra.runner.kafka;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -13,7 +12,6 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.runners.*;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.runner.kafka.serializers.JsonSerde;
@@ -26,13 +24,11 @@ import io.micronaut.context.ApplicationContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.Stores;
@@ -40,7 +36,6 @@ import org.slf4j.event.Level;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +46,6 @@ import javax.inject.Singleton;
 
 @KafkaQueueEnabled
 @Singleton
-@Slf4j
 public class KafkaExecutor extends AbstractExecutor implements Closeable {
     private static final String EXECUTOR_STATE_STORE_NAME = "executor";
     private static final String WORKERTASK_DEDUPLICATION_STATE_STORE_NAME = "workertask_deduplication";
@@ -114,7 +108,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         builder.addStateStore(Stores.keyValueStoreBuilder(
             Stores.persistentKeyValueStore(NEXTS_DEDUPLICATION_STATE_STORE_NAME),
             Serdes.String(),
-            JsonSerde.of(ExecutorProcessTransformer.Store.class)
+            JsonSerde.of(ExecutorNextTransformer.Store.class)
         ));
 
         // trigger deduplication
@@ -204,44 +198,15 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             .filter((key, value) -> value != null, Named.as("Executor.filterNotNull"))
             // don't remove ValueTransformerWithKey<String, Execution, Executor> generic or it crash java compiler
             // https://bugs.openjdk.java.net/browse/JDK-8217234
-            .transformValues(() -> new ValueTransformerWithKey<String, Execution, Executor>() {
-                ProcessorContext context;
-
-                @Override
-                public void init(ProcessorContext context) {
-                    this.context = context;
-                }
-
-                @Override
-                public Executor transform(String readOnlyKey, Execution value) {
-                    if (value == null) {
-                        return null;
-                    }
-
-                    Executor executor = new Executor(
-                        value,
-                        this.context.offset()
-                    );
-
-                    // restart need to be publised
-                    if (executor.getExecution().isJustRestarted()) {
-                        executor = executor.withExecution(value, "restarted");
-                    }
-
-                    this.context.headers().remove("from");
-                    this.context.headers().remove("offset");
-
-                    return executor;
-                }
-
-                @Override
-                public void close() {
-
-                }
-            }, Named.as("Executor.toExecutor"));
+            .transformValues(
+                () -> new ExecutorFromExecutionTransformer(EXECUTOR_STATE_STORE_NAME),
+                Named.as("Executor.toExecutor"),
+                EXECUTOR_STATE_STORE_NAME
+            );
 
         // logs
         KafkaStreamSourceService.logIfEnabled(
+            log,
             result,
             (key, value) -> log(log, true, value),
             "ExecutionIn"
@@ -355,7 +320,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
     private KStream<String, Executor> handleExecutor(KStream<String, Executor> stream) {
         return stream
             .transformValues(
-                () -> new ExecutorProcessTransformer(
+                () -> new ExecutorNextTransformer(
                     NEXTS_DEDUPLICATION_STATE_STORE_NAME,
                     this
                 ),
@@ -558,6 +523,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
 
         KStream<String, WorkerTaskResult> workerTaskResultKStream = KafkaStreamSourceService.logIfEnabled(
+            log,
             resultFlowable,
             (key, value) -> log(log, false, value),
             "HandleWorkerTaskFlowable"
@@ -579,6 +545,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
 
         KStream<String, WorkerTask> workerTaskKStream = KafkaStreamSourceService.logIfEnabled(
+            log,
             resultNotFlowable,
             (key, value) -> log(log, false, value),
             "HandleWorkerTaskNotFlowable"
@@ -671,6 +638,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
 
         executionKStream = KafkaStreamSourceService.logIfEnabled(
+            log,
             executionKStream,
             (key, value) -> log(log, false, value),
             "WorkerTaskExecutionToExecution"
@@ -728,6 +696,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
 
         KafkaStreamSourceService.logIfEnabled(
+            log,
             workerTaskResultKStream,
             (key, value) -> log(log, false, value),
             name
@@ -778,6 +747,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             );
 
         KafkaStreamSourceService.logIfEnabled(
+            log,
             resultWorkerTask,
             (key, value) -> log.debug(
                 ">> OUT WorkerTask resend : {}",
@@ -792,6 +762,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
 
         // we resend the WorkerInstance update
         KStream<String, WorkerInstance> updatedStream = KafkaStreamSourceService.logIfEnabled(
+            log,
             stream,
             (key, value) -> log.debug(
                 "Instance updated: {}",
@@ -823,38 +794,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         KStream<String, Executor> streamFrom = stream
             .filter((key, value) -> value.isExecutionUpdated(), Named.as("ToExecution.haveFrom"))
             .transformValues(
-                () -> new ValueTransformer<Executor, Executor>() {
-                    ProcessorContext context;
-
-                    @Override
-                    public void init(ProcessorContext context) {
-                        this.context = context;
-                    }
-
-                    @Override
-                    public Executor transform(Executor value) {
-                        try {
-                            this.context.headers().add(
-                                "from",
-                                JacksonMapper.ofJson().writeValueAsString(value.getFrom()).getBytes(StandardCharsets.UTF_8)
-                            );
-
-                            this.context.headers().add(
-                                "offset",
-                                JacksonMapper.ofJson().writeValueAsString(value.getOffset()).getBytes(StandardCharsets.UTF_8)
-                            );
-                        } catch (JsonProcessingException e) {
-                            log.warn("Unable to add headers", e);
-                        }
-
-                        return value;
-                    }
-
-                    @Override
-                    public void close() {
-
-                    }
-                },
+                ExecutorAddHeaderTransformer::new,
                 Named.as("ToExecution.addHeaders")
             );
 
@@ -888,6 +828,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
 
     private void toExecutionSend(KStream<String, Executor> stream, String from) {
         stream = KafkaStreamSourceService.logIfEnabled(
+            log,
             stream,
             (key, value) -> log(log, false, value),
             from

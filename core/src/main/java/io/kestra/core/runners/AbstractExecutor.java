@@ -24,8 +24,9 @@ import java.util.stream.Collectors;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
-@Slf4j
 public abstract class AbstractExecutor implements Runnable, Closeable {
+    protected static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractExecutor.class);
+
     protected RunContextFactory runContextFactory;
     protected MetricRegistry metricRegistry;
     protected ConditionService conditionService;
@@ -43,6 +44,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
 
     public Executor process(Executor executor) {
         try {
+            executor = this.handleRestart(executor);
             executor = this.handleEnd(executor);
             executor = this.handleKilling(executor);
 
@@ -366,7 +368,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         List<WorkerTaskResult> workerTaskResults = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.CREATED)
+            .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
             .map(throwFunction(t -> {
                 Task task = executor.getFlow().findTaskByTaskId(t.getTaskId());
 
@@ -424,6 +426,26 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         return this.onEnd(executor);
     }
 
+
+    private Executor handleRestart(Executor executor) {
+        if (executor.getExecution().getState().getCurrent() != State.Type.RESTARTED) {
+            return executor;
+        }
+
+        metricRegistry
+            .counter(MetricRegistry.KESTRA_EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(executor.getExecution()))
+            .increment();
+
+        executor.getFlow().logger().info(
+            "[namespace: {}] [flow: {}] [execution: {}] Flow restarted",
+            executor.getExecution().getNamespace(),
+            executor.getExecution().getFlowId(),
+            executor.getExecution().getId()
+        );
+
+        return executor.withExecution(executor.getExecution().withState(State.Type.RUNNING), "handleRestart");
+    }
+
     private Executor handleKilling(Executor executor) {
         if (executor.getExecution().getState().getCurrent() != State.Type.KILLING) {
             return executor;
@@ -434,7 +456,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
             ResolvedTask.of(executor.getFlow().getErrors())
         );
 
-        if (executor.getExecution().hasRunning(currentTasks) || executor.getExecution().findFirstByState(State.Type.CREATED).isPresent()) {
+        if (executor.getExecution().hasRunning(currentTasks) || executor.getExecution().hasCreated()) {
             return executor;
         }
 
@@ -453,7 +475,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         List<WorkerTask> workerTasks = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent() == State.Type.CREATED)
+            .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
             .map(throwFunction(taskRun -> {
                 Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
 

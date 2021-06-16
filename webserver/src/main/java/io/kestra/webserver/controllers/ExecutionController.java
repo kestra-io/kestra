@@ -392,7 +392,7 @@ public class ExecutionController {
      * @return the restarted execution
      */
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
+    @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON)
     public Execution restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {

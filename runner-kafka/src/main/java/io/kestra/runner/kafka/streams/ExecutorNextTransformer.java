@@ -16,12 +16,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class ExecutorProcessTransformer implements ValueTransformerWithKey<String, Executor, Executor> {
+public class ExecutorNextTransformer implements ValueTransformerWithKey<String, Executor, Executor> {
     private final String storeName;
     private final AbstractExecutor abstractExecutor;
     private KeyValueStore<String, Store> store;
 
-    public ExecutorProcessTransformer(String storeName, AbstractExecutor abstractExecutor) {
+    public ExecutorNextTransformer(String storeName, AbstractExecutor abstractExecutor) {
         this.storeName = storeName;
         this.abstractExecutor = abstractExecutor;
     }

@@ -56,6 +56,7 @@
             fullHeight: {type: Boolean, default: true},
             theme: {type: String, default: "vs-dark"},
             placeholder: {type: [String, Number], default: ""},
+            diffSideBySide: {type: Boolean, default: true},
         },
         components: {
             MonacoEditor,
@@ -63,54 +64,7 @@
             UnfoldMoreHorizontal,
         },
         data() {
-            const options = {}
-
-            if (this.input) {
-                options.lineNumbers = "off"
-                options.folding = false;
-                options.renderLineHighlight = "none"
-                options.wordBasedSuggestions = false;
-                options.occurrencesHighlight= false
-                options.hideCursorInOverviewRuler = true
-                options.overviewRulerBorder = false
-                options.overviewRulerLanes = 0
-                options.lineNumbersMinChars = 0;
-                options.fontSize = 13;
-                options.minimap =  {
-                    enabled: false
-                }
-                options.scrollBeyondLastColumn = 0;
-                options.scrollbar = {
-                    vertical: "hidden",
-                    alwaysConsumeMouseWheel: false,
-                    horizontalScrollbarSize: 5
-                };
-                options.find = {
-                    addExtraSpaceOnTop: false,
-                    autoFindInSelection: "never",
-                    seedSearchStringFromSelection: false,
-                }
-                options.contextmenu = false;
-                options.lineDecorationsWidth = 0;
-            } else {
-                options.scrollbar = {
-                    alwaysConsumeMouseWheel: false,
-                    vertical: "hidden",
-                };
-            }
-
             return {
-                options: {
-                    ...{
-                        tabSize: 2,
-                        fontFamily: "'Source Code Pro', SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
-                        fontSize: 12,
-                        showFoldingControls: "always",
-                        scrollBeyondLastLine: false,
-                        roundedSelection: false,
-                    },
-                    ...options
-                },
                 focus: false,
                 editor: undefined
             };
@@ -134,6 +88,57 @@
             showPlaceholder() {
                 return this.input === true && !this.focus && !(this.value !== undefined && this.value !== "");
             },
+            options() {
+                const options = {}
+
+                if (this.input) {
+                    options.lineNumbers = "off"
+                    options.folding = false;
+                    options.renderLineHighlight = "none"
+                    options.wordBasedSuggestions = false;
+                    options.occurrencesHighlight= false
+                    options.hideCursorInOverviewRuler = true
+                    options.overviewRulerBorder = false
+                    options.overviewRulerLanes = 0
+                    options.lineNumbersMinChars = 0;
+                    options.fontSize = 13;
+                    options.minimap =  {
+                        enabled: false
+                    }
+                    options.scrollBeyondLastColumn = 0;
+                    options.scrollbar = {
+                        vertical: "hidden",
+                        alwaysConsumeMouseWheel: false,
+                        horizontalScrollbarSize: 5
+                    };
+                    options.find = {
+                        addExtraSpaceOnTop: false,
+                        autoFindInSelection: "never",
+                        seedSearchStringFromSelection: false,
+                    }
+                    options.contextmenu = false;
+                    options.lineDecorationsWidth = 0;
+                } else {
+                    options.scrollbar = {
+                        vertical: this.original !== undefined ? "hidden" : "auto",
+                        verticalScrollbarSize: this.original !== undefined ? 0 : 10,
+                        alwaysConsumeMouseWheel: false,
+                    };
+                    options.renderSideBySide = this.diffSideBySide
+                }
+
+                return  {
+                    ...{
+                        tabSize: 2,
+                        fontFamily: "'Source Code Pro', SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace",
+                        fontSize: 12,
+                        showFoldingControls: "always",
+                        scrollBeyondLastLine: false,
+                        roundedSelection: false,
+                    },
+                    ...options
+                };
+            }
         },
         methods: {
             editorDidMount(editor) {

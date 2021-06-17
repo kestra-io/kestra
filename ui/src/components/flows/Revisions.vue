@@ -2,7 +2,7 @@
     <div v-if="revisions && revisions.length > 1">
         <b-row>
             <b-col md="12 mb-3">
-                <b-form-select v-model="displayType" :options="displayTypes" />
+                <b-form-select v-model="sideBySide" :options="displayTypes" />
             </b-col>
 
             <b-col md="6 mb-3">
@@ -31,7 +31,7 @@
             </b-col>
             <b-col md="12" ref="editorContainer" class="editor-wrap">
                 <Editor
-                    :diff-editor="true"
+                    :diff-side-by-side="sideBySide"
                     :value="revisionRightText"
                     :original="revisionLeftText"
                     lang="yaml"
@@ -158,10 +158,10 @@
                 revision: undefined,
                 revisionId: undefined,
                 revisionYaml: undefined,
-                displayType: "side-by-side",
+                sideBySide: true,
                 displayTypes: [
-                    {value: "side-by-side", text: "side-by-side"},
-                    {value: "line-by-line", text: "line-by-line"},
+                    {value: true, text: "side-by-side"},
+                    {value: false, text: "line-by-line"},
                 ],
             };
         },

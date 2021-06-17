@@ -1,9 +1,9 @@
 package io.kestra.webserver.responses;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.kestra.core.repositories.ArrayListTotal;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.repositories.ArrayListTotal;
 
 import javax.validation.constraints.NotNull;
 
@@ -12,6 +12,8 @@ import javax.validation.constraints.NotNull;
 public class PagedResults<T> {
     @NotNull
     private ArrayListTotal<T> results;
+
+    @JsonInclude
     @NotNull
     private long total;
 

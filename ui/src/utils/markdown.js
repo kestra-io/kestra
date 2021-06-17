@@ -12,8 +12,9 @@ export default class Markdown {
             .use(mark)
             .use(meta)
             .use(anchor, {
-                permalink: options.permalink || false,
-                permalinkBefore: options.permalink || false
+                permalink: options.permalink ? anchor.permalink.ariaHidden({
+                    placement: "before"
+                }) : undefined
             })
 
         md.set({

@@ -1,3 +1,5 @@
+import moment from "moment";
+
 export default class QueryBuilder {
     static toLucene(q) {
         let query = q;
@@ -14,6 +16,6 @@ export default class QueryBuilder {
     }
 
     static iso(date) {
-        return new Date(parseInt(date)).toISOString();
+        return moment(new Date(parseInt(date))).toISOString(true);
     }
 }

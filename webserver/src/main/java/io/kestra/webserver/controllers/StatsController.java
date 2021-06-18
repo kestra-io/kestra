@@ -10,7 +10,7 @@ import io.micronaut.validation.Validated;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 
-import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import io.micronaut.core.annotation.Nullable;
@@ -34,8 +34,8 @@ public class StatsController {
     @Post(uri = "executions/daily", produces = MediaType.TEXT_JSON)
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String q,
-        @Nullable @Format("yyyy-MM-dd") LocalDate startDate,
-        @Nullable @Format("yyyy-MM-dd") LocalDate endDate
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime startDate,
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime endDate
     ) {
         return executionRepository.dailyStatistics(q, startDate, endDate, false);
     }
@@ -52,8 +52,8 @@ public class StatsController {
     @Post(uri = "taskruns/daily", produces = MediaType.TEXT_JSON)
     public List<DailyExecutionStatistics> taskRunsDailyStatistics(
         @Nullable String q,
-        @Nullable @Format("yyyy-MM-dd") LocalDate startDate,
-        @Nullable @Format("yyyy-MM-dd") LocalDate endDate
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime startDate,
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime endDate
     ) {
         return executionRepository.dailyStatistics(q, startDate, endDate, true);
     }
@@ -70,9 +70,10 @@ public class StatsController {
     @Post(uri = "executions/daily/group-by-flow", produces = MediaType.TEXT_JSON)
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String q,
-        @Nullable @Format("yyyy-MM-dd") LocalDate startDate,
-        @Nullable @Format("yyyy-MM-dd") LocalDate endDate
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime startDate,
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime endDate
     ) {
+
         return executionRepository.dailyGroupByFlowStatistics(q, startDate, endDate);
     }
 }

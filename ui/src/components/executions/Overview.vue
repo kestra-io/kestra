@@ -107,7 +107,7 @@
             },
             stop() {
                 if (!this.execution || State.isRunning(this.execution.state.current)) {
-                    return new Date().toISOString()
+                    return new Date().toISOString(true)
                 } else {
                     return this.execution.state.histories[
                         this.execution.state.histories.length - 1

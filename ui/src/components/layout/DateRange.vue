@@ -20,6 +20,8 @@
 </template>
 <script>
     import DatePicker from "vue2-datepicker";
+    import moment from "moment";
+
     export default {
         components: {DatePicker},
         props: {
@@ -34,7 +36,7 @@
         },
         methods: {
             onDate(event, value) {
-                this.$emit(event, value ? value.toISOString() : undefined);
+                this.$emit(event, value ? moment(value).toISOString(true) : undefined);
             }
         },
         computed: {

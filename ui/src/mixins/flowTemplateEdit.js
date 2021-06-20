@@ -144,7 +144,7 @@ export default {
 
                     return;
                 }
-
+                this.previousContent = YamlUtils.stringify(this.item);
                 this.$store
                     .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: item})
                     .then((flow) => {

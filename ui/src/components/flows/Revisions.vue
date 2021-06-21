@@ -7,7 +7,7 @@
 
             <b-col md="6 mb-3">
                 <b-input-group>
-                    <b-form-select v-model="revisionLeft" :options="options" />
+                    <b-form-select @input="addQuery" v-model="revisionLeft" :options="options" />
                     <b-btn @click="seeRevision(revisionLeft, revisionLeftText)">
                         <kicon placement="bottomright" :tooltip="$t('see full revision')">
                             <file-code />
@@ -19,7 +19,7 @@
             </b-col>
             <b-col md="6 mb-3">
                 <b-input-group>
-                    <b-form-select v-model="revisionRight" :options="options" />
+                    <b-form-select @input="addQuery" v-model="revisionRight" :options="options" />
                     <b-btn @click="seeRevision(revisionRight, revisionRightText)">
                         <kicon placement="bottomright" :tooltip="$t('see full revision')">
                             <file-code />
@@ -117,6 +117,12 @@
                     this.$bvModal.show(`modal-source-${index}`)
                 })
             },
+            addQuery() {
+                this.$router.push({query: {
+                    ...this.$route.query,
+                    ...{revisionLeft:this.revisionLeft, revisionRight: this.revisionRight}}
+                });
+            }
         },
         computed: {
             ...mapState("flow", ["revisions"]),

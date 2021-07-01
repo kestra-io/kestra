@@ -125,9 +125,9 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
                 Argument.listOf(Flow.class)
             )
         );
-        JsonError jsonError = e.getResponse().getBody(JsonError.class).get();
+        String jsonError = e.getResponse().getBody(String.class).get();
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
-        assertThat(jsonError.getMessage(), containsString("flow.namespace"));
+        assertThat(jsonError, containsString("flow.namespace"));
 
         // flow is not created
         assertThrows(HttpClientResponseException.class, () -> {
@@ -150,9 +150,9 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
                 Argument.listOf(Flow.class)
             )
         );
-        jsonError = e.getResponse().getBody(JsonError.class).get();
+        jsonError = e.getResponse().getBody(String.class).get();
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
-        assertThat(jsonError.getMessage(), containsString("flow.id: Duplicate"));
+        assertThat(jsonError, containsString("flow.id: Duplicate"));
 
         // cleanup
         try {
@@ -289,11 +289,11 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             );
         });
 
-        JsonError jsonError = e.getResponse().getBody(JsonError.class).get();
+        String jsonError = e.getResponse().getBody(String.class).get();
 
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
-        assertThat(jsonError.getMessage(), containsString("flow.id"));
-        assertThat(jsonError.getMessage(), containsString("flow.namespace"));
+        assertThat(jsonError, containsString("flow.id"));
+        assertThat(jsonError, containsString("flow.namespace"));
     }
 
     @Test

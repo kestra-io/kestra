@@ -1,19 +1,6 @@
 package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.client.RxHttpClient;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.client.multipart.MultipartBody;
-import io.micronaut.http.client.sse.RxSseClient;
-import io.micronaut.http.hateoas.JsonError;
-import io.micronaut.http.sse.Event;
-import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -27,19 +14,31 @@ import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.client.RxHttpClient;
+import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
+import io.micronaut.http.client.sse.RxSseClient;
+import io.micronaut.http.sse.Event;
+import io.micronaut.runtime.server.EmbeddedServer;
+import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.File;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
+import javax.inject.Named;
 
+import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -190,8 +189,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         ));
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
-        assertThat(e.getResponse().getBody(JsonError.class).isPresent(), is(true));
-        assertThat(e.getResponse().getBody(JsonError.class).get().getMessage(), containsString("Task [" + referenceTaskId + "] does not exist !"));
+        assertThat(e.getResponse().getBody(String.class).isPresent(), is(true));
+        assertThat(e.getResponse().getBody(String.class).get(), containsString("Task [" + referenceTaskId + "] does not exist !"));
     }
 
     @Test
@@ -208,8 +207,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         ));
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
-        assertThat(e.getResponse().getBody(JsonError.class).isPresent(), is(true));
-        assertThat(e.getResponse().getBody(JsonError.class).get().getMessage(), containsString("No failed task found to restart execution from !"));
+        assertThat(e.getResponse().getBody(String.class).isPresent(), is(true));
+        assertThat(e.getResponse().getBody(String.class).get(), containsString("No failed task found to restart execution from !"));
     }
 
     @Test

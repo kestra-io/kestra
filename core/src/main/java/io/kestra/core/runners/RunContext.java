@@ -276,7 +276,7 @@ public class RunContext {
         clone.put("taskrun", this.variables(taskRun));
 
         this.variables = ImmutableMap.copyOf(clone);
-        this.storageExecutionPrefix = URI.create(this.storageInterface.executionPrefix(taskRun));
+        this.storageExecutionPrefix = URI.create("/" + this.storageInterface.executionPrefix(taskRun));
 
         return this;
     }

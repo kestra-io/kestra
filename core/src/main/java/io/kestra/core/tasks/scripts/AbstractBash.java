@@ -156,11 +156,17 @@ abstract public class AbstractBash extends Task {
         return outputFiles;
     }
 
+    protected Map<String, String> finalInputFiles() throws IOException {
+        return this.inputFiles;
+    }
+
     protected void handleInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
-        if (inputFiles != null && inputFiles.size() > 0) {
+        Map<String, String> finalInputFiles = this.finalInputFiles();
+
+        if (finalInputFiles != null && finalInputFiles.size() > 0) {
             Path workingDirectory = tmpWorkingDirectory();
 
-            for (String fileName : inputFiles.keySet()) {
+            for (String fileName : finalInputFiles.keySet()) {
                 File file = new File(fileName);
 
                 // path with "/", create the subfolders
@@ -176,7 +182,7 @@ abstract public class AbstractBash extends Task {
                 }
 
                 String filePath = workingDirectory + "/" + fileName;
-                String render = runContext.render(inputFiles.get(fileName), additionalVars);
+                String render = runContext.render(finalInputFiles.get(fileName), additionalVars);
 
                 if (render.startsWith("kestra://")) {
                     try (

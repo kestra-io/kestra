@@ -12,11 +12,9 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.Rethrow.throwSupplier;
@@ -108,15 +106,22 @@ public class Node extends AbstractBash implements RunnableTask<ScriptOutput> {
     private List<String> args;
 
     @Override
+    protected Map<String, String> finalInputFiles() throws IOException {
+        Map<String, String> map = super.finalInputFiles();
+
+        map.put("kestra.js", IOUtils.toString(
+            Objects.requireNonNull(Node.class.getClassLoader().getResourceAsStream("scripts/kestra.js")),
+            Charsets.UTF_8
+        ));
+
+        return map;
+    }
+
+    @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
         if (!inputFiles.containsKey("main.js")) {
             throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.js key with javascript code value.");
         }
-
-        this.inputFiles.put("kestra.js", IOUtils.toString(
-            Objects.requireNonNull(Node.class.getClassLoader().getResourceAsStream("scripts/kestra.js")),
-            Charsets.UTF_8
-        ));
 
         return run(runContext, throwSupplier(() -> {
             // final command

@@ -13,6 +13,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import javax.validation.constraints.NotEmpty;
@@ -94,15 +95,22 @@ public class Python extends AbstractPython implements RunnableTask<ScriptOutput>
     private List<String> args;
 
     @Override
+    protected Map<String, String> finalInputFiles() throws IOException {
+        Map<String, String> map = super.finalInputFiles();
+
+        map.put("kestra.py", IOUtils.toString(
+            Objects.requireNonNull(AbstractPython.class.getClassLoader().getResourceAsStream("scripts/kestra.py")),
+            Charsets.UTF_8
+        ));
+
+        return map;
+    }
+
+    @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
         if (!inputFiles.containsKey("main.py") && this.commands.size() == 1 && this.commands.get(0).equals("./bin/python main.py")) {
             throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.py key with python code value.");
         }
-
-        this.inputFiles.put("kestra.py", IOUtils.toString(
-            Objects.requireNonNull(AbstractPython.class.getClassLoader().getResourceAsStream("scripts/kestra.py")),
-            Charsets.UTF_8
-        ));
 
         return run(runContext, throwSupplier(() -> {
             List<String> renderer = new ArrayList<>();

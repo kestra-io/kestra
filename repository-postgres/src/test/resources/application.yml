@@ -1,0 +1,41 @@
+datasources:
+  default:
+    url: jdbc:postgresql://localhost:5432/kestra
+    driverClassName: org.postgresql.Driver
+    username: kestra
+    password: k3str4
+    dialect: POSTGRES
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations:
+        - classpath:migrations/postgres
+      placeholders:
+        prefix: ""
+
+kestra:
+  queue:
+    type: memory
+  repository:
+    type: postgres
+
+  jdbc:
+    table-prefix: ""
+    tables:
+      flows:
+        table: "${kestra.jdbc.table-prefix}flows"
+        cls: io.kestra.core.models.flows.Flow
+      executions:
+        table: "${kestra.jdbc.table-prefix}executions"
+        cls: io.kestra.core.models.executions.Execution
+      templates:
+        table: "${kestra.jdbc.table-prefix}templates"
+        cls: io.kestra.core.models.templates.Template
+      triggers:
+        table: "${kestra.jdbc.table-prefix}triggers"
+        cls: io.kestra.core.models.triggers.Trigger
+      logs:
+        table: "${kestra.jdbc.table-prefix}logs"
+        cls: io.kestra.core.models.executions.LogEntry

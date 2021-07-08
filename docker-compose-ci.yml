@@ -22,7 +22,7 @@ services:
       - 9092:9092
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.13.3
     environment:
       discovery.type: single-node
       ES_JAVA_OPTS: "-Xms256m -Xmx256m"
@@ -32,3 +32,22 @@ services:
         hard: -1
     ports:
       - 9200:9200
+
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_DATABASE: kestra
+      MYSQL_USER: kestra
+      MYSQL_PASSWORD: k3str4
+      MYSQL_ROOT_PASSWORD: "p4ssw0rd"
+    ports:
+      - 3306:3306
+
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: k3str4
+    ports:
+      - 5432:5432

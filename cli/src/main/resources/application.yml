@@ -43,6 +43,11 @@ endpoints:
   env:
     enabled: true
 
+flyway:
+  datasources:
+    default:
+      enabled: true
+
 kestra:
   retries:
     attempts: 5
@@ -199,6 +204,26 @@ kestra:
           cleanup.policy: "compact"
           min.compaction.lag.ms: 86400000
           delete.retention.ms: 86400000
+
+  jdbc:
+    defaults:
+      table-prefix: "kestra_"
+    tables:
+      flows:
+        table: "${kestra.jdbc.defaults.table-prefix}flows"
+        cls: io.kestra.core.models.flows.Flow
+      executions:
+        table: "${kestra.jdbc.defaults.table-prefix}executions"
+        cls: io.kestra.core.models.executions.Execution
+      templates:
+        table: "${kestra.jdbc.defaults.table-prefix}templates"
+        cls: io.kestra.core.models.templates.Template
+      triggers:
+        table: "${kestra.jdbc.defaults.table-prefix}triggers"
+        cls: io.kestra.core.models.triggers.Trigger
+      logs:
+        table: "${kestra.jdbc.defaults.table-prefix}logs"
+        cls: io.kestra.core.models.executions.LogEntry
 
   elasticsearch:
     defaults:

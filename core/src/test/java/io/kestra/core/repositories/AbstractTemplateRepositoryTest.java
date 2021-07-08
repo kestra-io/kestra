@@ -10,6 +10,8 @@ import io.kestra.core.models.templates.Template;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,14 +28,18 @@ public abstract class AbstractTemplateRepositoryTest {
     protected TemplateRepositoryInterface templateRepository;
 
     @BeforeEach
-    private void init() {
+    protected void init() throws IOException, URISyntaxException {
         TemplateListener.reset();
     }
 
-    private static Template.TemplateBuilder builder() {
+    protected static Template.TemplateBuilder<?, ?> builder() {
+        return builder(null);
+    }
+
+    protected static Template.TemplateBuilder<?, ?> builder(String namespace) {
         return Template.builder()
             .id(IdUtils.create())
-            .namespace("kestra.test")
+            .namespace(namespace == null ? "kestra.test" : namespace)
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()));
     }
 

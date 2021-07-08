@@ -1,0 +1,14 @@
+publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
+
+dependencies {
+    implementation project(":core")
+    implementation project(":jdbc")
+
+    implementation("io.micronaut.sql:micronaut-jooq")
+    runtimeOnly("mysql:mysql-connector-java")
+    runtimeOnly('org.flywaydb:flyway-mysql')
+
+    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(':runner-memory')
+}

@@ -8,6 +8,4 @@ import jakarta.inject.Inject;
 @MicronautTest
 public class MemoryTemplateRepositoryTest extends AbstractTemplateRepositoryTest {
 
-    @Inject
-    MemoryFlowRepository memoryFlowRepository;
 }

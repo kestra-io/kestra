@@ -97,9 +97,11 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
         }
 
         this.templates.remove(template.getId());
-        templateQueue.emit(template.toDeleted());
+        Template deleted = template.toDeleted();
 
-        eventPublisher.publishEvent(new CrudEvent<>(template, CrudEventType.DELETE));
+        templateQueue.emit(deleted);
+
+        eventPublisher.publishEvent(new CrudEvent<>(deleted, CrudEventType.DELETE));
     }
 
     @Override

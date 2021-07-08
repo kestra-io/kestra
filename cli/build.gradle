@@ -33,6 +33,10 @@ dependencies {
 
     implementation project(":indexer-kafka-elasticsearch")
 
+    implementation project(":jdbc")
+    implementation project(":jdbc-mysql")
+    implementation project(":jdbc-postgres")
+
     implementation project(":storage-local")
 
     implementation project(":webserver")

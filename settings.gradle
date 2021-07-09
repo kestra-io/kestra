@@ -10,8 +10,10 @@ include 'storage-local'
 
 include 'repository-elasticsearch'
 include 'repository-memory'
+include 'repository-mysql'
 
 include 'indexer-kafka-elasticsearch'
+include 'jdbc'
 
 include 'webserver'
 include 'ui'

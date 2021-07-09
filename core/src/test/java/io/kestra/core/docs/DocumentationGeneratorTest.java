@@ -30,7 +30,6 @@ class DocumentationGeneratorTest {
 
         String render = DocumentationGenerator.render(doc);
 
-        System.out.println(render);
         assertThat(render, containsString("ExampleTask"));
         assertThat(render, containsString("`VALUE_1`"));
         assertThat(render, containsString("`VALUE_2`"));

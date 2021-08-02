@@ -1,23 +1,25 @@
 package io.kestra.repository.elasticsearch;
 
 import com.devskiller.friendly_id.FriendlyId;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
+import io.kestra.core.models.executions.statistics.ExecutionCount;
+import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.tasks.debugs.Return;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
-import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.*;
+import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -26,7 +28,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
 @MicronautTest
-class ElasticSearchExecutionRepositoryTest {
+public class ElasticSearchExecutionRepositoryTest {
     public static final String NAMESPACE = "io.kestra.unittest";
     public static final String FLOW = "full";
 
@@ -36,7 +38,7 @@ class ElasticSearchExecutionRepositoryTest {
     @Inject
     ElasticSearchRepositoryTestUtils utils;
 
-    static Execution.ExecutionBuilder builder(State.Type state, String flowId) {
+    public static Execution.ExecutionBuilder builder(State.Type state, String flowId) {
         State finalState = randomDuration(state);
 
         Execution.ExecutionBuilder execution = Execution.builder()
@@ -157,8 +159,8 @@ class ElasticSearchExecutionRepositoryTest {
 
         Map<String, Map<String, List<DailyExecutionStatistics>>> result = executionRepository.dailyGroupByFlowStatistics(
             "*",
-            LocalDate.now().minusDays(10),
-            LocalDate.now()
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now()
         );
 
         assertThat(result.size(), is(1));
@@ -191,8 +193,8 @@ class ElasticSearchExecutionRepositoryTest {
 
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
             "*",
-            LocalDate.now().minusDays(10),
-            LocalDate.now(),
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
             false
         );
 
@@ -217,8 +219,8 @@ class ElasticSearchExecutionRepositoryTest {
 
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
             "*",
-            LocalDate.now().minusDays(10),
-            LocalDate.now(),
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
             true
         );
 
@@ -231,6 +233,34 @@ class ElasticSearchExecutionRepositoryTest {
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(55L));
     }
 
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    @Test
+    void executionsCount() {
+        for (int i = 0; i < 28; i++) {
+            executionRepository.save(builder(
+                State.Type.SUCCESS,
+                i < 4 ? "first" : (i < 10 ? "second" : "third")
+            ).build());
+        }
+
+        List<ExecutionCount> result = executionRepository.executionCounts(
+            List.of(
+                new Flow(NAMESPACE, "first"),
+                new Flow(NAMESPACE, "second"),
+                new Flow(NAMESPACE, "third"),
+                new Flow(NAMESPACE, "missing")
+            ),
+            "*",
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now()
+        );
+
+        assertThat(result.size(), is(4));
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount(), is(4L));
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount(), is(6L));
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount(), is(18L));
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("missing")).findFirst().get().getCount(), is(0L));
+    }
 
     @AfterEach
     protected void tearDown() throws IOException {

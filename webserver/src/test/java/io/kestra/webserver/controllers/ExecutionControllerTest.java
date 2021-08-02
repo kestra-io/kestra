@@ -1,19 +1,6 @@
 package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.client.RxHttpClient;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.http.client.multipart.MultipartBody;
-import io.micronaut.http.client.sse.RxSseClient;
-import io.micronaut.http.hateoas.JsonError;
-import io.micronaut.http.sse.Event;
-import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -27,19 +14,31 @@ import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.client.RxHttpClient;
+import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
+import io.micronaut.http.client.sse.RxSseClient;
+import io.micronaut.http.sse.Event;
+import io.micronaut.runtime.server.EmbeddedServer;
+import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.File;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
+import javax.inject.Inject;
+import javax.inject.Named;
 
+import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -185,14 +184,13 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
-                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, ImmutableMap.of()),
             Execution.class
         ));
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
-        assertThat(e.getResponse().getBody(JsonError.class).isPresent(), is(true));
-        assertThat(e.getResponse().getBody(JsonError.class).get().getMessage(), containsString("Task [" + referenceTaskId + "] does not exist !"));
+        assertThat(e.getResponse().getBody(String.class).isPresent(), is(true));
+        assertThat(e.getResponse().getBody(String.class).get(), containsString("Task [" + referenceTaskId + "] does not exist !"));
     }
 
     @Test
@@ -204,14 +202,13 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/" + parentExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
-                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                .POST("/api/v1/executions/" + parentExecution.getId() + "/restart", ImmutableMap.of()),
             Execution.class
         ));
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
-        assertThat(e.getResponse().getBody(JsonError.class).isPresent(), is(true));
-        assertThat(e.getResponse().getBody(JsonError.class).get().getMessage(), containsString("No failed task found to restart execution from !"));
+        assertThat(e.getResponse().getBody(String.class).isPresent(), is(true));
+        assertThat(e.getResponse().getBody(String.class).get(), containsString("No failed task found to restart execution from !"));
     }
 
     @Test
@@ -234,22 +231,21 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
                 Execution createdChidExec = client.toBlocking().retrieve(
                     HttpRequest
-                        .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
-                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                        .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, ImmutableMap.of()),
                     Execution.class
                 );
 
                 assertThat(createdChidExec, notNullValue());
                 assertThat(createdChidExec.getParentId(), is(parentExecution.getId()));
                 assertThat(createdChidExec.getTaskRunList().size(), is(4));
-                assertThat(createdChidExec.getState().getCurrent(), is(State.Type.CREATED));
+                assertThat(createdChidExec.getState().getCurrent(), is(State.Type.RESTARTED));
 
                 IntStream
                     .range(0, 3)
                     .mapToObj(value -> createdChidExec.getTaskRunList().get(value))
                     .forEach(taskRun -> assertThat(taskRun.getState().getCurrent(), is(State.Type.SUCCESS)));
 
-                assertThat(createdChidExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.CREATED));
+                assertThat(createdChidExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.RESTARTED));
                 assertThat(createdChidExec.getTaskRunList().get(3).getAttempts().size(), is(1));
             }),
             Duration.ofSeconds(15));
@@ -285,15 +281,14 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
                 Execution createdChidExec = client.toBlocking().retrieve(
                     HttpRequest
-                        .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, MultipartBody.builder().addPart("string", "myString").build())
-                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                        .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, ImmutableMap.of()),
                     Execution.class
                 );
 
                 assertThat(createdChidExec, notNullValue());
                 assertThat(createdChidExec.getParentId(), is(parentExecution.getId()));
                 assertThat(createdChidExec.getTaskRunList().size(), is(8));
-                assertThat(createdChidExec.getState().getCurrent(), is(State.Type.CREATED));
+                assertThat(createdChidExec.getState().getCurrent(), is(State.Type.RESTARTED));
 
                 assertThat(createdChidExec.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
                 assertThat(createdChidExec.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
@@ -302,7 +297,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                 assertThat(createdChidExec.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.SUCCESS));
                 assertThat(createdChidExec.getTaskRunList().get(5).getState().getCurrent(), is(State.Type.RUNNING));
                 assertThat(createdChidExec.getTaskRunList().get(6).getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(createdChidExec.getTaskRunList().get(7).getState().getCurrent(), is(State.Type.CREATED));
+                assertThat(createdChidExec.getTaskRunList().get(7).getState().getCurrent(), is(State.Type.RESTARTED));
                 assertThat(createdChidExec.getTaskRunList().get(7).getAttempts().size(), is(1));
             }),
             Duration.ofSeconds(30000));
@@ -330,8 +325,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
                 Execution restartedExec = client.toBlocking().retrieve(
                     HttpRequest
-                        .POST("/api/v1/executions/" + firstExecution.getId() + "/restart", MultipartBody.builder().addPart("string", "myString").build())
-                        .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+                        .POST("/api/v1/executions/" + firstExecution.getId() + "/restart", ImmutableMap.of()),
                     Execution.class
                 );
 
@@ -339,7 +333,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                 assertThat(restartedExec.getId(), is(firstExecution.getId()));
                 assertThat(restartedExec.getParentId(), nullValue());
                 assertThat(restartedExec.getTaskRunList().size(), is(3));
-                assertThat(restartedExec.getState().getCurrent(), is(State.Type.RUNNING));
+                assertThat(restartedExec.getState().getCurrent(), is(State.Type.RESTARTED));
 
                 IntStream
                     .range(0, 2)
@@ -347,7 +341,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                     assertThat(taskRun.getState().getCurrent(), is(State.Type.SUCCESS));
                     assertThat(taskRun.getAttempts().size(), is(1));
 
-                    assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.CREATED));
+                    assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.RESTARTED));
                     assertThat(restartedExec.getTaskRunList().get(2).getAttempts().size(), is(1));
                 });
             }),

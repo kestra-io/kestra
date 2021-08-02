@@ -1,6 +1,8 @@
 package io.kestra.runner.kafka;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.runners.Executor;
+import io.kestra.runner.kafka.streams.ExecutorFlowTrigger;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +16,6 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.serializers.JsonDeserializer;
-import io.kestra.runner.kafka.services.KafkaStreamSourceService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,7 +26,8 @@ public class KafkaExecutorProductionExceptionHandler implements org.apache.kafka
     public static final String APPLICATION_CONTEXT_CONFIG = "application.context";
 
     private ApplicationContext applicationContext;
-    private KafkaQueue<Execution> executorQueue;
+    private KafkaQueue<Execution> executionQueue;
+    private KafkaQueue<Executor> executorQueue;
     private KafkaQueue<LogEntry> logQueue;
 
     @Override
@@ -54,7 +56,10 @@ public class KafkaExecutorProductionExceptionHandler implements org.apache.kafka
         try {
             TopicsConfig topicsConfig = KafkaQueue.topicsConfigByTopicName(applicationContext, record.topic());
 
-            if (topicsConfig.getKey().equals(KafkaStreamSourceService.TOPIC_EXECUTOR) || topicsConfig.getCls() == Execution.class) {
+
+            if (topicsConfig.getCls() == Executor.class || topicsConfig.getCls() == ExecutorFlowTrigger.class) {
+                return ProductionExceptionHandlerResponse.CONTINUE;
+            } else if (topicsConfig.getCls() == Execution.class) {
                 Execution execution = getObject(Execution.class, record);
 
                 Execution.FailedExecutionWithLog failedExecutionWithLog = execution.failedExecutionFromExecutor(exception);
@@ -67,7 +72,8 @@ public class KafkaExecutorProductionExceptionHandler implements org.apache.kafka
                     while (!exit) {
                         try {
                             sendExecution = reduceOutputs(sendExecution);
-                            executorQueue.emit(sendExecution);
+                            executionQueue.emit(sendExecution);
+                            executorQueue.emit(null);
                             exit = true;
                         } catch (Exception e) {
                             exit = sendExecution.getTaskRunList().size() > 0;
@@ -76,7 +82,7 @@ public class KafkaExecutorProductionExceptionHandler implements org.apache.kafka
 
                     return ProductionExceptionHandlerResponse.CONTINUE;
                 } else {
-                    executorQueue.emit(sendExecution);
+                    executionQueue.emit(sendExecution);
                 }
             }
         } catch (Exception e) {
@@ -111,14 +117,19 @@ public class KafkaExecutorProductionExceptionHandler implements org.apache.kafka
     public void configure(Map<String, ?> configs) {
         applicationContext = (ApplicationContext) configs.get(APPLICATION_CONTEXT_CONFIG);
 
-        executorQueue = (KafkaQueue<Execution>) applicationContext.getBean(
+        executionQueue = (KafkaQueue<Execution>) applicationContext.getBean(
+            QueueInterface.class,
+            Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED)
+        );
+
+        executorQueue = (KafkaQueue<Executor>) applicationContext.getBean(
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.EXECUTOR_NAMED)
         );
 
         logQueue = (KafkaQueue<LogEntry>) applicationContext.getBean(
             QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.LOG_NAMED)
+            Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
         );
     }
 }

@@ -305,11 +305,14 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                     .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
             }
 
-            log.warn("Execution '{}' for flow '{}.{}' is not found, schedule is blocked",
-                lastTrigger.getExecutionId(),
-                lastTrigger.getNamespace(),
-                lastTrigger.getFlowId()
-            );
+            if (lastTrigger.getUpdatedDate() == null || lastTrigger.getUpdatedDate().plusSeconds(60).isBefore(Instant.now())) {
+                log.warn("Execution '{}' for flow '{}.{}' is not found, schedule is blocked since {}",
+                    lastTrigger.getExecutionId(),
+                    lastTrigger.getNamespace(),
+                    lastTrigger.getFlowId(),
+                    lastTrigger.getUpdatedDate()
+                );
+            }
 
             return false;
         }

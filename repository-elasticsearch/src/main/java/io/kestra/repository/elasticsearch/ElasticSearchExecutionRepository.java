@@ -1,5 +1,7 @@
 package io.kestra.repository.elasticsearch;
 
+import io.kestra.core.models.executions.statistics.ExecutionCount;
+import io.kestra.core.models.executions.statistics.Flow;
 import io.micronaut.data.model.Pageable;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.search.SearchRequest;
@@ -13,6 +15,8 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.filter.Filter;
+import org.elasticsearch.search.aggregations.bucket.filter.FiltersAggregator;
+import org.elasticsearch.search.aggregations.bucket.filter.ParsedFilters;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.histogram.DateHistogramInterval;
 import org.elasticsearch.search.aggregations.bucket.histogram.LongBounds;
@@ -37,6 +41,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,7 +53,7 @@ import javax.inject.Singleton;
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepository<Execution> implements ExecutionRepositoryInterface {
     private static final String INDEX_NAME = "executions";
-    public static final String START_DATE_FORMAT = "yyyy-MM-dd";
+    public static final String DATE_FORMAT = "yyyy-MM-dd";
 
     public static final String NESTED_AGG = "NESTED";
     public static final String DATE_AGG = "DATE";
@@ -75,15 +80,15 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     @Override
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String query,
-        @Nullable LocalDate startDate,
-        @Nullable LocalDate endDate
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate
     ) {
         if (startDate == null) {
-            startDate = LocalDate.now().minusDays(30);
+            startDate = ZonedDateTime.now().minusDays(30);
         }
 
         if (endDate == null) {
-            endDate = LocalDate.now();
+            endDate = ZonedDateTime.now();
         }
 
         TermsAggregationBuilder agg = AggregationBuilders.terms(NAMESPACE_AGG)
@@ -97,7 +102,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             );
 
         SearchSourceBuilder sourceBuilder = this.searchSource(
-            this.dailyExecutionStatisticsBool(query, startDate, endDate),
+            this.dateFilters(query, startDate, endDate),
             Optional.of(Collections.singletonList(
                 agg
             )),
@@ -157,18 +162,70 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     }
 
     @Override
-    public List<DailyExecutionStatistics> dailyStatistics(
-        @Nullable String query,
-        @Nullable LocalDate startDate,
-        @Nullable LocalDate endDate,
-        boolean isTaskRun
-    ) {
+    public List<ExecutionCount> executionCounts(List<Flow> flows, String query, ZonedDateTime startDate, ZonedDateTime endDate) {
         if (startDate == null) {
-            startDate = LocalDate.now().minusDays(30);
+            startDate = ZonedDateTime.now().minusDays(30);
         }
 
         if (endDate == null) {
-            endDate = LocalDate.now();
+            endDate = ZonedDateTime.now();
+        }
+
+        SearchSourceBuilder sourceBuilder = this.searchSource(
+            this.dateFilters(query, startDate, endDate),
+            Optional.of(Collections.singletonList(
+                AggregationBuilders.filters(
+                    "FILTERS",
+                    flows
+                        .stream()
+                        .map(flow -> new FiltersAggregator.KeyedFilter(
+                            flow.getNamespace() + "/" + flow.getFlowId(),
+                            QueryBuilders.boolQuery()
+                                .must(QueryBuilders.termQuery("namespace", flow.getNamespace()))
+                                .must(QueryBuilders.termQuery("flowId", flow.getFlowId()))
+                        ))
+                        .toArray(FiltersAggregator.KeyedFilter[]::new)
+                )
+            )),
+            null
+        );
+
+        try {
+            SearchRequest searchRequest = searchRequest(INDEX_NAME, sourceBuilder, false);
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
+            List<ExecutionCount> result = new ArrayList<>();
+
+            ((ParsedFilters) searchResponse.getAggregations().get("FILTERS")).getBuckets()
+                .forEach(filtersBuckets -> {
+                    final String key = filtersBuckets.getKeyAsString();
+
+                    result.add(new ExecutionCount(
+                        key.split("/")[0],
+                        key.split("/")[1],
+                        filtersBuckets.getDocCount()
+                    ));
+                });
+
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<DailyExecutionStatistics> dailyStatistics(
+        @Nullable String query,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        boolean isTaskRun
+    ) {
+        if (startDate == null) {
+            startDate = ZonedDateTime.now().minusDays(30);
+        }
+
+        if (endDate == null) {
+            endDate = ZonedDateTime.now();
         }
 
         AggregationBuilder agg = dailyExecutionStatisticsFinalAgg(startDate, endDate, isTaskRun);
@@ -179,7 +236,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         }
 
         SearchSourceBuilder sourceBuilder = this.searchSource(
-            this.dailyExecutionStatisticsBool(query, startDate, endDate),
+            this.dateFilters(query, startDate, endDate),
             Optional.of(Collections.singletonList(
                 agg
             )),
@@ -211,7 +268,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         }
     }
 
-    private BoolQueryBuilder dailyExecutionStatisticsBool(String query, LocalDate startDate, LocalDate endDate) {
+    private BoolQueryBuilder dateFilters(String query, ZonedDateTime startDate, ZonedDateTime endDate) {
         BoolQueryBuilder bool = this.defaultFilter();
 
         bool.must(QueryBuilders.rangeQuery("state.startDate")
@@ -230,18 +287,18 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     }
 
     private static DateHistogramAggregationBuilder dailyExecutionStatisticsFinalAgg(
-        LocalDate startDate,
-        LocalDate endDate,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
         boolean isTaskRun
     ) {
         return AggregationBuilders.dateHistogram(DATE_AGG)
             .field((isTaskRun ? "taskRunList." : "") + "state.startDate")
-            .format(START_DATE_FORMAT)
+            .format(DATE_FORMAT)
             .minDocCount(0)
             .fixedInterval(DateHistogramInterval.DAY)
             .extendedBounds(new LongBounds(
-                startDate.format(DateTimeFormatter.ofPattern(START_DATE_FORMAT)),
-                endDate.format(DateTimeFormatter.ofPattern(START_DATE_FORMAT))
+                startDate.format(DateTimeFormatter.ofPattern(DATE_FORMAT)),
+                endDate.format(DateTimeFormatter.ofPattern(DATE_FORMAT))
             ))
             .timeZone(ZoneId.systemDefault())
             .subAggregation(AggregationBuilders.stats(DURATION_AGG).

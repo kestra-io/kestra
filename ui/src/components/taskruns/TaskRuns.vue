@@ -262,8 +262,8 @@
                 this.$store
                     .dispatch("stat/taskRunDaily", {
                         q: this.loadQuery(),
-                        startDate: this.$moment(this.startDate).format("YYYY-MM-DD"),
-                        endDate: this.$moment(this.endDate).format("YYYY-MM-DD")
+                        startDate: this.$moment(this.startDate).startOf("day").toISOString(true),
+                        endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
                     })
                     .then(() => {
                         this.dailyReady = true;

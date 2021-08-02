@@ -1,0 +1,18 @@
+id: task-flow
+namespace: io.kestra.tests
+
+inputs:
+  - name: string
+    type: STRING
+
+tasks:
+  - id: launch
+    type: io.kestra.core.tasks.flows.Flow
+    namespace: io.kestra.tests
+    flowId: switch
+    inputs:
+      string: "{{ inputs.string }}"
+    wait: true
+    transmitFailed: true
+    outputs:
+      extracted: "{{ firstDefined outputs.default.value outputs.error-t1.value }}"

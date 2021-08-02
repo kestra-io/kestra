@@ -8,16 +8,19 @@ import org.apache.kafka.streams.state.KeyValueStore;
 
 @Slf4j
 public class DeduplicationTransformer<K, V, SV> implements ValueTransformerWithKey<K, V, V> {
+    private final String name;
     private final String storeName;
     private KeyValueStore<String, SV> store;
     private final KeyValueMapper<K, V, String> storeKeyMapper;
     private final KeyValueMapper<K, V, SV> storeValueMapper;
 
     public DeduplicationTransformer(
+        String name,
         String storeName,
         KeyValueMapper<K, V, String> storeKeyMapper,
         KeyValueMapper<K, V, SV> storeValueMapper
     ) {
+        this.name = name;
         this.storeName = storeName;
         this.storeKeyMapper = storeKeyMapper;
         this.storeValueMapper = storeValueMapper;
@@ -37,7 +40,7 @@ public class DeduplicationTransformer<K, V, SV> implements ValueTransformerWithK
         SV latestValue = store.get(storeKey);
 
         if (latestValue != null && latestValue.equals(currentValue)) {
-            log.debug("Duplicate value for key '{}', storeKey '{}', value '{}'", key, storeKey, latestValue);
+            log.trace("{} duplicate value for key '{}', storeKey '{}', value '{}'", name, key, storeKey, latestValue);
             return null;
         }
 

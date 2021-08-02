@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.executions.LogEntry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,10 @@ class WorkerTest {
     QueueInterface<ExecutionKilled> executionKilledQueue;
 
     @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    QueueInterface<LogEntry> workerTaskLogQueue;
+
+    @Inject
     RunContextFactory runContextFactory;
 
     @Test
@@ -57,7 +62,7 @@ class WorkerTest {
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
         workerTaskResultQueue.receive(workerTaskResult::set);
 
-        workerTaskQueue.emit(workerTask("sleep 1"));
+        workerTaskQueue.emit(workerTask("1"));
 
         Await.until(
             () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isTerninated(),
@@ -70,20 +75,23 @@ class WorkerTest {
 
     @Test
     void killed() throws InterruptedException, TimeoutException {
+        List<LogEntry> logs = new ArrayList<>();
+        workerTaskLogQueue.receive(logs::add);
+
         Worker worker = new Worker(applicationContext, 8);
         worker.run();
 
         List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
         workerTaskResultQueue.receive(workerTaskResult::add);
 
-        WorkerTask workerTask = workerTask("sleep 999");
+        WorkerTask workerTask = workerTask("999");
 
         workerTaskQueue.emit(workerTask);
         workerTaskQueue.emit(workerTask);
         workerTaskQueue.emit(workerTask);
         workerTaskQueue.emit(workerTask);
 
-        WorkerTask notKilled = workerTask("sleep 2");
+        WorkerTask notKilled = workerTask("2");
         workerTaskQueue.emit(notKilled);
 
         Thread.sleep(500);
@@ -109,13 +117,17 @@ class WorkerTest {
             .orElseThrow();
         assertThat(oneNotKilled.getTaskRun().getState().getHistories().size(), is(3));
         assertThat(oneNotKilled.getTaskRun().getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // child process is stopped and we never received 3 logs
+        Thread.sleep(1000);
+        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("3")).count(), is(0L));
     }
 
-    private WorkerTask workerTask(String command) {
+    private WorkerTask workerTask(String sleep) {
         Bash bash = Bash.builder()
             .type(Bash.class.getName())
             .id("unit-test")
-            .commands(new String[]{command})
+            .commands(new String[]{"for i in $(seq 1 " + sleep + "); do echo $i; sleep 1; done"})
             .build();
 
         Flow flow = Flow.builder()

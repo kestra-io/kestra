@@ -156,11 +156,17 @@ abstract public class AbstractBash extends Task {
         return outputFiles;
     }
 
+    protected Map<String, String> finalInputFiles() throws IOException {
+        return this.inputFiles;
+    }
+
     protected void handleInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
-        if (inputFiles != null && inputFiles.size() > 0) {
+        Map<String, String> finalInputFiles = this.finalInputFiles();
+
+        if (finalInputFiles != null && finalInputFiles.size() > 0) {
             Path workingDirectory = tmpWorkingDirectory();
 
-            for (String fileName : inputFiles.keySet()) {
+            for (String fileName : finalInputFiles.keySet()) {
                 File file = new File(fileName);
 
                 // path with "/", create the subfolders
@@ -176,7 +182,7 @@ abstract public class AbstractBash extends Task {
                 }
 
                 String filePath = workingDirectory + "/" + fileName;
-                String render = runContext.render(inputFiles.get(fileName), additionalVars);
+                String render = runContext.render(finalInputFiles.get(fileName), additionalVars);
 
                 if (render.startsWith("kestra://")) {
                     try (
@@ -268,8 +274,6 @@ abstract public class AbstractBash extends Task {
     }
 
     protected RunResult run(RunContext runContext, Logger logger, Path workingDirectory, List<String> commandsWithInterpreter, Map<String, String> env,  LogSupplier logSupplier) throws Exception {
-        logger.debug("Starting command [{}]", String.join(" ", commandsWithInterpreter));
-
         // start
         ProcessBuilder processBuilder = new ProcessBuilder();
 
@@ -293,25 +297,34 @@ abstract public class AbstractBash extends Task {
         }
 
         processBuilder.command(commandsWithInterpreter);
+
         Process process = processBuilder.start();
+        long pid = process.pid();
+        logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", commandsWithInterpreter));
 
-        // logs
-        AbstractLogThread stdOut = logSupplier.call(process.getInputStream(), false);
-        AbstractLogThread stdErr = logSupplier.call(process.getErrorStream(), true);
+        try {
+            // logs
+            AbstractLogThread stdOut = logSupplier.call(process.getInputStream(), false);
+            AbstractLogThread stdErr = logSupplier.call(process.getErrorStream(), true);
 
-        int exitCode = process.waitFor();
 
-        stdOut.join();
-        stdErr.join();
-        process.destroy();
+            int exitCode = process.waitFor();
 
-        if (exitCode != 0) {
-            throw new BashException(exitCode, stdOut.getLogsCount(), stdErr.getLogsCount());
-        } else {
-            logger.debug("Command succeed with code " + exitCode);
+            stdOut.join();
+            stdErr.join();
+
+            if (exitCode != 0) {
+                throw new BashException(exitCode, stdOut.getLogsCount(), stdErr.getLogsCount());
+            } else {
+                logger.debug("Command succeed with code " + exitCode);
+            }
+
+            return new RunResult(exitCode, stdOut, stdErr);
+        } catch (InterruptedException e) {
+            logger.warn("Killing process {} for InterruptedException", pid);
+            process.destroy();
+            throw e;
         }
-
-        return new RunResult(exitCode, stdOut, stdErr);
     }
 
     protected void cleanup() throws IOException {

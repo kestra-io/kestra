@@ -17,8 +17,8 @@ export default {
         },
 
         localStorageValue() {
-            if (localStorage.getItem(this.localStorageName)) {
-                return JSON.parse(localStorage.getItem(this.localStorageName))
+            if (window.sessionStorage.getItem(this.localStorageName)) {
+                return JSON.parse(window.sessionStorage.getItem(this.localStorageName))
             } else {
                 return null;
             }
@@ -30,7 +30,7 @@ export default {
                 return;
             }
 
-            localStorage.setItem(
+            window.sessionStorage.setItem(
                 this.localStorageName,
                 JSON.stringify(this.$route.query)
             );

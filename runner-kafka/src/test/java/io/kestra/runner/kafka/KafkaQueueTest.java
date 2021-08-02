@@ -25,8 +25,8 @@ class KafkaQueueTest {
         TopicsConfig byName = KafkaQueue.topicsConfigByTopicName(applicationContext, topicsConfig.getName());
         assertThat(byName, is(topicsConfig));
 
-        topicsConfig = KafkaQueue.topicsConfig(applicationContext, KafkaStreamSourceService.TOPIC_EXECUTOR);
-        assertThat(topicsConfig.getKey(), is(KafkaStreamSourceService.TOPIC_EXECUTOR));
+        topicsConfig = KafkaQueue.topicsConfig(applicationContext, KafkaStreamSourceService.TOPIC_FLOWLAST);
+        assertThat(topicsConfig.getKey(), is(KafkaStreamSourceService.TOPIC_FLOWLAST));
 
         byName = KafkaQueue.topicsConfigByTopicName(applicationContext, topicsConfig.getName());
         assertThat(byName, is(topicsConfig));

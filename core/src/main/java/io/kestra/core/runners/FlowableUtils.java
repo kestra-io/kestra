@@ -66,7 +66,7 @@ public class FlowableUtils {
         }
 
         // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastByState(currentTasks, State.Type.CREATED, parentTaskRun);
+        Optional<TaskRun> lastCreated = execution.findLastCreated(currentTasks, parentTaskRun);
         if (lastCreated.isPresent()) {
             return new ArrayList<>();
         }
@@ -174,7 +174,7 @@ public class FlowableUtils {
         }
 
         // first created, leave
-        Optional<TaskRun> lastCreated = execution.findLastByState(currentTasks, State.Type.CREATED, parentTaskRun);
+        Optional<TaskRun> lastCreated = execution.findLastCreated(currentTasks, parentTaskRun);
 
         if (notFinds.size() > 0 && lastCreated.isEmpty()) {
             Stream<NextTaskRun> nextTaskRunStream = notFinds

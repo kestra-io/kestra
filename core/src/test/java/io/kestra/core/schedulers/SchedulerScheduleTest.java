@@ -45,9 +45,9 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
         return createFlow(Collections.singletonList(schedule));
     }
 
-    private static ZonedDateTime date(int plus) {
+    private static ZonedDateTime date(int minus) {
         return ZonedDateTime.now()
-            .minusHours(plus)
+            .minusHours(minus)
             .truncatedTo(ChronoUnit.HOURS);
     }
 
@@ -80,11 +80,16 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
             // wait for execution
             executionQueue.receive(SchedulerScheduleTest.class, execution -> {
                 queueCount.countDown();
+                if (execution.getState().getCurrent() == State.Type.CREATED) {
+                    executionQueue.emit(execution.withState(State.Type.SUCCESS));
+                }
                 assertThat(execution.getFlowId(), is(flow.getId()));
             });
 
             scheduler.run();
             queueCount.await(1, TimeUnit.MINUTES);
+
+            assertThat(queueCount.getCount(), is(0L));
         }
     }
 }

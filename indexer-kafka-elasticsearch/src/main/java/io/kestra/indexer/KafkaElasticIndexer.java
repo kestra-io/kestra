@@ -97,7 +97,7 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
             while (running.get()) {
                 try {
                     List<ConsumerRecord<String, String>> records = StreamSupport
-                        .stream(kafkaConsumer.poll(Duration.ofMillis(100)).spliterator(), false)
+                        .stream(kafkaConsumer.poll(Duration.ofMillis(500)).spliterator(), false)
                         .collect(Collectors.toList());
 
                     records

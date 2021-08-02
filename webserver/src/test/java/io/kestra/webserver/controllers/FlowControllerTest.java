@@ -125,9 +125,9 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
                 Argument.listOf(Flow.class)
             )
         );
-        JsonError jsonError = e.getResponse().getBody(JsonError.class).get();
+        String jsonError = e.getResponse().getBody(String.class).get();
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
-        assertThat(jsonError.getMessage(), containsString("flow.namespace"));
+        assertThat(jsonError, containsString("flow.namespace"));
 
         // flow is not created
         assertThrows(HttpClientResponseException.class, () -> {
@@ -150,9 +150,20 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
                 Argument.listOf(Flow.class)
             )
         );
-        jsonError = e.getResponse().getBody(JsonError.class).get();
+        jsonError = e.getResponse().getBody(String.class).get();
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
-        assertThat(jsonError.getMessage(), containsString("flow.id: Duplicate"));
+        assertThat(jsonError, containsString("flow.id: Duplicate"));
+
+        // cleanup
+        try {
+            client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.othernamespace/invalid1"));
+            for (int i = 1; i <= 7; i++) {
+                client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/f1"));
+            }
+        } catch (Exception ignored) {
+
+        }
+
     }
 
     @Test
@@ -278,11 +289,11 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             );
         });
 
-        JsonError jsonError = e.getResponse().getBody(JsonError.class).get();
+        String jsonError = e.getResponse().getBody(String.class).get();
 
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
-        assertThat(jsonError.getMessage(), containsString("flow.id"));
-        assertThat(jsonError.getMessage(), containsString("flow.namespace"));
+        assertThat(jsonError, containsString("flow.id"));
+        assertThat(jsonError, containsString("flow.namespace"));
     }
 
     @Test

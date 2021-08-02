@@ -101,7 +101,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
 
             while (running.get()) {
                 try {
-                    ConsumerRecords<String, WorkerTask> records = kafkaConsumer.poll(Duration.ofMillis(100));
+                    ConsumerRecords<String, WorkerTask> records = kafkaConsumer.poll(Duration.ofMillis(500));
 
                     if (!records.isEmpty()) {
                         kafkaProducer.beginTransaction();
@@ -110,6 +110,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                             this.kafkaQueueService.log(
                                 log,
                                 this.topicsConfigWorkerTask,
+                                record.key(),
                                 record.value(),
                                 "Incoming messsage"
                             );
@@ -133,6 +134,7 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                             this.kafkaQueueService.log(
                                 log,
                                 this.topicsConfigWorkerTaskRunning,
+                                this.queueService.key(workerTaskRunning),
                                 workerTaskRunning,
                                 "Outgoing messsage"
                             );

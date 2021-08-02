@@ -11,14 +11,11 @@ import javax.inject.Singleton;
 @Slf4j
 @Singleton
 public class KafkaQueueService {
-    @Inject
-    private QueueService queueService;
-
-    public <T> void log(Logger log, TopicsConfig topicsConfig, T object, String message) {
+    public <T> void log(Logger log, TopicsConfig topicsConfig, String key, T object, String message) {
         if (log.isTraceEnabled()) {
             log.trace("{} on  topic '{}', value {}", message, topicsConfig.getName(), object);
         } else if (log.isDebugEnabled()) {
-            log.trace("{} on topic '{}', key {}", message, topicsConfig.getName(), this.queueService.key(object));
+            log.trace("{} on topic '{}', key {}", message, topicsConfig.getName(), key);
         }
     }
 }

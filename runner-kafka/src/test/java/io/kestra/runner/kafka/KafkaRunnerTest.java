@@ -10,6 +10,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.tasks.flows.EachSequentialTest;
+import io.kestra.core.tasks.flows.FlowCaseTest;
 import io.kestra.core.tasks.flows.TemplateTest;
 import io.kestra.core.utils.TestsUtils;
 import org.apache.kafka.common.errors.RecordTooLargeException;
@@ -44,6 +45,9 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Inject
     private TemplateRepositoryInterface templateRepository;
+
+    @Inject
+    private FlowCaseTest flowCaseTest;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -196,7 +200,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
         );
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getExecutionId().equals(execution.getId())).count(), is(131L));
+        assertThat(logs.stream().filter(logEntry -> logEntry.getExecutionId().equals(execution.getId())).count(), is(63L));
     }
 
     @Test
@@ -215,8 +219,13 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     }
 
     @Test
-    void restart() throws Exception {
-        restartCaseTest.restart();
+    void restartFailed() throws Exception {
+        restartCaseTest.restartFailed();
+    }
+
+    @Test
+    void restartTask() throws Exception {
+        restartCaseTest.restartTask();
     }
 
     @Test
@@ -249,5 +258,20 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
         taskDefaultsCaseTest.invalidTaskDefaults();
+    }
+
+    @Test
+    void flowWaitSuccess() throws Exception {
+        flowCaseTest.waitSuccess();
+    }
+
+    @Test
+    void flowWaitFailed() throws Exception {
+        flowCaseTest.waitFailed();
+    }
+
+    @Test
+    public void invalidOutputs() throws Exception {
+        flowCaseTest.invalidOutputs();
     }
 }

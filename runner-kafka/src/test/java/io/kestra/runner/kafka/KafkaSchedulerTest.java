@@ -1,23 +1,22 @@
 package io.kestra.runner.kafka;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.Executor;
 import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
 import io.kestra.runner.kafka.services.KafkaProducerService;
-import io.kestra.runner.kafka.services.KafkaStreamSourceService;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -37,17 +36,17 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
     @Inject
     protected FlowRepositoryInterface flowRepositoryInterface;
 
-    protected KafkaQueue<Execution> executorQueue;
+    protected KafkaQueue<Executor> executorQueue;
     protected KafkaQueue<Trigger> triggerQueue;
     protected KafkaProducer<String, Execution> executorProducer;
     private TopicsConfig topicsConfig;
 
     @BeforeEach
     private void init() {
-        this.executorQueue = new KafkaQueue<>(KafkaStreamSourceService.TOPIC_EXECUTOR, Execution.class, applicationContext);
+        this.executorQueue = new KafkaQueue<>(Executor.class, applicationContext);
         this.triggerQueue = new KafkaQueue<>(Trigger.class, applicationContext);
         this.executorProducer = applicationContext.getBean(KafkaProducerService.class).of(Execution.class, JsonSerde.of(Execution.class));
-        this.topicsConfig = KafkaQueue.topicsConfig(applicationContext, KafkaStreamSourceService.TOPIC_EXECUTOR);
+        this.topicsConfig = KafkaQueue.topicsConfig(applicationContext, Executor.class);
     }
 
     private static Flow createThreadFlow() {
@@ -80,7 +79,7 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
             executionQueue.receive(KafkaSchedulerTest.class, execution -> {
                 last.set(execution);
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    executorQueue.emit(execution.withState(State.Type.SUCCESS));
+                    executionQueue.emit(execution.withState(State.Type.SUCCESS));
                     queueCount.countDown();
                 } else if (execution.getState().getCurrent() == State.Type.SUCCESS) {
                     executorProducer.send(new ProducerRecord<>(

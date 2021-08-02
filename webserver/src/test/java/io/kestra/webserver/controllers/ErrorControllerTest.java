@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpStatus;
@@ -17,11 +18,13 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.POST;
+import static io.micronaut.http.HttpStatus.UNPROCESSABLE_ENTITY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 @MicronautTest
 class ErrorControllerTest {
     @Inject
@@ -53,4 +56,48 @@ class ErrorControllerTest {
         // missing getter & setter on JsonError
         // assertThat(exception.getResponse().getBody(JsonError.class).get().getEmbedded().get("errors").get().get(0).getPath(), containsInAnyOrder("tasks"));
     }
+
+    @Test
+    void unknownProperties() {
+        Map<String, Object> flow =  ImmutableMap.of(
+            "id", IdUtils.create(),
+            "namespace", "io.kestra.test",
+            "unknown", "properties"
+        );
+
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(POST("/api/v1/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class));
+        });
+
+        assertThat(exception.getStatus(), is(UNPROCESSABLE_ENTITY));
+
+        String response = exception.getResponse().getBody(String.class).get();
+        assertThat(response, containsString("Failed to convert argument [flow] for value [null] due to: Unrecognized field \\\"unknown\\\""));
+        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow[\\\"unknown\\\"]\""));
+    }
+
+    @Test
+    void invalidEnum() {
+        Map<String, Object> flow = ImmutableMap.of(
+            "id", IdUtils.create(),
+            "namespace", "io.kestra.test",
+            "tasks", Collections.singletonList(ImmutableMap.of(
+                "id", IdUtils.create(),
+                "type", Echo.class.getName(),
+                "format", "Yeah !",
+                "level", "WRONG"
+            ))
+        );
+
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(POST("/api/v1/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class));
+        });
+
+        assertThat(exception.getStatus(), is(UNPROCESSABLE_ENTITY));
+
+        String response = exception.getResponse().getBody(String.class).get();
+        assertThat(response, containsString("Cannot deserialize value of type `org.slf4j.event.Level` from String \\\"WRONG\\\""));
+        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow[\\\"tasks\\\"] > java.util.ArrayList[0] > io.kestra.core.tasks.debugs.Echo[\\\"level\\\"]\""));
+    }
+
 }

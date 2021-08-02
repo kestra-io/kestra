@@ -11,17 +11,17 @@ plugins {
     id 'org.gradle.test-retry' version '1.2.1'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.38.0"
+    id "com.github.ben-manes.versions" version "0.39.0"
 
     // front
-    id 'org.siouan.frontend-jdk11' version '5.1.0' apply false
+    id 'org.siouan.frontend-jdk11' version '5.2.0' apply false
 
     // release
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
     id 'net.researchgate.release' version '2.8.1'
     id "com.gorylenko.gradle-git-properties" version "2.3.1"
     id 'signing'
-    id 'ru.vyarus.pom' version '2.1.0' apply false
+    id 'ru.vyarus.pom' version '2.2.0' apply false
     id 'ru.vyarus.github-info' version '1.2.0' apply false
 }
 
@@ -107,11 +107,11 @@ allprojects {
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
         implementation 'com.github.jknack:handlebars:4.2.0'
-        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20201123'
+        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20210610'
 
         // exposed utils
         api group: 'com.google.guava', name: 'guava', version: '30.1.1-jre'
-        api group: 'commons-io', name: 'commons-io', version: '2.8.0'
+        api group: 'commons-io', name: 'commons-io', version: '2.10.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
         api "io.swagger.core.v3:swagger-annotations"
     }
@@ -148,7 +148,7 @@ subprojects {
     test {
         useJUnitPlatform()
 
-        maxHeapSize = "2048m"
+        maxHeapSize = "4048m"
 
         retry {
             maxRetries = 5

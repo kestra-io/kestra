@@ -1,26 +1,31 @@
 package io.kestra.core.docs;
 
+import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.github.victools.jsonschema.generator.*;
+import com.github.victools.jsonschema.generator.impl.DefinitionKey;
+import com.github.victools.jsonschema.generator.naming.DefaultSchemaDefinitionNamingStrategy;
 import com.github.victools.jsonschema.module.jackson.JacksonModule;
 import com.github.victools.jsonschema.module.javax.validation.JavaxValidationModule;
 import com.github.victools.jsonschema.module.javax.validation.JavaxValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
 import com.google.common.collect.ImmutableMap;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.serializers.JacksonMapper;
+import io.micronaut.core.annotation.Nullable;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
-import io.micronaut.core.annotation.Nullable;
 
 public class JsonSchemaGenerator {
     public <T> Map<String, Object> properties(Class<T> base, Class<? extends T> cls) {
@@ -68,7 +73,9 @@ public class JsonSchemaGenerator {
                 JavaxValidationOption.INCLUDE_PATTERN_EXPRESSIONS
             ))
             .with(new Swagger2Module())
-            .with(Option.INLINE_ALL_SCHEMAS)
+            .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
+            .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
+            .with(Option.PLAIN_DEFINITION_KEYS)
             .with(Option.ALLOF_CLEANUP_AT_THE_END);
 
         // base is passed, we don't return base properties
@@ -77,6 +84,42 @@ public class JsonSchemaGenerator {
                 .forFields()
                 .withIgnoreCheck(fieldScope -> fieldScope.getDeclaringType().getTypeName().equals(base.getName()));
         }
+
+        // def name
+        configBuilder.forTypesInGeneral()
+            .withDefinitionNamingStrategy(new DefaultSchemaDefinitionNamingStrategy() {
+                @Override
+                public String getDefinitionNameForKey(DefinitionKey key, SchemaGenerationContext context) {
+                    TypeContext typeContext = context.getTypeContext();
+                    ResolvedType type = key.getType();
+                    return typeContext.getFullTypeDescription(type);
+                }
+
+                @Override
+                public String adjustNullableName(DefinitionKey key, String definitionName, SchemaGenerationContext context) {
+                    return definitionName;
+                }
+            });
+
+        // inline some type
+        configBuilder.forTypesInGeneral()
+            .withCustomDefinitionProvider(new CustomDefinitionProviderV2() {
+                @Override
+                public CustomDefinition provideCustomSchemaDefinition(ResolvedType javaType, SchemaGenerationContext context) {
+                    if (javaType.isInstanceOf(Map.class) || javaType.isInstanceOf(Enum.class)) {
+                        ObjectNode definition = context.createStandardDefinition(javaType, this);
+                        return new CustomDefinition(definition, true);
+                    } else if (javaType.isInstanceOf(Duration.class)) {
+                        ObjectNode definitionReference = context
+                            .createDefinitionReference(context.getTypeContext().resolve(String.class))
+                            .put("format", "duration");
+
+                        return new CustomDefinition(definitionReference, true);
+                    } else {
+                        return null;
+                    }
+                }
+            });
 
         // default value
         configBuilder.forFields().withDefaultResolver(target -> {
@@ -149,49 +192,39 @@ public class JsonSchemaGenerator {
                 }
             }
 
-            return JacksonMapper.toMap(flattenAllOf(objectNode));
+            return JacksonMapper.toMap(extractMainRef(objectNode));
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
     }
 
 
-    private ObjectNode flattenAllOf(ObjectNode objectNode) {
-        JsonNode allOf = objectNode.get("allOf");
+    private ObjectNode extractMainRef(ObjectNode objectNode) {
+        TextNode ref = (TextNode) objectNode.get("$ref");
+        ObjectNode defs = (ObjectNode) objectNode.get("$defs");
 
-        if (allOf == null) {
-            return objectNode;
+        if (ref == null) {
+            throw new IllegalArgumentException("Missing $ref");
+        }
+        String mainClassName = ref.asText().substring(ref.asText().lastIndexOf("/") + 1);
+
+        if (mainClassName.endsWith("-2")) {
+            mainClassName = mainClassName.substring(0, mainClassName.length() - 2);
+            JsonNode mainClassDef = defs.get(mainClassName + "-1");
+
+            objectNode.set("properties", mainClassDef.get("properties"));
+
+            defs.remove(mainClassName + "-1");
+            defs.remove(mainClassName + "-2");
+        } else {
+            JsonNode mainClassDef = defs.get(mainClassName);
+            defs.remove(mainClassName);
+            objectNode.set("properties", mainClassDef.get("properties"));
         }
 
-        ArrayList<JsonNode> schema = new ArrayList<>();
-        allOf.forEach(schema::add);
-
-        // fields
-        JsonNode props = splitAllOf(schema,  false);
-        objectNode.remove("allOf");
-
-        props.fields().forEachRemaining(entry -> {
-            objectNode.set(entry.getKey(), entry.getValue());
-        });
-
-        // const
-        JsonNode type = splitAllOf(schema,  true);
-        type.get("properties").fields().forEachRemaining(entry -> {
-            ((ObjectNode) objectNode.get("properties")).set(entry.getKey(), entry.getValue());
-        });
+        objectNode.remove("$ref");
 
         return objectNode;
-    }
-
-    private static JsonNode splitAllOf(ArrayList<JsonNode> schema, boolean typeConstant) {
-        return schema
-            .stream()
-            .filter(jsonNode -> (jsonNode.has("properties") &&
-                jsonNode.get("properties").has("type") &&
-                jsonNode.get("properties").get("type").has("const")) == typeConstant
-            )
-            .findFirst()
-            .orElseThrow();
     }
 
     private Object buildDefaultInstance(Class<?> cls) {
@@ -206,7 +239,6 @@ public class JsonSchemaGenerator {
             return null;
         }
     }
-
 
     private Object defaultValue(Object instance, Class<?> cls, String fieldName) {
         try {

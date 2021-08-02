@@ -43,8 +43,8 @@
                     .confirm(this.$t("restart confirm", {id: this.execution.id}), () => {
                         this.$store
                             .dispatch("execution/restartExecution", {
-                                id: this.execution.id,
-                                taskId: this.task ? this.task.taskId : null
+                                executionId: this.execution.id,
+                                taskId: this.task ? this.task.taskId : undefined
                             })
                             .then(response => {
                                 this.$store.commit("execution/setExecution", response.data);

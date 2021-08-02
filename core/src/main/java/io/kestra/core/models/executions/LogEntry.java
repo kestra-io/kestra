@@ -16,7 +16,7 @@ import io.micronaut.core.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class LogEntry implements DeletedInterface {
     @NotNull
     private String namespace;

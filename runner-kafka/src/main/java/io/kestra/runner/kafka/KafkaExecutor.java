@@ -10,13 +10,10 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.utils.Either;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
 import io.kestra.runner.kafka.services.KafkaStreamService;
@@ -27,30 +24,30 @@ import io.micronaut.context.ApplicationContext;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.Stores;
+import org.slf4j.event.Level;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @KafkaQueueEnabled
 @Singleton
-@Slf4j
 public class KafkaExecutor extends AbstractExecutor implements Closeable {
+    private static final String EXECUTOR_STATE_STORE_NAME = "executor";
     private static final String WORKERTASK_DEDUPLICATION_STATE_STORE_NAME = "workertask_deduplication";
     private static final String TRIGGER_DEDUPLICATION_STATE_STORE_NAME = "trigger_deduplication";
     public static final String TRIGGER_MULTIPLE_STATE_STORE_NAME = "trigger_multiplecondition";
@@ -67,7 +64,6 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
     protected QueueService queueService;
 
     protected KafkaStreamService.Stream resultStream;
-    boolean ready = false;
 
     @Inject
     public KafkaExecutor(
@@ -94,10 +90,14 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
     public StreamsBuilder topology() {
         StreamsBuilder builder = new KafkaStreamsBuilder();
 
-        // copy execution to be done on executor queue
-        this.executionToExecutor(builder);
+        // executor
+        builder.addStateStore(Stores.keyValueStoreBuilder(
+            Stores.persistentKeyValueStore(EXECUTOR_STATE_STORE_NAME),
+            Serdes.String(),
+            JsonSerde.of(Executor.class)
+        ));
 
-        // worker deduplication
+        // WorkerTask deduplication
         builder.addStateStore(Stores.keyValueStoreBuilder(
             Stores.persistentKeyValueStore(WORKERTASK_DEDUPLICATION_STATE_STORE_NAME),
             Serdes.String(),
@@ -108,7 +108,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         builder.addStateStore(Stores.keyValueStoreBuilder(
             Stores.persistentKeyValueStore(NEXTS_DEDUPLICATION_STATE_STORE_NAME),
             Serdes.String(),
-            JsonSerde.of(ExecutionNextsDeduplicationTransformer.Store.class)
+            JsonSerde.of(ExecutorNextTransformer.Store.class)
         ));
 
         // trigger deduplication
@@ -118,7 +118,29 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             Serdes.String()
         ));
 
-        // trigger multiple flow
+        // declare common stream
+        KStream<String, WorkerTaskResult> workerTaskResultKStream = this.workerTaskResultKStream(builder);
+        KStream<String, Executor> executorKStream = this.executorKStream(builder);
+
+        // join with killed
+        KStream<String, ExecutionKilled> executionKilledKStream = this.executionKilledKStream(builder);
+        KStream<String, Executor> executionWithKilled = this.joinExecutionKilled(executionKilledKStream, executorKStream);
+
+        // join with WorkerResult
+        KStream<String, Executor> executionKStream = this.joinWorkerResult(workerTaskResultKStream, executionWithKilled);
+
+        // handle state on execution
+        GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
+        KStream<String, Executor> stream = kafkaStreamSourceService.executorWithFlow(flowKTable, executionKStream, true);
+
+        stream = this.handleExecutor(stream);
+
+        // save execution
+        this.toExecution(stream);
+        this.toWorkerTask(stream);
+        this.toWorkerTaskResult(stream);
+
+        // trigger
         builder.addStateStore(
             Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(TRIGGER_MULTIPLE_STATE_STORE_NAME),
@@ -127,7 +149,26 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             )
         );
 
-        // worker instance global state store
+        KStream<String, ExecutorFlowTrigger> flowWithTriggerStream = this.flowWithTriggerStream(builder);
+
+        this.toExecutorFlowTriggerTopic(stream);
+        this.handleFlowTrigger(flowWithTriggerStream);
+
+        // task Flow
+        KTable<String, WorkerTaskExecution> workerTaskExecutionKTable = this.workerTaskExecutionStream(builder);
+
+        KStream<String, WorkerTaskExecution> workerTaskExecutionKStream = this.deduplicateWorkerTaskExecution(stream);
+        this.toWorkerTaskExecution(workerTaskExecutionKStream);
+        this.workerTaskExecutionToExecution(workerTaskExecutionKStream);
+        this.handleWorkerTaskExecution(workerTaskExecutionKTable, stream);
+
+        // purge at end
+        this.purgeExecutor(stream);
+
+        // global KTable
+        this.templateKTable(builder);
+
+        // handle worker running
         builder.addGlobalStore(
             Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore(WORKERINSTANCE_STATE_STORE_NAME),
@@ -135,95 +176,61 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 JsonSerde.of(WorkerInstance.class)
             ),
             kafkaAdminService.getTopicName(TOPIC_EXECUTOR_WORKERINSTANCE),
-            Consumed.with(Serdes.String(), JsonSerde.of(WorkerInstance.class)),
+            Consumed.with(Serdes.String(), JsonSerde.of(WorkerInstance.class)).withName("GlobalStore.ExecutorWorkerInstace"),
             () -> new GlobalStateProcessor<>(WORKERINSTANCE_STATE_STORE_NAME)
         );
 
-        // declare ktable & kstream
-        KStream<String, WorkerTaskResult> workerTaskResultKStream = this.workerTaskResultKStream(builder);
-        KTable<String, Execution> executorKTable = kafkaStreamSourceService.executorKTable(builder);
-        KTable<String, Execution> executionNotKilledKTable = this.joinExecutionKilled(builder, executorKTable);
-        KTable<String, WorkerTaskResultState> workerTaskResultKTable = this.workerTaskResultKTable(workerTaskResultKStream);
-        GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
         GlobalKTable<String, WorkerTaskRunning> workerTaskRunningKTable = this.workerTaskRunningKStream(builder);
         KStream<String, WorkerInstance> workerInstanceKStream = this.workerInstanceKStream(builder);
-        KStream<String, ExecutorFlowTrigger> flowWithTriggerStream = this.flowWithTriggerStream(builder);
-        this.templateKTable(builder);
 
-        // logs
-        KafkaStreamSourceService.logIfEnabled(
-            executorKTable.toStream(Named.as("execution-toStream")),
-            (key, value) -> log.debug(
-                "Execution in '{}' with checksum '{}': {}",
-                value.getId(),
-                value.toCrc32State(),
-                value.toStringState()
-            ),
-            "execution-in"
-        );
-
-        // join with worker result
-        KStream<String, Execution> executionKStream = this.joinWorkerResult(workerTaskResultKTable, executionNotKilledKTable);
-
-        // handle state on execution
-        KStream<String, ExecutionWithFlow> stream = kafkaStreamSourceService.withFlow(flowKTable, executionKStream, true);
-
-        this.handleMain(stream);
-        this.handleNexts(stream);
-
-        this.handleWorkerTask(stream);
-        this.handleWorkerTaskResult(stream);
-
-        // trigger
-        this.handleExecutorFlowTriggerTopic(stream);
-        this.handleFlowTrigger(flowWithTriggerStream);
-
-        this.purgeExecutor(stream);
-
-        // handle worker
         this.purgeWorkerRunning(workerTaskResultKStream);
         this.detectNewWorker(workerInstanceKStream, workerTaskRunningKTable);
 
         return builder;
     }
 
-    private void executionToExecutor(StreamsBuilder builder) {
-        builder
+    public KStream<String, Executor> executorKStream(StreamsBuilder builder) {
+        KStream<String, Executor> result = builder
             .stream(
                 kafkaAdminService.getTopicName(Execution.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class))
+                Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("Executor.fromExecution")
             )
-            .filter((key, value) -> value.getTaskRunList() == null ||
-                value.getTaskRunList().size() == 0 ||
-                value.isJustRestarted(),
-                Named.as("executionToExecutor")
-            )
-            .to(
-                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
-                Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
+            .filter((key, value) -> value != null, Named.as("Executor.filterNotNull"))
+            // don't remove ValueTransformerWithKey<String, Execution, Executor> generic or it crash java compiler
+            // https://bugs.openjdk.java.net/browse/JDK-8217234
+            .transformValues(
+                () -> new ExecutorFromExecutionTransformer(EXECUTOR_STATE_STORE_NAME),
+                Named.as("Executor.toExecutor"),
+                EXECUTOR_STATE_STORE_NAME
             );
-    }
 
+        // logs
+        KafkaStreamSourceService.logIfEnabled(
+            log,
+            result,
+            (key, value) -> log(log, true, value),
+            "ExecutionIn"
+        );
+
+        return result;
+    }
 
     private GlobalKTable<String, Template> templateKTable(StreamsBuilder builder) {
         return builder
             .globalTable(
                 kafkaAdminService.getTopicName(Template.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Template.class)),
+                Consumed.with(Serdes.String(), JsonSerde.of(Template.class)).withName("GlobalKTable.Template"),
                 Materialized.<String, Template, KeyValueStore<Bytes, byte[]>>as("template")
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(Template.class))
             );
     }
 
-    private KTable<String, ExecutionKilled> executionKilledKTable(StreamsBuilder builder) {
+    private KStream<String, ExecutionKilled> executionKilledKStream(StreamsBuilder builder) {
         return builder
-            .table(
+            .stream(
                 kafkaAdminService.getTopicName(ExecutionKilled.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(ExecutionKilled.class)),
-                Materialized.<String, ExecutionKilled, KeyValueStore<Bytes, byte[]>>as("execution_killed")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(ExecutionKilled.class))
+                Consumed.with(Serdes.String(), JsonSerde.of(ExecutionKilled.class)).withName("KTable.ExecutionKilled")
             );
     }
 
@@ -231,7 +238,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         return builder
             .globalTable(
                 kafkaAdminService.getTopicName(WorkerTaskRunning.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class)),
+                Consumed.with(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class)).withName("GlobalKTable.WorkerTaskRunning"),
                 Materialized.<String, WorkerTaskRunning, KeyValueStore<Bytes, byte[]>>as(WORKER_RUNNING_STATE_STORE_NAME)
                     .withKeySerde(Serdes.String())
                     .withValueSerde(JsonSerde.of(WorkerTaskRunning.class))
@@ -242,7 +249,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         return builder
             .stream(
                 kafkaAdminService.getTopicName(WorkerInstance.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(WorkerInstance.class))
+                Consumed.with(Serdes.String(), JsonSerde.of(WorkerInstance.class)).withName("KStream.WorkerInstance")
             );
     }
 
@@ -250,184 +257,114 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         return builder
             .stream(
                 kafkaAdminService.getTopicName(ExecutorFlowTrigger.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(ExecutorFlowTrigger.class))
+                Consumed.with(Serdes.String(), JsonSerde.of(ExecutorFlowTrigger.class)).withName("KStream.ExecutorFlowTrigger")
             )
-            .filter((key, value) -> value != null, Named.as("flowWithTriggerStream-notNull-filter"));
+            .filter((key, value) -> value != null, Named.as("Flowwithtriggerstream.filterNotNull"));
     }
 
-    private KTable<String, Execution> joinExecutionKilled(StreamsBuilder builder, KTable<String, Execution> executionKTable) {
-        KTable<String, HasKilledJoin> table = executionKTable
-            .leftJoin(
-                this.executionKilledKTable(builder),
-                (execution, executionKilled) -> {
-                    if (executionKilled != null &&
-                        execution.getState().getCurrent() != State.Type.KILLING &&
-                        !execution.getState().isTerninated()
-                    ) {
-                        Execution newExecution = execution.withState(State.Type.KILLING);
-
-                        if (log.isDebugEnabled()) {
-                            log.debug("Killed in: {}", newExecution.toStringState());
-                        }
-
-                        return new HasKilledJoin(newExecution, true);
-                    }
-
-                    return new HasKilledJoin(execution, false);
-                },
-                Named.as("executionKilled-leftJoin")
+    private KStream<String, Executor> joinExecutionKilled(KStream<String, ExecutionKilled> executionKilledKStream, KStream<String, Executor> executorKStream) {
+        return executorKStream
+            .merge(
+                executionKilledKStream
+                    .transformValues(
+                        () -> new ExecutorKilledJoinerTransformer(
+                            EXECUTOR_STATE_STORE_NAME
+                        ),
+                        Named.as("JoinExecutionKilled.transformValues"),
+                        EXECUTOR_STATE_STORE_NAME
+                    )
+                    .filter((key, value) -> value != null, Named.as("JoinExecutionKilled.filterNotNull")),
+                Named.as("JoinExecutionKilled.merge")
             );
-
-        KStream<String, Execution> join = table
-            .filter((key, value) -> value.isJoined(), Named.as("executionKilled-isJoined-filter"))
-            .mapValues((readOnlyKey, value) -> value.getExecution(), Named.as("executionKilled-isJoined-map"))
-            .toStream();
-
-        toExecution(join, "executionKilled");
-
-        return table
-            .filter((key, value) -> !value.isJoined(), Named.as("executionKilled-isNotJoined-filter"))
-            .mapValues((readOnlyKey, value) -> value.getExecution(), Named.as("executionKilled-isNotJoined-map"));
     }
 
     private KStream<String, WorkerTaskResult> workerTaskResultKStream(StreamsBuilder builder) {
         return builder
             .stream(
                 kafkaAdminService.getTopicName(WorkerTaskResult.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
+                Consumed.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class)).withName("KStream.WorkerTaskResult")
             )
-            .filter((key, value) -> value != null, Named.as("workerTaskResultKStream-null-filter"));
+            .filter((key, value) -> value != null, Named.as("WorkerTaskResultKStream.filterNotNull"));
     }
 
-    private KTable<String, WorkerTaskResultState> workerTaskResultKTable(KStream<String, WorkerTaskResult> workerTaskResultKStream) {
-        return workerTaskResultKStream
-            .groupBy(
-                (key, value) -> value.getTaskRun().getExecutionId(),
-                Grouped.<String, WorkerTaskResult>as("workertaskresult_groupby")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(WorkerTaskResult.class))
+    private KStream<String, Executor> joinWorkerResult(KStream<String, WorkerTaskResult> workerTaskResultKstream, KStream<String, Executor> executorKStream) {
+        return executorKStream
+            .merge(
+                workerTaskResultKstream
+                    .selectKey((key, value) -> value.getTaskRun().getExecutionId(), Named.as("JoinWorkerResult.selectKey"))
+                    .mapValues(
+                        (key, value) -> new Executor(value),
+                        Named.as("JoinWorkerResult.WorkerTaskResultMap")
+                    )
+                    .repartition(
+                        Repartitioned.<String, Executor>as("workertaskjoined")
+                            .withKeySerde(Serdes.String())
+                            .withValueSerde(JsonSerde.of(Executor.class))
+                    ),
+                Named.as("JoinWorkerResult.merge")
             )
-            .aggregate(
-                WorkerTaskResultState::new,
-                (key, newValue, aggregate) -> {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Aggregate in: {}", newValue.getTaskRun().toStringState());
-                    }
-
-                    aggregate
-                        .getResults()
-                        .compute(
-                            newValue.getTaskRun().getId(),
-                            (s, workerTaskResult) -> newValue
-                        );
-
-                    return aggregate;
-                },
-                Named.as("workerTaskResultKTable-aggregate"),
-                Materialized.<String, WorkerTaskResultState, KeyValueStore<Bytes, byte[]>>as("workertaskresult")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(WorkerTaskResultState.class))
+            .transformValues(
+                () -> new ExecutorJoinerTransformer(
+                    EXECUTOR_STATE_STORE_NAME,
+                    this.metricRegistry
+                ),
+                Named.as("JoinWorkerResult.transformValues"),
+                EXECUTOR_STATE_STORE_NAME
+            )
+            .filter(
+                (key, value) -> value != null,
+                Named.as("JoinWorkerResult.notNullFilter")
             );
     }
 
-    private KStream<String, Execution> joinWorkerResult(KTable<String, WorkerTaskResultState> workerTaskResultKTable, KTable<String, Execution> executionKTable) {
-        KStream<String, Either<WithException, HasWorkerResultJoin>> eitherKStream = executionKTable
-            .leftJoin(
-                workerTaskResultKTable,
-                (execution, workerTaskResultState) -> {
-                    if (workerTaskResultState == null) {
-                        return Either.<WithException, HasWorkerResultJoin>right(new HasWorkerResultJoin(execution, false));
-                    }
-
-                    return workerTaskResultState
-                        .getResults()
-                        .values()
-                        .stream()
-                        .filter(workerTaskResult -> execution.hasTaskRunJoinable(workerTaskResult.getTaskRun()))
-                        .findFirst()
-                        .map(workerTaskResult -> {
-                            if (log.isDebugEnabled()) {
-                                log.debug("WorkerTaskResult in: {}", workerTaskResult.getTaskRun().toStringState());
-                            }
-
-                            metricRegistry
-                                .counter(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(workerTaskResult))
-                                .increment();
-
-                            metricRegistry
-                                .timer(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(workerTaskResult))
-                                .record(workerTaskResult.getTaskRun().getState().getDuration());
-
-                            try {
-                                return Either.<WithException, HasWorkerResultJoin>right(new HasWorkerResultJoin(
-                                    execution.withTaskRun(workerTaskResult.getTaskRun()),
-                                    true
-                                ));
-                            } catch (Exception e) {
-                                return Either.<WithException, HasWorkerResultJoin>left(new WithException(new HasWorkerResultJoin(execution, false), e));
-                            }
-                        })
-                        .orElseGet(() -> Either.<WithException, HasWorkerResultJoin>right(new HasWorkerResultJoin(execution, false)));
-                },
-                Named.as("join-leftJoin")
-            )
-            .toStream(Named.as("join-toStream"));
-
-        KStream<String, HasWorkerResultJoin> join = branchException(eitherKStream, "join");
-
-        return toExecutionJoin(join);
-    }
-
-    private void handleMain(KStream<String, ExecutionWithFlow> stream) {
-        KStream<String, Execution> result = stream
-            .mapValues(
-                (readOnlyKey, value) -> {
-                    Optional<Execution> main = this.doMain(value.getExecution(), value.getFlow());
-
-                    return main.orElse(null);
-                },
-                Named.as("handleMain-map")
+    private KStream<String, Executor> handleExecutor(KStream<String, Executor> stream) {
+        return stream
+            .transformValues(
+                () -> new ExecutorNextTransformer(
+                    NEXTS_DEDUPLICATION_STATE_STORE_NAME,
+                    this
+                ),
+                Named.as("HandleExecutor.transformValues"),
+                NEXTS_DEDUPLICATION_STATE_STORE_NAME
             );
-
-        this.toExecution(result, "handleMain");
     }
 
-    private void purgeExecutor(KStream<String, ExecutionWithFlow> stream) {
-        KStream<String, ExecutionWithFlow> terminatedWithKilled = stream
+    private void purgeExecutor(KStream<String, Executor> stream) {
+        KStream<String, Executor> terminatedWithKilled = stream
             .filter(
                 (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
-                Named.as("purgeExecutor-terminated-filter")
+                Named.as("PurgeExecutor.filterTerminated")
             );
 
         // we don't purge killed execution in order to have feedback about child running tasks
         // this can be killed lately (after the executor kill the execution), but we want to keep
         // feedback about the actual state (killed or not)
         // @TODO: this can lead to infinite state store for most executor topic
-        KStream<String, ExecutionWithFlow> terminated = terminatedWithKilled.filter(
+        KStream<String, Executor> terminated = terminatedWithKilled.filter(
             (key, value) -> value.getExecution().getState().getCurrent() != State.Type.KILLED,
-            Named.as("purgeExecutor-notkilled-filter")
+            Named.as("PurgeExecutor.filterKilledExecution")
         );
 
         // clean up executor
         terminated
             .mapValues(
                 (readOnlyKey, value) -> (Execution) null,
-                Named.as("purgeExecutor-executorToNull-map")
+                Named.as("PurgeExecutor.executionToNull")
             )
             .to(
-                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
-                Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
+                kafkaAdminService.getTopicName(Executor.class),
+                Produced.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("PurgeExecutor.toExecutor")
             );
 
         // flatMap taskRun
         KStream<String, TaskRun> taskRunKStream = terminated
             .filter(
                 (key, value) -> value.getExecution().getTaskRunList() != null,
-                Named.as("purgeExecutor-nullValue-filter")
+                Named.as("PurgeExecutor.notNullTaskRunList")
             )
             .flatMapValues(
                 (readOnlyKey, value) -> value.getExecution().getTaskRunList(),
-                Named.as("purgeExecutor-toTaskRun-flatmap")
+                Named.as("PurgeExecutor.flatMapTaskRunList")
             );
 
         // clean up workerTaskResult
@@ -437,11 +374,11 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                     value.getId(),
                     (WorkerTaskResult) null
                 ),
-                Named.as("purgeExecutor-workerTaskToNull-map")
+                Named.as("PurgeExecutor.workerTaskResultToNull")
             )
             .to(
                 kafkaAdminService.getTopicName(WorkerTaskResult.class),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class)).withName("PurgeExecutor.toWorkerTaskResult")
             );
 
         // clean up WorkerTask deduplication state
@@ -451,7 +388,17 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                     WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
                     (key, value) -> value.getExecutionId() + "-" + value.getId()
                 ),
-                Named.as("purgeExecutor-workerTaskPurge-transform"),
+                Named.as("PurgeExecutor.purgeWorkerTaskDeduplication"),
+                WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
+            );
+
+        taskRunKStream
+            .transformValues(
+                () -> new DeduplicationPurgeTransformer<>(
+                    WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
+                    (key, value) -> "WorkerTaskExecution-" + value.getExecutionId() + "-" + value.getId()
+                ),
+                Named.as("PurgeExecutor.purgeWorkerTaskExecutionDeduplication"),
                 WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
             );
 
@@ -462,7 +409,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                     NEXTS_DEDUPLICATION_STATE_STORE_NAME,
                     (key, value) -> value.getExecution().getId()
                 ),
-                Named.as("executionNexts-nextsPurge-transform"),
+                Named.as("PurgeExecutor.purgeNextsDeduplication"),
                 NEXTS_DEDUPLICATION_STATE_STORE_NAME
             );
 
@@ -470,39 +417,40 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         terminatedWithKilled
             .mapValues(
                 (readOnlyKey, value) -> (ExecutionKilled) null,
-                Named.as("purgeExecutor-killedPurge-map")
+                Named.as("PurgeExecutor.executionKilledToNull")
             )
             .to(
                 kafkaAdminService.getTopicName(ExecutionKilled.class),
-                Produced.with(Serdes.String(), JsonSerde.of(ExecutionKilled.class))
+                Produced.with(Serdes.String(), JsonSerde.of(ExecutionKilled.class)).withName("PurgeExecutor.toExecutionKilled")
             );
     }
 
-    private void handleExecutorFlowTriggerTopic(KStream<String, ExecutionWithFlow> stream) {
+    private void toExecutorFlowTriggerTopic(KStream<String, Executor> stream) {
         stream
             .filter(
                 (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
-                Named.as("handleExecutorFlowTriggerTopic-terminated-filter")
+                Named.as("HandleExecutorFlowTriggerTopic.filterTerminated")
             )
             .transformValues(
                 () -> new DeduplicationTransformer<>(
+                    "FlowTrigger",
                     TRIGGER_DEDUPLICATION_STATE_STORE_NAME,
                     (key, value) -> value.getExecution().getId(),
                     (key, value) -> value.getExecution().getId()
                 ),
-                Named.as("handleExecutorFlowTriggerTopic-deduplication-transform"),
+                Named.as("HandleExecutorFlowTriggerTopic.deduplication"),
                 TRIGGER_DEDUPLICATION_STATE_STORE_NAME
             )
-            .filter((key, value) -> value != null, Named.as("handleExecutorFlowTriggerTopic-dedupNull-filter"))
+            .filter((key, value) -> value != null, Named.as("HandleExecutorFlowTriggerTopic.deduplicationNotNull"))
             .flatTransform(
                 () -> new FlowWithTriggerTransformer(
                     flowService
                 ),
-                Named.as("handleExecutorFlowTriggerTopic-trigger-transform")
+                Named.as("HandleExecutorFlowTriggerTopic.flatMapToExecutorFlowTrigger")
             )
             .to(
                 kafkaAdminService.getTopicName(ExecutorFlowTrigger.class),
-                Produced.with(Serdes.String(), JsonSerde.of(ExecutorFlowTrigger.class))
+                Produced.with(Serdes.String(), JsonSerde.of(ExecutorFlowTrigger.class)).withName("PurgeExecutor.toExecutorFlowTrigger")
             );
     }
 
@@ -513,7 +461,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                     TRIGGER_MULTIPLE_STATE_STORE_NAME,
                     flowService
                 ),
-                Named.as("handleFlowTrigger-trigger-transform"),
+                Named.as("HandleFlowTrigger.transformToExecutionList"),
                 TRIGGER_MULTIPLE_STATE_STORE_NAME
             )
             .flatMap(
@@ -521,183 +469,251 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                     .stream()
                     .map(execution -> new KeyValue<>(execution.getId(), execution))
                     .collect(Collectors.toList()),
-                Named.as("handleFlowTrigger-execution-flapMap")
+                Named.as("HandleFlowTrigger.flapMapToExecution")
             )
             .to(
                 kafkaAdminService.getTopicName(Execution.class),
-                Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
+                Produced.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("HandleFlowTrigger.toExecution")
             );
 
         stream
-            .mapValues((readOnlyKey, value) -> (ExecutorFlowTrigger)null)
+            .mapValues(
+                (readOnlyKey, value) -> (ExecutorFlowTrigger)null,
+                Named.as("HandleFlowTrigger.executorFlowTriggerToNull")
+            )
             .to(
                 kafkaAdminService.getTopicName(ExecutorFlowTrigger.class),
-                Produced.with(Serdes.String(), JsonSerde.of(ExecutorFlowTrigger.class))
+                Produced.with(Serdes.String(), JsonSerde.of(ExecutorFlowTrigger.class)).withName("HandleFlowTrigger.toExecutorFlowTrigger")
             );
     }
 
-    private void handleNexts(KStream<String, ExecutionWithFlow> stream) {
-        KStream<String, Either<WithException, ExecutionNexts>> streamEither = stream
-            .mapValues(
-                (readOnlyKey, value) -> {
-                    try {
-                        Optional<List<TaskRun>> nexts = this.doNexts(value.getExecution(), value.getFlow());
-
-                        return Either.right(new ExecutionNexts(
-                            value.getFlow(),
-                            value.getExecution(),
-                            nexts.orElse(null)
-                        ));
-                    } catch (Exception e) {
-                        return Either.left(new WithException(value, e));
-                    }
-                },
-                Named.as("handleNexts-map")
-            );
-
-        KStream<String, Execution> result = branchException(streamEither, "handleNexts")
-            .transformValues(
-                () -> new ExecutionNextsDeduplicationTransformer(
-                    NEXTS_DEDUPLICATION_STATE_STORE_NAME
-                ),
-                Named.as("handleNexts-deduplication-transform"),
-                NEXTS_DEDUPLICATION_STATE_STORE_NAME
+    private void toWorkerTask(KStream<String, Executor> stream) {
+        // deduplication worker task
+        KStream<String, WorkerTask> dedupWorkerTask = stream
+            .flatMapValues(
+                (readOnlyKey, value) -> value.getWorkerTasks(),
+                Named.as("HandleWorkerTask.flatMapToWorkerTask")
             )
-            .filter((key, value) -> value != null, Named.as("handleNexts-dedupNull-filter"))
-            .mapValues(
-                (readOnlyKey, value) -> this.onNexts(value.getFlow(), value.getExecution(), value.getNexts()),
-                Named.as("handleNexts-onNexts-map")
-            );
-
-        this.toExecution(result, "handleChildNext");
-    }
-
-    private void handleWorkerTask(KStream<String, ExecutionWithFlow> stream) {
-        KStream<String, Either<WithException, List<WorkerTask>>> streamEither = stream
-            .mapValues(
-                (readOnlyKey, value) -> {
-                    try {
-                        return Either.right(
-                            this.doWorkerTask(value.getExecution(), value.getFlow()).orElse(null)
-                        );
-                    } catch (Exception e) {
-                        return Either.left(new WithException(value, e));
-                    }
-                },
-                Named.as("handleWorkerTask-map")
-            );
-
-        KStream<String, WorkerTask> dedupWorkerTask = branchException(streamEither, "handleWorkerTask")
-            .flatMapValues((readOnlyKey, value) -> value)
             .transformValues(
                 () -> new DeduplicationTransformer<>(
+                    "WorkerTask",
                     WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
                     (key, value) -> value.getTaskRun().getExecutionId() + "-" + value.getTaskRun().getId(),
                     (key, value) -> value.getTaskRun().getState().getCurrent().name()
                 ),
-                Named.as("handleWorkerTask-deduplication-transform"),
+                Named.as("HandleWorkerTask.deduplication"),
                 WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
             )
-            .filter((key, value) -> value != null, Named.as("handleWorkerTask-null-filter"));
+            .filter((key, value) -> value != null, Named.as("HandleWorkerTask.notNullFilter"));
 
+        // flowable > running to WorkerTaskResult
         KStream<String, WorkerTaskResult> resultFlowable = dedupWorkerTask
-            .filter((key, value) -> value.getTask().isFlowable(), Named.as("handleWorkerTask-isFlowable-filter"))
+            .filter((key, value) -> value.getTask().isFlowable(), Named.as("HandleWorkerTaskFlowable.filterIsFlowable"))
             .mapValues(
                 (key, value) -> new WorkerTaskResult(value.withTaskRun(value.getTaskRun().withState(State.Type.RUNNING))),
-                Named.as("handleWorkerTask-isFlowableToRunning-mapValues")
+                Named.as("HandleWorkerTaskFlowable.toRunning")
             )
             .map(
                 (key, value) -> new KeyValue<>(queueService.key(value), value),
-                Named.as("handleWorkerTask-isFlowable-map")
+                Named.as("HandleWorkerTaskFlowable.mapWithKey")
             )
             .selectKey(
                 (key, value) -> queueService.key(value),
-                Named.as("handleWorkerTask-isFlowable-selectKey")
+                Named.as("HandleWorkerTaskFlowable.selectKey")
             );
 
         KStream<String, WorkerTaskResult> workerTaskResultKStream = KafkaStreamSourceService.logIfEnabled(
+            log,
             resultFlowable,
-            (key, value) -> log.debug(
-                "WorkerTaskResult out: {}",
-                value.getTaskRun().toStringState()
-            ),
-            "handleWorkerTask-isFlowableLog"
+            (key, value) -> log(log, false, value),
+            "HandleWorkerTaskFlowable"
         );
 
         workerTaskResultKStream
             .to(
                 kafkaAdminService.getTopicName(WorkerTaskResult.class),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class)).withName("HandleWorkerTaskFlowable.toWorkerTaskResult")
             );
 
+        // not flowable > to WorkerTask
         KStream<String, WorkerTask> resultNotFlowable = dedupWorkerTask
-            .filter((key, value) -> !value.getTask().isFlowable(), Named.as("handleWorkerTask-notFlowable-filter"))
-            .map((key, value) -> new KeyValue<>(queueService.key(value), value), Named.as("handleWorkerTask-notFlowableKeyValue-map"))
+            .filter((key, value) -> !value.getTask().isFlowable(), Named.as("HandleWorkerTaskNotFlowable.filterIsNotFlowable"))
+            .map((key, value) -> new KeyValue<>(queueService.key(value), value), Named.as("HandleWorkerTaskNotFlowable.mapWithKey"))
             .selectKey(
                 (key, value) -> queueService.key(value),
-                Named.as("handleWorkerTask-notFlowableKeyValue-selectKey")
+                Named.as("HandleWorkerTaskNotFlowable.selectKey")
             );
 
         KStream<String, WorkerTask> workerTaskKStream = KafkaStreamSourceService.logIfEnabled(
+            log,
             resultNotFlowable,
-            (key, value) -> log.debug(
-                "WorkerTask out: {}",
-                value.getTaskRun().toStringState()
-            ),
-            "handleWorkerTask-notFlowableLog"
+            (key, value) -> log(log, false, value),
+            "HandleWorkerTaskNotFlowable"
         );
 
         workerTaskKStream
             .to(
                 kafkaAdminService.getTopicName(WorkerTask.class),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerTask.class))
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTask.class)).withName("HandleWorkerTaskNotFlowable.toWorkerTask")
             );
     }
 
-    private void handleWorkerTaskResult(KStream<String, ExecutionWithFlow> stream) {
-        KStream<String, Either<WithException, List<WorkerTaskResult>>> streamEither = stream
-            .mapValues(
-                (readOnlyKey, value) -> {
-                    try {
-                        return Either.right(
-                            this.doWorkerTaskResult(value.getExecution(), value.getFlow()).orElse(null)
-                        );
-                    } catch (Exception e) {
-                        return Either.left(new WithException(value, e));
-                    }
-                },
-                Named.as("handleWorkerTaskResult-map")
+    private KTable<String, WorkerTaskExecution> workerTaskExecutionStream(StreamsBuilder builder) {
+        return builder
+            .table(
+                kafkaAdminService.getTopicName(WorkerTaskExecution.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(WorkerTaskExecution.class)).withName("WorkerTaskExecution.from"),
+                Materialized.<String, WorkerTaskExecution, KeyValueStore<Bytes, byte[]>>as("workertaskexecution")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(JsonSerde.of(WorkerTaskExecution.class))
             );
+    }
 
-        branchException(streamEither, "handleWorkerTaskResult")
-            .flatMapValues((readOnlyKey, value) -> value)
+    private KStream<String, WorkerTaskExecution> deduplicateWorkerTaskExecution(KStream<String, Executor> stream) {
+        return stream
+            .flatMapValues(
+                (readOnlyKey, value) -> value.getWorkerTaskExecutions(),
+                Named.as("DeduplicateWorkerTaskExecution.flatMap")
+            )
             .transformValues(
                 () -> new DeduplicationTransformer<>(
+                    "DeduplicateWorkerTaskExecution",
+                    WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
+                    (key, value) -> "WorkerTaskExecution-" + value.getTaskRun().getExecutionId() + "-" + value.getTaskRun().getId(),
+                    (key, value) -> value.getTaskRun().getState().getCurrent().name()
+                ),
+                Named.as("DeduplicateWorkerTaskExecution.deduplication"),
+                WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
+            )
+            .filter((key, value) -> value != null, Named.as("DeduplicateWorkerTaskExecution.notNullFilter"));
+    }
+
+    private void toWorkerTaskExecution(KStream<String, WorkerTaskExecution> stream) {
+        stream
+            .selectKey(
+                (key, value) -> value.getExecution().getId(),
+                Named.as("ToWorkerTaskExecution.selectKey")
+            )
+            .to(
+                kafkaAdminService.getTopicName(WorkerTaskExecution.class),
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskExecution.class)).withName("ToWorkerTaskExecution.toWorkerTaskExecution")
+            );
+    }
+
+    private void workerTaskExecutionToExecution(KStream<String, WorkerTaskExecution> stream) {
+        stream
+            .mapValues(
+                value -> {
+                    String message = "Create new execution for flow '" +
+                        value.getExecution().getNamespace() + "'." + value.getExecution().getFlowId() +
+                        "' with id '" + value.getExecution().getId() + "' from task '" + value.getTask().getId() +
+                        "' and taskrun '" + value.getTaskRun().getId() +
+                        (value.getTaskRun().getValue() != null  ? " (" +  value.getTaskRun().getValue() + ")" : "") + "'";
+
+                    log.info(message);
+                    LogEntry.LogEntryBuilder logEntryBuilder = LogEntry.of(value.getTaskRun()).toBuilder()
+                        .level(Level.INFO)
+                        .message(message)
+                        .timestamp(value.getTaskRun().getState().getStartDate())
+                        .thread(Thread.currentThread().getName());
+
+                    return logEntryBuilder.build();
+                },
+                Named.as("WorkerTaskExecutionToExecution.mapToLog")
+            )
+            .selectKey((key, value) -> (String)null, Named.as("WorkerTaskExecutionToExecution.logRemoveKey"))
+            .to(
+                kafkaAdminService.getTopicName(LogEntry.class),
+                Produced.with(Serdes.String(), JsonSerde.of(LogEntry.class)).withName("WorkerTaskExecutionToExecution.toLogEntry")
+            );
+
+        KStream<String, Execution> executionKStream = stream
+            .mapValues(
+                (key, value) -> value.getExecution(),
+                Named.as("WorkerTaskExecutionToExecution.map")
+            )
+            .selectKey(
+                (key, value) -> value.getId(),
+                Named.as("WorkerTaskExecutionToExecution.selectKey")
+            );
+
+        executionKStream = KafkaStreamSourceService.logIfEnabled(
+            log,
+            executionKStream,
+            (key, value) -> log(log, false, value),
+            "WorkerTaskExecutionToExecution"
+        );
+
+        executionKStream
+            .to(
+                kafkaAdminService.getTopicName(Execution.class),
+                Produced.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("WorkerTaskExecutionToExecution.toExecution")
+            );
+    }
+
+    private void handleWorkerTaskExecution(KTable<String, WorkerTaskExecution> workerTaskExecutionKTable, KStream<String, Executor> stream) {
+        KStream<String, WorkerTaskResult> joinKStream = stream
+            .filter(
+                (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
+                Named.as("HandleWorkerTaskExecution.isTerminated")
+            )
+            .transformValues(
+                () -> new WorkerTaskExecutionTransformer(runContextFactory, workerTaskExecutionKTable.queryableStoreName()),
+                 Named.as("HandleWorkerTaskExecution.transform"),
+                workerTaskExecutionKTable.queryableStoreName()
+            )
+            .filter((key, value) -> value != null, Named.as("HandleWorkerTaskExecution.joinNotNullFilter"));
+
+        toWorkerTaskResultSend(joinKStream, "HandleWorkerTaskExecution");
+    }
+
+    private void toWorkerTaskResult(KStream<String, Executor> stream) {
+        KStream<String, WorkerTaskResult> workerTaskResultKStream = stream
+            .flatMapValues(
+                (readOnlyKey, value) -> value.getWorkerTaskResults(),
+                Named.as("HandleWorkerTaskResult.flapMap")
+            );
+
+        toWorkerTaskResultSend(workerTaskResultKStream, "HandleWorkerTaskResult");
+    }
+
+    private void toWorkerTaskResultSend(KStream<String, WorkerTaskResult> stream, String name) {
+        KStream<String, WorkerTaskResult> workerTaskResultKStream = stream
+            .transformValues(
+                () -> new DeduplicationTransformer<>(
+                    name,
                     WORKERTASK_DEDUPLICATION_STATE_STORE_NAME,
                     (key, value) -> value.getTaskRun().getExecutionId() + "-" + value.getTaskRun().getId(),
                     (key, value) -> value.getTaskRun().getState().getCurrent().name()
                 ),
-                Named.as("handleWorkerTaskResult-deduplication-transform"),
+                Named.as(name + ".deduplication"),
                 WORKERTASK_DEDUPLICATION_STATE_STORE_NAME
             )
-            .filter((key, value) -> value != null, Named.as("handleWorkerTaskResult-null-filter"))
+            .filter((key, value) -> value != null, Named.as(name + ".notNullFilter"))
             .selectKey(
                 (key, value) -> value.getTaskRun().getId(),
-                Named.as("handleWorkerTaskResult-selectKey")
-            )
+                Named.as(name + ".selectKey")
+            );
+
+        KafkaStreamSourceService.logIfEnabled(
+            log,
+            workerTaskResultKStream,
+            (key, value) -> log(log, false, value),
+            name
+        )
             .to(
                 kafkaAdminService.getTopicName(WorkerTaskResult.class),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class))
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskResult.class)).withName(name + ".toWorkerTaskResult")
             );
     }
 
     private void purgeWorkerRunning(KStream<String, WorkerTaskResult> workerTaskResultKStream) {
         workerTaskResultKStream
-            .filter((key, value) -> value.getTaskRun().getState().isTerninated(), Named.as("purgeWorkerRunning-terminated-filter"))
-            .mapValues((readOnlyKey, value) -> (WorkerTaskRunning)null, Named.as("purgeWorkerRunning-toNull-mapValues"))
+            .filter((key, value) -> value.getTaskRun().getState().isTerninated(), Named.as("PurgeWorkerRunning.filterTerminated"))
+            .mapValues((readOnlyKey, value) -> (WorkerTaskRunning)null, Named.as("PurgeWorkerRunning.toNull"))
             .to(
                 kafkaAdminService.getTopicName(WorkerTaskRunning.class),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class))
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class)).withName("PurgeWorkerRunning.toWorkerTaskRunning")
             );
     }
 
@@ -705,186 +721,130 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         workerInstanceKStream
             .to(
                 kafkaAdminService.getTopicName(TOPIC_EXECUTOR_WORKERINSTANCE),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerInstance.class))
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerInstance.class)).withName("DetectNewWorker.toExecutorWorkerInstance")
             );
 
         KStream<String, WorkerInstanceTransformer.Result> stream = workerInstanceKStream
             .transformValues(
                 WorkerInstanceTransformer::new,
-                Named.as("detectNewWorker-transformValues")
+                Named.as("DetectNewWorker.workerInstanceTransformer")
             )
-            .flatMapValues((readOnlyKey, value) -> value, Named.as("detectNewWorker-listToItem-flatMap"));
+            .flatMapValues((readOnlyKey, value) -> value, Named.as("DetectNewWorker.flapMapList"));
 
         // we resend the worker task from evicted worker
         KStream<String, WorkerTask> resultWorkerTask = stream
             .flatMapValues(
                 (readOnlyKey, value) -> value.getWorkerTasksToSend(),
-                Named.as("detectNewWorker-workerTask-flatMapValues")
+                Named.as("DetectNewWorkerTask.flapMapWorkerTaskToSend")
             );
 
         // and remove from running since already sent
         resultWorkerTask
-            .map((key, value) -> KeyValue.pair(value.getTaskRun().getId(), (WorkerTaskRunning)null), Named.as("detectNewWorker-runningToNull-map"))
+            .map((key, value) -> KeyValue.pair(value.getTaskRun().getId(), (WorkerTaskRunning)null), Named.as("DetectNewWorkerTask.workerTaskRunningToNull"))
             .to(
                 kafkaAdminService.getTopicName(WorkerTaskRunning.class),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class))
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTaskRunning.class)).withName("DetectNewWorker.toWorkerTaskRunning")
             );
 
         KafkaStreamSourceService.logIfEnabled(
+            log,
             resultWorkerTask,
             (key, value) -> log.debug(
-                "WorkerTask resend out: {}",
+                ">> OUT WorkerTask resend : {}",
                 value.getTaskRun().toStringState()
             ),
-            "detectNewWorker-taskLog"
+            "DetectNewWorkerTask"
         )
             .to(
                 kafkaAdminService.getTopicName(WorkerTask.class),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerTask.class))
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerTask.class)).withName("DetectNewWorkerTask.toWorkerTask")
             );
 
         // we resend the WorkerInstance update
         KStream<String, WorkerInstance> updatedStream = KafkaStreamSourceService.logIfEnabled(
+            log,
             stream,
             (key, value) -> log.debug(
                 "Instance updated: {}",
                 value
             ),
-            "detectNewWorker-instanceLog"
+            "DetectNewWorkerInstance"
         )
             .map(
                 (key, value) -> value.getWorkerInstanceUpdated(),
-                Named.as("detectNewWorker-instanceUpdate-map")
+                Named.as("DetectNewWorkerInstance.mapInstance")
             );
 
         // cleanup executor workerinstance state store
         updatedStream
-            .filter((key, value) -> value != null, Named.as("detectNewWorker-null-filter"))
+            .filter((key, value) -> value != null, Named.as("DetectNewWorkerInstance.filterNotNull"))
             .to(
                 kafkaAdminService.getTopicName(TOPIC_EXECUTOR_WORKERINSTANCE),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerInstance.class))
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerInstance.class)).withName("DetectNewWorkerInstance.toExecutorWorkerInstance")
             );
 
         updatedStream
             .to(
                 kafkaAdminService.getTopicName(WorkerInstance.class),
-                Produced.with(Serdes.String(), JsonSerde.of(WorkerInstance.class))
+                Produced.with(Serdes.String(), JsonSerde.of(WorkerInstance.class)).withName("DetectNewWorkerInstance.toWorkerInstance")
             );
     }
 
-    private <T> KStream<String, T> branchException(KStream<String, Either<WithException, T>> stream, String methodName) {
-        methodName = methodName + "-branchException";
+    private void toExecution(KStream<String, Executor> stream) {
+        KStream<String, Executor> streamFrom = stream
+            .filter((key, value) -> value.isExecutionUpdated(), Named.as("ToExecution.haveFrom"))
+            .transformValues(
+                ExecutorAddHeaderTransformer::new,
+                Named.as("ToExecution.addHeaders")
+            );
 
-        KStream<String, Execution.FailedExecutionWithLog> failedStream = stream
-            .filter((key, value) -> value != null, Named.as(methodName + "-isLeftNotNull-filter"))
-            .filter((key, value) -> value.isLeft(), Named.as(methodName + "-isLeft-filter"))
-            .mapValues(Either::getLeft, Named.as(methodName + "-isLeft-map"))
+        // send execution
+        KStream<String, Executor> executionKStream = streamFrom
+            .filter((key, value) -> value.getException() == null, Named.as("ToExecutionExecution.notException"));
+
+        toExecutionSend(executionKStream, "ToExecutionExecution");
+
+        // send exception
+        KStream<String, Pair<Executor, Execution.FailedExecutionWithLog>> failedStream = streamFrom
+            .filter((key, value) -> value.getException() != null, Named.as("ToExecutionException.isException"))
             .mapValues(
-                e -> e.getEntity().getExecution().failedExecutionFromExecutor(e.getException()),
-                Named.as(methodName + "-isLeft-failedExecutionFromExecutor-map")
+                e -> Pair.of(e, e.getExecution().failedExecutionFromExecutor(e.getException())),
+                Named.as("ToExecutionException.mapToFailedExecutionWithLog")
             );
 
         failedStream
-            .flatMapValues(Execution.FailedExecutionWithLog::getLogs, Named.as(methodName + "-getLogs-flatMap"))
+            .flatMapValues(e -> e.getRight().getLogs(), Named.as("ToExecutionException.flatmapLogs"))
+            .selectKey((key, value) -> (String)null, Named.as("ToExecutionException.removeKey"))
             .to(
                 kafkaAdminService.getTopicName(LogEntry.class),
-                Produced.with(Serdes.String(), JsonSerde.of(LogEntry.class))
+                Produced.with(Serdes.String(), JsonSerde.of(LogEntry.class)).withName("ToExecutionException.toLogEntry")
             );
 
-        KStream<String, Execution> result = failedStream
-            .mapValues(Execution.FailedExecutionWithLog::getExecution, Named.as(methodName + "-getExecution-map"));
+        KStream<String, Executor> executorFailedKStream = failedStream
+            .mapValues(e -> e.getLeft().withExecution(e.getRight().getExecution(), "failedExecutionFromExecutor"), Named.as("ToExecutionException.mapToExecutor"));
 
-        this.toExecution(result, methodName + "-isLeft");
-
-        return stream
-            .filter((key, value) -> value != null, Named.as(methodName + "-isRightNotNull-filter"))
-            .filter((key, value) -> value.isRight(), Named.as(methodName + "-isRight-filter"))
-            .mapValues(Either::getRight, Named.as(methodName + "-isRight-map"))
-            .filter((key, value) -> value != null, Named.as(methodName + "-isRight-notNull-filter"));
+        toExecutionSend(executorFailedKStream, "ToExecutionException");
     }
 
-    private KStream<String, Execution> toExecutionJoin(KStream<String, HasWorkerResultJoin> stream) {
-        KStream<String, Execution> result = stream
-            .filter((key, value) -> value != null, Named.as("join-isJoinedNull-filter"))
-            .filter((key, value) -> value.isJoined(), Named.as("join-isJoined-filter"))
-            .mapValues((readOnlyKey, value) -> value.getExecution(), Named.as("join-isJoined-map"));
-
-        toExecution(result, "join");
-
-        return stream
-            .filter((key, value) -> value != null, Named.as("join-isNotJoinedNull-filter"))
-            .filter((key, value) -> !value.isJoined(), Named.as("join-isNotJoined-filter"))
-            .mapValues((readOnlyKey, value) -> value.getExecution(), Named.as("join-isNotJoined-map"));
-    }
-
-    private void toExecution(KStream<String, Execution> stream, String methodName) {
-        methodName = methodName + "-toExecution";
-
-        KStream<String, Execution> result = stream
-            .filter((key, value) -> value != null, Named.as(methodName + "-null-filter"));
-
-        KStream<String, Execution> executionKStream = KafkaStreamSourceService.logIfEnabled(
-            result,
-            (key, value) -> log.debug(
-                "Execution out '{}' with checksum '{}': {}",
-                value.getId(),
-                value.toCrc32State(),
-                value.toStringState()
-            ),
-            methodName + "-log"
+    private void toExecutionSend(KStream<String, Executor> stream, String from) {
+        stream = KafkaStreamSourceService.logIfEnabled(
+            log,
+            stream,
+            (key, value) -> log(log, false, value),
+            from
         );
 
-        executionKStream
+        stream
+            .transformValues(
+                () -> new StateStoreTransformer<>(EXECUTOR_STATE_STORE_NAME, Executor::serialize),
+                Named.as(from + ".store"),
+                EXECUTOR_STATE_STORE_NAME
+            )
+            .mapValues((readOnlyKey, value) -> value.getExecution(), Named.as(from + ".mapToExecution"))
             .to(
                 kafkaAdminService.getTopicName(Execution.class),
-                Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
+                Produced.with(Serdes.String(), JsonSerde.of(Execution.class)).withName(from + ".toExecution")
             );
-
-        executionKStream
-            .to(
-                kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR),
-                Produced.with(Serdes.String(), JsonSerde.of(Execution.class))
-            );
-    }
-
-    public interface ExecutionInterface {
-        Execution getExecution();
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class HasWorkerResultJoin implements ExecutionInterface {
-        Execution execution;
-        boolean joined;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class HasKilledJoin implements ExecutionInterface {
-        Execution execution;
-        boolean joined;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class ExecutionWithFlow implements ExecutionInterface {
-        Flow flow;
-        Execution execution;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class ExecutionNexts implements ExecutionInterface {
-        Flow flow;
-        Execution execution;
-        List<TaskRun> nexts;
-    }
-
-    @AllArgsConstructor
-    @Getter
-    public static class WithException {
-        ExecutionInterface entity;
-        Exception exception;
     }
 
     @NoArgsConstructor
@@ -912,9 +872,10 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         kafkaAdminService.createIfNotExist(WorkerTaskResult.class);
         kafkaAdminService.createIfNotExist(Execution.class);
         kafkaAdminService.createIfNotExist(Flow.class);
-        kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_EXECUTOR);
+        kafkaAdminService.createIfNotExist(Executor.class);
         kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_EXECUTOR_WORKERINSTANCE);
         kafkaAdminService.createIfNotExist(ExecutionKilled.class);
+        kafkaAdminService.createIfNotExist(WorkerTaskExecution.class);
         kafkaAdminService.createIfNotExist(WorkerTaskRunning.class);
         kafkaAdminService.createIfNotExist(WorkerInstance.class);
         kafkaAdminService.createIfNotExist(Template.class);
@@ -939,8 +900,14 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         resultStream.start();
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(
-            resultStream.store("template", QueryableStoreTypes.keyValueStore())
+            resultStream.store(StoreQueryParameters.fromNameAndType("template", QueryableStoreTypes.keyValueStore()))
         ));
+
+        this.flowExecutorInterface = new KafkaFlowExecutor(
+            resultStream.store(StoreQueryParameters.fromNameAndType("flow", QueryableStoreTypes.keyValueStore())),
+            flowService
+        );
+        applicationContext.registerSingleton(this.flowExecutorInterface);
     }
 
     @Override

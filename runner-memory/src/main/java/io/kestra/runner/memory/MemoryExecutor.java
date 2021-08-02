@@ -13,20 +13,16 @@ import io.kestra.core.runners.*;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
-import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-@Slf4j
 @Singleton
 @MemoryQueueEnabled
 public class MemoryExecutor extends AbstractExecutor {
@@ -40,7 +36,9 @@ public class MemoryExecutor extends AbstractExecutor {
 
     private static final MemoryMultipleConditionStorage multipleConditionStorage = new MemoryMultipleConditionStorage();
 
-    private static final ConcurrentHashMap<String, ExecutionState> executions = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, ExecutionState> EXECUTIONS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, WorkerTaskExecution> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
+
     private List<Flow> allFlows;
 
     @Inject
@@ -54,7 +52,8 @@ public class MemoryExecutor extends AbstractExecutor {
         MetricRegistry metricRegistry,
         FlowService flowService,
         ConditionService conditionService,
-        TaskDefaultService taskDefaultService
+        TaskDefaultService taskDefaultService,
+        FlowExecutorInterface flowExecutorInterface
     ) {
         super(runContextFactory, metricRegistry, conditionService);
 
@@ -66,6 +65,7 @@ public class MemoryExecutor extends AbstractExecutor {
         this.flowService = flowService;
         this.conditionService = conditionService;
         this.taskDefaultService = taskDefaultService;
+        this.flowExecutorInterface = flowExecutorInterface;
     }
 
     @Override
@@ -76,68 +76,69 @@ public class MemoryExecutor extends AbstractExecutor {
     }
 
     private void executionQueue(Execution message) {
-        if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0 || message.isJustRestarted()) {
+        if (message.getTaskRunList() == null || message.getTaskRunList().size() == 0 || message.getState().isCreated()) {
             this.handleExecution(saveExecution(message));
         }
     }
 
     private void handleExecution(ExecutionState state) {
         synchronized (this) {
-            if (log.isDebugEnabled()) {
-                log.debug("Execution in with {}: {}", state.execution.toCrc32State(), state.execution.toStringState());
-            }
-
             Flow flow = this.flowRepository.findByExecution(state.execution);
             flow = taskDefaultService.injectDefaults(flow, state.execution);
 
             Execution execution = state.execution;
+            Executor executor = new Executor(execution, null).withFlow(flow);
 
-            Optional<Execution> main = this.doMain(execution, flow);
-            if (main.isPresent()) {
-                this.toExecution(main.get(), flow);
-                return;
+            if (log.isDebugEnabled()) {
+                log(log, true, executor);
             }
 
-            try {
-                Optional<List<TaskRun>> nexts = this.doNexts(execution, flow);
-                if (nexts.isPresent() && deduplicateNexts(execution, nexts.get())) {
-                    this.toExecution(this.onNexts(flow, execution, nexts.get()), flow);
-                    return;
-                }
+            executor = this.process(executor);
 
-                Optional<List<WorkerTask>> workerTasks = this.doWorkerTask(execution, flow);
-                if (workerTasks.isPresent()) {
-                    List<WorkerTask> workerTasksDedup = workerTasks.stream()
-                        .flatMap(Collection::stream)
-                        .filter(workerTask -> this.deduplicateWorkerTask(execution, workerTask.getTaskRun()))
-                        .collect(Collectors.toList());
+            if (executor.getNexts().size() > 0 && deduplicateNexts(execution, executor.getNexts())) {
+                executor.withExecution(
+                    this.onNexts(executor.getFlow(), executor.getExecution(), executor.getNexts()),
+                    "onNexts"
+                );
+            }
 
-                    // WorkerTask not flowable to workerTask
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> !workerTask.getTask().isFlowable())
-                        .forEach(workerTaskQueue::emit);
+            if (executor.getException() != null) {
+                handleFailedExecutionFromExecutor(executor, executor.getException());
+            } else if (executor.isExecutionUpdated()) {
+                toExecution(executor);
+            }
 
-                    // WorkerTask not flowable to workerTaskResult as Running
-                    workerTasksDedup
-                        .stream()
-                        .filter(workerTask -> workerTask.getTask().isFlowable())
-                        .map(workerTask -> new WorkerTaskResult(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING))))
-                        .forEach(workerTaskResultQueue::emit);
-                    return;
-                }
+            if (executor.getWorkerTasks().size() > 0){
+                List<WorkerTask> workerTasksDedup = executor.getWorkerTasks().stream()
+                    .filter(workerTask -> this.deduplicateWorkerTask(execution, workerTask.getTaskRun()))
+                    .collect(Collectors.toList());
 
-                Optional<List<WorkerTaskResult>> workerTaskResults = this.doWorkerTaskResult(execution, flow);
-                if (workerTaskResults.isPresent()) {
-                    workerTaskResults.stream()
-                        .flatMap(Collection::stream)
-                        .forEach(workerTaskResultQueue::emit);
+                // WorkerTask not flowable to workerTask
+                workerTasksDedup
+                    .stream()
+                    .filter(workerTask -> !workerTask.getTask().isFlowable())
+                    .forEach(workerTaskQueue::emit);
 
-                    return;
-                }
-            } catch (Exception e) {
-                handleFailedExecutionFromExecutor(execution, flow, e);
-                return;
+                // WorkerTask not flowable to workerTaskResult as Running
+                workerTasksDedup
+                    .stream()
+                    .filter(workerTask -> workerTask.getTask().isFlowable())
+                    .map(workerTask -> new WorkerTaskResult(workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING))))
+                    .forEach(workerTaskResultQueue::emit);
+            }
+
+            if (executor.getWorkerTaskResults().size() > 0) {
+                executor.getWorkerTaskResults()
+                    .forEach(workerTaskResultQueue::emit);
+            }
+
+            if (executor.getWorkerTaskExecutions().size() > 0) {
+                executor.getWorkerTaskExecutions()
+                    .forEach(workerTaskExecution -> {
+                        WORKERTASKEXECUTIONS_WATCHER.put(workerTaskExecution.getExecution().getId(), workerTaskExecution);
+
+                        executionQueue.emit(workerTaskExecution.getExecution());
+                    });
             }
 
             // Listeners need the last emit
@@ -145,6 +146,7 @@ public class MemoryExecutor extends AbstractExecutor {
                 this.executionQueue.emit(execution);
             }
 
+            // multiple condition
             if (conditionService.isTerminatedWithListeners(flow, execution)) {
                 // multiple conditions storage
                 multipleConditionStorage.save(
@@ -162,15 +164,29 @@ public class MemoryExecutor extends AbstractExecutor {
                     .multipleFlowToDelete(allFlows.stream(), multipleConditionStorage)
                     .forEach(multipleConditionStorage::delete);
             }
+
+            // worker task execution
+            if (conditionService.isTerminatedWithListeners(flow, execution) && WORKERTASKEXECUTIONS_WATCHER.containsKey(execution.getId())) {
+                WorkerTaskExecution workerTaskExecution = WORKERTASKEXECUTIONS_WATCHER.get(execution.getId());
+                Flow workerTaskFlow = this.flowRepository.findByExecution(execution);
+
+                WorkerTaskResult workerTaskResult = workerTaskExecution
+                    .getTask()
+                    .createWorkerTaskResult(runContextFactory, workerTaskExecution, workerTaskFlow, execution);
+
+                this.workerTaskResultQueue.emit(workerTaskResult);
+
+                WORKERTASKEXECUTIONS_WATCHER.remove(execution.getId());
+            }
         }
     }
 
-    private void handleFailedExecutionFromExecutor(Execution execution, Flow flow, Exception e) {
-        Execution.FailedExecutionWithLog failedExecutionWithLog = execution.failedExecutionFromExecutor(e);
+    private void handleFailedExecutionFromExecutor(Executor executor, Exception e) {
+        Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
         try {
             failedExecutionWithLog.getLogs().forEach(logQueue::emit);
 
-            this.toExecution(failedExecutionWithLog.getExecution(), flow);
+            this.toExecution(executor.withExecution(failedExecutionWithLog.getExecution(), "exception"));
         } catch (Exception ex) {
             log.error("Failed to produce {}", e.getMessage(), ex);
         }
@@ -178,7 +194,7 @@ public class MemoryExecutor extends AbstractExecutor {
 
     private ExecutionState saveExecution(Execution execution) {
         ExecutionState queued;
-        queued = executions.compute(execution.getId(), (s, executionState) -> {
+        queued = EXECUTIONS.compute(execution.getId(), (s, executionState) -> {
             if (executionState == null) {
                 return new ExecutionState(execution);
             } else {
@@ -189,27 +205,27 @@ public class MemoryExecutor extends AbstractExecutor {
         return queued;
     }
 
-    private void toExecution(Execution execution, Flow flow) {
+    private void toExecution(Executor executor) {
         if (log.isDebugEnabled()) {
-            log.debug("Execution out with {}: {}", execution.toCrc32State(), execution.toStringState());
+            log(log, false, executor);
         }
 
         // emit for other consumer than executor
-        this.executionQueue.emit(execution);
+        this.executionQueue.emit(executor.getExecution());
 
         // recursive search for other executor
-        this.handleExecution(saveExecution(execution));
+        this.handleExecution(saveExecution(executor.getExecution()));
 
         // delete if ended
-        if (conditionService.isTerminatedWithListeners(flow, execution)) {
-            executions.remove(execution.getId());
+        if (conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())) {
+            EXECUTIONS.remove(executor.getExecution().getId());
         }
     }
 
     private void workerTaskResultQueue(WorkerTaskResult message) {
         synchronized (this) {
             if (log.isDebugEnabled()) {
-                log.debug("WorkerTaskResult: {}", message.getTaskRun().toStringState());
+                log(log, true, message);
             }
 
             metricRegistry
@@ -221,7 +237,7 @@ public class MemoryExecutor extends AbstractExecutor {
                 .record(message.getTaskRun().getState().getDuration());
 
             // save WorkerTaskResult on current QueuedExecution
-            executions.compute(message.getTaskRun().getExecutionId(), (s, executionState) -> {
+            EXECUTIONS.compute(message.getTaskRun().getExecutionId(), (s, executionState) -> {
                 if (executionState == null) {
                     throw new IllegalStateException("Execution state don't exist for " + s + ", receive " + message);
                 }
@@ -233,22 +249,21 @@ public class MemoryExecutor extends AbstractExecutor {
                 }
             });
 
+            Flow flow = this.flowRepository.findByExecution(EXECUTIONS.get(message.getTaskRun().getExecutionId()).execution);
+            flow = taskDefaultService.injectDefaults(flow, EXECUTIONS.get(message.getTaskRun().getExecutionId()).execution);
 
-            Flow flow = this.flowRepository.findByExecution(executions.get(message.getTaskRun().getExecutionId()).execution);
-            flow = taskDefaultService.injectDefaults(flow, executions.get(message.getTaskRun().getExecutionId()).execution);
-
-            this.toExecution(executions.get(message.getTaskRun().getExecutionId()).execution, flow);
+            this.toExecution(new Executor(EXECUTIONS.get(message.getTaskRun().getExecutionId()).execution, null).withFlow(flow));
         }
     }
 
     private boolean deduplicateWorkerTask(Execution execution, TaskRun taskRun) {
-        ExecutionState executionState = executions.get(execution.getId());
+        ExecutionState executionState = EXECUTIONS.get(execution.getId());
 
         String deduplicationKey = taskRun.getExecutionId() + "-" + taskRun.getId();
         State.Type current = executionState.workerTaskDeduplication.get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.debug("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
+            log.trace("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
             return false;
         } else {
             executionState.workerTaskDeduplication.put(deduplicationKey, taskRun.getState().getCurrent());
@@ -257,7 +272,7 @@ public class MemoryExecutor extends AbstractExecutor {
     }
 
     private boolean deduplicateNexts(Execution execution, List<TaskRun> taskRuns) {
-        ExecutionState executionState = executions.get(execution.getId());
+        ExecutionState executionState = EXECUTIONS.get(execution.getId());
 
         return taskRuns
             .stream()
@@ -265,7 +280,7 @@ public class MemoryExecutor extends AbstractExecutor {
                 String deduplicationKey = taskRun.getParentTaskRunId() + "-" + taskRun.getTaskId() + "-" + taskRun.getValue();
 
                 if (executionState.childDeduplication.containsKey(deduplicationKey)) {
-                    log.debug("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
+                    log.trace("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
                     return false;
                 } else {
                     executionState.childDeduplication.put(deduplicationKey, taskRun.getId());

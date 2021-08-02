@@ -1,9 +1,9 @@
 package io.kestra.core.docs;
 
 import com.google.common.base.CaseFormat;
+import io.kestra.core.plugins.RegisteredPlugin;
 import lombok.*;
 import org.apache.commons.lang3.ArrayUtils;
-import io.kestra.core.plugins.RegisteredPlugin;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,6 +24,7 @@ public class ClassPluginDocumentation<T> {
     private String docDescription;
     private String docBody;
     private List<ExampleDoc> docExamples;
+    private Map<String, Object> defs = new TreeMap<>();
     private Map<String, Object> inputs = new TreeMap<>();
     private Map<String, Object> outputs = new TreeMap<>();
     private Map<String, Object> propertiesSchema;
@@ -44,6 +45,15 @@ public class ClassPluginDocumentation<T> {
 
         this.propertiesSchema = JSON_SCHEMA_GENERATOR.properties(baseCls, cls);
         this.outputsSchema = JSON_SCHEMA_GENERATOR.outputs(baseCls, cls);
+
+        if (this.propertiesSchema.containsKey("$defs")) {
+            this.defs.putAll((Map<String, Object>) this.propertiesSchema.get("$defs"));
+            this.propertiesSchema.remove("$defs");
+        }
+        if (this.outputsSchema.containsKey("$defs")) {
+            this.defs.putAll((Map<String, Object>) this.outputsSchema.get("$defs"));
+            this.outputsSchema.remove("$defs");
+        }
 
         this.docDescription = this.propertiesSchema.containsKey("title") ? (String) this.propertiesSchema.get("title") : null;;
         this.docBody = this.propertiesSchema.containsKey("description") ? (String) this.propertiesSchema.get("description") : null;
@@ -109,7 +119,9 @@ public class ClassPluginDocumentation<T> {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> properties(Map<String, Object> props) {
-        return (Map<String, Object>) props.get("properties");
+        Map<String, Object> properties = (Map<String, Object>) props.get("properties");
+
+        return properties != null ? properties : new HashMap<>();
     }
 
     @SuppressWarnings("unchecked")

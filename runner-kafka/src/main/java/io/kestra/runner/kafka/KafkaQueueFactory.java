@@ -1,21 +1,17 @@
 package io.kestra.runner.kafka;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Factory;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerTaskQueueInterface;
-import io.kestra.core.runners.WorkerInstance;
-import io.kestra.core.runners.WorkerTask;
-import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.runners.WorkerTaskRunning;
-import io.kestra.runner.kafka.services.KafkaStreamSourceService;
+import io.kestra.core.runners.*;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Factory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -37,8 +33,8 @@ public class KafkaQueueFactory implements QueueFactoryInterface {
     @Override
     @Singleton
     @Named(QueueFactoryInterface.EXECUTOR_NAMED)
-    public QueueInterface<Execution> executor() {
-        return new KafkaQueue<>(KafkaStreamSourceService.TOPIC_EXECUTOR, Execution.class, applicationContext);
+    public QueueInterface<Executor> executor() {
+        return new KafkaQueue<>(Executor.class, applicationContext);
     }
 
     @Override
@@ -102,13 +98,6 @@ public class KafkaQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.TRIGGER_NAMED)
     public QueueInterface<Trigger> trigger() {
         return new KafkaQueue<>(Trigger.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.LOG_NAMED)
-    public QueueInterface<LogEntry> logs() {
-        return new KafkaQueue<>(LogEntry.class, applicationContext);
     }
 
     @Override

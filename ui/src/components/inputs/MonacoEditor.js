@@ -23,14 +23,15 @@ module.exports = {
     watch: {
         options: {
             deep: true,
-            handler: function handler(options) {
-                if (this.editor) {
-                    let editor = this.getModifiedEditor();
-                    editor.updateOptions(options);
+            handler: function(newValue, oldValue) {
+                if (this.editor && this.needReload(newValue, oldValue)) {
+                    this.reload();
+                } else {
+                    this.editor.updateOptions(newValue);
                 }
             }
         },
-        value: function value(newValue) {
+        value: function(newValue) {
             if (this.editor) {
                 let editor = this.getModifiedEditor();
 
@@ -39,7 +40,7 @@ module.exports = {
                 }
             }
         },
-        original: function original(newValue) {
+        original: function(newValue) {
             if (this.editor && this.diffEditor) {
                 let editor = this.getOriginalEditor();
 
@@ -48,19 +49,19 @@ module.exports = {
                 }
             }
         },
-        language: function language(newVal) {
+        language: function(newVal) {
             if (this.editor) {
                 let editor = this.getModifiedEditor();
                 this.monaco.editor.setModelLanguage(editor.getModel(), newVal);
             }
         },
-        theme: function theme(newVal) {
+        theme: function(newVal) {
             if (this.editor) {
                 this.monaco.editor.setTheme(newVal);
             }
         }
     },
-    mounted: function mounted() {
+    mounted: function() {
         let _this = this;
 
         let monaco = require("monaco-editor/esm/vs/editor/editor.api.js");
@@ -70,11 +71,11 @@ module.exports = {
             _this.initMonaco(monaco);
         });
     },
-    beforeDestroy: function beforeDestroy() {
-        this.editor && this.editor.dispose();
+    beforeDestroy: function() {
+        this.destroy();
     },
     methods: {
-        initMonaco: function initMonaco(monaco) {
+        initMonaco: function(monaco) {
             let self = this;
 
             this.$emit("editorWillMount", this.monaco);
@@ -110,18 +111,30 @@ module.exports = {
             });
             this.$emit("editorDidMount", this.editor);
         },
-        getEditor: function getEditor() {
+        getEditor: function() {
             return this.editor;
         },
-        getModifiedEditor: function getModifiedEditor() {
+        getModifiedEditor: function() {
             return this.diffEditor ? this.editor.getModifiedEditor() : this.editor;
         },
-        getOriginalEditor: function getOriginalEditor() {
+        getOriginalEditor: function() {
             return this.diffEditor ? this.editor.getOriginalEditor() : this.editor;
         },
-        focus: function focus() {
+        focus: function() {
             this.editor.focus();
-        }
+        },
+        destroy: function() {
+            if (this.editor) {
+                this.editor.dispose();
+            }
+        },
+        needReload: function(newValue, oldValue) {
+            return oldValue.renderSideBySide !== newValue.renderSideBySide;
+        },
+        reload: function() {
+            this.destroy();
+            this.initMonaco(this.monaco);
+        },
     },
     render: function render(h) {
         return h("div");

@@ -33,6 +33,7 @@ public class RunContext {
     private ApplicationContext applicationContext;
     private StorageInterface storageInterface;
     private URI storageOutputPrefix;
+    private URI storageExecutionPrefix;
     private String envPrefix;
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -275,6 +276,7 @@ public class RunContext {
         clone.put("taskrun", this.variables(taskRun));
 
         this.variables = ImmutableMap.copyOf(clone);
+        this.storageExecutionPrefix = URI.create("/" + this.storageInterface.executionPrefix(taskRun));
 
         return this;
     }
@@ -398,7 +400,7 @@ public class RunContext {
     }
 
     public List<URI> purgeStorageExecution() throws IOException {
-        return this.storageInterface.deleteByPrefix(this.storageOutputPrefix);
+        return this.storageInterface.deleteByPrefix(this.storageExecutionPrefix);
     }
 
     public List<AbstractMetricEntry<?>> metrics() {

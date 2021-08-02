@@ -41,6 +41,18 @@ public interface StorageInterface {
         );
     }
 
+    default String executionPrefix(TaskRun taskRun) {
+        return String.join(
+            "/",
+            Arrays.asList(
+                taskRun.getNamespace().replace(".", "/"),
+                Slugify.of(taskRun.getFlowId()),
+                "executions",
+                taskRun.getExecutionId()
+            )
+        );
+    }
+
     default Optional<String> extractExecutionId(URI path) {
         Pattern pattern = Pattern.compile("^/(.+)/executions/([^/]+)/", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(path.getPath());

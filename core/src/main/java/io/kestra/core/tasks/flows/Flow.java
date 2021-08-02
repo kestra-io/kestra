@@ -1,28 +1,26 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @SuperBuilder
@@ -92,16 +90,22 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
     @PluginProperty(dynamic = false)
     private final Boolean transmitFailed = false;
 
-    @SuppressWarnings("unchecked")
+    @Schema(
+        title = "Extract outputs from triggered executions.",
+        description = "Allow to specify key value (with value renderered), in order to extract any outputs from " +
+            "triggered execution."
+    )
+    @PluginProperty(dynamic = true)
+    private Map<String, Object> outputs;
+
     @Override
     public Flow.Output run(RunContext runContext) throws Exception {
-        Logger logger = runContext.logger();
+        throw new IllegalStateException("This task must not be run by a worker and must be run on executor side!");
+    }
+
+    @SuppressWarnings("unchecked")
+    public Execution createExecution(RunContext runContext, FlowExecutorInterface flowExecutorInterface) throws Exception {
         RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
-        FlowRepositoryInterface flowRepository = runContext.getApplicationContext().getBean(FlowRepositoryInterface.class);
-        QueueInterface<Execution> executionQueue = (QueueInterface<Execution>) runContext.getApplicationContext().getBean(
-            QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED)
-        );
 
         Map<String, String> inputs = new HashMap<>();
         if (this.inputs != null) {
@@ -110,15 +114,13 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             }
         }
 
-        io.kestra.core.models.flows.Flow flow = flowRepository
-            .findById(
-                runContext.render(this.namespace),
-                runContext.render(this.flowId),
-                this.revision != null ? Optional.of(this.revision) : Optional.empty()
-            )
-            .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + this.flowId + "' in namespace '" + this.namespace + "'"));
+        io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findById(
+            runContext.render(this.namespace),
+            runContext.render(this.flowId),
+            this.revision != null ? Optional.of(this.revision) : Optional.empty()
+        );
 
-        Execution execution = runnerUtils
+        return runnerUtils
             .newExecution(
                 flow,
                 (f, e) -> runnerUtils.typedInputs(f, e, inputs)
@@ -134,36 +136,57 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
                 ))
                 .build()
             );
+    }
 
-        Output.OutputBuilder outputBuilder = Output.builder()
+    public WorkerTaskResult createWorkerTaskResult(
+        @Nullable RunContextFactory runContextFactory,
+        WorkerTaskExecution workerTaskExecution,
+        @Nullable io.kestra.core.models.flows.Flow flow,
+        Execution execution
+    ) {
+        TaskRun taskRun = workerTaskExecution.getTaskRun();
+
+        Output.OutputBuilder builder = Output.builder()
             .executionId(execution.getId());
 
-        logger.debug(
-            "Create new execution for flow {}.{} with id {}",
-            execution.getNamespace(),
-            execution.getFlowId(),
-            execution.getId()
-        );
-
-        if (!wait) {
-            executionQueue.emit(execution);
-        } else {
-            Execution ended = runnerUtils.awaitExecution(
-                runnerUtils.isTerminatedExecution(execution, flow),
-                () -> {
-                    executionQueue.emit(execution);
-                },
-                null
+        if (workerTaskExecution.getTask().getOutputs() != null && runContextFactory != null) {
+            RunContext runContext = runContextFactory.of(
+                flow,
+                workerTaskExecution.getTask(),
+                execution,
+                workerTaskExecution.getTaskRun()
             );
 
-            outputBuilder.state(ended.getState().getCurrent());
+            try {
+                builder.outputs(runContext.render(workerTaskExecution.getTask().getOutputs()));
+            } catch (Exception e) {
+                runContext.logger().warn("Failed to extract ouputs with error: '" + e.getMessage() + "'", e);
+                taskRun = taskRun
+                    .withState(State.Type.FAILED)
+                    .withOutputs(builder.build().toMap());
 
-            if (transmitFailed && (ended.getState().isFailed() || ended.getState().getCurrent() == State.Type.KILLED)) {
-                throw new Exception("Execution '" + ended.getId() + "' failed with status '" + ended.getState().getCurrent() + "'");
+                return WorkerTaskResult.builder()
+                    .task(workerTaskExecution.getTask())
+                    .taskRun(taskRun)
+                    .build();
             }
         }
 
-        return outputBuilder
+        builder.state(execution.getState().getCurrent());
+
+        taskRun = taskRun.withOutputs(builder.build().toMap());
+
+        if (transmitFailed &&
+            (execution.getState().isFailed() || execution.getState().getCurrent() == State.Type.KILLED || execution.getState().getCurrent() == State.Type.WARNING)
+        ) {
+            taskRun = taskRun.withState(execution.getState().getCurrent());
+        } else {
+            taskRun = taskRun.withState(State.Type.SUCCESS);
+        }
+
+        return WorkerTaskResult.builder()
+            .task(workerTaskExecution.getTask())
+            .taskRun(taskRun)
             .build();
     }
 
@@ -179,6 +202,11 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
             title = "The state of the execution trigger.",
             description = "Only available if the execution is waited with `wait` options"
         )
-        private State.Type state;
+        private final State.Type state;
+
+        @Schema(
+            title = "The extracted outputs from triggered executions."
+        )
+        private final Map<String, Object> outputs;
     }
 }

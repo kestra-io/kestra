@@ -31,17 +31,14 @@ public class ErrorController {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
     }
 
-    @SuppressWarnings("unchecked")
+
     @Error(global = true)
     public HttpResponse<JsonError> invalidTypeIdException(HttpRequest<?> request, ConversionErrorException e) {
         if (e.getConversionError().getCause() instanceof InvalidTypeIdException) {
             try {
-                InvalidTypeIdException invalidTypeIdException = ((InvalidTypeIdException) e.getConversionError()
-                    .getCause());
+                InvalidTypeIdException invalidTypeIdException = ((InvalidTypeIdException) e.getConversionError().getCause());
 
-                Field pathField = JsonMappingException.class.getDeclaredField("_path");
-                pathField.setAccessible(true);
-                LinkedList<JsonMappingException.Reference> path = (LinkedList< JsonMappingException.Reference>) pathField.get(invalidTypeIdException);
+                String path = path(invalidTypeIdException);
 
                 Field typeField = InvalidTypeIdException.class.getDeclaredField("_typeId");
                 typeField.setAccessible(true);
@@ -53,26 +50,49 @@ public class ErrorController {
                         "errors",
                         Arrays.asList(
                             new JsonError("Invalid type: " + typeClass)
-                                .path(path
-                                    .stream()
-                                    .map(JsonMappingException.Reference::getDescription)
-                                    .collect(Collectors.joining(" > "))
-                                ),
+                                .path(path),
                             new JsonError(e.getMessage())
-                                .path(path
-                                    .stream()
-                                    .map(JsonMappingException.Reference::getDescription)
-                                    .collect(Collectors.joining(" > "))
-                                )
+                                .path(path)
                         )
                     );
 
                 return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
             } catch (Exception ignored) {
             }
+        } else if (e.getConversionError().getCause() instanceof JsonMappingException) {
+            try {
+                JsonMappingException jsonMappingException = ((JsonMappingException) e.getConversionError().getCause());
+
+                String path = path(jsonMappingException);
+
+                JsonError error = new JsonError("Invalid json mapping")
+                    .link(Link.SELF, Link.of(request.getUri()))
+                    .embedded(
+                        "errors",
+                        Collections.singletonList(
+                            new JsonError(e.getMessage())
+                                .path(path)
+                        )
+                    );
+
+                return jsonError(error, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json mapping");
+            } catch (Exception ignored) {
+            }
         }
 
         return jsonError(request, e, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static String path(JsonMappingException jsonMappingException) throws NoSuchFieldException, IllegalAccessException {
+        Field pathField = JsonMappingException.class.getDeclaredField("_path");
+        pathField.setAccessible(true);
+        LinkedList<JsonMappingException.Reference> path = (LinkedList<JsonMappingException.Reference>) pathField.get(jsonMappingException);
+
+        return path
+            .stream()
+            .map(JsonMappingException.Reference::getDescription)
+            .collect(Collectors.joining(" > "));
     }
 
     @Error(global = true)
@@ -100,7 +120,7 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> invalidFormatException(HttpRequest<?> request, InvalidFormatException e) {
-        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid Format");
+        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid format");
     }
 
     @Error(global = true)

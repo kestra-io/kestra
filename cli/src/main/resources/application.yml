@@ -40,6 +40,7 @@ kestra:
   kafka:
     defaults:
       topic-prefix: "kestra_"
+      consumer-prefix: "kestra_"
       topic:
         partitions: 16
         replication-factor: 1
@@ -49,15 +50,12 @@ kestra:
           isolation.level: "read_committed"
           auto.offset.reset: "earliest"
           enable.auto.commit: "false"
-          max.poll.records: 50
 
       producer:
         properties:
           acks: "all"
           compression.type: "lz4"
           max.request.size: "10485760"
-          max.poll.records: 50
-          linger.ms: 0
 
       stream:
         properties:
@@ -66,10 +64,7 @@ kestra:
           acks: "all"
           compression.type: "lz4"
           max.request.size: "10485760"
-          poll.ms: 50
-          producer.linger.ms: 0
-          commit.interval.ms: 50
-          consumer.max.poll.records: 50
+          cache.max.bytes.buffering: 0
 
     topics:
       execution:
@@ -103,7 +98,8 @@ kestra:
           segment.bytes: "10485760"
 
       executor:
-        name: "${kestra.kafka.defaults.topic-prefix}executor"
+        name: "${kestra.kafka.defaults.topic-prefix}executor-executor-changelog"
+        cls: io.kestra.core.runners.Executor
         properties:
           cleanup.policy: "delete,compact"
 
@@ -116,6 +112,12 @@ kestra:
       executorflowtrigger:
         name: "${kestra.kafka.defaults.topic-prefix}executor_flowtrigger"
         cls: io.kestra.runner.kafka.streams.ExecutorFlowTrigger
+        properties:
+          cleanup.policy: "delete,compact"
+
+      executorworkertaskexecution:
+        cls: io.kestra.core.runners.WorkerTaskExecution
+        name: "${kestra.kafka.defaults.topic-prefix}executor_workertaskexecution"
         properties:
           cleanup.policy: "delete,compact"
 
@@ -158,6 +160,7 @@ kestra:
         name: "${kestra.kafka.defaults.topic-prefix}trigger"
         properties:
           cleanup.policy: "compact"
+
 
   elasticsearch:
     defaults:

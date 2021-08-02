@@ -17,7 +17,7 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 
 public class Helpers {
-    public static long FLOWS_COUNT = 45;
+    public static long FLOWS_COUNT = 46;
 
     public static ApplicationContext applicationContext() throws URISyntaxException {
         return applicationContext(Paths.get(Objects.requireNonNull(Helpers.class.getClassLoader().getResource("plugins")).toURI()));

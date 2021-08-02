@@ -91,15 +91,32 @@
             background: $success;
             color: $white;
             font-size: $font-size-sm;
+            padding: 2px 8px 2px 8px;
+
+            * {
+                color: $white !important;
+            }
         }
 
         h2 {
             margin-top: $spacer * 2;
+            border-bottom: 1px solid $gray-500;
+            font-weight: bold;
+            color: $gray-700
         }
+
         h3 {
             code {
                 display: inline-block;
                 font-size: $font-size-base * 1.10;
+                font-weight: 400;
+            }
+        }
+
+        h4 {
+            code {
+                display: inline-block;
+                font-size: $font-size-base * 1.00;
                 font-weight: 400;
             }
         }

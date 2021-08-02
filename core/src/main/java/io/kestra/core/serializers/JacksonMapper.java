@@ -15,6 +15,8 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import io.kestra.core.contexts.KestraClassLoader;
+import io.kestra.core.serializers.ion.IonFactory;
+import io.kestra.core.serializers.ion.IonModule;
 
 import java.util.Map;
 import java.util.TimeZone;
@@ -66,8 +68,9 @@ abstract public class JacksonMapper {
 
     private static final ObjectMapper ION_MAPPER = JacksonMapper
         .configure(
-            new IonObjectMapper()
+            new IonObjectMapper(new IonFactory())
         )
+        .registerModule(new IonModule())
         .setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS)
         .setSerializationInclusion(JsonInclude.Include.ALWAYS);
 

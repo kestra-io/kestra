@@ -34,7 +34,7 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Override
     @Singleton
     @Named(QueueFactoryInterface.EXECUTOR_NAMED)
-    public QueueInterface<Execution> executor() {
+    public QueueInterface<Executor> executor() {
         throw new NotImplementedException();
     }
 
@@ -99,13 +99,6 @@ public class MemoryQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.TRIGGER_NAMED)
     public QueueInterface<Trigger> trigger() {
         return new MemoryQueue<>(Trigger.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.EXECUTOR_NAMED)
-    public QueueInterface<LogEntry> logs() {
-        return new MemoryQueue<>(LogEntry.class, applicationContext);
     }
 
     @Override

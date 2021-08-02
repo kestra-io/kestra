@@ -2,12 +2,12 @@
     <div v-if="revisions && revisions.length > 1">
         <b-row>
             <b-col md="12 mb-3">
-                <b-form-select v-model="displayType" :options="displayTypes" />
+                <b-form-select v-model="sideBySide" :options="displayTypes" />
             </b-col>
 
             <b-col md="6 mb-3">
                 <b-input-group>
-                    <b-form-select v-model="revisionLeft" :options="options" />
+                    <b-form-select @input="addQuery" v-model="revisionLeft" :options="options" />
                     <b-btn @click="seeRevision(revisionLeft, revisionLeftText)">
                         <kicon placement="bottomright" :tooltip="$t('see full revision')">
                             <file-code />
@@ -19,7 +19,7 @@
             </b-col>
             <b-col md="6 mb-3">
                 <b-input-group>
-                    <b-form-select v-model="revisionRight" :options="options" />
+                    <b-form-select @input="addQuery" v-model="revisionRight" :options="options" />
                     <b-btn @click="seeRevision(revisionRight, revisionRightText)">
                         <kicon placement="bottomright" :tooltip="$t('see full revision')">
                             <file-code />
@@ -31,7 +31,7 @@
             </b-col>
             <b-col md="12" ref="editorContainer" class="editor-wrap">
                 <Editor
-                    :diff-editor="true"
+                    :diff-side-by-side="sideBySide"
                     :value="revisionRightText"
                     :original="revisionLeftText"
                     lang="yaml"
@@ -117,6 +117,12 @@
                     this.$bvModal.show(`modal-source-${index}`)
                 })
             },
+            addQuery() {
+                this.$router.push({query: {
+                    ...this.$route.query,
+                    ...{revisionLeft:this.revisionLeft, revisionRight: this.revisionRight}}
+                });
+            }
         },
         computed: {
             ...mapState("flow", ["revisions"]),
@@ -158,10 +164,10 @@
                 revision: undefined,
                 revisionId: undefined,
                 revisionYaml: undefined,
-                displayType: "side-by-side",
+                sideBySide: true,
                 displayTypes: [
-                    {value: "side-by-side", text: "side-by-side"},
-                    {value: "line-by-line", text: "line-by-line"},
+                    {value: true, text: "side-by-side"},
+                    {value: false, text: "line-by-line"},
                 ],
             };
         },

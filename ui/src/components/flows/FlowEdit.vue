@@ -27,6 +27,7 @@
 
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
+    import unsavedChange from "../../mixins/unsavedChange";
     import {mapGetters} from "vuex";
     import TriggerFlow from "./TriggerFlow"
     import Kicon from "../Kicon"
@@ -46,7 +47,11 @@
             ...mapGetters("flow", ["flow"]),
         },
         created() {
+            unsavedChange.methods.created.call(this);
             this.loadFile();
+        },
+        beforeDestroy() {
+            unsavedChange.methods.beforeDestroy.call(this);
         },
     };
 </script>

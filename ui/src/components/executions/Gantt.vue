@@ -78,25 +78,20 @@
             };
         },
         watch: {
-            execution() {
-                this.compute()
+            execution(oldValue, newValue) {
+                if (oldValue.id !== newValue.id) {
+                    this.realTime = true;
+                    this.paint();
+                } else {
+                    this.compute()
+                }
             },
             $route() {
                 this.compute()
             }
         },
         mounted() {
-            const repaint = () => {
-                this.compute()
-                if (this.realTime) {
-                    const delay = this.taskRunsCount < TASKRUN_THRESHOLD ? 40 : 500
-                    setTimeout(repaint, delay);
-                }
-            }
-            setTimeout(repaint);
-            setTimeout(() => {
-                this.usePartialSerie = false
-            }, 500);
+            this.paint();
         },
         computed: {
             ...mapState("execution", ["taskRun", "execution"]),
@@ -154,6 +149,19 @@
             }
         },
         methods: {
+            paint() {
+                const repaint = () => {
+                    this.compute()
+                    if (this.realTime) {
+                        const delay = this.taskRunsCount < TASKRUN_THRESHOLD ? 40 : 500
+                        setTimeout(repaint, delay);
+                    }
+                }
+                setTimeout(repaint);
+                setTimeout(() => {
+                    this.usePartialSerie = false
+                }, 500);
+            },
             compute() {
                 this.computeSeries();
                 this.computeDates();

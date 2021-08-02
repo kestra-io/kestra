@@ -29,6 +29,7 @@ public class VariableRenderer {
             .registerHelpers(EachHelper.class)
             .registerHelpers(LogHelper.class)
             .registerHelpers(StringHelpers.class)
+            .registerHelpers(OtherStringsHelper.class)
             .registerHelpers(UnlessHelper.class)
             .registerHelpers(WithHelper.class)
             .registerHelpers(DateHelper.class)

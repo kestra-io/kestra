@@ -87,7 +87,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     }
 
     private void produce(String key, T message) {
-        this.kafkaQueueService.log(log, topicsConfig, message, "Outgoing messsage");
+        this.kafkaQueueService.log(log, topicsConfig, key, message, "Outgoing messsage");
 
         try {
             kafkaProducer
@@ -152,10 +152,10 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
 
             while (running.get()) {
                 try {
-                    ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofMillis(100));
+                    ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofMillis(500));
 
                     records.forEach(record -> {
-                        this.kafkaQueueService.log(log, topicsConfig, record.value(), "Incoming messsage");
+                        this.kafkaQueueService.log(log, topicsConfig, record.key(), record.value(), "Incoming messsage");
 
                         consumer.accept(record.value());
 

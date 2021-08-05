@@ -426,6 +426,12 @@ public class Worker implements Runnable, Closeable {
                 this.exceptionHandler(this, new TimeoutExceededException(workerTask.getTask().getTimeout(), e));
             } catch (Exception e) {
                 this.exceptionHandler(this, e);
+            } finally {
+                try {
+                    task.cleanup();
+                } catch (IOException e) {
+                    log.warn("Unable to cleanup worker task", e);
+                }
             }
         }
 

@@ -8,12 +8,18 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.io.FileUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -48,6 +54,38 @@ abstract public class Task {
 
     @Builder.Default
     protected Boolean disabled = false;
+
+    @Getter(AccessLevel.NONE)
+    protected transient Path temporaryDirectory;
+
+    protected Path tempDir() throws IOException {
+        if (this.temporaryDirectory == null) {
+            this.temporaryDirectory = Files.createTempDirectory("task-temp-dir");
+        }
+
+        return this.temporaryDirectory;
+    }
+
+    protected Path tempFile() throws IOException {
+        return this.tempFile(null);
+    }
+
+    protected Path tempFile(byte[] content) throws IOException {
+        Path tempFile = Files.createTempFile(this.tempDir(), null, null);
+
+        if (content != null) {
+            Files.write(tempFile, content);
+        }
+
+        return tempFile;
+    }
+
+    public void cleanup() throws IOException {
+        if (temporaryDirectory != null) {
+            FileUtils.deleteDirectory(temporaryDirectory.toFile());
+            this.temporaryDirectory = null;
+        }
+    }
 
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {

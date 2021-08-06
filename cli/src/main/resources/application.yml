@@ -25,6 +25,8 @@ jackson:
     writeDatesAsTimestamps: false
     writeDurationsAsTimestamps: false
   serialization-inclusion: non_default
+  deserialization:
+    FAIL_ON_UNKNOWN_PROPERTIES: false
 
 endpoints:
   all:

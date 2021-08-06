@@ -428,7 +428,7 @@ public class Worker implements Runnable, Closeable {
                 this.exceptionHandler(this, e);
             } finally {
                 try {
-                    task.cleanup();
+                    runContext.cleanup();
                 } catch (IOException e) {
                     log.warn("Unable to cleanup worker task", e);
                 }

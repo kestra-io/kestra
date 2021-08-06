@@ -24,18 +24,17 @@ abstract public class BashService {
     private static final Pattern PATTERN = Pattern.compile("^::(\\{.*\\})::$");
 
     public static List<String> finalCommandsWithInterpreter(
-        Path workingDirectory,
         String interpreter,
         String[] interpreterArgs,
-        String commandAsString
+        String commandAsString,
+        RunContext runContext
     ) throws IOException {
         // build the final commands
         List<String> commandsWithInterpreter = new ArrayList<>(Collections.singletonList(interpreter));
 
-        File bashTempFiles = null;
         // https://www.in-ulm.de/~mascheck/various/argmax/ MAX_ARG_STRLEN (131072)
         if (commandAsString.length() > 131072) {
-            bashTempFiles = File.createTempFile("bash", ".sh", workingDirectory.toFile());
+            File bashTempFiles = runContext.tempFile(".sh").toFile();
             Files.write(bashTempFiles.toPath(), commandAsString.getBytes());
 
             commandAsString = bashTempFiles.getAbsolutePath();
@@ -51,7 +50,8 @@ abstract public class BashService {
     public static Map<String, String> createOutputFiles(
         Path workingDirectory,
         List<String> outputFiles,
-        Map<String, Object> additionalVars
+        Map<String, Object> additionalVars,
+        RunContext runContext
     ) {
         List<String> outputs = new ArrayList<>();
 
@@ -63,7 +63,7 @@ abstract public class BashService {
         if (outputs.size() > 0) {
             outputs
                 .forEach(throwConsumer(s -> {
-                    File tempFile = File.createTempFile(s + "_", ".tmp", workingDirectory.toFile());
+                    File tempFile = runContext.tempFile().toFile();
 
                     result.put(s, "{{workingDir}}/" + tempFile.getName());
                 }));

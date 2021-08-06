@@ -79,7 +79,7 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
 
     @Override
     public Concat.Output run(RunContext runContext) throws Exception {
-        File tempFile = File.createTempFile("concat_", "");
+        File tempFile = runContext.tempFile().toFile();
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile)) {
             if (files != null) {
                 files.forEach(throwConsumer(s -> {

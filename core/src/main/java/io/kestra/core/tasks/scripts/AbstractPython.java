@@ -99,7 +99,7 @@ public class AbstractPython extends AbstractBash {
 
     protected String virtualEnvCommand(RunContext runContext, List<String> requirements) throws IllegalVariableEvaluationException, IOException {
         List<String> renderer = new ArrayList<>();
-        Path workingDirectory = this.tempDir();
+        Path workingDirectory = runContext.tempDir();
 
         if (this.exitOnFailed) {
             renderer.add("set -o errexit");

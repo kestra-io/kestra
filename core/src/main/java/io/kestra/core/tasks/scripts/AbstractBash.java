@@ -116,24 +116,26 @@ abstract public class AbstractBash extends Task {
         return this.inputFiles;
     }
 
-    protected List<String> finalCommandsWithInterpreter(String commandAsString) throws IOException {
+    protected List<String> finalCommandsWithInterpreter(RunContext runContext, String commandAsString) throws IOException {
         return BashService.finalCommandsWithInterpreter(
-            this.tempDir(),
             this.interpreter,
             this.interpreterArgs,
-            commandAsString
+            commandAsString,
+            runContext
         );
     }
 
     protected ScriptOutput run(RunContext runContext, Supplier<String> supplier) throws Exception {
         Logger logger = runContext.logger();
 
-        Path workingDirectory = this.tempDir();
+        Path workingDirectory = runContext.tempDir();
+        additionalVars.put("workingDir", workingDirectory.toAbsolutePath().toString());
 
         Map<String, String> outputFiles = BashService.createOutputFiles(
             workingDirectory,
             this.outputFiles,
-            additionalVars
+            additionalVars,
+            runContext
         );
 
         BashService.createInputFiles(
@@ -150,7 +152,7 @@ abstract public class AbstractBash extends Task {
             runContext,
             logger,
             workingDirectory,
-            finalCommandsWithInterpreter(commandAsString),
+            finalCommandsWithInterpreter(runContext, commandAsString),
             this.env,
             (inputStream, isStdErr) -> {
                 AbstractLogThread thread = new LogThread(logger, inputStream, isStdErr, runContext);
@@ -166,8 +168,6 @@ abstract public class AbstractBash extends Task {
 
         outputFiles.
             forEach(throwBiConsumer((k, v) -> uploaded.put(k, runContext.putTempFile(new File(runContext.render(v, additionalVars))))));
-
-        this.cleanup();
 
         Map<String, Object> outputs = new HashMap<>();
         outputs.putAll(runResult.getStdOut().getOutputs());
@@ -236,13 +236,6 @@ abstract public class AbstractBash extends Task {
             process.destroy();
             throw e;
         }
-    }
-
-    protected Path tempDir() throws IOException {
-        Path path = super.tempDir();
-        additionalVars.put("workingDir", path.toAbsolutePath().toString());
-
-        return path;
     }
 
     @NoArgsConstructor

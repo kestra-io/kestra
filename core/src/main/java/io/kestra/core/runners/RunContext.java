@@ -20,9 +20,12 @@ import io.kestra.core.utils.Slugify;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.NoArgsConstructor;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,6 +42,7 @@ public class RunContext {
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
     private MetricRegistry meterRegistry;
     private RunContextLogger runContextLogger;
+    protected transient Path temporaryDirectory;
 
     /**
      * Only used by {@link io.kestra.core.models.triggers.types.Flow}
@@ -461,5 +465,42 @@ public class RunContext {
         values.add(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, clsName));
 
         return String.join(".", values);
+    }
+
+    public Path tempDir() throws IOException {
+        if (this.temporaryDirectory == null) {
+            this.temporaryDirectory = Files.createTempDirectory("runcontext-temp-dir");
+        }
+
+        return this.temporaryDirectory;
+    }
+
+    public Path tempFile() throws IOException {
+        return this.tempFile(null, null);
+    }
+
+    public Path tempFile(String suffix) throws IOException {
+        return this.tempFile(null, suffix);
+    }
+
+    public Path tempFile(byte[] content) throws IOException {
+        return this.tempFile(content, null);
+    }
+
+    public Path tempFile(byte[] content, String suffix) throws IOException {
+        Path tempFile = Files.createTempFile(this.tempDir(), null, suffix);
+
+        if (content != null) {
+            Files.write(tempFile, content);
+        }
+
+        return tempFile;
+    }
+
+    public void cleanup() throws IOException {
+        if (temporaryDirectory != null) {
+            FileUtils.deleteDirectory(temporaryDirectory.toFile());
+            this.temporaryDirectory = null;
+        }
     }
 }

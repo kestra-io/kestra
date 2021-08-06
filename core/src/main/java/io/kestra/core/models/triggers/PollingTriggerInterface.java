@@ -1,8 +1,8 @@
 package io.kestra.core.models.triggers;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.RunContext;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;

@@ -156,7 +156,11 @@ public class Worker implements Runnable, Closeable {
                         Objects.requireNonNull(result.getTaskRun().lastAttempt()).getState().getCurrent() == State.Type.FAILED
                     )
                     .onRetry(e -> {
-                        current.set(e.getLastResult());
+                        WorkerTask lastResult = e.getLastResult();
+
+                        lastResult = lastResult.getRunContext().cleanup(lastResult);
+
+                        current.set(lastResult);
 
                         metricRegistry
                             .counter(
@@ -169,7 +173,7 @@ public class Worker implements Runnable, Closeable {
                             .increment();
 
                         this.workerTaskResultQueue.emit(
-                            new WorkerTaskResult(e.getLastResult())
+                            new WorkerTaskResult(lastResult)
                         );
                     })/*,
                     Fallback.of(current::get)*/

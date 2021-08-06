@@ -97,9 +97,8 @@ public class AbstractPython extends AbstractBash {
     @PluginProperty(dynamic = true)
     protected List<String> requirements;
 
-    protected String virtualEnvCommand(RunContext runContext, List<String> requirements) throws IllegalVariableEvaluationException, IOException {
+    protected String virtualEnvCommand(RunContext runContext, List<String> requirements) throws IllegalVariableEvaluationException {
         List<String> renderer = new ArrayList<>();
-        Path workingDirectory = this.tmpWorkingDirectory();
 
         if (this.exitOnFailed) {
             renderer.add("set -o errexit");

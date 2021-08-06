@@ -1,36 +1,30 @@
 package io.kestra.core.tasks.scripts;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.utils.ExecutorsUtils;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import org.apache.commons.io.FileUtils;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.function.Function;
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import static io.kestra.core.utils.Rethrow.*;
+import static io.kestra.core.utils.Rethrow.throwBiConsumer;
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
@@ -96,8 +90,8 @@ abstract public class AbstractBash extends Task {
     @Schema(
         title = "Input files are extra files supplied by user that make it simpler organize code.",
         description = "Describe a files map that will be written and usable in execution context. In python execution " +
-            "context is in a temp folder, for bash scripts, you can reach files using a inputsDirectory variable " +
-            "like 'source {{inputsDirectory}}/myfile.sh' "
+            "context is in a temp folder, for bash scripts, you can reach files using a workingDir variable " +
+            "like 'source {{workingDir}}/myfile.sh' "
     )
     @PluginProperty(
         additionalProperties = String.class,
@@ -114,10 +108,6 @@ abstract public class AbstractBash extends Task {
     )
     protected Map<String, String> env;
 
-    @Builder.Default
-    @Getter(AccessLevel.NONE)
-    protected transient List<File> cleanupDirectory = new ArrayList<>();
-
     @Getter(AccessLevel.NONE)
     protected transient Path workingDirectory;
 
@@ -125,110 +115,40 @@ abstract public class AbstractBash extends Task {
     @Getter(AccessLevel.NONE)
     protected transient Map<String, Object> additionalVars = new HashMap<>();
 
-    protected Map<String, String> handleOutputFiles() {
-        List<String> outputs = new ArrayList<>();
-
-        if (this.outputFiles != null && this.outputFiles.size() > 0) {
-            outputs.addAll(this.outputFiles);
-        }
-
-        if (this.outputsFiles != null && this.outputsFiles.size() > 0) {
-            outputs.addAll(this.outputsFiles);
-        }
-
-        if (files != null && files.size() > 0) {
-            outputs.addAll(files);
-        }
-
-        Map<String, String> outputFiles = new HashMap<>();
-        if (outputs.size() > 0) {
-            outputs
-                .forEach(throwConsumer(s -> {
-                    File tempFile = File.createTempFile(s + "_", ".tmp");
-
-                    outputFiles.put(s, tempFile.getAbsolutePath());
-                }));
-
-            additionalVars.put("temp", outputFiles);
-            additionalVars.put("outputFiles", outputFiles);
-        }
-
-        return outputFiles;
-    }
-
     protected Map<String, String> finalInputFiles() throws IOException {
         return this.inputFiles;
     }
 
-    protected void handleInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
-        Map<String, String> finalInputFiles = this.finalInputFiles();
-
-        if (finalInputFiles != null && finalInputFiles.size() > 0) {
-            Path workingDirectory = tmpWorkingDirectory();
-
-            for (String fileName : finalInputFiles.keySet()) {
-                File file = new File(fileName);
-
-                // path with "/", create the subfolders
-                if (file.getParent() != null) {
-                    Path subFolder = Paths.get(
-                        workingDirectory.toAbsolutePath().toString(),
-                        new File(fileName).getParent()
-                    );
-
-                    if (!subFolder.toFile().exists()) {
-                        Files.createDirectories(subFolder);
-                    }
-                }
-
-                String filePath = workingDirectory + "/" + fileName;
-                String render = runContext.render(finalInputFiles.get(fileName), additionalVars);
-
-                if (render.startsWith("kestra://")) {
-                    try (
-                        InputStream inputStream = runContext.uriToInputStream(new URI(render));
-                        OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(filePath))
-                    ) {
-                        int byteRead;
-                        while ((byteRead = inputStream.read()) != -1) {
-                            outputStream.write(byteRead);
-                        }
-                        outputStream.flush();
-                    }
-                } else {
-                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-                        writer.write(render);
-                    }
-                }
-            }
-        }
-    }
-
     protected List<String> finalCommandsWithInterpreter(String commandAsString) throws IOException {
-        // build the final commands
-        List<String> commandsWithInterpreter = new ArrayList<>(Collections.singletonList(this.interpreter));
-
-        File bashTempFiles = null;
-        // https://www.in-ulm.de/~mascheck/various/argmax/ MAX_ARG_STRLEN (131072)
-        if (commandAsString.length() > 131072) {
-            bashTempFiles = File.createTempFile("bash", ".sh", this.tmpWorkingDirectory().toFile());
-            Files.write(bashTempFiles.toPath(), commandAsString.getBytes());
-
-            commandAsString = bashTempFiles.getAbsolutePath();
-        } else {
-            commandsWithInterpreter.addAll(Arrays.asList(this.interpreterArgs));
-        }
-
-        commandsWithInterpreter.add(commandAsString);
-
-        return commandsWithInterpreter;
+        return BashService.finalCommandsWithInterpreter(
+            this.interpreter,
+            this.interpreterArgs,
+            commandAsString,
+            workingDirectory
+        );
     }
 
     protected ScriptOutput run(RunContext runContext, Supplier<String> supplier) throws Exception {
         Logger logger = runContext.logger();
 
-        Map<String, String> outputFiles = this.handleOutputFiles();
-        this.handleInputFiles(runContext);
+        if (this.workingDirectory == null) {
+            this.workingDirectory = runContext.tempDir();
+        }
+
+        additionalVars.put("workingDir", workingDirectory.toAbsolutePath().toString());
+
+        Map<String, String> outputFiles = BashService.createOutputFiles(
+            workingDirectory,
+            this.outputFiles,
+            additionalVars
+        );
+
+        BashService.createInputFiles(
+            runContext,
+            workingDirectory,
+            this.finalInputFiles(),
+            additionalVars
+        );
 
         String commandAsString = supplier.get();
 
@@ -252,11 +172,7 @@ abstract public class AbstractBash extends Task {
         Map<String, URI> uploaded = new HashMap<>();
 
         outputFiles.
-            forEach(throwBiConsumer((k, v) -> {
-                uploaded.put(k, runContext.putTempFile(new File(v)));
-            }));
-
-        this.cleanup();
+            forEach(throwBiConsumer((k, v) -> uploaded.put(k, runContext.putTempFile(new File(runContext.render(v, additionalVars))))));
 
         Map<String, Object> outputs = new HashMap<>();
         outputs.putAll(runResult.getStdOut().getOutputs());
@@ -327,28 +243,11 @@ abstract public class AbstractBash extends Task {
         }
     }
 
-    protected void cleanup() throws IOException {
-        for (File folder : cleanupDirectory) {
-            FileUtils.deleteDirectory(folder);
-        }
-    }
-
-    protected Path tmpWorkingDirectory() throws IOException {
-        if (this.workingDirectory == null) {
-            this.workingDirectory = Files.createTempDirectory("working-dir");
-            this.cleanupDirectory.add(workingDirectory.toFile());
-            additionalVars.put("workingDir", workingDirectory.toAbsolutePath().toString());
-        }
-
-        return this.workingDirectory;
-    }
-
     @NoArgsConstructor
     @Data
     public static class BashCommand <T> {
         private Map<String, Object> outputs;
         private List<AbstractMetricEntry<T>> metrics;
-
     }
 
     @FunctionalInterface
@@ -357,9 +256,6 @@ abstract public class AbstractBash extends Task {
     }
 
     public static class LogThread extends AbstractLogThread {
-        protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
-        private static final Pattern PATTERN = Pattern.compile("^::(\\{.*\\})::$");
-
         private final Logger logger;
         private final boolean isStdErr;
         private final RunContext runContext;
@@ -373,33 +269,12 @@ abstract public class AbstractBash extends Task {
         }
 
         protected void call(String line) {
-            this.parseOut(line, logger, runContext);
+            outputs.putAll(BashService.parseOut(line, logger, runContext));
 
             if (isStdErr) {
                 logger.warn(line);
             } else {
                 logger.info(line);
-            }
-        }
-
-        protected void parseOut(String line, Logger logger, RunContext runContext)  {
-            Matcher m = PATTERN.matcher(line);
-
-            if (m.find()) {
-                try {
-                    BashCommand<?> bashCommand = MAPPER.readValue(m.group(1), BashCommand.class);
-
-                    if (bashCommand.outputs != null) {
-                        outputs.putAll(bashCommand.outputs);
-                    }
-
-                    if (bashCommand.metrics != null) {
-                        bashCommand.metrics.forEach(runContext::metric);
-                    }
-                }
-                catch (JsonProcessingException e) {
-                    logger.warn("Invalid outputs '{}'", e.getMessage(), e);
-                }
             }
         }
     }
@@ -419,6 +294,5 @@ abstract public class AbstractBash extends Task {
             this.stdOutSize = stdOutSize;
             this.stdErrSize = stdErrSize;
         }
-
     }
 }

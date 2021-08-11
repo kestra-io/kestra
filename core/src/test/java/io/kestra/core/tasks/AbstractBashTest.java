@@ -3,6 +3,7 @@ package io.kestra.core.tasks;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import io.kestra.core.tasks.scripts.ScriptOutput;
+import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
@@ -30,36 +31,32 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest
-class BashTest {
+abstract class AbstractBashTest {
     @Inject
     RunContextFactory runContextFactory;
 
     @Inject
     StorageInterface storageInterface;
 
+    abstract protected Bash.BashBuilder<?, ?> configure(Bash.BashBuilder<?, ?> builder);
+
     @Test
     void run() throws Exception {
-        RunContext runContext = runContextFactory.of(ImmutableMap.of(
-            "input", ImmutableMap.of("url", "www.google.fr")
-            )
-        );
+        Bash bash = configure(Bash.builder()
+            .commands(new String[]{"echo 0", "echo 1", ">&2 echo 2", ">&2 echo 3"})
+        ).build();
 
-        Bash bash = Bash.builder()
-            .commands(new String[]{"sleep 1", "curl {{ upper input.url }} > /dev/null", "echo 0", "sleep 1", "echo 1"})
-            .build();
-
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of());
         ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getStdOutLineCount(), is(2));
-        assertThat(run.getStdErrLineCount() > 0, is(true));
+        assertThat(run.getStdErrLineCount(), is(2));
     }
 
     @Test
     void files() throws Exception {
-        RunContext runContext = runContextFactory.of();
-
-        Bash bash = Bash.builder()
+        Bash bash = configure(Bash.builder()
             .outputFiles(Arrays.asList("xml", "csv"))
             .inputFiles(ImmutableMap.of("files/in/in.txt", "I'm here"))
             .commands(new String[]{
@@ -68,8 +65,9 @@ class BashTest {
                 "echo 2 >> {{ outputFiles.csv }}",
                 "echo 3 >> {{ outputFiles.xml }}"
             })
-            .build();
+        ).build();
 
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of());
         ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
@@ -96,12 +94,11 @@ class BashTest {
     @Test
     @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void failed() {
-        RunContext runContext = runContextFactory.of();
-
-        Bash bash = Bash.builder()
+        Bash bash = configure(Bash.builder()
             .commands(new String[]{"echo 1 1>&2", "exit 66", "echo 2"})
-            .build();
+        ).build();
 
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of());
         Bash.BashException bashException = assertThrows(Bash.BashException.class, () -> {
             bash.run(runContext);
         });
@@ -115,12 +112,11 @@ class BashTest {
     @Test
     @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void stopOnFirstFailed() {
-        RunContext runContext = runContextFactory.of();
-
-        Bash bash = Bash.builder()
+        Bash bash = configure(Bash.builder()
             .commands(new String[]{"unknown", "echo 1"})
-            .build();
+        ).build();
 
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of());
         Bash.BashException bashException = assertThrows(Bash.BashException.class, () -> {
             bash.run(runContext);
         });
@@ -133,13 +129,12 @@ class BashTest {
     @Test
     @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void dontStopOnFirstFailed() throws Exception {
-        RunContext runContext = runContextFactory.of();
-
-        Bash bash = Bash.builder()
+        Bash bash = configure(Bash.builder()
             .commands(new String[]{"unknown", "echo 1"})
             .exitOnFailed(false)
-            .build();
+        ).build();
 
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of());
         ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
@@ -149,17 +144,17 @@ class BashTest {
 
     @Test
     void longBashCreateTempFiles() throws Exception {
-        RunContext runContext = runContextFactory.of();
 
         List<String> commands = new ArrayList<>();
         for (int i = 0; i < 15000; i++) {
             commands.add("if [ \"" + i + "\" -eq 0 ] || [ \"" + i + "\" -eq 14999  ]; then echo " + i + ";fi;");
         }
 
-        Bash bash = Bash.builder()
+        Bash bash = configure(Bash.builder()
             .commands(commands.toArray(String[]::new))
-            .build();
+        ).build();
 
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of());
         ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
@@ -169,20 +164,19 @@ class BashTest {
 
     @Test
     void useInputFiles() throws Exception {
-        RunContext runContext = runContextFactory.of();
-
         Map<String, String> files = new HashMap<>();
         files.put("test.sh", "tst() { echo '::{\"outputs\": {\"extract\":\"testbash\"}}::' ; echo '{{workingDir}}'; }");
 
         List<String> commands = new ArrayList<>();
         commands.add("source {{workingDir}}/test.sh && tst");
 
-        Bash bash = Bash.builder()
+        Bash bash = configure(Bash.builder()
             .interpreter("/bin/bash")
             .commands(commands.toArray(String[]::new))
             .inputFiles(files)
-            .build();
+        ).build();
 
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of());
         ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
@@ -191,9 +185,7 @@ class BashTest {
 
     @Test
     void useInputFilesFromKestraFs() throws Exception {
-        RunContext runContext = runContextFactory.of();
-
-        URL resource = BashTest.class.getClassLoader().getResource("application.yml");
+        URL resource = AbstractBashTest.class.getClassLoader().getResource("application.yml");
 
         URI put = storageInterface.put(
             new URI("/file/storage/get.yml"),
@@ -207,13 +199,14 @@ class BashTest {
         List<String> commands = new ArrayList<>();
         commands.add("cat fscontent.txt > {{ outputFiles.out }} ");
 
-        Bash bash = Bash.builder()
+        Bash bash = configure(Bash.builder()
             .interpreter("/bin/bash")
             .commands(commands.toArray(String[]::new))
             .inputFiles(files)
             .outputFiles(Collections.singletonList("out"))
-            .build();
+        ).build();
 
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of());
         ScriptOutput run = bash.run(runContext);
 
         assertThat(run.getExitCode(), is(0));
@@ -229,22 +222,22 @@ class BashTest {
         assertThat(run.getVars().get("bool"), is(true));
         assertThat(run.getVars().get("float"), is(3.65));
 
-        assertThat(BashTest.getMetrics(runContext, "count").getValue(), is(1D));
-        assertThat(BashTest.getMetrics(runContext, "count2").getValue(), is(2D));
-        assertThat(BashTest.getMetrics(runContext, "count2").getTags().size(), is(0));
-        assertThat(BashTest.getMetrics(runContext, "count").getTags().size(), is(2));
-        assertThat(BashTest.getMetrics(runContext, "count").getTags().get("tag1"), is("i"));
-        assertThat(BashTest.getMetrics(runContext, "count").getTags().get("tag2"), is("win"));
+        assertThat(AbstractBashTest.getMetrics(runContext, "count").getValue(), is(1D));
+        assertThat(AbstractBashTest.getMetrics(runContext, "count2").getValue(), is(2D));
+        assertThat(AbstractBashTest.getMetrics(runContext, "count2").getTags().size(), is(0));
+        assertThat(AbstractBashTest.getMetrics(runContext, "count").getTags().size(), is(2));
+        assertThat(AbstractBashTest.getMetrics(runContext, "count").getTags().get("tag1"), is("i"));
+        assertThat(AbstractBashTest.getMetrics(runContext, "count").getTags().get("tag2"), is("win"));
 
-        assertThat(BashTest.<Duration>getMetrics(runContext, "timer1").getValue().getNano(), greaterThan(0));
-        assertThat(BashTest.<Duration>getMetrics(runContext, "timer1").getTags().size(), is(2));
-        assertThat(BashTest.<Duration>getMetrics(runContext, "timer1").getTags().get("tag1"), is("i"));
-        assertThat(BashTest.<Duration>getMetrics(runContext, "timer1").getTags().get("tag2"), is("lost"));
+        assertThat(AbstractBashTest.<Duration>getMetrics(runContext, "timer1").getValue().getNano(), greaterThan(0));
+        assertThat(AbstractBashTest.<Duration>getMetrics(runContext, "timer1").getTags().size(), is(2));
+        assertThat(AbstractBashTest.<Duration>getMetrics(runContext, "timer1").getTags().get("tag1"), is("i"));
+        assertThat(AbstractBashTest.<Duration>getMetrics(runContext, "timer1").getTags().get("tag2"), is("lost"));
 
-        assertThat(BashTest.<Duration>getMetrics(runContext, "timer2").getValue().getNano(), greaterThan(100000000));
-        assertThat(BashTest.<Duration>getMetrics(runContext, "timer2").getTags().size(), is(2));
-        assertThat(BashTest.<Duration>getMetrics(runContext, "timer2").getTags().get("tag1"), is("i"));
-        assertThat(BashTest.<Duration>getMetrics(runContext, "timer2").getTags().get("tag2"), is("destroy"));
+        assertThat(AbstractBashTest.<Duration>getMetrics(runContext, "timer2").getValue().getNano(), greaterThan(100000000));
+        assertThat(AbstractBashTest.<Duration>getMetrics(runContext, "timer2").getTags().size(), is(2));
+        assertThat(AbstractBashTest.<Duration>getMetrics(runContext, "timer2").getTags().get("tag1"), is("i"));
+        assertThat(AbstractBashTest.<Duration>getMetrics(runContext, "timer2").getTags().get("tag2"), is("destroy"));
     }
 
     @SuppressWarnings("unchecked")

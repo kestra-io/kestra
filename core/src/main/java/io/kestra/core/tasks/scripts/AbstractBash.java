@@ -4,6 +4,10 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.tasks.scripts.runners.DockerScriptRunner;
+import io.kestra.core.tasks.scripts.runners.ProcessBuilderScriptRunner;
+import io.kestra.core.tasks.scripts.runners.ScriptRunnerInterface;
+import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -14,17 +18,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
-import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 import static io.kestra.core.utils.Rethrow.throwBiConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
@@ -34,7 +35,21 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 abstract public class AbstractBash extends Task {
     @Builder.Default
     @Schema(
-        description = "Interpreter to used"
+        title = "Runner to use"
+    )
+    @PluginProperty(dynamic = false)
+    @NotNull
+    @NotEmpty
+    protected AbstractBash.Runner runner = Runner.PROCESS;
+
+    @Schema(
+        title = "Docker options when using runner `DOCKER`"
+    )
+    protected DockerOptions dockerOptions;
+
+    @Builder.Default
+    @Schema(
+        title = "Interpreter to used"
     )
     @PluginProperty(dynamic = false)
     @NotNull
@@ -190,57 +205,22 @@ abstract public class AbstractBash extends Task {
     }
 
     protected RunResult run(RunContext runContext, Logger logger, Path workingDirectory, List<String> commandsWithInterpreter, Map<String, String> env,  LogSupplier logSupplier) throws Exception {
-        // start
-        ProcessBuilder processBuilder = new ProcessBuilder();
-
-        if (env != null && env.size() > 0) {
-            Map<String, String> environment = processBuilder.environment();
-
-            environment.putAll(env
-                .entrySet()
-                .stream()
-                .map(throwFunction(r -> new AbstractMap.SimpleEntry<>(
-                        runContext.render(r.getKey()),
-                        runContext.render(r.getValue())
-                    )
-                ))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-            );
+        ScriptRunnerInterface executor;
+        if (this.runner == Runner.DOCKER) {
+            executor = new DockerScriptRunner();
+        } else {
+            executor = new ProcessBuilderScriptRunner();
         }
 
-        if (workingDirectory != null) {
-            processBuilder.directory(workingDirectory.toFile());
-        }
-
-        processBuilder.command(commandsWithInterpreter);
-
-        Process process = processBuilder.start();
-        long pid = process.pid();
-        logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", commandsWithInterpreter));
-
-        try {
-            // logs
-            AbstractLogThread stdOut = logSupplier.call(process.getInputStream(), false);
-            AbstractLogThread stdErr = logSupplier.call(process.getErrorStream(), true);
-
-
-            int exitCode = process.waitFor();
-
-            stdOut.join();
-            stdErr.join();
-
-            if (exitCode != 0) {
-                throw new BashException(exitCode, stdOut.getLogsCount(), stdErr.getLogsCount());
-            } else {
-                logger.debug("Command succeed with code " + exitCode);
-            }
-
-            return new RunResult(exitCode, stdOut, stdErr);
-        } catch (InterruptedException e) {
-            logger.warn("Killing process {} for InterruptedException", pid);
-            process.destroy();
-            throw e;
-        }
+        return executor.run(
+            this,
+            runContext,
+            logger,
+            workingDirectory,
+            commandsWithInterpreter,
+            env,
+            logSupplier
+        );
     }
 
     @NoArgsConstructor
@@ -294,5 +274,50 @@ abstract public class AbstractBash extends Task {
             this.stdOutSize = stdOutSize;
             this.stdErrSize = stdErrSize;
         }
+    }
+
+    public enum Runner {
+        PROCESS,
+        DOCKER
+    }
+
+    @SuperBuilder
+    @NoArgsConstructor
+    @Getter
+    @Introspected
+    public static class DockerOptions {
+        @Schema(
+            title = "Docker api uri"
+        )
+        @PluginProperty(dynamic = true)
+        @Builder.Default
+        private final String dockerHost = "unix:///var/run/docker.sock";
+
+        @Schema(
+            title = "Docker config file",
+            description = "Full file that can be used to configure private registries, ..."
+        )
+        @PluginProperty(dynamic = true)
+        private String dockerConfig;
+
+        @Schema(
+            title = "Docker image to use"
+        )
+        @PluginProperty(dynamic = true)
+        @NotNull
+        @NotEmpty
+        protected String image;
+
+        @Schema(
+            title = "Docker user to use"
+        )
+        @PluginProperty(dynamic = true)
+        protected String user;
+
+        @Schema(
+            title = "Docker entrypoint to use"
+        )
+        @PluginProperty(dynamic = true)
+        protected List<String> entryPoint;
     }
 }

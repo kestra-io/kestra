@@ -166,6 +166,6 @@ class NodeTest {
 
         ScriptOutput run = node.run(runContext);
 
-        BashTest.controlOutputs(runContext, run);
+        AbstractBashTest.controlOutputs(runContext, run);
     }
 }

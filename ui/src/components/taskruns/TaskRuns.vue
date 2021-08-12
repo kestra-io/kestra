@@ -262,7 +262,7 @@
                 this.$store
                     .dispatch("stat/taskRunDaily", {
                         q: this.loadQuery(),
-                        startDate: this.$moment(this.startDate).startOf("day").toISOString(true),
+                        startDate: this.$moment(this.startDate).startOf("day").add(-1, "day").toISOString(true),
                         endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
                     })
                     .then(() => {

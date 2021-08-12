@@ -312,7 +312,7 @@
                     this.$store
                         .dispatch("stat/daily", {
                             q: this.loadQuery(),
-                            startDate: this.$moment(this.startDate).startOf("day").toISOString(true),
+                            startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
                             endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
                         })
                         .then(() => {

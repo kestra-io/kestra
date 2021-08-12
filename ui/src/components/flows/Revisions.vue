@@ -120,7 +120,7 @@
             addQuery() {
                 this.$router.push({query: {
                     ...this.$route.query,
-                    ...{revisionLeft:this.revisionLeft, revisionRight: this.revisionRight}}
+                    ...{revisionLeft:this.revisionLeft + 1, revisionRight: this.revisionRight + 1}}
                 });
             }
         },

@@ -2,9 +2,11 @@
     <b-table
         striped
         hover
-        bordered
+        :bordered="!stacked"
         small
         show-empty
+        :stacked="stacked"
+        :responsive="true"
         :items="variables"
         :fields="fields"
         class="mb-0"
@@ -71,7 +73,11 @@
                 type: Object,
                 required: false,
                 default: undefined
-            }
+            },
+            stacked: {
+                type: Boolean,
+                default: false
+            },
         },
         computed: {
             fields() {
@@ -102,4 +108,15 @@
 /deep/ td.key {
     width: 150px;
 }
+
+/deep/ .b-table-stacked {
+    td.key {
+        width: 100%;
+    }
+
+    td:before {
+        display: none;
+    }
+}
+
 </style>

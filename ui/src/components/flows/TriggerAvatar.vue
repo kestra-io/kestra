@@ -1,17 +1,21 @@
 <template>
     <div>
-        <span v-for="trigger in triggers" :key="uid(trigger)">
+        <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)">
             <b-avatar
                 size="sm"
                 variant="primary"
                 :text="name(trigger)"
                 button
-                @click="showTriggerDetails(trigger)"
             />
+            <b-popover triggers="hover" :target="uid(trigger)" placement="left" :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`">
+                <vars :stacked="true" :data="triggerData(trigger)" />
+            </b-popover>
         </span>
     </div>
 </template>
 <script>
+    import Markdown from "../../utils/markdown";
+    import Vars from "../executions/Vars";
 
     export default {
         props: {
@@ -24,18 +28,24 @@
                 default: () => undefined,
             },
         },
-        components: {},
+        components: {
+            Vars
+        },
         methods: {
-            showTriggerDetails(trigger) {
-                this.$emit("showTriggerDetails", trigger);
-            },
             uid(trigger) {
-                return (this.flow ? this.flow.namespace + "-" + this.flow.id : this.execution.namespace + "-" + this.execution.flowId) + "-" + trigger.id
+                return (this.flow ? this.flow.namespace + "-" + this.flow.id : this.execution.id) + "-" + trigger.id
             },
             name(trigger) {
                 let split = trigger.type.split(".");
 
                 return split[split.length - 1].substr(0, 1).toUpperCase();
+            },
+            triggerData(trigger) {
+                if (trigger.description) {
+                    return {...trigger, description: Markdown.render(trigger.description)}
+                }
+
+                return trigger
             },
         },
         computed: {

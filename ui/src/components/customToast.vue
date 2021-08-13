@@ -10,7 +10,7 @@
             class="mt-2 mb-0"
             small
             bordered
-            responsive
+            :responsive="true"
             v-if="items && items.length > 0"
             striped
             hover

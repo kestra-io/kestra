@@ -31,7 +31,7 @@
                         :no-local-sorting="true"
                         @row-dblclicked="onRowDoubleClick"
                         @sort-changed="onSort"
-                        responsive
+                        :responsive="true"
                         striped
                         bordered
                         hover
@@ -81,14 +81,13 @@
                         </template>
 
                         <template #cell(triggers)="row">
-                            <trigger-avatar @showTriggerDetails="showTriggerDetails" :flow="row.item" />
+                            <trigger-avatar :flow="row.item" />
                         </template>
                     </b-table>
                 </template>
             </data-table>
         </div>
 
-        <trigger-details-modal :trigger="flowTriggerDetails" />
 
         <bottom-line v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
             <ul class="navbar-nav ml-auto">
@@ -135,7 +134,6 @@
     import StateChart from "../stats/StateChart";
     import DurationChart from "../stats/DurationChart";
     import StateGlobalChart from "../stats/StateGlobalChart";
-    import TriggerDetailsModal from "./TriggerDetailsModal";
     import TriggerAvatar from "./TriggerAvatar";
     import MarkdownTooltip from "../layout/MarkdownTooltip"
     import Kicon from "../Kicon"
@@ -154,7 +152,6 @@
             StateChart,
             DurationChart,
             StateGlobalChart,
-            TriggerDetailsModal,
             TriggerAvatar,
             MarkdownTooltip,
             Kicon
@@ -166,7 +163,6 @@
                 action: action,
                 dailyGroupByFlowReady: false,
                 dailyReady: false,
-                flowTriggerDetails: undefined
             };
         },
         computed: {
@@ -239,10 +235,6 @@
             }
         },
         methods: {
-            showTriggerDetails(trigger) {
-                this.flowTriggerDetails = trigger
-                this.$bvModal.show("modal-triggers-details")
-            },
             chartData(row) {
                 if (this.dailyGroupByFlow && this.dailyGroupByFlow[row.item.namespace] && this.dailyGroupByFlow[row.item.namespace][row.item.id]) {
                     return this.dailyGroupByFlow[row.item.namespace][row.item.id];

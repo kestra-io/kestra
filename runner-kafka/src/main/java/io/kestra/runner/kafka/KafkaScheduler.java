@@ -59,8 +59,8 @@ public class KafkaScheduler extends AbstractScheduler {
 
     private final Map<String, Trigger> triggerLock = new ConcurrentHashMap<>();
 
-    private KafkaStreamService.Stream stateStream;
-    private KafkaStreamService.Stream cleanTriggerStream;
+    protected KafkaStreamService.Stream stateStream;
+    protected KafkaStreamService.Stream cleanTriggerStream;
 
     @SuppressWarnings("unchecked")
     public KafkaScheduler(
@@ -90,7 +90,7 @@ public class KafkaScheduler extends AbstractScheduler {
     }
 
     public class SchedulerCleaner {
-        private Topology topology() {
+        private StreamsBuilder topology() {
             StreamsBuilder builder = new KafkaStreamsBuilder();
 
             KStream<String, Executor> executorKStream = kafkaStreamSourceService.executorKStream(builder);
@@ -120,19 +120,12 @@ public class KafkaScheduler extends AbstractScheduler {
                     Produced.with(Serdes.String(), JsonSerde.of(Trigger.class))
                 );
 
-            // build
-            Topology topology = builder.build();
-
-            if (log.isTraceEnabled()) {
-                log.trace(topology.describe().toString());
-            }
-
-            return topology;
+            return builder;
         }
     }
 
     public class SchedulerState {
-        public Topology topology() {
+        public StreamsBuilder topology() {
             StreamsBuilder builder = new KafkaStreamsBuilder();
 
             // executor global state store
@@ -159,14 +152,7 @@ public class KafkaScheduler extends AbstractScheduler {
                 () -> new GlobalStateLockProcessor<>(STATESTORE_TRIGGER, triggerLock)
             );
 
-            // build
-            Topology topology = builder.build();
-
-            if (log.isTraceEnabled()) {
-                log.trace(topology.describe().toString());
-            }
-
-            return topology;
+            return builder;
         }
     }
 
@@ -203,13 +189,22 @@ public class KafkaScheduler extends AbstractScheduler {
         kafkaProducer.commitTransaction();
     }
 
-    @Override
-    public void run() {
+    protected KafkaStreamService.Stream init(Class<?> group, StreamsBuilder builder) {
+        Topology topology = builder.build();
+
+        if (log.isTraceEnabled()) {
+            log.trace(topology.describe().toString());
+        }
+
+        return kafkaStreamService.of(group, topology);
+    }
+
+    public void initStream() {
         kafkaAdminService.createIfNotExist(Flow.class);
         kafkaAdminService.createIfNotExist(Executor.class);
         kafkaAdminService.createIfNotExist(Trigger.class);
 
-        this.stateStream = kafkaStreamService.of(SchedulerState.class, new SchedulerState().topology());
+        this.stateStream = this.init(SchedulerState.class, new SchedulerState().topology());
         this.stateStream.start((newState, oldState) -> {
             this.isReady = newState == KafkaStreams.State.RUNNING;
         });
@@ -224,9 +219,13 @@ public class KafkaScheduler extends AbstractScheduler {
             stateStream.store(StoreQueryParameters.fromNameAndType(STATESTORE_EXECUTOR, QueryableStoreTypes.keyValueStore()))
         );
 
-        this.cleanTriggerStream = kafkaStreamService.of(SchedulerCleaner.class, new SchedulerCleaner().topology());
+        this.cleanTriggerStream = this.init(SchedulerCleaner.class, new SchedulerCleaner().topology());
         this.cleanTriggerStream.start();
+    }
 
+    @Override
+    public void run() {
+        this.initStream();
         super.run();
     }
 

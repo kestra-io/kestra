@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,7 @@ abstract public class AbstractBash extends Task {
 
     @Schema(
         title = "The list of files that will be uploaded to internal storage, ",
-        description ="use `outputsFiles` property instead",
+        description ="use `outputFiles` property instead",
         deprecated = true
     )
     @PluginProperty(dynamic = true)
@@ -152,9 +153,24 @@ abstract public class AbstractBash extends Task {
 
         additionalVars.put("workingDir", workingDirectory.toAbsolutePath().toString());
 
+        List<String> allOutputs = new ArrayList<>();
+
+        // deprecated properties
+        if (this.outputFiles != null && this.outputFiles.size() > 0) {
+            allOutputs.addAll(this.outputFiles);
+        }
+
+        if (this.outputsFiles != null && this.outputsFiles.size() > 0) {
+            allOutputs.addAll(this.outputsFiles);
+        }
+
+        if (files != null && files.size() > 0) {
+            allOutputs.addAll(files);
+        }
+
         Map<String, String> outputFiles = BashService.createOutputFiles(
             workingDirectory,
-            this.outputFiles,
+            allOutputs,
             additionalVars
         );
 
@@ -189,16 +205,16 @@ abstract public class AbstractBash extends Task {
         outputFiles.
             forEach(throwBiConsumer((k, v) -> uploaded.put(k, runContext.putTempFile(new File(runContext.render(v, additionalVars))))));
 
-        Map<String, Object> outputs = new HashMap<>();
-        outputs.putAll(runResult.getStdOut().getOutputs());
-        outputs.putAll(runResult.getStdErr().getOutputs());
+        Map<String, Object> outputsVars = new HashMap<>();
+        outputsVars.putAll(runResult.getStdOut().getOutputs());
+        outputsVars.putAll(runResult.getStdErr().getOutputs());
 
         // output
         return ScriptOutput.builder()
             .exitCode(runResult.getExitCode())
             .stdOutLineCount(runResult.getStdOut().getLogsCount())
             .stdErrLineCount(runResult.getStdErr().getLogsCount())
-            .vars(outputs)
+            .vars(outputsVars)
             .files(uploaded)
             .outputFiles(uploaded)
             .build();

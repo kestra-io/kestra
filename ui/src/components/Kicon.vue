@@ -1,5 +1,5 @@
 <template>
-    <div v-b-tooltip="{title:tooltip, placement, html: true}">
+    <div class="kicon" v-b-tooltip="{title:tooltip, placement, html: true}">
         <slot />
     </div>
 </template>
@@ -20,3 +20,10 @@
         }
     }
 </script>
+
+<style lang="scss" scoped>
+
+.kicon {
+    white-space: nowrap;
+}
+</style>

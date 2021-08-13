@@ -1,5 +1,5 @@
 <template>
-    <b-navbar class="bottom-line" fixed="bottom" toggleable="lg">
+    <b-navbar class="bottom-line" fixed="bottom">
         <slot />
     </b-navbar>
 </template>

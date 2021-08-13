@@ -25,7 +25,7 @@
             {{ $t('Max displayable') }}: {{ max }}
         </small>
 
-        <small class="btn btn-sm btn-outline-light text-muted">
+        <small class="total btn btn-sm btn-outline-light text-muted">
             {{ $t('Total') }}: {{ total }}
         </small>
     </div>
@@ -67,8 +67,20 @@
         },
     };
 </script>
-<style scoped>
+<style scoped lang="scss">
+@import "../../styles/_variable.scss";
+
 select {
     width: auto;
+}
+
+@media (max-width: map-get($grid-breakpoints, "sm")) {
+    select {
+        display: none;
+    }
+}
+
+.total {
+    white-space: nowrap;
 }
 </style>

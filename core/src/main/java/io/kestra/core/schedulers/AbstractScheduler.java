@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -448,6 +449,8 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                 flowWithTrigger.getTriggerContext().getDate()
             );
         }
+
+        flowWithTrigger.getRunContext().cleanup();
 
         if (evaluate.isEmpty()) {
             return null;

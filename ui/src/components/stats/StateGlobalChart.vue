@@ -1,7 +1,7 @@
 <template>
     <div class="state-global-charts">
-        <div class="title" :title="$t('last 30 days executions')">
-            {{ $t('last 30 days executions') }}
+        <div class="title" :title="$t('last 30 days count')">
+            {{ $t('last 30 days count', {count: formatedCount}) }}
         </div>
         <template v-if="hasData">
             <state-chart
@@ -21,6 +21,7 @@
 
 <script>
     import StateChart from "./StateChart";
+    import Utils from "../../utils/utils";
 
     export default {
         components: {
@@ -41,10 +42,16 @@
             }
         },
         computed: {
-            hasData() {
+            formatedCount() {
+                return Utils.number(this.count);
+            },
+            count() {
                 return [...this.data].reduce((a, b) => {
                     return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
-                }, 0) > 0
+                }, 0);
+            },
+            hasData() {
+                return this.count > 0;
             }
         }
     };

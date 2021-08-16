@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
@@ -15,20 +16,26 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Slugify;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.NoArgsConstructor;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @NoArgsConstructor
 public class RunContext {
+    private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
+
     private VariableRenderer variableRenderer;
     private ApplicationContext applicationContext;
     private StorageInterface storageInterface;
@@ -39,6 +46,7 @@ public class RunContext {
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
     private MetricRegistry meterRegistry;
     private RunContextLogger runContextLogger;
+    protected transient Path temporaryDirectory;
 
     /**
      * Only used by {@link io.kestra.core.models.triggers.types.Flow}
@@ -461,5 +469,61 @@ public class RunContext {
         values.add(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, clsName));
 
         return String.join(".", values);
+    }
+
+    public Path tempDir() throws IOException {
+        if (this.temporaryDirectory == null) {
+            this.temporaryDirectory = Files.createTempDirectory("runcontext-temp-dir");
+        }
+
+        return this.temporaryDirectory;
+    }
+
+    public Path tempFile() throws IOException {
+        return this.tempFile(null, null);
+    }
+
+    public Path tempFile(String suffix) throws IOException {
+        return this.tempFile(null, suffix);
+    }
+
+    public Path tempFile(byte[] content) throws IOException {
+        return this.tempFile(content, null);
+    }
+
+    public Path tempFile(byte[] content, String suffix) throws IOException {
+        Path tempFile = Files.createTempFile(this.tempDir(), null, suffix);
+
+        if (content != null) {
+            Files.write(tempFile, content);
+        }
+
+        return tempFile;
+    }
+
+    public void cleanup() {
+        try {
+            this.cleanTemporaryDirectory();
+        } catch (IOException ex) {
+            logger().warn("Unable to cleanup worker task", ex);
+        }
+    }
+
+    public WorkerTask cleanup(WorkerTask workerTask) {
+        try {
+            this.cleanTemporaryDirectory();
+            return MAPPER.readValue(MAPPER.writeValueAsString(workerTask), WorkerTask.class);
+        } catch (IOException ex) {
+            logger().warn("Unable to cleanup worker task", ex);
+
+            return workerTask;
+        }
+    }
+
+    private void cleanTemporaryDirectory() throws IOException {
+        if (temporaryDirectory != null) {
+            FileUtils.deleteDirectory(temporaryDirectory.toFile());
+            this.temporaryDirectory = null;
+        }
     }
 }

@@ -34,7 +34,7 @@
                 <b-table
                     :no-local-sorting="true"
                     @sort-changed="onSort"
-                    responsive
+                    :responsive="true"
                     striped
                     bordered
                     hover
@@ -86,13 +86,11 @@
                     </template>
 
                     <template #cell(trigger)="row">
-                        <trigger-avatar @showTriggerDetails="showTriggerDetails" :execution="row.item" />
+                        <trigger-avatar :execution="row.item" />
                     </template>
                 </b-table>
             </template>
         </data-table>
-
-        <flow-trigger-details-modal v-if="flowTriggerDetails" :trigger="flowTriggerDetails" />
     </div>
 </template>
 
@@ -109,7 +107,6 @@
     import RefreshButton from "../layout/RefreshButton"
     import StatusFilterButtons from "../layout/StatusFilterButtons"
     import StateGlobalChart from "../../components/stats/StateGlobalChart";
-    import FlowTriggerDetailsModal from "../../components/flows/TriggerDetailsModal";
     import TriggerAvatar from "../../components/flows/TriggerAvatar";
     import DateAgo from "../layout/DateAgo";
     import Kicon from "../Kicon"
@@ -129,7 +126,6 @@
             RefreshButton,
             StatusFilterButtons,
             StateGlobalChart,
-            FlowTriggerDetailsModal,
             TriggerAvatar,
             DateAgo,
             Kicon
@@ -258,10 +254,6 @@
 
                 this.load(this.onDataLoaded);
             },
-            showTriggerDetails(trigger) {
-                this.flowTriggerDetails = trigger
-                this.$bvModal.show("modal-triggers-details")
-            },
             triggerExecution() {
                 this.$store
                     .dispatch("execution/triggerExecution", this.$route.params)
@@ -312,7 +304,7 @@
                     this.$store
                         .dispatch("stat/daily", {
                             q: this.loadQuery(),
-                            startDate: this.$moment(this.startDate).startOf("day").toISOString(true),
+                            startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
                             endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
                         })
                         .then(() => {

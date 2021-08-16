@@ -134,7 +134,7 @@
             "names": "Plugins",
             "please": "Please choose a task on the right to see its documentation"
         },
-        "last 30 days executions": "Last 30 days executions",
+        "last 30 days count": "{count} in last 30 days",
         "revisions": "Revisions",
         "no revisions found": "Only one revision exist for this flow",
         "see full revision": "See full revision",
@@ -295,7 +295,7 @@
             "names": "Plugins",
             "please": "Veuillez choisir une tache sur la droite afin de voir sa documentation"
         },
-        "last 30 days executions": "Execution des 30 derniers jours",
+        "last 30 days count": "{count} lors des 30 derniers jours",
         "revisions": "Révisions",
         "no revisions found": "Une seule révision existe pour ce flow",
         "see full revision": "Voir la révision complète",

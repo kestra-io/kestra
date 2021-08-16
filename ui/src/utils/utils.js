@@ -40,7 +40,7 @@ export default class Utils {
             }
 
             if (typeof (flat[key]) === "number") {
-                return {key, value: flat[key].toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1 ")};
+                return {key, value: Utils.number(flat[key])};
             }
 
             return {key, value: flat[key]};
@@ -82,5 +82,10 @@ export default class Utils {
 
     static duration(isoString) {
         return moment.duration(isoString, moment.ISO_8601).asMilliseconds() / 1000
+    }
+
+
+    static number(number) {
+        return number.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1 ");
     }
 }

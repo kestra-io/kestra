@@ -188,6 +188,6 @@ class PythonTest {
         assertThat(run.getVars().get("bool"), is(true));
         assertThat(run.getVars().get("float"), is(3.65));
 
-        BashTest.controlOutputs(runContext, run);
+        AbstractBashTest.controlOutputs(runContext, run);
     }
 }

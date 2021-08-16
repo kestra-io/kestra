@@ -10,7 +10,7 @@
                 <status :status="execution.state.current" />
             </b-col>
         </b-row>
-        <b-table responsive striped hover bordered :items="freshItems" class="mb-0">
+        <b-table :responsive="true" striped hover bordered :items="freshItems" class="mb-0">
             <template #cell(value)="row">
                 <router-link
                     v-if="row.item.link"

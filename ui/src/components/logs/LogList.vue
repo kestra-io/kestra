@@ -38,7 +38,7 @@
                                     </small>
                                 </div>
 
-                                <div class="task-id">
+                                <div class="task-duration">
                                     <small class="mr-1">
                                         <clock />
                                         {{ attempt.state.duration | humanizeDuration }}
@@ -315,10 +315,21 @@
         .attempt-number {
             background: $primary;
             padding: $btn-padding-y $btn-padding-x;
+            white-space: nowrap;
+        }
+
+        .task-id, .task-duration {
+            padding: $btn-padding-y $btn-padding-x;
         }
 
         .task-id {
-            padding: $btn-padding-y $btn-padding-x;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .task-duration {
+            white-space: nowrap;
         }
 
         .task-status {

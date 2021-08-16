@@ -7,7 +7,7 @@ dependencies {
 
     implementation group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: "$elasticsearchVersion"
     implementation group: "org.apache.kafka", name: "kafka-clients", version: kafkaVersion
-    implementation group: 'net.jodah', name: 'failsafe', version: '2.4.0'
+    implementation group: 'net.jodah', name: 'failsafe', version: '2.4.1'
 
-    testImplementation 'org.mockito:mockito-junit-jupiter:3.11.1'
+    testImplementation 'org.mockito:mockito-junit-jupiter:3.11.2'
 }

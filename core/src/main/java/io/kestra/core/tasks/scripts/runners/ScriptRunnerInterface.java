@@ -17,6 +17,7 @@ public interface ScriptRunnerInterface {
         Path workingDirectory,
         List<String> commandsWithInterpreter,
         Map<String, String> env,
-        AbstractBash.LogSupplier logSupplier
+        AbstractBash.LogSupplier logSupplier,
+        Map<String, Object> additionalVars
     ) throws Exception;
 }

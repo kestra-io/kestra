@@ -38,7 +38,7 @@
             }
         },
         setup(props, {root}) {
-            let duration = ref(root.$i18n.t("duration"))
+            let duration = root.$i18n.t("duration")
 
             const chartRef = ref();
             const tooltipContent = ref("");

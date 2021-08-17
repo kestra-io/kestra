@@ -9,10 +9,11 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@vue/composition-api": "^1.1.1",
     "axios": "^0.21.1",
     "bootstrap": "^4.6.0",
     "bootstrap-vue": "^2.21.2",
-    "chart.js": "^2.9.4",
+    "chart.js": "^3.5.0",
     "core-js": "^3.16.0",
     "cron-parser": "^3.5.0",
     "cron-validator": "^1.2.1",
@@ -38,7 +39,7 @@
     "vue": "^2.6.14",
     "vue-analytics": "^5.22.1",
     "vue-axios": "^3.2.5",
-    "vue-chartjs": "^3.5.1",
+    "vue-chart-3": "^0.5.7",
     "vue-i18n": "^8.25.0",
     "vue-material-design-icons": "^4.12.1",
     "vue-moment": "^4.0.0",

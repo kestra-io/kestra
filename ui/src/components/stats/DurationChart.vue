@@ -1,6 +1,6 @@
 <template>
     <div :id="uuid" :class="'executions-charts' + (this.global ? '' : ' mini')" v-if="dataReady">
-        <current-chart :data="collections" :options="options" />
+        <LineChart :ref="chartRef" :chart-data="chartData" :options="options" />
         <b-tooltip
             custom-class="tooltip-stats"
             no-fade
@@ -8,40 +8,20 @@
             :placement="(this.global ? 'bottom' : 'left')"
             triggers="hover"
         >
-            <span v-html="tooltip" />
+            <span v-html="tooltipContent" />
         </b-tooltip>
     </div>
 </template>
 
 <script>
-    import {Line} from "vue-chartjs"
-    import humanizeDuration from "humanize-duration";
+    import {computed, defineComponent, ref} from "@vue/composition-api";
+    import {LineChart} from "vue-chart-3";
+    import Utils from "../../utils/utils.js";
     import {tooltip, defaultConfig} from "../../utils/charts.js";
-    import Utils from "../../utils/utils";
+    import humanizeDuration from "humanize-duration";
 
-    const CurrentChart = {
-        extends: Line,
-        props: {
-            data: {
-                type: Object,
-                required: true
-            },
-            options: {
-                type: Object,
-                required: true
-            }
-        },
-        mounted() {
-            setTimeout(() => {
-                this.renderChart(this.data, this.options);
-            }, 0)
-        },
-    };
-
-    export default {
-        components: {
-            CurrentChart
-        },
+    export default defineComponent({
+        components: {LineChart},
         props: {
             data: {
                 type: Array,
@@ -52,56 +32,55 @@
                 default: () => false
             }
         },
-        data() {
-            return {
-                uuid: Utils.uid(),
-                tooltip: undefined
-            };
-        },
-        computed: {
-            dataReady() {
-                return this.data.length > 0;
-            },
-            collections() {
-                let avgData = this.data
+        setup(props, {root}) {
+            let duration = ref(root.$i18n.t("duration"))
+
+            const chartRef = ref();
+            const tooltipContent = ref("");
+
+            const dataReady = computed(() => props.data.length > 0)
+
+            const options = computed(() => defaultConfig({
+                plugins: {
+                    tooltip: {
+                        external: function (context) {
+                            let content = tooltip(context.tooltip);
+                            if (content) {
+                                tooltipContent.value = content;
+                            }
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                return humanizeDuration(context.raw * 1000);
+                            }
+                        }
+                    }
+                }
+            }))
+
+            const chartData = computed(() => {
+                let avgData = props.data
                     .map((value) => {
                         return value.duration.avg === 0 ? null : Utils.duration(value.duration.avg);
                     });
 
                 return {
-                    labels: this.data.map(r => r.startDate),
+                    labels: props.data.map(r => r.startDate),
                     datasets: [{
-                        label: "Duration",
+                        label: duration,
                         backgroundColor: "#c7e7e5",
-                        fill: "start",
-                        pointRadius: 1,
-                        borderWidth: 1,
                         borderColor: "#1dbaaf",
                         data: avgData
                     }]
                 }
-            },
+            })
 
-            options() {
-                let self = this
-
-                return defaultConfig({
-                    tooltips: {
-                        custom: function(tooltipModel) {
-                            let content = tooltip(tooltipModel);
-                            if (content) {
-                                self.tooltip = content;
-                            }
-                        },
-                        callbacks: {
-                            label: function(tooltipItem) {
-                                return humanizeDuration(tooltipItem.yLabel * 1000);
-                            }
-                        }
-                    },
-
-                })
-            }
-        }
-    }
+            return {chartData, tooltipContent, chartRef, options, dataReady};
+        },
+        data() {
+            return {
+                uuid: Utils.uid(),
+            };
+        },
+    });
 </script>

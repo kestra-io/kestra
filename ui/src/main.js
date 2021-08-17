@@ -8,6 +8,7 @@ import "vue-material-design-icons/styles.css";
 import App from "./App.vue"
 import BootstrapVue from "bootstrap-vue"
 import Vue from "vue"
+import VueCompositionAPI from "@vue/composition-api"
 import VueI18n from "vue-i18n"
 import VueMoment from "vue-moment"
 import NProgress from "vue-nprogress"
@@ -27,9 +28,35 @@ import stores from "./stores/store"
 import vSelect from "vue-select"
 import VueHotkey from "v-hotkey"
 
+import {
+    Chart,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    BarController,
+    LineElement,
+    LineController,
+    PointElement,
+    Tooltip,
+    Filler
+} from "chart.js";
+
+Chart.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    BarController,
+    LineElement,
+    LineController,
+    PointElement,
+    Tooltip,
+    Filler
+);
+
 let app = document.querySelector("#app");
 
 if (app) {
+  Vue.use(VueCompositionAPI)
   Vue.use(Vuex)
   let store = new Vuex.Store(stores);
 

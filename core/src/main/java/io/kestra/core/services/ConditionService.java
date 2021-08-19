@@ -1,9 +1,9 @@
 package io.kestra.core.services;
 
 import com.cronutils.utils.VisibleForTesting;
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.ResolvedTask;
@@ -11,12 +11,12 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.micronaut.core.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import io.micronaut.core.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
@@ -42,7 +42,7 @@ public class ConditionService {
         return this.isValid(condition, flow, execution, null);
     }
 
-    private void logException(Flow flow, Condition condition, ConditionContext conditionContext, Exception e) {
+    private void logException(Flow flow, Object condition, ConditionContext conditionContext, Exception e) {
         conditionContext.getRunContext().logger().warn(
             "[namespace: {}] [flow: {}] [condition: {}] Evaluate Condition Failed with error '{}'",
             flow.getNamespace(),
@@ -57,6 +57,20 @@ public class ConditionService {
         List<Condition> conditions = trigger.getConditions() == null ? new ArrayList<>() : trigger.getConditions();
 
         return this.valid(flow, conditions, conditionContext);
+    }
+
+    public boolean isValid(Flow flow, List<ScheduleCondition> conditions, ConditionContext conditionContext) {
+        return conditions
+            .stream()
+            .allMatch(condition -> {
+                try {
+                    return condition.test(conditionContext);
+                } catch (Exception e) {
+                    logException(flow, condition, conditionContext, e);
+
+                    return false;
+                }
+            });
     }
 
     public boolean isValid(AbstractTrigger trigger, Flow flow, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {

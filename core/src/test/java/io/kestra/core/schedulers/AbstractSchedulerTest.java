@@ -1,6 +1,7 @@
 package io.kestra.core.schedulers;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.conditions.ConditionContext;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.*;
@@ -55,7 +56,7 @@ abstract public class AbstractSchedulerTest {
         @Builder.Default
         private transient int counter = 0;
 
-        public Optional<Execution> evaluate(RunContext runContext, TriggerContext context) throws InterruptedException {
+        public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws InterruptedException {
             counter++;
 
             if (counter % 2 == 0) {

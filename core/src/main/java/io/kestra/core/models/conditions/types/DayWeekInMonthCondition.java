@@ -6,6 +6,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -37,7 +38,7 @@ import javax.validation.constraints.NotNull;
         )
     }
 )
-public class DayWeekInMonthCondition extends Condition {
+public class DayWeekInMonthCondition extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
         title = "The date to test",
@@ -59,7 +60,7 @@ public class DayWeekInMonthCondition extends Condition {
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        String render = conditionContext.getRunContext().render(date);
+        String render = conditionContext.getRunContext().render(date, conditionContext.getVariables());
         LocalDate currentDate = DateUtils.parseLocalDate(render);
         LocalDate computed;
 

@@ -3,6 +3,7 @@ package io.kestra.core.utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
@@ -97,7 +98,7 @@ abstract public class TestsUtils {
             .withState(State.Type.RUNNING);
     }
 
-    public static Map.Entry<RunContext, TriggerContext> mockTrigger(RunContextFactory runContextFactory, AbstractTrigger trigger) {
+    public static Map.Entry<ConditionContext, TriggerContext> mockTrigger(RunContextFactory runContextFactory, AbstractTrigger trigger) {
         StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
         Flow flow = TestsUtils.mockFlow(caller);
 
@@ -110,7 +111,10 @@ abstract public class TestsUtils {
             .build();
 
         return new AbstractMap.SimpleEntry<>(
-            runContextFactory.of(flow, trigger),
+            ConditionContext.builder()
+                .runContext(runContextFactory.of(flow, trigger))
+                .flow(flow)
+                .build(),
             triggerContext
         );
     }

@@ -1,13 +1,13 @@
 package io.kestra.core.models.conditions.types;
 
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -36,7 +36,7 @@ import javax.validation.constraints.NotNull;
         )
     }
 )
-public class DateTimeBetweenCondition extends Condition {
+public class DateTimeBetweenCondition extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
         title = "The date to test",
@@ -56,7 +56,7 @@ public class DateTimeBetweenCondition extends Condition {
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        String render = conditionContext.getRunContext().render(date);
+        String render = conditionContext.getRunContext().render(date, conditionContext.getVariables());
         ZonedDateTime currentDate = DateUtils.parseZonedDateTime(render);
 
         if (this.before != null && this.after != null) {

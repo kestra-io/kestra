@@ -25,7 +25,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -167,7 +166,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                     .flow(flowWithTrigger.getFlow())
                     .trigger(flowWithTrigger.getTrigger())
                     .pollingTrigger((PollingTriggerInterface) flowWithTrigger.getTrigger())
-                    .runContext(flowWithTrigger.getRunContext())
+                    .conditionContext(flowWithTrigger.getConditionContext())
                     .triggerContext(TriggerContext
                         .builder()
                         .namespace(flowWithTrigger.getFlow().getNamespace())
@@ -187,7 +186,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
                         return FlowWithPollingTriggerNextDate.of(
                             f,
-                            f.getPollingTrigger().nextDate(Optional.of(lastTrigger))
+                            f.getPollingTrigger().nextEvaluationDate(Optional.of(lastTrigger))
                         );
                     }
                 })
@@ -250,7 +249,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         public void onFailure(Throwable e) {
             scheduler.removeFromRunning(flowWithPollingTriggerNextDate.getTriggerContext());
 
-            this.flowWithPollingTriggerNextDate.getRunContext().logger().warn(
+            this.flowWithPollingTriggerNextDate.getConditionContext().getRunContext().logger().warn(
                 "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
                 flowWithPollingTriggerNextDate.getFlow().getNamespace(),
                 flowWithPollingTriggerNextDate.getFlow().getId(),
@@ -379,7 +378,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
             // this allow some edge case when the evaluation loop of schedulers will change second
             // between start and end
             .orElseGet(() -> {
-                    ZonedDateTime nextDate = f.getPollingTrigger().nextDate(Optional.empty());
+                    ZonedDateTime nextDate = f.getPollingTrigger().nextEvaluationDate(Optional.empty());
 
                     return Trigger.builder()
                         .date(nextDate.compareTo(now) < 0 ? nextDate : now)
@@ -438,7 +437,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         Optional<Execution> evaluate = this.metricRegistry
             .timer(MetricRegistry.SCHEDULER_EVALUATE_DURATION, metricRegistry.tags(flowWithTrigger.getTriggerContext()))
             .record(throwSupplier(() -> flowWithTrigger.getPollingTrigger().evaluate(
-                flowWithTrigger.getRunContext(),
+                flowWithTrigger.getConditionContext(),
                 flowWithTrigger.getTriggerContext()
             )));
 
@@ -450,7 +449,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
             );
         }
 
-        flowWithTrigger.getRunContext().cleanup();
+        flowWithTrigger.getConditionContext().getRunContext().cleanup();
 
         if (evaluate.isEmpty()) {
             return null;
@@ -475,7 +474,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         private AbstractTrigger trigger;
         private PollingTriggerInterface pollingTrigger;
         private TriggerContext triggerContext;
-        private RunContext runContext;
+        private ConditionContext conditionContext;
     }
 
     @SuperBuilder
@@ -489,7 +488,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                 .flow(f.getFlow())
                 .trigger(f.getTrigger())
                 .pollingTrigger(f.getPollingTrigger())
-                .runContext(f.getRunContext())
+                .conditionContext(f.getConditionContext())
                 .triggerContext(TriggerContext.builder()
                     .namespace(f.getTriggerContext().getNamespace())
                     .flowId(f.getTriggerContext().getFlowId())

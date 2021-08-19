@@ -1,17 +1,17 @@
 package io.kestra.core.models.triggers;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.runners.RunContext;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
 public interface PollingTriggerInterface {
-    Optional<Execution> evaluate(RunContext runContext, TriggerContext context) throws Exception;
+    Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception;
 
-    default ZonedDateTime nextDate(Optional<? extends TriggerContext> last) {
+    default ZonedDateTime nextEvaluationDate(Optional<? extends TriggerContext> last) {
         return ZonedDateTime.now();
     }
 

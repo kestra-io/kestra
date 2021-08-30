@@ -1,48 +1,28 @@
 <template>
-    <div :id="uuid" :class="'executions-charts' + (this.global ? (this.big ? ' big' : '') : ' mini')" v-if="dataReady">
-        <current-chart :data="collections" :options="options" />
+    <div :id="uuid" :class="'executions-charts' + (global ? (this.big ? ' big' : '') : ' mini')" v-if="dataReady">
+        <BarChart ref="chartRef" :chart-data="chartData" :options="options" />
         <b-tooltip
             custom-class="tooltip-stats"
             no-fade
             :target="uuid"
-            :placement="(this.global ? 'bottom' : 'left')"
+            :placement="(global ? 'bottom' : 'left')"
             triggers="hover"
         >
-            <span v-html="tooltip" />
+            <span v-html="tooltipContent" />
         </b-tooltip>
     </div>
 </template>
 
 <script>
-    import {Bar} from "vue-chartjs"
+    import {defineComponent, computed, ref} from "@vue/composition-api"
+    import {BarChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
     import {tooltip, defaultConfig} from "../../utils/charts.js";
     import State from "../..//utils/state";
     import humanizeDuration from "humanize-duration";
 
-    const CurrentChart = {
-        extends: Bar,
-        props: {
-            data: {
-                type: Object,
-                required: true
-            },
-            options: {
-                type: Object,
-                required: true
-            },
-        },
-        mounted() {
-            setTimeout(() => {
-                this.renderChart(this.data, this.options);
-            }, 0)
-        },
-    };
-
-    export default {
-        components: {
-            CurrentChart
-        },
+    export default defineComponent({
+        components: {BarChart},
         props: {
             data: {
                 type: Array,
@@ -57,32 +37,64 @@
                 default: () => false
             }
         },
-        data() {
-            return {
-                uuid: Utils.uid(),
-                tooltip: undefined
-            };
-        },
-        methods: {
-            backgroundFromState(state) {
+        setup(props, {root}) {
+            let duration = root.$i18n.t("duration")
+
+            const chartRef = ref();
+            const tooltipContent = ref("");
+
+            const dataReady = computed(() => props.data.length > 0)
+
+            const options = computed(() => defaultConfig({
+                plugins: {
+                    tooltip: {
+                        external: function (context) {
+                            let content = tooltip(context.tooltip);
+                            if (content) {
+                                tooltipContent.value = content;
+                            }
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.yAxisID === "yAxesB") {
+                                    return context.dataset.label + ": " + humanizeDuration(context.raw * 1000);
+                                } else {
+                                    return context.dataset.label + ": " + context.formattedValue
+                                }
+                            }
+                        }
+                    },
+                },
+                scales: {
+                    xAxes: {
+                        stacked: true,
+                    },
+                    yAxes: {
+                        display: false,
+                        position: "left",
+                        stacked: true,
+                    },
+                    yAxesB: {
+                        display: false,
+                        position: "right",
+
+                    }
+                },
+            }))
+
+            const backgroundFromState = (state) => {
                 return State.color()[state]
             }
-        },
-        computed: {
-            dataReady() {
-                return this.data.length > 0;
-            },
-            collections() {
-                let self = this;
 
-                let datasets = this.data
+            const chartData = computed(() => {
+                let datasets = props.data
                     .reduce(function (accumulator, value) {
                         Object.keys(value.executionCounts).forEach(function (state) {
                             if (accumulator[state] === undefined) {
                                 accumulator[state] = {
                                     label: state,
-                                    backgroundColor: self.backgroundFromState(state),
-                                    yAxisID: "A",
+                                    backgroundColor: backgroundFromState(state),
+                                    yAxisID: "yAxes",
                                     data: []
                                 };
                             }
@@ -94,64 +106,31 @@
                     }, Object.create(null))
 
                 return {
-                    labels: this.data.map(r => r.startDate),
-                    datasets: !this.big ? Object.values(datasets) : [{
+                    labels: props.data.map(r => r.startDate),
+                    datasets: !props.big ? Object.values(datasets) : [{
+                        order: 2,
                         type: "line",
-                        label: this.$t("duration"),
+                        label: duration,
                         backgroundColor: "#c7e7e5",
                         fill: "start",
                         pointRadius: 1,
                         borderWidth: 1,
                         borderColor: "#1dbaaf",
-                        yAxisID: "B",
-                        data: this.data
+                        yAxisID: "yAxesB",
+                        data: props.data
                             .map((value) => {
                                 return value.duration.avg === 0 ? 0 : Utils.duration(value.duration.avg);
                             })
                     }, ...Object.values(datasets), ]
                 }
-            },
-            options() {
-                let self = this
+            })
 
-                return defaultConfig({
-                    tooltips: {
-                        custom: function (tooltipModel) {
-                            let content = tooltip(tooltipModel);
-                            if (content) {
-                                self.tooltip = content;
-                            }
-                        },
-                        callbacks: {
-                            label: function(tooltipItem, data) {
-                                const dataset = data.datasets[tooltipItem.datasetIndex];
-                                if (dataset.yAxisID === "B") {
-                                    return dataset.label + ": " + humanizeDuration(tooltipItem.yLabel * 1000);
-                                } else {
-                                    return dataset.label + ": " + tooltipItem.value
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        xAxes: [{
-                            stacked: true,
-                        }],
-                        yAxes: [
-                            {
-                                id: "A",
-                                position: "left",
-                                stacked: true,
-                            },
-                            {
-                                id: "B",
-                                display: false,
-                                position: "right",
-                            }
-                        ]
-                    },
-                })
-            }
-        }
-    }
+            return {chartData, tooltipContent, chartRef, options, dataReady};
+        },
+        data() {
+            return {
+                uuid: Utils.uid(),
+            };
+        },
+    });
 </script>

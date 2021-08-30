@@ -32,24 +32,37 @@ export function defaultConfig(overide) {
         maintainAspectRatio: false,
         layout: {
             padding: {
-                top: 5
+                top: 2
             }
         },
-        tooltips: {
-            mode: "index",
-            intersect: false,
-            enabled: false,
-        },
         scales: {
-            xAxes: [{
+            xAxes: {
                 display: false,
-            }],
-            yAxes: [{
+            },
+            yAxes: {
                 display: false,
-            }]
+            }
         },
-        legend: {
-            display: false,
+        elements: {
+            line: {
+                borderWidth: 1,
+                fill: "start",
+                tension: 0.3
+            },
+            point: {
+                radius: 0,
+                hoverRadius: 0
+            }
+        },
+        plugins: {
+            legend: {
+                display: false,
+            },
+            tooltip: {
+                mode: "index",
+                intersect: false,
+                enabled: false,
+            },
         }
     }, overide);
 }

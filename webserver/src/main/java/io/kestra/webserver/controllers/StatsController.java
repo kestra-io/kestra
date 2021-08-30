@@ -10,6 +10,7 @@ import io.micronaut.validation.Validated;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +35,16 @@ public class StatsController {
     @Post(uri = "executions/daily", produces = MediaType.TEXT_JSON)
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String q,
-        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime startDate,
-        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime endDate
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
     ) {
-        return executionRepository.dailyStatistics(q, startDate, endDate, false);
+        // @TODO: seems to be converted back to utc by micronaut
+        return executionRepository.dailyStatistics(
+            q,
+            startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
+            endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
+            false
+        );
     }
 
     /**
@@ -52,10 +59,15 @@ public class StatsController {
     @Post(uri = "taskruns/daily", produces = MediaType.TEXT_JSON)
     public List<DailyExecutionStatistics> taskRunsDailyStatistics(
         @Nullable String q,
-        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime startDate,
-        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime endDate
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
     ) {
-        return executionRepository.dailyStatistics(q, startDate, endDate, true);
+        return executionRepository.dailyStatistics(
+            q,
+            startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
+            endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
+            true
+        );
     }
 
     /**
@@ -70,10 +82,14 @@ public class StatsController {
     @Post(uri = "executions/daily/group-by-flow", produces = MediaType.TEXT_JSON)
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String q,
-        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime startDate,
-        @Nullable @Format("yyyy-MM-dd'T'HH:mm:ss.SSSXXX") ZonedDateTime endDate
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
     ) {
 
-        return executionRepository.dailyGroupByFlowStatistics(q, startDate, endDate);
+        return executionRepository.dailyGroupByFlowStatistics(
+            q,
+            startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
+            endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null
+        );
     }
 }

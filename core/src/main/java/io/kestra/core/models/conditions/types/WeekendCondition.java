@@ -1,12 +1,12 @@
 package io.kestra.core.models.conditions.types;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -14,7 +14,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import javax.validation.constraints.NotNull;
 
 @SuperBuilder
@@ -36,7 +35,7 @@ import javax.validation.constraints.NotNull;
         )
     }
 )
-public class WeekendCondition extends Condition {
+public class WeekendCondition extends Condition implements ScheduleCondition {
     @NotNull
     @Schema(
         title = "The date to test",
@@ -48,7 +47,7 @@ public class WeekendCondition extends Condition {
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        String render = conditionContext.getRunContext().render(date);
+        String render = conditionContext.getRunContext().render(date, conditionContext.getVariables());
         LocalDate currentDate = DateUtils.parseLocalDate(render);
 
         return currentDate.getDayOfWeek().equals(DayOfWeek.SATURDAY) ||

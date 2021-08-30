@@ -22,7 +22,8 @@ public class ProcessBuilderScriptRunner implements ScriptRunnerInterface {
         Path workingDirectory,
         List<String> commandsWithInterpreter,
         Map<String, String> env,
-        AbstractBash.LogSupplier logSupplier
+        AbstractBash.LogSupplier logSupplier,
+        Map<String, Object> additionalVars
     ) throws Exception {
         ProcessBuilder processBuilder = new ProcessBuilder();
 
@@ -33,8 +34,8 @@ public class ProcessBuilderScriptRunner implements ScriptRunnerInterface {
                 .entrySet()
                 .stream()
                 .map(throwFunction(r -> new AbstractMap.SimpleEntry<>(
-                        runContext.render(r.getKey()),
-                        runContext.render(r.getValue())
+                        runContext.render(r.getKey(), additionalVars),
+                        runContext.render(r.getValue(), additionalVars)
                     )
                 ))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))

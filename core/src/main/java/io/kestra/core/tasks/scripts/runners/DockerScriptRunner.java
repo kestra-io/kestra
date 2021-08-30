@@ -21,7 +21,6 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -101,7 +100,8 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
         Path workingDirectory,
         List<String> commandsWithInterpreter,
         Map<String, String> env,
-        AbstractBash.LogSupplier logSupplier
+        AbstractBash.LogSupplier logSupplier,
+        Map<String, Object> additionalVars
     ) throws Exception {
         DockerClient dockerClient = getDockerClient(abstractBash, runContext, workingDirectory);
 
@@ -109,7 +109,7 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
             throw new IllegalArgumentException("Missing required dockerOptions properties");
         }
 
-        String image = runContext.render(abstractBash.getDockerOptions().getImage());
+        String image = runContext.render(abstractBash.getDockerOptions().getImage(), additionalVars);
         NameParser.ReposTag imageParse = NameParser.parseRepositoryTag(image);
 
         try (
@@ -128,8 +128,8 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
                 container.withEnv(env
                     .entrySet()
                     .stream()
-                    .map(throwFunction(r -> runContext.render(r.getKey()) + "=" +
-                            runContext.render(r.getValue())
+                    .map(throwFunction(r -> runContext.render(r.getKey(), additionalVars) + "=" +
+                            runContext.render(r.getValue(), additionalVars)
                     ))
                     .collect(Collectors.toList())
                 );
@@ -149,11 +149,15 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
             }
 
             if (abstractBash.getDockerOptions().getUser() != null) {
-                container.withUser(runContext.render(abstractBash.getDockerOptions().getUser()));
+                container.withUser(runContext.render(abstractBash.getDockerOptions().getUser(), additionalVars));
             }
 
             if (abstractBash.getDockerOptions().getEntryPoint() != null) {
-                container.withEntrypoint(runContext.render(abstractBash.getDockerOptions().getEntryPoint()));
+                container.withEntrypoint(runContext.render(abstractBash.getDockerOptions().getEntryPoint(), additionalVars));
+            }
+
+            if (abstractBash.getDockerOptions().getExtraHosts() != null) {
+                hostConfig.withExtraHosts(runContext.render(abstractBash.getDockerOptions().getExtraHosts(), additionalVars).toArray(String[]::new));
             }
 
             container

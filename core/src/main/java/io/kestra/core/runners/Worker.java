@@ -180,6 +180,8 @@ public class Worker implements Runnable, Closeable {
                 )
                 .get(() -> this.runAttempt(current.get()));
 
+            finalWorkerTask = finalWorkerTask.getRunContext().cleanup(finalWorkerTask);
+
             // get last state
             TaskRunAttempt lastAttempt = finalWorkerTask.getTaskRun().lastAttempt();
             if (lastAttempt == null) {

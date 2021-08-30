@@ -293,25 +293,34 @@ public class RunContext {
         return variableRenderer.render(inline, this.variables);
     }
 
+    public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return variableRenderer.render(inline, mergeVariables(variables));
+    }
+
     public List<String> render(List<String> inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
+    }
+
+    public List<String> render(List<String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return variableRenderer.render(inline, mergeVariables(variables));
     }
 
     public Map<String, Object> render(Map<String, Object> inline) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, this.variables);
     }
 
-    public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return variableRenderer.render(
-            inline,
-            Stream
-                .concat(this.variables.entrySet().stream(), variables.entrySet().stream())
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue,
-                    (o, o2) -> o2
-                ))
-        );
+    public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        return variableRenderer.render(inline, mergeVariables(variables));
+    }
+
+    private Map<String, Object> mergeVariables(Map<String, Object> variables) {
+        return Stream
+            .concat(this.variables.entrySet().stream(), variables.entrySet().stream())
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (o, o2) -> o2
+            ));
     }
 
     public org.slf4j.Logger logger() {

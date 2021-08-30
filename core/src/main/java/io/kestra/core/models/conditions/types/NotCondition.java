@@ -6,6 +6,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.conditions.ScheduleCondition;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -42,7 +43,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
         )
     }
 )
-public class NotCondition extends Condition {
+public class NotCondition extends Condition implements ScheduleCondition {
     @NotNull
     @NotEmpty
     @Schema(

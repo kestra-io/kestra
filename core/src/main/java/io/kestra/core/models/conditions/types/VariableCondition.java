@@ -5,6 +5,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.conditions.ScheduleCondition;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -37,14 +38,14 @@ import javax.validation.constraints.NotNull;
         )
     }
 )
-public class VariableCondition extends Condition {
+public class VariableCondition extends Condition implements ScheduleCondition {
     @NotNull
     @NotEmpty
     private String expression;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        String render = conditionContext.getRunContext().render(expression);
+        String render = conditionContext.getRunContext().render(expression, conditionContext.getVariables());
         return !(render.isBlank() || render.isEmpty() || render.trim().equals("false"));
     }
 }

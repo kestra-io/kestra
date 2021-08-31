@@ -22,7 +22,8 @@ export default {
                 null,
                 {
                     params: {
-                        taskId: options.taskId
+                        taskId: options.taskId,
+                        revision: options.revision
                     }
                 })
         },

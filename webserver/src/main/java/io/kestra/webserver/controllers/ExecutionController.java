@@ -393,13 +393,32 @@ public class ExecutionController {
      */
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON)
-    public Execution restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) throws Exception {
+    public Execution restart(
+        String executionId,
+        @Nullable @QueryValue(value = "taskId") String taskId,
+        @Nullable @QueryValue(value = "revision") Integer revision
+        ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
             return null;
         }
 
-        Execution restart = executionService.restart(execution.get(), taskId);
+        if (revision != null) {
+            Optional<Flow> flowRevision = this.flowRepository.findById(
+                execution.get().getNamespace(),
+                execution.get().getFlowId(),
+                Optional.of(revision)
+            );
+
+            if (flowRevision.isEmpty()) {
+                throw new NoSuchElementException("Unable to find revision " + revision  +
+                    " on flow " + execution.get().getNamespace() + "." + execution.get().getFlowId()
+                );
+            }
+        }
+
+        Execution restart = executionService.restart(execution.get(), taskId, revision);
+        executionQueue.emit(restart);
         eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
 
         return restart;

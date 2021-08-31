@@ -48,7 +48,7 @@
                                 <div class="task-status">
                                     <status
                                         class="status"
-                                        :status="currentTaskRun.state.current"
+                                        :status="attempt.state.current"
                                         size="sm"
                                     />
                                 </div>

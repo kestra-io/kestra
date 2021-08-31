@@ -58,18 +58,18 @@ public class TaskRun {
         );
     }
 
-    public TaskRun forChildExecution(String id, String executionId, String parentTaskRunId, State state) {
+    public TaskRun forChildExecution(Map<String, String> remapTaskRunId, String executionId, State state) {
         return TaskRun.builder()
-            .id(id)
-            .executionId(executionId)
+            .id(remapTaskRunId.get(this.getId()))
+            .executionId(executionId != null ? executionId : this.getExecutionId())
             .namespace(this.getNamespace())
             .flowId(this.getFlowId())
             .taskId(this.getTaskId())
-            .parentTaskRunId(parentTaskRunId)
+            .parentTaskRunId(this.getParentTaskRunId() != null ? remapTaskRunId.get(this.getParentTaskRunId()) : null)
             .value(this.getValue())
             .attempts(this.getAttempts())
             .outputs(this.getOutputs())
-            .state(state)
+            .state(state == null ? this.getState() : state)
             .build();
     }
 

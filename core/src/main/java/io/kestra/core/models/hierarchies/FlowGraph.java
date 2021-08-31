@@ -27,20 +27,12 @@ public class FlowGraph {
     }
 
     public static FlowGraph of(Flow flow, Execution execution) throws IllegalVariableEvaluationException {
-        GraphCluster graph = new GraphCluster();
-
-        GraphService.sequential(
-            graph,
-            flow.getTasks(),
-            flow.getErrors(),
-            null,
-            execution
-        );
+        GraphCluster graph = GraphService.of(flow, execution);
 
         return FlowGraph.builder()
-            .nodes(nodes(graph))
-            .edges(edges(graph))
-            .clusters(clusters(graph, new ArrayList<>())
+            .nodes(GraphService.nodes(graph))
+            .edges(GraphService.edges(graph))
+            .clusters(GraphService.clusters(graph, new ArrayList<>())
                 .stream()
                 .map(g -> new Cluster(g.getKey(), g.getKey().getGraph()
                     .nodes()
@@ -52,46 +44,6 @@ public class FlowGraph {
                 .collect(Collectors.toList())
             )
             .build();
-    }
-
-    private static List<AbstractGraphTask> nodes(GraphCluster graphCluster) {
-        return graphCluster.getGraph().nodes()
-            .stream()
-            .flatMap(t -> t instanceof GraphCluster ? nodes((GraphCluster) t).stream() : Stream.of(t))
-            .distinct()
-            .collect(Collectors.toList());
-    }
-
-    private static List<Edge> edges(GraphCluster graphCluster) {
-        return Stream.concat(
-            graphCluster.getGraph().edges()
-                .stream()
-                .map(r -> new Edge(r.getSource().getUid(), r.getTarget().getUid(), r.getValue())),
-            graphCluster.getGraph().nodes()
-                .stream()
-                .flatMap(t -> t instanceof GraphCluster ? edges((GraphCluster) t).stream() : Stream.of())
-        )
-            .collect(Collectors.toList());
-    }
-
-    private static List<Pair<GraphCluster, List<String>>> clusters(GraphCluster graphCluster, List<String> parents) {
-        return graphCluster.getGraph().nodes()
-            .stream()
-            .flatMap(t -> {
-
-                if (t instanceof GraphCluster) {
-                    ArrayList<String> currentParents = new ArrayList<>(parents);
-                    currentParents.add(t.getUid());
-
-                    return Stream.concat(
-                        Stream.of(Pair.of((GraphCluster) t, parents)),
-                        clusters((GraphCluster) t, currentParents).stream()
-                    );
-                }
-
-                return Stream.of();
-            })
-            .collect(Collectors.toList());
     }
 
     @Getter

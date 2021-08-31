@@ -5,7 +5,7 @@
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
             </b-col>
             <b-col class="text-right">
-                <restart :execution="execution" @restart="restart" />
+                <restart :execution="execution" />
                 <kill :execution="execution" />
                 <status :status="execution.state.current" />
             </b-col>
@@ -96,9 +96,6 @@
             setTimeout(refreshValues,300)
         },
         methods: {
-            restart() {
-                this.$emit("follow");
-            },
             duration () {
                 const startTs = this.execution.state.histories[0].date;
                 const delta = ts(this.stop()) - ts(startTs);

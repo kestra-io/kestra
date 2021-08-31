@@ -41,6 +41,7 @@ public class Execution implements DeletedInterface {
     private String flowId;
 
     @NotNull
+    @With
     private Integer flowRevision;
 
     @With
@@ -107,7 +108,7 @@ public class Execution implements DeletedInterface {
 
     public Execution childExecution(String childExecutionId, List<TaskRun> taskRunList, State state) {
         return new Execution(
-            childExecutionId,
+            childExecutionId != null ? childExecutionId : this.getId(),
             this.namespace,
             this.flowId,
             this.flowRevision,
@@ -115,7 +116,7 @@ public class Execution implements DeletedInterface {
             this.inputs,
             this.variables,
             state,
-            this.id,
+            childExecutionId != null ? this.getId() : null,
             this.trigger
         );
     }

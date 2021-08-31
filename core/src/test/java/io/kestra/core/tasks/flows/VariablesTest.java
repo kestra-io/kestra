@@ -53,4 +53,12 @@ class VariablesTest extends AbstractMemoryRunnerTest {
         assertThat(filters.get(0).getMessage(), containsString("Missing variable: inputs.invalid"));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
+
+    @Test
+    void failedFirst() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "failed-first");
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.FAILED));
+    }
 }

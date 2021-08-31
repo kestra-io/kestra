@@ -57,13 +57,14 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
 
-    public static Map<String, String> inputs = ImmutableMap.of(
-        "string", "myString",
-        "int", "42",
-        "float", "42.42",
-        "instant", "2019-10-06T18:27:49Z",
-        "file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath()
-    );
+    public static Map<String, String> inputs = ImmutableMap.<String, String>builder()
+        .put("failed", "NO")
+        .put("string", "myString")
+        .put("int", "42")
+        .put("float", "42.42")
+        .put("instant", "2019-10-06T18:27:49Z")
+        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath())
+        .build();
 
     @Test
     void getNotFound() {
@@ -263,8 +264,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void restartFromTaskIdWithSequential() throws TimeoutException, InterruptedException {
-        final String flowId = "restart_with_sequential";
-        final String referenceTaskId = "a-3-2-2_end";
+        final String flowId = "restart-each";
+        final String referenceTaskId = "2_end";
 
         // Run execution until it ends
         Execution parentExecution = runnerUtils.runOne(TESTS_FLOW_NS, flowId, null,
@@ -285,20 +286,11 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
                     Execution.class
                 );
 
-                assertThat(createdChidExec, notNullValue());
-                assertThat(createdChidExec.getParentId(), is(parentExecution.getId()));
-                assertThat(createdChidExec.getTaskRunList().size(), is(8));
                 assertThat(createdChidExec.getState().getCurrent(), is(State.Type.RESTARTED));
+                assertThat(createdChidExec.getState().getHistories(), hasSize(4));
+                assertThat(createdChidExec.getTaskRunList(), hasSize(20));
 
-                assertThat(createdChidExec.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
-                assertThat(createdChidExec.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(createdChidExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(createdChidExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.RUNNING));
-                assertThat(createdChidExec.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(createdChidExec.getTaskRunList().get(5).getState().getCurrent(), is(State.Type.RUNNING));
-                assertThat(createdChidExec.getTaskRunList().get(6).getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(createdChidExec.getTaskRunList().get(7).getState().getCurrent(), is(State.Type.RESTARTED));
-                assertThat(createdChidExec.getTaskRunList().get(7).getAttempts().size(), is(1));
+                assertThat(createdChidExec.getId(), not(parentExecution.getId()));
             }),
             Duration.ofSeconds(30000));
     }

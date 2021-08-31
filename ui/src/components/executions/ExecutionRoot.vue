@@ -12,7 +12,7 @@
                     lazy
                 >
                     <b-card-text>
-                        <div :is="tab.tab" @follow="follow" />
+                        <div :is="tab.tab" />
                     </b-card-text>
                 </b-tab>
             </b-tabs>

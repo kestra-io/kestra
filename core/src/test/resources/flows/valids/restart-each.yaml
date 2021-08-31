@@ -1,0 +1,32 @@
+id: restart-each
+namespace: io.kestra.tests
+
+inputs:
+  - name: failed
+    type: STRING
+
+tasks:
+  - id: 1_each
+    type: io.kestra.core.tasks.flows.EachParallel
+    value: '["value 1", "value 2", "value 3"]'
+    tasks:
+      - id: 2-1_seq
+        type: io.kestra.core.tasks.flows.Sequential
+        tasks:
+          - id: 2-1-1_t1
+            type: io.kestra.core.tasks.scripts.Bash
+            commands:
+              - "exit {{eq inputs.failed 'FIRST' yes='1' no='0'}}"
+          - id: 2-1-2_t2
+            type: io.kestra.core.tasks.flows.EachParallel
+            value: '["value a", "value b", "value c"]'
+            tasks:
+              - id: 2-1-2-1_t1
+                type: io.kestra.core.tasks.scripts.Bash
+                commands:
+                  - "exit {{eq inputs.failed 'SECOND' yes='1' no='0'}}"
+
+  - id: 2_end
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"
+

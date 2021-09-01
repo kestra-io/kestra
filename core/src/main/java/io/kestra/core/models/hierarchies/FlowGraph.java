@@ -1,19 +1,14 @@
 package io.kestra.core.models.hierarchies;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Value;
-import org.apache.commons.lang3.tuple.Pair;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.services.GraphService;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Value
 @Builder
@@ -48,6 +43,8 @@ public class FlowGraph {
 
     @Getter
     @AllArgsConstructor
+    @ToString
+    @EqualsAndHashCode
     public static class Edge {
         private final String source;
         private final String target;
@@ -56,6 +53,8 @@ public class FlowGraph {
 
     @Getter
     @AllArgsConstructor
+    @ToString
+    @EqualsAndHashCode
     public static class Cluster {
         private final GraphCluster cluster;
         private final List<String> nodes;

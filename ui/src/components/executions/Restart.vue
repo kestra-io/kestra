@@ -3,23 +3,24 @@
         <b-button
             @click="$bvModal.show(uuid)"
             v-if="enabled"
-            :class="!isButtonGroup ? 'rounded-lg btn-info restart mr-1' : ''"
+            :class="!isReplay ? 'rounded-lg btn-info restart mr-1' : ''"
         >
-            <kicon :tooltip="$t('restart')">
-                <restart-icon />
-                {{ (isButtonGroup ? '' : $t("restart")) }}
+            <kicon :tooltip="$t(replayOrRestart)">
+                <restart-icon v-if="!isReplay" />
+                <play-box-multiple v-if="isReplay" />
+                {{ (isReplay ? '' : $t(replayOrRestart)) }}
             </kicon>
         </b-button>
 
-        <b-modal :id="uuid" @show="loadRevision">
+        <b-modal v-if="enabled" :id="uuid" @show="loadRevision">
             <template #modal-header>
                 <h5>{{ $t("confirmation") }}</h5>
             </template>
 
             <template>
-                <p v-html="$t('restart confirm', {id: execution.id})" />
+                <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
 
-                <b-form>
+                <b-form class="text-muted">
                     <p>{{ $t("restart change revision") }}</p>
                     <b-form-group label-cols-sm="3" label-cols-lg="3" :label="$t('revisions')" label-for="input-revision">
                         <b-form-select v-model="revisionsSelected" :options="revisionsOptions" />
@@ -40,6 +41,7 @@
 </template>
 <script>
     import RestartIcon from "vue-material-design-icons/Restart";
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -47,9 +49,9 @@
     import Kicon from "../Kicon"
 
     export default {
-        components: {RestartIcon, Kicon},
+        components: {RestartIcon, PlayBoxMultiple, Kicon},
         props: {
-            isButtonGroup: {
+            isReplay: {
                 type: Boolean,
                 default: false
             },
@@ -57,8 +59,13 @@
                 type: Object,
                 required: true
             },
-            task: {
+            taskRun: {
                 type: Object,
+                required: false,
+                default: undefined
+            },
+            attemptIndex: {
+                type: Number,
                 required: false,
                 default: undefined
             }
@@ -76,9 +83,9 @@
                 closeCallback()
 
                 this.$store
-                    .dispatch("execution/restartExecution", {
+                    .dispatch(`execution/${this.replayOrRestart}Execution`, {
                         executionId: this.execution.id,
-                        taskId: this.task ? this.task.taskId : undefined,
+                        taskRunId: this.taskRun && this.isReplay ? this.taskRun.id : undefined,
                         revision: this.sameRevision(this.revisionsSelected) ? undefined : this.revisionsSelected
                     })
                     .then(response => {
@@ -89,7 +96,7 @@
                         this.$router.push({name: "executions/update", params: response.data, query: {tab: "gantt"}});
                     })
                     .then(() => {
-                        this.$toast().success(this.$t("restarted"));
+                        this.$toast().success(this.$t(this.replayOrRestart + "ed"));
                     })
             },
             sameRevision(revision) {
@@ -99,6 +106,9 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapState("flow", ["revisions"]),
+            replayOrRestart() {
+                return this.isReplay ? "replay" : "restart";
+            },
             revisionsOptions() {
                 return (this.revisions || []).map((revision) => {
                     return {
@@ -108,34 +118,23 @@
                 });
             },
             uuid() {
-                return this.execution.id + (this.task ? "-" + this.task.id : "");
+                return this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "");
             },
             enabled() {
-                // TODO : Add a "restartable" property on task run object (backend side)
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (this.isReplay && !(this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace))) {
                     return false;
                 }
 
-                // If a specific task has been passed, we see if it can be restarted
-                if (this.task && this.task.taskId) {
-                    // We find the taskRun based on its taskId
-                    let taskRunIndex = this.execution.taskRunList.findIndex(
-                        t => t.taskId === this.task.taskId
-                    );
-
-                    if (taskRunIndex === -1) return false;
-
-                    // There can be no taskRun with a failed state before
-                    // our specific task for it to be restarted
-                    let subList = this.execution.taskRunList.slice(0, taskRunIndex);
-
-                    let indexOfFailedTaskRun = subList.findIndex(
-                        t => t.state.current === State.FAILED
-                    );
-
-                    return indexOfFailedTaskRun === -1;
+                if (!this.isReplay && !(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                    return false;
                 }
-                return this.execution.state.current === State.FAILED;
+
+                if (this.isReplay && (this.taskRun.attempts !== undefined && this.taskRun.attempts.length - 1 !== this.attemptIndex)) {
+                    return false;
+                }
+
+                return (this.isReplay && !State.isRunning(this.execution.state.current)) ||
+                    (!this.isReplay && this.execution.state.current === State.FAILED);
             }
         },
         data() {

@@ -10,6 +10,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 
 import java.time.Duration;
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -47,7 +48,7 @@ public class RestartCaseTest {
             execution -> execution.getState().getCurrent() == State.Type.SUCCESS,
             throwRunnable(() -> {
                 Thread.sleep(1000);
-                Execution restartedExec = executionService.restart(firstExecution, null, null);
+                Execution restartedExec = executionService.restart(firstExecution, null);
                 executionQueue.emit(restartedExec);
 
                 assertThat(restartedExec, notNullValue());
@@ -73,7 +74,7 @@ public class RestartCaseTest {
             .forEach(state -> assertThat(state.getCurrent(), is(State.Type.SUCCESS)));
     }
 
-    public void restartTask() throws Exception {
+    public void replay() throws Exception {
         Flow flow = flowRepository.findById("io.kestra.tests", "restart-each").orElseThrow();
 
         Execution firstExecution = runnerUtils.runOne(flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
@@ -86,7 +87,7 @@ public class RestartCaseTest {
             firstExecution,
             throwRunnable(() -> {
                 Thread.sleep(1000);
-                Execution restartedExec = executionService.restart(firstExecution, "2_end", null);
+                Execution restartedExec = executionService.replay(firstExecution, firstExecution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
                 executionQueue.emit(restartedExec);
 
                 assertThat(restartedExec.getState().getCurrent(), is(State.Type.RESTARTED));

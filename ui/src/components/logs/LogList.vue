@@ -82,9 +82,10 @@
 
                                     <restart
                                         :key="`restart-${index}-${attempt.state.startDate}`"
-                                        :is-button-group="true"
+                                        :is-replay="true"
                                         :execution="execution"
-                                        :task="currentTaskRun"
+                                        :task-run="currentTaskRun"
+                                        :attempt-index="index"
                                     />
                                 </b-button-group>
                             </div>

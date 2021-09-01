@@ -22,7 +22,17 @@ export default {
                 null,
                 {
                     params: {
-                        taskId: options.taskId,
+                        revision: options.revision
+                    }
+                })
+        },
+        replayExecution(_, options) {
+            return Vue.axios.post(
+                `/api/v1/executions/${options.executionId}/replay`,
+                null,
+                {
+                    params: {
+                        taskRunId: options.taskRunId,
                         revision: options.revision
                     }
                 })

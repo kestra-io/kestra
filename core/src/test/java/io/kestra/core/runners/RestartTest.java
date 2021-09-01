@@ -14,7 +14,7 @@ public class RestartTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartTask() throws Exception {
-        restartCaseTest.restartTask();
+    void replay() throws Exception {
+        restartCaseTest.replay();
     }
 }

@@ -185,13 +185,13 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, ImmutableMap.of()),
+                .POST("/api/v1/executions/" + parentExecution.getId() + "/replay?taskRunId=" + referenceTaskId, ImmutableMap.of()),
             Execution.class
         ));
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
         assertThat(e.getResponse().getBody(String.class).isPresent(), is(true));
-        assertThat(e.getResponse().getBody(String.class).get(), containsString("Task [" + referenceTaskId + "] does not exist !"));
+        assertThat(e.getResponse().getBody(String.class).get(), containsString("No task found to restart execution from !"));
     }
 
     @Test
@@ -213,7 +213,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromTaskId() throws TimeoutException, InterruptedException {
+    void restartFromTaskId() throws Exception {
         final String flowId = "restart_with_inputs";
         final String referenceTaskId = "instant";
 
@@ -232,7 +232,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
                 Execution createdChidExec = client.toBlocking().retrieve(
                     HttpRequest
-                        .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, ImmutableMap.of()),
+                        .POST("/api/v1/executions/" + parentExecution.getId() + "/replay?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), ImmutableMap.of()),
                     Execution.class
                 );
 
@@ -263,7 +263,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void restartFromTaskIdWithSequential() throws TimeoutException, InterruptedException {
+    void restartFromTaskIdWithSequential() throws Exception {
         final String flowId = "restart-each";
         final String referenceTaskId = "2_end";
 
@@ -282,7 +282,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
                 Execution createdChidExec = client.toBlocking().retrieve(
                     HttpRequest
-                        .POST("/api/v1/executions/" + parentExecution.getId() + "/restart?taskId=" + referenceTaskId, ImmutableMap.of()),
+                        .POST("/api/v1/executions/" + parentExecution.getId() + "/replay?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), ImmutableMap.of()),
                     Execution.class
                 );
 

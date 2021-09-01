@@ -76,6 +76,38 @@ public class GraphService {
             .collect(Collectors.toList());
     }
 
+    public static Set<AbstractGraphTask> successors(GraphCluster graphCluster, List<String> taskRunIds) {
+        List<FlowGraph.Edge> edges = GraphService.edges(graphCluster);
+        List<AbstractGraphTask> nodes = GraphService.nodes(graphCluster);
+
+        List<AbstractGraphTask> selectedTaskRuns = nodes
+            .stream()
+            .filter(task -> task.getTaskRun() != null && taskRunIds.contains(task.getTaskRun().getId()))
+            .collect(Collectors.toList());
+
+        Set<String> edgeUuid = selectedTaskRuns
+            .stream()
+            .flatMap(task -> recursiveEdge(edges, task.getUid()).stream())
+            .map(FlowGraph.Edge::getSource)
+            .collect(Collectors.toSet());
+
+        return nodes
+            .stream()
+            .filter(task -> edgeUuid.contains(task.getUid()))
+            .collect(Collectors.toSet());
+    }
+
+    private static List<FlowGraph.Edge> recursiveEdge(List<FlowGraph.Edge> edges, String selectedUuid) {
+        return edges
+            .stream()
+            .filter(edge -> edge.getSource().equals(selectedUuid))
+            .flatMap(edge -> Stream.concat(
+                Stream.of(edge),
+                recursiveEdge(edges, edge.getTarget()).stream()
+            ))
+            .collect(Collectors.toList());
+    }
+
     public static void sequential(
         GraphCluster graph,
         List<Task> tasks,

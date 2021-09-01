@@ -24,12 +24,12 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     FlowRepositoryInterface flowRepository;
 
     @Test
-    void simple() throws Exception {
+    void restartSimple() throws Exception {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "restart_last_failed");
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
-        Execution restart = executionService.restart(execution, null, null);
+        Execution restart = executionService.restart(execution, null);
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
@@ -42,11 +42,10 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void simpleRevision() throws Exception {
+    void restartSimpleRevision() throws Exception {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "restart_last_failed");
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-
 
         Flow flow = flowRepository.findById("io.kestra.tests", "restart_last_failed").orElseThrow();
         flowRepository.update(flow, flow.updateTask(
@@ -59,7 +58,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         ));
 
 
-        Execution restart = executionService.restart(execution, null, 2);
+        Execution restart = executionService.restart(execution, 2);
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
@@ -72,12 +71,12 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void flowable() throws Exception {
+    void restartFlowable() throws Exception {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "FIRST"));
         assertThat(execution.getTaskRunList(), hasSize(7));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
-        Execution restart = executionService.restart(execution, null, null);
+        Execution restart = executionService.restart(execution, null);
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
@@ -88,12 +87,12 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void flowable2() throws Exception {
+    void restartFlowable2() throws Exception {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "SECOND"));
         assertThat(execution.getTaskRunList(), hasSize(16));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
-        Execution restart = executionService.restart(execution, null, null);
+        Execution restart = executionService.restart(execution, null);
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
@@ -104,17 +103,107 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void flowableRestartTask() throws Exception {
+    void replaySimple() throws Exception {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "logs");
+        assertThat(execution.getTaskRunList(), hasSize(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        Execution restart = executionService.replay(execution, execution.getTaskRunList().get(1).getId(), null);
+
+        assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getState().getHistories(), hasSize(4));
+        assertThat(restart.getTaskRunList(), hasSize(2));
+        assertThat(restart.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getTaskRunList().get(1).getState().getHistories(), hasSize(4));
+
+        assertThat(restart.getId(), not(execution.getId()));
+        assertThat(restart.getTaskRunList().get(1).getId(), not(execution.getTaskRunList().get(1).getId()));
+    }
+
+    @Test
+    void replayFlowable() throws Exception {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "restart-each", null, (f, e) -> ImmutableMap.of("failed", "NO"));
         assertThat(execution.getTaskRunList(), hasSize(20));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
-        Execution restart = executionService.restart(execution, "2_end", null);
+        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(restart.getState().getHistories(), hasSize(4));
         assertThat(restart.getTaskRunList(), hasSize(20));
         assertThat(restart.getTaskRunList().get(19).getState().getCurrent(), is(State.Type.RESTARTED));
+
+        assertThat(restart.getId(), not(execution.getId()));
+        assertThat(restart.getTaskRunList().get(1).getId(), not(execution.getTaskRunList().get(1).getId()));
+    }
+
+    @Test
+    void replayParallel() throws Exception {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel-nested");
+        assertThat(execution.getTaskRunList(), hasSize(11));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("1-3-2_par", List.of()).getId(), null);
+
+        assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getState().getHistories(), hasSize(4));
+        assertThat(restart.getTaskRunList(), hasSize(8));
+        assertThat(restart.findTaskRunByTaskIdAndValue("1-3-2_par", List.of()).getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(restart.findTaskRunByTaskIdAndValue("1-3-2_par", List.of()).getState().getHistories(), hasSize(4));
+
+        assertThat(restart.getId(), not(execution.getId()));
+        assertThat(restart.getTaskRunList().get(1).getId(), not(execution.getTaskRunList().get(1).getId()));
+    }
+
+    @Test
+    void replayEachSeq() throws Exception {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential-nested");
+        assertThat(execution.getTaskRunList(), hasSize(23));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getId(), null);
+
+        assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getState().getHistories(), hasSize(4));
+        assertThat(restart.getTaskRunList(), hasSize(5));
+        assertThat(restart.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(restart.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getState().getHistories(), hasSize(4));
+
+        assertThat(restart.getId(), not(execution.getId()));
+        assertThat(restart.getTaskRunList().get(1).getId(), not(execution.getTaskRunList().get(1).getId()));
+    }
+
+    @Test
+    void replayEachSeq2() throws Exception {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential-nested");
+        assertThat(execution.getTaskRunList(), hasSize(23));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("1-2-1_return", List.of("s1", "a a")).getId(), null);
+
+        assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getState().getHistories(), hasSize(4));
+        assertThat(restart.getTaskRunList(), hasSize(6));
+        assertThat(restart.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(restart.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getState().getHistories(), hasSize(4));
+
+        assertThat(restart.getId(), not(execution.getId()));
+        assertThat(restart.getTaskRunList().get(1).getId(), not(execution.getTaskRunList().get(1).getId()));
+    }
+
+    @Test
+    void replayEachPara() throws Exception {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel-nested");
+        assertThat(execution.getTaskRunList(), hasSize(11));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId(), null);
+
+        assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getState().getHistories(), hasSize(4));
+        assertThat(restart.getTaskRunList(), hasSize(8));
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getHistories(), hasSize(4));
 
         assertThat(restart.getId(), not(execution.getId()));
         assertThat(restart.getTaskRunList().get(1).getId(), not(execution.getTaskRunList().get(1).getId()));

@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
@@ -11,10 +12,7 @@ import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
 
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -37,7 +35,46 @@ public class ExecutionService {
             );
         }
 
-        return restartExecutionFromFailed(execution, State.Type.RESTARTED, revision);
+        final Flow flow = flowRepositoryInterface.findByExecution(execution);
+
+        Set<String> taskRunToRestart = this.taskRunWithAncestors(
+            execution,
+            execution
+                .getTaskRunList()
+                .stream()
+                .filter(taskRun -> taskRun.getState().getCurrent().isFailed())
+                .collect(Collectors.toList())
+        );
+
+        if (taskRunToRestart.size() == 0) {
+            throw new IllegalArgumentException("No failed task found to restart execution from !");
+        }
+
+        Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, revision == null);
+        final String newExecutionId = revision != null ? IdUtils.create() : null;
+
+        List<TaskRun> newTaskRuns = execution
+            .getTaskRunList()
+            .stream()
+            .map(throwFunction(originalTaskRun -> this.mapTaskRun(
+                flow,
+                originalTaskRun,
+                mappingTaskRunId,
+                newExecutionId,
+                State.Type.RESTARTED,
+                taskRunToRestart.contains(originalTaskRun.getId()))
+            ))
+            .collect(Collectors.toList());
+
+        // Build and launch new execution
+        Execution newExecution = execution
+            .childExecution(
+                newExecutionId,
+                newTaskRuns,
+                execution.withState(State.Type.RESTARTED).getState()
+            );
+
+        return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
 
     public Execution replay(final Execution execution, String taskRunId, @Nullable Integer revision) throws Exception {
@@ -47,22 +84,6 @@ public class ExecutionService {
             );
         }
 
-        return replayExecutionFromTaskRunId(execution, taskRunId, State.Type.RESTARTED, revision);
-    }
-
-    private Set<String> getAncestors(Execution execution, TaskRun taskRun) {
-        return Stream
-            .concat(
-                execution
-                    .findChilds(taskRun)
-                    .stream(),
-                Stream.of(taskRun)
-            )
-            .map(TaskRun::getId)
-            .collect(Collectors.toSet());
-    }
-
-    private Execution replayExecutionFromTaskRunId(final Execution execution, String taskRunId, State.Type newStateType, Integer revision) throws IllegalArgumentException, InternalException {
         final Flow flow = flowRepositoryInterface.findByExecution(execution);
         GraphCluster graphCluster = GraphService.of(flow, execution);
 
@@ -90,7 +111,7 @@ public class ExecutionService {
                 originalTaskRun,
                 mappingTaskRunId,
                 newExecutionId,
-                newStateType,
+                State.Type.RESTARTED,
                 taskRunToRestart.contains(originalTaskRun.getId()))
             ))
             .collect(Collectors.toList());
@@ -110,10 +131,69 @@ public class ExecutionService {
         Execution newExecution = execution.childExecution(
             newExecutionId,
             newTaskRuns,
-            execution.withState(newStateType).getState()
+            execution.withState(State.Type.RESTARTED).getState()
         );
 
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
+    }
+
+    public Execution markAs(final Execution execution, String taskRunId, State.Type newState) throws Exception {
+        if (!execution.getState().isTerninated()) {
+            throw new IllegalStateException("Execution must be terminated to be restarted, " +
+                "current state is '" + execution.getState().getCurrent() + "' !"
+            );
+        }
+
+        final Flow flow = flowRepositoryInterface.findByExecution(execution);
+
+        Set<String> taskRunToRestart = this.taskRunWithAncestors(
+            execution,
+            execution
+                .getTaskRunList()
+                .stream()
+                .filter(taskRun -> taskRun.getId().equals(taskRunId))
+                .collect(Collectors.toList())
+        );
+
+        if (taskRunToRestart.size() == 0) {
+            throw new IllegalArgumentException("No task found to restart execution from !");
+        }
+
+        Execution newExecution = execution;
+
+        for (String s : taskRunToRestart) {
+            TaskRun originalTaskRun = newExecution.findTaskRunByTaskRunId(s);
+            boolean isFlowable = flow.findTaskByTaskId(originalTaskRun.getTaskId()).isFlowable();
+
+            if (!isFlowable || s.equals(taskRunId)) {
+                TaskRun newTaskRun = originalTaskRun.withState(newState);
+
+                if (originalTaskRun.getAttempts() != null && originalTaskRun.getAttempts().size() > 0) {
+                    ArrayList<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
+                    attempts.set(attempts.size() - 1, attempts.get(attempts.size() - 1).withState(newState));
+                    newTaskRun = newTaskRun.withAttempts(attempts);
+                }
+
+                newExecution = newExecution.withTaskRun(newTaskRun);
+            } else {
+                newExecution = newExecution.withTaskRun(originalTaskRun.withState(State.Type.RUNNING));
+            }
+        }
+
+        return newExecution
+            .withState(State.Type.RESTARTED);
+    }
+
+    private Set<String> getAncestors(Execution execution, TaskRun taskRun) {
+        return Stream
+            .concat(
+                execution
+                    .findChilds(taskRun)
+                    .stream(),
+                Stream.of(taskRun)
+            )
+            .map(TaskRun::getId)
+            .collect(Collectors.toSet());
     }
 
     private Map<String, String> mapTaskRunId(Execution execution, boolean keep) {
@@ -160,48 +240,5 @@ public class ExecutionService {
             .stream()
             .flatMap(throwFunction(taskRun -> this.getAncestors(execution, taskRun).stream()))
             .collect(Collectors.toSet());
-    }
-
-    private Execution restartExecutionFromFailed(final Execution execution, State.Type newStateType, Integer revision) throws InternalException {
-        final Flow flow = flowRepositoryInterface.findByExecution(execution);
-
-        Set<String> taskRunToRestart = this.taskRunWithAncestors(
-            execution,
-            execution
-                .getTaskRunList()
-                .stream()
-                .filter(taskRun -> taskRun.getState().getCurrent().isFailed())
-                .collect(Collectors.toList())
-        );
-
-        if (taskRunToRestart.size() == 0) {
-            throw new IllegalArgumentException("No failed task found to restart execution from !");
-        }
-
-        Map<String, String> mappingTaskRunId = this.mapTaskRunId(execution, revision == null);
-        final String newExecutionId = revision != null ? IdUtils.create() : null;
-
-        List<TaskRun> newTaskRuns = execution
-            .getTaskRunList()
-            .stream()
-            .map(throwFunction(originalTaskRun -> this.mapTaskRun(
-                flow,
-                originalTaskRun,
-                mappingTaskRunId,
-                newExecutionId,
-                newStateType,
-                taskRunToRestart.contains(originalTaskRun.getId()))
-            ))
-            .collect(Collectors.toList());
-
-        // Build and launch new execution
-        Execution newExecution = execution
-            .childExecution(
-                newExecutionId,
-                newTaskRuns,
-                execution.withState(newStateType).getState()
-            );
-
-        return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
 }

@@ -208,4 +208,32 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.getId(), not(execution.getId()));
         assertThat(restart.getTaskRunList().get(1).getId(), not(execution.getTaskRunList().get(1).getId()));
     }
+
+    @Test
+    void markAsEachPara() throws Exception {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-parallel-nested");
+        assertThat(execution.getTaskRunList(), hasSize(11));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        Execution restart = executionService.markAs(execution, execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId(), State.Type.FAILED);
+
+        assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getState().getHistories(), hasSize(4));
+        assertThat(restart.getTaskRunList(), hasSize(11));
+        assertThat(restart.findTaskRunByTaskIdAndValue("1_each", List.of()).getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getHistories(), hasSize(4));
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getAttempts(), nullValue());
+
+        restart = executionService.markAs(execution, execution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId(), State.Type.FAILED);
+
+        assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getState().getHistories(), hasSize(4));
+        assertThat(restart.getTaskRunList(), hasSize(11));
+        assertThat(restart.findTaskRunByTaskIdAndValue("1_each", List.of()).getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getCurrent(), is(State.Type.RUNNING));
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getHistories(), hasSize(4));
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getAttempts().get(0).getState().getCurrent(), is(State.Type.FAILED));
+    }
 }

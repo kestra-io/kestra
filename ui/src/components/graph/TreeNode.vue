@@ -94,7 +94,13 @@
                     </b-nav-form>
                 </b-collapse>
             </b-navbar>
-            <log-list :task-id="task.id" :filter="this.filter" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" :level="logLevel" />
+            <log-list
+                :task-id="task.id"
+                :filter="this.filter"
+                :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                :level="logLevel"
+                @follow="forwardEvent('follow', $event)"
+            />
         </b-modal>
     </div>
 </template>
@@ -147,6 +153,9 @@
             }
         },
         methods: {
+            forwardEvent(type, event) {
+                this.$emit(type, event);
+            },
             onTaskSelect() {
                 this.$store.commit("execution/setTask", this.task);
             },

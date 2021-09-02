@@ -6,6 +6,7 @@
         :flow-id="execution.flowId"
         :namespace="execution.namespace"
         :execution="execution"
+        @follow="forwardEvent('follow', $event)"
     />
 </template>
 <script>
@@ -38,6 +39,9 @@
             }
         },
         methods: {
+            forwardEvent(type, event) {
+                this.$emit(type, event);
+            },
             loadGraph() {
                 this.$store.dispatch("flow/loadGraph", {
                     namespace: this.execution.namespace,

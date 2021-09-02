@@ -2,7 +2,8 @@
     <span>
         <b-button
             @click="$bvModal.show(uuid)"
-            v-if="enabled"
+            v-if="isReplay || enabled"
+            :disabled="!enabled"
             :class="!isReplay ? 'rounded-lg btn-info restart mr-1' : ''"
         >
             <kicon :tooltip="$t(replayOrRestart)">
@@ -47,6 +48,7 @@
     import action from "../../models/action";
     import State from "../../utils/state";
     import Kicon from "../Kicon"
+    import ExecutionUtils from "../../utils/executionUtils";
 
     export default {
         components: {RestartIcon, PlayBoxMultiple, Kicon},
@@ -89,13 +91,20 @@
                         revision: this.sameRevision(this.revisionsSelected) ? undefined : this.revisionsSelected
                     })
                     .then(response => {
-                        this.$store.commit("execution/setExecution", response.data)
                         if (response.data.id === this.execution.id) {
-                            // @TODO: we need to wait that the execution is updated by indexer
+                            return ExecutionUtils.waitForState(response.data);
+                        } else {
+                            return response.data;
                         }
-                        this.$router.push({name: "executions/update", params: response.data, query: {tab: "gantt"}});
                     })
-                    .then(() => {
+                    .then((execution) => {
+                        this.$store.commit("execution/setExecution", execution)
+                        if (execution.id === this.execution.id) {
+                            this.$emit("follow")
+                        } else {
+                            this.$router.push({name: "executions/update", params: execution, query: {tab: "gantt"}});
+                        }
+
                         this.$toast().success(this.$t(this.replayOrRestart + "ed"));
                     })
             },
@@ -118,7 +127,7 @@
                 });
             },
             uuid() {
-                return this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "");
+                return "restart-" + this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "");
             },
             enabled() {
                 if (this.isReplay && !(this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace))) {
@@ -130,6 +139,10 @@
                 }
 
                 if (this.isReplay && (this.taskRun.attempts !== undefined && this.taskRun.attempts.length - 1 !== this.attemptIndex)) {
+                    return false;
+                }
+
+                if (State.isRunning(this.execution.state.current)) {
                     return false;
                 }
 

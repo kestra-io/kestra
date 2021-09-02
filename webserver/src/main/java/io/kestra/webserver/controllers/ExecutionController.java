@@ -15,6 +15,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import lombok.Data;
 import org.apache.commons.io.FilenameUtils;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
@@ -460,6 +461,34 @@ public class ExecutionController {
         eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.CREATE));
 
         return replay;
+    }
+
+    /**
+     * Create a new execution from an old one and start it from a specified task run id
+     *
+     * @param executionId the origin execution id to clone
+     * @param stateRequest the taskRun id & state to apply
+     * @return the restarted execution
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/{executionId}/state", produces = MediaType.TEXT_JSON)
+    public Execution changeState(String executionId, @Body StateRequest stateRequest) throws Exception {
+        Optional<Execution> execution = executionRepository.findById(executionId);
+        if (execution.isEmpty()) {
+            return null;
+        }
+
+        Execution replay = executionService.markAs(execution.get(), stateRequest.getTaskRunId(), stateRequest.getState());
+        executionQueue.emit(replay);
+        eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.UPDATE));
+
+        return replay;
+    }
+
+    @lombok.Value
+    public static class StateRequest {
+        String taskRunId;
+        State.Type state;
     }
 
     /**

@@ -5,7 +5,7 @@
                 <strong class="mr-auto" v-html="title" />
             </div>
         </template>
-        <span>{{ text }}</span>
+        <span v-html="text" />
         <b-table
             class="mt-2 mb-0"
             small

@@ -37,6 +37,14 @@ export default {
                     }
                 })
         },
+        changeStatus(_, options) {
+            return Vue.axios.post(
+                `/api/v1/executions/${options.executionId}/state`,
+                {
+                    taskRunId: options.taskRunId,
+                    state: options.state,
+                })
+        },
         kill(_, options) {
             return Vue.axios.delete(`/api/v1/executions/${options.id}/kill`);
         },

@@ -409,7 +409,7 @@ public class Worker implements Runnable, Closeable {
                     Failsafe
                         .with(Timeout
                             .<WorkerTask>of(workerTask.getTask().getTimeout())
-                            .withCancel(true)
+                            .withInterrupt(true)
                             .onFailure(event -> metricRegistry
                                 .counter(
                                     MetricRegistry.METRIC_WORKER_TIMEOUT_COUNT,

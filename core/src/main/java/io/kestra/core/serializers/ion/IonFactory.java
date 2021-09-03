@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.Reader;
 
 public class IonFactory extends com.fasterxml.jackson.dataformat.ion.IonFactory {
+    private static final long serialVersionUID = 1L;
+
     @Override
     protected JsonParser _createParser(Reader r, IOContext ctxt) throws IOException {
         IonReader ionReader = IonSystemBuilder.standard().build().newReader(r);

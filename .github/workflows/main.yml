@@ -154,9 +154,9 @@ jobs:
           status: ${{ job.status }}
           job_name: Check
           fields: repo,message,author,action,ref,job,took
-          username: Github Actions
-          icon_emoji: ':octocat:'
-          channel: '#kestra'
+          username: GitHub Actions
+          icon_emoji: ':github-actions:'
+          channel: '#git'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -232,9 +232,9 @@ jobs:
           status: ${{ job.status }}
           job_name: Publish docker
           fields: repo,commit,action,ref,job,took
-          username: Github Actions
-          icon_emoji: ':octocat:'
-          channel: '#kestra'
+          username: GitHub Actions
+          icon_emoji: ':github-actions:'
+          channel: '#git'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -288,9 +288,9 @@ task jacoco(type: JacocoReport) {
     getExecutionData().setFrom(files(javaProject.jacocoTestReport.executionData))
 
     reports {
-        html.enabled = true
-        xml.enabled = true
-        csv.enabled = true
+        html.required = true
+        xml.required = true
+        csv.required = true
     }
 }
 
@@ -300,7 +300,7 @@ task jacoco(type: JacocoReport) {
 task runStandalone(type: JavaExec) {
     group = "application"
     classpath = project(":cli").sourceSets.main.runtimeClasspath
-    main = mainClassName
+    mainClass = mainClassName
     args 'server', 'standalone'
 }
 

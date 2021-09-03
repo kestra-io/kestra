@@ -15,7 +15,6 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import lombok.Data;
 import org.apache.commons.io.FilenameUtils;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
@@ -190,7 +189,7 @@ public class ExecutionController {
     }
 
     /**
-     * Trigger an new execution for a webhook trigger
+     * Trigger a new execution for a webhook trigger
      *
      * @param namespace The flow namespace
      * @param id The flow id
@@ -209,7 +208,7 @@ public class ExecutionController {
     }
 
     /**
-     * Trigger an new execution for a webhook trigger
+     * Trigger a new execution for a webhook trigger
      *
      * @param namespace The flow namespace
      * @param id The flow id
@@ -228,7 +227,7 @@ public class ExecutionController {
     }
 
     /**
-     * Trigger an new execution for a webhook trigger
+     * Trigger a new execution for a webhook trigger
      *
      * @param namespace The flow namespace
      * @param id The flow id
@@ -282,7 +281,7 @@ public class ExecutionController {
     }
 
     /**
-     * Trigger an new execution for current flow
+     * Trigger a new execution for current flow
      *
      * @param namespace The flow namespace
      * @param id The flow id
@@ -366,7 +365,7 @@ public class ExecutionController {
      * Get file meta information from given path
      *
      * @param path The file URI to gather metas values
-     * @return meta data about given file
+     * @return metadata about given file
      */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/file/metas", produces = MediaType.TEXT_JSON)
@@ -402,19 +401,7 @@ public class ExecutionController {
             return null;
         }
 
-        if (revision != null) {
-            Optional<Flow> flowRevision = this.flowRepository.findById(
-                execution.get().getNamespace(),
-                execution.get().getFlowId(),
-                Optional.of(revision)
-            );
-
-            if (flowRevision.isEmpty()) {
-                throw new NoSuchElementException("Unable to find revision " + revision  +
-                    " on flow " + execution.get().getNamespace() + "." + execution.get().getFlowId()
-                );
-            }
-        }
+        this.controlRevision(execution.get(), revision);
 
         Execution restart = executionService.restart(execution.get(), revision);
         executionQueue.emit(restart);
@@ -442,19 +429,7 @@ public class ExecutionController {
             return null;
         }
 
-        if (revision != null) {
-            Optional<Flow> flowRevision = this.flowRepository.findById(
-                execution.get().getNamespace(),
-                execution.get().getFlowId(),
-                Optional.of(revision)
-            );
-
-            if (flowRevision.isEmpty()) {
-                throw new NoSuchElementException("Unable to find revision " + revision  +
-                    " on flow " + execution.get().getNamespace() + "." + execution.get().getFlowId()
-                );
-            }
-        }
+        this.controlRevision(execution.get(), revision);
 
         Execution replay = executionService.replay(execution.get(), taskRunId, revision);
         executionQueue.emit(replay);
@@ -463,11 +438,27 @@ public class ExecutionController {
         return replay;
     }
 
+    private void controlRevision(Execution execution, Integer revision) {
+        if (revision != null) {
+            Optional<Flow> flowRevision = this.flowRepository.findById(
+                execution.getNamespace(),
+                execution.getFlowId(),
+                Optional.of(revision)
+            );
+
+            if (flowRevision.isEmpty()) {
+                throw new NoSuchElementException("Unable to find revision " + revision  +
+                    " on flow " + execution.getNamespace() + "." + execution.getFlowId()
+                );
+            }
+        }
+    }
+
     /**
      * Create a new execution from an old one and start it from a specified task run id
      *
      * @param executionId the origin execution id to clone
-     * @param stateRequest the taskRun id & state to apply
+     * @param stateRequest the taskRun id &amp; state to apply
      * @return the restarted execution
      */
     @ExecuteOn(TaskExecutors.IO)
@@ -499,7 +490,7 @@ public class ExecutionController {
      */
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/{executionId}/kill", produces = MediaType.TEXT_JSON)
-    public HttpResponse<?> kill(String executionId) throws Exception {
+    public HttpResponse<?> kill(String executionId) {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isPresent() && execution.get().getState().isTerninated()) {
             throw new IllegalArgumentException("Execution is already finished, can't kill it");
@@ -515,7 +506,7 @@ public class ExecutionController {
     }
 
     /**
-     * Trigger an new execution for current flow and follow execution
+     * Trigger a new execution for current flow and follow execution
      *
      * @param executionId The execution id to follow
      * @return execution sse event
@@ -540,7 +531,7 @@ public class ExecutionController {
                     return;
                 }
 
-                // emit the reposiytory one first in order to wait the queue connections
+                // emit the repository one first in order to wait the queue connections
                 emitter.onNext(Event.of(execution).id("progress"));
 
                 // consume new value

@@ -132,7 +132,7 @@ abstract public class AbstractBash extends Task {
     protected transient Map<String, Object> additionalVars = new HashMap<>();
 
     protected Map<String, String> finalInputFiles() throws IOException {
-        return this.inputFiles;
+        return this.inputFiles != null ? new HashMap<>(this.inputFiles) : new HashMap<>();
     }
 
     protected List<String> finalCommandsWithInterpreter(String commandAsString) throws IOException {
@@ -144,6 +144,7 @@ abstract public class AbstractBash extends Task {
         );
     }
 
+    @SuppressWarnings("deprecation")
     protected ScriptOutput run(RunContext runContext, Supplier<String> supplier) throws Exception {
         Logger logger = runContext.logger();
 

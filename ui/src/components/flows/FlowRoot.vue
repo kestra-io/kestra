@@ -102,7 +102,7 @@
                     });
                 }
 
-                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace)) {
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
                     tabs.push({
                         tab: "data-source",
                         title: this.$t("source"),

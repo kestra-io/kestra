@@ -50,10 +50,26 @@ public class ClassPluginDocumentation<T> {
             this.defs.putAll((Map<String, Object>) this.propertiesSchema.get("$defs"));
             this.propertiesSchema.remove("$defs");
         }
+
         if (this.outputsSchema.containsKey("$defs")) {
             this.defs.putAll((Map<String, Object>) this.outputsSchema.get("$defs"));
             this.outputsSchema.remove("$defs");
         }
+
+        // add $required on defs
+        this.defs = this.getDefs()
+            .entrySet()
+            .stream()
+            .map(entry -> {
+                Map<String, Object> value = (Map<String, Object>) entry.getValue();
+                value.put("properties", flatten(properties(value), required(value)));
+
+                return new AbstractMap.SimpleEntry<>(
+                    entry.getKey(),
+                    value
+                );
+            })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         this.docDescription = this.propertiesSchema.containsKey("title") ? (String) this.propertiesSchema.get("title") : null;;
         this.docBody = this.propertiesSchema.containsKey("description") ? (String) this.propertiesSchema.get("description") : null;

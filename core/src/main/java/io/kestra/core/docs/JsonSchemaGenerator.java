@@ -213,6 +213,9 @@ public class JsonSchemaGenerator {
             JsonNode mainClassDef = defs.get(mainClassName + "-1");
 
             objectNode.set("properties", mainClassDef.get("properties"));
+            if (mainClassDef.has("required")) {
+                objectNode.set("required", mainClassDef.get("required"));
+            }
 
             defs.remove(mainClassName + "-1");
             defs.remove(mainClassName + "-2");
@@ -220,6 +223,9 @@ public class JsonSchemaGenerator {
             JsonNode mainClassDef = defs.get(mainClassName);
             defs.remove(mainClassName);
             objectNode.set("properties", mainClassDef.get("properties"));
+            if (mainClassDef.has("required")) {
+                objectNode.set("required", mainClassDef.get("required"));
+            }
         }
 
         objectNode.remove("$ref");

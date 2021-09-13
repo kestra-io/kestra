@@ -212,25 +212,33 @@ public class JsonSchemaGenerator {
             mainClassName = mainClassName.substring(0, mainClassName.length() - 2);
             JsonNode mainClassDef = defs.get(mainClassName + "-1");
 
-            objectNode.set("properties", mainClassDef.get("properties"));
-            if (mainClassDef.has("required")) {
-                objectNode.set("required", mainClassDef.get("required"));
-            }
+            this.addMainRefProperties(mainClassDef, objectNode);
 
             defs.remove(mainClassName + "-1");
             defs.remove(mainClassName + "-2");
         } else {
             JsonNode mainClassDef = defs.get(mainClassName);
+            this.addMainRefProperties(mainClassDef, objectNode);
+
             defs.remove(mainClassName);
-            objectNode.set("properties", mainClassDef.get("properties"));
-            if (mainClassDef.has("required")) {
-                objectNode.set("required", mainClassDef.get("required"));
-            }
         }
 
         objectNode.remove("$ref");
 
         return objectNode;
+    }
+
+    private void addMainRefProperties(JsonNode mainClassDef, ObjectNode objectNode) {
+        objectNode.set("properties", mainClassDef.get("properties"));
+        if (mainClassDef.has("required")) {
+            objectNode.set("required", mainClassDef.get("required"));
+        }
+        if (mainClassDef.has("title")) {
+            objectNode.set("title", mainClassDef.get("title"));
+        }
+        if (mainClassDef.has("description")) {
+            objectNode.set("description", mainClassDef.get("description"));
+        }
     }
 
     private Object buildDefaultInstance(Class<?> cls) {

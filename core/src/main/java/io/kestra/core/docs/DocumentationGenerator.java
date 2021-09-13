@@ -10,6 +10,7 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.runners.handlebars.helpers.OtherBooleansHelper;
 import io.kestra.core.runners.handlebars.helpers.DateHelper;
 import io.kestra.core.runners.handlebars.helpers.JsonHelper;
 import io.kestra.core.runners.handlebars.helpers.OtherStringsHelper;
@@ -35,6 +36,7 @@ abstract public class DocumentationGenerator {
         .registerHelpers(LogHelper.class)
         .registerHelpers(StringHelpers.class)
         .registerHelpers(OtherStringsHelper.class)
+        .registerHelpers(OtherBooleansHelper.class)
         .registerHelper("definitionName", (context, options) -> {
             String s = StringUtils.substringAfterLast(context.toString(), ".");
             if (s.contains("-")) {

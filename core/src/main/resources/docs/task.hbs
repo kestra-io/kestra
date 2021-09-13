@@ -51,7 +51,7 @@ icon: {{ icon }}
 {{~/inline~}}
 
 {{~#*inline "fieldDetail" ~}}
-{{~#if default ~}}
+{{~#if (isNotNull default) ~}}
     * **Default:** `{{ default }}`
 {{/if}}
 

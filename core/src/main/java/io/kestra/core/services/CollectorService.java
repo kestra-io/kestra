@@ -58,13 +58,13 @@ public class CollectorService {
     @Value("${kestra.anonymous-usage-report.uri}")
     protected URI url;
 
-    private transient Usage.UsageBuilder<?, ?> builder;
+    private transient Usage defaultUsage;
 
-    protected synchronized Usage.UsageBuilder<?, ?> builder() {
-        boolean first = builder == null;
+    protected synchronized Usage defaultUsage() {
+        boolean first = defaultUsage == null;
 
         if (first) {
-            builder = Usage.builder()
+            defaultUsage = Usage.builder()
                 .startUuid(UUID)
                 .serverType(serverType)
                 .version(versionProvider.getVersion())
@@ -73,14 +73,16 @@ public class CollectorService {
                 .environments(applicationContext.getEnvironment().getActiveNames())
                 .startTime(Instant.ofEpochMilli(ManagementFactory.getRuntimeMXBean().getStartTime()))
                 .host(HostUsage.of())
-                .plugins(PluginUsage.of(applicationContext));
+                .plugins(PluginUsage.of(applicationContext))
+                .build();
         }
 
-        return builder;
+        return defaultUsage;
     }
 
     public Usage metrics() {
-        Usage.UsageBuilder<?, ?> builder = builder()
+        Usage.UsageBuilder<?, ?> builder = defaultUsage()
+            .toBuilder()
             .uuid(IdUtils.create());
 
         if (serverType == ServerType.EXECUTOR || serverType == ServerType.STANDALONE) {

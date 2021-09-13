@@ -260,8 +260,19 @@ public class JsonSchemaGenerator {
 
             field.setAccessible(true);
             return field.invoke(instance);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IllegalArgumentException e) {
-            return null;
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IllegalArgumentException ignored) {
+
         }
+
+        try {
+            Method field = cls.getMethod("is" + fieldName.substring(0, 1).toUpperCase(Locale.ROOT) + fieldName.substring(1));
+
+            field.setAccessible(true);
+            return field.invoke(instance);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IllegalArgumentException ignored) {
+
+        }
+
+        return null;
     }
 }

@@ -6,7 +6,7 @@ const STATE = Object.freeze({
         name: "CREATED",
         colorClass: "info",
         color: "#75bcdd",
-        icon: "pause-circle",
+        icon: "play-pause-circle",
         isRunning: true,
         isKillable: true
     },
@@ -65,6 +65,14 @@ const STATE = Object.freeze({
         icon: "close-circle",
         isRunning: false,
         isKillable: false
+    },
+    PAUSED: {
+        name: "PAUSED",
+        colorClass: "purple",
+        color: "#6f42c1",
+        icon: "pause-circle",
+        isRunning: false,
+        isKillable: false
     }
 });
 
@@ -99,6 +107,10 @@ export default class State {
 
     static get WARNING() {
         return STATE.WARNING.name;
+    }
+
+    static get PAUSED() {
+        return STATE.PAUSED.name;
     }
 
     static isRunning(state) {

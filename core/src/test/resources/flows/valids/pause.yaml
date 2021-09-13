@@ -1,0 +1,14 @@
+id: pause
+namespace: io.kestra.tests
+
+tasks:
+  - id: pause
+    type: io.kestra.core.tasks.flows.Pause
+    tasks:
+      - id: ko
+        type: io.kestra.core.tasks.scripts.Bash
+        commands:
+          - echo "trigger after manual restart"
+  - id: last
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{task.id}} > {{taskrun.startDate}}"

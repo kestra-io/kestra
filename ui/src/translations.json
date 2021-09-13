@@ -100,6 +100,10 @@
             "The flow will restart as this task was success.",
             "All the blocked tasks will be execute.",
             "The flow will be on SUCCESS if all the tasks are also SUCCESS."
+          ],
+          "RUNNING" : [
+            "The flow will restart and will execute all next tasks.",
+            "All the blocked tasks will be execute."
           ]
         },
         "mark as": "Mark as <code>{status}</code>",
@@ -283,9 +287,13 @@
             "Les tâches d'erreurs seront executées."
           ],
           "SUCCESS" : [
-            "Le flow redemerra comme si cette tâche était en SUCCESS",
+            "Le flow redémerra comme si cette tâche était en SUCCESS",
             "Tous les tâches bloqués seront executées.",
             "Le flow passera en état SUCCESS si tous les taches sont aussi SUCCESS"
+          ],
+          "RUNNING" : [
+            "Le flow redémerra et executera les tâches suivantes",
+            "Tous les tâches bloqués seront executées."
           ]
         },
         "mark as": "Marqué comme <code>{status}</code>",

@@ -224,7 +224,7 @@ abstract public class AbstractBash extends Task {
     protected RunResult run(RunContext runContext, Logger logger, Path workingDirectory, List<String> commandsWithInterpreter, Map<String, String> env,  LogSupplier logSupplier) throws Exception {
         ScriptRunnerInterface executor;
         if (this.runner == Runner.DOCKER) {
-            executor = new DockerScriptRunner();
+            executor = new DockerScriptRunner(runContext.getApplicationContext());
         } else {
             executor = new ProcessBuilderScriptRunner();
         }

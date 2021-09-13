@@ -384,6 +384,10 @@ public class Execution implements DeletedInterface {
                 .findLastByState(currentTasks, State.Type.WARNING, parentTaskRun)
                 .map(taskRun -> taskRun.getState().getCurrent())
             )
+            .or(() -> this
+                .findLastByState(currentTasks, State.Type.PAUSED, parentTaskRun)
+                .map(taskRun -> taskRun.getState().getCurrent())
+            )
             .orElse(State.Type.SUCCESS);
     }
 

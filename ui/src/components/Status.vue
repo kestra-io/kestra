@@ -16,6 +16,7 @@
     import StopCircle from "vue-material-design-icons/StopCircle";
     import Restart from "vue-material-design-icons/Restart";
     import AlertCircle from "vue-material-design-icons/AlertCircle";
+    import PlayPause from "vue-material-design-icons/PlayPause";
 
     export default {
         components: {
@@ -25,7 +26,8 @@
             CloseCircle,
             StopCircle,
             Restart,
-            AlertCircle
+            AlertCircle,
+            PlayPause
 
         },
         props: {

@@ -126,11 +126,17 @@
                 return "changestatus-" + this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "");
             },
             states() {
-                return [
-                    State.FAILED,
-                    State.SUCCESS,
-                    State.WARNING,
-                ]
+                return (this.taskRun.state.current === "PAUSED" ?
+                    [
+                        State.FAILED,
+                        State.RUNNING,
+                    ] :
+                    [
+                        State.FAILED,
+                        State.SUCCESS,
+                        State.WARNING,
+                    ]
+                )
                     .filter(value => value !== this.taskRun.state.current)
                     .map(value => {
                         return {

@@ -118,6 +118,7 @@ public class State {
     public enum Type {
         CREATED,
         RUNNING,
+        PAUSED,
         RESTARTED,
         KILLING,
         SUCCESS,
@@ -126,20 +127,19 @@ public class State {
         KILLED;
 
         public boolean isTerninated() {
-            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED;
+            return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.PAUSED;
         }
 
         public boolean isCreated() {
             return this == Type.CREATED || this == Type.RESTARTED;
         }
 
-
         public boolean isRunning() {
-            return this == Type.RUNNING || this == Type.KILLING;
+            return this == Type.RUNNING ||this == Type.KILLING;
         }
 
         public boolean isFailed() {
-            return this == Type.FAILED;
+            return this == Type.FAILED || this == Type.PAUSED;
         }
     }
 

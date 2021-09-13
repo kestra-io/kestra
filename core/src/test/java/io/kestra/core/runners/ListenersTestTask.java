@@ -8,10 +8,8 @@ import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.serializers.JacksonMapper;
 
 import java.time.Duration;
-import java.util.Map;
 import java.util.NoSuchElementException;
 
 @SuperBuilder

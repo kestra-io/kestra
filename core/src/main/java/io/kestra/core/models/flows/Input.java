@@ -33,6 +33,8 @@ public class Input {
     @Builder.Default
     Boolean required = true;
 
+    String defaults;
+
     @Introspected
     public enum Type {
         STRING,

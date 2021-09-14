@@ -18,6 +18,9 @@ inputs:
 - name: optionalFile
   type: FILE
   required: false
+- name: instantDefaults
+  type: DATETIME
+  defaults: "2013-08-09T14:19:00Z"
 
 tasks:
 - id: string

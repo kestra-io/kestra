@@ -2,6 +2,7 @@ package io.kestra.core.schedulers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.flows.Input;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.*;
@@ -38,9 +39,16 @@ abstract public class AbstractSchedulerTest {
         return Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
+            .inputs(List.of(Input.builder()
+                .type(Input.Type.STRING)
+                .name("testInputs")
+                .required(false)
+                .defaults("test")
+                .build()
+            ))
             .revision(1)
             .triggers(triggers)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("{{ inputs.testInputs }}").build()))
             .build();
     }
 

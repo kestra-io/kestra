@@ -10,6 +10,7 @@ import io.kestra.runner.memory.MemoryFlowListeners;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,9 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
             .id("hourly")
             .type(Schedule.class.getName())
             .cron("0 * * * *")
+            .inputs(Map.of(
+                "testInputs", "test-inputs"
+            ))
             .backfill(Schedule.ScheduleBackfill.builder()
                 .start(date(5))
                 .build()
@@ -79,6 +83,8 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
 
             // wait for execution
             executionQueue.receive(SchedulerScheduleTest.class, execution -> {
+                assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
+
                 queueCount.countDown();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));

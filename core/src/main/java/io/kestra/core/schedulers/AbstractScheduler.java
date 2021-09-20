@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -248,8 +249,9 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         @Override
         public void onFailure(Throwable e) {
             scheduler.removeFromRunning(flowWithPollingTriggerNextDate.getTriggerContext());
+            Logger logger = this.flowWithPollingTriggerNextDate.getConditionContext().getRunContext().logger();
 
-            this.flowWithPollingTriggerNextDate.getConditionContext().getRunContext().logger().warn(
+            logger.warn(
                 "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
                 flowWithPollingTriggerNextDate.getFlow().getNamespace(),
                 flowWithPollingTriggerNextDate.getFlow().getId(),
@@ -258,6 +260,10 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                 e.getMessage(),
                 e
             );
+
+            if (logger.isTraceEnabled()) {
+                logger.trace(e.getMessage(), e);
+            }
         }
     }
 

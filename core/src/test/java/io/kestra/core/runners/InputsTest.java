@@ -85,6 +85,12 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void inputInstantDefaults() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("instantDefaults"), is(Instant.parse("2013-08-09T14:19:00Z")));
+    }
+
+    @Test
     void inputFile() throws URISyntaxException, IOException {
         Map<String, Object> typeds = typedInputs(inputs);
         URI file = (URI) typeds.get("file");

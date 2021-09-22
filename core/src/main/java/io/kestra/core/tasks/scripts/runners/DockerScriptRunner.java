@@ -3,6 +3,7 @@ package io.kestra.core.tasks.scripts.runners;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.exception.InternalServerErrorException;
 import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -12,11 +13,14 @@ import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient.Builder;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.tasks.scripts.AbstractBash;
 import io.kestra.core.tasks.scripts.AbstractLogThread;
 import io.kestra.core.tasks.scripts.RunResult;
+import io.kestra.core.utils.RetryUtils;
 import io.kestra.core.utils.Slugify;
+import io.micronaut.context.ApplicationContext;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -26,6 +30,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,6 +38,12 @@ import java.util.stream.Collectors;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public class DockerScriptRunner implements ScriptRunnerInterface {
+    private final RetryUtils retryUtils;
+
+    public DockerScriptRunner(ApplicationContext applicationContext) {
+        this.retryUtils = applicationContext.getBean(RetryUtils.class);
+    }
+
     private DockerClient getDockerClient(AbstractBash abstractBash, RunContext runContext, Path workingDirectory) throws IllegalVariableEvaluationException, IOException {
         DefaultDockerClientConfig.Builder dockerClientConfigBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder();
 
@@ -167,11 +178,24 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
                 .withAttachStdout(true);
 
             // pull image
-            pull
-                .withTag(!imageParse.tag.equals("") ? imageParse.tag : "latest")
-                .exec(new PullImageResultCallback())
-                .awaitCompletion();
-            logger.debug("Image pulled [{}:{}]", pull.getRepository(), pull.getTag());
+            retryUtils.<Boolean, InternalServerErrorException>of(
+                Exponential.builder()
+                    .delayFactor(2.0)
+                    .interval(Duration.ofSeconds(5))
+                    .maxInterval(Duration.ofSeconds(120))
+                    .maxAttempt(5)
+                    .build()
+            ).run(
+                InternalServerErrorException.class,
+                () -> {
+                    pull
+                        .withTag(!imageParse.tag.equals("") ? imageParse.tag : "latest")
+                        .exec(new PullImageResultCallback())
+                        .awaitCompletion();
+                    logger.debug("Image pulled [{}:{}]", pull.getRepository(), pull.getTag());
+                    return true;
+                }
+            );
 
             // start container
             CreateContainerResponse exec = container.exec();

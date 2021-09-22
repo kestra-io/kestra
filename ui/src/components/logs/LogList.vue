@@ -48,7 +48,7 @@
                                 <div class="task-status">
                                     <status
                                         class="status"
-                                        :status="currentTaskRun.state.current"
+                                        :status="attempt.state.current"
                                         size="sm"
                                     />
                                 </div>
@@ -82,9 +82,19 @@
 
                                     <restart
                                         :key="`restart-${index}-${attempt.state.startDate}`"
-                                        :is-button-group="true"
+                                        :is-replay="true"
                                         :execution="execution"
-                                        :task="currentTaskRun"
+                                        :task-run="currentTaskRun"
+                                        :attempt-index="index"
+                                        @follow="forwardEvent('follow', $event)"
+                                    />
+
+                                    <change-status
+                                        :key="`change-status-${index}-${attempt.state.startDate}`"
+                                        :execution="execution"
+                                        :task-run="currentTaskRun"
+                                        :attempt-index="index"
+                                        @follow="forwardEvent('follow', $event)"
                                     />
                                 </b-button-group>
                             </div>
@@ -133,6 +143,7 @@
     import humanizeDuration from "humanize-duration";
     import LogLine from "./LogLine";
     import Restart from "../executions/Restart";
+    import ChangeStatus from "../executions/ChangeStatus";
     import Vars from "../executions/Vars";
     import Clock from "vue-material-design-icons/Clock";
     import LocationExit from "vue-material-design-icons/LocationExit";
@@ -146,6 +157,7 @@
         components: {
             LogLine,
             Restart,
+            ChangeStatus,
             Clock,
             LocationExit,
             Vars,
@@ -199,6 +211,9 @@
             ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
         },
         methods: {
+            forwardEvent(type, event) {
+                this.$emit(type, event);
+            },
             displayTaskRun(currentTaskRun) {
                 if (this.taskRun && this.taskRun.id !== currentTaskRun.id) {
                     return false;

@@ -77,6 +77,36 @@
         "restart": "Restart",
         "restarted": "Execution is restarted",
         "restart confirm": "Are you sure to restart execution <code>{id}</code> ?",
+        "restart change revision" : "You can change the revision that will be used for the new execution.",
+        "replay": "Replay",
+        "replayed": "Execution is replayed",
+        "replay confirm": "Are you sure to replay this execution <code>{id}</code> and create a new one ?",
+        "current" : "current",
+        "change status": "Change status",
+        "change status done": "Task status has been updated",
+        "change status confirm": "Are you sure to change status on task <code>{task}</code> for execution <code>{id}</code> ?",
+        "change status hint": {
+          "WARNING" : [
+            "The flow will be marked as WARNING.",
+            "The next tasks will be execute.",
+            "The error tasks will be execute."
+          ],
+          "FAILED" : [
+            "The flow will be marked as FAILED.",
+            "No other task will be execute.",
+            "The error tasks will be execute."
+          ],
+          "SUCCESS" : [
+            "The flow will restart as this task was success.",
+            "All the blocked tasks will be execute.",
+            "The flow will be on SUCCESS if all the tasks are also SUCCESS."
+          ],
+          "RUNNING" : [
+            "The flow will restart and will execute all next tasks.",
+            "All the blocked tasks will be execute."
+          ]
+        },
+        "mark as": "Mark as <code>{status}</code>",
         "kill": "Kill",
         "killed confirm": "Are you sure to kill execution <code>{id}</code> ?",
         "killed done": "Execution is queued for killing",
@@ -201,7 +231,7 @@
         "launch execution": "Déclencher",
         "warning flow with triggers": "Ce flow contient des déclencheurs, une execution manuelle peut ne pas fonctionner si celui-ci dépend de variables de déclencheurs !",
         "triggered": "Execution déclenchée",
-        "triggered done": "L'execution <em>{name}</em> est déclenchée !",
+        "triggered done": "L'exécution <em>{name}</em> est déclenchée !",
         "topology": "Topology",
         "created date": "Date de création",
         "updated date": "Date de mise à jour",
@@ -235,11 +265,41 @@
         "start datetime": "Date de départ",
         "end datetime": "Date de fin",
         "restart": "Relancer",
-        "restarted": "L'execution est relancée",
+        "restarted": "L'exécution est relancée",
         "restart confirm": "Êtes-vous sur de vouloir relancer <code>{id}</code> ?",
+        "restart change revision" : "Vous pouvez changer la révision qui sera utilisé pour la nouvelle execution relancée.",
+        "replay": "Rejouer",
+        "replayed": "Execution est rejouée",
+        "replay confirm": "Êtes-vous sur de vouloir relancer l'exécution <code>{id}</code> et créer une nouvelle execution ?",
+        "current" : "actuel",
+        "change status": "Changer le statut",
+        "change status done": "Le statut de la tâche a était mis à jour",
+        "change status confirm": "Êtes-vous sur de vouloir changer le statut de la tâche <code>{task}</code> pour l'exécution <code>{id}</code> ?",
+        "change status hint": {
+          "WARNING" : [
+            "Le flow serra marqué en état WARNING.",
+            "Les tâches suivantes seront executées.",
+            "Les tâches d'erreurs seront executées."
+          ],
+          "FAILED" : [
+            "Le flow serra marqué en état FAILED.",
+            "Aucune autre tâche ne serra executée.",
+            "Les tâches d'erreurs seront executées."
+          ],
+          "SUCCESS" : [
+            "Le flow redémerra comme si cette tâche était en SUCCESS",
+            "Tous les tâches bloqués seront executées.",
+            "Le flow passera en état SUCCESS si tous les taches sont aussi SUCCESS"
+          ],
+          "RUNNING" : [
+            "Le flow redémerra et executera les tâches suivantes",
+            "Tous les tâches bloqués seront executées."
+          ]
+        },
+        "mark as": "Marqué comme <code>{status}</code>",
         "kill": "Arrêter",
-        "killed confirm": "Êtes-vous sur de vouloir arrêter l'execution <code>{id}</code> ?",
-        "killed done": "L'execution est en attente d'arrêt",
+        "killed confirm": "Êtes-vous sur de vouloir arrêter l'exécution <code>{id}</code> ?",
+        "killed done": "L'exécution est en attente d'arrêt",
         "toggle output": "Voir les sorties",
         "metrics": "Mesures",
         "toggle metrics": "Voir les mesures",
@@ -247,7 +307,7 @@
         "outputs": "Sorties",
         "output": "Sortie",
         "attempt": "Essai",
-        "toggle output display": "Permutter l'affichage de sortie",
+        "toggle output display": "Permuter l'affichage de sortie",
         "name": "Nom",
         "value": "Valeur",
         "parent execution": "Execution parente",
@@ -268,16 +328,16 @@
         "display output for specific task": "Afficher les output pour cette tâche",
         "display direct sub tasks count": "Display les sous tâches directes",
         "stream": "Flux",
-        "execution statistics": "Statistiques d'execution ",
-        "avg duration": "Durée moyenne d'execution",
+        "execution statistics": "Statistiques d'exécution ",
+        "avg duration": "Durée moyenne d'exécution",
         "neutral trend": "Stable",
         "up trend": "En augmentation",
         "down trend": "En baisse",
         "update aborted": "Mise à jour annulée",
         "invalid flow": "Flow invalide",
         "invalid yaml": "YAML invalide",
-        "add schedule": "Ajouter un plannificationS",
-        "schedule": "Tâche plannifié",
+        "add schedule": "Ajouter un planifications",
+        "schedule": "Tâche planifié",
         "schedules": {
             "cron": {
                 "expression": "Expression",
@@ -308,7 +368,7 @@
         "trigger details": "Détails du déclencheur",
         "conditions": "conditions",
         "taskruns":"Execution de tâches",
-        "Fold auto": "Editeur : Replier automatiquement le contenu multi-lignes",
+        "Fold auto": "Éditeur : Replier automatiquement le contenu multi-lignes",
         "Fold content lines": "Replier le contenu des lignes",
         "Unfold content lines": "Déplier le contenu des lignes",
         "Max displayable": "Max affichables",
@@ -316,7 +376,7 @@
         "link to sub flow": "Lien vers le sous flow",
         "New execution": "Nouvelle execution",
         "execute the flow": "Créer une exécution",
-        "execute flow now ?": "Voulez-vous executer ce flow ?",
+        "execute flow now ?": "Voulez-vous exécuter ce flow ?",
         "Default namespace": "Espace de nom par défaut",
         "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?"
     }

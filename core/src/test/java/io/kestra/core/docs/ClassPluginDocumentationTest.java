@@ -66,6 +66,10 @@ class ClassPluginDocumentationTest {
         assertThat(((Map<String, Object>) childOutput.get("outputChildMap")).get("type"), is("object"));
         assertThat(((Map<String, String>)((Map<String, Object>) childOutput.get("outputChildMap")).get("additionalProperties")).get("$ref"), containsString("OutputMap"));
 
+        // required
+        Map<String, Object> propertiesChild = (Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.ExampleTask-PropertyChildInput");
+        assertThat(((List<String>) propertiesChild.get("required")).size(), is(3));
+
         // output ref
         Map<String, Object> outputMap = ((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.AbstractTask-OutputMap")).get("properties"));
         assertThat(outputMap.size(), is(2));

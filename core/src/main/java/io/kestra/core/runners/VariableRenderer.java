@@ -35,6 +35,7 @@ public class VariableRenderer {
             .registerHelpers(DateHelper.class)
             .registerHelpers(JsonHelper.class)
             .registerHelpers(MiscHelper.class)
+            .registerHelpers(OtherBooleansHelper.class)
             .registerHelper("eval", new EvalHelper(this))
             .registerHelper("firstDefinedEval", new FirstDefinedEvalHelper(this))
             .registerHelper("jq", new JqHelper())

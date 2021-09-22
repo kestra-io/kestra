@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import org.elasticsearch.action.search.SearchRequest;
@@ -293,6 +294,9 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         flowQueue.emit(deleted);
         this.deleteRequest(INDEX_NAME, flowId(deleted));
         this.putRequest(REVISIONS_NAME, deleted.uid(), deleted);
+
+        ListUtils.emptyOnNull(flow.getTriggers())
+            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
         eventPublisher.publishEvent(new CrudEvent<>(flow, CrudEventType.DELETE));
 

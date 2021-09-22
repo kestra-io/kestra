@@ -47,6 +47,7 @@
                         :namespace="namespace"
                         :flow-id="flowId"
                         :execution="execution"
+                        @follow="forwardEvent('follow', $event)"
                     />
                 </MountingPortal>
             </div>
@@ -121,6 +122,9 @@
             this.generateGraph();
         },
         methods: {
+            forwardEvent(type, event) {
+                this.$emit(type, event);
+            },
             setAction(action) {
                 if (action === "in") {
                     if (this.cy.zoom() <= 1.7) {

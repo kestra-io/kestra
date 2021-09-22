@@ -189,7 +189,7 @@ public class ExecutionController {
     }
 
     /**
-     * Trigger an new execution for a webhook trigger
+     * Trigger a new execution for a webhook trigger
      *
      * @param namespace The flow namespace
      * @param id The flow id
@@ -208,7 +208,7 @@ public class ExecutionController {
     }
 
     /**
-     * Trigger an new execution for a webhook trigger
+     * Trigger a new execution for a webhook trigger
      *
      * @param namespace The flow namespace
      * @param id The flow id
@@ -227,7 +227,7 @@ public class ExecutionController {
     }
 
     /**
-     * Trigger an new execution for a webhook trigger
+     * Trigger a new execution for a webhook trigger
      *
      * @param namespace The flow namespace
      * @param id The flow id
@@ -281,7 +281,7 @@ public class ExecutionController {
     }
 
     /**
-     * Trigger an new execution for current flow
+     * Trigger a new execution for current flow
      *
      * @param namespace The flow namespace
      * @param id The flow id
@@ -365,7 +365,7 @@ public class ExecutionController {
      * Get file meta information from given path
      *
      * @param path The file URI to gather metas values
-     * @return meta data about given file
+     * @return metadata about given file
      */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/file/metas", produces = MediaType.TEXT_JSON)
@@ -385,24 +385,101 @@ public class ExecutionController {
     }
 
     /**
-     * Create a new execution from an old one and start it from a specified ("reference") task id
+     * Restart a new execution from an old one
      *
      * @param executionId the origin execution id to clone
-     * @param taskId the reference task id
      * @return the restarted execution
      */
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON)
-    public Execution restart(String executionId, @Nullable @QueryValue(value = "taskId") String taskId) throws Exception {
+    public Execution restart(
+        String executionId,
+        @Nullable @QueryValue(value = "revision") Integer revision
+        ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
             return null;
         }
 
-        Execution restart = executionService.restart(execution.get(), taskId);
+        this.controlRevision(execution.get(), revision);
+
+        Execution restart = executionService.restart(execution.get(), revision);
+        executionQueue.emit(restart);
         eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
 
         return restart;
+    }
+
+    /**
+     * Create a new execution from an old one and start it from a specified task run id
+     *
+     * @param executionId the origin execution id to clone
+     * @param taskRunId the reference taskRun id
+     * @return the restarted execution
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/{executionId}/replay", produces = MediaType.TEXT_JSON)
+    public Execution replay(
+        String executionId,
+        @Nullable @QueryValue(value = "taskRunId") String taskRunId,
+        @Nullable @QueryValue(value = "revision") Integer revision
+    ) throws Exception {
+        Optional<Execution> execution = executionRepository.findById(executionId);
+        if (execution.isEmpty()) {
+            return null;
+        }
+
+        this.controlRevision(execution.get(), revision);
+
+        Execution replay = executionService.replay(execution.get(), taskRunId, revision);
+        executionQueue.emit(replay);
+        eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.CREATE));
+
+        return replay;
+    }
+
+    private void controlRevision(Execution execution, Integer revision) {
+        if (revision != null) {
+            Optional<Flow> flowRevision = this.flowRepository.findById(
+                execution.getNamespace(),
+                execution.getFlowId(),
+                Optional.of(revision)
+            );
+
+            if (flowRevision.isEmpty()) {
+                throw new NoSuchElementException("Unable to find revision " + revision  +
+                    " on flow " + execution.getNamespace() + "." + execution.getFlowId()
+                );
+            }
+        }
+    }
+
+    /**
+     * Create a new execution from an old one and start it from a specified task run id
+     *
+     * @param executionId the origin execution id to clone
+     * @param stateRequest the taskRun id &amp; state to apply
+     * @return the restarted execution
+     */
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/{executionId}/state", produces = MediaType.TEXT_JSON)
+    public Execution changeState(String executionId, @Body StateRequest stateRequest) throws Exception {
+        Optional<Execution> execution = executionRepository.findById(executionId);
+        if (execution.isEmpty()) {
+            return null;
+        }
+
+        Execution replay = executionService.markAs(execution.get(), stateRequest.getTaskRunId(), stateRequest.getState());
+        executionQueue.emit(replay);
+        eventPublisher.publishEvent(new CrudEvent<>(replay, CrudEventType.UPDATE));
+
+        return replay;
+    }
+
+    @lombok.Value
+    public static class StateRequest {
+        String taskRunId;
+        State.Type state;
     }
 
     /**
@@ -413,7 +490,7 @@ public class ExecutionController {
      */
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/{executionId}/kill", produces = MediaType.TEXT_JSON)
-    public HttpResponse<?> kill(String executionId) throws Exception {
+    public HttpResponse<?> kill(String executionId) {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isPresent() && execution.get().getState().isTerninated()) {
             throw new IllegalArgumentException("Execution is already finished, can't kill it");
@@ -429,7 +506,7 @@ public class ExecutionController {
     }
 
     /**
-     * Trigger an new execution for current flow and follow execution
+     * Trigger a new execution for current flow and follow execution
      *
      * @param executionId The execution id to follow
      * @return execution sse event
@@ -454,7 +531,7 @@ public class ExecutionController {
                     return;
                 }
 
-                // emit the reposiytory one first in order to wait the queue connections
+                // emit the repository one first in order to wait the queue connections
                 emitter.onNext(Event.of(execution).id("progress"));
 
                 // consume new value

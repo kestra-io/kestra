@@ -33,8 +33,8 @@ export const executeTask = (submitor, flow, options) => {
         })
         .then((execution) => {
             submitor.$store.dispatch("core/showMessage", {
-                title: submitor.$t("triggered done", {name: execution.id}),
-                message: submitor.$t("success"),
+                title: submitor.$t("success"),
+                message: submitor.$t("triggered done", {name: execution.id}),
                 variant: "success",
                 timeout: 5000
             })

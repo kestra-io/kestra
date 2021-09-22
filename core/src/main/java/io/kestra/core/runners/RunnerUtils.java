@@ -100,6 +100,10 @@ public class RunnerUtils {
             .map((Function<Input, Optional<AbstractMap.SimpleEntry<String, Object>>>) input -> {
                 String current = in == null ? null : in.get(input.getName());
 
+                if (current == null && input.getDefaults() != null) {
+                    current = input.getDefaults();
+                }
+
                 if (input.getRequired() && current == null) {
                     throw new MissingRequiredInput("Missing required input value '" + input.getName() + "'");
                 }

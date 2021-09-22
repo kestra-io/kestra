@@ -254,21 +254,6 @@
 
                 this.load(this.onDataLoaded);
             },
-            triggerExecution() {
-                this.$store
-                    .dispatch("execution/triggerExecution", this.$route.params)
-                    .then(response => {
-                        this.$router.push({
-                            name: "execution",
-                            params: response.data
-                        });
-
-                        return response.data
-                    })
-                    .then((execution) => {
-                        this.$toast().success(this.$t("triggered done", {name: execution.id}));
-                    })
-            },
             loadQuery() {
                 let filter = [];
                 let query = this.queryWithFilter();

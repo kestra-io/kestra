@@ -3,14 +3,111 @@ package io.kestra.core.services;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.*;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GraphService {
+    public static GraphCluster of(Flow flow, Execution execution) throws IllegalVariableEvaluationException {
+        GraphCluster graph = new GraphCluster();
+
+        GraphService.sequential(
+            graph,
+            flow.getTasks(),
+            flow.getErrors(),
+            null,
+            execution
+        );
+
+        return graph;
+    }
+
+    public static List<AbstractGraphTask> nodes(GraphCluster graphCluster) {
+        return graphCluster.getGraph().nodes()
+            .stream()
+            .flatMap(t -> t instanceof GraphCluster ? nodes((GraphCluster) t).stream() : Stream.of(t))
+            .distinct()
+            .collect(Collectors.toList());
+    }
+
+    private static List<Triple<AbstractGraphTask, AbstractGraphTask, Relation>> rawEdges(GraphCluster graphCluster) {
+        return Stream.concat(
+                graphCluster.getGraph().edges()
+                    .stream()
+                    .map(r -> Triple.of(r.getSource(), r.getTarget(), r.getValue())),
+                graphCluster.getGraph().nodes()
+                    .stream()
+                    .flatMap(t -> t instanceof GraphCluster ? rawEdges((GraphCluster) t).stream() : Stream.of())
+            )
+            .collect(Collectors.toList());
+    }
+
+    public static List<FlowGraph.Edge> edges(GraphCluster graphCluster) {
+        return rawEdges(graphCluster)
+            .stream()
+            .map(r -> new FlowGraph.Edge(r.getLeft().getUid(), r.getMiddle().getUid(), r.getRight()))
+            .collect(Collectors.toList());
+    }
+
+    public static List<Pair<GraphCluster, List<String>>> clusters(GraphCluster graphCluster, List<String> parents) {
+        return graphCluster.getGraph().nodes()
+            .stream()
+            .flatMap(t -> {
+
+                if (t instanceof GraphCluster) {
+                    ArrayList<String> currentParents = new ArrayList<>(parents);
+                    currentParents.add(t.getUid());
+
+                    return Stream.concat(
+                        Stream.of(Pair.of((GraphCluster) t, parents)),
+                        clusters((GraphCluster) t, currentParents).stream()
+                    );
+                }
+
+                return Stream.of();
+            })
+            .collect(Collectors.toList());
+    }
+
+    public static Set<AbstractGraphTask> successors(GraphCluster graphCluster, List<String> taskRunIds) {
+        List<FlowGraph.Edge> edges = GraphService.edges(graphCluster);
+        List<AbstractGraphTask> nodes = GraphService.nodes(graphCluster);
+
+        List<AbstractGraphTask> selectedTaskRuns = nodes
+            .stream()
+            .filter(task -> task.getTaskRun() != null && taskRunIds.contains(task.getTaskRun().getId()))
+            .collect(Collectors.toList());
+
+        Set<String> edgeUuid = selectedTaskRuns
+            .stream()
+            .flatMap(task -> recursiveEdge(edges, task.getUid()).stream())
+            .map(FlowGraph.Edge::getSource)
+            .collect(Collectors.toSet());
+
+        return nodes
+            .stream()
+            .filter(task -> edgeUuid.contains(task.getUid()))
+            .collect(Collectors.toSet());
+    }
+
+    private static List<FlowGraph.Edge> recursiveEdge(List<FlowGraph.Edge> edges, String selectedUuid) {
+        return edges
+            .stream()
+            .filter(edge -> edge.getSource().equals(selectedUuid))
+            .flatMap(edge -> Stream.concat(
+                Stream.of(edge),
+                recursiveEdge(edges, edge.getTarget()).stream()
+            ))
+            .collect(Collectors.toList());
+    }
+
     public static void sequential(
         GraphCluster graph,
         List<Task> tasks,

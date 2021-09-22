@@ -4,12 +4,15 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
-import io.kestra.core.utils.Await;
 
 import java.time.Duration;
+import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,6 +30,10 @@ public class RestartCaseTest {
     @Inject
     private ExecutionService executionService;
 
+    @Inject
+    @Named(QueueFactoryInterface.EXECUTION_NAMED)
+    private QueueInterface<Execution> executionQueue;
+
     public void restartFailed() throws Exception {
         Flow flow = flowRepository.findById("io.kestra.tests", "restart_last_failed").orElseThrow();
 
@@ -42,6 +49,7 @@ public class RestartCaseTest {
             throwRunnable(() -> {
                 Thread.sleep(1000);
                 Execution restartedExec = executionService.restart(firstExecution, null);
+                executionQueue.emit(restartedExec);
 
                 assertThat(restartedExec, notNullValue());
                 assertThat(restartedExec.getId(), is(firstExecution.getId()));
@@ -66,8 +74,8 @@ public class RestartCaseTest {
             .forEach(state -> assertThat(state.getCurrent(), is(State.Type.SUCCESS)));
     }
 
-    public void restartTask() throws Exception {
-        Flow flow = flowRepository.findById("io.kestra.tests", "restart_with_sequential").orElseThrow();
+    public void replay() throws Exception {
+        Flow flow = flowRepository.findById("io.kestra.tests", "restart-each").orElseThrow();
 
         Execution firstExecution = runnerUtils.runOne(flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
 
@@ -79,22 +87,16 @@ public class RestartCaseTest {
             firstExecution,
             throwRunnable(() -> {
                 Thread.sleep(1000);
-                Execution restartedExec = executionService.restart(firstExecution, "a-3-2-2_end");
+                Execution restartedExec = executionService.replay(firstExecution, firstExecution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
+                executionQueue.emit(restartedExec);
 
-                assertThat(restartedExec, notNullValue());
-                assertThat(restartedExec.getParentId(), is(firstExecution.getId()));
-                assertThat(restartedExec.getTaskRunList().size(), is(8));
                 assertThat(restartedExec.getState().getCurrent(), is(State.Type.RESTARTED));
+                assertThat(restartedExec.getState().getHistories(), hasSize(4));
+                assertThat(restartedExec.getTaskRunList(), hasSize(20));
+                assertThat(restartedExec.getTaskRunList().get(19).getState().getCurrent(), is(State.Type.RESTARTED));
 
-                assertThat(restartedExec.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
-                assertThat(restartedExec.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(restartedExec.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.RUNNING));
-                assertThat(restartedExec.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(restartedExec.getTaskRunList().get(5).getState().getCurrent(), is(State.Type.RUNNING));
-                assertThat(restartedExec.getTaskRunList().get(6).getState().getCurrent(), is(State.Type.SUCCESS));
-                assertThat(restartedExec.getTaskRunList().get(7).getState().getCurrent(), is(State.Type.RESTARTED));
-                assertThat(restartedExec.getTaskRunList().get(7).getAttempts().size(), is(1));
+                assertThat(restartedExec.getId(), not(firstExecution.getId()));
+                assertThat(restartedExec.getTaskRunList().get(1).getId(), not(firstExecution.getTaskRunList().get(1).getId()));
             }),
             Duration.ofSeconds(60)
         );

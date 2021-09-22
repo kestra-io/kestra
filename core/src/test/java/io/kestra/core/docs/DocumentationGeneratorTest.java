@@ -1,5 +1,7 @@
 package io.kestra.core.docs;
 
+import io.kestra.core.tasks.debugs.Return;
+import io.kestra.core.tasks.flows.Flow;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
@@ -30,7 +32,6 @@ class DocumentationGeneratorTest {
 
         String render = DocumentationGenerator.render(doc);
 
-        System.out.println(render);
         assertThat(render, containsString("ExampleTask"));
         assertThat(render, containsString("`VALUE_1`"));
         assertThat(render, containsString("`VALUE_2`"));
@@ -43,10 +44,40 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class bash = scan.findClass(Bash.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan, bash,  Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan, bash, Task.class);
 
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render, containsString("Bash"));
+        assertThat(render, containsString("**Required:** ✔️"));
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    @Test
+    void returnDoc() throws IOException {
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+        RegisteredPlugin scan = pluginScanner.scan();
+        Class bash = scan.findClass(Return.class.getName()).orElseThrow();
+
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan, bash, Task.class);
+
+        String render = DocumentationGenerator.render(doc);
+
+        assertThat(render, containsString("debugging task that return"));
+        assertThat(render, containsString("is mostly useful"));
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    @Test
+    void defaultBool() throws IOException {
+        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
+        RegisteredPlugin scan = pluginScanner.scan();
+        Class bash = scan.findClass(Flow.class.getName()).orElseThrow();
+
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan, bash, Task.class);
+
+        String render = DocumentationGenerator.render(doc);
+
+        assertThat(render, containsString("* **Default:** `false`"));
     }
 }

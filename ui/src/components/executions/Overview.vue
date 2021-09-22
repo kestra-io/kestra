@@ -5,7 +5,7 @@
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
             </b-col>
             <b-col class="text-right">
-                <restart :execution="execution" @restart="restart" />
+                <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <kill :execution="execution" />
                 <status :status="execution.state.current" />
             </b-col>
@@ -96,6 +96,9 @@
             setTimeout(refreshValues,300)
         },
         methods: {
+            forwardEvent(type, event) {
+                this.$emit(type, event);
+            },
             restart() {
                 this.$emit("follow");
             },

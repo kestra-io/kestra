@@ -71,6 +71,6 @@ public enum MiscHelper implements Helper<Object> {
 
             throw new IllegalStateException("Incompatible type '" + value.getClass() + "' for indexOf with  '" + key + "' on '" + value + "'");
         }
-    }
+    },
 }
 

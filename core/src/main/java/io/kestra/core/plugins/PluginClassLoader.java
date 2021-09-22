@@ -59,6 +59,10 @@ public class PluginClassLoader extends URLClassLoader {
         return pluginLocation.toString();
     }
 
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+        return loadClass(name, false);
+    }
+
     /**
      * {@inheritDoc}
      */

@@ -51,7 +51,7 @@ icon: {{ icon }}
 {{~/inline~}}
 
 {{~#*inline "fieldDetail" ~}}
-{{~#if default ~}}
+{{~#if (isNotNull default) ~}}
     * **Default:** `{{ default }}`
 {{/if}}
 
@@ -160,6 +160,8 @@ type: "{{cls}}"
 {{#each def.properties  as | output name | ~}}
 #### `{{ name }}`
 {{> fieldType }}
+* **Dynamic:** {{yesno $dynamic yes="✔️" no="❌" maybe="❓"}}
+* **Required:** {{yesno $required yes="✔️" no="❌" maybe="❌"}}
 {{> fieldDetail }}
 {{> body }}
 {{/each}}

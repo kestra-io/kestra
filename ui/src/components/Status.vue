@@ -1,5 +1,5 @@
 <template>
-    <b-button class="status text-white rounded-lg" :class="cls">
+    <b-button @click="$emit('click', $event)" class="status text-white rounded-lg" :class="cls">
         <component :is="icon" />
         <template v-if="label">
             {{ status | lower | cap }}
@@ -16,6 +16,7 @@
     import StopCircle from "vue-material-design-icons/StopCircle";
     import Restart from "vue-material-design-icons/Restart";
     import AlertCircle from "vue-material-design-icons/AlertCircle";
+    import PlayPause from "vue-material-design-icons/PlayPause";
 
     export default {
         components: {
@@ -25,7 +26,8 @@
             CloseCircle,
             StopCircle,
             Restart,
-            AlertCircle
+            AlertCircle,
+            PlayPause
 
         },
         props: {
@@ -40,7 +42,7 @@
             label: {
                 type: Boolean,
                 default: true
-            }
+            },
         },
         computed: {
             cls() {

@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.security.SecureRandom;
 import javax.inject.Inject;
 
 @CommandLine.Command(
@@ -23,13 +22,8 @@ public class FlowDotCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0", description = "the flow file to display")
     private Path file;
 
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
-
     @Inject
     private ApplicationContext applicationContext;
-
-    private static final SecureRandom random = new SecureRandom();
 
     public FlowDotCommand() {
         super(false);
@@ -41,15 +35,8 @@ public class FlowDotCommand extends AbstractCommand {
 
         YamlFlowParser parser = applicationContext.getBean(YamlFlowParser.class);
         Flow flow = parser.parse(file.toFile());
-        GraphCluster graph = new GraphCluster();
 
-        GraphService.sequential(
-            graph,
-            flow.getTasks(),
-            flow.getErrors(),
-            null,
-            null
-        );
+        GraphCluster graph = GraphService.of(flow, null);
 
         stdOut(Graph2DotService.dot(graph.getGraph()));
 

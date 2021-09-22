@@ -61,7 +61,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 "            \"text\": \":warning: Flow `{{ jq taskrun.value '.namespace' true }}`.`{{ jq taskrun.value '.flowId' true }}` has no execution on last 24h !\"",
                 "          }",
                 "        url: \"https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX\"",
-                "    value: \"{{ jq outputs.counts.results '.[]' }}\"",
+                "    value: \"{{ jq outputs.counts.results '. | select(. != null) | .[]' }}\"",
                 "",
                 "triggers:",
                 "  - id: schedule",

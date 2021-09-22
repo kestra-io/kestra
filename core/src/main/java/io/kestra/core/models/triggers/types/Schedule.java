@@ -8,6 +8,7 @@ import com.cronutils.parser.CronParser;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
@@ -28,7 +29,9 @@ import lombok.experimental.SuperBuilder;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -107,6 +110,12 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     )
     private List<ScheduleCondition> scheduleConditions;
 
+    @Schema(
+        title = "The input to pass to the triggered flow"
+    )
+    @PluginProperty(dynamic = true)
+    private Map<String, String> inputs;
+
     @Override
     public ZonedDateTime nextEvaluationDate(Optional<? extends TriggerContext> last) {
         if (last.isPresent()) {
@@ -163,6 +172,13 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         }
 
 
+        Map<String, Object> inputs = new HashMap<>();
+        if (this.inputs != null) {
+            for (Map.Entry<String, String> entry: this.inputs.entrySet()) {
+                inputs.put(entry.getKey(), runContext.render(entry.getValue()));
+            }
+        }
+
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, output);
 
         Execution execution = Execution.builder()
@@ -172,6 +188,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .flowRevision(context.getFlowRevision())
             .state(new State())
             .trigger(executionTrigger)
+            .inputs(inputs)
             // keep to avoid breaking compatibility
             .variables(ImmutableMap.of(
                 "schedule", executionTrigger.getVariables()

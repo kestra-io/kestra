@@ -1,6 +1,7 @@
 package io.kestra.repository.memory;
 
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
@@ -183,6 +184,9 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         flowQueue.emit(deleted);
         this.flows.remove(flowId(deleted));
         this.revisions.put(deleted.uid(), deleted);
+
+        ListUtils.emptyOnNull(flow.getTriggers())
+            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
         eventPublisher.publishEvent(new CrudEvent<>(flow, CrudEventType.DELETE));
 

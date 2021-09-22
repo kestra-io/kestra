@@ -94,9 +94,10 @@ class YamlFlowParserTest {
     void inputs() {
         Flow flow = this.parse("flows/valids/inputs.yaml");
 
-        assertThat(flow.getInputs().size(), is(7));
-        assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(5L));
+        assertThat(flow.getInputs().size(), is(8));
+        assertThat(flow.getInputs().stream().filter(Input::getRequired).count(), is(6L));
         assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count(), is(2L));
+        assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count(), is(1L));
     }
 
     @Test

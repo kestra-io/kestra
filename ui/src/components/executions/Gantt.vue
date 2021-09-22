@@ -49,7 +49,12 @@
                     </tr>
                     <tr v-if="taskRun && taskRun.id === currentTaskRun.id">
                         <td :colspan="dates.length + 1">
-                            <log-list :task-run-id="taskRun.id" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" level="TRACE" />
+                            <log-list
+                                :task-run-id="taskRun.id"
+                                :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                                level="TRACE"
+                                @follow="forwardEvent('follow', $event)"
+                            />
                         </td>
                     </tr>
                 </tbody>
@@ -149,6 +154,9 @@
             }
         },
         methods: {
+            forwardEvent(type, event) {
+                this.$emit(type, event);
+            },
             paint() {
                 const repaint = () => {
                     this.compute()

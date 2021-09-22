@@ -1,11 +1,19 @@
 package io.kestra.core.services;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.conditions.types.VariableCondition;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.TaskDefault;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
+import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.models.triggers.TriggerOutput;
+import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.EqualsAndHashCode;
@@ -15,9 +23,11 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -38,12 +48,30 @@ class TaskDefaultServiceTest {
             .build();
 
         Flow flow = Flow.builder()
+            .triggers(List.of(
+                DefaultTriggerTester.builder()
+                    .id("trigger")
+                    .type(DefaultTriggerTester.class.getName())
+                    .conditions(List.of(VariableCondition.builder()
+                        .type(VariableCondition.class.getName())
+                        .build())
+                    )
+                    .build()
+            ))
             .tasks(Collections.singletonList(task))
-            .taskDefaults(Collections.singletonList(new TaskDefault(DefaultTester.class.getName(), ImmutableMap.of(
-                "value", 1,
-                "set", 123,
-                "arrays", Collections.singletonList(1)
-            ))))
+            .taskDefaults(List.of(
+                new TaskDefault(DefaultTester.class.getName(), ImmutableMap.of(
+                    "value", 1,
+                    "set", 123,
+                    "arrays", Collections.singletonList(1)
+                )),
+                new TaskDefault(DefaultTriggerTester.class.getName(), ImmutableMap.of(
+                    "set", 123
+                )),
+                new TaskDefault(VariableCondition.class.getName(), ImmutableMap.of(
+                    "expression", "{{ test }}"
+                ))
+            ))
             .build();
 
         Flow injected = taskDefaultService.injectDefaults(flow);
@@ -57,6 +85,25 @@ class TaskDefaultServiceTest {
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().get("key"), is("test"));
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    public static class DefaultTriggerTester extends AbstractTrigger implements PollingTriggerInterface, TriggerOutput<Schedule.Output> {
+        @Override
+        public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
+            return Optional.empty();
+        }
+
+        private Integer set;
+
+        @Override
+        public Duration getInterval() {
+            return Duration.ofSeconds(1);
+        }
     }
 
     @SuperBuilder

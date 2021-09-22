@@ -77,8 +77,8 @@ public class KafkaStreamService {
             this.setGlobalStateRestoreListener(new StateRestoreLoggerListeners());
 
             this.setStateListener((newState, oldState) -> {
-                if (log.isTraceEnabled()) {
-                    log.trace("Switching stream state from {} to {}", oldState, newState);
+                if (log.isInfoEnabled()) {
+                    log.info("Switching stream state from {} to {}", oldState, newState);
                 }
 
                 if (listener != null) {

@@ -1,5 +1,6 @@
 package io.kestra.core.schedulers;
 
+import io.kestra.core.models.flows.TaskDefault;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -7,6 +8,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.runner.memory.MemoryFlowListeners;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -19,7 +22,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class SchedulerThreadTest extends AbstractSchedulerTest {
+public class SchedulerThreadTest extends AbstractSchedulerTest {
     @Inject
     protected MemoryFlowListeners flowListenersService;
 
@@ -29,13 +32,18 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
     @Inject
     protected SchedulerExecutionStateInterface executionState;
 
-    private static Flow createThreadFlow() {
+    public static Flow createThreadFlow() {
         UnitTest schedule = UnitTest.builder()
             .id("sleep")
             .type(UnitTest.class.getName())
             .build();
 
-        return createFlow(Collections.singletonList(schedule));
+        return createFlow(Collections.singletonList(schedule), List.of(
+            TaskDefault.builder()
+                .type(UnitTest.class.getName())
+                .values(Map.of("defaultInjected", "done"))
+                .build()
+        ));
     }
 
     @Test
@@ -63,7 +71,6 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
             schedulerExecutionStateSpy,
             triggerState
         )) {
-
             AtomicReference<Execution> last = new AtomicReference<>();
 
             // wait for execution
@@ -81,7 +88,9 @@ class SchedulerThreadTest extends AbstractSchedulerTest {
             scheduler.run();
             queueCount.await(1, TimeUnit.MINUTES);
 
+            assertThat(last.get().getVariables().get("defaultInjected"), is("done"));
             assertThat(last.get().getVariables().get("counter"), is(3));
+            AbstractSchedulerTest.COUNTER = 0;
         }
     }
 

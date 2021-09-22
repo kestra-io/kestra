@@ -10,6 +10,7 @@ import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
+import org.slf4j.Logger;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -69,6 +70,15 @@ public class TaskDefaultService {
                     LogEntry.of(execution)
                 )
                 .forEach(logQueue::emit);
+            return flow;
+        }
+    }
+
+    public Flow injectDefaults(Flow flow, Logger logger) {
+        try {
+            return this.injectDefaults(flow);
+        } catch (Exception e) {
+            logger.warn(e.getMessage(), e);
             return flow;
         }
     }

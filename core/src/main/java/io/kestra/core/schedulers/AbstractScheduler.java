@@ -1,6 +1,8 @@
 package io.kestra.core.schedulers;
 
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.*;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -15,6 +17,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowListenersInterface;
+import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.ApplicationContext;
@@ -49,6 +52,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     private final RunContextFactory runContextFactory;
     private final MetricRegistry metricRegistry;
     private final ConditionService conditionService;
+    private final TaskDefaultService taskDefaultService;
 
     protected SchedulerExecutionStateInterface executionState;
     protected SchedulerTriggerStateInterface triggerState;
@@ -78,6 +82,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
         this.conditionService = applicationContext.getBean(ConditionService.class);
+        this.taskDefaultService = applicationContext.getBean(TaskDefaultService.class);
 
         this.cachedExecutor = MoreExecutors.listeningDecorator(applicationContext
             .getBean(ExecutorsUtils.class)
@@ -249,21 +254,25 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         @Override
         public void onFailure(Throwable e) {
             scheduler.removeFromRunning(flowWithPollingTriggerNextDate.getTriggerContext());
-            Logger logger = this.flowWithPollingTriggerNextDate.getConditionContext().getRunContext().logger();
+            AbstractScheduler.logError(flowWithPollingTriggerNextDate, e);
+        }
+    }
 
-            logger.warn(
-                "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
-                flowWithPollingTriggerNextDate.getFlow().getNamespace(),
-                flowWithPollingTriggerNextDate.getFlow().getId(),
-                flowWithPollingTriggerNextDate.getTriggerContext().getTriggerId(),
-                flowWithPollingTriggerNextDate.getTriggerContext().getDate(),
-                e.getMessage(),
-                e
-            );
+    private static void  logError(FlowWithPollingTrigger flowWithPollingTriggerNextDate, Throwable e) {
+        Logger logger = flowWithPollingTriggerNextDate.getConditionContext().getRunContext().logger();
 
-            if (logger.isTraceEnabled()) {
-                logger.trace(e.getMessage(), e);
-            }
+        logger.warn(
+            "[namespace: {}] [flow: {}] [trigger: {}] [date: {}] Evaluate Failed with error '{}'",
+            flowWithPollingTriggerNextDate.getFlow().getNamespace(),
+            flowWithPollingTriggerNextDate.getFlow().getId(),
+            flowWithPollingTriggerNextDate.getTriggerContext().getTriggerId(),
+            flowWithPollingTriggerNextDate.getTriggerContext().getDate(),
+            e.getMessage(),
+            e
+        );
+
+        if (logger.isTraceEnabled()) {
+            logger.trace(Throwables.getStackTraceAsString(e));
         }
     }
 
@@ -440,29 +449,43 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     }
 
     private SchedulerExecutionWithTrigger evaluatePollingTrigger(FlowWithPollingTrigger flowWithTrigger) {
-        Optional<Execution> evaluate = this.metricRegistry
+        Optional<Execution> result = this.metricRegistry
             .timer(MetricRegistry.SCHEDULER_EVALUATE_DURATION, metricRegistry.tags(flowWithTrigger.getTriggerContext()))
-            .record(throwSupplier(() -> flowWithTrigger.getPollingTrigger().evaluate(
-                flowWithTrigger.getConditionContext(),
-                flowWithTrigger.getTriggerContext()
-            )));
+            .record(() -> {
+                try {
+                    FlowWithPollingTrigger flowWithPollingTrigger = flowWithTrigger.from(taskDefaultService.injectDefaults(
+                        flowWithTrigger.getFlow(),
+                        flowWithTrigger.getConditionContext().getRunContext().logger()
+                    ));
 
-        if (log.isDebugEnabled() && evaluate.isEmpty()) {
-            log.trace("Empty evaluation for flow '{}.{}' for date '{}, waiting !",
-                flowWithTrigger.getFlow().getNamespace(),
-                flowWithTrigger.getFlow().getId(),
-                flowWithTrigger.getTriggerContext().getDate()
-            );
-        }
+                    Optional<Execution> evaluate = flowWithPollingTrigger.getPollingTrigger().evaluate(
+                        flowWithPollingTrigger.getConditionContext(),
+                        flowWithPollingTrigger.getTriggerContext()
+                    );
 
-        flowWithTrigger.getConditionContext().getRunContext().cleanup();
+                    if (log.isDebugEnabled() && evaluate.isEmpty()) {
+                        log.trace("Empty evaluation for flow '{}.{}' for date '{}, waiting !",
+                            flowWithPollingTrigger.getFlow().getNamespace(),
+                            flowWithPollingTrigger.getFlow().getId(),
+                            flowWithPollingTrigger.getTriggerContext().getDate()
+                        );
+                    }
 
-        if (evaluate.isEmpty()) {
+                    flowWithPollingTrigger.getConditionContext().getRunContext().cleanup();
+
+                    return evaluate;
+                } catch (Exception e) {
+                    AbstractScheduler.logError(flowWithTrigger, e);
+                    return Optional.empty();
+                }
+            });
+
+        if (result.isEmpty()) {
             return null;
         }
 
         return new SchedulerExecutionWithTrigger(
-            evaluate.get(),
+            result.get(),
             flowWithTrigger.getTriggerContext()
         );
     }
@@ -472,7 +495,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         this.scheduleExecutor.shutdown();
     }
 
-    @SuperBuilder
+    @SuperBuilder(toBuilder = true)
     @Getter
     @NoArgsConstructor
     private static class FlowWithPollingTrigger {
@@ -481,6 +504,20 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         private PollingTriggerInterface pollingTrigger;
         private TriggerContext triggerContext;
         private ConditionContext conditionContext;
+
+        public FlowWithPollingTrigger from(Flow flow) throws InternalException {
+            AbstractTrigger abstractTrigger = flow.getTriggers()
+                .stream()
+                .filter(a -> a.getId().equals(this.trigger.getId()))
+                .findFirst()
+                .orElseThrow(() -> new InternalException("Couldn't find the trigger '" + this.trigger.getId() + "' on flow '" + flow.uid() + "'"));
+
+            return this.toBuilder()
+                .flow(flow)
+                .trigger(abstractTrigger)
+                .pollingTrigger((PollingTriggerInterface) abstractTrigger)
+                .build();
+        }
     }
 
     @SuperBuilder

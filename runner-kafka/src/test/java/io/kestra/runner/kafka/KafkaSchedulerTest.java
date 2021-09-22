@@ -8,6 +8,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
+import io.kestra.core.schedulers.SchedulerThreadTest;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
@@ -49,21 +50,12 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
         this.topicsConfig = KafkaQueue.topicsConfig(applicationContext, Executor.class);
     }
 
-    private static Flow createThreadFlow() {
-        UnitTest schedule = UnitTest.builder()
-            .id("sleep")
-            .type(UnitTest.class.getName())
-            .build();
-
-        return createFlow(Collections.singletonList(schedule));
-    }
-
     @Test
     void thread() throws Exception {
         // mock flow listeners
         CountDownLatch queueCount = new CountDownLatch(2);
 
-        Flow flow = createThreadFlow();
+        Flow flow = SchedulerThreadTest.createThreadFlow();
 
         flowRepositoryInterface.create(flow);
 
@@ -99,7 +91,10 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
             scheduler.run();
             queueCount.await(60, TimeUnit.SECONDS);
 
+            assertThat(last.get().getVariables().get("defaultInjected"), is("done"));
             assertThat(last.get().getVariables().get("counter"), is(3));
+
+            AbstractSchedulerTest.COUNTER = 0;
         }
     }
 }

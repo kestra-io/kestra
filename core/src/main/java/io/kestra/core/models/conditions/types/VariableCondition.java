@@ -33,7 +33,7 @@ import javax.validation.constraints.NotNull;
             code = {
                 "- conditions:",
                 "    - type: io.kestra.core.models.conditions.types.VariableCondition",
-                "      expression: {{ and unknown }}",
+                "      expression: {{ unknown is defined }}",
             }
         )
     }

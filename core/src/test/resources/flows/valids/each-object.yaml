@@ -14,7 +14,7 @@ tasks:
     tasks:
       - id: is-json
         type: io.kestra.core.tasks.flows.Switch
-        value: "{{isJson taskrun.value}}"
+        value: "{{ taskrun.value is json }}"
         cases:
           "false":
             - id: not-json
@@ -23,7 +23,7 @@ tasks:
         defaults:
         - id: json
           type: io.kestra.core.tasks.debugs.Return
-          format: "{{task.id}} > JSON > {{jq parent.taskrun.value '.key'}} > {{jq parent.taskrun.value '.value'}}"
+          format: "{{task.id}} > JSON > {{ parent.taskrun.value | jq('.key') }} > {{ parent.taskrun.value | jq('.value') }}"
 
   - id: 2_end
     type: io.kestra.core.tasks.debugs.Return

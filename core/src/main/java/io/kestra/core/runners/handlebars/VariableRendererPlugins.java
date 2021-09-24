@@ -1,4 +1,4 @@
-package io.kestra.core.runners;
+package io.kestra.core.runners.handlebars;
 
 import com.github.jknack.handlebars.Helper;
 

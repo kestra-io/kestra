@@ -21,7 +21,7 @@ tasks:
     namespace: io.kestra.tests
     templateId: template
     args:
-      my-forward: "{{ inputs.with-string }}"
+      my-forward: "{{ inputs['with-string'] }}"
   - id: 3-end
     type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

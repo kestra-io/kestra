@@ -6,12 +6,12 @@ import java.util.function.*;
 public final class Rethrow {
     @FunctionalInterface
     public interface ConsumerChecked<T, E extends Exception> {
-        void accept(T t) throws Exception;
+        void accept(T t) throws E;
     }
 
     @FunctionalInterface
     public interface SupplierChecked<T, E extends Exception> {
-        T get() throws Exception;
+        T get() throws E;
     }
 
     @FunctionalInterface

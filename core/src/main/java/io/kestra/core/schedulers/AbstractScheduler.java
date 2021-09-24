@@ -219,7 +219,11 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                     schedulableNextDate.put(f.getTriggerContext().uid(), f);
 
                     if (f.getPollingTrigger().getInterval() == null) {
-                        this.handleEvaluatePollingTriggerResult(this.evaluatePollingTrigger(f));
+                        try {
+                            this.handleEvaluatePollingTriggerResult(this.evaluatePollingTrigger(f));
+                        } catch (Exception e) {
+                            AbstractScheduler.logError(f, e);
+                        }
                     } else {
                         this.addToRunning(f.getTriggerContext(), now);
 
@@ -448,7 +452,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
-    private SchedulerExecutionWithTrigger evaluatePollingTrigger(FlowWithPollingTrigger flowWithTrigger) {
+    private SchedulerExecutionWithTrigger evaluatePollingTrigger(FlowWithPollingTrigger flowWithTrigger) throws Exception {
         Optional<Execution> result = this.metricRegistry
             .timer(MetricRegistry.SCHEDULER_EVALUATE_DURATION, metricRegistry.tags(flowWithTrigger.getTriggerContext()))
             .record(() -> {

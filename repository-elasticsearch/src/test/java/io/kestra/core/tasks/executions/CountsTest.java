@@ -48,9 +48,9 @@ class CountsTest {
                 new Flow(ElasticSearchExecutionRepositoryTest.NAMESPACE, "second"),
                 new Flow(ElasticSearchExecutionRepositoryTest.NAMESPACE, "third")
             ))
-            .expression("{{ gte count 5 }}")
-            .startDate("{{ dateAdd (now) -30 'DAYS' }}")
-            .endDate("{{ now }}")
+            .expression("{{ count >= 5 }}")
+            .startDate("{{ now() | dateAdd (-30, 'DAYS') }}")
+            .endDate("{{ now() }}")
             .build()
             .run(runContext);
 
@@ -66,7 +66,7 @@ class CountsTest {
                 new Flow(ElasticSearchExecutionRepositoryTest.NAMESPACE, "third")
             ))
             .states(List.of(State.Type.RUNNING))
-            .expression("{{ gte count 5 }}")
+            .expression("{{ count >= 5 }}")
             .build()
             .run(runContext);
 
@@ -79,7 +79,7 @@ class CountsTest {
                 new Flow(ElasticSearchExecutionRepositoryTest.NAMESPACE, "second"),
                 new Flow(ElasticSearchExecutionRepositoryTest.NAMESPACE, "third")
             ))
-            .expression("{{ eq count 0 }}")
+            .expression("{{ count == 0 }}")
             .build()
             .run(runContext);
 

@@ -38,7 +38,7 @@ class VariableConditionTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of("test", "value"));
 
         VariableCondition build = VariableCondition.builder()
-            .expression("{{ and unknown }}")
+            .expression("{{ unknown is defined }}")
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

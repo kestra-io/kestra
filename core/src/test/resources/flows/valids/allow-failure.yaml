@@ -34,7 +34,7 @@ tasks:
         format: "{{task.id}} > {{taskrun.startDate}}"
   - id: switch
     type: io.kestra.core.tasks.flows.Switch
-    value: "{{ and inputs.crash }}"
+    value: "{{ inputs.crash is defined }}"
     cases:
       "true":
         - id: crash

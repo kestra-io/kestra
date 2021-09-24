@@ -1,0 +1,42 @@
+package io.kestra.core.runners.pebble.filters;
+
+import com.mitchellbosecke.pebble.error.PebbleException;
+import com.mitchellbosecke.pebble.extension.Filter;
+import com.mitchellbosecke.pebble.template.EvaluationContext;
+import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import io.kestra.core.runners.pebble.AbstractDate;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
+
+public class DateAddFilter extends AbstractDate implements Filter {
+    public DateAddFilter() {
+        this.argumentNames.add("amount");
+        this.argumentNames.add("unit");
+        this.argumentNames.add("format");
+        this.argumentNames.add("timeZone");
+        this.argumentNames.add("existingFormat");
+        this.argumentNames.add("locale");
+    }
+
+    @Override
+    public Object apply(Object input, Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) throws PebbleException {
+        if (input == null) {
+            return null;
+        }
+
+        final Long amount = (Long) args.get("amount");
+        final String unit = (String) args.get("unit");
+        final String timeZone = (String) args.get("timeZone");
+        final String existingFormat = (String) args.get("existingFormat");
+
+        ZoneId zoneId = zoneId(timeZone);
+        ZonedDateTime date = convert(input, zoneId, existingFormat);
+
+        ZonedDateTime plus = date.plus(amount, ChronoUnit.valueOf(unit));
+
+        return format(plus, args, context);
+    }
+}

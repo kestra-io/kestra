@@ -25,6 +25,11 @@ public final class Rethrow {
     }
 
     @FunctionalInterface
+    public interface BiFunctionChecked<A, B, R, E extends Exception> {
+        R apply(A a, B b) throws E;
+    }
+
+    @FunctionalInterface
     public interface PredicateChecked<T, E extends Exception> {
         boolean test(T t) throws E;
     }
@@ -49,21 +54,20 @@ public final class Rethrow {
         };
     }
 
-    public static <T, E extends Exception> Supplier<T> throwSupplier(SupplierChecked<T, E> supplier) throws E {
-        return () -> {
+    public static <K, V, E extends Exception> BiConsumer<K, V> throwBiConsumer(BiConsumerChecked<K, V, E> consumer) throws E {
+        return (k, v) -> {
             try {
-                return supplier.get();
+                consumer.accept(k, v);
             } catch (Exception exception) {
                 throw throwException(exception);
             }
         };
     }
 
-
-    public static <K, V, E extends Exception> BiConsumer<K, V> throwBiConsumer(BiConsumerChecked<K, V, E> consumer) throws E {
-        return (k, v) -> {
+    public static <T, E extends Exception> Supplier<T> throwSupplier(SupplierChecked<T, E> supplier) throws E {
+        return () -> {
             try {
-                consumer.accept(k, v);
+                return supplier.get();
             } catch (Exception exception) {
                 throw throwException(exception);
             }
@@ -90,6 +94,16 @@ public final class Rethrow {
         };
     }
 
+    public static <A, B, R, E extends Exception> BiFunction<A, B, R> throwBiFunction(BiFunctionChecked<A, B, R, E> function) throws E {
+        return (a, b) -> {
+            try {
+                return function.apply(a, b);
+            } catch (Exception exception) {
+                throw throwException(exception);
+            }
+        };
+    }
+
     public static <E extends Exception> Runnable throwRunnable(RunnableChecked<E> runnable) throws E {
         return () -> {
             try {
@@ -110,8 +124,13 @@ public final class Rethrow {
         };
     }
 
-    @SuppressWarnings("unchecked")
-    private static <E extends Exception> E throwException(Exception exception) throws E {
-        return (E) exception;
+    private static <E extends Exception> Wrapped throwException(Exception exception) throws E {
+        return new Wrapped(exception);
+    }
+
+    public static class Wrapped extends RuntimeException {
+        public Wrapped(Throwable cause) {
+            super(cause);
+        }
     }
 }

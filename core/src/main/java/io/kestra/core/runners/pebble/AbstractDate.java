@@ -10,17 +10,8 @@ import java.time.format.FormatStyle;
 import java.util.*;
 
 public abstract class AbstractDate {
-    protected final List<String> argumentNames = new ArrayList<>();
-
-    protected void addStandardArguments() {
-        this.argumentNames.add("format");
-        this.argumentNames.add("timeZone");
-        this.argumentNames.add("existingFormat");
-        this.argumentNames.add("locale");
-    }
-
     public List<String> getArgumentNames() {
-        return this.argumentNames;
+        return List.of("format", "timeZone", "existingFormat", "locale");
     }
 
     private static final Map<String, DateTimeFormatter> FORMATTERS = ImmutableMap.<String, DateTimeFormatter>builder()

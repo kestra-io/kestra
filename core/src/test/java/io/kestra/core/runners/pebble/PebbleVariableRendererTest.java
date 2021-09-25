@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.utils.Rethrow;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 
@@ -71,6 +72,18 @@ class PebbleVariableRendererTest {
         assertThat((String) render.get("escape"), containsString("[\"string\",1,1.123] // {"));
         assertThat((String) render.get("empty"), is(""));
         assertThat((String) render.get("concat"), is("applepearbanana"));
+    }
+
+    @Test
+    void exception() {
+        Rethrow.Wrapped runtimeException = assertThrows(Rethrow.Wrapped.class, () -> {
+            Rethrow.throwSupplier(() -> {
+                variableRenderer.render("{{ missing is defined ? missing : missing2 }}", Map.of());
+                return null;
+            }).get();
+        });
+
+        assertThat(runtimeException.getCause().getClass(), is(IllegalVariableEvaluationException.class));
     }
 
     @Test
@@ -182,7 +195,7 @@ class PebbleVariableRendererTest {
         assertThat(render, is("awesome"));
 
         assertThrows(IllegalVariableEvaluationException.class, () -> {
-            variableRenderer.render("{{ missing is defined ? missing : missing2 ) }}", vars);
+            variableRenderer.render("{{ missing is defined ? missing : missing2 }}", vars);
         });
     }
 

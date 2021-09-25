@@ -9,10 +9,6 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 
 public class NowFunction extends AbstractDate implements Function {
-    public NowFunction() {
-        this.addStandardArguments();
-    }
-
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         return format(ZonedDateTime.now(), args, context);

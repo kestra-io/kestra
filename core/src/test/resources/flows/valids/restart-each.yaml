@@ -4,7 +4,6 @@ namespace: io.kestra.tests
 inputs:
   - name: failed
     type: STRING
-    defaults: NONE
 
 tasks:
   - id: 1_each

@@ -8,12 +8,13 @@ import io.kestra.core.runners.pebble.AbstractDate;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 
 public class TimestampFilter extends AbstractDate implements Filter {
-    public TimestampFilter() {
-        this.argumentNames.add("timeZone");
-        this.argumentNames.add("existingFormat");
+    @Override
+    public List<String> getArgumentNames() {
+        return List.of("timeZone", "existingFormat");
     }
 
     @Override

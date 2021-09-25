@@ -9,16 +9,13 @@ import io.kestra.core.runners.pebble.AbstractDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 
 public class DateAddFilter extends AbstractDate implements Filter {
-    public DateAddFilter() {
-        this.argumentNames.add("amount");
-        this.argumentNames.add("unit");
-        this.argumentNames.add("format");
-        this.argumentNames.add("timeZone");
-        this.argumentNames.add("existingFormat");
-        this.argumentNames.add("locale");
+    @Override
+    public List<String> getArgumentNames() {
+        return List.of("amount", "unit", "format", "timeZone", "existingFormat", "locale");
     }
 
     @Override

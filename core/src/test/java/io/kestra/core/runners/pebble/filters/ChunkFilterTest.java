@@ -32,13 +32,11 @@ class ChunkFilterTest {
 
     @Test
     void exception() {
-        Rethrow.Wrapped runtimeException = assertThrows(Rethrow.Wrapped.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () -> {
             Rethrow.throwSupplier(() -> {
                 variableRenderer.render("{{ test | chunk(2) }}", Map.of("test", 1));
                 return null;
             }).get();
         });
-
-        assertThat(runtimeException.getCause().getClass(), is(IllegalVariableEvaluationException.class));
     }
 }

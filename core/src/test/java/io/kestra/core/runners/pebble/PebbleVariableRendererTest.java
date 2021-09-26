@@ -76,14 +76,12 @@ class PebbleVariableRendererTest {
 
     @Test
     void exception() {
-        Rethrow.Wrapped runtimeException = assertThrows(Rethrow.Wrapped.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () -> {
             Rethrow.throwSupplier(() -> {
                 variableRenderer.render("{{ missing is defined ? missing : missing2 }}", Map.of());
                 return null;
             }).get();
         });
-
-        assertThat(runtimeException.getCause().getClass(), is(IllegalVariableEvaluationException.class));
     }
 
     @Test

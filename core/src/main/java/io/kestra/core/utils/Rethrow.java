@@ -49,7 +49,7 @@ public final class Rethrow {
             try {
                 consumer.accept(t);
             } catch (Exception exception) {
-                throw throwException(exception);
+                throwException(exception);
             }
         };
     }
@@ -59,7 +59,7 @@ public final class Rethrow {
             try {
                 consumer.accept(k, v);
             } catch (Exception exception) {
-                throw throwException(exception);
+                throwException(exception);
             }
         };
     }
@@ -69,7 +69,7 @@ public final class Rethrow {
             try {
                 return supplier.get();
             } catch (Exception exception) {
-                throw throwException(exception);
+                return throwException(exception);
             }
         };
     }
@@ -79,7 +79,7 @@ public final class Rethrow {
             try {
                 return consumer.test(t);
             } catch (Exception exception) {
-                throw throwException(exception);
+                return throwException(exception);
             }
         };
     }
@@ -89,7 +89,7 @@ public final class Rethrow {
             try {
                 return function.apply(t);
             } catch (Exception exception) {
-                throw throwException(exception);
+                return throwException(exception);
             }
         };
     }
@@ -99,7 +99,7 @@ public final class Rethrow {
             try {
                 return function.apply(a, b);
             } catch (Exception exception) {
-                throw throwException(exception);
+                return throwException(exception);
             }
         };
     }
@@ -109,7 +109,7 @@ public final class Rethrow {
             try {
                 runnable.run();
             } catch (Exception exception) {
-                throw throwException(exception);
+                throwException(exception);
             }
         };
     }
@@ -119,18 +119,13 @@ public final class Rethrow {
             try {
                 return runnable.call();
             } catch (Exception exception) {
-                throw throwException(exception);
+                return throwException(exception);
             }
         };
     }
 
-    private static <E extends Exception> Wrapped throwException(Exception exception) throws E {
-        return new Wrapped(exception);
-    }
-
-    public static class Wrapped extends RuntimeException {
-        public Wrapped(Throwable cause) {
-            super(cause);
-        }
+    @SuppressWarnings("unchecked")
+    private static <E extends Exception, R> R throwException(Exception exception) throws E {
+        throw (E) exception;
     }
 }

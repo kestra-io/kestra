@@ -114,11 +114,6 @@ public class ErrorController {
     }
 
     @Error(global = true)
-    public HttpResponse<JsonError> error(HttpRequest<?> request, Rethrow.Wrapped e) {
-        return this.error(request, e.getCause());
-    }
-
-    @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, IllegalArgumentException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Illegal argument");
     }

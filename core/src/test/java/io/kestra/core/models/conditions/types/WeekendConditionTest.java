@@ -29,7 +29,7 @@ class WeekendConditionTest {
             Arguments.of(LocalDate.parse("2013-09-08").toString(), true),
             Arguments.of(LocalDate.parse("2013-09-07").toString(), true),
             Arguments.of(LocalDate.parse("2013-09-07").toString(), true),
-            Arguments.of("{{ dateFormat \"2013-09-08T15:19:12.000000+02:00\" \"iso_local_date\" }}", true)
+            Arguments.of("{{ \"2013-09-08T15:19:12.000000+02:00\" | date(\"iso_local_date\") }}", true)
         );
     }
 

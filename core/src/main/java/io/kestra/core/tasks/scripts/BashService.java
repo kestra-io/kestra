@@ -51,7 +51,7 @@ abstract public class BashService {
         Path tempDirectory,
         List<String> outputFiles,
         Map<String, Object> additionalVars
-    ) {
+    ) throws IOException {
         List<String> outputs = new ArrayList<>();
 
         if (outputFiles != null && outputFiles.size() > 0) {

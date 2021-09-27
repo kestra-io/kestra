@@ -12,12 +12,12 @@ tasks:
         - id: 2-1-1_t1
           type: io.kestra.core.tasks.scripts.Bash
           commands:
-            - 'echo "{{task.id}} > {{ parents.0.taskrun.value }} > $(date +"%T.%N")"'
+            - 'echo "{{task.id}} > {{ parents[0].taskrun.value }} > $(date +"%T.%N")"'
             - 'sleep 1'
         - id: 2-1-2_t2
           type: io.kestra.core.tasks.scripts.Bash
           commands:
-            - 'echo "{{task.id}} > {{ parents.0.taskrun.value }} > $(date +"%T.%N")"'
+            - 'echo "{{task.id}} > {{ parents[0].taskrun.value }} > $(date +"%T.%N")"'
             - 'sleep 1'
   - id: 2_end
     type: io.kestra.core.tasks.debugs.Return

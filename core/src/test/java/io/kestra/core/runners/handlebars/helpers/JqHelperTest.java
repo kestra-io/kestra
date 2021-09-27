@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest
+@MicronautTest(environments = "handlebars")
 class JqHelperTest {
     @Inject
     VariableRenderer variableRenderer;

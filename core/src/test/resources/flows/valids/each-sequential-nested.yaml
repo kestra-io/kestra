@@ -18,10 +18,10 @@ tasks:
             format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
           - id: 1-2-2_return
             type: io.kestra.core.tasks.debugs.Return
-            format: "{{task.id}} > {{eval 'outputs.1-2-1_return.[s1].[{{taskrun.value}}].value' }} >> get {{ get (get (get outputs.1-2-1_return 's1') taskrun.value) 'value' }} > {{taskrun.startDate}}"
+            format: "{{task.id}} > {{ outputs['1-2-1_return'].s1[taskrun.value].value }} >> get {{ outputs['1-2-1_return']['s1'][taskrun.value].value }} > {{taskrun.startDate}}"
       - id: 1-3_return
         type: io.kestra.core.tasks.debugs.Return
-        format: "{{task.id}} > {{eval 'outputs.1-1_return.[{{taskrun.value}}].value' }} > {{taskrun.startDate}}"
+        format: "{{task.id}} > {{ outputs['1-1_return'][taskrun.value].value }} > {{taskrun.startDate}}"
   - id: 2_return
     type: io.kestra.core.tasks.debugs.Return
-    format: "{{task.id}} > {{outputs.1-2-1_return.[s1].[a a].value}}"
+    format: "{{task.id}} > {{outputs['1-2-1_return'].s1['a a'].value}}"

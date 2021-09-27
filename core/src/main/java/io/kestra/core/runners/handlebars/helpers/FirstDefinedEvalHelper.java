@@ -9,6 +9,7 @@ import io.kestra.core.runners.VariableRenderer;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,9 +37,10 @@ public class FirstDefinedEvalHelper implements Helper<String> {
         while (result == null && i < params.size()) {
             try {
                 String param = params.get(i++);
-                String finalTemplate = variableRenderer.recursiveRender(param, options.context);
+                String finalTemplate = variableRenderer.recursiveRender(param, (Map<String, Object>) options.context.model());
 
-                result = variableRenderer.recursiveRender("{{" + finalTemplate + "}}", options.context);
+                result = variableRenderer.recursiveRender("{{" + finalTemplate + "}}", (Map<String, Object>) options.context.model());
+                System.out.println(result);
             } catch (IllegalVariableEvaluationException | IllegalStateException | HandlebarsException ignored) {
             }
         }

@@ -6,12 +6,12 @@ import java.util.function.*;
 public final class Rethrow {
     @FunctionalInterface
     public interface ConsumerChecked<T, E extends Exception> {
-        void accept(T t) throws Exception;
+        void accept(T t) throws E;
     }
 
     @FunctionalInterface
     public interface SupplierChecked<T, E extends Exception> {
-        T get() throws Exception;
+        T get() throws E;
     }
 
     @FunctionalInterface
@@ -22,6 +22,11 @@ public final class Rethrow {
     @FunctionalInterface
     public interface FunctionChecked<T, R, E extends Exception> {
         R apply(T t) throws E;
+    }
+
+    @FunctionalInterface
+    public interface BiFunctionChecked<A, B, R, E extends Exception> {
+        R apply(A a, B b) throws E;
     }
 
     @FunctionalInterface
@@ -44,7 +49,17 @@ public final class Rethrow {
             try {
                 consumer.accept(t);
             } catch (Exception exception) {
-                throw throwException(exception);
+                throwException(exception);
+            }
+        };
+    }
+
+    public static <K, V, E extends Exception> BiConsumer<K, V> throwBiConsumer(BiConsumerChecked<K, V, E> consumer) throws E {
+        return (k, v) -> {
+            try {
+                consumer.accept(k, v);
+            } catch (Exception exception) {
+                throwException(exception);
             }
         };
     }
@@ -54,18 +69,7 @@ public final class Rethrow {
             try {
                 return supplier.get();
             } catch (Exception exception) {
-                throw throwException(exception);
-            }
-        };
-    }
-
-
-    public static <K, V, E extends Exception> BiConsumer<K, V> throwBiConsumer(BiConsumerChecked<K, V, E> consumer) throws E {
-        return (k, v) -> {
-            try {
-                consumer.accept(k, v);
-            } catch (Exception exception) {
-                throw throwException(exception);
+                return throwException(exception);
             }
         };
     }
@@ -75,7 +79,7 @@ public final class Rethrow {
             try {
                 return consumer.test(t);
             } catch (Exception exception) {
-                throw throwException(exception);
+                return throwException(exception);
             }
         };
     }
@@ -85,7 +89,17 @@ public final class Rethrow {
             try {
                 return function.apply(t);
             } catch (Exception exception) {
-                throw throwException(exception);
+                return throwException(exception);
+            }
+        };
+    }
+
+    public static <A, B, R, E extends Exception> BiFunction<A, B, R> throwBiFunction(BiFunctionChecked<A, B, R, E> function) throws E {
+        return (a, b) -> {
+            try {
+                return function.apply(a, b);
+            } catch (Exception exception) {
+                return throwException(exception);
             }
         };
     }
@@ -95,7 +109,7 @@ public final class Rethrow {
             try {
                 runnable.run();
             } catch (Exception exception) {
-                throw throwException(exception);
+                throwException(exception);
             }
         };
     }
@@ -105,13 +119,13 @@ public final class Rethrow {
             try {
                 return runnable.call();
             } catch (Exception exception) {
-                throw throwException(exception);
+                return throwException(exception);
             }
         };
     }
 
     @SuppressWarnings("unchecked")
-    private static <E extends Exception> E throwException(Exception exception) throws E {
-        return (E) exception;
+    private static <E extends Exception, R> R throwException(Exception exception) throws E {
+        throw (E) exception;
     }
 }

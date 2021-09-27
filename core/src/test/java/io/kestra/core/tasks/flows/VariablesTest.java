@@ -50,7 +50,7 @@ class VariablesTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(filters.get(0).getMessage(), containsString("Missing variable: inputs.invalid"));
+        assertThat(filters.stream().filter(logEntry -> logEntry.getMessage().contains("Missing variable: 'inputs' on '{{inputs.invalid}}'")).count(), greaterThan(0L));
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
     }
 

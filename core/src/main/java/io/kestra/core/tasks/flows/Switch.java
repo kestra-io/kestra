@@ -24,6 +24,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.GraphService;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.ConstraintViolation;

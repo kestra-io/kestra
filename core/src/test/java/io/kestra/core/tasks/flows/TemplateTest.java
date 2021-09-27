@@ -25,7 +25,7 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
     public static final io.kestra.core.models.templates.Template TEMPLATE = io.kestra.core.models.templates.Template.builder()
         .id("template")
         .namespace("io.kestra.tests")
-        .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("{{ parent.outputs.args.my-forward }}").build())).build();
+        .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("{{ parent.outputs.args['my-forward'] }}").build())).build();
 
     public static void withTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository) throws TimeoutException {
         templateRepository.create(TEMPLATE);

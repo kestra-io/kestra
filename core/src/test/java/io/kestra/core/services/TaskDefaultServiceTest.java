@@ -60,15 +60,15 @@ class TaskDefaultServiceTest {
             ))
             .tasks(Collections.singletonList(task))
             .taskDefaults(List.of(
-                new TaskDefault(DefaultTester.class.getName(), ImmutableMap.of(
+                new TaskDefault(DefaultTester.class.getName(), false, ImmutableMap.of(
                     "value", 1,
                     "set", 123,
                     "arrays", Collections.singletonList(1)
                 )),
-                new TaskDefault(DefaultTriggerTester.class.getName(), ImmutableMap.of(
+                new TaskDefault(DefaultTriggerTester.class.getName(), false, ImmutableMap.of(
                     "set", 123
                 )),
-                new TaskDefault(VariableCondition.class.getName(), ImmutableMap.of(
+                new TaskDefault(VariableCondition.class.getName(), false, ImmutableMap.of(
                     "expression", "{{ test }}"
                 ))
             ))
@@ -85,6 +85,33 @@ class TaskDefaultServiceTest {
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().get(0)).getProperty().getLists().get(0).getVal().get("key"), is("test"));
+    }
+
+    @Test
+    public void forced() {
+        DefaultTester task = DefaultTester.builder()
+            .id("test")
+            .type(DefaultTester.class.getName())
+            .set(666)
+            .build();
+
+        Flow flow = Flow.builder()
+            .tasks(Collections.singletonList(task))
+            .taskDefaults(List.of(
+                new TaskDefault(DefaultTester.class.getName(), true, ImmutableMap.of(
+                    "set", 123
+                )),
+                new TaskDefault(DefaultTester.class.getName(), false, ImmutableMap.of(
+                    "value", 1,
+                    "set", 456,
+                    "arrays", Collections.singletonList(1)
+                ))
+            ))
+            .build();
+
+        Flow injected = taskDefaultService.injectDefaults(flow);
+
+        assertThat(((DefaultTester) injected.getTasks().get(0)).getSet(), is(123));
     }
 
     @SuperBuilder

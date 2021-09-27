@@ -49,7 +49,6 @@ public class TaskDefaultService {
     private static Map<String, List<TaskDefault>> taskDefaultsToMap(List<TaskDefault> taskDefaults) {
         return taskDefaults
             .stream()
-            .sorted(Comparator.comparingInt(value -> value.isForced() ? 1 : 0))
             .collect(Collectors.groupingBy(TaskDefault::getType));
     }
 
@@ -80,20 +79,33 @@ public class TaskDefaultService {
     Flow injectDefaults(Flow flow) {
         Map<String, Object> flowAsMap = JacksonMapper.toMap(flow);
 
-        Map<String, List<TaskDefault>> defaults = taskDefaultsToMap(mergeAllDefaults(flow));
+        List<TaskDefault> allDefaults = mergeAllDefaults(flow);
+        Map<Boolean, List<TaskDefault>> allDefaultsGroup = allDefaults
+            .stream()
+            .collect(Collectors.groupingBy(TaskDefault::isForced, Collectors.toList()));
+
+        Map<String, List<TaskDefault>> defaults = taskDefaultsToMap(allDefaultsGroup.getOrDefault(false, new ArrayList<>()));
+        Map<String, List<TaskDefault>> forced = taskDefaultsToMap(allDefaultsGroup.getOrDefault(true, new ArrayList<>()));
 
         Object taskDefaults = flowAsMap.get("taskDefaults");
         if (taskDefaults != null) {
             flowAsMap.remove("taskDefaults");
         }
 
-        Map<String, Object> flowAsMapWithDefault = (Map<String, Object>) recursiveDefaults(flowAsMap, defaults);
-
-        if (taskDefaults != null) {
-            flowAsMapWithDefault.put("taskDefaults", taskDefaults);
+        // we apply default and overwrite with forced
+        if (defaults.size() > 0) {
+            flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, defaults);
         }
 
-        return JacksonMapper.toMap(flowAsMapWithDefault, Flow.class);
+        if (forced.size() > 0) {
+            flowAsMap = (Map<String, Object>) recursiveDefaults(flowAsMap, forced);
+        }
+
+        if (taskDefaults != null) {
+            flowAsMap.put("taskDefaults", taskDefaults);
+        }
+
+        return JacksonMapper.toMap(flowAsMap, Flow.class);
     }
 
     private static Object recursiveDefaults(Object object, Map<String, List<TaskDefault>> defaults) {

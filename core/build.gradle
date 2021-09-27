@@ -26,7 +26,9 @@ dependencies {
     implementation group: 'com.cronutils', name: 'cron-utils', version: '9.1.5'
 
     // process
-    implementation 'com.github.docker-java:docker-java:3.2.11'
+    implementation ('com.github.docker-java:docker-java:3.2.11') {
+        exclude group: 'com.github.docker-java', module: 'docker-java-transport-jersey'
+    }
     implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.2.11'
 
     // schema

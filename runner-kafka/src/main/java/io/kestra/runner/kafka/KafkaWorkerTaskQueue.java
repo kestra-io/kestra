@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
 
 @Slf4j
@@ -89,10 +88,10 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
             kafkaProducer.initTransactions();
 
             org.apache.kafka.clients.consumer.Consumer<String, WorkerTask> kafkaConsumer = kafkaConsumerService.of(
-                consumerGroup,
+                KafkaWorkerTaskQueue.class,
                 JsonSerde.of(WorkerTask.class),
-                ImmutableMap.of("client.id", this.workerUuid.toString()),
-                consumerRebalanceListener()
+                consumerRebalanceListener(),
+                consumerGroup
             );
 
             kafkaConsumers.add(kafkaConsumer);

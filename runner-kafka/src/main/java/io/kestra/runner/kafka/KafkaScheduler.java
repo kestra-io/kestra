@@ -196,7 +196,7 @@ public class KafkaScheduler extends AbstractScheduler {
             log.trace(topology.describe().toString());
         }
 
-        return kafkaStreamService.of(group, topology);
+        return kafkaStreamService.of(this.getClass(), group, topology);
     }
 
     public void initStream() {

@@ -78,7 +78,7 @@ class KafkaElasticIndexerTest {
 
         KafkaConsumerService kafkaConsumerServiceSpy = mock(KafkaConsumerService.class);
         MockConsumer<String, String> mockConsumer = mockConsumer(topic);
-        doReturn(mockConsumer).when(kafkaConsumerServiceSpy).of(any(), any());
+        doReturn(mockConsumer).when(kafkaConsumerServiceSpy).of(any(), any(), any());
 
         ConsumerRecord<String, String> first = buildExecutionRecord(topic, 0);
 

@@ -137,8 +137,9 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
 
         poolExecutor.execute(() -> {
             org.apache.kafka.clients.consumer.Consumer<String, T> kafkaConsumer = kafkaConsumerService.of(
-                consumerGroup,
-                JsonSerde.of(this.cls)
+                this.cls,
+                JsonSerde.of(this.cls),
+                consumerGroup
             );
 
             kafkaConsumers.add(kafkaConsumer);
@@ -232,8 +233,9 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
 
     Map<TopicPartition, Long> offsetForTime(Instant instant) {
         org.apache.kafka.clients.consumer.Consumer<String, T> consumer = kafkaConsumerService.of(
-            null,
-            JsonSerde.of(this.cls)
+            this.cls,
+            JsonSerde.of(this.cls),
+            null
         );
 
         try {

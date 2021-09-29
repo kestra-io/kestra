@@ -18,7 +18,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,7 +45,7 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
     private void init() {
         this.executorQueue = new KafkaQueue<>(Executor.class, applicationContext);
         this.triggerQueue = new KafkaQueue<>(Trigger.class, applicationContext);
-        this.executorProducer = applicationContext.getBean(KafkaProducerService.class).of(Execution.class, JsonSerde.of(Execution.class));
+        this.executorProducer = applicationContext.getBean(KafkaProducerService.class).of(KafkaSchedulerTest.class, JsonSerde.of(Execution.class));
         this.topicsConfig = KafkaQueue.topicsConfig(applicationContext, Executor.class);
     }
 

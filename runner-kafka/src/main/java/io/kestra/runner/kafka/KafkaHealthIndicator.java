@@ -26,10 +26,10 @@ public class KafkaHealthIndicator implements HealthIndicator {
     /**
      * Constructs a new Kafka health indicator for the given arguments.
      *
-     * @param adminService The admin service
+     * @param kafkaAdminService The admin service
      */
-    public KafkaHealthIndicator(KafkaAdminService adminService) {
-        this.adminClient = adminService.of();
+    public KafkaHealthIndicator(KafkaAdminService kafkaAdminService) {
+        this.adminClient = kafkaAdminService.of();
     }
 
     @Override

@@ -896,7 +896,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             log.trace(topology.describe().toString());
         }
 
-        resultStream = kafkaStreamService.of(this.getClass(), topology, properties);
+        resultStream = kafkaStreamService.of(this.getClass(), this.getClass(), topology, properties);
         resultStream.start();
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(

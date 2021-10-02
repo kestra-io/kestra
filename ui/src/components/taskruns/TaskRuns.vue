@@ -15,9 +15,8 @@
                 />
                 <date-range
                     :start="$route.query.start"
-                    @start="onDataTableValue('start', $event)"
                     :end="$route.query.end"
-                    @end="onDataTableValue('end', $event)"
+                    @input="onDataTableValue($event)"
                 />
                 <refresh-button class="float-right" @onRefresh="load" />
             </template>
@@ -236,7 +235,7 @@
                     query: {tab: "gantt"}
                 });
             },
-            loadQuery() {
+            loadQuery(stats) {
                 let filter = []
                 let query = this.queryWithFilter();
 
@@ -248,11 +247,11 @@
                     filter.push(qb.toLucene(query.q));
                 }
 
-                if (query.start) {
+                if (query.start && !stats) {
                     filter.push(`taskRunList.state.startDate:[${query.start} TO *]`)
                 }
 
-                if (query.end) {
+                if (query.end && !stats) {
                     filter.push(`taskRunList.state.endDate:[* TO ${query.end}]`)
                 }
 
@@ -261,7 +260,7 @@
             loadData(callback) {
                 this.$store
                     .dispatch("stat/taskRunDaily", {
-                        q: this.loadQuery(),
+                        q: this.loadQuery(true),
                         startDate: this.$moment(this.startDate).startOf("day").add(-1, "day").toISOString(true),
                         endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
                     })
@@ -275,7 +274,7 @@
                     .dispatch("taskrun/findTaskRuns", {
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
-                        q: this.loadQuery(),
+                        q: this.loadQuery(false),
                         sort: this.$route.query.sort,
                         state: this.$route.query.status
                     })

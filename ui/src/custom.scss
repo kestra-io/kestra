@@ -70,7 +70,6 @@ $vs-state-active-bg: $primary;
 
 @import '~vue2-datepicker/scss/index';
 .mx-datepicker {
-    width: 196px;
     .mx-input {
         border-radius: $border-radius;
 
@@ -79,6 +78,10 @@ $vs-state-active-bg: $primary;
             &::placeholder {
                 color: $input-placeholder-color;
             }
+        }
+
+        &::placeholder {
+            color: $input-placeholder-color;
         }
     }
 

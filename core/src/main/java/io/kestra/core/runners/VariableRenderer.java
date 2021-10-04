@@ -111,7 +111,11 @@ public class VariableRenderer {
                     Template  template = handlebars.compileInline(currentTemplate);
                     current = template.apply(variables);
                 } catch (IOException hbE) {
-                    throw new IllegalVariableEvaluationException(hbE);
+                    throw new IllegalVariableEvaluationException(
+                        "Pebble evaluation failed with '" + e.getMessage() +  "' " +
+                        "and Handlebars fallback failed also  with '" + hbE.getMessage() + "'" ,
+                        e
+                    );
                 }
             }
 

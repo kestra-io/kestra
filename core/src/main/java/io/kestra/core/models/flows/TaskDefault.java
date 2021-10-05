@@ -7,10 +7,9 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @AllArgsConstructor
 public class TaskDefault {
     private final String type;

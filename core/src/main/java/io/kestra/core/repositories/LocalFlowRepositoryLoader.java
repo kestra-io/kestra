@@ -35,12 +35,12 @@ public class LocalFlowRepositoryLoader {
             .collect(Collectors.toList());
 
         for (Path file: list) {
-            Flow parse = yamlFlowParser.parse(file.toFile());
-
             try {
+                Flow parse = yamlFlowParser.parse(file.toFile());
                 flowRepository.create(parse);
+                log.trace("Created flow {}.{}", parse.getNamespace(), parse.getId());
             } catch (ConstraintViolationException e) {
-                log.warn("Unable to create flow {}.{}", parse.getNamespace(), parse.getId(), e);
+                log.warn("Unable to create flow {}", file, e);
             }
         }
     }

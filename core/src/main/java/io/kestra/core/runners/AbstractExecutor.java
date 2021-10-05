@@ -494,12 +494,12 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         return executor.withWorkerTasks(workerTasks, "handleWorkerTask");
     }
 
-    private Executor handleFlowTask(final Executor executor) throws Exception {
+    private Executor handleFlowTask(final Executor executor) {
         List<WorkerTaskExecution> executions = new ArrayList<>();
         List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
 
         boolean haveFlows = executor.getWorkerTasks()
-            .removeIf(throwPredicate(workerTask -> {
+            .removeIf(workerTask -> {
                 if (!(workerTask.getTask() instanceof io.kestra.core.tasks.flows.Flow)) {
                     return false;
                 }
@@ -512,28 +512,37 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
                     workerTask.getTaskRun()
                 );
 
-                Execution execution = flowTask.createExecution(runContext, flowExecutorInterface);
+                try {
+                    Execution execution = flowTask.createExecution(runContext, flowExecutorInterface);
 
-                WorkerTaskExecution workerTaskExecution = WorkerTaskExecution.builder()
-                    .task(flowTask)
-                    .taskRun(workerTask.getTaskRun())
-                    .runContext(runContext)
-                    .execution(execution)
-                    .build();
+                    WorkerTaskExecution workerTaskExecution = WorkerTaskExecution.builder()
+                        .task(flowTask)
+                        .taskRun(workerTask.getTaskRun())
+                        .runContext(runContext)
+                        .execution(execution)
+                        .build();
 
-                executions.add(workerTaskExecution);
+                    executions.add(workerTaskExecution);
 
-                if (!flowTask.getWait()) {
-                    workerTaskResults.add(flowTask.createWorkerTaskResult(
-                        null,
-                        workerTaskExecution,
-                        null,
-                        execution
-                    ));
+                    if (!flowTask.getWait()) {
+                        workerTaskResults.add(flowTask.createWorkerTaskResult(
+                            null,
+                            workerTaskExecution,
+                            null,
+                            execution
+                        ));
+                    }
+                } catch (Exception e) {
+                    workerTaskResults.add(WorkerTaskResult.builder()
+                        .task(flowTask)
+                        .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED))
+                        .build()
+                    );
+                    executor.withException(e, "handleFlowTask");
                 }
 
                 return true;
-            }));
+            });
 
         if (!haveFlows) {
             return executor;

@@ -1,17 +1,15 @@
 <template>
-    <div class="date-range">
-        <date-picker
-            @input="onDate($event)"
-            :value="date"
-            :required="false"
-            :shortcuts="shortcuts"
-            :lang="lang"
-            type="datetime"
-            class="sm"
-            range
-            :placeholder="$t('date')"
-        />
-    </div>
+    <date-picker
+        @input="onDate($event)"
+        :value="date"
+        :required="false"
+        :shortcuts="shortcuts"
+        :lang="lang"
+        type="datetime"
+        class="sm date-range"
+        range
+        :placeholder="$t('date')"
+    />
 </template>
 <script>
     import DatePicker from "vue2-datepicker";

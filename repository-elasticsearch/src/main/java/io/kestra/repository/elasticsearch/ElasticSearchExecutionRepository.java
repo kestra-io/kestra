@@ -1,7 +1,16 @@
 package io.kestra.repository.elasticsearch;
 
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.utils.ExecutorsUtils;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.search.SearchRequest;
@@ -24,18 +33,11 @@ import org.elasticsearch.search.aggregations.bucket.histogram.ParsedDateHistogra
 import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
 import org.elasticsearch.search.aggregations.bucket.nested.ParsedNested;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.ParsedStats;
 import org.elasticsearch.search.aggregations.metrics.TopHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.utils.ExecutorsUtils;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -45,7 +47,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
-import io.micronaut.core.annotation.Nullable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -81,7 +82,8 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String query,
         @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
+        @Nullable ZonedDateTime endDate,
+        boolean groupByNamespaceOnly
     ) {
         if (startDate == null) {
             startDate = ZonedDateTime.now().minusDays(30);
@@ -92,13 +94,15 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         }
 
         TermsAggregationBuilder agg = AggregationBuilders.terms(NAMESPACE_AGG)
-            .size(10000)
+            .size(groupByNamespaceOnly ? 25 : 10000)
             .field("namespace")
             .subAggregation(
-                AggregationBuilders.terms(FLOW_AGG)
-                    .size(10000)
-                    .field("flowId")
-                    .subAggregation(dailyExecutionStatisticsFinalAgg(startDate, endDate, false))
+                groupByNamespaceOnly ?
+                    dailyExecutionStatisticsFinalAgg(startDate, endDate, false) :
+                    AggregationBuilders.terms(FLOW_AGG)
+                        .size(10000)
+                        .field("flowId")
+                        .subAggregation(dailyExecutionStatisticsFinalAgg(startDate, endDate, false))
             );
 
         SearchSourceBuilder sourceBuilder = this.searchSource(
@@ -119,46 +123,54 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                 .forEach(namespaceBucket -> {
                     final String namespace = namespaceBucket.getKeyAsString();
 
-                    ((ParsedStringTerms) namespaceBucket.getAggregations().get(FLOW_AGG)).getBuckets()
-                        .forEach(flowBucket -> {
-                            final String flowId = flowBucket.getKeyAsString();
+                    if (groupByNamespaceOnly) {
+                        this.parseDateAgg(namespaceBucket, result, namespace, "*");
+                    } else {
+                        ((ParsedStringTerms) namespaceBucket.getAggregations().get(FLOW_AGG)).getBuckets()
+                            .forEach(flowBucket -> {
+                                final String flowId = flowBucket.getKeyAsString();
 
-                            ((ParsedDateHistogram) flowBucket.getAggregations().get(DATE_AGG)).getBuckets()
-                                .forEach(dateBucket -> {
-                                    final LocalDate currentStartDate = LocalDate.parse(
-                                        dateBucket.getKeyAsString(),
-                                        DateTimeFormatter.ISO_LOCAL_DATE
-                                    );
-
-                                    ParsedStringTerms countAgg = dateBucket.getAggregations().get(COUNT_AGG);
-                                    ParsedStats durationAgg = dateBucket.getAggregations().get(DURATION_AGG);
-
-                                    result.compute(namespace, (namespaceKey, namespaceMap) -> {
-                                        if (namespaceMap == null) {
-                                            namespaceMap = new HashMap<>();
-                                        }
-
-                                        namespaceMap.compute(flowId, (flowKey, flowList) -> {
-                                            if (flowList == null) {
-                                                flowList = new ArrayList<>();
-                                            }
-
-                                            flowList.add(dailyExecutionStatisticsMap(countAgg, durationAgg, currentStartDate));
-
-                                            return flowList;
-                                        });
-
-                                        return namespaceMap;
-                                    });
-                                });
-                        });
-                });
-
+                                this.parseDateAgg(flowBucket, result, namespace, flowId);
+                            });
+                    }
+            });
 
             return result;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    private <T extends Terms.Bucket> void parseDateAgg(T bucket, Map<String, Map<String, List<DailyExecutionStatistics>>> result, String namespace, String flowId) {
+        ((ParsedDateHistogram) bucket.getAggregations().get(DATE_AGG)).getBuckets()
+            .forEach(dateBucket -> {
+                final LocalDate currentStartDate = LocalDate.parse(
+                    dateBucket.getKeyAsString(),
+                    DateTimeFormatter.ISO_LOCAL_DATE
+                );
+
+                ParsedStringTerms countAgg = dateBucket.getAggregations().get(COUNT_AGG);
+                ParsedStats durationAgg = dateBucket.getAggregations().get(DURATION_AGG);
+
+                result.compute(namespace, (namespaceKey, namespaceMap) -> {
+                    if (namespaceMap == null) {
+                        namespaceMap = new HashMap<>();
+                    }
+
+                    namespaceMap.compute(flowId, (flowKey, flowList) -> {
+                        if (flowList == null) {
+                            flowList = new ArrayList<>();
+                        }
+
+                        flowList.add(dailyExecutionStatisticsMap(countAgg, durationAgg, currentStartDate));
+
+                        return flowList;
+                    });
+
+                    return namespaceMap;
+                });
+            });
     }
 
     @Override

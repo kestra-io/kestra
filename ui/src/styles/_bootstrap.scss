@@ -120,8 +120,6 @@ mark {
                 margin-right: $spacer / 2;
             }
 
-
-
             &.collapse.show {
                 padding-top: $spacer/2;
 
@@ -135,9 +133,6 @@ mark {
                     display: table;
                     > div {
                         display: table-cell;
-                        &:first-child {
-                            padding-right: $spacer / 2;
-                        }
                     }
                 }
 

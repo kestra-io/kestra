@@ -32,7 +32,8 @@ public interface FlowableTask <T extends Output> {
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            parentTaskRun
+            parentTaskRun,
+            runContext
         );
     }
 

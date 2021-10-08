@@ -3,7 +3,6 @@ package io.kestra.core.runners;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
@@ -17,7 +16,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Slf4j
 public class FlowableUtils {
     public static List<NextTaskRun> resolveSequentialNexts(
         Execution execution,
@@ -94,12 +92,13 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
-        TaskRun parentTaskRun
+        TaskRun parentTaskRun,
+        RunContext runContext
     ) {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors);
 
         if (currentTasks == null) {
-            log.warn(
+            runContext.logger().warn(
                 "No task found on flow '{}', task '{}', execution '{}'",
                 execution.getNamespace() + "." + execution.getFlowId(),
                 parentTaskRun.getTaskId(),

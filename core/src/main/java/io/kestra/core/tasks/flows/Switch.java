@@ -159,7 +159,8 @@ public class Switch extends Task implements FlowableTask<Switch.Output>, TaskVal
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            parentTaskRun
+            parentTaskRun,
+            runContext
         );
     }
 

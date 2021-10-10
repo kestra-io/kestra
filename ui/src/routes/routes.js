@@ -21,11 +21,11 @@ export default {
         {name: "flows/list", path: "/flows", component: Flows},
         {name: "flows/search", path: "/flows/search", component: FlowsSearch},
         {name: "flows/create", path: "/flows/new", component: FlowEdit},
-        {name: "flows/update", path: "/flows/edit/:namespace/:id", component: FlowRoot},
+        {name: "flows/update", path: "/flows/edit/:namespace/:id/:tab?", component: FlowRoot},
 
         //Executions
         {name: "executions/list", path: "/executions", component: Executions},
-        {name: "executions/update", path: "/executions/:namespace/:flowId/:id", component: ExecutionRoot},
+        {name: "executions/update", path: "/executions/:namespace/:flowId/:id/:tab?", component: ExecutionRoot},
 
         //TaskRuns
         {name: "taskruns/list", path: "/taskruns", component: TaskRuns},

@@ -1,50 +1,27 @@
 <template>
-    <div>
-        <b-card v-if="ready" no-body>
-            <b-tabs card @activate-tab="onTabChange">
-                <b-tab
-                    v-for="tab in tabs()"
-                    :key="tab.tab"
-                    :active="$route.query.tab === tab.tab"
-                    :title="tab.title"
-                    :class="tab.class"
-                    lazy
-                >
-                    <b-card-text>
-                        <div :is="tab.tab" ref="currentTab" :prevent-route-info="true" />
-                    </b-card-text>
-                </b-tab>
-            </b-tabs>
-        </b-card>
+    <div v-if="ready">
+        <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" />
     </div>
 </template>
 <script>
     import Topology from "./Topology";
     import Schedule from "./Schedule";
-    import DataSource from "./DataSource";
-    import Revisions from "./Revisions";
-    import ExecutionConfiguration from "./ExecutionConfiguration";
-    import BottomLine from "../layout/BottomLine";
-    import FlowActions from "./FlowActions";
+    import FlowSource from "./FlowSource";
+    import FlowRevisions from "./FlowRevisions";
+    import FlowRun from "./FlowRun";
     import FlowLogs from "./FlowLogs";
     import FlowExecutions from "./FlowExecutions";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import Tabs from "../Tabs";
+    import UnsavedChange from "../../mixins/unsavedChange";
 
     export default {
-        mixins: [RouteContext],
+        mixins: [RouteContext, UnsavedChange],
         components: {
-            Topology,
-            Schedule,
-            BottomLine,
-            DataSource,
-            FlowActions,
-            FlowExecutions,
-            ExecutionConfiguration,
-            Revisions,
-            FlowLogs
+            Tabs
         },
         data() {
             return {
@@ -58,7 +35,11 @@
             }
         },
         created() {
+            UnsavedChange.methods.created.call(this);
             this.load();
+        },
+        beforeDestroy() {
+            UnsavedChange.methods.beforeDestroy.call(this);
         },
         methods: {
             load() {
@@ -68,64 +49,60 @@
                     }
                 });
             },
-            navigateTab(index) {
-                this.$router
-                    .push({
-                        name: "flows/update",
-                        params: this.$route.params,
-                        query: {tab: this.tabs()[index].tab}
-                    })
-                    .finally(() => {
-                        this.checkUnsaved = true;
-                    })
-            },
-            tabs() {
+            getTabs() {
                 const tabs = [
                     {
-                        tab: "topology",
+                        name: undefined,
+                        component: Topology,
                         title: this.$t("topology"),
-                        class: "p-0"
+                        bodyClass: {"p-0": true}
                     },
                 ];
 
                 if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
                     tabs.push({
-                        tab: "flow-executions",
+                        name: "executions",
+                        component: FlowExecutions,
                         title: this.$t("executions")
                     });
                 }
 
                 if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
                     tabs.push({
-                        tab: "execution-configuration",
+                        name: "execute",
+                        component: FlowRun,
                         title: this.$t("launch execution")
                     });
                 }
 
                 if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
                     tabs.push({
-                        tab: "data-source",
+                        name: "source",
+                        component: FlowSource,
                         title: this.$t("source"),
-                        class: "p-0"
+                        bodyClass: {"p-0": true}
                     });
 
                     tabs.push({
-                        tab: "schedule",
+                        name: "schedule",
+                        component: Schedule,
                         title: this.$t("schedule"),
                     });
                 }
 
                 if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
                     tabs.push({
-                        tab: "revisions",
+                        name: "revisions",
+                        component: FlowRevisions,
                         title: this.$t("revisions")
                     });
                 }
 
                 if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
                     tabs.push({
-                        tab: "flow-logs",
-                        title: this.$t("logs")
+                        name: "logs",
+                        component: FlowLogs,
+                        title: this.$t("logs"),
                     });
                 }
 
@@ -133,27 +110,10 @@
             },
             hasUnsavedChanged() {
                 return this.$refs.currentTab &&
-                    this.$refs.currentTab[0].$children &&
-                    this.$refs.currentTab[0].$children[0] &&
-                    this.$refs.currentTab[0].$children[0].hasUnsavedChanged &&
-                    this.$refs.currentTab[0].$children[0].hasUnsavedChanged();
-            },
-            onTabChange(newTabIndex, prevTabIndex, bvEvent) {
-                if (this.checkUnsaved === true && this.hasUnsavedChanged()) {
-                    bvEvent.preventDefault();
-
-                    this.$toast().unsavedConfirm(
-                        () => {
-                            this.checkUnsaved = false;
-                            this.navigateTab(newTabIndex)
-                        },
-                        () => {
-                            this.checkUnsaved = true;
-                        }
-                    )
-                } else if (this.checkUnsaved !== false) {
-                    this.navigateTab(newTabIndex)
-                }
+                    this.$refs.currentTab.$refs.tabContent &&
+                    this.$refs.currentTab.$refs.tabContent.$children[0] &&
+                    this.$refs.currentTab.$refs.tabContent.$children[0].hasUnsavedChanged &&
+                    this.$refs.currentTab.$refs.tabContent.$children[0].hasUnsavedChanged();
             },
         },
         computed: {
@@ -190,6 +150,9 @@
                         }
                     ]
                 };
+            },
+            tabs() {
+                return this.getTabs();
             },
             ready() {
                 return this.flow !== undefined;

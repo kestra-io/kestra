@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-list-group>
+        <b-list-group v-if="triggers.length > 0">
             <schedule-item
                 @remove="remove"
                 @set="set"
@@ -10,6 +10,9 @@
                 :key="x"
             />
         </b-list-group>
+        <b-alert show variant="light" v-else class="mb-0">
+            {{ $t('no result') }}
+        </b-alert>
         <bottom-line v-if="canSave">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">

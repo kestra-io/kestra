@@ -6,13 +6,13 @@
             </kicon>
         </b-button>
         <b-modal size="lg" hide-footer id="trigger-flow" :title="$t('execute the flow')">
-            <execution-configuration @onExecutionTrigger="closeModal" :redirect="true" />
+            <flow-run @onExecutionTrigger="closeModal" :redirect="true" />
         </b-modal>
     </div>
 </template>
 <script>
     import Flash from "vue-material-design-icons/Flash";
-    import ExecutionConfiguration from "./ExecutionConfiguration";
+    import FlowRun from "./FlowRun";
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
     import Kicon from "../Kicon"
@@ -20,7 +20,7 @@
     export default {
         components: {
             Flash,
-            ExecutionConfiguration,
+            FlowRun,
             Kicon
         },
         props: {

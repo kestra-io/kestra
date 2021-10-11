@@ -10,6 +10,7 @@ import Settings from "../components/settings/Settings.vue"
 import TemplateEdit from "../components/templates/TemplateEdit.vue"
 import Templates from "../components/templates/Templates.vue"
 import FlowsSearch from "../components/flows/FlowsSearch";
+import Errors from "../components/errors/Errors";
 
 export default {
     mode: "history",
@@ -44,5 +45,8 @@ export default {
 
         //Settings
         {name: "settings", path: "/settings", component: Settings},
+
+        //Errors
+        {name: "errors/404-wildcard", path: "*", component: Errors, props: {code: 404}},
     ]
 }

@@ -31,7 +31,10 @@ export default (callback, store, nprogress) => {
         response => {
             return response
         }, errorResponse => {
-            if (errorResponse.response && errorResponse.response.data) {
+            if (errorResponse.response.status === 404) {
+                console.log(errorResponse.response.status)
+                store.dispatch("core/showError", errorResponse.response.status)
+            } else if (errorResponse.response && errorResponse.response.data) {
                 store.dispatch("core/showMessage", {
                     content: errorResponse.response.data,
                     variant: "danger"

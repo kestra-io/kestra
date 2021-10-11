@@ -21,11 +21,11 @@
             />
         </div>
 
-        <small v-if="max" class="btn btn-sm btn-outline-light text-muted">
+        <small v-if="max" class="btn btn-sm btn-outline-light text-total">
             {{ $t('Max displayable') }}: {{ max }}
         </small>
 
-        <small class="total btn btn-sm btn-outline-light text-muted">
+        <small class="total btn btn-sm btn-outline-light text-total">
             {{ $t('Total') }}: {{ total }}
         </small>
     </div>
@@ -74,6 +74,9 @@ select {
     width: auto;
 }
 
+/deep/ .text-total {
+    color: $pagination-color !important;
+}
 @media (max-width: map-get($grid-breakpoints, "sm")) {
     select {
         display: none;

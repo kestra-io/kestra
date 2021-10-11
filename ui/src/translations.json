@@ -207,7 +207,13 @@
     "execute the flow": "Trigger the flow",
     "execute flow now ?": "Do you want to execute this flow ?",
     "Default namespace": "Default namespace",
-    "unsaved changed ?": "You have unsaved changed, do you want to leave this page ?"
+    "unsaved changed ?": "You have unsaved changed, do you want to leave this page ?",
+    "errors": {
+      "404": {
+        "title": "Page not found",
+        "content": "The requested URL was not found on this server. <span class=\"text-muted\">That’s all we know.</span>"
+      }
+    }
   },
   "fr": {
     "id": "Identifiant",
@@ -418,6 +424,12 @@
     "execute the flow": "Créer une exécution",
     "execute flow now ?": "Voulez-vous exécuter ce flow ?",
     "Default namespace": "Espace de nom par défaut",
-    "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?"
+    "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?",
+    "errors": {
+      "404": {
+        "title": "Page introuvable",
+        "content": "L'URL demandé est introuvable sur ce serveur. <span class=\"text-muted\">C'est tout ce que nous savons.</span>"
+      }
+    }
   }
 }

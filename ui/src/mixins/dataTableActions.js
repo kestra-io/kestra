@@ -59,13 +59,16 @@ export default {
                 params: item
             });
         },
-        onDataTableValue(key, value) {
+        onDataTableValue(keyOrObject, value) {
+            const values = typeof (keyOrObject) === "string" ? {[keyOrObject]: value} : keyOrObject;
             let query = {...this.$route.query};
 
-            if (value === undefined || value === "" || value === null) {
-                delete query[key]
-            } else {
-                query[key] = value;
+            for (const [key, value] of Object.entries(values)) {
+                if (value === undefined || value === "" || value === null) {
+                    delete query[key]
+                } else {
+                    query[key] = value;
+                }
             }
 
             delete query.page;

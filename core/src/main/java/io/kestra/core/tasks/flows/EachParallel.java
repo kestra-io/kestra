@@ -63,12 +63,12 @@ import javax.validation.constraints.NotNull;
                 "    - id: t1",
                 "      type: io.kestra.core.tasks.scripts.Bash",
                 "      commands:",
-                "        - 'echo \"{{task.id}} > {{ parents.0.taskrun.value }}",
+                "        - 'echo \"{{task.id}} > {{ parents[0].taskrun.value }}",
                 "        - 'sleep 1'",
                 "    - id: t2",
                 "      type: io.kestra.core.tasks.scripts.Bash",
                 "      commands:",
-                "        - 'echo \"{{task.id}} > {{ parents.0.taskrun.value }}",
+                "        - 'echo \"{{task.id}} > {{ parents[0].taskrun.value }}",
                 "        - 'sleep 1'"
             }
         )

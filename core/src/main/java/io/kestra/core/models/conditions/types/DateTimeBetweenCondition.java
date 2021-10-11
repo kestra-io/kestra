@@ -40,11 +40,11 @@ public class DateTimeBetweenCondition extends Condition implements ScheduleCondi
     @NotNull
     @Schema(
         title = "The date to test",
-        description = "Can be any variable or any valid ISO 8601 datetime, default will use `{{ now }}`"
+        description = "Can be any variable or any valid ISO 8601 datetime, default will use `{{ now() }}`"
     )
     @Builder.Default
     @PluginProperty(dynamic = true)
-    private final String date = "{{ now }}";
+    private final String date = "{{ now() }}";
 
     @Schema(title = "The date must after this one")
     @PluginProperty(dynamic = false)

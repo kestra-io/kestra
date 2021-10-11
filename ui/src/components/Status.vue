@@ -17,6 +17,7 @@
     import Restart from "vue-material-design-icons/Restart";
     import AlertCircle from "vue-material-design-icons/AlertCircle";
     import PlayPause from "vue-material-design-icons/PlayPause";
+    import ProgressWrench from "vue-material-design-icons/ProgressWrench";
 
     export default {
         components: {
@@ -27,8 +28,8 @@
             StopCircle,
             Restart,
             AlertCircle,
-            PlayPause
-
+            PlayPause,
+            ProgressWrench
         },
         props: {
             status: {
@@ -57,7 +58,7 @@
         }
     };
 </script>
-<style scoped>
+<style scoped lang="scss">
 button.status {
     cursor: default !important;
     white-space: nowrap;

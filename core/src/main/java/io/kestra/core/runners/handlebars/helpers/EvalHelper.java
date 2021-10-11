@@ -5,6 +5,8 @@ import com.github.jknack.handlebars.Options;
 import lombok.SneakyThrows;
 import io.kestra.core.runners.VariableRenderer;
 
+import java.util.Map;
+
 public class EvalHelper implements Helper<String> {
     private final VariableRenderer variableRenderer;
 
@@ -15,9 +17,9 @@ public class EvalHelper implements Helper<String> {
     @SneakyThrows
     @Override
     public CharSequence apply(final String value, final Options options) {
-        String finalTemplate = variableRenderer.recursiveRender(value, options.context);
+        String finalTemplate = variableRenderer.recursiveRender(value, (Map<String, Object>) options.context.model());
 
-        return variableRenderer.recursiveRender("{{" + finalTemplate + "}}", options.context);
+        return variableRenderer.recursiveRender("{{" + finalTemplate + "}}", (Map<String, Object>) options.context.model());
     }
 }
 

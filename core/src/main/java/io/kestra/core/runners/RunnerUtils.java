@@ -23,6 +23,7 @@ import java.io.File;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -132,10 +133,14 @@ public class RunnerUtils {
                         ));
 
                     case DATETIME:
-                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
-                            input.getName(),
-                            Instant.parse(current)
-                        ));
+                        try {
+                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                                input.getName(),
+                                Instant.parse(current)
+                            ));
+                        } catch (DateTimeParseException e) {
+                            throw new MissingRequiredInput("Invalid DATETIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                        }
 
                     case FILE:
                         try {

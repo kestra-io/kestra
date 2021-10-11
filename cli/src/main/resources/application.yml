@@ -47,6 +47,10 @@ kestra:
         partitions: 16
         replication-factor: 1
 
+      client:
+        properties:
+          metrics.recording.level: TRACE
+
       consumer:
         properties:
           isolation.level: "read_committed"

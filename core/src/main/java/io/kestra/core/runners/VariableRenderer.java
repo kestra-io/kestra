@@ -4,77 +4,141 @@ import com.github.jknack.handlebars.EscapingStrategy;
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
-import io.micronaut.context.ApplicationContext;
+import com.mitchellbosecke.pebble.PebbleEngine;
+import com.mitchellbosecke.pebble.error.AttributeNotFoundException;
+import com.mitchellbosecke.pebble.error.PebbleException;
+import com.mitchellbosecke.pebble.error.RootAttributeNotFoundException;
+import com.mitchellbosecke.pebble.extension.AbstractExtension;
+import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.handlebars.VariableRendererPlugins;
 import io.kestra.core.runners.handlebars.helpers.*;
+import io.kestra.core.runners.pebble.ExtensionCustomizer;
+import io.kestra.core.runners.pebble.JsonWriter;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Value;
 
 import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.*;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
-
 @Singleton
 public class VariableRenderer {
-    private final Handlebars handlebars;
+    private Handlebars handlebars;
+    private final PebbleEngine pebbleEngine;
+    private final boolean disableHandleBars;
 
     @SuppressWarnings("unchecked")
     @Inject
-    public VariableRenderer(ApplicationContext applicationContext) {
-        this.handlebars = new Handlebars()
-            .with(EscapingStrategy.NOOP)
-            .registerHelpers(ConditionalHelpers.class)
-            .registerHelpers(EachHelper.class)
-            .registerHelpers(LogHelper.class)
-            .registerHelpers(StringHelpers.class)
-            .registerHelpers(OtherStringsHelper.class)
-            .registerHelpers(UnlessHelper.class)
-            .registerHelpers(WithHelper.class)
-            .registerHelpers(DateHelper.class)
-            .registerHelpers(JsonHelper.class)
-            .registerHelpers(MiscHelper.class)
-            .registerHelpers(OtherBooleansHelper.class)
-            .registerHelper("eval", new EvalHelper(this))
-            .registerHelper("firstDefinedEval", new FirstDefinedEvalHelper(this))
-            .registerHelper("jq", new JqHelper())
-            .registerHelperMissing((context, options) -> {
-                throw new IllegalStateException("Missing variable: " + options.helperName);
-            });
+    public VariableRenderer(
+        ApplicationContext applicationContext,
+        @Value("${kestra.variables.disable-handlebars:true}") boolean disableHandleBars
+    ) {
+        this.disableHandleBars = disableHandleBars;
 
-        applicationContext.getBeansOfType(VariableRendererPlugins.class)
-            .forEach(variableRendererPlugins -> {
-                this.handlebars.registerHelper(
-                    variableRendererPlugins.name(),
-                    variableRendererPlugins.helper()
-                );
-            });
+        if (!disableHandleBars) {
+            this.handlebars = new Handlebars()
+                .with(EscapingStrategy.NOOP)
+                .registerHelpers(ConditionalHelpers.class)
+                .registerHelpers(EachHelper.class)
+                .registerHelpers(LogHelper.class)
+                .registerHelpers(StringHelpers.class)
+                .registerHelpers(OtherStringsHelper.class)
+                .registerHelpers(UnlessHelper.class)
+                .registerHelpers(WithHelper.class)
+                .registerHelpers(DateHelper.class)
+                .registerHelpers(JsonHelper.class)
+                .registerHelpers(MiscHelper.class)
+                .registerHelpers(OtherBooleansHelper.class)
+                .registerHelper("eval", new EvalHelper(this))
+                .registerHelper("firstDefinedEval", new FirstDefinedEvalHelper(this))
+                .registerHelper("jq", new JqHelper())
+                .registerHelperMissing((context, options) -> {
+                    throw new IllegalStateException("Missing variable: " + options.helperName);
+                });
+
+            applicationContext.getBeansOfType(VariableRendererPlugins.class)
+                .forEach(variableRendererPlugins -> {
+                    this.handlebars.registerHelper(
+                        variableRendererPlugins.name(),
+                        variableRendererPlugins.helper()
+                    );
+                });
+        }
+
+        PebbleEngine.Builder pebbleBuilder = new PebbleEngine.Builder()
+            .registerExtensionCustomizer(ExtensionCustomizer::new)
+            .strictVariables(true)
+            .cacheActive(false)
+            .newLineTrimming(false)
+            .autoEscaping(false);
+
+        applicationContext.getBeansOfType(AbstractExtension.class)
+            .forEach(pebbleBuilder::extension);
+
+        pebbleEngine = pebbleBuilder.build();
     }
 
-    public String recursiveRender(String inline, Object variables) throws IllegalVariableEvaluationException {
+    public String recursiveRender(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (inline == null) {
             return null;
         }
 
         boolean isSame = false;
-        String handlebarTemplate = inline;
+        String currentTemplate = inline;
         String current = "";
-        Template template;
-
+        PebbleTemplate compiledTemplate;
         while (!isSame) {
             try {
-                template = handlebars.compileInline(handlebarTemplate);
-                current = template.apply(variables);
-            } catch (IOException e) {
-                throw new IllegalVariableEvaluationException(e);
+                compiledTemplate = pebbleEngine.getLiteralTemplate(currentTemplate);
+
+                Writer writer = new JsonWriter(new StringWriter());
+                compiledTemplate.evaluate(writer, variables);
+                current = writer.toString();
+            } catch (IOException | PebbleException e) {
+                if (disableHandleBars) {
+                    if (e instanceof PebbleException) {
+                        throw properPebbleException((PebbleException) e);
+                    }
+
+                    throw new IllegalVariableEvaluationException(e);
+                }
+
+                try {
+                    Template  template = handlebars.compileInline(currentTemplate);
+                    current = template.apply(variables);
+                } catch (IOException hbE) {
+                    throw new IllegalVariableEvaluationException(
+                        "Pebble evaluation failed with '" + e.getMessage() +  "' " +
+                        "and Handlebars fallback failed also  with '" + hbE.getMessage() + "'" ,
+                        e
+                    );
+                }
             }
 
-            isSame = handlebarTemplate.equals(current);
-            handlebarTemplate = current;
+            isSame = currentTemplate.equals(current);
+            currentTemplate = current;
         }
 
         return current;
+    }
+
+    public IllegalVariableEvaluationException properPebbleException(PebbleException e) {
+        if (e instanceof AttributeNotFoundException) {
+            AttributeNotFoundException current = (AttributeNotFoundException) e;
+
+            return new IllegalVariableEvaluationException(
+                "Missing variable: '" + current.getAttributeName() +
+                    "' on '" + current.getFileName() +
+                    "' at line " + current.getLineNumber(),
+                e
+            );
+        }
+
+        return new IllegalVariableEvaluationException(e);
     }
 
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -83,26 +147,26 @@ public class VariableRenderer {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return in
-            .entrySet()
-            .stream()
-            .map(throwFunction(r -> {
-                Object value = r.getValue();
+        Map<String, Object> map = new HashMap<>();
 
-                if (r.getValue() instanceof Map) {
-                    value = this.render((Map) r.getValue(), variables);
-                } else if (r.getValue() instanceof Collection) {
-                    value = this.render((List) r.getValue(), variables);
-                } else if (r.getValue() instanceof String) {
-                    value = this.render((String) r.getValue(), variables);
-                }
+        for (Map.Entry<String, Object> r : in.entrySet()) {
+            Object value = r.getValue();
 
-                return new AbstractMap.SimpleEntry<>(
-                    r.getKey(),
-                    value
-                );
-            }))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
+            if (r.getValue() instanceof Map) {
+                value = this.render((Map) r.getValue(), variables);
+            } else if (r.getValue() instanceof Collection) {
+                value = this.render((List) r.getValue(), variables);
+            } else if (r.getValue() instanceof String) {
+                value = this.render((String) r.getValue(), variables);
+            }
+
+            map.putIfAbsent(
+                r.getKey(),
+                value
+            );
+        }
+
+        return map;
     }
 
     public List<String> render(List<String> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {

@@ -1,7 +1,8 @@
-package io.kestra.core.runners;
+package io.kestra.core.runners.handlebars.helpers;
 
 import com.github.jknack.handlebars.HandlebarsException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.runners.VariableRenderer;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -17,8 +18,8 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest
-class VariableRendererTest {
+@MicronautTest(environments = "handlebars")
+class HandlebarsVariableRendererTest {
     @Inject
     VariableRenderer variableRenderer;
 

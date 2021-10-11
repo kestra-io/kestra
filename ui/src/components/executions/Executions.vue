@@ -15,9 +15,8 @@
                 />
                 <date-range
                     :start="$route.query.start"
-                    @start="onDataTableValue('start', $event)"
                     :end="$route.query.end"
-                    @end="onDataTableValue('end', $event)"
+                    @input="onDataTableValue($event)"
                 />
                 <refresh-button class="float-right" @onRefresh="load" />
             </template>
@@ -254,7 +253,7 @@
 
                 this.load(this.onDataLoaded);
             },
-            loadQuery() {
+            loadQuery(stats) {
                 let filter = [];
                 let query = this.queryWithFilter();
 
@@ -266,12 +265,11 @@
                     filter.push(qb.toLucene(query.q));
                 }
 
-                if (query.start) {
+                if (query.start && !stats) {
                     filter.push(`state.startDate:[${query.start} TO *]`)
                 }
 
-                if (query.end) {
-                    filter.push(`state.endDate:[* TO ${query.end}]`)
+                if (query.end && !stats) {
                     filter.push(`state.endDate:[* TO ${query.end}]`)
                 }
 
@@ -288,7 +286,7 @@
 
                     this.$store
                         .dispatch("stat/daily", {
-                            q: this.loadQuery(),
+                            q: this.loadQuery(true),
                             startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
                             endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
                         })
@@ -300,7 +298,7 @@
                 this.$store.dispatch("execution/findExecutions", {
                     size: parseInt(this.$route.query.size || this.internalPageSize),
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
-                    q: this.loadQuery(),
+                    q: this.loadQuery(false),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.status ? [this.$route.query.status] : this.statuses
                 }).finally(callback);

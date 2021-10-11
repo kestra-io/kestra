@@ -3,6 +3,7 @@ package io.kestra.core.schedulers;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.flows.TaskDefault;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.*;
@@ -23,6 +24,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -36,7 +38,11 @@ abstract public class AbstractSchedulerTest {
     protected QueueInterface<Execution> executionQueue;
 
     protected  static Flow createFlow(List<AbstractTrigger> triggers) {
-        return Flow.builder()
+        return createFlow(triggers, null);
+    }
+
+    protected  static Flow createFlow(List<AbstractTrigger> triggers, List<TaskDefault> list) {
+        Flow.FlowBuilder flow = Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .inputs(List.of(Input.builder()
@@ -48,9 +54,21 @@ abstract public class AbstractSchedulerTest {
             ))
             .revision(1)
             .triggers(triggers)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("{{ inputs.testInputs }}").build()))
+            .tasks(Collections.singletonList(Return.builder()
+                .id("test")
+                .type(Return.class.getName())
+                .format("{{ inputs.testInputs }}")
+                .build()));
+
+        if (list != null) {
+            flow.taskDefaults(list);
+        }
+
+        return flow
             .build();
     }
+
+    protected static int COUNTER = 0;
 
     @SuperBuilder
     @ToString
@@ -61,13 +79,12 @@ abstract public class AbstractSchedulerTest {
         @Builder.Default
         private final Duration interval = Duration.ofSeconds(2);
 
-        @Builder.Default
-        private transient int counter = 0;
+        private String defaultInjected;
 
         public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws InterruptedException {
-            counter++;
+            COUNTER++;
 
-            if (counter % 2 == 0) {
+            if (COUNTER % 2 == 0) {
                 Thread.sleep(4000);
 
                 return Optional.empty();
@@ -78,7 +95,10 @@ abstract public class AbstractSchedulerTest {
                     .flowId(context.getFlowId())
                     .flowRevision(context.getFlowRevision())
                     .state(new State())
-                    .variables(ImmutableMap.of("counter", counter))
+                    .variables(ImmutableMap.of(
+                        "counter", COUNTER,
+                        "defaultInjected", defaultInjected == null ? "ko" : defaultInjected
+                    ))
                     .build();
 
                 return Optional.of(execution);

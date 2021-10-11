@@ -28,8 +28,8 @@ class DateTimeBetweenConditionTest {
             Arguments.of(ZonedDateTime.parse("2013-09-08T16:19:12.000000+02:00").toString(), null, ZonedDateTime.now(), false),
             Arguments.of(ZonedDateTime.parse("2013-09-08T16:19:12.000000+02:00").toString(), ZonedDateTime.parse("2013-09-08T16:20:12.000000+02:00"), ZonedDateTime.parse("2013-09-08T16:18:12.000000+02:00"), true),
             Arguments.of(ZonedDateTime.parse("2013-09-08T16:19:12.000000+02:00").toString(), ZonedDateTime.parse("2013-09-08T16:20:12.000000+02:00"), null, true),
-            Arguments.of("{{ now }}", ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(-1), true),
-            Arguments.of("{{ now }}", ZonedDateTime.now().plusHours(-1), null, false)
+            Arguments.of("{{ now() }}", ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(-1), true),
+            Arguments.of("{{ now() }}", ZonedDateTime.now().plusHours(-1), null, false)
         );
     }
 

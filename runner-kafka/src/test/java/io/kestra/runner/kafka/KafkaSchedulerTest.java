@@ -8,6 +8,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
+import io.kestra.core.schedulers.SchedulerThreadTest;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
@@ -17,7 +18,6 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -45,17 +45,8 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
     private void init() {
         this.executorQueue = new KafkaQueue<>(Executor.class, applicationContext);
         this.triggerQueue = new KafkaQueue<>(Trigger.class, applicationContext);
-        this.executorProducer = applicationContext.getBean(KafkaProducerService.class).of(Execution.class, JsonSerde.of(Execution.class));
+        this.executorProducer = applicationContext.getBean(KafkaProducerService.class).of(KafkaSchedulerTest.class, JsonSerde.of(Execution.class));
         this.topicsConfig = KafkaQueue.topicsConfig(applicationContext, Executor.class);
-    }
-
-    private static Flow createThreadFlow() {
-        UnitTest schedule = UnitTest.builder()
-            .id("sleep")
-            .type(UnitTest.class.getName())
-            .build();
-
-        return createFlow(Collections.singletonList(schedule));
     }
 
     @Test
@@ -63,7 +54,7 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
         // mock flow listeners
         CountDownLatch queueCount = new CountDownLatch(2);
 
-        Flow flow = createThreadFlow();
+        Flow flow = SchedulerThreadTest.createThreadFlow();
 
         flowRepositoryInterface.create(flow);
 
@@ -99,7 +90,10 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
             scheduler.run();
             queueCount.await(60, TimeUnit.SECONDS);
 
+            assertThat(last.get().getVariables().get("defaultInjected"), is("done"));
             assertThat(last.get().getVariables().get("counter"), is(3));
+
+            AbstractSchedulerTest.COUNTER = 0;
         }
     }
 }

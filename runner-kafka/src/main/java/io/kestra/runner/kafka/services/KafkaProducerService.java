@@ -1,6 +1,7 @@
 package io.kestra.runner.kafka.services;
 
 import com.google.common.collect.ImmutableMap;
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
 import io.micronaut.context.annotation.Value;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -8,13 +9,13 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.StringSerializer;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.runner.kafka.KafkaQueue;
 import io.kestra.runner.kafka.configs.ClientConfig;
 import io.kestra.runner.kafka.configs.ProducerDefaultsConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -35,11 +36,11 @@ public class KafkaProducerService {
     @Value("${kestra.server.metrics.kafka.producer:true}")
     protected Boolean metricsEnabled;
 
-    public <V> KafkaProducerService.Producer<V> of(Class<?> name, Serde<V> serde) {
-        return this.of(name, serde, ImmutableMap.of());
+    public <V> KafkaProducerService.Producer<V> of(Class<?> clientId, Serde<V> serde) {
+        return this.of(clientId, serde, ImmutableMap.of());
     }
 
-    public <V> KafkaProducerService.Producer<V> of(Class<?> name, Serde<V> serde, Map<String, String> properties) {
+    public <V> KafkaProducerService.Producer<V> of(Class<?> clientId, Serde<V> serde, Map<String, String> properties) {
         Properties props = new Properties();
         props.putAll(clientConfig.getProperties());
 
@@ -49,7 +50,7 @@ public class KafkaProducerService {
 
         props.putAll(properties);
 
-        props.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConfigService.getConsumerGroupName(name));
+        props.put(CommonClientConfigs.CLIENT_ID_CONFIG, clientId.getName());
 
         return new Producer<>(props, serde, metricsEnabled ? metricRegistry : null);
     }
@@ -61,7 +62,13 @@ public class KafkaProducerService {
             super(properties, new StringSerializer(), valueSerde.serializer());
 
             if (metrics != null) {
-                metrics = new KafkaClientMetrics(this);
+                metrics = new KafkaClientMetrics(
+                    this,
+                    List.of(
+                        Tag.of("client_type", "producer"),
+                        Tag.of("client_class_id", (String) properties.get(CommonClientConfigs.CLIENT_ID_CONFIG))
+                    )
+                );
                 meterRegistry.bind(metrics);
             }
         }

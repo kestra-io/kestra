@@ -56,10 +56,10 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         kafkaAdminService.createIfNotExist(Flow.class);
         kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_FLOWLAST);
 
-        KafkaStreamService.Stream buillLastVersion = kafkaStreamService.of(FlowListenerBuild.class, new FlowListenerBuild().topology());
+        KafkaStreamService.Stream buillLastVersion = kafkaStreamService.of(FlowListenerBuild.class, FlowListenerBuild.class, new FlowListenerBuild().topology());
         buillLastVersion.start();
 
-        stream = kafkaStreamService.of(FlowListener.class, new FlowListener().topology());
+        stream = kafkaStreamService.of(FlowListener.class, FlowListener.class, new FlowListener().topology());
         stream.start((newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING) {
                 try {

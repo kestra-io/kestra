@@ -89,7 +89,7 @@ public class KafkaElasticIndexer implements IndexerInterface, Cloneable {
 
     public void run() {
         poolExecutor.execute(() -> {
-            kafkaConsumer = kafkaConsumerService.of(Indexer.class, Serdes.String());
+            kafkaConsumer = kafkaConsumerService.of(Indexer.class, Serdes.String(), Indexer.class);
             kafkaConsumer.subscribe(this.subscriptions);
 
             List<ConsumerRecord<String, String>> rows = new ArrayList<>();

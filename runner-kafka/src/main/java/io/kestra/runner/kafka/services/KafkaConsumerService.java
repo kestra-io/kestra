@@ -1,5 +1,6 @@
 package io.kestra.runner.kafka.services;
 
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
 import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +10,6 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.runner.kafka.KafkaQueue;
 import io.kestra.runner.kafka.configs.ClientConfig;
 import io.kestra.runner.kafka.configs.ConsumerDefaultsConfig;
 import org.slf4j.Logger;
@@ -40,11 +40,16 @@ public class KafkaConsumerService {
     @Value("${kestra.server.metrics.kafka.consumer:true}")
     protected Boolean metricsEnabled;
 
-    public <V> org.apache.kafka.clients.consumer.Consumer<String, V> of(Class<?> group, Serde<V> serde) {
-        return of(group, serde, null, null);
+    public <V> org.apache.kafka.clients.consumer.Consumer<String, V> of(Class<?> clientId, Serde<V> serde, Class<?> group) {
+        return of(clientId, serde, null, group);
     }
 
-    public <V> org.apache.kafka.clients.consumer.Consumer<String, V> of(Class<?> group, Serde<V> serde, Map<String, String> properties, ConsumerRebalanceListener consumerRebalanceListener) {
+    public <V> org.apache.kafka.clients.consumer.Consumer<String, V> of(
+        Class<?> clientId,
+        Serde<V> serde,
+        ConsumerRebalanceListener consumerRebalanceListener,
+        Class<?> group
+    ) {
         Properties props = new Properties();
         props.putAll(clientConfig.getProperties());
 
@@ -52,15 +57,12 @@ public class KafkaConsumerService {
             props.putAll(consumerConfig.getProperties());
         }
 
+        props.put(CommonClientConfigs.CLIENT_ID_CONFIG, clientId.getName());
+
         if (group != null) {
-            props.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
             props.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
         } else {
             props.remove(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG);
-        }
-
-        if (properties != null) {
-            props.putAll(properties);
         }
 
         return new Consumer<>(props, serde, metricsEnabled ? metricRegistry : null, consumerRebalanceListener);
@@ -100,7 +102,13 @@ public class KafkaConsumerService {
             super(properties, new StringDeserializer(), valueSerde.deserializer());
 
             if (meterRegistry != null) {
-                metrics = new KafkaClientMetrics(this);
+                metrics = new KafkaClientMetrics(
+                    this,
+                    List.of(
+                        Tag.of("client_type", "consumer"),
+                        Tag.of("client_class_id", (String) properties.get(CommonClientConfigs.CLIENT_ID_CONFIG))
+                    )
+                );
                 meterRegistry.bind(metrics);
             }
 

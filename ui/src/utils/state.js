@@ -6,7 +6,7 @@ const STATE = Object.freeze({
         name: "CREATED",
         colorClass: "info",
         color: "#75bcdd",
-        icon: "play-pause-circle",
+        icon: "progress-wrench",
         isRunning: true,
         isKillable: true
     },

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import io.kestra.core.utils.Rethrow;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -27,13 +28,12 @@ import javax.validation.ConstraintViolationException;
 @Controller
 public class ErrorController {
     @Error(global = true)
-    public HttpResponse<JsonError> jsonError(HttpRequest<?> request, JsonParseException e) {
+    public HttpResponse<JsonError> error(HttpRequest<?> request, JsonParseException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
     }
 
-
     @Error(global = true)
-    public HttpResponse<JsonError> invalidTypeIdException(HttpRequest<?> request, ConversionErrorException e) {
+    public HttpResponse<JsonError> error(HttpRequest<?> request, ConversionErrorException e) {
         if (e.getConversionError().getCause() instanceof InvalidTypeIdException) {
             try {
                 InvalidTypeIdException invalidTypeIdException = ((InvalidTypeIdException) e.getConversionError().getCause());
@@ -96,7 +96,7 @@ public class ErrorController {
     }
 
     @Error(global = true)
-    public HttpResponse<JsonError> constraintError(HttpRequest<?> request, ConstraintViolationException e) {
+    public HttpResponse<JsonError> error(HttpRequest<?> request, ConstraintViolationException e) {
         JsonError error = new JsonError("Invalid entity: " + e.getMessage())
             .link(Link.SELF, Link.of(request.getUri()))
             .embedded(
@@ -114,17 +114,17 @@ public class ErrorController {
     }
 
     @Error(global = true)
-    public HttpResponse<JsonError> illegalArgumentException(HttpRequest<?> request, IllegalArgumentException e) {
+    public HttpResponse<JsonError> error(HttpRequest<?> request, IllegalArgumentException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Illegal argument");
     }
 
     @Error(global = true)
-    public HttpResponse<JsonError> invalidFormatException(HttpRequest<?> request, InvalidFormatException e) {
+    public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidFormatException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid format");
     }
 
     @Error(global = true)
-    public HttpResponse<JsonError> internalServerError(HttpRequest<?> request, Throwable e) {
+    public HttpResponse<JsonError> error(HttpRequest<?> request, Throwable e) {
         return jsonError(request, e, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
     }
 

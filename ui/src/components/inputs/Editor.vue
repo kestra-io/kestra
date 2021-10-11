@@ -57,6 +57,7 @@
             theme: {type: String, default: "vs-dark"},
             placeholder: {type: [String, Number], default: ""},
             diffSideBySide: {type: Boolean, default: true},
+            readOnly: {type: Boolean, default: false},
         },
         components: {
             MonacoEditor,
@@ -125,6 +126,10 @@
                         alwaysConsumeMouseWheel: false,
                     };
                     options.renderSideBySide = this.diffSideBySide
+                }
+
+                if (this.readOnly) {
+                    options.readOnly = true
                 }
 
                 return  {

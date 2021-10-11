@@ -10,4 +10,8 @@ public class IllegalVariableEvaluationException extends InternalException {
     public IllegalVariableEvaluationException(String message) {
         super(message);
     }
+
+    public IllegalVariableEvaluationException(String message, Throwable e) {
+        super(message, e);
+    }
 }

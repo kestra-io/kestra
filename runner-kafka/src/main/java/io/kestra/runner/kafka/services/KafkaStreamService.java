@@ -1,5 +1,6 @@
 package io.kestra.runner.kafka.services;
 
+import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics;
 import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import io.kestra.runner.kafka.configs.ClientConfig;
 import io.kestra.runner.kafka.configs.StreamDefaultsConfig;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Properties;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,19 +41,19 @@ public class KafkaStreamService {
     @Value("${kestra.server.metrics.kafka.stream:true}")
     protected Boolean metricsEnabled;
 
-    public KafkaStreamService.Stream of(Class<?> group, Topology topology) {
-        return this.of(group, topology, new Properties());
+    public KafkaStreamService.Stream of(Class<?> clientId, Class<?> groupId, Topology topology) {
+        return this.of(clientId, groupId, topology, new Properties());
     }
 
-    public KafkaStreamService.Stream of(Class<?> group, Topology topology, Properties properties) {
+    public KafkaStreamService.Stream of(Class<?> clientId, Class<?> groupId, Topology topology, Properties properties) {
         properties.putAll(clientConfig.getProperties());
 
         if (this.streamConfig.getProperties() != null) {
             properties.putAll(streamConfig.getProperties());
         }
 
-        properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
-        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
+        properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, clientId.getName());
+        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, kafkaConfigService.getConsumerGroupName(groupId));
 
         return new Stream(topology, properties, metricsEnabled ? metricRegistry : null);
     }
@@ -63,7 +65,13 @@ public class KafkaStreamService {
             super(topology, props);
 
             if (meterRegistry != null) {
-                metrics = new KafkaStreamsMetrics(this);
+                metrics = new KafkaStreamsMetrics(
+                    this,
+                    List.of(
+                        Tag.of("client_type", "stream"),
+                        Tag.of("client_class_id", (String) props.get(CommonClientConfigs.CLIENT_ID_CONFIG))
+                    )
+                );
                 meterRegistry.bind(metrics);
             }
         }
@@ -77,8 +85,8 @@ public class KafkaStreamService {
             this.setGlobalStateRestoreListener(new StateRestoreLoggerListeners());
 
             this.setStateListener((newState, oldState) -> {
-                if (log.isTraceEnabled()) {
-                    log.trace("Switching stream state from {} to {}", oldState, newState);
+                if (log.isInfoEnabled()) {
+                    log.info("Switching stream state from {} to {}", oldState, newState);
                 }
 
                 if (listener != null) {

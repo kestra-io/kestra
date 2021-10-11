@@ -34,7 +34,7 @@ export default {
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&
-                (this.dataType === "template" || this.$route.query.tab === "data-source")
+                (this.dataType === "template" || this.$route.params.tab === "source")
             );
         },
         canSave() {
@@ -154,8 +154,7 @@ export default {
 
                         this.$router.push({
                             name: `${this.dataType}s/update`,
-                            params: item,
-                            query: {tab: "data-source"}
+                            params: {...item, ...{tab: "source"}}
                         });
                     })
                     .then(() => {

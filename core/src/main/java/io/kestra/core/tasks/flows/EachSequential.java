@@ -93,7 +93,8 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            parentTaskRun
+            parentTaskRun,
+            runContext
         );
     }
 

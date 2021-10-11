@@ -9,6 +9,7 @@
     import {mapGetters} from "vuex";
     import FlowEdit from "./FlowEdit";
     export default {
+        name: "FlowSource",
         components: {FlowEdit},
         computed: {
             ...mapGetters("flow", ["flow"])

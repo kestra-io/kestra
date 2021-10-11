@@ -83,13 +83,15 @@ public class StatsController {
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String q,
         @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
-        @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
+        @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
+        @Nullable Boolean namespaceOnly
     ) {
 
         return executionRepository.dailyGroupByFlowStatistics(
             q,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
-            endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null
+            endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
+            namespaceOnly != null && namespaceOnly
         );
     }
 }

@@ -905,7 +905,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
 
         this.flowExecutorInterface = new KafkaFlowExecutor(
             resultStream.store(StoreQueryParameters.fromNameAndType("flow", QueryableStoreTypes.keyValueStore())),
-            flowService
+            applicationContext
         );
         applicationContext.registerSingleton(this.flowExecutorInterface);
     }

@@ -9,6 +9,7 @@ import com.mitchellbosecke.pebble.operator.UnaryOperator;
 import com.mitchellbosecke.pebble.tokenParser.TokenParser;
 import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
 import io.kestra.core.runners.pebble.filters.*;
+import io.kestra.core.runners.pebble.functions.JsonFunction;
 import io.kestra.core.runners.pebble.functions.NowFunction;
 import io.kestra.core.runners.pebble.tests.JsonTest;
 
@@ -76,6 +77,7 @@ public class Extension extends AbstractExtension {
         Map<String, Function> tests = new HashMap<>();
 
         tests.put("now", new NowFunction());
+        tests.put("json", new JsonFunction());
 
         return tests;
     }

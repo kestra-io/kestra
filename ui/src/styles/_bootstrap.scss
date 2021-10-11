@@ -18,6 +18,11 @@ ul.nav-tabs {
         border-bottom-width: 4px;
         border-bottom-color: transparent;
         color: $body-color;
+        transition-duration: 300ms;
+        a {
+            color: $body-color;
+            text-decoration: none;
+        }
 
         &.active,
         &:hover.active {
@@ -26,10 +31,13 @@ ul.nav-tabs {
             border-bottom-color: $primary;
             border-bottom-width: 4px;
             background-color: transparent;
+
+            a {
+                color: $primary;
+            }
         }
 
         &:hover {
-            transition-duration: 0ms;
             border-bottom-color: $gray-400;
             background: transparent;
             border-bottom-width: 4px;
@@ -120,8 +128,6 @@ mark {
                 margin-right: $spacer / 2;
             }
 
-
-
             &.collapse.show {
                 padding-top: $spacer/2;
 
@@ -135,9 +141,6 @@ mark {
                     display: table;
                     > div {
                         display: table-cell;
-                        &:first-child {
-                            padding-right: $spacer / 2;
-                        }
                     }
                 }
 

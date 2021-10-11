@@ -8,7 +8,8 @@ const STATE = Object.freeze({
         color: "#75bcdd",
         icon: "progress-wrench",
         isRunning: true,
-        isKillable: true
+        isKillable: true,
+        isFailed: false,
     },
     RESTARTED: {
         name: "RESTARTED",
@@ -16,7 +17,8 @@ const STATE = Object.freeze({
         color: "#75bcdd",
         icon: "restart",
         isRunning: false,
-        isKillable: true
+        isKillable: true,
+        isFailed: false,
     },
     SUCCESS: {
         name: "SUCCESS",
@@ -24,7 +26,8 @@ const STATE = Object.freeze({
         color: "#43ac6a",
         icon: "check-circle",
         isRunning: false,
-        isKillable: false
+        isKillable: false,
+        isFailed: false,
     },
     RUNNING: {
         name: "RUNNING",
@@ -32,7 +35,8 @@ const STATE = Object.freeze({
         color: "#1AA5DE",
         icon: "play-circle",
         isRunning: true,
-        isKillable: true
+        isKillable: true,
+        isFailed: false,
     },
     KILLING: {
         name: "KILLING",
@@ -40,7 +44,8 @@ const STATE = Object.freeze({
         color: "#FBD10B",
         icon: "close-circle",
         isRunning: true,
-        isKillable: false
+        isKillable: false,
+        isFailed: true,
     },
     KILLED: {
         name: "KILLED",
@@ -48,7 +53,8 @@ const STATE = Object.freeze({
         color: "#FBD10B",
         icon: "stop-circle",
         isRunning: false,
-        isKillable: false
+        isKillable: false,
+        isFailed: true,
     },
     WARNING: {
         name: "WARNING",
@@ -56,7 +62,8 @@ const STATE = Object.freeze({
         color: "#FBD10B",
         icon: "alert-circle",
         isRunning: false,
-        isKillable: false
+        isKillable: false,
+        isFailed: true,
     },
     FAILED: {
         name: "FAILED",
@@ -64,7 +71,8 @@ const STATE = Object.freeze({
         color: "#F04124",
         icon: "close-circle",
         isRunning: false,
-        isKillable: false
+        isKillable: false,
+        isFailed: true,
     },
     PAUSED: {
         name: "PAUSED",
@@ -72,7 +80,8 @@ const STATE = Object.freeze({
         color: "#6f42c1",
         icon: "pause-circle",
         isRunning: false,
-        isKillable: false
+        isKillable: false,
+        isFailed: false,
     }
 });
 
@@ -119,6 +128,10 @@ export default class State {
 
     static isKillable(state) {
         return STATE[state] && STATE[state].isKillable;
+    }
+
+    static isFailed(state) {
+        return STATE[state] && STATE[state].isFailed;
     }
 
     static allStates() {

@@ -6,7 +6,10 @@
         <custom-toast v-if="message" :no-auto-hide="true" :message="message" />
         <div id="app" class="container-fluid">
             <div class="content-wrapper" :class="menuCollapsed">
-                <router-view />
+                <router-view v-if="!error" />
+                <template v-else>
+                    <errors :code="error" />
+                </template>
             </div>
         </div>
     </div>
@@ -17,6 +20,7 @@
     import TopNavBar from "./components/layout/TopNavBar";
     import CustomToast from "./components/customToast";
     import NprogressContainer from "vue-nprogress/src/NprogressContainer";
+    import Errors from "./components/errors/Errors";
     import {mapState} from "vuex";
 
     export default {
@@ -25,7 +29,9 @@
             Menu,
             TopNavBar,
             CustomToast,
-            NprogressContainer
+            NprogressContainer,
+
+            Errors
         },
         data() {
             return {
@@ -33,7 +39,7 @@
             };
         },
         computed: {
-            ...mapState("core", ["message"])
+            ...mapState("core", ["message", "error"])
         },
         created() {
             if (this.$route.path === "/") {

@@ -12,11 +12,13 @@ export function tooltip(tooltipModel) {
         });
 
         bodyLines.forEach(function (body, i) {
-            let colors = tooltipModel.labelColors[i];
-            let style = "background:" + colors.backgroundColor;
-            style += "; border-color:" + colors.borderColor;
-            let span = "<span class=\"square\" style=\"" + style + "\"></span>";
-            innerHtml += span + body + "<br />";
+            if (body.length > 0) {
+                let colors = tooltipModel.labelColors[i];
+                let style = "background:" + colors.backgroundColor;
+                style += "; border-color:" + colors.borderColor;
+                let span = "<span class=\"square\" style=\"" + style + "\"></span>";
+                innerHtml += span + body + "<br />";
+            }
         });
 
         return innerHtml;
@@ -25,7 +27,7 @@ export function tooltip(tooltipModel) {
     return undefined;
 }
 
-export function defaultConfig(overide) {
+export function defaultConfig(override) {
     return _merge({
         animation: false,
         responsive: true,
@@ -64,5 +66,5 @@ export function defaultConfig(overide) {
                 enabled: false,
             },
         }
-    }, overide);
+    }, override);
 }

@@ -123,7 +123,8 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
-            parentTaskRun
+            parentTaskRun,
+            runContext
         );
     }
 

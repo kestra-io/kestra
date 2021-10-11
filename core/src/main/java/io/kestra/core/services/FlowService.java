@@ -91,14 +91,13 @@ public class FlowService {
             .collect(Collectors.toList());
     }
 
-    private static Stream<Flow> removeSelf(Stream<Flow> flowStream, Execution execution) {
+    protected boolean removeUnwanted(Flow f, Execution execution) {
         // we don't allow recursive
-        return flowStream
-            .filter(f -> !f.uidWithoutRevision().equals(Flow.uidWithoutRevision(execution)));
+        return !f.uidWithoutRevision().equals(Flow.uidWithoutRevision(execution));
     }
 
     public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
-        return removeSelf(flowStream, execution)
+        return flowStream
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
             .flatMap(flow -> flow.getTriggers()
                 .stream()
@@ -116,6 +115,7 @@ public class FlowService {
                     (io.kestra.core.models.triggers.types.Flow) f.getTrigger()
                 )
             )
+            .filter(f -> this.removeUnwanted(f.getFlow(), execution))
             .map(f -> f.getTrigger().evaluate(
                 runContextFactory.of(f.getFlow(), execution),
                 f.getFlow(),

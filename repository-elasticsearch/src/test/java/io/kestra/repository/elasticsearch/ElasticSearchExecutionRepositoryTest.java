@@ -160,7 +160,8 @@ public class ElasticSearchExecutionRepositoryTest {
         Map<String, Map<String, List<DailyExecutionStatistics>>> result = executionRepository.dailyGroupByFlowStatistics(
             "*",
             ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now()
+            ZonedDateTime.now(),
+            false
         );
 
         assertThat(result.size(), is(1));
@@ -180,6 +181,23 @@ public class ElasticSearchExecutionRepositoryTest {
         assertThat(second.getExecutionCounts().size(), is(8));
         assertThat(second.getExecutionCounts().get(State.Type.SUCCESS), is(13L));
         assertThat(second.getExecutionCounts().get(State.Type.CREATED), is(0L));
+
+        result = executionRepository.dailyGroupByFlowStatistics(
+            "*",
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            true
+        );
+
+        assertThat(result.size(), is(1));
+        assertThat(result.get("io.kestra.unittest").size(), is(1));
+        full = result.get("io.kestra.unittest").get("*").get(10);
+        assertThat(full.getDuration().getAvg().getSeconds(), greaterThan(0L));
+        assertThat(full.getExecutionCounts().size(), is(8));
+        assertThat(full.getExecutionCounts().get(State.Type.FAILED), is(3L));
+        assertThat(full.getExecutionCounts().get(State.Type.RUNNING), is(5L));
+        assertThat(full.getExecutionCounts().get(State.Type.SUCCESS), is(20L));
+        assertThat(full.getExecutionCounts().get(State.Type.CREATED), is(0L));
     }
 
     @Test

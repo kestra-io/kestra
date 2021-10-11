@@ -23,7 +23,12 @@
             :fields="fields"
             :items="outputs"
             class="mb-0"
+            show-empty
         >
+            <template #empty>
+                <span class="text-black-50">{{ $t('no result') }}</span>
+            </template>
+
             <template #cell(key)="row">
                 <code>{{ row.item.key }}</code>
             </template>

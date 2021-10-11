@@ -1,22 +1,8 @@
 <template>
     <div>
-        <b-card v-if="ready" no-body>
-            <b-tabs card>
-                <b-tab
-                    v-for="tab in tabs()"
-                    :key="tab.tab"
-                    @click="setTab(tab.tab)"
-                    :active="$route.query.tab === tab.tab"
-                    :title="tab.title"
-                    :class="tab.class"
-                    lazy
-                >
-                    <b-card-text>
-                        <div :is="tab.tab" @follow="follow" />
-                    </b-card-text>
-                </b-tab>
-            </b-tabs>
-        </b-card>
+        <div v-if="ready">
+            <tabs route-name="executions/update" @follow="follow" :tabs="tabs" />
+        </div>
         <bottom-line>
             <ul class="navbar-nav ml-auto" v-hotkey="keymap">
                 <li class="nav-item">
@@ -42,9 +28,7 @@
     import Logs from "./Logs";
     import Topology from "./Topology";
     import ExecutionOutput from "./ExecutionOutput";
-    import Trigger from "vue-material-design-icons/Cogs";
     import BottomLine from "../layout/BottomLine";
-    import FlowActions from "../flows/FlowActions";
     import TriggerFlow from "../flows/TriggerFlow";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
@@ -52,21 +36,16 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Kicon from "../Kicon"
+    import Tabs from "../../components/Tabs";
 
     export default {
         mixins: [RouteContext],
         components: {
-            Overview,
             BottomLine,
-            Trigger,
-            Gantt,
-            Logs,
-            Topology,
-            FlowActions,
             TriggerFlow,
-            ExecutionOutput,
             Pencil,
             Kicon,
+            Tabs,
         },
         data() {
             return {
@@ -83,6 +62,8 @@
         },
         watch: {
             $route () {
+                this.$store.commit("execution/setTaskRun", undefined);
+                this.$store.commit("execution/setTask", undefined);
                 if (this.previousExecutionId !== this.$route.params.id) {
                     this.follow()
                 }
@@ -111,40 +92,36 @@
                     this.sse = undefined;
                 }
             },
-            tabs() {
+            getTabs() {
                 const title = title => this.$t(title);
                 return [
                     {
-                        tab: "overview",
+                        name: undefined,
+                        component: Overview,
                         title: title("overview"),
                     },
                     {
-                        tab: "gantt",
+                        name: "gantt",
+                        component: Gantt,
                         title: title("gantt")
                     },
                     {
-                        tab: "logs",
+                        name: "logs",
+                        component: Logs,
                         title: title("logs")
                     },
                     {
-                        tab: "topology",
+                        name: "topology",
+                        component: Topology,
                         title: title("topology"),
-                        class: "p-0"
+                        bodyClass: {"p-0" : true}
                     },
                     {
-                        tab: "execution-output",
-                        title: title("output")
+                        name: "outputs",
+                        component: ExecutionOutput,
+                        title: title("outputs")
                     }
                 ];
-            },
-            setTab(tab) {
-                this.$store.commit("execution/setTaskRun", undefined);
-                this.$store.commit("execution/setTask", undefined);
-                this.$router.push({
-                    name: "executions/update",
-                    params: this.$route.params,
-                    query: {tab}
-                });
             },
             editFlow() {
                 this.$router.push({name:"flows/update", params: {
@@ -162,6 +139,9 @@
                 return {
                     "ctrl+shift+e": this.editFlow,
                 }
+            },
+            tabs() {
+                return this.getTabs();
             },
             routeInfo() {
                 const ns = this.$route.params.namespace;

@@ -40,7 +40,6 @@ public class FirstDefinedEvalHelper implements Helper<String> {
                 String finalTemplate = variableRenderer.recursiveRender(param, (Map<String, Object>) options.context.model());
 
                 result = variableRenderer.recursiveRender("{{" + finalTemplate + "}}", (Map<String, Object>) options.context.model());
-                System.out.println(result);
             } catch (IllegalVariableEvaluationException | IllegalStateException | HandlebarsException ignored) {
             }
         }

@@ -5,7 +5,12 @@
             {{ name }}
         </div>
         <b-tooltip :target="uuid" placement="bottom">
-            <span v-html="tooltip" />
+            <span>
+                {{ tooltipStart }}
+            </span>
+            <code>
+                {{ tooltipEnd }}
+            </code>
         </b-tooltip>
     </div>
 </template>
@@ -48,9 +53,13 @@
                     backgroundImage: `url(data:image/svg+xml;base64,${this.imageBase64})`
                 }
             },
-            tooltip() {
-                return this.name ? this.cls.replace("." + this.name, ".<code>" + this.name + "</code>") : this.cls;
+            tooltipStart() {
+                return this.name ? this.cls.replace("." + this.name, ".") : this.cls;
             },
+            tooltipEnd() {
+                return this.name ;
+            },
+
             imageBase64() {
                 const icon = this.icon ? this.icon.icon : undefined;
                 return icon ? icon : btoa("<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" aria-hidden=\"true\" focusable=\"false\" width=\"0.75em\" height=\"1em\" style=\"-ms-transform: rotate(360deg); -webkit-transform: rotate(360deg); transform: rotate(360deg);\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 384 512\"><path d=\"M288 32H0v448h384V128l-96-96zm64 416H32V64h224l96 96v288z\" fill=\"#333\"/></svg>");

@@ -34,7 +34,7 @@
                             </template>
                             <template v-for="(fragment, j) in item.fragments">
                                 <small :key="`pre-${i}-${j}`">
-                                    <pre class="mb-1 text-sm-left" v-html="fragment" />
+                                    <pre class="mb-1 text-sm-left" v-html="sanitize(fragment)" />
                                 </small>
                             </template>
                         </b-card>
@@ -54,6 +54,7 @@
     import DataTable from "../layout/DataTable";
     import SearchField from "../layout/SearchField";
     import qb from "../../utils/queryBuilder";
+    import _escape from "lodash/escape"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -84,7 +85,11 @@
             }
         },
         methods: {
-
+            sanitize(content) {
+                return _escape(content)
+                    .replaceAll("[mark]", "<mark>")
+                    .replaceAll("[/mark]", "</mark>")
+            },
             loadQuery() {
                 let filter = []
                 let query = this.queryWithFilter();

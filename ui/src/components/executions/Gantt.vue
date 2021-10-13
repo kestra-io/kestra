@@ -28,7 +28,9 @@
                                 :target="`task-progress-${currentTaskRun.id}`"
                                 placement="left"
                             >
-                                <span v-html="currentTaskRun.tooltip" />
+                                <span style="white-space: pre-wrap;">
+                                    {{ currentTaskRun.tooltip }}
+                                </span>
                             </b-tooltip>
                             <div
                                 :style="{left: Math.max(1, (currentTaskRun.start - 1)) + '%', width: currentTaskRun.width - 1 + '%'}"
@@ -222,8 +224,8 @@
                     let tooltip = `${this.$t("duration")} : ${humanizeDuration(duration)}`
 
                     if (runningState.length > 0) {
-                        tooltip += `<br />${this.$t("queued duration")} : ${humanizeDuration(ts(runningState[0].date) - startTs)}`;
-                        tooltip += `<br />${this.$t("running duration")} : ${humanizeDuration(stopTs - ts(runningState[0].date))}`;
+                        tooltip += `\n${this.$t("queued duration")} : ${humanizeDuration(ts(runningState[0].date) - startTs)}`;
+                        tooltip += `\n${this.$t("running duration")} : ${humanizeDuration(stopTs - ts(runningState[0].date))}`;
                     }
 
                     let width = (stop / executionDelta) * 100

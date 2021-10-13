@@ -50,7 +50,7 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
 
         assertThat((long) search.size(), is(1L));
         assertThat(search.get(0).getModel().getId(), is("trigger-multiplecondition-listener"));
-        assertThat(search.get(0).getFragments().get(0), containsString("types.MultipleCondition</mark>"));
+        assertThat(search.get(0).getFragments().get(0), containsString("types.MultipleCondition[/mark]"));
     }
 
     @AfterEach

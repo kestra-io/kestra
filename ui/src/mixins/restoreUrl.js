@@ -6,7 +6,7 @@ export default {
         },
     },
     created() {
-        if (Object.keys(this.$route.query).length === 0) {
+        if (Object.keys(this.$route.query).length === 0 && this.restoreUrl) {
             this.loadInit = false;
             this.goToRestoreUrl();
         }

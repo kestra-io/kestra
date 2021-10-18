@@ -216,6 +216,61 @@ abstract class AbstractBashTest {
         assertThat(outputContent, is(fileContent));
     }
 
+    @Test
+    void preventRelativeFile() throws Exception {
+        URL resource = AbstractBashTest.class.getClassLoader().getResource("application.yml");
+
+        URI put = storageInterface.put(
+            new URI("/file/storage/get.yml"),
+            new FileInputStream(Objects.requireNonNull(resource).getFile())
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            Bash bash = configure(Bash.builder()
+                .commands(new String[]{"echo 1"})
+                .inputFiles(Map.of(
+                    "{{ inputs.vars }}", put.toString()
+                ))
+            ).build();
+
+            RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of(
+                "vars", "../../test.txt"
+            ));
+
+            bash.run(runContext);
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            Bash bash = configure(Bash.builder()
+                .commands(new String[]{"echo 1"})
+                .inputFiles(Map.of(
+                    "{{ inputs.vars }}", put.toString()
+                ))
+            ).build();
+
+            RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of(
+                "vars", "../../test.txt"
+            ));
+
+            bash.run(runContext);
+        });
+
+        // we allow dot file starting with a .
+        Bash bash = configure(Bash.builder()
+            .commands(new String[]{"echo 1"})
+            .inputFiles(Map.of(
+                "{{ inputs.vars }}", put.toString()
+            ))
+        ).build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of(
+            "vars", ".test.txt"
+        ));
+
+        ScriptOutput run = bash.run(runContext);
+        assertThat(run.getExitCode(), is(0));
+    }
+
     static void controlOutputs(RunContext runContext, ScriptOutput run) {
         assertThat(run.getVars().get("test"), is("value"));
         assertThat(run.getVars().get("int"), is(2));
@@ -247,6 +302,5 @@ abstract class AbstractBashTest {
             .filter(abstractMetricEntry -> abstractMetricEntry.getName().equals(name))
             .findFirst()
             .orElseThrow();
-
     }
 }

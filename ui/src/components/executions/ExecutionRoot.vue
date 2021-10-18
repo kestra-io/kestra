@@ -126,9 +126,8 @@
             editFlow() {
                 this.$router.push({name:"flows/update", params: {
                     namespace: this.$route.params.namespace,
-                    id: this.$route.params.flowId
-                }, query:{
-                    tab: "data-source"
+                    id: this.$route.params.flowId,
+                    tab: "source"
                 }})
             },
         },

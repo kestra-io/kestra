@@ -101,6 +101,9 @@ class TaskDefaultServiceTest {
                 new TaskDefault(DefaultTester.class.getName(), true, ImmutableMap.of(
                     "set", 123
                 )),
+                new TaskDefault(DefaultTester.class.getName(), true, ImmutableMap.of(
+                    "set", 789
+                )),
                 new TaskDefault(DefaultTester.class.getName(), false, ImmutableMap.of(
                     "value", 1,
                     "set", 456,

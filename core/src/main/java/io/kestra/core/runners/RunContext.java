@@ -28,9 +28,14 @@ import java.io.*;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @NoArgsConstructor
 public class RunContext {
@@ -470,7 +475,23 @@ public class RunContext {
 
     public Path tempDir() throws IOException {
         if (this.temporaryDirectory == null) {
-            this.temporaryDirectory = Files.createTempDirectory("runcontext-temp-dir");
+            Optional<String> tmpBasedDirectory = applicationContext.getProperty("kestra.tasks.tmp-dir.path", String.class);
+
+            if (tmpBasedDirectory.isPresent()) {
+                Path tempBasedPath = Path.of(tmpBasedDirectory.get());
+                //noinspection ResultOfMethodCallIgnored
+                tempBasedPath.toFile().mkdirs();
+
+                this.temporaryDirectory = Files.createTempDirectory(tempBasedPath, "runcontext-temp-dir");
+            } else {
+                this.temporaryDirectory = Files.createTempDirectory("runcontext-temp-dir");
+            }
+
+            applicationContext.getProperty("kestra.tasks.tmp-dir.mask", String.class)
+                .ifPresent(throwConsumer(s -> {
+                    Set<PosixFilePermission> ownerWritable = PosixFilePermissions.fromString(s);
+                    Files.setPosixFilePermissions(this.temporaryDirectory, ownerWritable);
+                }));
         }
 
         return this.temporaryDirectory;

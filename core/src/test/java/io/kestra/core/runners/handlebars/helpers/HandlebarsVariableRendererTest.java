@@ -85,7 +85,7 @@ class HandlebarsVariableRendererTest {
         assertThat(render, is("awesome"));
 
 
-        assertThrows(HandlebarsException.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ firstDefined missing missing2 }}", vars);
         });
     }
@@ -103,7 +103,7 @@ class HandlebarsVariableRendererTest {
         render = variableRenderer.render("{{ firstDefinedEval 'missing' 'block.test.child' }}", vars);
         assertThat(render, is("awesome"));
 
-        assertThrows(HandlebarsException.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ firstDefinedEval 'missing' 'missing2' }}", vars);
         });
     }
@@ -121,7 +121,7 @@ class HandlebarsVariableRendererTest {
         render = variableRenderer.render("{{ get (get block 'test') 'child' }}", vars);
         assertThat(render, is("awesome"));
 
-        assertThrows(HandlebarsException.class, () -> {
+        assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ get missing }}", vars);
         });
     }

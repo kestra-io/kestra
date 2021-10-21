@@ -4,6 +4,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
+import io.kestra.core.models.executions.TaskRun;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
@@ -298,12 +299,17 @@ public class Worker implements Runnable, Closeable {
         // save outputs
         List<TaskRunAttempt> attempts = this.addAttempt(workerTask, taskRunAttempt);
 
+        TaskRun taskRun = workerTask.getTaskRun()
+            .withAttempts(attempts);
+
+        try {
+            taskRun = taskRun.withOutputs(workerThread.getTaskOutput() != null ? workerThread.getTaskOutput().toMap() : ImmutableMap.of());
+        } catch (Exception e) {
+            logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
+        }
+
         return workerTask
-            .withTaskRun(
-                workerTask.getTaskRun()
-                    .withAttempts(attempts)
-                    .withOutputs(workerThread.getTaskOutput() != null ? workerThread.getTaskOutput().toMap() : ImmutableMap.of())
-            );
+            .withTaskRun(taskRun);
     }
 
     private List<TaskRunAttempt> addAttempt(WorkerTask workerTask, TaskRunAttempt taskRunAttempt) {

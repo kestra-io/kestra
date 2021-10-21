@@ -3,7 +3,7 @@
         <b-navbar toggleable="lg" type="light" variant="light" v-if="hasNavBar">
             <b-navbar-toggle target="nav-collapse" />
             <b-collapse id="nav-collapse" is-nav>
-                <b-nav-form>
+                <b-nav-form @submit.prevent="prevent">
                     <slot name="navbar" />
                 </b-nav-form>
             </b-collapse>
@@ -39,6 +39,9 @@
             page: {type: Number, default: 1}
         },
         methods: {
+            prevent(event) {
+                event.preventDefault();
+            },
             onPageChanged(pagination) {
                 this.$emit("onPageChanged", pagination);
             },

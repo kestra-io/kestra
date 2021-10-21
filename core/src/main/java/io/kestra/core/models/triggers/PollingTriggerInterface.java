@@ -19,7 +19,8 @@ public interface PollingTriggerInterface {
         title = "Interval between polling",
         description = "The interval between 2 different test of schedule, this can avoid to overload the remote system " +
             "with too many call. For most of trigger that depend on external system, a minimal interval must be " +
-            "at least PT30S.",
+            "at least PT30S.\n" +
+            "See [ISO_8601 Durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) for more information of available interval value",
         defaultValue = "PT1S"
     )
     Duration getInterval();

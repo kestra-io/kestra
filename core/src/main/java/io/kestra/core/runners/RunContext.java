@@ -51,6 +51,7 @@ public class RunContext {
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
     private MetricRegistry meterRegistry;
     private RunContextLogger runContextLogger;
+    private Path tempBasedPath;
     protected transient Path temporaryDirectory;
 
     /**
@@ -118,6 +119,14 @@ public class RunContext {
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
         this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
+        this.tempBasedPath =  Path.of(applicationContext
+            .getProperty("kestra.tasks.tmp-dir.path", String.class)
+            .orElse(System.getProperty("java.io.tmpdir"))
+        );
+
+        if (!this.tempBasedPath.toFile().exists()) {
+            this.tempBasedPath.toFile().mkdirs();
+        }
     }
 
     private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
@@ -475,23 +484,7 @@ public class RunContext {
 
     public Path tempDir() throws IOException {
         if (this.temporaryDirectory == null) {
-            Optional<String> tmpBasedDirectory = applicationContext.getProperty("kestra.tasks.tmp-dir.path", String.class);
-
-            if (tmpBasedDirectory.isPresent()) {
-                Path tempBasedPath = Path.of(tmpBasedDirectory.get());
-                //noinspection ResultOfMethodCallIgnored
-                tempBasedPath.toFile().mkdirs();
-
-                this.temporaryDirectory = Files.createTempDirectory(tempBasedPath, "runcontext-temp-dir");
-            } else {
-                this.temporaryDirectory = Files.createTempDirectory("runcontext-temp-dir");
-            }
-
-            applicationContext.getProperty("kestra.tasks.tmp-dir.mask", String.class)
-                .ifPresent(throwConsumer(s -> {
-                    Set<PosixFilePermission> ownerWritable = PosixFilePermissions.fromString(s);
-                    Files.setPosixFilePermissions(this.temporaryDirectory, ownerWritable);
-                }));
+            this.temporaryDirectory = Files.createTempDirectory(tempBasedPath, "runcontext-temp-dir");
         }
 
         return this.temporaryDirectory;

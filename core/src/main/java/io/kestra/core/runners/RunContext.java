@@ -207,22 +207,22 @@ public class RunContext {
             }
         }
 
-        if (flow != null && execution != null) {
+        if (flow != null) {
             builder
                 .put("flow", ImmutableMap.of(
                     "id", flow.getId(),
                     "namespace", flow.getNamespace(),
                     "revision", flow.getRevision()
                 ));
+        }
 
+        if (execution != null) {
             builder
                 .put("execution", ImmutableMap.of(
                     "id", execution.getId(),
                     "startDate", execution.getState().getStartDate()
                 ));
-        }
 
-        if (execution != null) {
             if (execution.getTaskRunList() != null) {
                 builder.put("outputs", execution.outputs());
             }
@@ -242,10 +242,6 @@ public class RunContext {
 
         if (trigger != null) {
             builder
-                .put("flow", ImmutableMap.of(
-                    "id", flow.getId(),
-                    "namespace", flow.getNamespace()
-                ))
                 .put("trigger", ImmutableMap.of(
                     "id", trigger.getId(),
                     "type", trigger.getType()

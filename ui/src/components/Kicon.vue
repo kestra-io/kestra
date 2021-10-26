@@ -1,7 +1,7 @@
 <template>
-    <div class="kicon" v-b-tooltip="{title:tooltip, placement, html: true}">
+    <span class="kicon" v-b-tooltip="{title:tooltip, placement, html: true}">
         <slot />
-    </div>
+    </span>
 </template>
 <script>
     export default {

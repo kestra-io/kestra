@@ -44,7 +44,7 @@ $vs-state-active-bg: $primary;
     }
 
     .vs__dropdown-toggle {
-        padding: 2px 0 5px 0;
+        padding: 2px 0 6px 0;
     }
 
     .vs__dropdown-option {
@@ -58,8 +58,16 @@ $vs-state-active-bg: $primary;
         }
 
         .vs__actions {
-            padding-top: 0px;
+            padding-top: 0;
         }
+    }
+
+    .input-group & {
+        position: relative;
+        flex: 1 1 auto;
+        width: 1%;
+        min-width: 0;
+        margin-bottom: 0;
     }
 }
 @import '~vue-select/src/scss/vue-select.scss';

@@ -18,6 +18,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Slugify;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -119,14 +120,10 @@ public class RunContext {
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
         this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
-        this.tempBasedPath =  Path.of(applicationContext
+        this.tempBasedPath = Path.of(applicationContext
             .getProperty("kestra.tasks.tmp-dir.path", String.class)
             .orElse(System.getProperty("java.io.tmpdir"))
         );
-
-        if (!this.tempBasedPath.toFile().exists()) {
-            this.tempBasedPath.toFile().mkdirs();
-        }
     }
 
     private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
@@ -478,9 +475,18 @@ public class RunContext {
         return String.join(".", values);
     }
 
-    public Path tempDir() throws IOException {
+    public synchronized Path tempDir() {
+        return this.tempDir(true);
+    }
+
+    public synchronized Path tempDir(boolean create) {
         if (this.temporaryDirectory == null) {
-            this.temporaryDirectory = Files.createTempDirectory(tempBasedPath, "runcontext-temp-dir");
+            this.temporaryDirectory = tempBasedPath.resolve(IdUtils.create());
+        }
+
+        if (create && !this.temporaryDirectory.toFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            this.temporaryDirectory.toFile().mkdirs();
         }
 
         return this.temporaryDirectory;
@@ -528,7 +534,7 @@ public class RunContext {
     }
 
     private void cleanTemporaryDirectory() throws IOException {
-        if (temporaryDirectory != null) {
+        if (temporaryDirectory != null && temporaryDirectory.toFile().exists()) {
             FileUtils.deleteDirectory(temporaryDirectory.toFile());
             this.temporaryDirectory = null;
         }

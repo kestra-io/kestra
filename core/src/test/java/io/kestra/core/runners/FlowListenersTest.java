@@ -21,9 +21,9 @@ import static org.hamcrest.Matchers.is;
 @MicronautTest
 abstract public class FlowListenersTest {
     @Inject
-    FlowRepositoryInterface flowRepository;
+    protected FlowRepositoryInterface flowRepository;
 
-    private static Flow create(String flowId, String taskId) {
+    protected static Flow create(String flowId, String taskId) {
         return Flow.builder()
             .id(flowId)
             .namespace("io.kestra.unittest")

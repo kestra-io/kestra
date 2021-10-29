@@ -196,8 +196,6 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 Consumed.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("Executor.fromExecution")
             )
             .filter((key, value) -> value != null, Named.as("Executor.filterNotNull"))
-            // don't remove ValueTransformerWithKey<String, Execution, Executor> generic or it crash java compiler
-            // https://bugs.openjdk.java.net/browse/JDK-8217234
             .transformValues(
                 () -> new ExecutorFromExecutionTransformer(EXECUTOR_STATE_STORE_NAME),
                 Named.as("Executor.toExecutor"),
@@ -884,11 +882,6 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         kafkaAdminService.createIfNotExist(ExecutorFlowTrigger.class);
 
         Properties properties = new Properties();
-
-        // hack, we send application context in order to use on exception handler
-        properties.put(StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG, KafkaExecutorProductionExceptionHandler.class);
-        properties.put(KafkaExecutorProductionExceptionHandler.APPLICATION_CONTEXT_CONFIG, applicationContext);
-
         // build
         Topology topology = this.topology().build();
 
@@ -900,11 +893,13 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         resultStream.start();
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(
-            resultStream.store(StoreQueryParameters.fromNameAndType("template", QueryableStoreTypes.keyValueStore()))
+            resultStream.store(StoreQueryParameters.fromNameAndType("template", QueryableStoreTypes.keyValueStore())),
+            "template"
         ));
 
         this.flowExecutorInterface = new KafkaFlowExecutor(
             resultStream.store(StoreQueryParameters.fromNameAndType("flow", QueryableStoreTypes.keyValueStore())),
+            "flow",
             applicationContext
         );
         applicationContext.registerSingleton(this.flowExecutorInterface);

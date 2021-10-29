@@ -1,7 +1,10 @@
 package io.kestra.runner.kafka.services;
 
+import io.kestra.runner.kafka.KafkaDeserializationExceptionHandler;
+import io.kestra.runner.kafka.KafkaExecutorProductionExceptionHandler;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -25,9 +28,14 @@ import javax.validation.constraints.NotNull;
 @Singleton
 @Slf4j
 public class KafkaStreamService {
+    public static final String APPLICATION_CONTEXT_CONFIG = "application.context";
+
     @Inject
     @NotNull
     private ClientConfig clientConfig;
+
+    @Inject
+    private ApplicationContext applicationContext;
 
     @Inject
     private StreamDefaultsConfig streamConfig;
@@ -54,6 +62,12 @@ public class KafkaStreamService {
 
         properties.put(CommonClientConfigs.CLIENT_ID_CONFIG, clientId.getName());
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, kafkaConfigService.getConsumerGroupName(groupId));
+
+        // hack, we send application context in order to use on exception handler
+        properties.put(StreamsConfig.DEFAULT_PRODUCTION_EXCEPTION_HANDLER_CLASS_CONFIG, KafkaExecutorProductionExceptionHandler.class);
+        properties.put(APPLICATION_CONTEXT_CONFIG, applicationContext);
+
+        properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, KafkaDeserializationExceptionHandler.class);
 
         return new Stream(topology, properties, metricsEnabled ? metricRegistry : null);
     }

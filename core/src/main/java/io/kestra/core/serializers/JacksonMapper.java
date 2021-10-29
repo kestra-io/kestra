@@ -4,6 +4,7 @@ package io.kestra.core.serializers;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
@@ -28,6 +29,16 @@ abstract public class JacksonMapper {
 
     public static ObjectMapper ofJson() {
         return MAPPER;
+    }
+
+    public static ObjectMapper ofJson(boolean strict) {
+        if (strict) {
+            return MAPPER;
+        }
+
+        return MAPPER
+            .copy()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.configure(

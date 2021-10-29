@@ -9,7 +9,8 @@ import java.io.IOException;
 import java.util.Map;
 
 public class JsonDeserializer<T> implements Deserializer<T> {
-    private static final ObjectMapper mapper = JacksonMapper.ofJson();
+    private static final ObjectMapper mapper = JacksonMapper.ofJson(false);
+
     private Class<T> cls;
 
     public JsonDeserializer(Class<T> cls) {

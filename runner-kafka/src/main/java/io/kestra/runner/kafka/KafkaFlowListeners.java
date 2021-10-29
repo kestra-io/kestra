@@ -1,6 +1,7 @@
 package io.kestra.runner.kafka;
 
 import com.google.common.collect.Streams;
+import io.kestra.runner.kafka.services.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +21,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.runner.kafka.serializers.JsonSerde;
-import io.kestra.runner.kafka.services.KafkaAdminService;
-import io.kestra.runner.kafka.services.KafkaStreamService;
-import io.kestra.runner.kafka.services.KafkaStreamSourceService;
-import io.kestra.runner.kafka.services.KafkaStreamsBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +37,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
     private final KafkaAdminService kafkaAdminService;
     private final FlowService flowService;
 
-    private ReadOnlyKeyValueStore<String, Flow> store;
+    private SafeKeyValueStore<String, Flow> store;
     private final List<Consumer<List<Flow>>> consumers = new ArrayList<>();
     private final KafkaStreamService.Stream stream;
 
@@ -63,7 +60,12 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         stream.start((newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING) {
                 try {
-                    this.store = stream.store(StoreQueryParameters.fromNameAndType("flow", QueryableStoreTypes.keyValueStore()));
+                    ReadOnlyKeyValueStore<String, Flow> store = stream.store(StoreQueryParameters.fromNameAndType(
+                        "flow",
+                        QueryableStoreTypes.keyValueStore()
+                    ));
+
+                    this.store = new SafeKeyValueStore<>(store, "flow");
                     this.send(this.flows());
                 } catch (InvalidStateStoreException e) {
                     this.store = null;
@@ -196,14 +198,10 @@ public class KafkaFlowListeners implements FlowListenersInterface {
             return Collections.emptyList();
         }
 
-        try (KeyValueIterator<String, Flow> all = this.store.all()) {
-            List<Flow> alls = Streams.stream(all).map(r -> r.value).collect(Collectors.toList());
-
-            return alls
-                .stream()
-                .filter(flow -> !flow.isDeleted())
-                .collect(Collectors.toList());
-        }
+        return this.store
+            .toStream()
+            .filter(flow -> !flow.isDeleted())
+            .collect(Collectors.toList());
     }
 
     private void send(List<Flow> flows) {

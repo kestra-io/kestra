@@ -1,5 +1,6 @@
 package io.kestra.runner.kafka;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -10,6 +11,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.*;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tasks.flows.Parallel;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -20,8 +22,12 @@ import io.kestra.runner.kafka.services.KafkaAdminService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.*;
+import org.apache.kafka.streams.processor.StateStore;
+import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.test.TestRecord;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,10 +37,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.ListIterator;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 import javax.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -91,7 +94,8 @@ class KafkaExecutorTest {
         testTopology = new TopologyTestDriver(topology, properties);
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(
-            testTopology.getKeyValueStore("template")
+            testTopology.getKeyValueStore("template"),
+            "template"
         ));
     }
 
@@ -504,6 +508,45 @@ class KafkaExecutorTest {
         assertThat(workerTaskRunningRecord.key(), is(taskRunId));
     }
 
+
+    @Test
+    void invalidStore() throws JsonProcessingException {
+        KeyValueStore<String, String> flow = this.testTopology.getKeyValueStore("flow");
+        flow.put("io.kestra.unittest_invalid_1", JacksonMapper.ofJson().writeValueAsString(Map.of(
+            "id", "invalid",
+            "namespace", "io.kestra.unittest",
+            "revision", 1,
+            "tasks", List.of(
+                Map.of(
+                    "id", "invalid",
+                    "type", "io.kestra.core.tasks.debugs.Echo",
+                    "level", "invalid"
+                )
+            )
+        )));
+
+
+        Flow triggerFlow = flowRepository.findById("io.kestra.tests", "trigger-flow-listener-no-inputs").orElseThrow();
+        this.flowInput().pipeInput(triggerFlow.uid(), triggerFlow);
+
+        Flow firstFlow = flowRepository.findById("io.kestra.tests", "trigger-flow").orElseThrow();
+        this.flowInput().pipeInput(firstFlow.uid(), firstFlow);
+
+        Execution firstExecution = createExecution(firstFlow);
+
+        // task
+        firstExecution = runningAndSuccessSequential(firstFlow, firstExecution, 0);
+        assertThat(firstExecution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        Execution triggerExecution = executionOutput().readRecord().getValue();
+        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.CREATED));
+
+        triggerExecution = runningAndSuccessSequential(triggerFlow, triggerExecution, 0);
+
+        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+
     private Execution createExecution(Flow flow) {
         Execution execution = Execution.builder()
             .id(IdUtils.create())
@@ -605,6 +648,15 @@ class KafkaExecutorTest {
                 kafkaAdminService.getTopicName(Flow.class),
                 Serdes.String().serializer(),
                 JsonSerde.of(Flow.class).serializer()
+            );
+    }
+
+    private TestInputTopic<String, String> flowRawInput() {
+        return this.testTopology
+            .createInputTopic(
+                kafkaAdminService.getTopicName(Flow.class),
+                Serdes.String().serializer(),
+                new StringSerializer()
             );
     }
 

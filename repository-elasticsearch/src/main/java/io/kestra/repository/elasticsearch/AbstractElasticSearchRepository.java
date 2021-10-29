@@ -62,9 +62,10 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 @Slf4j
 abstract public class AbstractElasticSearchRepository<T> {
+    protected static final ObjectMapper mapper = JacksonMapper.ofJson(true);
+
     private static ExecutorService poolExecutor;
 
-    protected static final ObjectMapper mapper = JacksonMapper.ofJson();
     protected Class<T> cls;
     protected RestHighLevelClient client;
     protected ModelValidator modelValidator;

@@ -1,10 +1,6 @@
 <template>
     <div class="container" v-if="flow">
         <b-form v-hotkey="keymap" @submit.prevent="onSubmit">
-            <b-alert v-if="flow.triggers" variant="warning" show>
-                {{ $t('warning flow with triggers') }}
-            </b-alert>
-
             <b-form-group
                 v-for="input in flow.inputs"
                 :key="input.id"
@@ -60,20 +56,15 @@
                 </b-button>
             </b-form-group>
         </b-form>
-        <br>
-        <b-card :header="$t('triggers')" v-if="flow && flow.triggers">
-            <triggers />
-        </b-card>
     </div>
 </template>
 <script>
     import {mapState} from "vuex";
     import DatePicker from "vue2-datepicker";
     import Trigger from "vue-material-design-icons/Cogs";
-    import Triggers from "./Triggers";
     import {executeTask} from "../../utils/submitTask"
     export default {
-        components: {DatePicker, Trigger, Triggers},
+        components: {DatePicker, Trigger},
         props: {
             redirect: {
                 type: Boolean,

@@ -36,6 +36,11 @@
                 this.onHide()
             }
         },
+        watch: {
+            $route() {
+                this.$bvToast.hide("app-toast");
+            }
+        },
         computed: {
             text () {
                 return this.message.message || this.message.content.message

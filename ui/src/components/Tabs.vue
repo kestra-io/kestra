@@ -105,7 +105,18 @@
                 direction: ltr;
                 transform: rotate(-180deg);
             }
+
+            @-moz-document url-prefix() {
+                & {
+                    overflow-x: auto;
+                    .card-header-tabs {
+                        padding-top: 5px;
+                    }
+                }
+            }
+
         }
+
 
         &:before, &:after {
             content: "";

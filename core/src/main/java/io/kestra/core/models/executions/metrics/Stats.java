@@ -6,5 +6,5 @@ import lombok.Value;
 @Value
 @Builder
 public class Stats {
-    private double avg;
+    double avg;
 }

@@ -32,37 +32,38 @@ import javax.validation.constraints.NotNull;
 @Slf4j
 public class Execution implements DeletedInterface {
     @NotNull
-    private String id;
+    String id;
 
     @NotNull
-    private String namespace;
+    String namespace;
 
     @NotNull
-    private String flowId;
+    String flowId;
 
     @NotNull
     @With
-    private Integer flowRevision;
+    Integer flowRevision;
 
     @With
-    private List<TaskRun> taskRunList;
+    List<TaskRun> taskRunList;
 
     @With
-    private Map<String, Object> inputs;
+    Map<String, Object> inputs;
 
     @With
-    private Map<String, Object> variables;
+    Map<String, Object> variables;
 
     @NotNull
-    private State state;
+    State state;
 
-    private String parentId;
+    String parentId;
 
     @With
-    private ExecutionTrigger trigger;
+    ExecutionTrigger trigger;
 
     @NotNull
-    private boolean deleted = false;
+    @Builder.Default
+    boolean deleted = false;
 
     public Execution withState(State.Type state) {
         return new Execution(
@@ -75,7 +76,8 @@ public class Execution implements DeletedInterface {
             this.variables,
             this.state.withState(state),
             this.parentId,
-            this.trigger
+            this.trigger,
+            this.deleted
         );
     }
 
@@ -102,7 +104,8 @@ public class Execution implements DeletedInterface {
             this.variables,
             this.state,
             this.parentId,
-            this.trigger
+            this.trigger,
+            this.deleted
         );
     }
 
@@ -117,7 +120,8 @@ public class Execution implements DeletedInterface {
             this.variables,
             state,
             childExecutionId != null ? this.getId() : null,
-            this.trigger
+            this.trigger,
+            this.deleted
         );
     }
 

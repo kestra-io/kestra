@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import com.google.common.collect.Lists;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
@@ -84,8 +85,11 @@ public class TaskDefaultService {
             .stream()
             .collect(Collectors.groupingBy(TaskDefault::isForced, Collectors.toList()));
 
+        // non forced
         Map<String, List<TaskDefault>> defaults = taskDefaultsToMap(allDefaultsGroup.getOrDefault(false, new ArrayList<>()));
-        Map<String, List<TaskDefault>> forced = taskDefaultsToMap(allDefaultsGroup.getOrDefault(true, new ArrayList<>()));
+
+        // forced task default need to be reverse, lower win
+        Map<String, List<TaskDefault>> forced = taskDefaultsToMap(Lists.reverse(allDefaultsGroup.getOrDefault(true, new ArrayList<>())));
 
         Object taskDefaults = flowAsMap.get("taskDefaults");
         if (taskDefaults != null) {

@@ -7,11 +7,11 @@ import javax.validation.constraints.NotNull;
 @Value
 public class ExecutionCount {
     @NotNull
-    protected String namespace;
+    String namespace;
 
     @NotNull
-    private String flowId;
+    String flowId;
 
     @NotNull
-    private Long count;
+    Long count;
 }

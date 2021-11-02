@@ -44,4 +44,7 @@ dependencies {
     testImplementation project(':storage-local')
 
     testImplementation 'org.mockito:mockito-junit-jupiter:3.11.2'
+    testImplementation "io.micronaut:micronaut-http-client"
+    testImplementation "io.micronaut:micronaut-http-server-netty"
+    testImplementation "io.micronaut:micronaut-management"
 }

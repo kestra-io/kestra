@@ -9,7 +9,9 @@
             <span v-if="humanSize">({{ humanSize }})</span>
         </kicon>
     </b-link>
-    <span v-else v-html="value" />
+    <span v-else>
+        {{ value }}
+    </span>
 </template>
 
 <script>

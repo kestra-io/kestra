@@ -8,17 +8,23 @@ import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.context.annotation.Property;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -28,6 +34,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 
+@Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
 class RunContextTest extends AbstractMemoryRunnerTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -35,6 +42,9 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Inject
     TaskDefaultsCaseTest taskDefaultsCaseTest;
+
+    @Inject
+    RunContextFactory runContextFactory;
 
     @Test
     void logs() throws TimeoutException {
@@ -99,6 +109,14 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     void taskDefaults() throws TimeoutException, IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/task-defaults.yaml")));
         taskDefaultsCaseTest.taskDefaults();
+    }
+
+    @Test
+    void tempFiles() throws IOException {
+        RunContext runContext = runContextFactory.of();
+        Path path = runContext.tempFile();
+
+        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/"), is(true));
     }
 
     @Test

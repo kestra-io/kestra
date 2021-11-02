@@ -18,6 +18,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Slugify;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -28,9 +29,14 @@ import java.io.*;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @NoArgsConstructor
 public class RunContext {
@@ -46,6 +52,7 @@ public class RunContext {
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
     private MetricRegistry meterRegistry;
     private RunContextLogger runContextLogger;
+    private Path tempBasedPath;
     protected transient Path temporaryDirectory;
 
     /**
@@ -113,6 +120,10 @@ public class RunContext {
         this.storageInterface = applicationContext.findBean(StorageInterface.class).orElse(null);
         this.envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
         this.meterRegistry = applicationContext.findBean(MetricRegistry.class).orElseThrow();
+        this.tempBasedPath = Path.of(applicationContext
+            .getProperty("kestra.tasks.tmp-dir.path", String.class)
+            .orElse(System.getProperty("java.io.tmpdir"))
+        );
     }
 
     private void initContext(Flow flow, Task task, Execution execution, TaskRun taskRun) {
@@ -193,22 +204,22 @@ public class RunContext {
             }
         }
 
-        if (flow != null && execution != null) {
+        if (flow != null) {
             builder
                 .put("flow", ImmutableMap.of(
                     "id", flow.getId(),
                     "namespace", flow.getNamespace(),
                     "revision", flow.getRevision()
                 ));
+        }
 
+        if (execution != null) {
             builder
                 .put("execution", ImmutableMap.of(
                     "id", execution.getId(),
                     "startDate", execution.getState().getStartDate()
                 ));
-        }
 
-        if (execution != null) {
             if (execution.getTaskRunList() != null) {
                 builder.put("outputs", execution.outputs());
             }
@@ -228,10 +239,6 @@ public class RunContext {
 
         if (trigger != null) {
             builder
-                .put("flow", ImmutableMap.of(
-                    "id", flow.getId(),
-                    "namespace", flow.getNamespace()
-                ))
                 .put("trigger", ImmutableMap.of(
                     "id", trigger.getId(),
                     "type", trigger.getType()
@@ -468,9 +475,18 @@ public class RunContext {
         return String.join(".", values);
     }
 
-    public Path tempDir() throws IOException {
+    public synchronized Path tempDir() {
+        return this.tempDir(true);
+    }
+
+    public synchronized Path tempDir(boolean create) {
         if (this.temporaryDirectory == null) {
-            this.temporaryDirectory = Files.createTempDirectory("runcontext-temp-dir");
+            this.temporaryDirectory = tempBasedPath.resolve(IdUtils.create());
+        }
+
+        if (create && !this.temporaryDirectory.toFile().exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            this.temporaryDirectory.toFile().mkdirs();
         }
 
         return this.temporaryDirectory;
@@ -518,7 +534,7 @@ public class RunContext {
     }
 
     private void cleanTemporaryDirectory() throws IOException {
-        if (temporaryDirectory != null) {
+        if (temporaryDirectory != null && temporaryDirectory.toFile().exists()) {
             FileUtils.deleteDirectory(temporaryDirectory.toFile());
             this.temporaryDirectory = null;
         }

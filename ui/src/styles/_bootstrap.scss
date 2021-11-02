@@ -190,11 +190,21 @@ mark {
         height: 100%;
         transform: translate3d(0%, 0, 0);
         max-width: 95%;
+        box-shadow: 0 0 10px 0px rgba(0,0,0,0.35);
     }
 
     .modal-content {
         height: 100%;
+        border-radius: 0;
         overflow-y: auto;
+
+        header {
+            border-radius: 0;
+        }
+
+        footer.modal-footer {
+            padding: $navbar-padding-y/2 $navbar-padding-x $navbar-padding-y/2 $navbar-padding-x;
+        }
     }
 
     .modal-body {

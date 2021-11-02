@@ -41,8 +41,6 @@ import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import static io.kestra.core.utils.Rethrow.throwSupplier;
-
 @Slf4j
 @Singleton
 public abstract class AbstractScheduler implements Runnable, AutoCloseable {
@@ -393,22 +391,26 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     private Trigger getLastTrigger(FlowWithPollingTrigger f, ZonedDateTime now) {
         return triggerState
             .findLast(f.getTriggerContext())
-            // we don't find, so never started execution, create an trigger context with next date.
-            // this allow some edge case when the evaluation loop of schedulers will change second
-            // between start and end
             .orElseGet(() -> {
-                    ZonedDateTime nextDate = f.getPollingTrigger().nextEvaluationDate(Optional.empty());
+                // we don't find, so never started execution, create a trigger context with previous date in the past.
+                // this allows some edge case when the evaluation loop of schedulers will change second
+                // between start and end
 
-                    return Trigger.builder()
-                        .date(nextDate.compareTo(now) < 0 ? nextDate : now)
-                        .flowId(f.getFlow().getId())
-                        .flowRevision(f.getFlow().getRevision())
-                        .namespace(f.getFlow().getNamespace())
-                        .triggerId(f.getTriggerContext().getTriggerId())
-                        .updatedDate(Instant.now())
-                        .build();
-                }
-            );
+                ZonedDateTime nextDate = f.getPollingTrigger().nextEvaluationDate(Optional.empty());
+
+                Trigger build = Trigger.builder()
+                    .date(nextDate.compareTo(now) < 0 ? nextDate : now)
+                    .flowId(f.getFlow().getId())
+                    .flowRevision(f.getFlow().getRevision())
+                    .namespace(f.getFlow().getNamespace())
+                    .triggerId(f.getTriggerContext().getTriggerId())
+                    .updatedDate(Instant.now())
+                    .build();
+
+                triggerState.save(build);
+
+                return build;
+            });
     }
 
     private boolean isEvaluationInterval(FlowWithPollingTrigger flowWithPollingTrigger, ZonedDateTime now) {

@@ -185,8 +185,8 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
         sourceBuilder.fetchSource("*", "sourceCode");
         sourceBuilder.highlighter(new HighlightBuilder()
-            .preTags("<mark>")
-            .postTags("</mark>")
+            .preTags("[mark]")
+            .postTags("[/mark]")
             .field("sourceCode")
         );
 

@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.github.jknack.handlebars.EscapingStrategy;
 import com.github.jknack.handlebars.Handlebars;
+import com.github.jknack.handlebars.HandlebarsException;
 import com.github.jknack.handlebars.Template;
 import com.github.jknack.handlebars.helper.*;
 import com.mitchellbosecke.pebble.PebbleEngine;
@@ -110,7 +111,7 @@ public class VariableRenderer {
                 try {
                     Template  template = handlebars.compileInline(currentTemplate);
                     current = template.apply(variables);
-                } catch (IOException hbE) {
+                } catch (HandlebarsException | IOException hbE) {
                     throw new IllegalVariableEvaluationException(
                         "Pebble evaluation failed with '" + e.getMessage() +  "' " +
                         "and Handlebars fallback failed also  with '" + hbE.getMessage() + "'" ,

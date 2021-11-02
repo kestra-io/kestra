@@ -13,5 +13,5 @@ import javax.validation.constraints.NotNull;
 @ToString
 public class ExecutionKilled {
     @NotNull
-    private String executionId;
+    String executionId;
 }

@@ -62,6 +62,8 @@ abstract public class BashService {
         if (outputs.size() > 0) {
             outputs
                 .forEach(throwConsumer(s -> {
+                    BashService.validFilename(s);
+
                     File tempFile = File.createTempFile(s + "_", null, tempDirectory.toFile());
 
                     result.put(s, "{{workingDir}}/" + tempFile.getName());
@@ -74,6 +76,14 @@ abstract public class BashService {
         return result;
     }
 
+    private static void validFilename(String s) {
+        if (s.startsWith("./") || s.startsWith("..") || s.startsWith("/")) {
+            throw new IllegalArgumentException("Invalid outputFile (only relative path is supported) " +
+                "for path '" + s + "'"
+            );
+        }
+    }
+
     public static void createInputFiles(
         RunContext runContext,
         Path workingDirectory,
@@ -82,13 +92,17 @@ abstract public class BashService {
     ) throws IOException, IllegalVariableEvaluationException, URISyntaxException {
         if (inputFiles != null && inputFiles.size() > 0) {
             for (String fileName : inputFiles.keySet()) {
+                String finalFileName = runContext.render(fileName);
+
+                BashService.validFilename(finalFileName);
+
                 File file = new File(fileName);
 
                 // path with "/", create the subfolders
                 if (file.getParent() != null) {
                     Path subFolder = Paths.get(
                         workingDirectory.toAbsolutePath().toString(),
-                        new File(fileName).getParent()
+                        new File(finalFileName).getParent()
                     );
 
                     if (!subFolder.toFile().exists()) {
@@ -96,7 +110,7 @@ abstract public class BashService {
                     }
                 }
 
-                String filePath = workingDirectory + "/" + fileName;
+                String filePath = workingDirectory + "/" + finalFileName;
                 String render = runContext.render(inputFiles.get(fileName), additionalVars);
 
                 if (render.startsWith("kestra://")) {

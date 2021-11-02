@@ -46,10 +46,6 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
         this.eventPublisher = eventPublisher;
     }
 
-    private static String templateId(Template template) {
-        return template.getId();
-    }
-
     @Override
     public Optional<Template> findById(String namespace, String id) {
         BoolQueryBuilder bool = this.defaultFilter()
@@ -107,7 +103,7 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     }
 
     public Template save(Template template, CrudEventType crudEventType) {
-        this.putRequest(INDEX_NAME, template.getId(), template);
+        this.putRequest(INDEX_NAME, template.uid(), template);
 
         templateQueue.emit(template);
 
@@ -118,7 +114,7 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
 
     @Override
     public void delete(Template template) {
-        this.deleteRequest(INDEX_NAME, templateId(template));
+        this.deleteRequest(INDEX_NAME, template.uid());
 
         eventPublisher.publishEvent(new CrudEvent<>(template, CrudEventType.DELETE));
     }

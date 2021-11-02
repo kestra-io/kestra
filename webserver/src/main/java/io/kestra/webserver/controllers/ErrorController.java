@@ -13,6 +13,7 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Error;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.hateoas.Link;
+import io.micronaut.web.router.exceptions.UnsatisfiedQueryValueRouteException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileNotFoundException;
@@ -141,6 +142,11 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> notFound(HttpRequest<?> request, FileNotFoundException e) {
         return jsonError(request, e, HttpStatus.NOT_FOUND, "Not Found");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> notFound(HttpRequest<?> request, UnsatisfiedQueryValueRouteException e) {
+        return jsonError(request, e, HttpStatus.BAD_REQUEST, "Bad Request");
     }
 
     private static HttpResponse<JsonError> jsonError(JsonError jsonError, HttpStatus status, String reason) {

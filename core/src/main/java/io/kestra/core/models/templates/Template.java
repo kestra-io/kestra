@@ -37,8 +37,8 @@ public class Template implements DeletedInterface {
     @Valid
     private final List<Task> errors;
 
-    @Builder.Default
     @NotNull
+    @Builder.Default
     private final boolean deleted = false;
 
     @JsonIgnore

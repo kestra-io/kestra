@@ -19,37 +19,38 @@ import javax.validation.constraints.NotNull;
 @Builder(toBuilder = true)
 public class LogEntry implements DeletedInterface {
     @NotNull
-    private String namespace;
+    String namespace;
 
     @NotNull
-    private String flowId;
+    String flowId;
 
     @Nullable
-    private String taskId;
+    String taskId;
 
     @Nullable
-    private String executionId;
+    String executionId;
 
     @Nullable
-    private String taskRunId;
+    String taskRunId;
 
     @Nullable
     @JsonInclude
-    private Integer attemptNumber;
+    Integer attemptNumber;
 
     @Nullable
-    private String triggerId;
+    String triggerId;
 
-    private Instant timestamp;
+    Instant timestamp;
 
-    private Level level;
+    Level level;
 
-    private String thread;
+    String thread;
 
-    private String message;
+    String message;
 
     @NotNull
-    private boolean deleted = false;
+    @Builder.Default
+    boolean deleted = false;
 
     public static List<String> findLevelsByMin(Level minLevel) {
         if (minLevel == null) {

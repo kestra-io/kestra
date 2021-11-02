@@ -13,10 +13,10 @@ import javax.validation.constraints.NotNull;
 @Builder
 public class WorkerTaskResult {
     @NotNull
-    private TaskRun taskRun;
+    TaskRun taskRun;
 
     @NotNull
-    private Task task;
+    Task task;
 
     public WorkerTaskResult(WorkerTask workerTask) {
         this.taskRun = workerTask.getTaskRun();

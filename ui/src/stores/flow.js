@@ -1,4 +1,5 @@
 import Vue from "vue"
+
 export default {
     namespaced: true,
     state: {
@@ -37,7 +38,13 @@ export default {
         },
         loadFlow({commit}, options) {
             return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}`).then(response => {
-                commit("setFlow", response.data)
+                if (response.data.exception) {
+                    commit("core/setMessage", {title: "Invalid source code", message: response.data.exception, variant: "danger"}, {root: true});
+                    delete response.data.exception;
+                    commit("setFlow", JSON.parse(response.data.source));
+                } else {
+                    commit("setFlow", response.data)
+                }
 
                 return response.data;
             })

@@ -1,12 +1,15 @@
 package io.kestra.core.models.templates;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.micronaut.core.annotation.Introspected;
-import lombok.Builder;
-import lombok.Getter;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.micronaut.core.annotation.Introspected;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.*;
 import javax.validation.ConstraintViolation;
@@ -17,25 +20,27 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
-@Builder
-@Introspected
+@SuperBuilder
 @Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@Introspected
 public class Template implements DeletedInterface {
     @NotNull
     @NotBlank
     @Pattern(regexp = "[a-zA-Z0-9._-]+")
-    private final String id;
+    private String id;
 
     @NotNull
     @Pattern(regexp="[a-z0-9._-]+")
-    private final String namespace;
+    private String namespace;
 
     @Valid
     @NotEmpty
-    private final List<Task> tasks;
+    private List<Task> tasks;
 
     @Valid
-    private final List<Task> errors;
+    private List<Task> errors;
 
     @NotNull
     @Builder.Default

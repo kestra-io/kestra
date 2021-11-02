@@ -1,8 +1,11 @@
 package io.kestra.repository.elasticsearch;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -74,6 +77,27 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             flow.getNamespace(),
             flow.getId()
         ));
+    }
+
+    @Override
+    protected Flow deserialize(String source) {
+        try {
+            return super.deserialize(source);
+        } catch (DeserializationException e) {
+            try {
+                JsonNode jsonNode = MAPPER.readTree(source);
+                return FlowSource.builder()
+                    .id(jsonNode.get("id").asText())
+                    .namespace(jsonNode.get("namespace").asText())
+                    .revision(jsonNode.get("revision").asInt())
+                    .source(JacksonMapper.ofJson().writeValueAsString(JacksonMapper.toMap(source)))
+                    .exception(e.getMessage())
+                    .tasks(List.of())
+                    .build();
+            } catch (JsonProcessingException ex) {
+                throw new DeserializationException(ex);
+            }
+        }
     }
 
     @Override
@@ -199,7 +223,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                     .map(documentFields -> {
                         try {
                             return new SearchResult<>(
-                                mapper.readValue(documentFields.getSourceAsString(), this.cls),
+                                MAPPER.readValue(documentFields.getSourceAsString(), this.cls),
                                 documentFields.getHighlightFields().get("sourceCode") != null ?
                                     Arrays.stream(documentFields.getHighlightFields().get("sourceCode").getFragments())
                                         .map(Text::string)

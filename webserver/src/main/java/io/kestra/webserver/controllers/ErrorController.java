@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import io.kestra.core.utils.Rethrow;
+import io.kestra.core.exceptions.DeserializationException;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -147,6 +147,11 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> notFound(HttpRequest<?> request, UnsatisfiedQueryValueRouteException e) {
         return jsonError(request, e, HttpStatus.BAD_REQUEST, "Bad Request");
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> serialization(HttpRequest<?> request, DeserializationException e) {
+        return jsonError(request, e, HttpStatus.LOCKED, "Locked");
     }
 
     private static HttpResponse<JsonError> jsonError(JsonError jsonError, HttpStatus status, String reason) {

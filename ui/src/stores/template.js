@@ -22,7 +22,13 @@ export default {
         },
         loadTemplate({commit}, options) {
             return Vue.axios.get(`/api/v1/templates/${options.namespace}/${options.id}`).then(response => {
-                commit("setTemplate", response.data)
+                if (response.data.exception) {
+                    commit("core/setMessage", {title: "Invalid source code", message: response.data.exception, variant: "danger"}, {root: true});
+                    delete response.data.exception;
+                    commit("setTemplate", JSON.parse(response.data.source));
+                } else {
+                    commit("setTemplate", response.data)
+                }
 
                 return response.data;
             })

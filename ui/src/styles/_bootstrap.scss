@@ -60,7 +60,7 @@ table.table {
         width: 16px;
     }
 
-    td.row-action a {
+    td.r-ow-action a {
         color: $body-color;
     }
 
@@ -266,5 +266,13 @@ $modal-size: ("sm": $modal-sm, "md": $modal-md, "lg": $modal-lg, "xl": $modal-xl
         .modal-dialog {
             right: 0 !important;
         }
+    }
+}
+
+.toast {
+    .toast-body {
+        overflow: auto;
+        margin: $toast-padding-x;
+        padding: 0;
     }
 }

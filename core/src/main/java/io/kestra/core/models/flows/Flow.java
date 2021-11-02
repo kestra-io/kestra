@@ -46,41 +46,41 @@ public class Flow implements DeletedInterface {
     @NotNull
     @NotBlank
     @Pattern(regexp="[a-zA-Z0-9._-]+")
-    private String id;
+    String id;
 
     @NotNull
     @Pattern(regexp="[a-z0-9._-]+")
-    private String namespace;
+    String namespace;
 
     @With
     @Min(value = 1)
-    private Integer revision;
+    Integer revision;
 
-    private String description;
+    String description;
 
     @Valid
-    private List<Input> inputs;
+    List<Input> inputs;
 
-    private Map<String, Object> variables;
+    Map<String, Object> variables;
 
     @Valid
     @NotEmpty
-    private List<Task> tasks;
+    List<Task> tasks;
 
     @Valid
-    private List<Task> errors;
+    List<Task> errors;
 
     @Valid
-    private List<Listener> listeners;
+    List<Listener> listeners;
 
     @Valid
-    private List<AbstractTrigger> triggers;
+    List<AbstractTrigger> triggers;
 
-    private List<TaskDefault> taskDefaults;
+    List<TaskDefault> taskDefaults;
 
-    @Builder.Default
     @NotNull
-    private boolean deleted = false;
+    @Builder.Default
+    boolean deleted = false;
 
     public Logger logger() {
         return LoggerFactory.getLogger("flow." + this.id);

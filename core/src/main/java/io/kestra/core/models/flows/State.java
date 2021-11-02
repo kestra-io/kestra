@@ -23,10 +23,10 @@ import java.util.Optional;
 public class State {
     @NotNull
     @JsonInclude
-    private Type current;
+    Type current;
 
     @Valid
-    private List<History> histories;
+    List<History> histories;
 
     public State() {
         this.current = Type.CREATED;
@@ -146,9 +146,9 @@ public class State {
     @Value
     public static class History {
         @NotNull
-        private Type state;
+        Type state;
 
         @NotNull
-        private Instant date;
+        Instant date;
     }
 }

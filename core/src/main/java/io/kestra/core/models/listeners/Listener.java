@@ -14,12 +14,12 @@ import javax.validation.constraints.NotEmpty;
 @Builder
 @Introspected
 public class Listener {
-    private String description;
+    String description;
 
     @Valid
-    private List<Condition> conditions;
+    List<Condition> conditions;
 
     @Valid
     @NotEmpty
-    private List<Task> tasks;
+    List<Task> tasks;
 }

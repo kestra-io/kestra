@@ -16,32 +16,32 @@ import javax.validation.constraints.NotNull;
 @Builder(toBuilder = true)
 public class TaskRun {
     @NotNull
-    private String id;
+    String id;
 
     @NotNull
-    private String executionId;
+    String executionId;
 
     @NotNull
-    private String namespace;
+    String namespace;
 
     @NotNull
-    private String flowId;
+    String flowId;
 
     @NotNull
-    private String taskId;
+    String taskId;
 
-    private String parentTaskRunId;
+    String parentTaskRunId;
 
-    private String value;
+    String value;
 
     @With
-    private List<TaskRunAttempt> attempts;
+    List<TaskRunAttempt> attempts;
 
     @With
-    private Map<String, Object> outputs;
+    Map<String, Object> outputs;
 
     @NotNull
-    private State state;
+    State state;
 
     public TaskRun withState(State.Type state) {
         return new TaskRun(

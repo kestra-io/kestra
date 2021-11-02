@@ -1,16 +1,16 @@
 package io.kestra.core.models.tasks;
 
-import lombok.Value;
 import io.kestra.core.models.flows.State;
+import lombok.Value;
 
 import java.time.Duration;
 import java.time.Instant;
 
 @Value
 public class TaskResult {
-    private State state;
+    State state;
 
-    private Instant start;
+    Instant start;
 
-    private Duration duration;
+    Duration duration;
 }

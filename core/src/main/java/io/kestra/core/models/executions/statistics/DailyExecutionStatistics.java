@@ -37,18 +37,18 @@ public class DailyExecutionStatistics {
     @Builder
     static public class Duration {
         @NotNull
-        private java.time.Duration min;
+        java.time.Duration min;
 
         @NotNull
-        private java.time.Duration avg;
+        java.time.Duration avg;
 
         @NotNull
-        private java.time.Duration max;
+        java.time.Duration max;
 
         @NotNull
-        private java.time.Duration sum;
+        java.time.Duration sum;
 
         @NotNull
-        private long count;
+        long count;
     }
 }

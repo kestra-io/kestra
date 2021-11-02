@@ -14,11 +14,11 @@ import javax.validation.constraints.NotNull;
 @Value
 public class ResolvedTask {
     @NotNull
-    protected Task task;
+    Task task;
 
-    protected String value;
+    String value;
 
-    protected String parentId;
+    String parentId;
 
     public NextTaskRun toNextTaskRun(Execution execution) {
         return new NextTaskRun(

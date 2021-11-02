@@ -13,10 +13,10 @@ import javax.validation.constraints.NotNull;
 @Builder
 public class TaskRunAttempt {
     @With
-    private List<AbstractMetricEntry<?>> metrics;
+    List<AbstractMetricEntry<?>> metrics;
 
     @NotNull
-    private State state;
+    State state;
 
     public TaskRunAttempt withState(State.Type state) {
         return new TaskRunAttempt(

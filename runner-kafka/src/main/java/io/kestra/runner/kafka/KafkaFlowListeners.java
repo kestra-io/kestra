@@ -191,7 +191,6 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         }
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     @Override
     public List<Flow> flows() {
         if (this.store == null || stream.state() != KafkaStreams.State.RUNNING) {

@@ -294,7 +294,6 @@ label,
 .alert {
     font-size: $font-size-sm;
     font-weight: 300;
-    color: $white;
 
     &-primary {
         &, > th, > td {
@@ -346,7 +345,6 @@ label,
 
     .alert-link {
         font-weight: normal;
-        color: #fff;
         text-decoration: underline;
     }
 

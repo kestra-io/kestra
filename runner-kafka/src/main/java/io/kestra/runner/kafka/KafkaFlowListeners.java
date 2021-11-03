@@ -84,7 +84,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
             KStream<String, Flow> stream = builder
                 .stream(
                     kafkaAdminService.getTopicName(Flow.class),
-                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class))
+                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class, false))
                 );
 
             KStream<String, Flow> result = KafkaStreamSourceService.logIfEnabled(
@@ -98,12 +98,13 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                 ),
                 "flow-in"
             )
+                .filter((key, value) -> value != null, Named.as("notNull"))
                 .selectKey((key, value) -> value.uidWithoutRevision(), Named.as("rekey"))
                 .groupBy(
                     (String key, Flow value) -> value.uidWithoutRevision(),
                     Grouped.<String, Flow>as("grouped")
                         .withKeySerde(Serdes.String())
-                        .withValueSerde(JsonSerde.of(Flow.class))
+                        .withValueSerde(JsonSerde.of(Flow.class, false))
                 )
                 .aggregate(
                     AllFlowRevision::new,
@@ -114,7 +115,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                     },
                     Materialized.<String, AllFlowRevision, KeyValueStore<Bytes, byte[]>>as("list")
                         .withKeySerde(Serdes.String())
-                        .withValueSerde(JsonSerde.of(AllFlowRevision.class))
+                        .withValueSerde(JsonSerde.of(AllFlowRevision.class, false))
                 )
                 .mapValues(
                     (readOnlyKey, value) -> {
@@ -171,11 +172,12 @@ public class KafkaFlowListeners implements FlowListenersInterface {
             builder
                 .table(
                     kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_FLOWLAST),
-                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)),
+                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class, false)),
                     Materialized.<String, Flow, KeyValueStore<Bytes, byte[]>>as("flow")
                         .withKeySerde(Serdes.String())
-                        .withValueSerde(JsonSerde.of(Flow.class))
+                        .withValueSerde(JsonSerde.of(Flow.class, false))
                 )
+                .filter((key, value) -> value != null)
                 .toStream()
                 .peek((key, value) -> {
                     send(flows());

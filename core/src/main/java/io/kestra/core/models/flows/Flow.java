@@ -34,6 +34,8 @@ import javax.validation.constraints.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Introspected
+@ToString
+@EqualsAndHashCode
 public class Flow implements DeletedInterface {
     private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {

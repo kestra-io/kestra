@@ -10,14 +10,19 @@ public class JsonSerde<T> implements Serde<T> {
     private final Serializer<T> serializer;
     private final Deserializer<T> deserializer;
 
-    private JsonSerde(Class<T> cls) {
-        this.deserializer = new JsonDeserializer<>(cls);
+    private JsonSerde(Class<T> cls, boolean strict) {
+        this.deserializer = new JsonDeserializer<>(cls, strict);
         this.serializer = new JsonSerializer<>();
     }
 
     public static <T> JsonSerde<T> of(Class<T> cls) {
-        return new JsonSerde<>(cls);
+        return new JsonSerde<>(cls, true);
     }
+
+    public static <T> JsonSerde<T> of(Class<T> cls, boolean strict) {
+        return new JsonSerde<>(cls, strict);
+    }
+
 
     @Override
     public void configure(Map<String, ?> settings, boolean isKey) {

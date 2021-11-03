@@ -5,10 +5,7 @@ import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.micronaut.core.annotation.Introspected;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.*;
@@ -25,6 +22,8 @@ import javax.validation.constraints.Pattern;
 @AllArgsConstructor
 @NoArgsConstructor
 @Introspected
+@ToString
+@EqualsAndHashCode
 public class Template implements DeletedInterface {
     @NotNull
     @NotBlank

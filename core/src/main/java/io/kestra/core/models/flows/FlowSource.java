@@ -1,9 +1,7 @@
 package io.kestra.core.models.flows;
 
 import io.micronaut.core.annotation.Introspected;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
@@ -11,6 +9,8 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @NoArgsConstructor
 @Introspected
+@ToString
+@EqualsAndHashCode
 public class FlowSource extends Flow {
     String source;
     String exception;

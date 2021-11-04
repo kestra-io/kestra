@@ -131,7 +131,8 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
 
         // handle state on execution
         GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
-        KStream<String, Executor> stream = kafkaStreamSourceService.executorWithFlow(flowKTable, executionKStream, true);
+        GlobalKTable<String, Template> templateKTable = kafkaStreamSourceService.templateGlobalKTable(builder);
+        KStream<String, Executor> stream = kafkaStreamSourceService.executorWithFlow(executionKStream, true);
 
         stream = this.handleExecutor(stream);
 
@@ -164,9 +165,6 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
 
         // purge at end
         this.purgeExecutor(stream);
-
-        // global KTable
-        this.templateKTable(builder);
 
         // handle worker running
         builder.addGlobalStore(
@@ -211,17 +209,6 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
         );
 
         return result;
-    }
-
-    private GlobalKTable<String, Template> templateKTable(StreamsBuilder builder) {
-        return builder
-            .globalTable(
-                kafkaAdminService.getTopicName(Template.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Template.class)).withName("GlobalKTable.Template"),
-                Materialized.<String, Template, KeyValueStore<Bytes, byte[]>>as("template")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(Template.class))
-            );
     }
 
     private KStream<String, ExecutionKilled> executionKilledKStream(StreamsBuilder builder) {

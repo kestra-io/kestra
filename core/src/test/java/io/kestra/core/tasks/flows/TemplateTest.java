@@ -1,18 +1,25 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.tasks.debugs.Echo;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.tasks.debugs.Return;
+import org.slf4j.event.Level;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -22,13 +29,20 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
     @Inject
     protected TemplateRepositoryInterface templateRepository;
 
-    public static final io.kestra.core.models.templates.Template TEMPLATE = io.kestra.core.models.templates.Template.builder()
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    protected QueueInterface<LogEntry> logQueue;
+
+    public static final io.kestra.core.models.templates.Template TEMPLATE_1 = io.kestra.core.models.templates.Template.builder()
         .id("template")
         .namespace("io.kestra.tests")
-        .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("{{ parent.outputs.args['my-forward'] }}").build())).build();
+        .tasks(Collections.singletonList(Echo.builder().id("test").type(Echo.class.getName()).format("{{ parent.outputs.args['my-forward'] }}").build())).build();
 
-    public static void withTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository) throws TimeoutException {
-        templateRepository.create(TEMPLATE);
+    public static void withTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, QueueInterface<LogEntry> logQueue) throws TimeoutException {
+        templateRepository.create(TEMPLATE_1);
+
+        List<LogEntry> logs = new ArrayList<>();
+        logQueue.receive(logs::add);
 
         Execution execution = runnerUtils.runOne(
             "io.kestra.tests",
@@ -43,14 +57,11 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(4));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(
-            execution.findTaskRunsByTaskId("test").get(0).getOutputs().get("value"),
-            is("myString")
-        );
+        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("myString")).findFirst().orElseThrow().getLevel(), is(Level.ERROR));
     }
 
     @Test
     void withTemplate() throws TimeoutException {
-        TemplateTest.withTemplate(runnerUtils, templateRepository);
+        TemplateTest.withTemplate(runnerUtils, templateRepository, logQueue);
     }
 }

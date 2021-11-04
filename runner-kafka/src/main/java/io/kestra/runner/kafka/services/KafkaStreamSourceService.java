@@ -1,11 +1,12 @@
 package io.kestra.runner.kafka.services;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.runner.kafka.serializers.JsonSerde;
-import lombok.extern.slf4j.Slf4j;
+import io.kestra.runner.kafka.streams.FlowJoinerTransformer;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -38,6 +39,17 @@ public class KafkaStreamSourceService {
             );
     }
 
+    public GlobalKTable<String, Template> templateGlobalKTable(StreamsBuilder builder) {
+        return builder
+            .globalTable(
+                kafkaAdminService.getTopicName(Template.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(Template.class)).withName("GlobalKTable.Template"),
+                Materialized.<String, Template, KeyValueStore<Bytes, byte[]>>as("template")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(JsonSerde.of(Template.class))
+            );
+    }
+
     public KStream<String, Executor> executorKStream(StreamsBuilder builder) {
         return builder
             .stream(
@@ -57,21 +69,11 @@ public class KafkaStreamSourceService {
             );
     }
 
-    public KStream<String, Executor> executorWithFlow(GlobalKTable<String, Flow> flowGlobalKTable, KStream<String, Executor> executionKStream, boolean withDefaults) {
+    public KStream<String, Executor> executorWithFlow(KStream<String, Executor> executionKStream, boolean withDefaults) {
         return executionKStream
             .filter((key, value) -> value != null, Named.as("ExecutorWithFlow.filterNotNull"))
-            .join(
-                flowGlobalKTable,
-                (key, executor) -> Flow.uid(executor.getExecution()),
-                (executor, flow) -> {
-                    if (!withDefaults) {
-                        return executor.withFlow(flow);
-                    } else {
-                        Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, executor.getExecution());
-                        return executor.withFlow(flowWithDefaults);
-                    }
-                },
-                Named.as("ExecutorWithFlow.join")
+            .transformValues(
+                () -> new FlowJoinerTransformer(withDefaults, taskDefaultService)
             );
     }
 

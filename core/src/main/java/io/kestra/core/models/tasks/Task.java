@@ -23,7 +23,7 @@ import javax.validation.constraints.Pattern;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @Introspected

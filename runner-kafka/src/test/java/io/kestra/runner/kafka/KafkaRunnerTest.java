@@ -27,7 +27,6 @@ import javax.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class KafkaRunnerTest extends AbstractKafkaRunnerTest {
@@ -51,7 +50,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> workerTaskLogQueue;
+    private QueueInterface<LogEntry> logsQueue;
 
     @Test
     void full() throws TimeoutException, QueueException {
@@ -158,7 +157,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Test
     void streamTooLarge() throws TimeoutException {
         List<LogEntry> logs = new ArrayList<>();
-        workerTaskLogQueue.receive(logs::add);
+        logsQueue.receive(logs::add);
 
         char[] chars = new char[1100000];
         Arrays.fill(chars, 'a');
@@ -183,7 +182,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Test
     void workerRecordTooLarge() throws TimeoutException {
         List<LogEntry> logs = new ArrayList<>();
-        workerTaskLogQueue.receive(logs::add);
+        logsQueue.receive(logs::add);
 
         char[] chars = new char[600000];
         Arrays.fill(chars, 'a');
@@ -206,7 +205,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Test
     void invalidVars() throws TimeoutException {
         List<LogEntry> logs = new ArrayList<>();
-        workerTaskLogQueue.receive(logs::add);
+        logsQueue.receive(logs::add);
 
         Execution execution = runnerUtils.runOne("io.kestra.tests", "variables-invalid", null, null, Duration.ofSeconds(60));
 
@@ -240,12 +239,12 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void eachWithNull() throws Exception {
-        EachSequentialTest.eachNullTest(runnerUtils, workerTaskLogQueue);
+        EachSequentialTest.eachNullTest(runnerUtils, logsQueue);
     }
 
     @Test
     void withTemplate() throws Exception {
-        TemplateTest.withTemplate(runnerUtils, templateRepository);
+        TemplateTest.withTemplate(runnerUtils, templateRepository, logsQueue);
     }
 
     @Test

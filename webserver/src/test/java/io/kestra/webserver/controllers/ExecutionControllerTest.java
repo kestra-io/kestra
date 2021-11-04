@@ -401,7 +401,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
                 .POST(
-                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key,
+                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key + "?name=john&age=12&age=13",
                     ImmutableMap.of("a", 1, "b", true)
                 ),
             Execution.class
@@ -409,6 +409,8 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("a"), is(1));
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b"), is(true));
+        assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("parameters")).get("name"), is(List.of("john")));
+        assertThat(((Map<String, List<Integer>>) execution.getTrigger().getVariables().get("parameters")).get("age"), containsInAnyOrder("12", "13"));
 
         execution = client.toBlocking().retrieve(
             HttpRequest

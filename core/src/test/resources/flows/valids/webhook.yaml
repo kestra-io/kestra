@@ -4,7 +4,7 @@ namespace: io.kestra.tests
 tasks:
   - id: out
     type: io.kestra.core.tasks.debugs.Return
-    format: "{{json trigger}}"
+    format: "{{trigger | json }}"
 
 
 triggers:

@@ -201,7 +201,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
 
         return this.store
             .toStream()
-            .filter(flow -> !flow.isDeleted())
+            .filter(flow -> flow != null && !flow.isDeleted())
             .collect(Collectors.toList());
     }
 

@@ -11,8 +11,6 @@
         <b-modal
             :id="'tooltip-desc-modal-' + id"
             :title="title"
-            header-bg-variant="dark"
-            header-text-variant="light"
             hide-backdrop
             hide-footer
             modal-class="right"

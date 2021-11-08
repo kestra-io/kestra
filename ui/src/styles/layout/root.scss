@@ -1,0 +1,39 @@
+:root {
+    --white-always: #{$white-always};
+    --black-always: #{$black-always};
+    --dark-always: #{$dark-always};
+
+    --gray-100: #{$gray-100};
+    --gray-200: #{$gray-200};
+    --gray-300: #{$gray-300};
+    --gray-400: #{$gray-400};
+    --gray-500: #{$gray-500};
+    --gray-600: #{$gray-600};
+    --gray-700: #{$gray-700};
+    --gray-800: #{$gray-800};
+    --gray-900: #{$gray-900};
+
+    @each $color, $value in $grays {
+        @for $i from 1 through 3 {
+            --gray-#{$color}-lighten-#{$i*5}: #{lighten($value, $i*5)} ;
+            --gray-#{$color}-darken-#{$i*5}: #{darken($value, $i*5)} ;
+        }
+    }
+
+    @each $color, $value in $colors {
+        @for $i from 1 through 3 {
+            --#{$color}-lighten-#{$i*5}: #{lighten($value, $i*5)} ;
+            --#{$color}-darken-#{$i*5}: #{darken($value, $i*5)} ;
+        }
+    }
+
+    @each $color, $value in $theme-colors {
+        @for $i from 1 through 3 {
+            --#{$color}-lighten-#{$i*5}: #{lighten($value, $i*5)} ;
+            --#{$color}-darken-#{$i*5}: #{darken($value, $i*5)} ;
+        }
+    }
+
+    --table-border-color: #{$table-border-color};
+}
+

@@ -1,6 +1,8 @@
 export default {
     namespaced: true,
     state: {
+        themes: undefined,
+        theme: undefined,
         message: undefined,
         error: undefined
     },
@@ -13,6 +15,12 @@ export default {
         }
     },
     mutations: {
+        setThemes(state, themes) {
+            state.themes = themes
+        },
+        setTheme(state, theme) {
+            state.theme = theme
+        },
         setMessage(state, message) {
             state.message = message
         },

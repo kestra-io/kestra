@@ -1,5 +1,5 @@
 <template>
-    <b-button @click="$emit('click', $event)" class="status text-white rounded-lg" :class="cls">
+    <b-button @click="$emit('click', $event)" class="status rounded-lg" :class="cls">
         <component :is="icon" />
         <template v-if="label">
             {{ status | lower | cap }}

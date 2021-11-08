@@ -8,7 +8,7 @@
         class="ns-selector"
     >
         <template #option="{label,level}">
-            <strong :class="'level-'+level">{{ label }}</strong>
+            <span :class="'level-'+level">{{ label }}</span>
         </template>
     </v-select>
 </template>
@@ -85,14 +85,11 @@
 .v-select{
     $levels: 10;
     $level-size: 6px;
-    $base-font-weight:800;
 
     @mixin level-x {
         @for $i from 0 through $levels {
             .level-#{$i} {
-                font-weight: ($base-font-weight - ($i * 100));
                 margin-left: $level-size * $i;
-                color: lighten($dark, $i*5%);
             }
         }
     }

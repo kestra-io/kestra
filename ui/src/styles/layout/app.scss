@@ -1,0 +1,32 @@
+$web-font-path: "https://fonts.googleapis.com/css?family=Roboto:300,400,700" !default;
+@import url($web-font-path);
+
+body {
+    min-width: 320px;
+}
+
+body,
+html,
+.container {
+    height: 100% !important;
+}
+
+.content-wrapper {
+    padding-top: 15px;
+    padding-bottom: 60px !important;
+
+    &.menu-collapsed {
+        transition: all 0.3s ease;
+        padding-left: 50px;
+    }
+
+    &.menu-not-collapsed {
+        transition: all 0.3s;
+        padding-left: $menu-width;
+    }
+}
+
+#theme-loaded {
+    content: $theme-name;
+    display: none;
+}

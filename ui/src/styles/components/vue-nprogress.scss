@@ -1,0 +1,21 @@
+
+#nprogress {
+    .bar {
+        background: $yellow;
+        z-index: 9999;
+    }
+
+    .spinner {
+        top: 8px;
+        right: 8px;
+    }
+
+    .peg {
+        box-shadow: 0 0 10px $yellow, 0 0 5px $yellow;
+    }
+
+    .spinner-icon {
+        border-top-color: $yellow;
+        border-left-color: $yellow;
+    }
+}

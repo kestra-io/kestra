@@ -282,7 +282,7 @@
 
 table {
     & th, td {
-        border-color: $table-border-color;
+        border-color: var(--table-border-color);
     }
 
     thead th, thead td {

@@ -89,7 +89,7 @@
 
         > .hover {
             position: absolute;
-            background: lighten($indigo, 15%);
+            background: var(--indigo-lighten-15);
             border-top: 1px solid $indigo;
             color: $white;
             font-size: 70%;
@@ -105,7 +105,7 @@
 
         &.flowable {
             > .hover {
-                background: darken($pink, 15%);
+                background: var(--pink-darken-15);
             }
         }
 

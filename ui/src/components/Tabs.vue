@@ -93,7 +93,7 @@
 
             &::-webkit-scrollbar-track, &::-webkit-scrollbar-thumb {
                 background: transparent;
-                transition: 300ms;
+                transition: 320ms;
             }
 
             &::-webkit-scrollbar-thumb:hover {
@@ -114,9 +114,7 @@
                     }
                 }
             }
-
         }
-
 
         &:before, &:after {
             content: "";
@@ -127,16 +125,25 @@
             height: 100%;
             z-index: 2;
             background: linear-gradient(to right, rgba(247,247,247,0) 0%, rgba(247,247,247,1) 85%);
+
+            .theme-dark & {
+                background: linear-gradient(to right, rgba(32, 32, 32, 0) 0%, rgb(32, 32, 32) 85%);
+            }
         }
 
         &:after {
             left: 0;
             background: linear-gradient(to left, rgba(247,247,247,0) 0%, rgba(247,247,247,1) 85%);
+
+            .theme-dark & {
+                background: linear-gradient(to left, rgba(32, 32, 32, 0) 0%, rgb(32, 32, 32) 85%);
+            }
         }
 
         &:hover > div::-webkit-scrollbar-thumb {
-            background: $gray-500;
+            background: var(--gray-500);
         }
+
         .nav {
             flex-wrap: nowrap;
 

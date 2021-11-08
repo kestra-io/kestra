@@ -1,9 +1,6 @@
 import "./filters"
 import "moment/locale/fr"
 import "./utils/global"
-import "./custom.scss"
-// @TODO: move to scss
-import "vue-material-design-icons/styles.css";
 
 import App from "./App.vue"
 import BootstrapVue from "bootstrap-vue"

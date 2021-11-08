@@ -64,7 +64,9 @@
 </script>
 <style lang="scss">
     @import "../styles/variable";
-    table {
-        background-color: $white;
+    #app-toast {
+        table {
+            background-color: $white;
+        }
     }
 </style>

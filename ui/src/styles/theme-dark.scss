@@ -1,0 +1,72 @@
+$theme-name: "theme-dark";
+
+$white: #000;
+$white-always: #FFF;
+$gray-100: #222;
+$gray-200: #303030;
+$gray-300: #444;
+$gray-400: #999;
+$gray-500: #adb5bd;
+$gray-600: #ced4da;
+$gray-700: #dee2e6;
+$gray-800: #ebebeb;
+$gray-900: #f8f9fa;
+$black: #fff;
+$black-always: #000;
+
+$light: $gray-200;
+$light-always: $gray-800;
+$dark: $gray-100;
+$dark-always: $gray-100;
+
+// Body
+$body-bg: #171819;
+$text-muted: $gray-400;
+
+
+// Tables
+$table-bg: transparent;
+$table-accent-bg: $gray-200;
+$table-border-color: $gray-300;
+$table-dark-border-color: $gray-300;
+$table-dark-color: $dark;
+
+
+// Cards
+$card-bg: transparent;
+
+// Forms
+$input-bg: $gray-100;
+$input-disabled-bg: $gray-300;
+$input-border-color: darken($gray-100, 3%);
+
+$input-group-addon-color: $gray-500;
+$input-group-addon-bg: $gray-300;
+$input-group-addon-border-color: $input-group-addon-bg;
+
+$custom-file-color: $gray-500;
+$custom-file-border-color: $gray-300;
+
+// sidebar
+$base-bg: $white;
+
+
+// modals
+
+@import "./theme-light";
+
+// button
+.btn {
+    color: $black;
+
+    &:hover {
+        color: $black
+    }
+}
+
+.form-control {
+    &:disabled,
+    &[readonly] {
+       color: $text-muted;
+    }
+}

@@ -77,8 +77,6 @@
         <b-modal
             :id="`modal-logs-${task.id}`"
             :title="`Task ${task.id}`"
-            header-bg-variant="dark"
-            header-text-variant="light"
             hide-backdrop
             hide-footer
             modal-class="right"
@@ -248,7 +246,7 @@
     cursor: pointer;
     display: flex;
     width: 200px;
-    border: 1px solid $gray-600;
+    border: 1px solid var(--gray-600);
     &.task-disabled {
         .card-header .task-title {
             text-decoration: line-through;
@@ -258,44 +256,44 @@
     > .icon {
         width: 35px;
         height: 51px;
-        background: white;
-        border-right: 1px solid $gray-500;
+        background: var(--white);
+        border-right: 1px solid var(--gray-500);
         position: relative;
     }
 
     .status-color {
         width: 10px;
         height: 51px;
-        border-right: 1px solid $gray-500;
+        border-right: 1px solid var(--gray-500);
     }
 
     .is-success {
-        background-color: $green;
+        background-color: var(--green);
     }
 
     .is-running {
-        background-color: $blue;
+        background-color: var(--blue);
     }
 
     .is-failed {
-        background-color: $red;
+        background-color: var(--red);
     }
 
     .bg-undefined {
-        background-color: $gray-400;
+        background-color: var(--gray-400);
     }
 
     .task-content {
         flex-grow: 1;
-        background-color: $white;
+        background-color: var(--white);
         width: 38px;
 
         .card-header {
             height: 25px;
             padding: 2px;
             margin: 0;
-            border-bottom: 1px solid $gray-500;
-            background: $gray-200;
+            border-bottom: 1px solid var(--gray-500);
+            background: var(--gray-200);
             flex: 1;
             flex-wrap: nowrap;
 

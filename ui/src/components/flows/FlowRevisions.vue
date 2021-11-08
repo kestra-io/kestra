@@ -52,8 +52,6 @@
         <b-modal
             :id="`modal-source-${revisionId}`"
             :title="`Revision ${revision}`"
-            header-bg-variant="dark"
-            header-text-variant="light"
             hide-backdrop
             hide-footer
             modal-class="right"

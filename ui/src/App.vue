@@ -43,7 +43,6 @@
             ...mapState("core", ["message", "error", "themes", "theme"])
         },
         created() {
-            console.log(this.created)
             if (this.created === false) {
                 if (this.$route.path === "/") {
                     this.$router.push({name: "flows/list"});

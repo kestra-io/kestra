@@ -2,8 +2,16 @@ dynamic: false
 properties:
   id:
     type: keyword
+    fields:
+      fulltext:
+        type: keyword
+        normalizer: keyword
   namespace:
     type: keyword
+    fields:
+      fulltext:
+        type: keyword
+        normalizer: keyword
   tasks:
     properties:
       id:

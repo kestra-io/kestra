@@ -38,7 +38,7 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     @Override
     public ArrayListTotal<LogEntry> find(String query, Pageable pageable, Level minLevel) {
         BoolQueryBuilder bool = this.defaultFilter()
-            .must(QueryBuilders.queryStringQuery(query));
+            .must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
 
         if (minLevel != null) {
             bool.must(minLevel(minLevel));

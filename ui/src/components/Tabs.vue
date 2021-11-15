@@ -1,7 +1,7 @@
 <template>
     <div class="card ktr-tabs">
         <div class="tabs">
-            <div class="card-header">
+            <div class="card-header mb-4">
                 <div>
                     <b-nav tabs class="card-header-tabs">
                         <b-nav-item
@@ -17,13 +17,13 @@
                     </b-nav>
                 </div>
             </div>
-            <div class="tab-content">
+            <div class="tab-content" :class="bodyClass">
                 <div
                     ref="tabContent"
                     :is="activeTab.component"
                     v-bind="activeTab.props"
                     v-on="$listeners"
-                    :class="bodyClass"
+                    :class="{'p-3': activeTab.background === undefined || activeTab.background !== false}"
                     :prevent-route-info="true"
                 />
             </div>
@@ -62,11 +62,9 @@
                     .filter(tab => this.$route.params.tab === tab.name)[0] || this.tabs[0];
             },
             bodyClass() {
-                const havePadding = Object.keys(this.activeTab.bodyClass || {})
-                    .filter(value => value.startsWith("p"))
-                    .length > 0;
+                let background = this.activeTab.background !== false;
 
-                return {...{"tab-pane": true, "active": true, "p-3": !havePadding}, ...this.activeTab.bodyClass};
+                return {...{"card": background}};
             }
         }
     };
@@ -76,6 +74,13 @@
 @import "../styles/_variable.scss";
 
 .ktr-tabs {
+    transition: all 0.3s ease;
+
+    &.card {
+        background-color: transparent;
+        border: 0;
+    }
+
     .tabs > .card-header {
         padding: 0;
         position: relative;
@@ -124,24 +129,24 @@
             width: 10px;
             height: 100%;
             z-index: 2;
-            background: linear-gradient(to right, rgba(247,247,247,0) 0%, rgba(247,247,247,1) 85%);
+            background: linear-gradient(to right, rgba(248, 248, 252, 0) 0%, rgba(248, 248, 252, 1) 85%);
 
             .theme-dark & {
-                background: linear-gradient(to right, rgba(32, 32, 32, 0) 0%, rgb(32, 32, 32) 85%);
+                background: linear-gradient(to right, rgba(27, 30, 42, 0) 0%, rgb(27, 30, 42) 95%);
             }
         }
 
         &:after {
             left: 0;
-            background: linear-gradient(to left, rgba(247,247,247,0) 0%, rgba(247,247,247,1) 85%);
+            background: linear-gradient(to left, rgba(248, 248, 252, 0) 0%, rgba(248, 248, 252, 1) 85%);
 
             .theme-dark & {
-                background: linear-gradient(to left, rgba(32, 32, 32, 0) 0%, rgb(32, 32, 32) 85%);
+                background: linear-gradient(to left, rgba(27, 30, 42, 0) 0%, rgb(27, 30, 42) 95%);
             }
         }
 
         &:hover > div::-webkit-scrollbar-thumb {
-            background: var(--gray-500);
+            background: var(--secondary);
         }
 
         .nav {

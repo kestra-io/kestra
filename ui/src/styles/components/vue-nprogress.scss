@@ -1,7 +1,7 @@
 
 #nprogress {
     .bar {
-        background: $yellow;
+        background: $indigo;
         z-index: 9999;
     }
 
@@ -11,11 +11,11 @@
     }
 
     .peg {
-        box-shadow: 0 0 10px $yellow, 0 0 5px $yellow;
+        box-shadow: 0 0 10px $indigo, 0 0 5px $indigo;
     }
 
     .spinner-icon {
-        border-top-color: $yellow;
-        border-left-color: $yellow;
+        border-top-color: $indigo;
+        border-left-color: $indigo;
     }
 }

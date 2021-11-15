@@ -24,12 +24,12 @@
 
                 <template #table>
                     <b-overlay :show="isLoading" variant="transparent">
-                        <div v-if="logs === undefined">
-                            <b-alert variant="light" show>
+                        <div v-if="logs === undefined || logs.length === 0">
+                            <b-alert variant="light" class="text-muted" show>
                                 {{ $t('no result') }}
                             </b-alert>
                         </div>
-                        <div class="bg-dark logs-wrapper text-white-always mb-2">
+                        <div v-else class="bg-dark logs-wrapper text-white-always mb-2">
                             <template v-for="(log, i) in logs">
                                 <log-line
                                     level="TRACE"
@@ -155,7 +155,7 @@
         background-color: var(--gray-800);
 
         .theme-dark & {
-            background-color: var(--gray-200);
+            background-color: var(--gray-100);
         }
     }
 
@@ -163,7 +163,7 @@
         background-color: var(--gray-800-lighten-5);
 
         .theme-dark & {
-            background-color: var(--gray-200-lighten-5);
+            background-color: var(--gray-100-lighten-5);
         }
     }
 

@@ -2,7 +2,6 @@
     <b-table
         striped
         hover
-        :bordered="!stacked"
         small
         show-empty
         :stacked="stacked"

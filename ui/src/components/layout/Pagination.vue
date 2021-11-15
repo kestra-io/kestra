@@ -1,6 +1,6 @@
 <template>
     <div class="d-flex">
-        <div class="flex-grow-1">
+        <div class="flex-grow-1 d-sm-none d-md-inline-block">
             <b-form-select
                 v-model="internalSize"
                 @change="pageSizeChange"
@@ -8,7 +8,7 @@
                 :options="pageOptions"
             />
         </div>
-        <div>
+        <div class="mr-auto">
             <b-pagination
                 @change="pageChanged"
                 v-model="internalPage"
@@ -21,11 +21,11 @@
             />
         </div>
 
-        <small v-if="max" class="btn btn-sm btn-outline-light text-total">
+        <small v-if="max" class="d-sm-none d-md text-total">
             {{ $t('Max displayable') }}: {{ max }}
         </small>
 
-        <small class="total btn btn-sm btn-outline-light text-total">
+        <small class="total btn-outline-light text-total">
             {{ $t('Total') }}: {{ total }}
         </small>
     </div>
@@ -76,7 +76,9 @@ select {
 
 /deep/ .text-total {
     color: $pagination-color !important;
+    font-weight: normal;
 }
+
 @media (max-width: map-get($grid-breakpoints, "sm")) {
     select {
         display: none;
@@ -84,6 +86,9 @@ select {
 }
 
 .total {
+    border-radius: $border-radius-sm;
+    padding: $btn-padding-y-sm $btn-padding-x-sm;
+    border: 1px solid var(--table-border-color);
     white-space: nowrap;
 }
 </style>

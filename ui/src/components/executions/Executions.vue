@@ -24,6 +24,7 @@
             <template #top v-if="embed === false">
                 <state-global-chart
                     v-if="daily"
+                    class="mb-4"
                     :ready="dailyReady"
                     :data="daily"
                 />
@@ -35,7 +36,6 @@
                     @sort-changed="onSort"
                     :responsive="true"
                     striped
-                    bordered
                     hover
                     :items="executions"
                     :fields="fields"
@@ -44,7 +44,7 @@
                     show-empty
                 >
                     <template #empty>
-                        <span class="text-black-50">{{ $t('no result') }}</span>
+                        <span class="text-muted">{{ $t('no result') }}</span>
                     </template>
 
                     <template #cell(details)="row">

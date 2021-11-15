@@ -121,6 +121,7 @@
                             v-if="showMetrics[currentTaskRun.id + '-' + index]"
                             :title="$t('metrics')"
                             :execution="execution"
+                            class="table-unrounded mt-1"
                             :key="`metrics-${index}-${currentTaskRun.id}`"
                             :data="convertMetric(attempt.metrics)"
                         />
@@ -130,6 +131,7 @@
                         v-if="showOutputs[currentTaskRun.id]"
                         :title="$t('outputs')"
                         :execution="execution"
+                        class="table-unrounded mt-1"
                         :key="currentTaskRun.id"
                         :data="currentTaskRun.outputs"
                     />
@@ -313,11 +315,12 @@
 @import "../../styles/_variable.scss";
 
 .log-wrapper {
+
     .line:nth-child(odd) {
         background-color: var(--gray-800);
 
         .theme-dark & {
-            background-color: var(--gray-200);
+            background-color: var(--gray-100);
         }
     }
 
@@ -325,7 +328,7 @@
         background-color: var(--gray-800-lighten-5);
 
         .theme-dark & {
-            background-color: var(--gray-200-lighten-5);
+            background-color: var(--gray-100-lighten-5);
         }
     }
 
@@ -359,8 +362,11 @@
         .task-status {
             button {
                 height: 100%;
-                border-radius: 0 !important;
             }
+        }
+
+        button {
+            border-radius: 0 !important;
         }
     }
 

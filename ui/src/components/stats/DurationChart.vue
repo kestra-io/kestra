@@ -17,7 +17,7 @@
     import {computed, defineComponent, ref} from "@vue/composition-api";
     import {LineChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
-    import {tooltip, defaultConfig} from "../../utils/charts.js";
+    import {defaultConfig, tooltip} from "../../utils/charts.js";
     import humanizeDuration from "humanize-duration";
 
     export default defineComponent({
@@ -37,7 +37,7 @@
 
             const chartRef = ref();
             const tooltipContent = ref("");
-
+            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
             const dataReady = computed(() => props.data.length > 0)
 
             const options = computed(() => defaultConfig({
@@ -68,8 +68,8 @@
                     labels: props.data.map(r => r.startDate),
                     datasets: [{
                         label: duration,
-                        backgroundColor: "#c7e7e5",
-                        borderColor: "#1dbaaf",
+                        backgroundColor: !darkTheme ? "#eaf0f9" : "#292e40",
+                        borderColor: !darkTheme ? "#7081b9" : "#7989b4",
                         data: avgData
                     }]
                 }

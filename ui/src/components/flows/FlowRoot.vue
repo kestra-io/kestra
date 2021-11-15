@@ -55,7 +55,6 @@
                         name: undefined,
                         component: Topology,
                         title: this.$t("topology"),
-                        bodyClass: {"p-0": true}
                     },
                 ];
 
@@ -63,7 +62,8 @@
                     tabs.push({
                         name: "executions",
                         component: FlowExecutions,
-                        title: this.$t("executions")
+                        title: this.$t("executions"),
+                        background: false,
                     });
                 }
 
@@ -80,7 +80,6 @@
                         name: "source",
                         component: FlowSource,
                         title: this.$t("source"),
-                        bodyClass: {"p-0": true}
                     });
 
                     tabs.push({
@@ -103,6 +102,7 @@
                         name: "logs",
                         component: FlowLogs,
                         title: this.$t("logs"),
+                        background: false,
                     });
                 }
 

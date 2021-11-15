@@ -1,5 +1,5 @@
 <template>
-    <b-form-select @input="onInput" :value="value" size="sm" :options="statuses" />
+    <b-form-select @input="onInput" :value="value" :options="statuses" />
 </template>
 <script>
     import State from "../../utils/state";

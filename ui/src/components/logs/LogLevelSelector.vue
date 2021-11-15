@@ -3,7 +3,6 @@
         id="input-level"
         :value="value"
         class="form-control"
-        size="sm"
         @input="onInput"
         :options="levelOptions"
     />

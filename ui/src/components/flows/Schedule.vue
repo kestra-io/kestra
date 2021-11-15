@@ -10,7 +10,7 @@
                 :key="x"
             />
         </b-list-group>
-        <b-alert show variant="light" v-else class="mb-0">
+        <b-alert show variant="light" v-else class="text-muted mb-0">
             {{ $t('no result') }}
         </b-alert>
         <bottom-line v-if="canSave">

@@ -1,5 +1,5 @@
 <template>
-    <b-button-group size="sm">
+    <b-button-group>
         <b-button @click="toggleAutoRefresh" :pressed="autoRefresh">
             <kicon :tooltip="$t('toggle periodic refresh each 10 seconds')" placement="bottomleft">
                 <clock />

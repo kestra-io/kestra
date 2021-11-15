@@ -13,7 +13,7 @@
 
                     <trigger-flow v-if="flow && canExecute" :flow-id="flow.id" :namespace="flow.namespace" />
 
-                    <b-button @click="save" v-if="canSave">
+                    <b-button @click="save" v-if="canSave" variant="primary">
                         <kicon :tooltip="'(Ctrl + s)'">
                             <content-save />
                             <span>{{ $t('save') }}</span>

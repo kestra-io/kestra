@@ -26,6 +26,7 @@
                     v-if="taskRunDaily"
                     :ready="dailyReady"
                     :data="taskRunDaily"
+                    class="mb-4"
                 />
             </template>
 
@@ -36,14 +37,13 @@
                     :responsive="true"
                     striped
                     hover
-                    bordered
                     :items="taskruns"
                     :fields="fields"
                     @row-dblclicked="onRowDoubleClick"
                     show-empty
                 >
                     <template #empty>
-                        <span class="text-black-50">{{ $t('no result') }}</span>
+                        <span class="text-muted">{{ $t('no result') }}</span>
                     </template>
                     <template #cell(details)="row">
                         <router-link

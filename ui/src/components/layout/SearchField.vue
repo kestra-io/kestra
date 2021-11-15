@@ -1,7 +1,6 @@
 <template>
     <b-form-input
         :label="$t('search')"
-        size="sm"
         @input="onInput"
         v-model="search"
         :placeholder="$t('search')"

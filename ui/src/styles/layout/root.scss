@@ -1,4 +1,5 @@
 :root {
+    --tertiary: #{$tertiary};
     --white-always: #{$white-always};
     --black-always: #{$black-always};
     --dark-always: #{$dark-always};
@@ -35,5 +36,6 @@
     }
 
     --table-border-color: #{$table-border-color};
+    --body-bg: #{$body-bg};
 }
 

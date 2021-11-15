@@ -7,7 +7,6 @@
                 :label="input.name"
                 label-cols-sm="2"
                 label-align-sm="right"
-                label-size="sm"
             >
                 <b-form-input
                     v-if="input.type === 'STRING'"

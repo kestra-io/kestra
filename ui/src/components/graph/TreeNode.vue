@@ -247,6 +247,11 @@
     display: flex;
     width: 200px;
     border: 1px solid var(--gray-600);
+
+    .btn, .card-header {
+        border-radius: 0 !important;
+    }
+
     &.task-disabled {
         .card-header .task-title {
             text-decoration: line-through;
@@ -285,7 +290,7 @@
 
     .task-content {
         flex-grow: 1;
-        background-color: var(--white);
+        background-color: var(--light);
         width: 38px;
 
         .card-header {

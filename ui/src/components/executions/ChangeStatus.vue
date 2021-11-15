@@ -1,13 +1,11 @@
 <template>
-    <span>
-        <b-button
-            @click="$bvModal.show(uuid)"
-            :disabled="!enabled"
-        >
-            <kicon :tooltip="$t('change status')">
-                <state-machine />
-            </kicon>
-        </b-button>
+    <b-button
+        @click="$bvModal.show(uuid)"
+        :disabled="!enabled"
+    >
+        <kicon :tooltip="$t('change status')">
+            <state-machine />
+        </kicon>
 
         <b-modal v-if="enabled" :id="uuid">
             <template #modal-header>
@@ -41,10 +39,11 @@
 
                 <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
                     <ul>
-                        <li v-for="(text, i) in $t('change status hint')[this.selectedStatus]" :key="i">{{ text }}</li>
+                        <li v-for="(text, i) in $t('change status hint')[this.selectedStatus]" :key="i">
+                            {{ text }}
+                        </li>
                     </ul>
                 </div>
-
             </template>
 
             <template #modal-footer="{ok, cancel}">
@@ -60,7 +59,7 @@
                 </b-button>
             </template>
         </b-modal>
-    </span>
+    </b-button>
 </template>
 <script>
     import StateMachine from "vue-material-design-icons/StateMachine";

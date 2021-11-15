@@ -14,10 +14,10 @@
 </template>
 
 <script>
-    import {defineComponent, computed, ref} from "@vue/composition-api"
+    import {computed, defineComponent, ref} from "@vue/composition-api"
     import {BarChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
-    import {tooltip, defaultConfig} from "../../utils/charts.js";
+    import {defaultConfig, tooltip} from "../../utils/charts.js";
     import State from "../../utils/state";
     import humanizeDuration from "humanize-duration";
 
@@ -86,6 +86,8 @@
                 return State.color()[state]
             }
 
+            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
+
             const chartData = computed(() => {
                 let datasets = props.data
                     .reduce(function (accumulator, value) {
@@ -94,6 +96,7 @@
                                 accumulator[state] = {
                                     label: state,
                                     backgroundColor: backgroundFromState(state),
+                                    borderRadius: 4,
                                     yAxisID: "yAxes",
                                     data: []
                                 };
@@ -107,21 +110,24 @@
 
                 return {
                     labels: props.data.map(r => r.startDate),
-                    datasets: !props.big ? Object.values(datasets) : [{
-                        order: 2,
-                        type: "line",
-                        label: duration,
-                        backgroundColor: "#c7e7e5",
-                        fill: "start",
-                        pointRadius: 1,
-                        borderWidth: 1,
-                        borderColor: "#1dbaaf",
-                        yAxisID: "yAxesB",
-                        data: props.data
-                            .map((value) => {
-                                return value.duration.avg === 0 ? 0 : Utils.duration(value.duration.avg);
-                            })
-                    }, ...Object.values(datasets), ]
+                    datasets: props.big || props.global ?
+                        [{
+                            order: 2,
+                            type: "line",
+                            label: duration,
+                            fill: "start",
+                            pointRadius: 0,
+                            opacity: 0.5,
+                            borderWidth: 0.2,
+                            backgroundColor: !darkTheme ? "#eaf0f9" : "#292e40",
+                            borderColor: !darkTheme ? "#7081b9" : "#7989b4",
+                            yAxisID: "yAxesB",
+                            data: props.data
+                                .map((value) => {
+                                    return value.duration.avg === 0 ? 0 : Utils.duration(value.duration.avg);
+                                })
+                        }, ...Object.values(datasets)] :
+                        Object.values(datasets)
                 }
             })
 

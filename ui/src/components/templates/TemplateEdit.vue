@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <b-card>
         <editor @onSave="save" v-model="content" lang="yaml" />
         <bottom-line v-if="canSave || canDelete">
             <ul class="navbar-nav ml-auto">
@@ -9,14 +9,14 @@
                         <span>{{ $t('delete') }}</span>
                     </b-button>
 
-                    <b-button @click="save" v-if="canSave">
+                    <b-button @click="save" v-if="canSave" variant="primary">
                         <content-save />
                         <span>{{ $t('save') }}</span>
                     </b-button>
                 </li>
             </ul>
         </bottom-line>
-    </div>
+    </b-card>
 </template>
 
 <script>

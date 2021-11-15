@@ -1,8 +1,59 @@
-$primary-color: $primary;
-$base-bg: $black !default;
-
 @import "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
 
 .v-sidebar-menu {
-    z-index: 1999;
+    z-index: 1039;
+    border-right: 1px solid $border-color;
+
+    .vsm--list {
+        padding-top: $headings-margin-bottom*2;
+        transition: 0.3s all;
+    }
+
+    &.vsm_expanded .vsm--list {
+    }
+
+    .vsm--icon {
+        transition: left 0.3s ease;
+        left: 25px;
+    }
+
+    .vsm--title {
+        position: relative;
+        left: 25px;
+    }
+
+    .vsm-item {
+        * {
+            transition: 0.3s all;
+        }
+    }
+
+    .vsm--link {
+        padding: 0.3rem 0.5rem;
+        margin-bottom: 0.3rem;
+        border-left: 4px solid transparent;
+
+        &_level-1 {
+            &.vsm--link_exact-active,
+            &.vsm--link_active {
+                box-shadow: none;
+                border-left: 4px solid $secondary;
+            }
+        }
+
+        &_exact-active,
+        &_active {
+            font-weight: 700;
+        }
+    }
+
+    .vsm--toggle-btn {
+        background: transparent;
+        color: $secondary;
+        border-top: 1px solid $border-color;
+    }
+
+    &.vsm_collapsed .vsm--icon {
+        left: 0;
+    }
 }

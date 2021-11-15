@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-navbar toggleable="lg" type="light" variant="light" v-if="hasNavBar">
+        <b-navbar toggleable="lg" class="nav-filter mb-4" v-if="hasNavBar">
             <b-navbar-toggle target="nav-collapse" />
             <b-collapse id="nav-collapse" is-nav>
                 <b-nav-form @submit.prevent="prevent">
@@ -52,10 +52,12 @@
 <style scoped lang="scss">
 @import "../../styles/variable";
 
+
 small {
     padding: $pagination-padding-y-sm $pagination-padding-x-sm;
     white-space: nowrap;
 }
+
 
 /deep/ th {
     white-space: nowrap;

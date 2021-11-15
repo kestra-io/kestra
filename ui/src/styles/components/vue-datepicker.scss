@@ -1,26 +1,62 @@
+$default-color: $body-color;
+$primary-color: $primary;
+$input-border-color: $input-border-color;
+$input-hover-border-color: $input-focus-border-color;
+$disabled-color: $custom-select-disabled-color;
+$disabled-background-color: $input-disabled-bg;
+$calendar-active-color: $white-always !default;
+$calendar-active-background-color: $blue !default;
+$calendar-hover-color: $white-always !default;
+$calendar-hover-background-color: $blue !default;
+$calendar-in-range-color: $secondary !default;
+$calendar-in-range-background-color: $light !default;
+$time-active-color: $white-always !default;
+$time-active-background-color: $blue !default;
+$time-hover-color: $white-always !default;
+$time-hover-background-color: $blue !default;
+$input-border-radius: $border-radius;
+
 @import '~vue2-datepicker/scss/index';
 
-.mx-datepicker {
-    .mx-input {
+.mx-datepicker-main {
+    .theme-dark & {
         background-color: $input-bg;
-        border-radius: $border-radius;
+    }
 
-        input {
-            color: $input-color;
-            &::placeholder {
-                color: $input-placeholder-color;
-            }
-        }
+    .mx-time {
+        background-color: $input-bg;
+    }
+
+    .mx-btn:hover {
+        color: $link-hover-color;
+    }
+}
+
+.mx-datepicker-range, .mx-datepicker {
+    width: 100%;
+
+    input {
+        height: $input-height;
+        padding: $input-padding-y ($input-padding-x * 3) $input-padding-y $input-padding-x ;
+        font-family: $input-font-family;
+
+        box-shadow: none;
+        font-size: $input-font-size;
 
         &::placeholder {
             color: $input-placeholder-color;
         }
     }
 
-    &.sm {
-        input {
-            height: 31px;
-        }
+    .mx-icon-calendar, .mx-icon-clear {
+        right: 16px;
+        color: $input-color;
+    }
+}
+
+.form-inline {
+    .mx-datepicker-range, .mx-datepicker {
+        width: auto;
     }
 }
 

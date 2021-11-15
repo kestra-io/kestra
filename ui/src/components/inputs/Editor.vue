@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-navbar v-if="original === undefined && navbar" type="dark" variant="dark">
+        <b-navbar v-if="original === undefined && navbar" class="top-nav">
             <b-btn-group>
                 <b-button @click="autoFold(true)" size="sm" variant="light" v-b-tooltip.hover.top="$t('Fold content lines')">
                     <unfold-less-horizontal />
@@ -78,7 +78,9 @@
         },
         computed: {
             themeComputed() {
-                return this.theme ? this.theme : (!this.input ? "vs-dark" : "vs")
+                const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
+
+                return this.theme ? this.theme : (darkTheme ? "vs-dark" : "vs")
             },
             containerClass() {
                 return [
@@ -228,7 +230,7 @@
                     const containerWidth = containerParent.offsetWidth;
 
                     if (this.original || this.fullHeight) {
-                        const fullHeight = window.innerHeight - this.$refs.editorContainer.getBoundingClientRect().y - 55 - 30;
+                        const fullHeight = window.innerHeight - this.$refs.editorContainer.getBoundingClientRect().y - 55 - 50;
                         container.style.height = `${fullHeight}px`;
                         this.editor.layout({width: containerWidth, height: fullHeight});
                     } else {
@@ -262,12 +264,10 @@
 
 .navbar {
     border: 0;
+    background-color: #1e1e1e;
 }
-/deep/ .editor-container {
-    //.monaco-editor .suggest-widget, .monaco-editor .suggest-details {
-    //    border-style: hidden;
-    //}
 
+/deep/ .editor-container {
     position: relative;
     max-width: 100%;
     display: flex;

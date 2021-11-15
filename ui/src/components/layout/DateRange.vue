@@ -6,7 +6,8 @@
         :shortcuts="shortcuts"
         :lang="lang"
         type="datetime"
-        class="sm date-range"
+        class="date-range"
+        input-class="form-control"
         range
         :placeholder="$t('date')"
     />

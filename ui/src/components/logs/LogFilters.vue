@@ -9,7 +9,6 @@
                     id="input-1"
                     :value="filter"
                     required
-                    size="sm"
                     @input="onChange('filter', $event)"
                     :placeholder="$t('search') + '...'"
                 />

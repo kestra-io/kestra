@@ -1,5 +1,5 @@
 <template>
-    <div v-if="execution" class="log-wrapper text-white">
+    <div v-if="execution" class="log-wrapper text-white-always">
         <div v-for="currentTaskRun in execution.taskRunList" :key="currentTaskRun.id">
             <template
                 v-if="displayTaskRun(currentTaskRun)"
@@ -314,10 +314,19 @@
 
 .log-wrapper {
     .line:nth-child(odd) {
-        background-color: $gray-800;
+        background-color: var(--gray-800);
+
+        .theme-dark & {
+            background-color: var(--gray-200);
+        }
     }
+
     .line:nth-child(even) {
-        background-color: lighten($gray-800, 5%);
+        background-color: var(--gray-800-lighten-5);
+
+        .theme-dark & {
+            background-color: var(--gray-200-lighten-5);
+        }
     }
 
     .attempt-header {
@@ -328,7 +337,7 @@
         line-height: $btn-line-height;
 
         .attempt-number {
-            background: $primary;
+            background: var(--primary);
             padding: $btn-padding-y $btn-padding-x;
             white-space: nowrap;
         }
@@ -368,8 +377,8 @@
     }
 
     pre {
-        border: 1px solid $light;
-        background-color: $gray-200;
+        border: 1px solid var(--light);
+        background-color: var(--gray-200);
         padding: 10px;
         margin-top: 5px;
         margin-bottom: 20px;

@@ -9,7 +9,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import java.util.Map;
 
 public class JsonSerializer<T> extends JacksonMapper implements Serializer<T> {
-    private static final ObjectMapper mapper = JacksonMapper.ofJson();
+    private static final ObjectMapper mapper = JacksonMapper.ofJson(false);
 
     public JsonSerializer() {
         super();

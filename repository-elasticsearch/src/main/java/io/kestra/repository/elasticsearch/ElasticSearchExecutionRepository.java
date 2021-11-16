@@ -414,7 +414,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             List<TaskRun> collect = Arrays.stream(th.getHits().getHits())
                 .map(documentFields -> {
                     try {
-                        return mapper.readValue(documentFields.getSourceAsString(), TaskRun.class);
+                        return MAPPER.readValue(documentFields.getSourceAsString(), TaskRun.class);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

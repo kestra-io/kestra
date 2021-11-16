@@ -438,7 +438,7 @@
 }
 
 .top {
-    background-color: $breadcrumb-bg;
+    background-color: var(--gray-200);
     .breadcrumb {
         margin-bottom: 0;
         border-radius: 0;

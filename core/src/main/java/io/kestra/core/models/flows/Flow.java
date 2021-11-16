@@ -5,10 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
-import io.micronaut.core.annotation.Introspected;
-import lombok.Builder;
-import lombok.Value;
-import lombok.With;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.executions.Execution;
@@ -19,6 +15,9 @@ import io.kestra.core.models.tasks.TaskValidationInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
+import io.micronaut.core.annotation.Introspected;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,9 +29,13 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 
-@Value
-@Builder
+@SuperBuilder
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
 @Introspected
+@ToString
+@EqualsAndHashCode
 public class Flow implements DeletedInterface {
     private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {

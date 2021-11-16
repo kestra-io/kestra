@@ -1,20 +1,25 @@
 package io.kestra.repository.elasticsearch;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.templates.Template;
+import io.kestra.core.models.templates.TemplateSource;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.TemplateRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import io.kestra.core.events.CrudEvent;
-import io.kestra.core.events.CrudEventType;
-import io.kestra.core.models.templates.Template;
-import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.TemplateRepositoryInterface;
-import io.kestra.core.utils.ExecutorsUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +49,26 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
 
         this.templateQueue = templateQueue;
         this.eventPublisher = eventPublisher;
+    }
+
+    @Override
+    protected Template deserialize(String source) {
+        try {
+            return super.deserialize(source);
+        } catch (DeserializationException e) {
+            try {
+                JsonNode jsonNode = MAPPER.readTree(source);
+                return TemplateSource.builder()
+                    .id(jsonNode.get("id").asText())
+                    .namespace(jsonNode.get("namespace").asText())
+                    .source(JacksonMapper.ofYaml().writeValueAsString(JacksonMapper.toMap(source)))
+                    .exception(e.getMessage())
+                    .tasks(List.of())
+                    .build();
+            } catch (JsonProcessingException ex) {
+                throw new DeserializationException(ex);
+            }
+        }
     }
 
     @Override

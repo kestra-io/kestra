@@ -2,6 +2,8 @@ package io.kestra.repository.elasticsearch;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -62,9 +64,10 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 @Slf4j
 abstract public class AbstractElasticSearchRepository<T> {
+    protected static final ObjectMapper MAPPER = JacksonMapper.ofJson(false);
+
     private static ExecutorService poolExecutor;
 
-    protected static final ObjectMapper mapper = JacksonMapper.ofJson();
     protected Class<T> cls;
     protected RestHighLevelClient client;
     protected ModelValidator modelValidator;
@@ -139,7 +142,7 @@ abstract public class AbstractElasticSearchRepository<T> {
                 return Optional.empty();
             }
 
-            return Optional.of(mapper.readValue(getResponse.getSourceAsString(), this.cls));
+            return Optional.of(this.deserialize(getResponse.getSourceAsString()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -179,7 +182,7 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     protected IndexResponse putRequest(String index, String id, T source) {
         try {
-            String json = mapper.writeValueAsString(source);
+            String json = MAPPER.writeValueAsString(source);
             return this.putRequest(index, id, json);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -341,16 +344,21 @@ abstract public class AbstractElasticSearchRepository<T> {
         return this.scroll(index, sourceBuilder);
     }
 
-    private List<T> map(SearchHit[] searchHits) {
+    protected List<T> map(SearchHit[] searchHits) {
         return Arrays.stream(searchHits)
-            .map(documentFields -> {
-                try {
-                    return mapper.readValue(documentFields.getSourceAsString(), this.cls);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            })
+            .map(searchHit -> this.deserialize(searchHit.getSourceAsString()))
+            .filter(Objects::nonNull)
             .collect(Collectors.toList());
+    }
+
+    protected T deserialize(String source) {
+        try {
+            return MAPPER.readValue(source, this.cls);
+        } catch (InvalidTypeIdException e) {
+            throw new DeserializationException(e);
+        } catch (IOException e) {
+            throw new DeserializationException(e);
+        }
     }
 
     protected ArrayListTotal<T> query(String index, SearchSourceBuilder sourceBuilder) {

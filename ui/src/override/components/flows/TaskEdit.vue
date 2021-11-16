@@ -2,8 +2,6 @@
     <b-modal
         :id="modalId"
         :title="`Task ${task.id}`"
-        header-bg-variant="dark"
-        header-text-variant="light"
         hide-backdrop
         modal-class="right"
         size="xl"

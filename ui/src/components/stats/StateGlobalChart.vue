@@ -1,6 +1,6 @@
 <template>
     <div class="state-global-charts">
-        <div class="title" :title="$t('last 30 days count')">
+        <div class="title" :title="$t('last 30 days count', {count: formatedCount})">
             {{ $t('last 30 days count', {count: formatedCount}) }}
         </div>
         <template v-if="hasData">
@@ -61,9 +61,9 @@
 @import "../../styles/_variable.scss";
 
 .state-global-charts {
-    border: 1px solid $table-border-color;
+    border: 1px solid var(--table-border-color);
     border-bottom: 0;
-    background: $gray-100;
+    background: var(--gray-100);
     position: relative;
     height: 100px;
     vertical-align: middle;
@@ -74,8 +74,9 @@
         margin: 0;
         padding: $spacer/2;
         border-right: 0;
-        background: $gray-700;
-        color: $white;
+        background: var(--dark-always);
+        color: var(--white-always);
+        border-left: 1px solid var(--table-border-color);
         position: absolute;
         font-size: $font-size-xs;
         height: 100%;

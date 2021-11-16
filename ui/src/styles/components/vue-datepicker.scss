@@ -1,0 +1,31 @@
+@import '~vue2-datepicker/scss/index';
+
+.mx-datepicker {
+    .mx-input {
+        background-color: $input-bg;
+        border-radius: $border-radius;
+
+        input {
+            color: $input-color;
+            &::placeholder {
+                color: $input-placeholder-color;
+            }
+        }
+
+        &::placeholder {
+            color: $input-placeholder-color;
+        }
+    }
+
+    &.sm {
+        input {
+            height: 31px;
+        }
+    }
+}
+
+.form-group {
+    .mx-datepicker {
+        width: 100%;
+    }
+}

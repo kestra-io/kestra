@@ -92,6 +92,7 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
                         .orElse(body)
                     )
                     .headers(request.getHeaders().asMap())
+                    .parameters(request.getParameters().asMap())
                     .build()
             ));
 
@@ -132,5 +133,10 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         @Schema(title = "The headers for the webhook request")
         @NotNull
         private Map<String, List<String>> headers;
+
+
+        @Schema(title = "The parameters for the webhook request")
+        @NotNull
+        private Map<String, List<String>> parameters;
     }
 }

@@ -1,0 +1,20 @@
+@import "variable";
+@import "layout/root";
+@import '~bootstrap/scss/bootstrap';
+@import '~bootstrap-vue/src/index.scss';
+
+@import "components/vue-datepicker";
+@import "components/vue-material-design-icon";
+@import "components/vue-sidebar-menu";
+@import "components/vue-nprogress";
+@import "components/vue-select";
+
+@import './layout/bootstrap';
+@import "./layout/app";
+@import "./layout/charts";
+
+
+
+
+
+

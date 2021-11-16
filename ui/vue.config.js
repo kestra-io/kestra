@@ -5,6 +5,22 @@ const MonacoEditorPlugin = require("monaco-editor-webpack-plugin")
 module.exports = {
     publicPath: "/ui/",
     outputDir: "../webserver/src/main/resources/ui",
+    pages: {
+        index: {
+            entry: "src/main.js",
+            template: "public/index.html",
+            filename: "index.html",
+        },
+    },
+    chainWebpack: config => {
+        config.entry("theme-light")
+            .add("./src/styles/theme-light.scss")
+            .end();
+
+        config.entry("theme-dark")
+            .add("./src/styles/theme-dark.scss")
+            .end();
+    },
     configureWebpack: {
         devtool: process.env.NODE_ENV !== "production" ? "eval-source-map" : false,
         resolve: {

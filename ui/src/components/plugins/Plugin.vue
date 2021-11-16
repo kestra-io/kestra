@@ -88,21 +88,21 @@
         }
 
         mark {
-            background: $success;
-            color: $white;
+            background: var(--success);
+            color: var(--white);
             font-size: $font-size-sm;
             padding: 2px 8px 2px 8px;
 
             * {
-                color: $white !important;
+                color: var(--white) !important;
             }
         }
 
         h2 {
             margin-top: $spacer * 2;
-            border-bottom: 1px solid $gray-500;
+            border-bottom: 1px solid var(--gray-500);
             font-weight: bold;
-            color: $gray-700
+            color: var(--gray-700)
         }
 
         h3 {

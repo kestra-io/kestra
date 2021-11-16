@@ -30,6 +30,8 @@ public class ValidationFactory {
                 SimpleDateFormat dateFormat = new SimpleDateFormat(value);
                 dateFormat.format(now);
             } catch (Exception e) {
+                context.messageTemplate("invalid date format value '({validatedValue})': " + e.getMessage());
+
                 return false;
             }
             return true;
@@ -47,6 +49,8 @@ public class ValidationFactory {
                 Cron parse = CRON_PARSER.parse(value.toString());
                 parse.validate();
             } catch (IllegalArgumentException e) {
+                context.messageTemplate("invalid cron expression '({validatedValue})': " + e.getMessage());
+
                 return false;
             }
 
@@ -64,6 +68,8 @@ public class ValidationFactory {
             try {
                 OBJECT_MAPPER.readTree(value);
             } catch (IOException e) {
+                context.messageTemplate("invalid json '({validatedValue})': " + e.getMessage());
+
                 return false;
             }
             return true;

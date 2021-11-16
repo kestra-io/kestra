@@ -2,6 +2,7 @@ package io.kestra.runner.kafka;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.runners.Executor;
+import io.kestra.runner.kafka.services.KafkaStreamService;
 import io.kestra.runner.kafka.streams.ExecutorFlowTrigger;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -23,8 +24,6 @@ import java.util.Map;
 
 @Slf4j
 public class KafkaExecutorProductionExceptionHandler implements org.apache.kafka.streams.errors.ProductionExceptionHandler {
-    public static final String APPLICATION_CONTEXT_CONFIG = "application.context";
-
     private ApplicationContext applicationContext;
     private KafkaQueue<Execution> executionQueue;
     private KafkaQueue<Executor> executorQueue;
@@ -115,7 +114,7 @@ public class KafkaExecutorProductionExceptionHandler implements org.apache.kafka
     @SuppressWarnings("unchecked")
     @Override
     public void configure(Map<String, ?> configs) {
-        applicationContext = (ApplicationContext) configs.get(APPLICATION_CONTEXT_CONFIG);
+        applicationContext = (ApplicationContext) configs.get(KafkaStreamService.APPLICATION_CONTEXT_CONFIG);
 
         executionQueue = (KafkaQueue<Execution>) applicationContext.getBean(
             QueueInterface.class,

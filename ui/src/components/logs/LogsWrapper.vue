@@ -29,7 +29,7 @@
                                 {{ $t('no result') }}
                             </b-alert>
                         </div>
-                        <div class="bg-dark text-white mb-2">
+                        <div class="bg-dark logs-wrapper text-white-always mb-2">
                             <template v-for="(log, i) in logs">
                                 <log-line
                                     level="TRACE"
@@ -143,16 +143,30 @@
     > div.log-content {
         margin-bottom: $spacer;
         .navbar {
-            border: 1px solid $table-border-color;
-        }
-
-        .line:nth-child(odd) {
-            background-color: $gray-800;
-        }
-        .line:nth-child(even) {
-            background-color: lighten($gray-800, 5%);
+            border: 1px solid var(--table-border-color);
         }
     }
+
+    .logs-wrapper {
+        border: 1px solid var(--table-border-color);
+    }
+
+    .line:nth-child(odd) {
+        background-color: var(--gray-800);
+
+        .theme-dark & {
+            background-color: var(--gray-200);
+        }
+    }
+
+    .line:nth-child(even) {
+        background-color: var(--gray-800-lighten-5);
+
+        .theme-dark & {
+            background-color: var(--gray-200-lighten-5);
+        }
+    }
+
 }
 
 </style>

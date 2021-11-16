@@ -102,7 +102,7 @@
                         if (execution.id === this.execution.id) {
                             this.$emit("follow")
                         } else {
-                            this.$router.push({name: "executions/update", params: execution, query: {tab: "gantt"}});
+                            this.$router.push({name: "executions/update", params: {...execution, ...{tab: "gantt"}}});
                         }
 
                         this.$toast().success(this.$t(this.replayOrRestart + "ed"));

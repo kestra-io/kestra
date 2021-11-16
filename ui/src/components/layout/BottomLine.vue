@@ -12,9 +12,9 @@
     .bottom-line {
         left: 50px;
         border-radius: 0;
-        border-top: 1px solid $gray-300;
+        border-top: 1px solid var(--gray-300);
         z-index: 90;
-        background-color: $white;
+        background-color: var(--white);
 
         button {
             margin-left: $spacer;

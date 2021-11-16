@@ -201,11 +201,11 @@
         }
 
         &::-webkit-scrollbar-track {
-            background-color: $gray-100;
+            background-color: var(--gray-100);
         }
 
         &::-webkit-scrollbar-thumb {
-            background-color: $gray-300;
+            background-color: var(--gray-300);
         }
     }
 }

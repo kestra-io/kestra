@@ -164,7 +164,7 @@
             display: block;
             height: 52px;
             overflow: hidden;
-            border-bottom: 4px solid $tertiary;
+            border-bottom: 4px solid var(--tertiary);
 
             span.img {
                 height: 50px;
@@ -181,9 +181,9 @@
             font-size: $font-size-xs;
             text-align: right;
             display: block;
-            border-top: 2px solid $secondary;
-            color: $gray-600;
-            border-bottom: 1px solid $gray-900;
+            border-top: 2px solid var(--secondary);
+            color: var(--gray-600);
+            border-bottom: 1px solid var(--gray-900);
             padding-right: 16px;
         }
     }

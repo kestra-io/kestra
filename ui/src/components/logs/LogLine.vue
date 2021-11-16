@@ -1,11 +1,11 @@
 <template>
     <div class="line text-monospace" v-if="filtered">
         <span :class="levelClass" class="header-badge log-level">{{ log.level.padEnd(9) }}</span>
-        <span class="header-badge bg-light text-dark">
+        <span class="header-badge bg-light-always text-dark-always">
             {{ log.timestamp | date("iso") }}
         </span>
         <span v-for="(meta, x) in metaWithValue" :key="x">
-            <span class="header-badge bg-light text-dark property">
+            <span class="header-badge bg-light-always text-dark-always property">
                 <span>{{ meta.key }}</span>
                 {{ meta.value }}
             </span>
@@ -99,7 +99,7 @@ div.line {
 
             > span {
                 font-family: $font-family-sans-serif;
-                color: $gray-600;
+                color: var(--gray-600);
             }
         }
     }

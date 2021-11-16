@@ -1,5 +1,8 @@
 <template>
     <div>
+        <b-form-group :label="$t('theme')" label-cols-sm="3">
+            <b-form-select :value="currentTheme" :options="Object.keys(themes)" @input="onThemeSelect" />
+        </b-form-group>
         <b-form-group :label="$t('Language')" label-cols-sm="3">
             <b-form-select v-model="lang" :options="langOptions" />
         </b-form-group>
@@ -15,6 +18,7 @@
 <script>
     import RouteContext from "../../mixins/routeContext";
     import NamespaceSelect from "../../components/namespace/NamespaceSelect";
+    import {mapState} from "vuex";
 
     export default {
         mixins: [RouteContext],
@@ -27,11 +31,13 @@
                     {value: "en", text: "English"},
                     {value: "fr", text: "Français"}
                 ],
-                defaultNamespace: undefined
+                defaultNamespace: undefined,
+                currentTheme: undefined
             };
         },
         created() {
             this.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
+            this.currentTheme = localStorage.getItem("theme") || "";
         },
         methods: {
             onNamespaceSelect(value) {
@@ -44,8 +50,14 @@
                 }
                 this.$toast().saved();
             },
+            onThemeSelect(value) {
+                this.currentTheme = value;
+                this.$root.$emit("setTheme", value)
+                this.$toast().saved();
+            },
         },
         computed: {
+            ...mapState("core", ["themes", "theme"]),
             routeInfo() {
                 return {
                     title: this.$t("settings")

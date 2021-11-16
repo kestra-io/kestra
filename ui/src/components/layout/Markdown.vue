@@ -48,7 +48,7 @@
 @import "../../styles/_variable.scss";
 .markdown {
     a.header-anchor {
-        color: $gray-600;
+        color: var(--gray-600);
         font-size: $font-size-base;
         font-weight: normal;
     }

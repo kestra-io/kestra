@@ -9,13 +9,24 @@ import java.io.IOException;
 import java.util.Map;
 
 public class JsonDeserializer<T> implements Deserializer<T> {
-    private static final ObjectMapper mapper = JacksonMapper.ofJson();
+    private static final ObjectMapper mapper = JacksonMapper.ofJson(false);
+
     private Class<T> cls;
+    private boolean strict;
+
 
     public JsonDeserializer(Class<T> cls) {
         super();
 
         this.cls = cls;
+        this.strict = true;
+    }
+
+    public JsonDeserializer(Class<T> cls, boolean strict) {
+        super();
+
+        this.cls = cls;
+        this.strict = strict;
     }
 
     @Override
@@ -31,7 +42,11 @@ public class JsonDeserializer<T> implements Deserializer<T> {
         try {
             return mapper.readValue(bytes, this.cls);
         } catch (IOException e) {
-            throw new SerializationException(e);
+            if (strict) {
+                throw new SerializationException(e);
+            } else {
+                return null;
+            }
         }
     }
 }

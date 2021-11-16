@@ -231,8 +231,7 @@
             onRowDoubleClick(item) {
                 this.$router.push({
                     name: "executions/update",
-                    params: {namespace: item.namespace, flowId: item.flowId, id: item.executionId},
-                    query: {tab: "gantt"}
+                    params: {namespace: item.namespace, flowId: item.flowId, id: item.executionId, tab: "gantt"},
                 });
             },
             loadQuery(stats) {

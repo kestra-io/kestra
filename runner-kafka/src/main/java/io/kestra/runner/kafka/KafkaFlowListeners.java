@@ -1,6 +1,7 @@
 package io.kestra.runner.kafka;
 
 import com.google.common.collect.Streams;
+import io.kestra.runner.kafka.services.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +21,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.runner.kafka.serializers.JsonSerde;
-import io.kestra.runner.kafka.services.KafkaAdminService;
-import io.kestra.runner.kafka.services.KafkaStreamService;
-import io.kestra.runner.kafka.services.KafkaStreamSourceService;
-import io.kestra.runner.kafka.services.KafkaStreamsBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +37,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
     private final KafkaAdminService kafkaAdminService;
     private final FlowService flowService;
 
-    private ReadOnlyKeyValueStore<String, Flow> store;
+    private SafeKeyValueStore<String, Flow> store;
     private final List<Consumer<List<Flow>>> consumers = new ArrayList<>();
     private final KafkaStreamService.Stream stream;
 
@@ -63,7 +60,12 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         stream.start((newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING) {
                 try {
-                    this.store = stream.store(StoreQueryParameters.fromNameAndType("flow", QueryableStoreTypes.keyValueStore()));
+                    ReadOnlyKeyValueStore<String, Flow> store = stream.store(StoreQueryParameters.fromNameAndType(
+                        "flow",
+                        QueryableStoreTypes.keyValueStore()
+                    ));
+
+                    this.store = new SafeKeyValueStore<>(store, "flow");
                     this.send(this.flows());
                 } catch (InvalidStateStoreException e) {
                     this.store = null;
@@ -82,7 +84,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
             KStream<String, Flow> stream = builder
                 .stream(
                     kafkaAdminService.getTopicName(Flow.class),
-                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class))
+                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class, false))
                 );
 
             KStream<String, Flow> result = KafkaStreamSourceService.logIfEnabled(
@@ -96,12 +98,13 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                 ),
                 "flow-in"
             )
+                .filter((key, value) -> value != null, Named.as("notNull"))
                 .selectKey((key, value) -> value.uidWithoutRevision(), Named.as("rekey"))
                 .groupBy(
                     (String key, Flow value) -> value.uidWithoutRevision(),
                     Grouped.<String, Flow>as("grouped")
                         .withKeySerde(Serdes.String())
-                        .withValueSerde(JsonSerde.of(Flow.class))
+                        .withValueSerde(JsonSerde.of(Flow.class, false))
                 )
                 .aggregate(
                     AllFlowRevision::new,
@@ -112,7 +115,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                     },
                     Materialized.<String, AllFlowRevision, KeyValueStore<Bytes, byte[]>>as("list")
                         .withKeySerde(Serdes.String())
-                        .withValueSerde(JsonSerde.of(AllFlowRevision.class))
+                        .withValueSerde(JsonSerde.of(AllFlowRevision.class, false))
                 )
                 .mapValues(
                     (readOnlyKey, value) -> {
@@ -169,11 +172,12 @@ public class KafkaFlowListeners implements FlowListenersInterface {
             builder
                 .table(
                     kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_FLOWLAST),
-                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)),
+                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class, false)),
                     Materialized.<String, Flow, KeyValueStore<Bytes, byte[]>>as("flow")
                         .withKeySerde(Serdes.String())
-                        .withValueSerde(JsonSerde.of(Flow.class))
+                        .withValueSerde(JsonSerde.of(Flow.class, false))
                 )
+                .filter((key, value) -> value != null)
                 .toStream()
                 .peek((key, value) -> {
                     send(flows());
@@ -189,21 +193,16 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         }
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     @Override
     public List<Flow> flows() {
         if (this.store == null || stream.state() != KafkaStreams.State.RUNNING) {
             return Collections.emptyList();
         }
 
-        try (KeyValueIterator<String, Flow> all = this.store.all()) {
-            List<Flow> alls = Streams.stream(all).map(r -> r.value).collect(Collectors.toList());
-
-            return alls
-                .stream()
-                .filter(flow -> !flow.isDeleted())
-                .collect(Collectors.toList());
-        }
+        return this.store
+            .toStream()
+            .filter(flow -> flow != null && !flow.isDeleted())
+            .collect(Collectors.toList());
     }
 
     private void send(List<Flow> flows) {

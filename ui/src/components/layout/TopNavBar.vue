@@ -60,15 +60,15 @@
 }
 
 .top-line {
-    border-bottom: 4px solid $secondary;
+    border-bottom: 4px solid var(--secondary);
 }
 
 .top-line {
-    border-bottom: 4px solid $secondary;
+    border-bottom: 4px solid var(--secondary);
 }
 
 h1 {
-    color: $secondary;
+    color: var(--secondary);
     font-size: $h3-font-size;
     margin-bottom: $headings-margin-bottom / 2;
     font-weight: bold;

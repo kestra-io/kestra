@@ -1,11 +1,11 @@
 <template>
     <div v-if="revisions && revisions.length > 1">
         <b-row>
-            <b-col md="12 mb-3">
+            <b-col md="12" class="mb-3">
                 <b-form-select v-model="sideBySide" :options="displayTypes" />
             </b-col>
 
-            <b-col md="6 mb-3">
+            <b-col md="6">
                 <b-input-group>
                     <b-form-select @input="addQuery" v-model="revisionLeft" :options="options" />
                     <b-btn @click="seeRevision(revisionLeft, revisionLeftText)">
@@ -15,9 +15,14 @@
                     </b-btn>
                 </b-input-group>
 
+                <b-alert v-if="revisionLeftError" variant="warning" class="mb-0 mt-3" show>
+                    <strong>{{ $t('invalid source') }}</strong><br>
+                    {{ revisionLeftError }}
+                </b-alert>
+
                 <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionLeft)}" />
             </b-col>
-            <b-col md="6 mb-3">
+            <b-col md="6">
                 <b-input-group>
                     <b-form-select @input="addQuery" v-model="revisionRight" :options="options" />
                     <b-btn @click="seeRevision(revisionRight, revisionRightText)">
@@ -27,9 +32,14 @@
                     </b-btn>
                 </b-input-group>
 
+                <b-alert v-if="revisionRightError" variant="warning" class="mb-0 mt-3" show>
+                    <strong>{{ $t('invalid source') }}</strong><br>
+                    {{ revisionRightError }}
+                </b-alert>
+
                 <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionRight)}" />
             </b-col>
-            <b-col md="12" ref="editorContainer" class="editor-wrap">
+            <b-col md="12" ref="editorContainer" class="mt-3 editor-wrap">
                 <Editor
                     :diff-side-by-side="sideBySide"
                     :value="revisionRightText"
@@ -42,8 +52,6 @@
         <b-modal
             :id="`modal-source-${revisionId}`"
             :title="`Revision ${revision}`"
-            header-bg-variant="dark"
-            header-text-variant="light"
             hide-backdrop
             hide-footer
             modal-class="right"
@@ -122,6 +130,13 @@
                     ...this.$route.query,
                     ...{revisionLeft:this.revisionLeft + 1, revisionRight: this.revisionRight + 1}}
                 });
+            },
+            tranformRevision(source) {
+                if (source.exception) {
+                    return YamlUtils.stringify(YamlUtils.parse(source.source));
+                }
+
+                return YamlUtils.stringify(source);
             }
         },
         computed: {
@@ -134,17 +149,33 @@
                     };
                 });
             },
+            revisionLeftError() {
+                if (this.revisionLeft === undefined) {
+                    return "";
+                }
+
+                return this.revisions[this.revisionLeft].exception
+            },
+            revisionRightError() {
+                if (this.revisionRight === undefined) {
+                    return "";
+                }
+
+                return this.revisions[this.revisionRight].exception
+            },
             revisionLeftText() {
                 if (this.revisionLeft === undefined) {
                     return "";
                 }
-                return YamlUtils.stringify(this.revisions[this.revisionLeft]);
+
+                return this.tranformRevision(this.revisions[this.revisionLeft]);
             },
             revisionRightText() {
                 if (this.revisionRight === undefined) {
                     return "";
                 }
-                return YamlUtils.stringify(this.revisions[this.revisionRight]);
+
+                return this.tranformRevision(this.revisions[this.revisionRight]);
             },
             diff() {
                 const linesLeft = this.revisionLeftText.split("\n");

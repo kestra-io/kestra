@@ -313,9 +313,9 @@
 }
 .stats span.title {
     padding-left: 10px;
-    color: $gray-600;
+    color: var(--gray-600);
 }
 .stats span.value {
-    color: $gray-900;
+    color: var(--gray-900);
 }
 </style>

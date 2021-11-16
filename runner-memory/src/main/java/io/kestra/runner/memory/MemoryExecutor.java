@@ -13,6 +13,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.tasks.flows.Template;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +34,7 @@ public class MemoryExecutor extends AbstractExecutor {
     private final QueueInterface<LogEntry> logQueue;
     private final FlowService flowService;
     private final TaskDefaultService taskDefaultService;
-
+    private final Template.TemplateExecutorInterface templateExecutorInterface;
     private static final MemoryMultipleConditionStorage multipleConditionStorage = new MemoryMultipleConditionStorage();
 
     private static final ConcurrentHashMap<String, ExecutionState> EXECUTIONS = new ConcurrentHashMap<>();
@@ -52,7 +53,8 @@ public class MemoryExecutor extends AbstractExecutor {
         MetricRegistry metricRegistry,
         FlowService flowService,
         ConditionService conditionService,
-        TaskDefaultService taskDefaultService
+        TaskDefaultService taskDefaultService,
+        Template.TemplateExecutorInterface templateExecutorInterface
     ) {
         super(runContextFactory, metricRegistry, conditionService);
 
@@ -65,6 +67,7 @@ public class MemoryExecutor extends AbstractExecutor {
         this.conditionService = conditionService;
         this.taskDefaultService = taskDefaultService;
         this.flowExecutorInterface = new MemoryFlowExecutor(this.flowRepository);
+        this.templateExecutorInterface = templateExecutorInterface;
     }
 
     @Override
@@ -80,10 +83,20 @@ public class MemoryExecutor extends AbstractExecutor {
         }
     }
 
+    private Flow transform(Flow flow, Execution execution) {
+        flow = Template.injectTemplate(
+            flow,
+            execution,
+            templateExecutorInterface::findById
+        );
+
+        return taskDefaultService.injectDefaults(flow, execution);
+    }
+
     private void handleExecution(ExecutionState state) {
         synchronized (this) {
             Flow flow = this.flowRepository.findByExecution(state.execution);
-            flow = taskDefaultService.injectDefaults(flow, state.execution);
+            flow = transform(flow, state.execution);
 
             Execution execution = state.execution;
             Executor executor = new Executor(execution, null).withFlow(flow);
@@ -249,7 +262,7 @@ public class MemoryExecutor extends AbstractExecutor {
             });
 
             Flow flow = this.flowRepository.findByExecution(EXECUTIONS.get(message.getTaskRun().getExecutionId()).execution);
-            flow = taskDefaultService.injectDefaults(flow, EXECUTIONS.get(message.getTaskRun().getExecutionId()).execution);
+            flow = transform(flow, EXECUTIONS.get(message.getTaskRun().getExecutionId()).execution);
 
             this.toExecution(new Executor(EXECUTIONS.get(message.getTaskRun().getExecutionId()).execution, null).withFlow(flow));
         }

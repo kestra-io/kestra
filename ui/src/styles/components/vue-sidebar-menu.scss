@@ -1,0 +1,8 @@
+$primary-color: $primary;
+$base-bg: $black !default;
+
+@import "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
+
+.v-sidebar-menu {
+    z-index: 1999;
+}

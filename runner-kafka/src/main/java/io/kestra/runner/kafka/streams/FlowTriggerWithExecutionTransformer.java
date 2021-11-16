@@ -1,5 +1,6 @@
 package io.kestra.runner.kafka.streams;
 
+import io.kestra.runner.kafka.services.SafeKeyValueStore;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -21,7 +22,7 @@ public class FlowTriggerWithExecutionTransformer implements ValueTransformer<Exe
     private final FlowService flowService;
 
     private KeyValueStore<String, MultipleConditionWindow> multipleStore;
-    private KeyValueStore<String, ValueAndTimestamp<Flow>> flowStore;
+    private SafeKeyValueStore<String, ValueAndTimestamp<Flow>> flowStore;
 
     public FlowTriggerWithExecutionTransformer(String multipleStoreName, FlowService flowService) {
         this.multipleStoreName = multipleStoreName;
@@ -31,28 +32,31 @@ public class FlowTriggerWithExecutionTransformer implements ValueTransformer<Exe
     @Override
     @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
-        this.flowStore = (KeyValueStore<String, ValueAndTimestamp<Flow>>) context.getStateStore("flow");
+        var flowStore = (KeyValueStore<String, ValueAndTimestamp<Flow>>) context.getStateStore("flow");
+        this.flowStore = new SafeKeyValueStore<>(flowStore, flowStore.name());
         this.multipleStore = (KeyValueStore<String, MultipleConditionWindow>) context.getStateStore(this.multipleStoreName);
     }
 
     @Override
     public List<Execution> transform(final ExecutorFlowTrigger value) {
-        ValueAndTimestamp<Flow> flowValueAndTimestamp = this.flowStore.get(Flow.uid(value.getExecution()));
-        Flow executionFlow = flowValueAndTimestamp.value();
-
         MultipleConditionStorageInterface multipleConditionStorage = new KafkaMultipleConditionStorage(this.multipleStore);
 
         // multiple conditions storage
-        flowService
-            .multipleFlowTrigger(
-                Stream.of(value.getFlowHavingTrigger()),
-                executionFlow,
-                value.getExecution(),
-                multipleConditionStorage
-            )
-            .forEach(triggerExecutionWindow -> {
-                this.multipleStore.put(triggerExecutionWindow.uid(), triggerExecutionWindow);
-            });
+        this.flowStore.get(Flow.uid(value.getExecution()))
+            .ifPresent(flowValueAndTimestamp -> {
+            Flow executionFlow = flowValueAndTimestamp.value();
+
+            flowService
+                .multipleFlowTrigger(
+                    Stream.of(value.getFlowHavingTrigger()),
+                    executionFlow,
+                    value.getExecution(),
+                    multipleConditionStorage
+                )
+                .forEach(triggerExecutionWindow -> {
+                    this.multipleStore.put(triggerExecutionWindow.uid(), triggerExecutionWindow);
+                });
+        });
 
         List<Execution> triggeredExecutions = flowService.flowTriggerExecution(
             Stream.of(value.getFlowHavingTrigger()),

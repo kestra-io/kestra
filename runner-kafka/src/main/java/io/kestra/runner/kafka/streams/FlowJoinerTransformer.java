@@ -1,5 +1,6 @@
 package io.kestra.runner.kafka.streams;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.services.TaskDefaultService;
@@ -50,14 +51,18 @@ public class FlowJoinerTransformer implements ValueTransformerWithKey<String, Ex
             return executor.withFlow(flow);
         }
 
-        flow = Template.injectTemplate(flow, executor.getExecution(), (namespace, id) -> {
-            String templateUid = io.kestra.core.models.templates.Template.uid(
-                namespace,
-                id
-            );
+        try {
+            flow = Template.injectTemplate(flow, executor.getExecution(), (namespace, id) -> {
+                String templateUid = io.kestra.core.models.templates.Template.uid(
+                    namespace,
+                    id
+                );
 
-            return this.templateStore.get(templateUid).map(ValueAndTimestamp::value).orElse(null);
-        });
+                return this.templateStore.get(templateUid).map(ValueAndTimestamp::value).orElse(null);
+            });
+        } catch (InternalException e) {
+            log.warn("Failed to inject template",  e);
+        }
 
         Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, executor.getExecution());
 

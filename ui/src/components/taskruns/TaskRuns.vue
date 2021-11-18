@@ -47,7 +47,7 @@
                     </template>
                     <template #cell(details)="row">
                         <router-link
-                            :to="{name: 'executions/update', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.executionId},query: {tab:'gantt'}}"
+                            :to="{name: 'executions/update', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.executionId, tab:'gantt'}}"
                         >
                             <kicon :tooltip="$t('details')" placement="left">
                                 <eye />

@@ -145,7 +145,7 @@
             routeInfo() {
                 const ns = this.$route.params.namespace;
                 return {
-                    title: this.$t("execution"),
+                    title: this.$route.params.id,
                     breadcrumb: [
                         {
                             label: this.$t("flows"),
@@ -172,17 +172,9 @@
                                 name: "flows/update",
                                 params: {
                                     namespace: ns,
-                                    id: this.$route.params.flowId
-                                },
-                                query: {
+                                    id: this.$route.params.flowId,
                                     tab: "executions"
                                 }
-                            }
-                        },
-                        {
-                            label: this.$route.params.id,
-                            link: {
-                                name: "executions/update"
                             }
                         }
                     ]

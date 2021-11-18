@@ -137,16 +137,6 @@
                                     namespace: this.$route.params.namespace
                                 }
                             }
-                        },
-                        {
-                            label: this.$route.params.id,
-                            link: {
-                                name: "flows/update",
-                                params: {
-                                    namespace: this.$route.params.namespace,
-                                    id: this.$route.params.id
-                                }
-                            }
                         }
                     ]
                 };

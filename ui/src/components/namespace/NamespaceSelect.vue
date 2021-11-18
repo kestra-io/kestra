@@ -78,7 +78,7 @@
 @import "../../styles/_variable.scss";
 @include media-breakpoint-up(md) {
     .ns-selector {
-        //width:550px !important;
+        width:550px !important;
     }
 }
 

@@ -1,5 +1,0 @@
-# Ignore everything
-**
-
-# Allow docker directories
-!docker/

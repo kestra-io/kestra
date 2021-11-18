@@ -1,5 +1,6 @@
 package io.kestra.runner.memory;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -84,11 +85,15 @@ public class MemoryExecutor extends AbstractExecutor {
     }
 
     private Flow transform(Flow flow, Execution execution) {
-        flow = Template.injectTemplate(
-            flow,
-            execution,
-            templateExecutorInterface::findById
-        );
+        try {
+            flow = Template.injectTemplate(
+                flow,
+                execution,
+                templateExecutorInterface::findById
+            );
+        } catch (InternalException e) {
+            log.warn("Failed to inject template",  e);
+        }
 
         return taskDefaultService.injectDefaults(flow, execution);
     }

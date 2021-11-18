@@ -72,7 +72,7 @@ import javax.validation.constraints.NotNull;
     }
 )
 @Slf4j
-public class AbstractPython extends AbstractBash {
+public abstract class AbstractPython extends AbstractBash {
     @Builder.Default
     @Schema(
         title = "The python interpreter to use",

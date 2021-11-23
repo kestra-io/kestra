@@ -181,6 +181,7 @@
 
                 .theme-dark & {
                     background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
+                    background-size: 179px 55px;
                 }
             }
         }

@@ -80,7 +80,6 @@
             themeComputed() {
                 const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
 
-                console.log(this.theme)
                 return this.theme ? this.theme : (localStorage.getItem("editorTheme") || (darkTheme ? "vs-dark" : "vs"))
             },
             containerClass() {
@@ -222,7 +221,7 @@
                     this.editor.updateOptions({readOnly: true})
                 }
 
-                this.onResize();
+                window.setInterval(this.onResize, 1)
             },
             onResize() {
                 if (this.$refs.editorContainer && this.editor) {

@@ -49,7 +49,14 @@ $base-bg: darken($table-bg, 7%);
 // modals
 $modal-content-bg: $body-bg;
 
+// popover
+$popover-bg: $dark;
+
 @import "./theme-light";
+
+pre {
+    background-color: $dark;
+}
 
 .form-control {
     &:disabled,

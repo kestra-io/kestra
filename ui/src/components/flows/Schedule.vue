@@ -17,7 +17,6 @@
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
                     <b-button
-                        variant="primary"
                         @click="addSchedule"
                         v-if="canSave"
                     >
@@ -25,7 +24,7 @@
                         {{ $t("add schedule") }}
                     </b-button>
 
-                    <b-button @click="save" v-if="canSave">
+                    <b-button @click="save" v-if="canSave" variant="primary">
                         <content-save />
                         <span>{{ $t("save") }}</span>
                     </b-button>

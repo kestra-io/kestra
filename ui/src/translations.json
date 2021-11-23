@@ -210,6 +210,7 @@
     "execute flow now ?": "Do you want to execute this flow ?",
     "Default namespace": "Default namespace",
     "unsaved changed ?": "You have unsaved changed, do you want to leave this page ?",
+    "Editor theme": "Editor theme",
     "errors": {
       "404": {
         "title": "Page not found",
@@ -429,6 +430,7 @@
     "execute flow now ?": "Voulez-vous exécuter ce flow ?",
     "Default namespace": "Espace de nom par défaut",
     "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?",
+    "Editor theme": "Theme de l'éditeur",
     "errors": {
       "404": {
         "title": "Page introuvable",

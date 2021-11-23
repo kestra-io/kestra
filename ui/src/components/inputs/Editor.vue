@@ -54,7 +54,7 @@
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
             fullHeight: {type: Boolean, default: true},
-            theme: {type: String, default: "vs-dark"},
+            theme: {type: String, default: undefined},
             placeholder: {type: [String, Number], default: ""},
             diffSideBySide: {type: Boolean, default: true},
             readOnly: {type: Boolean, default: false},
@@ -80,7 +80,8 @@
             themeComputed() {
                 const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
 
-                return this.theme ? this.theme : (darkTheme ? "vs-dark" : "vs")
+                console.log(this.theme)
+                return this.theme ? this.theme : (localStorage.getItem("editorTheme") || (darkTheme ? "vs-dark" : "vs"))
             },
             containerClass() {
                 return [

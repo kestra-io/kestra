@@ -221,7 +221,7 @@
                     this.editor.updateOptions({readOnly: true})
                 }
 
-                window.setInterval(this.onResize, 1)
+                this.onResize();
             },
             onResize() {
                 if (this.$refs.editorContainer && this.editor) {
@@ -232,13 +232,20 @@
                     if (this.original || this.fullHeight) {
                         const fullHeight = window.innerHeight - this.$refs.editorContainer.getBoundingClientRect().y - 55 - 50;
                         container.style.height = `${fullHeight}px`;
-                        this.editor.layout({width: containerWidth, height: fullHeight});
+                        this.updateSize(containerWidth, fullHeight);
                     } else {
                         const contentHeight = Math.max(21, this.editor.getContentHeight());
                         container.style.height = `${contentHeight+3}px`;
                         container.style.width = `${containerWidth-(this.input ? 20 : 0)}px`;
-                        this.editor.layout({width: containerWidth-(this.input ? 20 : 0),  height: contentHeight});
+                        this.updateSize(containerWidth-(this.input ? 20 : 0),  contentHeight);
                     }
+                }
+            },
+            updateSize(width, height) {
+                if (width === 0 || height === 0) {
+                    window.setTimeout(this.onResize, 100);
+                } else {
+                    this.editor.layout({width: width,  height: height});
                 }
             },
             autoFold(autoFold) {

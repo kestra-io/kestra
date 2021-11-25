@@ -269,11 +269,6 @@
 <style scoped lang="scss">
 @import "../../styles/variable";
 
-.navbar {
-    border: 0;
-    background-color: #1e1e1e;
-}
-
 /deep/ .editor-container {
     position: relative;
     max-width: 100%;

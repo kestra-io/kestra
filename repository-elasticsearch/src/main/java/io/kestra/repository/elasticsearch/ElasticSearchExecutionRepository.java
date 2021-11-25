@@ -292,7 +292,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         );
 
         if (query != null) {
-            bool.must(QueryBuilders.queryStringQuery(query));
+            bool.must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
         }
 
         return bool;
@@ -362,7 +362,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     @Override
     public ArrayListTotal<Execution> find(String query, Pageable pageable, List<State.Type> state) {
         BoolQueryBuilder bool = this.defaultFilter()
-            .must(QueryBuilders.queryStringQuery(query));
+            .must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
         if (state != null) {
             bool = bool.must(QueryBuilders.termsQuery("state.current", stateConvert(state)));
         }
@@ -395,9 +395,12 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             );
 
         BoolQueryBuilder mainQuery = this.defaultFilter()
-            .filter(
-                QueryBuilders.nestedQuery("taskRunList", QueryBuilders.queryStringQuery(query), ScoreMode.Total)
-            );
+            .filter(QueryBuilders.nestedQuery(
+                "taskRunList",
+                QueryBuilders.queryStringQuery(query).field("*.fulltext"),
+                ScoreMode.Total
+            ));
+
         SearchSourceBuilder sourceBuilder = this.searchSource(mainQuery, Optional.of(List.of(nestedAgg)), null)
             .fetchSource(false);
 

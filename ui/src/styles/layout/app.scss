@@ -1,4 +1,5 @@
-$web-font-path: "https://fonts.googleapis.com/css?family=Roboto:300,400,700" !default;
+$web-font-path: "https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700;900&display=swap" !default;
+
 @import url($web-font-path);
 
 body {
@@ -23,6 +24,11 @@ html,
     &.menu-not-collapsed {
         transition: all 0.3s;
         padding-left: $menu-width;
+
+        @media (min-width: map-get($grid-breakpoints, "lg")) {
+            padding-left: $menu-width + 40px;
+            padding-right: 40px;
+        }
     }
 }
 
@@ -30,3 +36,5 @@ html,
     content: $theme-name;
     display: none;
 }
+
+

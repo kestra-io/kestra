@@ -8,7 +8,7 @@
         @shown="onShow"
     >
         <template #modal-footer>
-            <b-button @click="saveTask" v-if="canSave">
+            <b-button @click="saveTask" v-if="canSave" variant="primary">
                 <content-save />&nbsp;
                 <span>{{ $t('save') }}</span>
             </b-button>
@@ -18,7 +18,6 @@
             ref="editor"
             @onSave="saveTask"
             v-model="taskYaml"
-            theme="vs"
             :full-height="false"
             :navbar="false"
             lang="yaml"

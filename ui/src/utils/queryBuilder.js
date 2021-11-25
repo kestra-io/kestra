@@ -2,17 +2,15 @@ import moment from "moment";
 
 export default class QueryBuilder {
     static toLucene(q) {
-        let query = q;
+        const split = q.split(/[^a-zA-Z0-9_.-]+/g);
 
-        query = query.replace(/</g, "");
-        query = query.replace(/>/g, "");
-        query = query.replace(/\//g, "");
-        query = query.replace(/\\/g, "");
-        query = query.replace(/&/g, "");
-        query = query.replace(/!/g, "");
-        query = query.replace(/([\^~*?:"+-=|(){}[\]])/g, "\\$1")
+        let query = "(*" + split.join("*") + "*)^3 OR (*" + split.join("* AND *") + "*)";
 
-        return `(*${query}* OR ${query})`;
+        if (split.length === 1 ) {
+            query = `(${q})^5 OR ${query}`
+        }
+
+        return query;
     }
 
     static iso(date) {

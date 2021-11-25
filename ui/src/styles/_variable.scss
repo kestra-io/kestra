@@ -1,35 +1,36 @@
 $theme-name: "theme-light" !default;
-$menu-width: 200px;
+$menu-width: 268px;
 
 // Color system
 $white: #fff !default;
 $white-always: #fff !default;
-$gray-100: #f8f9fa !default;
-$gray-200: #eee !default;
-$gray-300: #dee2e6 !default;
-$gray-400: #ccc !default;
-$gray-500: #adb5bd !default;
-$gray-600: #888 !default;
-$gray-700: #495057 !default;
-$gray-800: #333 !default;
-$gray-900: #222 !default;
+$gray-100: #f8f8fc !default;
+$gray-200: #f1f5fa !default;;
+$gray-300: #eaf0f9 !default;;
+$gray-400: #b6c2e4 !default;;
+$gray-500: #8997bd !default;;
+$gray-600: #7081b9 !default;;
+$gray-700: #303e67 !default;;
+$gray-800: #2c3652 !default;;
+$gray-900: #1d2c48 !default;;
 $black: #000 !default;
 $black-always: #000 !default;
 
-$blue: #1AA5DE !default;
+$blue: #1761fd !default;
 $indigo: #6610f2 !default;
-$purple: #6f42c1 !default;
-$pink: #e83e8c !default;
-$red: #F04124 !default;
-$orange: #fd7e14 !default;
-$yellow: #FBD10B !default;
-$green: #43ac6a !default;
-$teal: #1DBAAF !default;
-$cyan: #5bc0de !default;
+$purple: #6d81f5 !default;
+$pink: #fd3c97 !default;
+$red: #f5325c !default;
+$orange: #ff8500 !default;
+$yellow: #ffb822 !default;
+$green: #22b783 !default;
+$teal: #03d87f !default;
+$cyan: #12a4ed !default;
 
-$primary: $blue !default;
-$secondary: $teal !default;
-$tertiary: $yellow !default;
+$primary: #192A4E !default;
+$secondary: #4F83A5 !default;
+$tertiary: #9EBFD5 !default;
+
 $success: $green !default;
 $info: $cyan !default;
 $warning: $yellow !default;
@@ -46,13 +47,23 @@ $theme-colors: (
     "purple": $purple
 ) !default;
 
+// Fonts
+$font-weight-bolder: 900;
+$enable-shadows: true;
+
+// Body
+$body-color: $gray-700 !default;
+$body-bg: $gray-100 !default;
+$link-color: $cyan !default;
+$border-color: $gray-300 !default;
+
 // Components
-$border-radius: 0px !default;
-$border-radius-lg: 4px !default;
-$border-radius-sm: 0px !default;
+$border-radius: 0.25rem !default;
+$border-radius-lg: 0.5rem !default;
+$border-radius-sm: 0.15rem  !default;
 
 // Fonts
-$font-family-sans-serif: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !default;
+$font-family-sans-serif: "Ubuntu", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !default;
 $font-family-monospace: 'Source Code Pro', SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !default;
 
 $font-size-base: 1rem !default;
@@ -63,18 +74,21 @@ $headings-font-weight: 300 !default;
 $text-muted: $gray-500 !default;
 
 // Buttons
-$input-btn-padding-x: 0.5rem !default;
 $btn-font-weight: 300 !default;
+$input-btn-focus-box-shadow: none !default;
+$btn-box-shadow: none !default;
+$btn-focus-box-shadow:  none !default;
+$btn-active-box-shadow: none !default;
 
 // Dropdowns
-$dropdown-border-color: rgba($black, .1) !default;
-$dropdown-divider-bg: rgba($black, .1) !default;
+$dropdown-border-color: $border-color !default;
+$dropdown-divider-bg: $border-color !default;
 
 // Navs
-$nav-link-disabled-color: $gray-400 !default;
-$nav-tabs-border-color: $dropdown-border-color !default;
-$nav-tabs-link-hover-border-color: $nav-tabs-border-color !default;
-$nav-tabs-link-active-border-color: $nav-tabs-border-color !default;
+//$nav-link-disabled-color: $gray-400 !default;
+//$nav-tabs-border-color: $dropdown-border-color !default;
+//$nav-tabs-link-hover-border-color: $nav-tabs-border-color !default;
+//$nav-tabs-link-active-border-color: $nav-tabs-border-color !default;
 
 // Navbar
 $navbar-dark-color: rgba($white, .7) !default;
@@ -85,22 +99,23 @@ $navbar-toggler-font-size: $font-size-sm !default;
 $pagination-color: var(--gray-600) !default;
 $pagination-bg: transparent !default;
 $pagination-disabled-bg: transparent !default;
-$pagination-border-color: $nav-tabs-border-color !default;
-$pagination-active-border-color: darken($primary, 5%) !default;
-
 
 // Jumbotron
 $jumbotron-padding: 4rem !default;
 
 // Cards
-$card-inner-border-radius: 0px !default;
+$card-inner-border-radius: $border-radius-lg !default;
+$card-border-radius: $border-radius-lg !default;
+$card-cap-bg: transparent !default;
+$card-border-color: $border-color !default;
+$card-bg: $white !default;
 
 // Badges
 $badge-font-weight: 300 !default;
 $badge-padding-x: 1rem !default;
 
 // Progress bars
-$progress-bg: $gray-400 !default;
+$progress-bg: $gray-200 !default;
 $progress-bar-color: $white !default;
 
 // List group
@@ -122,9 +137,51 @@ $mark-bg: $yellow !default;
 $mark-padding: 0.1rem 0.25rem !default;
 
 // tooltip
-$tooltip-bg: $black-always;
-$tooltip-color: $white-always;
-$tooltip-arrow-color: $black-always;
+$tooltip-bg: $black-always !default;
+$tooltip-color: $white-always !default;
+$tooltip-arrow-color: $black-always !default;
+
+// Table
+$table-bg: $white !default;
+$table-accent-bg: lighten($body-bg, 0.3%) !default;
+$table-hover-bg: darken($table-accent-bg, 3%) !default;
+$table-head-bg: darken($table-accent-bg, 3%) !default;
+
+// Pagination
+$pagination-active-color: $white-always !default;
+
+// Progress
+$progress-box-shadow: none !default;
+
+// Vue Bootstrap
+$b-table-sort-icon-bg-dark-not-sorted: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='101' height='101' view-box='0 0 101 101' preserveAspectRatio='none'><path fill='" + $gray-500 + "' opacity='.3' d='M51 1l25 23 24 22H1l25-22zM51 101l25-23 24-22H1l25 22z'/></svg>") !default;
+$b-table-sort-icon-bg-dark-ascending: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='101' height='101' view-box='0 0 101 101' preserveAspectRatio='none'><path fill='" + $gray-500 + "' d='M51 1l25 23 24 22H1l25-22z'/><path fill='" + $gray-500 + "' opacity='.3' d='M51 101l25-23 24-22H1l25 22z'/></svg>") !default;
+$b-table-sort-icon-bg-dark-descending: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='101' height='101' view-box='0 0 101 101' preserveAspectRatio='none'><path fill='" + $gray-500 + "' opacity='.3' d='M51 1l25 23 24 22H1l25-22z'/><path fill='" + $gray-500 + "' d='M51 101l25-23 24-22H1l25 22z'/></svg>") !default;
+
+$b-table-sort-icon-bg-not-sorted: $b-table-sort-icon-bg-dark-not-sorted;
+$b-table-sort-icon-bg-ascending: $b-table-sort-icon-bg-dark-ascending;
+$b-table-sort-icon-bg-descending: $b-table-sort-icon-bg-dark-descending;
+
+// forms
+$input-border-color: $border-color !default;
+$input-box-shadow: none !default;
+$custom-select-box-shadow: none !default;
+
+// modals
+$modal-backdrop-bg: #000;
+
+// popover
+$popover-inner-border-radius: $border-radius;
+
+// v-select
+$primary-color: $secondary !default;
+$base-bg: $white !default;
+$item-color: $tertiary !default;
+$item-active-color: $primary-color !default;
+$item-font-size: $font-size-base !default;
+$item-hover-bg: darken($secondary, 5%) !default;
+$item-hover-color: $white !default;
+$item-hover-bg: darken($secondary, 5%) !default;
 
 // Import
 @import "~bootstrap/scss/functions";
@@ -132,5 +189,3 @@ $tooltip-arrow-color: $black-always;
 @import "~bootstrap/scss/vendor/rfs";
 @import '~bootstrap/scss/variables';
 
-// forms
-$custom-select-color: $input-color;

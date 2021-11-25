@@ -1,5 +1,12 @@
 index:
   analysis:
+    normalizer:
+      keyword:
+        type: custom
+        char_filter: []
+        filter:
+          - lowercase
+          - asciifolding
     analyzer:
       prefix:
         type: custom

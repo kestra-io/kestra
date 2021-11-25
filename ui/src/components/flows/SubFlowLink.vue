@@ -40,25 +40,24 @@
                 if (this.executionId && this.namespace && this.flowId) {
                     this.$router.push({
                         name: this.routeName,
-                        params: {namespace: this.namespace, flowId: this.flowId, id: this.executionId},
-                        query: this.query
+                        params: {namespace: this.namespace, flowId: this.flowId, id: this.executionId, tab: this.tab},
                     });
                 } else if (this.executionId) {
                     this.$store
                         .dispatch("execution/loadExecution", {id: this.executionId})
                         .then(value => {
                             this.$store.commit("execution/setExecution", value);
-                            this.$router.push({name: this.routeName, params: this.params(value), query: this.query})
+                            this.$router.push({name: this.routeName, params: this.params(value)})
                         })
                 } else {
-                    this.$router.push({name: this.routeName, params: this.params(), query: this.query})
+                    this.$router.push({name: this.routeName, params: this.params()})
                 }
             },
             params (execution) {
                 if (execution) {
-                    return {namespace: execution.namespace, flowId: execution.flowId, id: execution.id}
+                    return {namespace: execution.namespace, flowId: execution.flowId, id: execution.id, tab: this.tab}
                 } else {
-                    return {namespace: this.namespace, id: this.flowId}
+                    return {namespace: this.namespace, id: this.flowId, tab: this.tab}
                 }
             },
         },
@@ -66,8 +65,8 @@
             routeName () {
                 return this.executionId ? "executions/update" : "flows/update"
             },
-            query () {
-                return this.executionId ? {tab: this.tabExecution} : {tab: this.tabFlow}
+            tab () {
+                return this.executionId ? this.tabExecution : this.tabFlow
             }
         }
     }

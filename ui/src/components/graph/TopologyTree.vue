@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="d-flex top">
+        <div class="d-flex top rounded">
             <div>
                 <b-btn-group>
                     <b-btn size="sm" @click="toggleOrientation">
@@ -247,17 +247,17 @@
                         style: {
                             "width": 10,
                             "height": 10,
-                            "background-color": "#1AA5DE",
+                            "background-color": "#12a4ed",
                         }
                     },
                     {
                         selector: "node[type = \"cluster\"]",
                         style: {
                             label: "data(label)",
-                            "background-color": "#1AA5DE",
+                            "background-color": "#12a4ed",
                             "background-opacity": 0.05,
-                            "border-color": "#1AA5DE",
-                            "color": "#1AA5DE",
+                            "border-color": "#12a4ed",
+                            "color": "#12a4ed",
                             "text-margin-y": 20,
                             "padding": "25px",
                         }
@@ -268,8 +268,8 @@
                             "font-size": "13px",
                             "width": 1,
                             "target-arrow-shape": "vee",
-                            "line-color": "#1AA5DE",
-                            "target-arrow-color": "#1AA5DE",
+                            "line-color": "#12a4ed",
+                            "target-arrow-color": "#12a4ed",
                             "source-endpoint": this.orientation ? undefined : "50% 0%",
                             "target-endpoint": this.orientation ? undefined : "-50% 0%",
                             "curve-style": "straight",
@@ -287,7 +287,7 @@
                         selector: "edge[label]",
                         style: {
                             "label": "data(label)",
-                            "color": "#666",
+                            "color": "#8997bd",
                             "line-height": 2,
                             "source-text-offset": "100",
                             "target-text-offset": "100",
@@ -298,25 +298,25 @@
                     {
                         selector: "edge[relationType = \"ERROR\"]",
                         style: {
-                            "line-color": "#dc3545",
-                            "color": "#dc3545",
-                            "target-arrow-color": "#dc3545",
+                            "line-color": "#f5325c",
+                            "color": "#f5325c",
+                            "target-arrow-color": "#f5325c",
                         }
                     },
                     {
                         selector: "edge[relationType = \"DYNAMIC\"]",
                         style: {
-                            "line-color": "#6610f2",
-                            "color": "#6610f2",
-                            "target-arrow-color": "#6610f2",
+                            "line-color": "#6d81f5",
+                            "color": "#6d81f5",
+                            "target-arrow-color": "#6d81f5",
                         }
                     },
                     {
                         selector: "edge[relationType = \"CHOICE\"]",
                         style: {
-                            "line-color": "#fd7e14",
-                            "color": "#fd7e14",
-                            "target-arrow-color": "#fd7e14",
+                            "line-color": "#ff8500",
+                            "color": "#ff8500",
+                            "target-arrow-color": "#ff8500",
                         }
                     },
                     {
@@ -324,8 +324,8 @@
                         css: {
                             "active-bg-size": 0,
                             "selection-box-border-width": 0,
-                            "selection-box-color": "#FF0000",
-                            "active-bg-color" : "#FF0000"
+                            "selection-box-color": "#f5325c",
+                            "active-bg-color" : "#f5325c"
                         }
                     }
                 ];
@@ -424,7 +424,7 @@
 @import "../../styles/variable";
 
 .graph-wrapper {
-    height: calc(100vh - 260px);
+    height: calc(100vh - 310px);
 }
 
 .hidden {

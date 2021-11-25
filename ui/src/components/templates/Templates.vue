@@ -5,7 +5,6 @@
                 @onPageChanged="onPageChanged"
                 striped
                 hover
-                bordered
                 ref="dataTable"
                 :total="total"
             >
@@ -25,7 +24,6 @@
                         @sort-changed="onSort"
                         :responsive="true"
                         striped
-                        bordered
                         hover
                         :items="templates"
                         :fields="fields"
@@ -33,7 +31,7 @@
                         show-empty
                     >
                         <template #empty>
-                            <span class="text-black-50">{{ $t('no result') }}</span>
+                            <span class="text-muted">{{ $t('no result') }}</span>
                         </template>
 
                         <template #cell(actions)="row">

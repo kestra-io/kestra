@@ -27,7 +27,7 @@ export default class Markdown {
             quotes: "“”‘’",
         })
 
-        md.renderer.rules.table_open = () => "<table class=\"table table-bordered\">\n"
+        md.renderer.rules.table_open = () => "<table class=\"table\">\n"
 
         return md.render(
             markdown

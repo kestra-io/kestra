@@ -2,7 +2,7 @@
 $vs-colors: (
     lightest: $gray-400,
     light: $gray-600,
-    dark: $dark,
+    dark: $white-always,
     darkest: $gray-900,
 );
 $vs-border-color: $input-border-color;
@@ -11,14 +11,33 @@ $vs-border-radius: $input-border-radius;
 $vs-dropdown-bg: $input-bg;
 $vs-state-active-bg: $primary;
 $vs-selected-bg: $light;
+$vs-selected-bg: $primary;
+$vs-controls-color: $gray-400;
 
 @import '~vue-select/src/scss/vue-select.scss';
 
 .v-select {
     background: $input-bg;
+    border-radius: $input-border-radius;
 
     .form-inline & {
         width: 196px;
+    }
+
+    &.vs--open {
+        .vs__dropdown-toggle {
+            transition: all 0.3s ease-out;
+            border-color: $input-hover-border-color;
+        }
+
+        .vs__dropdown-menu {
+            transition: all 0.3s ease-out;
+            border-color: $input-hover-border-color;
+        }
+    }
+
+    .vs__clear {
+        display: flex;
     }
 
     input {
@@ -35,29 +54,38 @@ $vs-selected-bg: $light;
         .vs__selected {
             max-width: 100%;
             white-space: nowrap;
-            color: $input-color;
+            font-weight: 400;
             overflow: hidden;
             text-overflow: ellipsis;
         }
     }
 
+    &.vs--single {
+        .vs__selected-options {
+            .vs__selected {
+                color: $input-color;
+            }
+        }
+    }
+
+    .vs__actions {
+        > * {
+            fill: $input-color;
+        }
+    }
+
     .vs__dropdown-toggle {
         padding: 2px 0 6px 0;
+        font-size: $input-font-size;
     }
 
     .vs__dropdown-option {
         display: inline-block;
         min-width: 100%;
         color: $input-color;
-    }
 
-    .content-wrapper .navbar .navbar-collapse & {
-        .vs__dropdown-toggle {
-            padding: 2px 0 2px 0;
-        }
-
-        .vs__actions {
-            padding-top: 0;
+        &.vs__dropdown-option--highlight {
+            color: $white-always;
         }
     }
 

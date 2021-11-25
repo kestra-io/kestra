@@ -10,14 +10,13 @@
                 :key="x"
             />
         </b-list-group>
-        <b-alert show variant="light" v-else class="mb-0">
+        <b-alert show variant="light" v-else class="text-muted mb-0">
             {{ $t('no result') }}
         </b-alert>
         <bottom-line v-if="canSave">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
                     <b-button
-                        variant="primary"
                         @click="addSchedule"
                         v-if="canSave"
                     >
@@ -25,7 +24,7 @@
                         {{ $t("add schedule") }}
                     </b-button>
 
-                    <b-button @click="save" v-if="canSave">
+                    <b-button @click="save" v-if="canSave" variant="primary">
                         <content-save />
                         <span>{{ $t("save") }}</span>
                     </b-button>

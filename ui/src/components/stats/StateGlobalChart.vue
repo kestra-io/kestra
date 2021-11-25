@@ -1,22 +1,21 @@
 <template>
-    <div class="state-global-charts">
-        <div class="title" :title="$t('last 30 days count', {count: formatedCount})">
-            {{ $t('last 30 days count', {count: formatedCount}) }}
+    <b-card header-tag="header" :header="$t('last 30 days count', {count: formattedCount})">
+        <div class="state-global-charts" :class="{big: big}">
+            <template v-if="hasData">
+                <state-chart
+                    v-if="ready"
+                    :data="data"
+                    :big="big"
+                    :global="true"
+                />
+            </template>
+            <template v-else>
+                <b-alert variant="light" class="text-muted m-0" show>
+                    {{ $t('no result') }}
+                </b-alert>
+            </template>
         </div>
-        <template v-if="hasData">
-            <state-chart
-                v-if="ready"
-                :data="data"
-                :big="big"
-                :global="true"
-            />
-        </template>
-        <template v-else>
-            <b-alert variant="light" class="m-0" show>
-                {{ $t('no result') }}
-            </b-alert>
-        </template>
-    </div>
+    </b-card>
 </template>
 
 <script>
@@ -42,7 +41,7 @@
             }
         },
         computed: {
-            formatedCount() {
+            formattedCount() {
                 return Utils.number(this.count);
             },
             count() {
@@ -61,37 +60,12 @@
 @import "../../styles/_variable.scss";
 
 .state-global-charts {
-    border: 1px solid var(--table-border-color);
-    border-bottom: 0;
-    background: var(--gray-100);
     position: relative;
     height: 100px;
     vertical-align: middle;
 
-    .title {
-        writing-mode: vertical-rl;
-        transform: rotate(-180deg);
-        margin: 0;
-        padding: $spacer/2;
-        border-right: 0;
-        background: var(--dark-always);
-        color: var(--white-always);
-        border-left: 1px solid var(--table-border-color);
-        position: absolute;
-        font-size: $font-size-xs;
-        height: 100%;
-        width: 35px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-    }
-
-    .alert {
-        margin-left: 35px !important;
-    }
 
     .executions-charts {
-        margin-left: 35px;
         top: 0;
         height: 100%;
         display: flex;

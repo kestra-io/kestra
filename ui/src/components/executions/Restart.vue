@@ -1,17 +1,15 @@
 <template>
-    <span>
-        <b-button
-            @click="$bvModal.show(uuid)"
-            v-if="isReplay || enabled"
-            :disabled="!enabled"
-            :class="!isReplay ? 'rounded-lg btn-info restart mr-1' : ''"
-        >
-            <kicon :tooltip="$t(replayOrRestart)">
-                <restart-icon v-if="!isReplay" />
-                <play-box-multiple v-if="isReplay" />
-                {{ (isReplay ? '' : $t(replayOrRestart)) }}
-            </kicon>
-        </b-button>
+    <b-button
+        @click="$bvModal.show(uuid)"
+        v-if="isReplay || enabled"
+        :disabled="!enabled"
+        :class="!isReplay ? 'btn-info restart mr-1' : ''"
+    >
+        <kicon :tooltip="$t(replayOrRestart)">
+            <restart-icon v-if="!isReplay" />
+            <play-box-multiple v-if="isReplay" />
+            {{ (isReplay ? '' : $t(replayOrRestart)) }}
+        </kicon>
 
         <b-modal v-if="enabled" :id="uuid" @show="loadRevision">
             <template #modal-header>
@@ -38,7 +36,7 @@
                 </b-button>
             </template>
         </b-modal>
-    </span>
+    </b-button>
 </template>
 <script>
     import RestartIcon from "vue-material-design-icons/Restart";

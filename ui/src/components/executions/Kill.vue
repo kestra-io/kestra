@@ -1,6 +1,6 @@
 <template>
     <div class="wrapper" v-if="enabled">
-        <b-button @click="kill" class="rounded-lg btn-warning mr-1">
+        <b-button @click="kill" class="btn-warning mr-1">
             <stop-circle-outline />
             {{ $t("kill") }}
         </b-button>

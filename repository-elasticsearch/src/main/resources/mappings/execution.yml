@@ -2,15 +2,26 @@ dynamic: false
 properties:
   flowId:
     type: keyword
+    fields:
+      fulltext:
+        type: keyword
+        normalizer: keyword
   flowRevision:
     type: integer
   id:
     type: keyword
+    fields:
+      fulltext:
+        type: keyword
   inputs:
     type: object
     properties: {}
   namespace:
     type: keyword
+    fields:
+      fulltext:
+        type: keyword
+        normalizer: keyword
   parentId:
     type: keyword
   state:
@@ -35,50 +46,43 @@ properties:
       id:
         type: text
         fields:
-          keyword:
+          fulltext:
             type: keyword
       executionId:
         type: text
         fields:
-          keyword:
+          fulltext:
             type: keyword
       namespace:
         type: text
         fields:
-          keyword:
+          fulltext:
             type: keyword
+            normalizer: keyword
       flowId:
         type: text
         fields:
-          keyword:
+          fulltext:
             type: keyword
+            normalizer: keyword
       taskId:
         type: text
         fields:
-          keyword:
+          fulltext:
             type: keyword
+            normalizer: keyword
       parentTaskRunId:
         type: text
         fields:
-          keyword:
+          fulltext:
             type: keyword
       value:
         type: text
         fields:
-          keyword:
+          fulltext:
             type: keyword
       attempts:
         properties:
-          logs:
-            properties:
-              level:
-                type: keyword
-              message:
-                type: text
-              thread:
-                type: text
-              timestamp:
-                type: date
           state:
             properties:
               current:

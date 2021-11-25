@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-navbar v-if="original === undefined && navbar" type="dark" variant="dark">
+        <b-navbar v-if="original === undefined && navbar" class="top-nav">
             <b-btn-group>
                 <b-button @click="autoFold(true)" size="sm" variant="light" v-b-tooltip.hover.top="$t('Fold content lines')">
                     <unfold-less-horizontal />
@@ -54,7 +54,7 @@
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
             fullHeight: {type: Boolean, default: true},
-            theme: {type: String, default: "vs-dark"},
+            theme: {type: String, default: undefined},
             placeholder: {type: [String, Number], default: ""},
             diffSideBySide: {type: Boolean, default: true},
             readOnly: {type: Boolean, default: false},
@@ -78,7 +78,9 @@
         },
         computed: {
             themeComputed() {
-                return this.theme ? this.theme : (!this.input ? "vs-dark" : "vs")
+                const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
+
+                return this.theme ? this.theme : (localStorage.getItem("editorTheme") || (darkTheme ? "vs-dark" : "vs"))
             },
             containerClass() {
                 return [
@@ -228,15 +230,22 @@
                     const containerWidth = containerParent.offsetWidth;
 
                     if (this.original || this.fullHeight) {
-                        const fullHeight = window.innerHeight - this.$refs.editorContainer.getBoundingClientRect().y - 55 - 30;
+                        const fullHeight = window.innerHeight - this.$refs.editorContainer.getBoundingClientRect().y - 55 - 50;
                         container.style.height = `${fullHeight}px`;
-                        this.editor.layout({width: containerWidth, height: fullHeight});
+                        this.updateSize(containerWidth, fullHeight);
                     } else {
                         const contentHeight = Math.max(21, this.editor.getContentHeight());
                         container.style.height = `${contentHeight+3}px`;
                         container.style.width = `${containerWidth-(this.input ? 20 : 0)}px`;
-                        this.editor.layout({width: containerWidth-(this.input ? 20 : 0),  height: contentHeight});
+                        this.updateSize(containerWidth-(this.input ? 20 : 0),  contentHeight);
                     }
+                }
+            },
+            updateSize(width, height) {
+                if (width === 0 || height === 0) {
+                    window.setTimeout(this.onResize, 100);
+                } else {
+                    this.editor.layout({width: width,  height: height});
                 }
             },
             autoFold(autoFold) {
@@ -262,12 +271,10 @@
 
 .navbar {
     border: 0;
+    background-color: #1e1e1e;
 }
-/deep/ .editor-container {
-    //.monaco-editor .suggest-widget, .monaco-editor .suggest-details {
-    //    border-style: hidden;
-    //}
 
+/deep/ .editor-container {
     position: relative;
     max-width: 100%;
     display: flex;

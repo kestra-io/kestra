@@ -2,15 +2,19 @@
     <sidebar-menu
         :menu="menu"
         @toggle-collapse="onToggleCollapse"
-        width="200px"
+        width="268px"
         :collapsed="collapsed"
     >
         <div class="logo" slot="header">
             <router-link :to="{name: 'home'}">
                 <span class="img" />
             </router-link>
-            <span class="version">{{ version ? version.version : '' }}</span>
         </div>
+
+        <span slot="footer">
+            <span class="version">{{ version ? version.version : '' }}</span>
+        </span>
+
         <span slot="toggle-icon">
             <chevron-right v-if="collapsed" />
             <chevron-left v-else />
@@ -23,22 +27,22 @@
     import {SidebarMenu} from "vue-sidebar-menu";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft";
     import ChevronRight from "vue-material-design-icons/ChevronRight";
-    import Graph from "vue-material-design-icons/Graph";
-    import Cog from "vue-material-design-icons/Cog";
-    import TimelineClock from "vue-material-design-icons/TimelineClock";
-    import BookOpen from "vue-material-design-icons/BookOpen";
-    import CardText from "vue-material-design-icons/CardText";
-    import HexagonMultiple from "vue-material-design-icons/HexagonMultiple";
-    import ChartTimeline from "vue-material-design-icons/ChartTimeline";
+    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline";
+    import ContentCopy from "vue-material-design-icons/ContentCopy";
+    import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline";
+    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline";
+    import NotebookOutline from "vue-material-design-icons/NotebookOutline";
+    import BookOutline from "vue-material-design-icons/BookOutline";
+    import CogOutline from "vue-material-design-icons/CogOutline";
     import {mapState} from "vuex";
 
-    Vue.component("Graph", Graph);
-    Vue.component("Settings", Cog);
-    Vue.component("Timelineclock", TimelineClock);
-    Vue.component("Bookopen", BookOpen);
-    Vue.component("Cardtext", CardText);
-    Vue.component("HexagonMultiple", HexagonMultiple);
-    Vue.component("Charttimeline", ChartTimeline);
+    Vue.component("FlowMenuIcon", FileTreeOutline);
+    Vue.component("TemplateMenuIcon", ContentCopy);
+    Vue.component("ExecutionMenuIcon", TimelineClockOutline);
+    Vue.component("TaskRunMenuIcon", TimelineTextOutline);
+    Vue.component("LogMenuIcon", NotebookOutline);
+    Vue.component("DocumentationMenuIcon", BookOutline);
+    Vue.component("SettingMenuIcon", CogOutline);
 
     export default {
         components: {
@@ -78,9 +82,9 @@
                         ],
                         title: this.$t("flows"),
                         icon: {
-                            element: "graph",
+                            element: "FlowMenuIcon",
                             class: "menu-icon",
-                        }
+                        },
                     },
                     {
                         href: "/templates",
@@ -89,9 +93,9 @@
                         ],
                         title: this.$t("templates"),
                         icon: {
-                            element: "cardtext",
-                            class: "menu-icon"
-                        }
+                            element: "TemplateMenuIcon",
+                            class: "menu-icon",
+                        },
                     },
                     {
                         href: "/executions",
@@ -100,18 +104,18 @@
                         ],
                         title: this.$t("executions"),
                         icon: {
-                            element: "timelineclock",
+                            element: "ExecutionMenuIcon",
                             class: "menu-icon"
-                        }
+                        },
                     },
                     {
                         href: "/taskruns",
                         alias: ["/taskruns*"],
                         title: this.$t("taskruns"),
                         icon: {
-                            element: "charttimeline",
+                            element: "TaskRunMenuIcon",
                             class: "menu-icon"
-                        }
+                        },
                     },
                     {
                         href: "/logs",
@@ -120,9 +124,9 @@
                         ],
                         title: this.$t("logs"),
                         icon: {
-                            element: "hexagon-multiple",
+                            element: "LogMenuIcon",
                             class: "menu-icon"
-                        }
+                        },
                     },
                     {
                         href: "/plugins",
@@ -131,7 +135,7 @@
                         ],
                         title: this.$t("plugins.documentation"),
                         icon: {
-                            element: "bookopen",
+                            element: "DocumentationMenuIcon",
                             class: "menu-icon"
                         }
                     },
@@ -142,7 +146,7 @@
                         ],
                         title: this.$t("settings"),
                         icon: {
-                            element: "settings",
+                            element: "SettingMenuIcon",
                             class: "menu-icon"
                         }
                     }
@@ -153,44 +157,54 @@
 </script>
 
 <style lang="scss" scoped>
-    @import "src/styles/variable";
+    @import "../../styles/variable";
 
     .logo {
-        height: 82px;
-        min-height: 82px;
         overflow: hidden;
-
+        padding: 35px 0;
+        height: 133px;
+        position: relative;
         a {
+            transition: 0.3s all;
+            position: absolute;
+            left: 37px;
             display: block;
-            height: 52px;
+            height: 55px;
+            width: 100%;
             overflow: hidden;
-            border-bottom: 4px solid var(--tertiary);
 
             span.img {
-                height: 50px;
-                background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
-                background-size: 190px 60px;
-                background-position-y: -6px;
-                background-position-x: -2px;
+                height: 100%;
+                background: url(../../../src/assets/logo.svg) 0 0 no-repeat;
+                background-size: 179px 55px;
                 display: block;
+
+                .theme-dark & {
+                    background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
+                    background-size: 179px 55px;
+                }
+            }
+        }
+    }
+
+    span.version {
+        transition: 0.3s all;
+        white-space: nowrap;
+        font-size: $font-size-xs;
+        text-align: center;
+        display: block;
+        color: var(--tertiary);
+    }
+
+    .vsm_collapsed {
+        .logo {
+            a {
+                left: 0;
             }
         }
 
         span.version {
-            margin-top: 2px;
-            font-size: $font-size-xs;
-            text-align: right;
-            display: block;
-            border-top: 2px solid var(--secondary);
-            color: var(--gray-600);
-            border-bottom: 1px solid var(--gray-900);
-            padding-right: 16px;
-        }
-    }
-
-    .vsm_collapsed {
-        span.version {
-            color: black;
+            opacity: 0;
         }
     }
 
@@ -200,7 +214,7 @@
 
     /deep/ .menu-icon {
         font-size: 1.5em;
-        background-color: $dark !important;
+        background-color: transparent !important;
         padding-bottom: 15px;
 
         svg {

@@ -5,7 +5,6 @@
                 @onPageChanged="onPageChanged"
                 striped
                 hover
-                bordered
                 ref="dataTable"
                 :total="total"
             >
@@ -20,7 +19,7 @@
 
                 <template #table>
                     <div v-if="search === undefined">
-                        <b-alert variant="light" show>
+                        <b-alert variant="light" class="text-muted" show>
                             {{ $t('no result') }}
                         </b-alert>
                     </div>

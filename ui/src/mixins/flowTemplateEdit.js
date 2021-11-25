@@ -44,17 +44,33 @@ export default {
             return this.dataType === "flow" && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
         },
         routeInfo() {
-            return {
-                title: this.$t(`${this.dataType} creation`),
+            let route = {
+                title: this.isEdit ? this.$route.params.id : this.$t(`${this.dataType}`),
                 breadcrumb: [
                     {
-                        label: this.$t(this.dataType)
-                    },
-                    {
-                        label: this.$t("creation")
+                        label: this.$t(`${this.dataType}s`),
+                        link: {
+                            name: `${this.dataType}s/list`,
+                        }
                     }
                 ]
             };
+
+            if (this.isEdit) {
+                route.breadcrumb.push(
+                    {
+                        label: this.$route.params.namespace,
+                        link: {
+                            name: `${this.dataType}s/list`,
+                            query: {
+                                namespace: this.$route.params.namespace
+                            }
+                        }
+                    }
+                )
+            }
+
+            return route;
         },
         item() {
             return this[this.dataType]

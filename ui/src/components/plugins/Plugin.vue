@@ -2,12 +2,14 @@
     <div>
         <b-row>
             <b-col md="9" class="markdown">
-                <markdown v-if="plugin" :source="plugin.markdown" :permalink="true" />
-                <div v-else>
-                    <b-alert variant="info" show>
-                        {{ $t('plugins.please') }}
-                    </b-alert>
-                </div>
+                <b-overlay :show="isLoading" variant="transparent">
+                    <markdown v-if="plugin && $route.params.cls" :source="plugin.markdown" :permalink="true" />
+                    <div v-else>
+                        <b-alert variant="info" show>
+                            {{ $t('plugins.please') }}
+                        </b-alert>
+                    </div>
+                </b-overlay>
             </b-col>
             <b-col md="3">
                 <Toc @routerChange="routerChange" v-if="plugins" :plugins="plugins" />
@@ -44,12 +46,20 @@
                 }
             }
         },
-
+        data() {
+            return {
+                isLoading: false
+            };
+        },
         created() {
             this.loadToc();
             this.loadPlugin()
         },
-
+        watch: {
+            $route() {
+                this.routerChange();
+            }
+        },
         methods: {
             loadToc() {
                 this.$store.dispatch("plugin/list")
@@ -57,10 +67,13 @@
 
             loadPlugin() {
                 if (this.$route.params.cls) {
-                    this.$store.dispatch(
-                        "plugin/load",
-                        this.$route.params
-                    )
+                    this.isLoading = true;
+
+                    this.$store
+                        .dispatch("plugin/load", this.$route.params)
+                        .finally(() => {
+                            this.isLoading = false
+                        });
                 }
             },
 

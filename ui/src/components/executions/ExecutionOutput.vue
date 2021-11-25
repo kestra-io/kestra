@@ -19,14 +19,13 @@
             :responsive="true"
             striped
             hover
-            bordered
             :fields="fields"
             :items="outputs"
             class="mb-0"
             show-empty
         >
             <template #empty>
-                <span class="text-black-50">{{ $t('no result') }}</span>
+                <span class="text-muted">{{ $t('no result') }}</span>
             </template>
 
             <template #cell(key)="row">

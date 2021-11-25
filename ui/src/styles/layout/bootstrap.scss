@@ -1,5 +1,4 @@
 /* Typography *********************************************************************************************************/
-
 .text-secondary {
     color: $gray-700 !important;
 }
@@ -29,7 +28,7 @@ blockquote {
     border-left: 5px solid $gray-400;
     margin-top: $spacer * 2;
     padding: $spacer/4  0 $spacer/4 $spacer;
-    color: $gray-700;
+    color: $gray-500;
     p {
         margin-bottom: 0;
     }
@@ -47,6 +46,11 @@ mark {
     font-size: $font-size-base * 0.7;
 }
 
+.text-muted {
+    font-weight: 300;
+}
+
+
 code[class*="language-"], pre[class*="language-"] {
     font-size: $font-size-sm !important;
     font-family: $font-family-monospace !important;
@@ -63,6 +67,24 @@ code[class*="language-"], pre[class*="language-"] {
     background-color: $light-always;
 }
 
+/* Card ***************************************************************************************************************/
+.card {
+    header.card-header {
+        color: $secondary;
+        font-weight: bold;
+    }
+
+    .card-body {
+        .card {
+            box-shadow: none !important;
+
+            .card-body {
+                padding: 0;
+            }
+        }
+    }
+}
+
 /* Navbar *************************************************************************************************************/
 
 .navbar {
@@ -70,8 +92,7 @@ code[class*="language-"], pre[class*="language-"] {
     font-weight: $headings-font-weight;
 
     .content-wrapper & {
-        border: 1px solid $table-border-color;
-        border-bottom: 0;
+        border: 0;
 
         .navbar-collapse {
             input,
@@ -131,12 +152,6 @@ code[class*="language-"], pre[class*="language-"] {
 
 /* Navs ***************************************************************************************************************/
 
-.dropdown-item {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-    font-size: $font-size-sm;
-    font-weight: 300;
-}
 
 .nav-tabs {
     .nav-link,
@@ -211,7 +226,33 @@ table {
     font-size: $font-size-sm;
 }
 
+.table-responsive {
+    border-radius: $border-radius-lg;
+    border: 1px solid $border-color;
+
+
+    &.table-unrounded {
+        border-radius: 0;
+
+        .table {
+            border-radius: 0;
+        }
+    }
+}
+
 .table {
+    border-radius: $border-radius-lg;
+    background: $table-bg;
+
+    thead {
+        th {
+            background-color: $table-head-bg;
+            color: $table-head-color;
+            border-bottom-width: 0;
+            border-top-width: 0;
+        }
+    }
+
     &-primary,
     &-success,
     &-info,
@@ -275,7 +316,6 @@ table {
     }
 
     &-hover {
-
         .table-primary:hover {
             &, > th, > td {
                 background-color: darken($primary, 5%);
@@ -362,7 +402,6 @@ table {
     }
 }
 
-
 /* Forms **************************************************************************************************************/
 
 label,
@@ -395,6 +434,17 @@ select {
     }
 }
 
+.custom-file-label {
+    font-size: $input-font-size;
+    color: $input-placeholder-color;
+}
+
+.custom-file.b-form-file.is-valid {
+    .custom-file-label {
+        color: $input-color;
+    }
+}
+
 /* Breadcrumb *********************************************************************************************************/
 
 .breadcrumb {
@@ -414,7 +464,7 @@ select {
         border-color: transparent;
         margin-left: 0.1em;
         margin-right: 0.1em;
-        border-radius: 1px;
+        border-radius: $border-radius-sm;
 
         &:hover,
         &:focus {
@@ -515,15 +565,6 @@ select {
         font-weight: normal;
         text-decoration: underline;
     }
-
-    &-secondary,
-    &-light {
-        &,
-        & a:not(.btn),
-        & .alert-link {
-            color: $body-color;
-        }
-    }
 }
 
 /*Toast ***************************************************************************************************************/
@@ -573,10 +614,10 @@ ul.nav-tabs {
         border: 0 solid;
         border-bottom-width: 4px;
         border-bottom-color: transparent;
-        color: $body-color;
+        color: $secondary;
         transition-duration: 300ms;
         a {
-            color: $body-color;
+            color: $secondary;
             text-decoration: none;
         }
 
@@ -594,19 +635,10 @@ ul.nav-tabs {
         }
 
         &:hover {
-            border-bottom-color: $gray-400;
+            border-bottom-color: $secondary;
             background: transparent;
             border-bottom-width: 4px;
         }
-    }
-}
-
-.tabs-container {
-    .tab-content {
-        padding: 20px;
-        border: 1px solid $nav-tabs-border-color;
-        background: $gray-900;
-        border-top: 0;
     }
 }
 
@@ -634,7 +666,6 @@ ul.nav-tabs {
         height: 100%;
         transform: translate3d(0%, 0, 0);
         max-width: 95%;
-        box-shadow: 0 0 10px 0px rgba(0,0,0,0.35);
     }
 
     .modal-content {

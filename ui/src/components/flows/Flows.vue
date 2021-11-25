@@ -5,7 +5,6 @@
                 @onPageChanged="onPageChanged"
                 striped
                 hover
-                bordered
                 ref="dataTable"
                 :total="total"
             >
@@ -20,6 +19,7 @@
 
                 <template #top>
                     <state-global-chart
+                        class="mb-4"
                         v-if="daily"
                         :ready="dailyReady"
                         :data="daily"
@@ -33,7 +33,6 @@
                         @sort-changed="onSort"
                         :responsive="true"
                         striped
-                        bordered
                         hover
                         :items="flows"
                         :fields="fields"
@@ -41,7 +40,7 @@
                         show-empty
                     >
                         <template #empty>
-                            <span class="text-black-50">{{ $t('no result') }}</span>
+                            <span class="text-muted">{{ $t('no result') }}</span>
                         </template>
 
                         <template #cell(actions)="row">
@@ -68,7 +67,7 @@
 
                         <template #cell(id)="row">
                             <router-link
-                                :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.id}, query:{tab: 'executions'}}"
+                                :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.id, tab: 'executions'}}"
                             >
                                 {{ row.item.id }}
                             </router-link>
@@ -93,7 +92,7 @@
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
                     <router-link :to="{name: 'flows/search'}">
-                        <b-button variant="light">
+                        <b-button variant="secondary">
                             <kicon>
                                 <text-box-search />
                                 {{ $t('source search') }}
@@ -304,18 +303,4 @@
         }
     };
 </script>
-<style lang="scss" scoped>
-@import "../../styles/_variable.scss";
 
-.stats {
-    display: block;
-    font-size: $font-size-xs;
-}
-.stats span.title {
-    padding-left: 10px;
-    color: var(--gray-600);
-}
-.stats span.value {
-    color: var(--gray-900);
-}
-</style>

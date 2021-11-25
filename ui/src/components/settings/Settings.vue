@@ -12,6 +12,9 @@
         <b-form-group :label="$t('Default namespace')" label-cols-sm="3">
             <namespace-select data-type="flow" :value="defaultNamespace" @input="onNamespaceSelect" />
         </b-form-group>
+        <b-form-group :label="$t('Editor theme')" label-cols-sm="3">
+            <b-form-select v-model="editorTheme" :options="editorThemes" />
+        </b-form-group>
     </div>
 </template>
 
@@ -30,6 +33,10 @@
                 langOptions: [
                     {value: "en", text: "English"},
                     {value: "fr", text: "Français"}
+                ],
+                editorThemes: [
+                    {value: "vs", text: "Light"},
+                    {value: "vs-dark", text: "Dark"}
                 ],
                 defaultNamespace: undefined,
                 currentTheme: undefined
@@ -72,6 +79,17 @@
                 },
                 get() {
                     return localStorage.getItem("lang") || "en";
+                }
+            },
+            editorTheme: {
+                set(theme) {
+                    localStorage.setItem("editorTheme", theme);
+                    this.$toast().saved();
+                },
+                get() {
+                    const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
+
+                    return localStorage.getItem("editorTheme") || (darkTheme ? "vs-dark" : "vs");
                 }
             },
             autofoldTextEditor: {

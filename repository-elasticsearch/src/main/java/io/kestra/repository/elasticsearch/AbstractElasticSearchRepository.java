@@ -321,7 +321,9 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     protected ArrayListTotal<T> findQueryString(String index, String query, Pageable pageable) {
         BoolQueryBuilder bool = this.defaultFilter()
-            .must(QueryBuilders.queryStringQuery(query));
+            .must(QueryBuilders.queryStringQuery(query)
+                .field("*.fulltext")
+            );
 
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
 

@@ -1,13 +1,14 @@
 <template>
-    <b-navbar v-if="topNavbar" :class="menuCollapsed" class="top-line" type="dark" variant="dark">
-        <b-navbar-nav>
+    <b-navbar v-if="topNavbar" :class="menuCollapsed" class="top-line">
+        <b-navbar-nav class="top-title">
             <b-nav-text>
-                <h1>{{ title }}</h1>
-
+                <h1 class="text-truncate">
+                    {{ title }}
+                </h1>
                 <b-breadcrumb>
                     <b-breadcrumb-item>
                         <router-link :to="{name: 'home'}">
-                            <home /> {{ $t('home') }}
+                            <home-outline /> {{ $t('home') }}
                         </router-link>
                     </b-breadcrumb-item>
                     <b-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :text="item.label" :key="x" />
@@ -19,12 +20,12 @@
 </template>
 <script>
     import {mapState} from "vuex";
-    import Home from "vue-material-design-icons/Home";
+    import HomeOutline from "vue-material-design-icons/HomeOutline";
     import Auth from "override/components/auth/Auth";
 
     export default {
         components: {
-            Home,
+            HomeOutline,
             Auth,
         },
         props: {
@@ -57,36 +58,56 @@
     transition: all 0.3s;
     left: $menu-width;
     width: calc(100% - #{$menu-width});
+
+    @media (min-width: map-get($grid-breakpoints, "lg")) {
+        &.navbar {
+            padding-left: 55px;
+            padding-right: 40px;
+        }
+    }
+
 }
 
 .top-line {
-    border-bottom: 4px solid var(--secondary);
+    display: flex;
+    min-width: 0;
+    max-width: 100%;
 }
 
-.top-line {
-    border-bottom: 4px solid var(--secondary);
-}
+.top-title {
+    padding-top: 35px;
+    overflow: hidden;
+    .navbar-text {
+        h1 {
+            color: var(--primary);
+            margin-bottom: $headings-margin-bottom / 2;
+            font-weight: bold;
 
-h1 {
-    color: var(--secondary);
-    font-size: $h3-font-size;
-    margin-bottom: $headings-margin-bottom / 2;
-    font-weight: bold;
+            .theme-dark & {
+                color: var(--tertiary);
+            }
+        }
+
+        ol.breadcrumb {
+            border: 0;
+            padding: 0;
+            margin-bottom: 0;
+            background: transparent;
+            font-size: $font-size-sm;
+            text-transform: none;
+            a {
+                color: var(--tertiary);
+
+                .theme-dark & {
+                    color: var(--secondary);
+                }
+            }
+        }
+    }
 }
 
 .navbar-expand .navbar-nav .navbar-text {
     padding: 0
 }
 
-ol.breadcrumb {
-    border: 0;
-    padding: 0;
-    margin-bottom: 0;
-    background: transparent;
-    font-size: $font-size-xs;
-    text-transform: none;
-    a {
-        color: $gray-500;
-    }
-}
 </style>

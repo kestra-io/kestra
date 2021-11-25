@@ -1,6 +1,5 @@
 package io.kestra.core.tasks.flows;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
@@ -18,6 +17,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.GraphService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.StartupEvent;
@@ -40,6 +40,7 @@ import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder(toBuilder = true)
@@ -116,29 +117,15 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @PluginProperty(dynamic = true, additionalProperties = String.class)
     private Map<String, String> args;
 
-    private transient io.kestra.core.models.templates.Template template;
-
-    private io.kestra.core.models.templates.Template template() throws IllegalVariableEvaluationException {
-        if (this.template == null) {
-            this.template = this.findTemplate(ContextHelper.context());
-        }
-
-        return this.template;
-    }
-
-    @JsonIgnore
-    public boolean isExecutorReady() {
-        return this.template != null;
-    }
-
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
+        io.kestra.core.models.templates.Template template = this.findTemplate(ContextHelper.context());
 
         GraphService.sequential(
             subGraph,
-            this.template().getTasks(),
-            this.template().getErrors(),
+            template.getTasks(),
+            template.getErrors(),
             taskRun,
             execution
         );
@@ -149,11 +136,12 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @Override
     public List<Task> allChildTasks() {
         try {
+            io.kestra.core.models.templates.Template template = this.findTemplate(ContextHelper.context());
 
             return Stream
                 .concat(
-                    this.template().getTasks() != null ? this.template().getTasks().stream() : Stream.empty(),
-                    this.template().getErrors() != null ? this.template().getErrors().stream() : Stream.empty()
+                    template.getTasks() != null ? template.getTasks().stream() : Stream.empty(),
+                    template.getErrors() != null ? template.getErrors().stream() : Stream.empty()
                 )
                 .collect(Collectors.toList());
         } catch (IllegalVariableEvaluationException e) {
@@ -163,16 +151,19 @@ public class Template extends Task implements FlowableTask<Template.Output> {
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        io.kestra.core.models.templates.Template template = this.findTemplate(ContextHelper.context());
 
-        return FlowableUtils.resolveTasks(this.template().getTasks(), parentTaskRun);
+        return FlowableUtils.resolveTasks(template.getTasks(), parentTaskRun);
     }
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        io.kestra.core.models.templates.Template template = this.findTemplate(ContextHelper.context());
+
         return FlowableUtils.resolveSequentialNexts(
             execution,
             this.childTasks(runContext, parentTaskRun),
-            FlowableUtils.resolveTasks(this.template().getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(template.getErrors(), parentTaskRun),
             parentTaskRun
         );
     }
@@ -196,7 +187,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
         return builder.build();
     }
 
-    private io.kestra.core.models.templates.Template findTemplate(ApplicationContext applicationContext) throws IllegalVariableEvaluationException {
+    protected io.kestra.core.models.templates.Template findTemplate(ApplicationContext applicationContext) throws IllegalVariableEvaluationException {
         TemplateExecutorInterface templateExecutor = applicationContext.getBean(TemplateExecutorInterface.class);
 
         io.kestra.core.models.templates.Template template = templateExecutor.findById(this.namespace, this.templateId);
@@ -207,40 +198,59 @@ public class Template extends Task implements FlowableTask<Template.Output> {
         return template;
     }
 
-    public static Flow injectTemplate(Flow flow, Execution execution, BiFunction<String, String, io.kestra.core.models.templates.Template> provider) {
+    @SuperBuilder(toBuilder = true)
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExecutorTemplate extends Template {
+        private io.kestra.core.models.templates.Template template;
+
+        @Override
+        protected io.kestra.core.models.templates.Template findTemplate(ApplicationContext applicationContext) throws IllegalVariableEvaluationException {
+            return this.template;
+        }
+
+        public static ExecutorTemplate of(Template templateTask, io.kestra.core.models.templates.Template template) {
+            Map<String, Object> map = JacksonMapper.toMap(templateTask);
+            map.put("type", ExecutorTemplate.class.getName());
+
+            ExecutorTemplate executorTemplate = JacksonMapper.toMap(map, ExecutorTemplate.class);
+            executorTemplate.template = template;
+
+            return executorTemplate;
+        }
+    }
+
+    public static Flow injectTemplate(Flow flow, Execution execution, BiFunction<String, String, io.kestra.core.models.templates.Template> provider) throws InternalException {
         AtomicReference<Flow> flowReference = new AtomicReference<>(flow);
 
         boolean haveTemplate = true;
         while (haveTemplate) {
             List<Template> templates = flowReference.get().allTasks()
-                .filter(task -> task.getType().equals(Template.class.getName()))
+                .filter(task -> task instanceof Template)
                 .map(task -> (Template) task)
-                .filter(t -> !t.isExecutorReady())
+                .filter(t -> !(t instanceof ExecutorTemplate))
                 .collect(Collectors.toList());
 
             templates
-                .forEach(templateTask -> {
+                .forEach(throwConsumer(templateTask -> {
                     io.kestra.core.models.templates.Template template = provider.apply(
                         templateTask.getNamespace(),
                         templateTask.getTemplateId()
                     );
 
-                    if (template!= null) {
-                        try {
-                            flowReference.set(
-                                flowReference.get().updateTask(
-                                    templateTask.getId(),
-                                    templateTask.toBuilder()
-                                        .template(template)
-                                        .build()
-                                )
-                            );
-                        } catch (InternalException e) {
-                            log.warn("Unable to update task for execution {}", execution.getId(), e);
-                        }
+                    if (template != null) {
+                        flowReference.set(
+                            flowReference.get().updateTask(
+                                templateTask.getId(),
+                                ExecutorTemplate.of(templateTask, template)
+                            )
+                        );
                     }
 
-                });
+                }));
 
             haveTemplate = templates.size() > 0;
         }

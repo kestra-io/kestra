@@ -10,7 +10,7 @@
                 <status :status="execution.state.current" />
             </b-col>
         </b-row>
-        <b-table :responsive="true" striped hover bordered :items="freshItems" class="mb-0">
+        <b-table :responsive="true" striped hover :items="freshItems" class="mb-0">
             <template #cell(value)="row">
                 <router-link
                     v-if="row.item.link"
@@ -24,7 +24,7 @@
                 <span v-else>
                     <span v-if="row.item.key === $t('revision')">
                         <router-link
-                            :to="{name: 'flows/update', params: {id: $route.params.flowId, namespace: $route.params.namespace}, query: {tab: 'revisions', revisionRight: row.item.value}}"
+                            :to="{name: 'flows/update', params: {id: $route.params.flowId, namespace: $route.params.namespace, tab: 'revisions'}, query: {revisionRight: row.item.value}}"
                         >{{ row.item.value }}</router-link>
                     </span>
                     <span v-else>{{ row.item.value }}</span>

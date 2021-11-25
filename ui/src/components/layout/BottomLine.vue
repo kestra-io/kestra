@@ -16,6 +16,10 @@
         z-index: 90;
         background-color: var(--white);
 
+        .theme-dark & {
+            background-color: var(--light);
+        }
+
         button {
             margin-left: $spacer;
 

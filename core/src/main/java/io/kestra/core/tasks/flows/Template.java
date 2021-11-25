@@ -229,7 +229,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
         boolean haveTemplate = true;
         while (haveTemplate) {
             List<Template> templates = flowReference.get().allTasks()
-                .filter(task -> task.getType().equals(Template.class.getName()))
+                .filter(task -> task instanceof Template)
                 .map(task -> (Template) task)
                 .filter(t -> !(t instanceof ExecutorTemplate))
                 .collect(Collectors.toList());

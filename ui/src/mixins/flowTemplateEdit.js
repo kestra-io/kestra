@@ -4,7 +4,8 @@ import {mapGetters, mapState} from "vuex";
 import BottomLine from "../components/layout/BottomLine";
 import ContentSave from "vue-material-design-icons/ContentSave";
 import Delete from "vue-material-design-icons/Delete";
-import Editor from "../components/inputs/Editor";
+import FlowEditor from "override/components/inputs/FlowEditor";
+import TemplateEditor from "override/components/inputs/TemplateEditor";
 import RouteContext from "./routeContext";
 import UnsavedChange from "./unsavedChange";
 import YamlUtils from "../utils/yamlUtils";
@@ -14,7 +15,8 @@ import permission from "../models/permission";
 export default {
     mixins: [RouteContext, UnsavedChange],
     components: {
-        Editor,
+        FlowEditor,
+        TemplateEditor,
         ContentSave,
         Delete,
         BottomLine

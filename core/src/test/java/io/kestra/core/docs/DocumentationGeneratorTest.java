@@ -2,6 +2,7 @@ package io.kestra.core.docs;
 
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Flow;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
@@ -15,11 +16,17 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 
+import javax.inject.Inject;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
+@MicronautTest
 class DocumentationGeneratorTest {
+    @Inject
+    JsonSchemaGenerator jsonSchemaGenerator;
+
     @Test
     void tasks() throws URISyntaxException, IOException {
         Path plugins = Paths.get(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
@@ -28,7 +35,7 @@ class DocumentationGeneratorTest {
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
         assertThat(scan.size(), is(1));
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan.get(0), scan.get(0).getTasks().get(0), Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan.get(0), scan.get(0).getTasks().get(0), Task.class);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -44,7 +51,7 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class bash = scan.findClass(Bash.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan, bash, Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -59,7 +66,7 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class bash = scan.findClass(Return.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan, bash, Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
 
         String render = DocumentationGenerator.render(doc);
 
@@ -74,7 +81,7 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class bash = scan.findClass(Flow.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan, bash, Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
 
         String render = DocumentationGenerator.render(doc);
 

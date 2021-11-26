@@ -39,7 +39,20 @@ module.exports = {
         },
         plugins: [
             new MonacoEditorPlugin({
-                languages: ["yaml"],
+                languages: [],
+                customLanguages: [
+                    {
+                        label: "yaml",
+                        entry: [
+                            "monaco-yaml/lib/esm/monaco.contribution",
+                            "vs/basic-languages/yaml/yaml.contribution",
+                        ],
+                        worker: {
+                            id: "monaco-yaml/lib/esm/yamlWorker",
+                            entry: "monaco-yaml/lib/esm/yaml.worker",
+                        },
+                    },
+                ],
                 features: [
                     "!accessibilityHelp",
                     "!anchorSelect",

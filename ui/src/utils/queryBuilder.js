@@ -10,7 +10,7 @@ export default class QueryBuilder {
             query = `(${q})^5 OR ${query}`
         }
 
-        return query;
+        return `(${query})`;
     }
 
     static iso(date) {

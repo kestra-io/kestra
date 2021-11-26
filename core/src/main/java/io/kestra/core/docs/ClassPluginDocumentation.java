@@ -14,8 +14,6 @@ import java.util.stream.Collectors;
 @ToString
 @NoArgsConstructor
 public class ClassPluginDocumentation<T> {
-    private static final JsonSchemaGenerator JSON_SCHEMA_GENERATOR = new JsonSchemaGenerator();
-
     private String cls;
     private String icon;
     private String group;
@@ -32,7 +30,7 @@ public class ClassPluginDocumentation<T> {
 
 
     @SuppressWarnings("unchecked")
-    private ClassPluginDocumentation(RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
+    private ClassPluginDocumentation(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
         this.cls = cls.getName();
         this.group = plugin.group();
         this.icon = DocumentationGenerator.icon(plugin, cls);
@@ -43,8 +41,8 @@ public class ClassPluginDocumentation<T> {
 
         this.shortName = cls.getSimpleName();
 
-        this.propertiesSchema = JSON_SCHEMA_GENERATOR.properties(baseCls, cls);
-        this.outputsSchema = JSON_SCHEMA_GENERATOR.outputs(baseCls, cls);
+        this.propertiesSchema = jsonSchemaGenerator.properties(baseCls, cls);
+        this.outputsSchema = jsonSchemaGenerator.outputs(baseCls, cls);
 
         if (this.propertiesSchema.containsKey("$defs")) {
             this.defs.putAll((Map<String, Object>) this.propertiesSchema.get("$defs"));
@@ -149,8 +147,8 @@ public class ClassPluginDocumentation<T> {
         return (List<String>) props.get("required");
     }
 
-    public static <T> ClassPluginDocumentation<T> of(RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
-        return new ClassPluginDocumentation<>(plugin, cls, baseCls);
+    public static <T> ClassPluginDocumentation<T> of(JsonSchemaGenerator jsonSchemaGenerator, RegisteredPlugin plugin, Class<? extends T> cls, Class<T> baseCls) {
+        return new ClassPluginDocumentation<>(jsonSchemaGenerator, plugin, cls, baseCls);
     }
 
     @AllArgsConstructor

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
     name: "MonacoEditor",
     props: {
         original: String,
@@ -12,6 +12,7 @@ module.exports = {
         },
         language: String,
         options: Object,
+        schemas: Array,
         diffEditor: {
             type: Boolean,
             "default": false
@@ -89,6 +90,7 @@ module.exports = {
                 ...this.options
             };
 
+
             if (this.diffEditor) {
                 this.editor = monaco.editor.createDiffEditor(this.$el, options);
                 let originalModel = monaco.editor.createModel(this.original, this.language);
@@ -98,6 +100,22 @@ module.exports = {
                     modified: modifiedModel
                 });
             } else {
+                if (this.schemas !== undefined) {
+                    monaco.languages.yaml.yamlDefaults.setDiagnosticsOptions({
+                        enableSchemaRequest: true,
+                        hover: true,
+                        completion: true,
+                        validate: true,
+                        format: true,
+                        schemas: this.schemas.map(r => {
+                            return {
+                                uri: r,
+                                fileMatch: ["*"]
+                            }
+                        })
+                    });
+                }
+
                 this.editor = monaco.editor.create(this.$el, options);
             }
 

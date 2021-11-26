@@ -25,6 +25,7 @@
                     :options="options"
                     :diff-editor="original !== undefined"
                     :original="original"
+                    :schemas="schemas"
                     @editorDidMount="editorDidMount"
                     @change="onInput"
                     :language="lang"
@@ -51,6 +52,7 @@
             value: {type: String, required: true},
             original: {type: String, default: undefined},
             lang: {type: String, default: undefined},
+            schemas: {type: Array, default: undefined},
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
             fullHeight: {type: Boolean, default: true},
@@ -300,6 +302,25 @@
 
         &.theme-vs-dark {
             background: #1e1e1e;
+        }
+    }
+
+    .monaco-hover-content {
+        h4 {
+            font-size: $font-size-base;
+            font-weight: bold;
+            line-height: $line-height-base;
+        }
+
+        p {
+            margin-bottom: $spacer/2;
+            &:last-child {
+                display: none;
+            }
+        }
+
+        *:nth-last-child(2n) {
+            margin-bottom: 0;
         }
     }
 }

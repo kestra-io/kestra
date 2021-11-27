@@ -1,0 +1,33 @@
+{
+  "name": "e2e-kestra",
+  "version": "0.0.1",
+  "description": "kestra end to end tests",
+  "dependencies": {
+    "chromedriver": "^91.0.1",
+    "dayjs": "^1.10.7",
+    "jest": "^27.0.1",
+    "taiko": "latest",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "babel-core": "7.0.0-bridge.0",
+    "babel-eslint": "^10.1.0",
+    "babel-jest": "^23.6.0",
+    "eslint": "^7.7.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "eslint-plugin-sort-imports-es6-autofix": "^0.6.0"
+  },
+  "jest": {
+    "testTimeout": 1600000,
+    "globals": {
+      "TAIKO_BROWSER_ARGS": [
+        "--window-size=1440,900",
+        "--no-sandbox",
+        "--no-zygote"
+      ]
+    }
+  },
+  "author": "eric regnier <eric.regnier.mail@gmail.com>",
+  "license": "ISC"
+}

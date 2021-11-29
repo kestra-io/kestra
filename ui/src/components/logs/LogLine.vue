@@ -58,7 +58,6 @@
                     INFO: "badge-primary",
                     WARN: "badge-warning",
                     ERROR: "badge-danger",
-                    CRITICAL: "badge-danger font-weight-bold",
                 }[this.log.level];
             },
             filtered() {

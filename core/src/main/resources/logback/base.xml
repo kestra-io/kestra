@@ -28,4 +28,7 @@
 
     <!-- Docker api log before exception -->
     <logger name="com.github.dockerjava.api" level="OFF" />
+
+    <!-- HealthCheck that report an exception -->
+    <logger name="io.micronaut.management.health.indicator.HealthResult" level="OFF" />
 </included>

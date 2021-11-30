@@ -1,9 +1,9 @@
 package io.kestra.repository.elasticsearch;
 
-import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
-import org.elasticsearch.action.support.IndicesOptions;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.opensearch.action.admin.indices.delete.DeleteIndexRequest;
+import org.opensearch.action.support.IndicesOptions;
+import org.opensearch.client.RequestOptions;
+import org.opensearch.client.RestHighLevelClient;
 import org.junit.jupiter.api.AfterEach;
 import io.kestra.repository.elasticsearch.configs.IndicesConfig;
 

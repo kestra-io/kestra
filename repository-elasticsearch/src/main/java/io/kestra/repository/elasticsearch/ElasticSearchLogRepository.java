@@ -1,12 +1,12 @@
 package io.kestra.repository.elasticsearch;
 
 import io.micronaut.data.model.Pageable;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermsQueryBuilder;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.SortOrder;
+import org.opensearch.client.RestHighLevelClient;
+import org.opensearch.index.query.BoolQueryBuilder;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.index.query.TermsQueryBuilder;
+import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.search.sort.SortOrder;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.ArrayListTotal;

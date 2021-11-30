@@ -1,9 +1,9 @@
 package io.kestra.repository.elasticsearch;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.opensearch.client.RestHighLevelClient;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.search.builder.SearchSourceBuilder;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.validations.ModelValidator;

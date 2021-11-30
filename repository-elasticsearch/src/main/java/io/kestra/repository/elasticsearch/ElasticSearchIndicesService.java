@@ -1,11 +1,11 @@
 package io.kestra.repository.elasticsearch;
 
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.client.indices.CreateIndexRequest;
-import org.elasticsearch.client.indices.GetIndexRequest;
-import org.elasticsearch.client.indices.PutMappingRequest;
-import org.elasticsearch.common.xcontent.XContentType;
+import org.opensearch.client.RequestOptions;
+import org.opensearch.client.RestHighLevelClient;
+import org.opensearch.client.indices.CreateIndexRequest;
+import org.opensearch.client.indices.GetIndexRequest;
+import org.opensearch.client.indices.PutMappingRequest;
+import org.opensearch.common.xcontent.XContentType;
 import io.kestra.repository.elasticsearch.configs.IndicesConfig;
 
 import java.io.IOException;

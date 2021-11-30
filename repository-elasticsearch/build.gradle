@@ -3,9 +3,7 @@ publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
 dependencies {
     implementation project(":core")
 
-    implementation "io.micronaut.elasticsearch:micronaut-elasticsearch"
-
-    implementation group: 'org.elasticsearch.client', name: 'elasticsearch-rest-high-level-client', version: "$elasticsearchVersion"
+    implementation group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchVersion"
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':runner-memory')

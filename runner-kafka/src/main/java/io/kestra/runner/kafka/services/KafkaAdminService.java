@@ -145,7 +145,7 @@ public class KafkaAdminService implements AutoCloseable {
                         }}).all().get();
 
                     log.info("Topic Config '{}' updated", newTopic.name());
-
+                } catch (TopicExistsException ignored) {
                 } catch (InterruptedException | ExecutionException e1) {
                     throw new RuntimeException(e);
                 }

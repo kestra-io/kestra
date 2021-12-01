@@ -20,6 +20,8 @@ services:
       - zookeeper-log:/var/lib/zookeeper/log
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: WARN
+      ZOOKEEPER_TOOLS_LOG4J_LOGLEVEL: WARN
 
   kafka:
     image: confluentinc/cp-kafka
@@ -32,18 +34,26 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
+      KAFKA_LOG4J_LOGGERS: "kafka=WARN,kafka.producer.async.DefaultEventHandler=WARN,kafka.controller=WARN,state.change.logger=WARN"
+      KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
+      KAFKA_TOOLS_LOG4J_LOGLEVEL: WARN
     links:
       - zookeeper
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
     environment:
       discovery.type: single-node
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+      xpack.security.enabled: "false"
       ES_JAVA_OPTS: "-Xms256m -Xmx256m"
     ulimits:
       memlock:
         soft: -1
         hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
 
@@ -72,7 +82,7 @@ services:
             type: kafka
 
     ports:
-      - 8080:8080
+      - "28080:8080"
     links:
       - kafka
       - zookeeper

@@ -35,7 +35,7 @@ public class RunContextLogger {
 
     public RunContextLogger(QueueInterface<LogEntry> logQueue, LogEntry logEntry) {
         if (logEntry.getExecutionId() != null) {
-            this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getExecutionId() + "." + logEntry.getTaskRunId();
+            this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getExecutionId() + (logEntry.getTaskRunId() != null ? "." + logEntry.getTaskRunId() : "");
         } else {
             this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getTriggerId();
         }

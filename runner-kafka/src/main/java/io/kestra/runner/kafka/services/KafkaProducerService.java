@@ -1,23 +1,26 @@
 package io.kestra.runner.kafka.services;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.runner.kafka.ProducerInterceptor;
+import io.kestra.runner.kafka.configs.ClientConfig;
+import io.kestra.runner.kafka.configs.ProducerDefaultsConfig;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.StringSerializer;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.runner.kafka.configs.ClientConfig;
-import io.kestra.runner.kafka.configs.ProducerDefaultsConfig;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 public class KafkaProducerService {
@@ -25,10 +28,10 @@ public class KafkaProducerService {
     private ClientConfig clientConfig;
 
     @Inject
-    private ProducerDefaultsConfig producerConfig;
+    private ApplicationContext applicationContext;
 
     @Inject
-    private KafkaConfigService kafkaConfigService;
+    private ProducerDefaultsConfig producerConfig;
 
     @Inject
     private MetricRegistry metricRegistry;
@@ -51,6 +54,14 @@ public class KafkaProducerService {
         props.putAll(properties);
 
         props.put(CommonClientConfigs.CLIENT_ID_CONFIG, clientId.getName());
+        props.put(KafkaStreamService.APPLICATION_CONTEXT_CONFIG, applicationContext);
+
+        if (clientConfig.getLoggers() != null) {
+            props.put(
+                ProducerConfig.INTERCEPTOR_CLASSES_CONFIG,
+                ProducerInterceptor.class.getName()
+            );
+        }
 
         return new Producer<>(props, serde, metricsEnabled ? metricRegistry : null);
     }

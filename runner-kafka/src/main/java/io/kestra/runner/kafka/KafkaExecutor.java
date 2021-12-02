@@ -461,6 +461,18 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
                 Produced.with(Serdes.String(), JsonSerde.of(Execution.class)).withName("HandleFlowTrigger.toExecution")
             );
 
+
+        // clean up Trigger deduplication state
+        stream
+            .transformValues(
+                () -> new DeduplicationPurgeTransformer<>(
+                    TRIGGER_DEDUPLICATION_STATE_STORE_NAME,
+                    (key, value) -> value.getExecution().getId()
+                ),
+                Named.as("PurgeExecutor.purgeTriggerDeduplication"),
+                TRIGGER_DEDUPLICATION_STATE_STORE_NAME
+            );
+
         stream
             .mapValues(
                 (readOnlyKey, value) -> (ExecutorFlowTrigger)null,

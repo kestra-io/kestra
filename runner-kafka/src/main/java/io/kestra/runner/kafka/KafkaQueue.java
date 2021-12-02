@@ -40,7 +40,6 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     private final KafkaConsumerService kafkaConsumerService;
     private final List<org.apache.kafka.clients.consumer.Consumer<String, T>> kafkaConsumers = Collections.synchronizedList(new ArrayList<>());
     private final QueueService queueService;
-    private final KafkaQueueService kafkaQueueService;
     private final RetryUtils retryUtils;
 
     private static ExecutorService poolExecutor;
@@ -59,7 +58,6 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         this.adminClient = kafkaAdminService.of();
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
         this.queueService = applicationContext.getBean(QueueService.class);
-        this.kafkaQueueService = applicationContext.getBean(KafkaQueueService.class);
         this.retryUtils = applicationContext.getBean(RetryUtils.class);
     }
 
@@ -87,8 +85,6 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     }
 
     private void produce(String key, T message) {
-        this.kafkaQueueService.log(log, topicsConfig, key, message, "Outgoing messsage");
-
         try {
             kafkaProducer
                 .send(
@@ -156,8 +152,6 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
                     ConsumerRecords<String, T> records = kafkaConsumer.poll(Duration.ofMillis(500));
 
                     records.forEach(record -> {
-                        this.kafkaQueueService.log(log, topicsConfig, record.key(), record.value(), "Incoming messsage");
-
                         consumer.accept(record.value());
 
                         if (consumerGroup != null) {

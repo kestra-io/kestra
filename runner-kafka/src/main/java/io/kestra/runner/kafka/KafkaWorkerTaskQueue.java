@@ -47,7 +47,6 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
     private final KafkaConsumerService kafkaConsumerService;
     private final KafkaConfigService kafkaConfigService;
     private final QueueService queueService;
-    private final KafkaQueueService kafkaQueueService;
     private final AtomicReference<WorkerInstance> workerInstance = new AtomicReference<>();
     private final UUID workerUuid;
 
@@ -72,7 +71,6 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
         this.kafkaConsumerService = applicationContext.getBean(KafkaConsumerService.class);
         this.kafkaConfigService = applicationContext.getBean(KafkaConfigService.class);
         this.queueService = applicationContext.getBean(QueueService.class);
-        this.kafkaQueueService = applicationContext.getBean(KafkaQueueService.class);
         this.workerInstanceQueue = (QueueInterface<WorkerInstance>) applicationContext.getBean(
             QueueInterface.class,
             Qualifiers.byName(QueueFactoryInterface.WORKERINSTANCE_NAMED)
@@ -106,14 +104,6 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                         kafkaProducer.beginTransaction();
 
                         records.forEach(record -> {
-                            this.kafkaQueueService.log(
-                                log,
-                                this.topicsConfigWorkerTask,
-                                record.key(),
-                                record.value(),
-                                "Incoming messsage"
-                            );
-
                             if (workerInstance.get() == null) {
                                 Await.until(() -> workerInstance.get() != null);
                             }
@@ -129,14 +119,6 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                                 this.queueService.key(workerTaskRunning),
                                 workerTaskRunning
                             ));
-
-                            this.kafkaQueueService.log(
-                                log,
-                                this.topicsConfigWorkerTaskRunning,
-                                this.queueService.key(workerTaskRunning),
-                                workerTaskRunning,
-                                "Outgoing messsage"
-                            );
                         });
 
                         // we commit first all offset before submit task to worker

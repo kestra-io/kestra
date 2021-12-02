@@ -110,7 +110,7 @@
                 }
 
                 if (query.q) {
-                    filter.push(qb.toLucene(query.q));
+                    filter.push(qb.toTextLucene(query.q));
                 }
 
                 if (this.isFlowEdit) {

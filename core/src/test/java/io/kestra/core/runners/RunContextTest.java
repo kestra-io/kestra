@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.utils.TestsUtils;
@@ -15,17 +16,12 @@ import org.slf4j.event.Level;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -71,6 +67,37 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(filters, hasSize(1));
         assertThat(filters.get(0).getLevel(), is(Level.ERROR));
         assertThat(filters.get(0).getMessage(), is("third logs"));
+    }
+
+    @Test
+    void inputsLarge() throws TimeoutException, InterruptedException {
+        List<LogEntry> logs = new ArrayList<>();
+        workerTaskLogQueue.receive(logs::add);
+
+        char[] chars = new char[1024*11];
+        Arrays.fill(chars, 'a');
+
+        Map<String, String> inputs = new HashMap<>(InputsTest.inputs);
+        inputs.put("string", new String(chars));
+
+        Execution execution = runnerUtils.runOne(
+            "io.kestra.tests",
+            "inputs-large",
+            null,
+            (flow, execution1) -> runnerUtils.typedInputs(flow, execution1, inputs)
+        );
+
+        assertThat(execution.getTaskRunList(), hasSize(10));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.SUCCESS));
+
+        List<LogEntry> logEntries = logs.stream()
+            .filter(logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()))
+            .sorted(Comparator.comparingLong(value -> value.getTimestamp().toEpochMilli()))
+            .collect(Collectors.toList());
+
+        Thread.sleep(100);
+        assertThat(logEntries.get(0).getTimestamp().toEpochMilli() + 1, is(logEntries.get(1).getTimestamp().toEpochMilli()));
     }
 
     @Test

@@ -1,24 +1,18 @@
 package io.kestra.repository.elasticsearch.services;
 
-import io.micronaut.elasticsearch.DefaultElasticsearchClientFactory;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.opensearch.client.RestClient;
+import org.opensearch.client.RestClientBuilder;
+import org.opensearch.client.RestHighLevelClient;
 import io.kestra.repository.elasticsearch.configs.ElasticsearchConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-/**
- * A replacement for {@link DefaultElasticsearchClientFactory} for creating Elasticsearch client.
- * The original is incomplete and don't allow basic auth.
- */
+
 @Requires(beans = ElasticsearchConfig.class)
-@Replaces(DefaultElasticsearchClientFactory.class)
 @Factory
 public class ElasticsearchClientFactory {
     /**
@@ -79,5 +73,4 @@ public class ElasticsearchClientFactory {
 
         return builder;
     }
-
 }

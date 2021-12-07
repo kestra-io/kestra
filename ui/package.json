@@ -31,6 +31,7 @@
     "md5": "^2.3.0",
     "moment": "^2.29.1",
     "moment-range": "4.0.2",
+    "monaco-yaml": "^3.2.1",
     "portal-vue": "^2.1.7",
     "prismjs": "^1.24.1",
     "qs": "^6.10.1",

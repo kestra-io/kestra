@@ -5,6 +5,7 @@ import io.kestra.cli.AbstractCommand;
 import io.kestra.core.docs.DocumentationGenerator;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.micronaut.context.ApplicationContext;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -13,12 +14,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 @CommandLine.Command(
     name = "doc",
     description = "write documentation for all plugins currently installed"
 )
 public class PluginDocCommand extends AbstractCommand {
+    @Inject
+    private ApplicationContext applicationContext;
+
     @CommandLine.Parameters(index = "0", description = "Path to write documentations files")
     private Path output = Paths.get(System.getProperty("user.dir"), "docs");
 
@@ -41,8 +46,10 @@ public class PluginDocCommand extends AbstractCommand {
             scan.add(corePluginScanner.scan());
         }
 
+        DocumentationGenerator documentationGenerator = applicationContext.getBean(DocumentationGenerator.class);
+
         for (RegisteredPlugin registeredPlugin : scan) {
-            DocumentationGenerator
+            documentationGenerator
                 .generate(registeredPlugin)
                 .forEach(s -> {
                         File file = Paths.get(output.toAbsolutePath().toString(), s.getPath()).toFile();

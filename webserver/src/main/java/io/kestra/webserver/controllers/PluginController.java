@@ -1,6 +1,11 @@
 package io.kestra.webserver.controllers;
 
-import io.micronaut.context.ApplicationContext;
+import io.kestra.core.docs.ClassPluginDocumentation;
+import io.kestra.core.docs.DocumentationGenerator;
+import io.kestra.core.docs.JsonSchemaGenerator;
+import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.core.services.PluginService;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.exceptions.HttpStatusException;
@@ -10,13 +15,6 @@ import io.micronaut.validation.Validated;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import io.kestra.core.contexts.KestraApplicationContext;
-import io.kestra.core.docs.DocumentationGenerator;
-import io.kestra.core.docs.ClassPluginDocumentation;
-import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.plugins.PluginScanner;
-import io.kestra.core.plugins.RegisteredPlugin;
 
 import java.io.IOException;
 import java.util.*;
@@ -28,12 +26,16 @@ import javax.inject.Inject;
 @Controller("/api/v1/plugins/")
 public class PluginController {
     @Inject
-    private ApplicationContext applicationContext;
+    private JsonSchemaGenerator jsonSchemaGenerator;
+
+    @Inject
+    private PluginService pluginService;
 
     @Get
     @ExecuteOn(TaskExecutors.IO)
     public List<Plugin> search() throws HttpStatusException {
-        return plugins()
+        return pluginService
+            .allPlugins()
             .stream()
             .map(Plugin::of)
             .collect(Collectors.toList());
@@ -41,7 +43,8 @@ public class PluginController {
 
     @Get(uri = "icons")
     public Map<String, PluginIcon> icons() throws HttpStatusException {
-        return plugins()
+        return pluginService
+            .allPlugins()
             .stream()
             .flatMap(plugin -> Stream
                 .concat(
@@ -67,7 +70,10 @@ public class PluginController {
     @Get(uri = "{cls}")
     @ExecuteOn(TaskExecutors.IO)
     public Doc pluginDocumentation(String cls) throws HttpStatusException, IOException {
-        ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(plugins(), cls);
+        ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(
+            pluginService.allPlugins(),
+            cls
+        );
 
         return new Doc(
             DocumentationGenerator.render(classPluginDocumentation),
@@ -77,25 +83,6 @@ public class PluginController {
                 classPluginDocumentation.getDefs()
             )
         );
-    }
-
-    private List<RegisteredPlugin> plugins() {
-        if (!(applicationContext instanceof KestraApplicationContext)) {
-            throw new RuntimeException("Invalid ApplicationContext");
-        }
-
-        KestraApplicationContext context = (KestraApplicationContext) applicationContext;
-        PluginRegistry pluginRegistry = context.getPluginRegistry();
-
-        List<RegisteredPlugin> plugins = new ArrayList<>();
-        if (pluginRegistry != null) {
-            plugins = new ArrayList<>(pluginRegistry.getPlugins());
-        }
-
-        PluginScanner corePluginScanner = new PluginScanner(PluginController.class.getClassLoader());
-        plugins.add(corePluginScanner.scan());
-
-        return plugins;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -113,7 +100,7 @@ public class PluginController {
         Class baseCls = registeredPlugin
             .baseClass(className);
 
-        return ClassPluginDocumentation.of(registeredPlugin, cls, baseCls);
+        return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, baseCls);
     }
 
     @NoArgsConstructor

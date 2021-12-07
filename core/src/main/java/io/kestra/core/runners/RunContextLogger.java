@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class RunContextLogger {
     private static final int MAX_MESSAGE_LENGTH = 1024*10;
@@ -35,7 +34,7 @@ public class RunContextLogger {
 
     public RunContextLogger(QueueInterface<LogEntry> logQueue, LogEntry logEntry) {
         if (logEntry.getExecutionId() != null) {
-            this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getExecutionId() + "." + logEntry.getTaskRunId();
+            this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getExecutionId() + (logEntry.getTaskRunId() != null ? "." + logEntry.getTaskRunId() : "");
         } else {
             this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getTriggerId();
         }
@@ -56,8 +55,10 @@ public class RunContextLogger {
             split = Collections.singletonList(message);
         }
 
-        return StreamSupport.stream(split.spliterator(), false)
-            .map(s -> LogEntry.builder()
+        List<LogEntry> result = new ArrayList<>();
+        long i = 0;
+        for (String s : split) {
+            result.add(LogEntry.builder()
                 .namespace(logEntry.getNamespace())
                 .flowId(logEntry.getFlowId())
                 .taskId(logEntry.getTaskId())
@@ -67,11 +68,14 @@ public class RunContextLogger {
                 .triggerId(logEntry.getTriggerId())
                 .level(level != null ? level : org.slf4j.event.Level.valueOf(event.getLevel().toString()))
                 .message(s)
-                .timestamp(Instant.ofEpochMilli(event.getTimeStamp()))
+                .timestamp(Instant.ofEpochMilli(event.getTimeStamp()).plusMillis(i))
                 .thread(event.getThreadName())
                 .build()
-            )
-            .collect(Collectors.toList());
+            );
+            i++;
+        }
+
+        return result;
     }
 
     @SuppressWarnings("UnstableApiUsage")

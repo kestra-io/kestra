@@ -29,7 +29,7 @@
                                 {{ $t('no result') }}
                             </b-alert>
                         </div>
-                        <div v-else class="bg-dark logs-wrapper text-white-always mb-2">
+                        <div v-else class="logs-wrapper mb-2 text-dark">
                             <template v-for="(log, i) in logs">
                                 <log-line
                                     level="TRACE"
@@ -110,7 +110,7 @@
                 }
 
                 if (query.q) {
-                    filter.push(qb.toLucene(query.q));
+                    filter.push(qb.toTextLucene(query.q));
                 }
 
                 if (this.isFlowEdit) {
@@ -152,19 +152,12 @@
     }
 
     .line:nth-child(odd) {
-        background-color: var(--gray-800);
+        background-color: var(--gray-100);
 
-        .theme-dark & {
-            background-color: var(--gray-100);
-        }
     }
 
     .line:nth-child(even) {
-        background-color: var(--gray-800-lighten-5);
-
-        .theme-dark & {
-            background-color: var(--gray-100-lighten-5);
-        }
+        background-color: var(--gray-100-lighten-5);
     }
 
 }

@@ -1,5 +1,6 @@
 package io.kestra.core.docs;
 
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
@@ -12,10 +13,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import javax.inject.Inject;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+@MicronautTest
 class ClassPluginDocumentationTest {
+    @Inject
+    JsonSchemaGenerator jsonSchemaGenerator;
 
     @SuppressWarnings("unchecked")
     @Test
@@ -28,7 +34,7 @@ class ClassPluginDocumentationTest {
         assertThat(scan.size(), is(1));
         assertThat(scan.get(0).getTasks().size(), is(1));
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(scan.get(0), scan.get(0).getTasks().get(0), Task.class);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan.get(0), scan.get(0).getTasks().get(0), Task.class);
 
         assertThat(doc.getDocExamples().size(), is(2));
         assertThat(doc.getIcon(), is(notNullValue()));

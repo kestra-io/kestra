@@ -81,7 +81,7 @@ public class ErrorController {
             }
         }
 
-        return jsonError(request, e, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Internal server error");
     }
 
     @SuppressWarnings("unchecked")

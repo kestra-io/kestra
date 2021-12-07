@@ -65,7 +65,7 @@ public class RunContext {
     public RunContext(ApplicationContext applicationContext, Flow flow, Execution execution) {
         this.initBean(applicationContext);
         this.initContext(flow, null, execution, null);
-        this.runContextLogger = new RunContextLogger();
+        this.initLogger(execution);
     }
 
     /**
@@ -141,6 +141,17 @@ public class RunContext {
                 Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
             ).orElseThrow(),
             LogEntry.of(taskRun)
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    private void initLogger(Execution execution) {
+        this.runContextLogger = new RunContextLogger(
+            applicationContext.findBean(
+                QueueInterface.class,
+                Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+            ).orElseThrow(),
+            LogEntry.of(execution)
         );
     }
 

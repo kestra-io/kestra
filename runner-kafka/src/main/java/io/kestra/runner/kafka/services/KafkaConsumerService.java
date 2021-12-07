@@ -1,7 +1,12 @@
 package io.kestra.runner.kafka.services;
 
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.runner.kafka.ConsumerInterceptor;
+import io.kestra.runner.kafka.configs.ClientConfig;
+import io.kestra.runner.kafka.configs.ConsumerDefaultsConfig;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.kafka.KafkaClientMetrics;
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -9,24 +14,24 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.runner.kafka.configs.ClientConfig;
-import io.kestra.runner.kafka.configs.ConsumerDefaultsConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Singleton
 @Slf4j
 public class KafkaConsumerService {
     @Inject
     private ClientConfig clientConfig;
+
+    @Inject
+    private ApplicationContext applicationContext;
 
     @Inject
     private ConsumerDefaultsConfig consumerConfig;
@@ -58,11 +63,20 @@ public class KafkaConsumerService {
         }
 
         props.put(CommonClientConfigs.CLIENT_ID_CONFIG, clientId.getName());
+        props.put(KafkaStreamService.APPLICATION_CONTEXT_CONFIG, applicationContext);
 
         if (group != null) {
             props.put(ConsumerConfig.GROUP_ID_CONFIG, kafkaConfigService.getConsumerGroupName(group));
         } else {
             props.remove(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG);
+        }
+
+        // interceptor
+        if (clientConfig.getLoggers() != null) {
+            props.put(
+                ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG,
+                ConsumerInterceptor.class.getName()
+            );
         }
 
         return new Consumer<>(props, serde, metricsEnabled ? metricRegistry : null, consumerRebalanceListener);

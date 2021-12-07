@@ -27,8 +27,11 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
-abstract public class DocumentationGenerator {
+@Singleton
+public class DocumentationGenerator {
     private static final Handlebars handlebars = new Handlebars()
         .with(EscapingStrategy.NOOP)
         .registerHelpers(ConditionalHelpers.class)
@@ -55,14 +58,17 @@ abstract public class DocumentationGenerator {
         .registerHelpers(DateHelper.class)
         .registerHelpers(JsonHelper.class);
 
-    public static List<Document> generate(RegisteredPlugin registeredPlugin) throws IOException {
+    @Inject
+    JsonSchemaGenerator jsonSchemaGenerator;
+
+    public List<Document> generate(RegisteredPlugin registeredPlugin) throws IOException {
         ArrayList<Document> result = new ArrayList<>();
 
-        result.addAll(DocumentationGenerator.index(registeredPlugin));
+        result.addAll(index(registeredPlugin));
 
-        result.addAll(DocumentationGenerator.generate(registeredPlugin, registeredPlugin.getTasks(), Task.class, "tasks"));
-        result.addAll(DocumentationGenerator.generate(registeredPlugin, registeredPlugin.getTriggers(), AbstractTrigger.class, "triggers"));
-        result.addAll(DocumentationGenerator.generate(registeredPlugin, registeredPlugin.getConditions(), Condition.class, "conditions"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getTasks(), Task.class, "tasks"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getTriggers(), AbstractTrigger.class, "triggers"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getConditions(), Condition.class, "conditions"));
 
         return result;
     }
@@ -88,10 +94,10 @@ abstract public class DocumentationGenerator {
         ));
     }
 
-    private static <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {
+    private <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {
         return cls
             .stream()
-            .map(r -> ClassPluginDocumentation.of(registeredPlugin, r, baseCls))
+            .map(r -> ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, r, baseCls))
             .map(pluginDocumentation -> {
                 try {
                     return new Document(

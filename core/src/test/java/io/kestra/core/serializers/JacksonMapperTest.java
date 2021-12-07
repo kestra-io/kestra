@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -18,19 +16,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 class JacksonMapperTest {
-    private TimeZone timeZone;
-
-    @BeforeEach
-    void init() {
-        timeZone = TimeZone.getDefault();
-        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Athens"));
-    }
-
-    @AfterEach
-    void tearDown() {
-        TimeZone.setDefault(timeZone);
-    }
-
     Pojo pojo() {
         return new Pojo(
             "te\n\nst",
@@ -42,6 +27,9 @@ class JacksonMapperTest {
 
     @Test
     void json() throws IOException {
+        TimeZone timeZone = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Athens"));
+
         ObjectMapper mapper = JacksonMapper.ofJson();
 
         Pojo original = pojo();
@@ -50,10 +38,15 @@ class JacksonMapperTest {
         Pojo deserialize = mapper.readValue(s, Pojo.class);
 
         test(original, deserialize);
+
+        TimeZone.setDefault(timeZone);
     }
 
     @Test
     void ion() throws IOException {
+        TimeZone timeZone = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Athens"));
+
         ObjectMapper mapper = JacksonMapper.ofIon();
 
         Pojo original = pojo();
@@ -62,6 +55,8 @@ class JacksonMapperTest {
         assertThat(s, containsString("nullable:null"));
         Pojo deserialize = mapper.readValue(s, Pojo.class);
         test(original, deserialize);
+
+        TimeZone.setDefault(timeZone);
     }
 
     void test(Pojo original, Pojo deserialize) {

@@ -1,13 +1,17 @@
 package io.kestra.runner.kafka.services;
 
+import io.kestra.runner.kafka.ConsumerInterceptor;
 import io.kestra.runner.kafka.KafkaDeserializationExceptionHandler;
 import io.kestra.runner.kafka.KafkaExecutorProductionExceptionHandler;
+import io.kestra.runner.kafka.ProducerInterceptor;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
@@ -68,6 +72,19 @@ public class KafkaStreamService {
         properties.put(APPLICATION_CONTEXT_CONFIG, applicationContext);
 
         properties.put(StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, KafkaDeserializationExceptionHandler.class);
+
+        // interceptor
+        if (clientConfig.getLoggers() != null) {
+            properties.put(
+                StreamsConfig.PRODUCER_PREFIX + ProducerConfig.INTERCEPTOR_CLASSES_CONFIG,
+                ProducerInterceptor.class.getName()
+            );
+
+            properties.put(
+                StreamsConfig.MAIN_CONSUMER_PREFIX + ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG,
+                ConsumerInterceptor.class.getName()
+            );
+        }
 
         return new Stream(topology, properties, metricsEnabled ? metricRegistry : null);
     }

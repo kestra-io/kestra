@@ -1,10 +1,10 @@
 <template>
-    <div v-if="execution" class="log-wrapper text-white-always">
+    <div v-if="execution" class="log-wrapper text-dark">
         <div v-for="currentTaskRun in execution.taskRunList" :key="currentTaskRun.id">
             <template
                 v-if="displayTaskRun(currentTaskRun)"
             >
-                <div class="bg-dark attempt-wrapper">
+                <div class="bg-light attempt-wrapper">
                     <template v-for="(attempt, index) in attempts(currentTaskRun)">
                         <div
                             :key="`attempt-${index}-${currentTaskRun.id}`"
@@ -317,19 +317,11 @@
 .log-wrapper {
 
     .line:nth-child(odd) {
-        background-color: var(--gray-800);
-
-        .theme-dark & {
-            background-color: var(--gray-100);
-        }
+        background-color: var(--gray-100);
     }
 
     .line:nth-child(even) {
-        background-color: var(--gray-800-lighten-5);
-
-        .theme-dark & {
-            background-color: var(--gray-100-lighten-5);
-        }
+        background-color: var(--gray-100-lighten-5);
     }
 
     .attempt-header {
@@ -340,7 +332,7 @@
         line-height: $btn-line-height;
 
         .attempt-number {
-            background: var(--primary);
+            background: var(--gray-400);
             padding: $btn-padding-y $btn-padding-x;
             white-space: nowrap;
         }

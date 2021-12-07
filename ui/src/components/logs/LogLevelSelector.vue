@@ -17,7 +17,6 @@
                     "INFO",
                     "WARN",
                     "ERROR",
-                    "CRITICAL",
                 ],
             };
         },

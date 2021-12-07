@@ -15,19 +15,22 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 
+@Singleton
 public class JsonSchemaGenerator {
+    Map<Class<?>, Object> defaultInstances = new HashMap<>();
+
     public <T> Map<String, Object> properties(Class<T> base, Class<? extends T> cls) {
         return this.generate(cls, base);
     }
@@ -57,16 +60,8 @@ public class JsonSchemaGenerator {
             .orElse(ImmutableMap.of());
     }
 
-    private <T> Map<String, Object> generate(Class<? extends T> cls, @Nullable Class<T> base) {
-        // store current class
-        Map<Class<?>, Object> defaultInstances = new HashMap<>();
-        defaultInstances.put(cls, buildDefaultInstance(cls));
-
-        // init schema generator
-        SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(
-            SchemaVersion.DRAFT_2019_09,
-            OptionPreset.PLAIN_JSON
-        )
+    protected <T> void build(SchemaGeneratorConfigBuilder builder, Class<? extends T> cls) {
+        builder
             .with(new JacksonModule())
             .with(new JavaxValidationModule(
                 JavaxValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
@@ -78,15 +73,11 @@ public class JsonSchemaGenerator {
             .with(Option.PLAIN_DEFINITION_KEYS)
             .with(Option.ALLOF_CLEANUP_AT_THE_END);
 
-        // base is passed, we don't return base properties
-        if (base != null) {
-            configBuilder
-                .forFields()
-                .withIgnoreCheck(fieldScope -> fieldScope.getDeclaringType().getTypeName().equals(base.getName()));
-        }
+        // default value
+        builder.forFields().withDefaultResolver(this::defaults);
 
         // def name
-        configBuilder.forTypesInGeneral()
+        builder.forTypesInGeneral()
             .withDefinitionNamingStrategy(new DefaultSchemaDefinitionNamingStrategy() {
                 @Override
                 public String getDefinitionNameForKey(DefinitionKey key, SchemaGenerationContext context) {
@@ -102,7 +93,7 @@ public class JsonSchemaGenerator {
             });
 
         // inline some type
-        configBuilder.forTypesInGeneral()
+        builder.forTypesInGeneral()
             .withCustomDefinitionProvider(new CustomDefinitionProviderV2() {
                 @Override
                 public CustomDefinition provideCustomSchemaDefinition(ResolvedType javaType, SchemaGenerationContext context) {
@@ -121,30 +112,8 @@ public class JsonSchemaGenerator {
                 }
             });
 
-        // default value
-        configBuilder.forFields().withDefaultResolver(target -> {
-            if (target.getOverriddenType() != null) {
-                return null;
-            }
-
-            // class is abstract we try with cls passed to method, optimistic approach
-            Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
-            if (Modifier.isAbstract(baseCls.getModifiers()) && baseCls.isAssignableFrom(cls)) {
-                baseCls = cls;
-            }
-
-            if (!defaultInstances.containsKey(baseCls)) {
-                defaultInstances.put(baseCls, buildDefaultInstance(baseCls));
-            }
-
-            Object instance = defaultInstances.get(baseCls);
-
-            return instance == null ? null : defaultValue(instance, baseCls, target.getName());
-        });
-
-
         // PluginProperty $dynamic && deprecated swagger properties
-        configBuilder.forFields().withInstanceAttributeOverride((memberAttributes, member, context) -> {
+        builder.forFields().withInstanceAttributeOverride((memberAttributes, member, context) -> {
             PluginProperty pluginPropertyAnnotation = member.getAnnotation(PluginProperty.class);
             if (pluginPropertyAnnotation != null) {
                 memberAttributes.put("$dynamic", pluginPropertyAnnotation.dynamic());
@@ -157,8 +126,29 @@ public class JsonSchemaGenerator {
             }
         });
 
+        // Add Plugin annotation special docs
+        builder.forTypesInGeneral()
+            .withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
+                Plugin pluginAnnotation = scope.getType().getErasedType().getAnnotation(Plugin.class);
+                if (pluginAnnotation != null) {
+                    List<ObjectNode> examples = Arrays
+                        .stream(pluginAnnotation.examples())
+                        .map(example -> context.getGeneratorConfig().createObjectNode()
+                            .put("full", example.full())
+                            .put("code", String.join("\n", example.code()))
+                            .put("lang", example.lang())
+                            .put("title", example.title())
+                        )
+                        .collect(Collectors.toList());
+
+                    if (examples.size() > 0) {
+                        collectedTypeAttributes.set("$examples", context.getGeneratorConfig().createArrayNode().addAll(examples));
+                    }
+                }
+            });
+
         // PluginProperty additionalProperties
-        configBuilder.forFields().withAdditionalPropertiesResolver(target -> {
+        builder.forFields().withAdditionalPropertiesResolver(target -> {
             PluginProperty pluginPropertyAnnotation = target.getAnnotation(PluginProperty.class);
             if (pluginPropertyAnnotation != null) {
                 return pluginPropertyAnnotation.additionalProperties();
@@ -166,31 +156,26 @@ public class JsonSchemaGenerator {
 
             return Object.class;
         });
+    }
 
-        // generate json schema
-        SchemaGeneratorConfig schemaGeneratorConfig = configBuilder.build();
+    protected <T> Map<String, Object> generate(Class<? extends T> cls, @Nullable Class<T> base) {
+        SchemaGeneratorConfigBuilder builder = new SchemaGeneratorConfigBuilder(
+            SchemaVersion.DRAFT_2019_09,
+            OptionPreset.PLAIN_JSON
+        );
+
+        this.build(builder, cls);
+
+        // base is passed, we don't return base properties
+        builder
+            .forFields()
+            .withIgnoreCheck(fieldScope -> base != null && fieldScope.getDeclaringType().getTypeName().equals(base.getName()));
+
+        SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
+
         SchemaGenerator generator = new SchemaGenerator(schemaGeneratorConfig);
         try {
             ObjectNode objectNode = generator.generateSchema(cls);
-
-            // add Plugin annotation special docs
-            Plugin pluginAnnotation = cls.getDeclaredAnnotation(Plugin.class);
-
-            if (pluginAnnotation != null) {
-                List<ObjectNode> examples = Arrays
-                    .stream(pluginAnnotation.examples())
-                    .map(example -> schemaGeneratorConfig.createObjectNode()
-                        .put("full", example.full())
-                        .put("code", String.join("\n", example.code()))
-                        .put("lang", example.lang())
-                        .put("title", example.title())
-                    )
-                    .collect(Collectors.toList());
-
-                if (examples.size() > 0) {
-                    objectNode.set("$examples", schemaGeneratorConfig.createArrayNode().addAll(examples));
-                }
-            }
 
             return JacksonMapper.toMap(extractMainRef(objectNode));
         } catch (IllegalArgumentException e) {
@@ -198,6 +183,36 @@ public class JsonSchemaGenerator {
         }
     }
 
+    protected Object defaults(FieldScope target) {
+        if (target.getOverriddenType() != null) {
+            return null;
+        }
+
+        // class is abstract we try with cls passed to method, we try to find a derived one, optimistic approach
+        Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
+        if (Modifier.isAbstract(baseCls.getModifiers())) {
+            Class<?> abstractBaseCls = baseCls;
+            Optional<Map.Entry<Class<?>, Object>> derivedOne = defaultInstances
+                .entrySet()
+                .stream()
+                .filter(e -> !Modifier.isAbstract(e.getKey().getModifiers()))
+                .filter(e -> abstractBaseCls.isAssignableFrom(e.getKey()))
+                .findFirst();
+
+            if (derivedOne.isPresent()) {
+                defaultInstances.put(baseCls, derivedOne.get());
+                baseCls = derivedOne.get().getKey();
+            }
+        }
+
+        if (!defaultInstances.containsKey(baseCls)) {
+            defaultInstances.put(baseCls, buildDefaultInstance(baseCls));
+        }
+
+        Object instance = defaultInstances.get(baseCls);
+
+        return instance == null ? null : defaultValue(instance, baseCls, target.getName());
+    }
 
     private ObjectNode extractMainRef(ObjectNode objectNode) {
         TextNode ref = (TextNode) objectNode.get("$ref");
@@ -238,6 +253,9 @@ public class JsonSchemaGenerator {
         }
         if (mainClassDef.has("description")) {
             objectNode.set("description", mainClassDef.get("description"));
+        }
+        if (mainClassDef.has("$examples")) {
+            objectNode.set("$examples", mainClassDef.get("$examples"));
         }
     }
 

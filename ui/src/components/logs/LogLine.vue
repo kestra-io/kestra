@@ -1,11 +1,11 @@
 <template>
     <div class="line text-monospace" v-if="filtered">
         <span :class="levelClass" class="header-badge log-level">{{ log.level.padEnd(9) }}</span>
-        <span class="header-badge bg-light-always text-dark-always">
+        <span class="header-badge bg-light text-dark">
             {{ log.timestamp | date("iso") }}
         </span>
         <span v-for="(meta, x) in metaWithValue" :key="x">
-            <span class="header-badge bg-light-always text-dark-always property">
+            <span class="header-badge bg-light text-dark property">
                 <span>{{ meta.key }}</span>
                 {{ meta.value }}
             </span>
@@ -58,7 +58,6 @@
                     INFO: "badge-primary",
                     WARN: "badge-warning",
                     ERROR: "badge-danger",
-                    CRITICAL: "badge-danger font-weight-bold",
                 }[this.log.level];
             },
             filtered() {
@@ -77,6 +76,10 @@ div.line {
     white-space: pre-wrap;
     word-break: break-all;
     padding: 0 $spacer/2;
+
+    .theme-dark & {
+        color: var(--body-color)
+    }
 
     .header-badge {
         display: inline-block;
@@ -100,6 +103,18 @@ div.line {
             > span {
                 font-family: $font-family-sans-serif;
                 color: var(--gray-600);
+                user-select: none;
+            }
+        }
+
+
+
+        .theme-dark &.bg-light {
+            background-color: var(--gray-200-lighten-5) !important;
+            color: var(--gray-600) !important;
+
+            > span {
+                color: var(--gray-300-lighten-10) !important;
             }
         }
     }

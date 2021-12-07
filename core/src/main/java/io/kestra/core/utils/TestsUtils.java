@@ -51,7 +51,7 @@ abstract public class TestsUtils {
     public static List<LogEntry> filterLogs(List<LogEntry> logs, TaskRun taskRun) {
         return logs
             .stream()
-            .filter(r -> r.getTaskRunId().equals(taskRun.getId()))
+            .filter(r -> r.getTaskRunId() != null && r.getTaskRunId().equals(taskRun.getId()))
             .collect(Collectors.toList());
     }
 

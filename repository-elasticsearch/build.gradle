@@ -3,7 +3,9 @@ publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
 dependencies {
     implementation project(":core")
 
-    implementation group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchVersion"
+    implementation (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchVersion") {
+        exclude group: 'org.apache.logging.log4j'
+    }
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':runner-memory')

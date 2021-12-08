@@ -5,7 +5,9 @@ dependencies {
     implementation project(":repository-elasticsearch")
     implementation project(":runner-kafka")
 
-    implementation group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchVersion"
+    implementation (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchVersion") {
+        exclude group: 'org.apache.logging.log4j'
+    }
     implementation group: "org.apache.kafka", name: "kafka-clients", version: kafkaVersion
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.1'
 

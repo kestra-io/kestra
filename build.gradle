@@ -97,6 +97,8 @@ allprojects {
         // logs
         implementation "org.slf4j:slf4j-api:1.7.30"
         implementation "ch.qos.logback:logback-classic:1.2.3"
+        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.14.1'
+        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.30'
 
         // jackson
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.3'

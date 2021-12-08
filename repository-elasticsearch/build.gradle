@@ -3,10 +3,11 @@ publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
 dependencies {
     implementation project(":core")
 
-    implementation group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchVersion"
+    implementation (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchVersion") {
+        exclude group: 'org.apache.logging.log4j'
+    }
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':runner-memory')
     testImplementation 'org.mockito:mockito-junit-jupiter:3.11.2'
-    testImplementation  group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.14.1'
 }

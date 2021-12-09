@@ -19,7 +19,4 @@ public class WorkerTaskExecution {
 
     @NotNull
     private Execution execution;
-
-    @NotNull
-    private RunContext runContext;
 }

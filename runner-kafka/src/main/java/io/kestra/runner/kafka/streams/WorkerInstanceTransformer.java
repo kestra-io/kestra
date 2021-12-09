@@ -125,7 +125,6 @@ public class WorkerInstanceTransformer implements ValueTransformerWithKey<String
                 .map(r -> r.value.value())
                 .filter(r -> r.getWorkerInstance().getWorkerUuid().toString().equals(workerInstance.getWorkerUuid().toString()))
                 .map(r -> WorkerTask.builder()
-                    .runContext(r.getRunContext())
                     .taskRun(r.getTaskRun().onRunningResend())
                     .task(r.getTask())
                     .build()

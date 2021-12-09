@@ -170,7 +170,6 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
                     .withOutputs(builder.build().toMap());
 
                 return WorkerTaskResult.builder()
-                    .task(workerTaskExecution.getTask())
                     .taskRun(taskRun)
                     .build();
             }
@@ -189,7 +188,6 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         }
 
         return WorkerTaskResult.builder()
-            .task(workerTaskExecution.getTask())
             .taskRun(taskRun)
             .build();
     }

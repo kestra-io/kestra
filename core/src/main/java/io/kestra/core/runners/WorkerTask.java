@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.executions.Execution;
 import lombok.Builder;
 import lombok.Data;
 import lombok.With;
@@ -22,6 +23,9 @@ public class WorkerTask {
 
     @NotNull
     private RunContext runContext;
+
+    @NotNull
+    private Execution execution;
 
     public Logger logger() {
         return LoggerFactory.getLogger(

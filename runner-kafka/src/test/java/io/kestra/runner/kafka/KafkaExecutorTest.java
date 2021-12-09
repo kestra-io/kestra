@@ -635,7 +635,6 @@ class KafkaExecutorTest {
     private void changeStatus(Task task, TaskRun taskRun, State.Type state) {
         this.workerTaskResultInput()
             .pipeInput("unittest", WorkerTaskResult.builder()
-                .task(task)
                 .taskRun(taskRun.withState(state))
                 .build()
             );

@@ -178,10 +178,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         TaskRun taskRun
     ) {
         return findState
-            .map(throwFunction(type -> new WorkerTaskResult(
-                taskRun.withState(type),
-                task
-            )))
+            .map(throwFunction(type -> new WorkerTaskResult(taskRun.withState(type))))
             .stream()
             .peek(workerTaskResult -> {
                 metricRegistry
@@ -518,7 +515,6 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
                     WorkerTaskExecution workerTaskExecution = WorkerTaskExecution.builder()
                         .task(flowTask)
                         .taskRun(workerTask.getTaskRun())
-                        .runContext(runContext)
                         .execution(execution)
                         .build();
 
@@ -534,7 +530,6 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
                     }
                 } catch (Exception e) {
                     workerTaskResults.add(WorkerTaskResult.builder()
-                        .task(flowTask)
                         .taskRun(workerTask.getTaskRun().withState(State.Type.FAILED))
                         .build()
                     );

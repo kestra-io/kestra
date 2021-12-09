@@ -1,9 +1,9 @@
 package io.kestra.core.runners;
 
-import lombok.Builder;
-import lombok.Data;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
+import lombok.Builder;
+import lombok.Data;
 
 import javax.validation.constraints.NotNull;
 
@@ -17,9 +17,6 @@ public class WorkerTaskRunning {
     private Task task;
 
     @NotNull
-    private RunContext runContext;
-
-    @NotNull
     private WorkerInstance workerInstance;
 
     @NotNull
@@ -31,7 +28,6 @@ public class WorkerTaskRunning {
             .partition(partition)
             .taskRun(workerTask.getTaskRun())
             .task(workerTask.getTask())
-            .runContext(workerTask.getRunContext())
             .build();
     }
 }

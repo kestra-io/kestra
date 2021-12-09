@@ -150,12 +150,10 @@ public class MetricRegistry {
      */
     public String[] tags(WorkerTaskResult workerTaskResult, String... tags) {
         return ArrayUtils.addAll(
-            ArrayUtils.addAll(
-                this.tags(workerTaskResult.getTask()),
-                tags
-            ),
+            tags,
             TAG_NAMESPACE_ID, workerTaskResult.getTaskRun().getNamespace(),
             TAG_FLOW_ID, workerTaskResult.getTaskRun().getFlowId(),
+            TAG_TASK_ID, workerTaskResult.getTaskRun().getTaskId(),
             TAG_STATE, workerTaskResult.getTaskRun().getState().getCurrent().name()
         );
     }

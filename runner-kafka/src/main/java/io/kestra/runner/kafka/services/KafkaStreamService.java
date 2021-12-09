@@ -21,6 +21,7 @@ import org.apache.kafka.streams.processor.StateRestoreListener;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.runner.kafka.configs.ClientConfig;
 import io.kestra.runner.kafka.configs.StreamDefaultsConfig;
+import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.util.List;
@@ -57,7 +58,15 @@ public class KafkaStreamService {
         return this.of(clientId, groupId, topology, new Properties());
     }
 
+    public KafkaStreamService.Stream of(Class<?> clientId, Class<?> groupId, Topology topology, Logger logger) {
+        return this.of(clientId, groupId, topology, new Properties(), logger);
+    }
+
     public KafkaStreamService.Stream of(Class<?> clientId, Class<?> groupId, Topology topology, Properties properties) {
+        return this.of(clientId, groupId, topology, properties, null);
+    }
+
+    public KafkaStreamService.Stream of(Class<?> clientId, Class<?> groupId, Topology topology, Properties properties, Logger logger) {
         properties.putAll(clientConfig.getProperties());
 
         if (this.streamConfig.getProperties() != null) {
@@ -86,13 +95,14 @@ public class KafkaStreamService {
             );
         }
 
-        return new Stream(topology, properties, metricsEnabled ? metricRegistry : null);
+        return new Stream(topology, properties, metricsEnabled ? metricRegistry : null, logger);
     }
 
     public static class Stream extends KafkaStreams {
+        private final Logger logger;
         private KafkaStreamsMetrics metrics;
 
-        private Stream(Topology topology, Properties props, MetricRegistry meterRegistry) {
+        private Stream(Topology topology, Properties props, MetricRegistry meterRegistry, Logger logger) {
             super(topology, props);
 
             if (meterRegistry != null) {
@@ -105,6 +115,8 @@ public class KafkaStreamService {
                 );
                 meterRegistry.bind(metrics);
             }
+
+            this.logger = logger != null ? logger : log;
         }
 
         public synchronized void start(final KafkaStreams.StateListener listener) throws IllegalStateException, StreamsException {
@@ -113,11 +125,11 @@ public class KafkaStreamService {
                 System.exit(1);
             });
 
-            this.setGlobalStateRestoreListener(new StateRestoreLoggerListeners());
+            this.setGlobalStateRestoreListener(new StateRestoreLoggerListeners(logger));
 
             this.setStateListener((newState, oldState) -> {
-                if (log.isInfoEnabled()) {
-                    log.info("Switching stream state from {} to {}", oldState, newState);
+                if (logger.isInfoEnabled()) {
+                    logger.info("Switching stream state from {} to {}", oldState, newState);
                 }
 
                 if (listener != null) {
@@ -153,10 +165,16 @@ public class KafkaStreamService {
     }
 
     public static class StateRestoreLoggerListeners implements StateRestoreListener {
+        private final Logger logger;
+
+        public StateRestoreLoggerListeners(Logger logger) {
+            this.logger = logger;
+        }
+
         @Override
         public void onRestoreStart(TopicPartition topicPartition, String storeName, long startingOffset, long endingOffset) {
-            if (log.isDebugEnabled()) {
-                log.debug(
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                     "Starting restore topic '{}', partition '{}', store '{}' from {} to {}",
                     topicPartition.topic(),
                     topicPartition.partition(),
@@ -169,9 +187,9 @@ public class KafkaStreamService {
 
         @Override
         public void onBatchRestored(TopicPartition topicPartition, String storeName, long batchEndOffset, long numRestored) {
-            if (log.isTraceEnabled()) {
-                log.trace(
-                    "Restore done for topic '{}', partition '{}', store '{}' at offset {} with {} records",
+            if (logger.isTraceEnabled()) {
+                logger.trace(
+                    "Restore batch for topic '{}', partition '{}', store '{}' at offset {} with {} records",
                     topicPartition.topic(),
                     topicPartition.partition(),
                     storeName,
@@ -183,8 +201,8 @@ public class KafkaStreamService {
 
         @Override
         public void onRestoreEnd(TopicPartition topicPartition, String storeName, long totalRestored) {
-            if (log.isDebugEnabled()) {
-                log.debug(
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                     "Restore ended for topic '{}', partition '{}', store '{}'",
                     topicPartition.topic(),
                     topicPartition.partition(),

@@ -37,7 +37,7 @@ kestra:
 
       stream:
         properties:
-          processing.guarantee: "exactly_once_beta"
+          processing.guarantee: "exactly_once_v2"
           acks: "all"
           compression.type: "lz4"
           max.request.size: "10485760"

@@ -17,6 +17,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.StreamsException;
+import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.processor.StateRestoreListener;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.runner.kafka.configs.ClientConfig;
@@ -120,9 +121,9 @@ public class KafkaStreamService {
         }
 
         public synchronized void start(final KafkaStreams.StateListener listener) throws IllegalStateException, StreamsException {
-            this.setUncaughtExceptionHandler((thread, e) -> {
-                log.error("Uncaught exception in Kafka Stream " + thread.getName() + ", closing !", e);
-                System.exit(1);
+            this.setUncaughtExceptionHandler(e -> {
+                log.error("Uncaught exception in Kafka Stream, closing !", e);
+                return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_APPLICATION;
             });
 
             this.setGlobalStateRestoreListener(new StateRestoreLoggerListeners(logger));

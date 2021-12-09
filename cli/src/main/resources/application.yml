@@ -65,7 +65,7 @@ kestra:
 
       stream:
         properties:
-          processing.guarantee: "exactly_once_beta"
+          processing.guarantee: "exactly_once_v2"
           replication.factor: "${kestra.kafka.defaults.topic.replication-factor}"
           acks: "all"
           compression.type: "lz4"

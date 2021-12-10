@@ -37,6 +37,8 @@
                     :responsive="true"
                     striped
                     hover
+                    sort-by="startDate"
+                    sort-desc
                     :items="taskruns"
                     :fields="fields"
                     @row-dblclicked="onRowDoubleClick"
@@ -138,13 +140,6 @@
                 dailyReady: false,
                 isDefaultNamespaceAllow: true,
             };
-        },
-        beforeMount() {
-            if (this.$route.query.sort === undefined) {
-                this.$router.push({
-                    query: {...this.$route.query, ...{sort: "taskRunList.state.startDate:desc"}}
-                });
-            }
         },
         computed: {
             ...mapState("taskrun", ["taskruns", "total", "maxTaskRunSetting"]),
@@ -275,7 +270,7 @@
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         q: this.loadQuery(false),
-                        sort: this.$route.query.sort,
+                        sort: this.$route.query.sort || "taskRunList.state.startDate:desc",
                         state: this.$route.query.status
                     })
                     .finally(callback);

@@ -37,6 +37,8 @@
                     :responsive="true"
                     striped
                     hover
+                    sort-by="startDate"
+                    sort-desc
                     :items="executions"
                     :fields="fields"
                     @row-dblclicked="onRowDoubleClick"
@@ -150,13 +152,6 @@
                 dblClickRouteName: "executions/update",
                 flowTriggerDetails: undefined
             };
-        },
-        beforeMount() {
-            if (this.$route.query.sort === undefined) {
-                this.$router.push({
-                    query: {...this.$route.query, ...{sort: "state.startDate:desc"}}
-                });
-            }
         },
         computed: {
             ...mapState("execution", ["executions", "total"]),

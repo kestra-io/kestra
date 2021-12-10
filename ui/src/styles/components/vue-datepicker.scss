@@ -39,6 +39,7 @@ $input-border-radius: $border-radius;
         height: $input-height;
         padding: $input-padding-y ($input-padding-x * 3) $input-padding-y $input-padding-x ;
         font-family: $input-font-family;
+        background-color: $input-bg;
 
         box-shadow: none;
         font-size: $input-font-size;

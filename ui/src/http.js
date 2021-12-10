@@ -31,13 +31,28 @@ export default (callback, store, nprogress) => {
         response => {
             return response
         }, errorResponse => {
+            if (errorResponse.code && errorResponse.code === "ECONNABORTED") {
+                store.dispatch("core/showMessage", {
+                    content: errorResponse,
+                    variant: "danger"
+                })
+
+                return Promise.reject(errorResponse);
+            }
+
             if (errorResponse.response.status === 404) {
                 store.dispatch("core/showError", errorResponse.response.status)
-            } else if (errorResponse.response && errorResponse.response.data) {
+
+                return Promise.reject(errorResponse);
+            }
+
+            if (errorResponse.response && errorResponse.response.data) {
                 store.dispatch("core/showMessage", {
                     content: errorResponse.response.data,
                     variant: "danger"
                 })
+
+                return Promise.reject(errorResponse);
             }
 
             return Promise.reject(errorResponse);

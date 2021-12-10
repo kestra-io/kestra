@@ -239,8 +239,9 @@
                 let query = this.queryWithFilter();
 
                 if (query.namespace) {
-                    filter.push(`taskRunList.namespace:${query.namespace}*`)
+                    filter.push(`${!stats ? "taskRunList.namespace" : "namespace"}:${query.namespace}*`)
                 }
+
 
                 if (query.q) {
                     filter.push(qb.toLucene(query.q));

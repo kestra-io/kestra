@@ -1,67 +1,65 @@
 <template>
     <div v-if="execution">
-        <div class="table-responsive">
-            <table class="table table-sm">
-                <thead>
-                    <tr class="bg-light">
-                        <th>{{ duration }}</th>
-                        <td v-for="(date, i) in dates" :key="i">
-                            {{ date }}
-                        </td>
-                    </tr>
-                </thead>
-                <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
-                    <tr>
-                        <th :id="`task-title-wrapper-${currentTaskRun.id}`">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr class="bg-light">
+                    <th>{{ duration }}</th>
+                    <td v-for="(date, i) in dates" :key="i">
+                        {{ date }}
+                    </td>
+                </tr>
+            </thead>
+            <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
+                <tr>
+                    <th :id="`task-title-wrapper-${currentTaskRun.id}`">
+                        <code>{{ currentTaskRun.name }}</code>
+                        <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
+                        <b-tooltip
+                            placement="right"
+                            :target="`task-title-wrapper-${currentTaskRun.id}`"
+                        >
                             <code>{{ currentTaskRun.name }}</code>
-                            <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
-                            <b-tooltip
-                                placement="right"
-                                :target="`task-title-wrapper-${currentTaskRun.id}`"
-                            >
-                                <code>{{ currentTaskRun.name }}</code>
-                                <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
-                            </b-tooltip>
-                        </th>
-                        <td :colspan="dates.length">
-                            <b-tooltip
-                                :target="`task-progress-${currentTaskRun.id}`"
-                                placement="left"
-                            >
-                                <span style="white-space: pre-wrap;">
-                                    {{ currentTaskRun.tooltip }}
-                                </span>
-                            </b-tooltip>
-                            <div
-                                :style="{left: Math.max(1, (currentTaskRun.start - 1)) + '%', width: currentTaskRun.width - 1 + '%'}"
-                                class="task-progress"
-                                @click="onTaskSelect(currentTaskRun.task)"
-                                :id="`task-progress-${currentTaskRun.id}`"
-                            >
-                                <div class="progress">
-                                    <div
-                                        class="progress-bar"
-                                        :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
-                                        :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped' : '')"
-                                        role="progressbar"
-                                    />
-                                </div>
+                            <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
+                        </b-tooltip>
+                    </th>
+                    <td :colspan="dates.length">
+                        <b-tooltip
+                            :target="`task-progress-${currentTaskRun.id}`"
+                            placement="left"
+                        >
+                            <span style="white-space: pre-wrap;">
+                                {{ currentTaskRun.tooltip }}
+                            </span>
+                        </b-tooltip>
+                        <div
+                            :style="{left: Math.max(1, (currentTaskRun.start - 1)) + '%', width: currentTaskRun.width - 1 + '%'}"
+                            class="task-progress"
+                            @click="onTaskSelect(currentTaskRun.task)"
+                            :id="`task-progress-${currentTaskRun.id}`"
+                        >
+                            <div class="progress">
+                                <div
+                                    class="progress-bar"
+                                    :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
+                                    :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped' : '')"
+                                    role="progressbar"
+                                />
                             </div>
-                        </td>
-                    </tr>
-                    <tr v-if="taskRun && taskRun.id === currentTaskRun.id">
-                        <td :colspan="dates.length + 1">
-                            <log-list
-                                :task-run-id="taskRun.id"
-                                :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
-                                level="TRACE"
-                                @follow="forwardEvent('follow', $event)"
-                            />
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr v-if="taskRun && taskRun.id === currentTaskRun.id">
+                    <td :colspan="dates.length + 1" class="p-0 pb-2">
+                        <log-list
+                            :task-run-id="taskRun.id"
+                            :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                            level="TRACE"
+                            @follow="forwardEvent('follow', $event)"
+                        />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </template>
 <script>
@@ -281,6 +279,8 @@
 @import "../../styles/_variable.scss";
 
 table {
+    table-layout: fixed;
+
     & th, td {
         border-color: var(--table-border-color);
     }

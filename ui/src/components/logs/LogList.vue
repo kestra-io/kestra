@@ -331,6 +331,10 @@
         margin-top: $paragraph-margin-bottom * 1.5;
         line-height: $btn-line-height;
 
+        .theme-dark & {
+            background-color: var(--gray-100);
+        }
+
         .attempt-number {
             background: var(--gray-400);
             padding: $btn-padding-y $btn-padding-x;
@@ -347,8 +351,13 @@
             text-overflow: ellipsis;
         }
 
+        small {
+            color: var(--gray-500);
+        }
+
         .task-duration {
             white-space: nowrap;
+
         }
 
         .task-status {

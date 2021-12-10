@@ -30,10 +30,17 @@ export default {
                 return;
             }
 
-            window.sessionStorage.setItem(
-                this.localStorageName,
-                JSON.stringify(this.$route.query)
-            );
+            if (Object.keys(this.$route.query).length > 0 || (this.localStorageValue !== null && Object.keys(this.localStorageValue).length > 0)) {
+
+                if (Object.keys(this.$route.query).length === 0) {
+                    window.sessionStorage.removeItem(this.localStorageName);
+                } else {
+                    window.sessionStorage.setItem(
+                        this.localStorageName,
+                        JSON.stringify(this.$route.query)
+                    );
+                }
+            }
         },
         goToRestoreUrl() {
             if (!this.restoreUrl) {

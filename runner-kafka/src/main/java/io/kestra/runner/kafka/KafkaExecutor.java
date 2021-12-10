@@ -63,7 +63,7 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
     protected KafkaStreamSourceService kafkaStreamSourceService;
     protected QueueService queueService;
 
-    protected KafkaStreamService.Stream resultStream;
+    protected KafkaStreamService.Stream stream;
 
     @Inject
     public KafkaExecutor(
@@ -876,16 +876,18 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
             log.trace(topology.describe().toString());
         }
 
-        resultStream = kafkaStreamService.of(this.getClass(), this.getClass(), topology, properties, log);
-        resultStream.start();
+        stream = kafkaStreamService.of(this.getClass(), this.getClass(), topology, properties, log);
+        stream.start();
+
+        applicationContext.inject(stream);
 
         applicationContext.registerSingleton(new KafkaTemplateExecutor(
-            resultStream.store(StoreQueryParameters.fromNameAndType("template", QueryableStoreTypes.keyValueStore())),
+            stream.store(StoreQueryParameters.fromNameAndType("template", QueryableStoreTypes.keyValueStore())),
             "template"
         ));
 
         this.flowExecutorInterface = new KafkaFlowExecutor(
-            resultStream.store(StoreQueryParameters.fromNameAndType("flow", QueryableStoreTypes.keyValueStore())),
+            stream.store(StoreQueryParameters.fromNameAndType("flow", QueryableStoreTypes.keyValueStore())),
             "flow",
             applicationContext
         );
@@ -894,9 +896,9 @@ public class KafkaExecutor extends AbstractExecutor implements Closeable {
 
     @Override
     public void close() throws IOException {
-        if (this.resultStream != null) {
-            this.resultStream.close(Duration.ofSeconds(10));
-            this.resultStream = null;
+        if (this.stream != null) {
+            this.stream.close(Duration.ofSeconds(10));
+            this.stream = null;
         }
     }
 

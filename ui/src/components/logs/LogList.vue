@@ -41,7 +41,7 @@
                                 <div class="task-duration">
                                     <small class="mr-1">
                                         <clock />
-                                        {{ attempt.state.duration | humanizeDuration }}
+                                        <real-time class="ml-2" :histories="attempt.state.histories" />
                                     </small>
                                 </div>
 
@@ -154,6 +154,7 @@
     import Status from "../Status";
     import SubFlowLink from "../flows/SubFlowLink"
     import Kicon from "../Kicon"
+    import RealTime from "../executions/RealTime.vue";
 
     export default {
         components: {
@@ -167,6 +168,7 @@
             Status,
             SubFlowLink,
             Kicon,
+            RealTime
         },
         props: {
             level: {

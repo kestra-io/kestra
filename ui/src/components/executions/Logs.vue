@@ -8,6 +8,7 @@
     import LogList from "../logs/LogList";
     import LogFilters from "../logs/LogFilters";
     import {mapState} from "vuex";
+
     export default {
         components: {LogList, LogFilters},
         computed: {

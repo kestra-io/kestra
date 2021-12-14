@@ -24,7 +24,8 @@ jobs:
     name: Check & Publish
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -196,7 +197,7 @@ jobs:
       # Slack
       - name: Slack notification
         uses: 8398a7/action-slack@v3
-        if: always()
+        if: ${{ always() && env.SLACK_WEBHOOK_URL != 0 }}
         with:
           status: ${{ job.status }}
           job_name: Check & Publish

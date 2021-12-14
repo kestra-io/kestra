@@ -3,6 +3,7 @@ package io.kestra.core.models.tasks.retrys;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -29,6 +30,9 @@ public abstract class AbstractRetry {
 
     @Min(1)
     private Integer maxAttempt;
+
+    @Builder.Default
+    private Boolean warningOnRetry = false;
 
     public <T> RetryPolicy<T> toPolicy() {
         RetryPolicy<T> policy = new RetryPolicy<>();

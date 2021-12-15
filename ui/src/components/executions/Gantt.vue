@@ -3,7 +3,9 @@
         <table class="table table-sm mb-0">
             <thead>
                 <tr class="bg-light">
-                    <th>{{ duration }}</th>
+                    <th>
+                        <real-time :histories="execution.state.histories" />
+                    </th>
                     <td v-for="(date, i) in dates" :key="i">
                         {{ date }}
                     </td>
@@ -67,11 +69,12 @@
     import {mapState} from "vuex";
     import humanizeDuration from "humanize-duration";
     import State from "../../utils/state";
+    import RealTime from "./RealTime.vue";
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50
     export default {
-        components: {LogList},
+        components: {LogList, RealTime},
         data() {
             return {
                 colors: State.colorClass(),
@@ -173,7 +176,6 @@
             compute() {
                 this.computeSeries();
                 this.computeDates();
-                this.computeDuration();
             },
             delta() {
                 return this.stop() - this.start;
@@ -258,9 +260,6 @@
                     dates.push(date(start + i * delta));
                 }
                 this.dates = dates;
-            },
-            computeDuration() {
-                this.duration = humanizeDuration(this.delta());
             },
             onTaskSelect(taskRun) {
                 taskRun = this.taskRun && this.taskRun.id === taskRun.id ? undefined : taskRun;

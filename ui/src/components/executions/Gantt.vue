@@ -4,7 +4,7 @@
             <thead>
                 <tr class="bg-light">
                     <th>
-                        <real-time :histories="execution.state.histories" />
+                        <duration :histories="execution.state.histories" />
                     </th>
                     <td v-for="(date, i) in dates" :key="i">
                         {{ date }}
@@ -43,7 +43,7 @@
                                 <div
                                     class="progress-bar"
                                     :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
-                                    :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped' : '')"
+                                    :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped progress-bar-animated' : '')"
                                     role="progressbar"
                                 />
                             </div>
@@ -67,14 +67,14 @@
 <script>
     import LogList from "../logs/LogList";
     import {mapState} from "vuex";
-    import humanizeDuration from "humanize-duration";
     import State from "../../utils/state";
-    import RealTime from "./RealTime.vue";
+    import Duration from "../layout/Duration";
+    import Utils from "../../utils/utils";
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50
     export default {
-        components: {LogList, RealTime},
+        components: {LogList, Duration},
         data() {
             return {
                 colors: State.colorClass(),
@@ -221,11 +221,11 @@
                     const delta = stopTs - startTs;
                     const duration = this.$moment.duration(delta);
 
-                    let tooltip = `${this.$t("duration")} : ${humanizeDuration(duration)}`
+                    let tooltip = `${this.$t("duration")} : ${Utils.humanDuration(duration)}`
 
                     if (runningState.length > 0) {
-                        tooltip += `\n${this.$t("queued duration")} : ${humanizeDuration(ts(runningState[0].date) - startTs)}`;
-                        tooltip += `\n${this.$t("running duration")} : ${humanizeDuration(stopTs - ts(runningState[0].date))}`;
+                        tooltip += `\n${this.$t("queued duration")} : ${Utils.humanDuration(ts(runningState[0].date) - startTs)}`;
+                        tooltip += `\n${this.$t("running duration")} : ${Utils.humanDuration(stopTs - ts(runningState[0].date))}`;
                     }
 
                     let width = (stop / executionDelta) * 100

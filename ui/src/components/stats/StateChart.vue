@@ -19,7 +19,6 @@
     import Utils from "../../utils/utils.js";
     import {defaultConfig, tooltip} from "../../utils/charts.js";
     import State from "../../utils/state";
-    import humanizeDuration from "humanize-duration";
 
     export default defineComponent({
         components: {BarChart},
@@ -57,7 +56,7 @@
                         callbacks: {
                             label: function(context) {
                                 if (context.dataset.yAxisID === "yAxesB" && context.raw !== 0) {
-                                    return context.dataset.label + ": " + humanizeDuration(context.raw * 1000);
+                                    return context.dataset.label + ": " + Utils.humanDuration(context.raw * 1000);
                                 } else if (context.formattedValue !== "0") {
                                     return context.dataset.label + ": " + context.formattedValue
                                 }

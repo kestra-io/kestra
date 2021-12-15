@@ -18,7 +18,6 @@
     import {LineChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
     import {defaultConfig, tooltip} from "../../utils/charts.js";
-    import humanizeDuration from "humanize-duration";
 
     export default defineComponent({
         components: {LineChart},
@@ -51,7 +50,7 @@
                         },
                         callbacks: {
                             label: function(context) {
-                                return humanizeDuration(context.raw * 1000);
+                                return Utils.humanDuration(context.raw * 1000);
                             }
                         }
                     }

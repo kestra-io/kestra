@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@vue/composition-api": "^1.1.1",
-    "axios": "^0.21.1",
+    "axios": "^0.21.4",
     "bootstrap": "^4.6.0",
     "bootstrap-vue": "^2.21.2",
     "chart.js": "^3.5.0",
@@ -33,7 +33,7 @@
     "moment-range": "4.0.2",
     "monaco-yaml": "^3.2.1",
     "portal-vue": "^2.1.7",
-    "prismjs": "^1.24.1",
+    "prismjs": "^1.25.0",
     "qs": "^6.10.1",
     "throttle-debounce": "^3.0.1",
     "v-hotkey": "^0.9.0",

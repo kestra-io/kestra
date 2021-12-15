@@ -1,31 +1,10 @@
 import Vue from "vue"
-import humanizeDuration from "humanize-duration";
 import Utils from "./utils/utils";
 
 Vue.filter("id", value => value ? value.toString().substr(0, 8) : "");
 
 Vue.filter("humanizeDuration", (value, options) => {
-    options = options || {maxDecimalPoints: 2}
-    options.spacer = ""
-    const language = localStorage.getItem("lang") || "en"
-    options.language = language
-    options.languages = {}
-    options.languages[language] = {
-        y: () => "y",
-        mo: () => "mo",
-        w: () => "w",
-        d: () => "d",
-        h: () => "h",
-        m: () => "m",
-        s: () => "s",
-        ms: () => "ms",
-    }
-
-    if (typeof (value) !== "number") {
-        value = Utils.duration(value);
-    }
-
-    return humanizeDuration(value * 1000, options)
+    return Utils.humanDuration(value, options);
 });
 
 Vue.filter("cap", value => value ? value.toString().capitalize() : "");

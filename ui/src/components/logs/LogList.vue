@@ -41,7 +41,7 @@
                                 <div class="task-duration">
                                     <small class="mr-1">
                                         <clock />
-                                        <real-time class="ml-2" :histories="attempt.state.histories" />
+                                        <duration class="ml-2" :histories="attempt.state.histories" />
                                     </small>
                                 </div>
 
@@ -142,7 +142,6 @@
 </template>
 <script>
     import {mapState} from "vuex";
-    import humanizeDuration from "humanize-duration";
     import LogLine from "./LogLine";
     import Restart from "../executions/Restart";
     import ChangeStatus from "../executions/ChangeStatus";
@@ -154,7 +153,8 @@
     import Status from "../Status";
     import SubFlowLink from "../flows/SubFlowLink"
     import Kicon from "../Kicon"
-    import RealTime from "../executions/RealTime.vue";
+    import Duration from "../layout/Duration";
+    import Utils from "../../utils/utils";
 
     export default {
         components: {
@@ -168,7 +168,7 @@
             Status,
             SubFlowLink,
             Kicon,
-            RealTime
+            Duration
         },
         props: {
             level: {
@@ -299,7 +299,7 @@
                 return (metrics || []).reduce((accumulator, r) => {
                     accumulator[r.name] =
                         r.type === "timer"
-                            ? humanizeDuration(parseInt(r.value * 1000))
+                            ? Utils.humanDuration(parseInt(r.value * 1000))
                             : r.value;
                     return accumulator;
                 }, Object.create(null));

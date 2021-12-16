@@ -11,7 +11,7 @@ import io.kestra.core.utils.TestsUtils;
 import java.io.File;
 import java.net.URL;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;

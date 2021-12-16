@@ -6,16 +6,16 @@ import io.kestra.core.tasks.debugs.Echo;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.client.RxHttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
+import io.micronaut.rxjava2.http.client.RxHttpClient;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.POST;
 import static io.micronaut.http.HttpStatus.UNPROCESSABLE_ENTITY;

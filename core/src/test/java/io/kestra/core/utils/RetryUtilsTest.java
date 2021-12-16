@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ConcurrentModificationException;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

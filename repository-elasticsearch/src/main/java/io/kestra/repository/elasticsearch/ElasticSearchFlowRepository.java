@@ -38,9 +38,9 @@ import io.kestra.core.utils.ExecutorsUtils;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
@@ -53,7 +53,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
     private final QueueInterface<Flow> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
-    private final ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
 
     @Inject
     public ElasticSearchFlowRepository(
@@ -63,7 +63,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue,
         @Named(QueueFactoryInterface.TRIGGER_NAMED) QueueInterface<Trigger> triggerQueue,
-        ApplicationEventPublisher eventPublisher
+        ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher
     ) {
         super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Flow.class);
 

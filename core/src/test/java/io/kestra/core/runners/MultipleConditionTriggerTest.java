@@ -3,7 +3,7 @@ package io.kestra.core.runners;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @MicronautTest
 public class MultipleConditionTriggerTest extends AbstractMemoryRunnerTest {

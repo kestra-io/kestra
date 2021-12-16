@@ -16,7 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import javax.validation.ConstraintViolationException;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;

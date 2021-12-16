@@ -8,7 +8,7 @@ import io.kestra.core.queues.WorkerTaskQueueInterface;
 import io.kestra.core.runners.WorkerTask;
 
 import java.util.function.Consumer;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 @MemoryQueueEnabled

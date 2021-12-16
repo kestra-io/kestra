@@ -5,6 +5,7 @@ import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import picocli.CommandLine;
 
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -24,8 +25,8 @@ public abstract class AbstractApiCommand extends AbstractCommand {
         super(withServer);
     }
 
-    protected DefaultHttpClient client() {
-        return new DefaultHttpClient(server);
+    protected DefaultHttpClient client() throws URISyntaxException {
+        return new DefaultHttpClient(server.toURI());
     }
 
     protected <T> HttpRequest<T> requestOptions(MutableHttpRequest<T> request) {

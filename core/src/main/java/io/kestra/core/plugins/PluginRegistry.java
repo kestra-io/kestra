@@ -6,7 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;

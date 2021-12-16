@@ -7,7 +7,7 @@ import io.kestra.core.utils.IdUtils;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

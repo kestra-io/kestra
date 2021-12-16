@@ -9,7 +9,7 @@ dependencies {
         exclude group: 'org.apache.logging.log4j'
     }
     implementation group: "org.apache.kafka", name: "kafka-clients", version: kafkaVersion
-    implementation group: 'net.jodah', name: 'failsafe', version: '2.4.1'
+    implementation group: 'net.jodah', name: 'failsafe', version: '2.4.4'
 
-    testImplementation 'org.mockito:mockito-junit-jupiter:3.11.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.2.0'
 }

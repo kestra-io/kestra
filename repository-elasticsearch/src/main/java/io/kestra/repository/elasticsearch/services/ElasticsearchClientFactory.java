@@ -8,8 +8,8 @@ import org.opensearch.client.RestClientBuilder;
 import org.opensearch.client.RestHighLevelClient;
 import io.kestra.repository.elasticsearch.configs.ElasticsearchConfig;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 
 @Requires(beans = ElasticsearchConfig.class)

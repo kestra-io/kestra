@@ -6,7 +6,7 @@ import io.kestra.core.models.triggers.types.Schedule;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.utils.IdUtils;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 import static com.mitchellbosecke.pebble.operator.BinaryOperatorType.NORMAL;
 

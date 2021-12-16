@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import io.micronaut.core.annotation.Nullable;
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.opensearch.common.xcontent.XContentFactory.jsonBuilder;
 

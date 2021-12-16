@@ -12,9 +12,9 @@ import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.micronaut.context.annotation.Requires;
 
 import java.io.IOException;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Requires(beans = {ExecutionRepositoryInterface.class, LogRepositoryInterface.class, TriggerRepositoryInterface.class})

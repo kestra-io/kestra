@@ -7,9 +7,9 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MutableHttpRequest;
-import io.micronaut.http.client.RxHttpClient;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.runtime.server.EmbeddedServer;
+import io.micronaut.rxjava2.http.client.RxHttpClient;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;

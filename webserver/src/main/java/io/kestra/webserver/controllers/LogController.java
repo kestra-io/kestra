@@ -23,8 +23,8 @@ import org.slf4j.event.Level;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import io.micronaut.core.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 @Validated
 @Controller("/api/v1/")

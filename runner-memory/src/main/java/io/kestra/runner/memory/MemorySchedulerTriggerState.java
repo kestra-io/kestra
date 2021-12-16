@@ -9,9 +9,9 @@ import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 @Singleton
 @MemoryQueueEnabled

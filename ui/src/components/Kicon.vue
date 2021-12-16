@@ -15,9 +15,6 @@
                 default: "top"
             },
         },
-        mounted () {
-            this.$el.querySelector("title").remove()
-        }
     }
 </script>
 

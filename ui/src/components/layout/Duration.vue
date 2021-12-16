@@ -8,7 +8,7 @@
         >
             <span v-for="(history, index) in histories" :key="'tt-' + uuid + '-' + index">
                 <span class="square" :class="squareClass(history.state)" />
-                <strong>{{ history.state }}:</strong> {{ history.date | date('iso') }} <br />
+                <strong>{{ history.state }}:</strong> {{ history.date | date('iso') }} <br>
             </span>
         </b-tooltip>
     </span>

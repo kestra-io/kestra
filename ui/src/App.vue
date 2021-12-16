@@ -10,6 +10,7 @@
                 <template v-else>
                     <errors :code="error" />
                 </template>
+                <log-fullscreen />
             </div>
         </div>
         <div id="theme-loaded" />
@@ -23,6 +24,7 @@
     import NprogressContainer from "vue-nprogress/src/NprogressContainer";
     import Errors from "./components/errors/Errors";
     import {mapState} from "vuex";
+    import LogFullscreen from "./components/logs/LogFullscreen"
 
     export default {
         name: "App",
@@ -31,7 +33,8 @@
             TopNavBar,
             CustomToast,
             NprogressContainer,
-            Errors
+            Errors,
+            LogFullscreen
         },
         data() {
             return {

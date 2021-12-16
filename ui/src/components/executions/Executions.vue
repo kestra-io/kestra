@@ -37,7 +37,7 @@
                     :responsive="true"
                     striped
                     hover
-                    sort-by="startDate"
+                    sort-by="state.startDate"
                     sort-desc
                     :items="executions"
                     :fields="fields"
@@ -56,22 +56,26 @@
                             </kicon>
                         </router-link>
                     </template>
-                    <template #cell(startDate)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(state.startDate)="row">
                         <date-ago :inverted="true" :date="row.item.state.startDate" />
                     </template>
-                    <template #cell(endDate)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(state.endDate)="row">
                         <span v-if="!isRunning(row.item)">
                             <date-ago :inverted="true" :date="row.item.state.endDate" />
                         </span>
                     </template>
-                    <template #cell(current)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(state.current)="row">
                         <status
                             class="status"
                             :status="row.item.state.current"
                             size="sm"
                         />
                     </template>
-                    <template #cell(duration)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(state.duration)="row">
                         <span v-if="isRunning(row.item)">{{ durationFrom(row.item) | humanizeDuration }}</span>
                         <span v-else>{{ row.item.state.duration | humanizeDuration }}</span>
                     </template>
@@ -171,22 +175,19 @@
                         label: title("id")
                     },
                     {
-                        key: "startDate",
+                        key: "state.startDate",
                         label: title("start date"),
                         sortable: true,
-                        sortKey: "state.startDate"
                     },
                     {
-                        key: "endDate",
+                        key: "state.endDate",
                         label: title("end date"),
                         sortable: true,
-                        sortKey: "state.endDate"
                     },
                     {
-                        key: "duration",
+                        key: "state.duration",
                         label: title("duration"),
                         sortable: true,
-                        sortKey: "state.duration"
                     },
                 ]
 
@@ -207,11 +208,10 @@
 
                 fields.push(
                     {
-                        key: "current",
+                        key: "state.current",
                         label: title("state"),
                         class: "text-center",
                         sortable: true,
-                        sortKey: "state.current"
                     },
                     {
                         key: "trigger",

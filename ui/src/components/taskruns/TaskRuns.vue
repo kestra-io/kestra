@@ -37,7 +37,7 @@
                     :responsive="true"
                     striped
                     hover
-                    sort-by="startDate"
+                    sort-by="taskRunList.state.startDate"
                     sort-desc
                     :items="taskruns"
                     :fields="fields"
@@ -56,22 +56,26 @@
                             </kicon>
                         </router-link>
                     </template>
-                    <template #cell(startDate)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.state.startDate)="row">
                         <date-ago :inverted="true" :date="row.item.state.startDate" />
                     </template>
-                    <template #cell(endDate)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.state.endDate)="row">
                         <span v-if="!isRunning(row.item)">
                             <date-ago :inverted="true" :date="row.item.state.endDate" />
                         </span>
                     </template>
-                    <template #cell(current)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.state.current)="row">
                         <status
                             class="status"
                             :status="row.item.state.current"
                             size="sm"
                         />
                     </template>
-                    <template #cell(duration)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.state.duration)="row">
                         <span v-if="isRunning(row.item)">
                             {{ durationFrom(row.item) | humanizeDuration }}
                         </span>
@@ -79,11 +83,20 @@
                             {{ row.item.state.duration | humanizeDuration }}
                         </span>
                     </template>
-                    <template #cell(flowId)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.flowId.keyword)="row">
                         <router-link
                             :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >
                             {{ row.item.flowId }}
+                        </router-link>
+                    </template>
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.namespace.keyword)="row">
+                        <router-link
+                            :to="{name: 'taskruns/list', query: {namespace: row.item.namespace}}"
+                        >
+                            {{ row.item.namespace }}
                         </router-link>
                     </template>
                     <template #cell(id)="row">
@@ -167,41 +180,35 @@
                         label: title("execution"),
                     },
                     {
-                        key: "startDate",
+                        key: "taskRunList.state.startDate",
                         label: title("start date"),
                         sortable: true,
-                        sortKey: "taskRunList.state.startDate"
                     },
                     {
-                        key: "endDate",
+                        key: "taskRunList.state.endDate",
                         label: title("end date"),
                         sortable: true,
-                        sortKey: "taskRunList.state.endDate"
                     },
                     {
-                        key: "duration",
+                        key: "taskRunList.state.duration",
                         label: title("duration"),
                         sortable: true,
-                        sortKey: "taskRunList.state.duration"
                     },
                     {
-                        key: "namespace",
+                        key: "taskRunList.namespace.keyword",
                         label: title("namespace"),
                         sortable: true,
-                        sortKey: "taskRunList.namespace.keyword"
                     },
                     {
-                        key: "flowId",
+                        key: "taskRunList.flowId.keyword",
                         label: title("flow"),
                         sortable: true,
-                        sortKey: "taskRunList.flowId.keyword"
                     },
                     {
-                        key: "current",
+                        key: "taskRunList.state.current",
                         label: title("state"),
                         class: "text-center",
                         sortable: true,
-                        sortKey: "taskRunList.state.current"
                     },
                     {
                         key: "details",

@@ -9,9 +9,9 @@ import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.kestra.core.contexts.KestraClassLoader;
 import io.micronaut.context.annotation.*;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.reflect.GenericTypeUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.jackson.JacksonConfiguration;
@@ -21,9 +21,9 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.TimeZone;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 /**
  *  hard copy from {link io.micronaut.jackson.{@link io.micronaut.jackson.ObjectMapperFactory}} just to change

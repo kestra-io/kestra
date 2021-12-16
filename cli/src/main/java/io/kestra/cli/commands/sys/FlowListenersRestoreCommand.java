@@ -10,7 +10,7 @@ import picocli.CommandLine;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "restore-flow-listeners",

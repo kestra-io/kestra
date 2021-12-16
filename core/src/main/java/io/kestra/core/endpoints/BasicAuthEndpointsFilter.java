@@ -4,7 +4,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.http.*;
 import io.micronaut.http.annotation.Filter;
-import io.micronaut.http.filter.OncePerRequestHttpServerFilter;
+import io.micronaut.http.filter.HttpServerFilter;
 import io.micronaut.http.filter.ServerFilterChain;
 import io.micronaut.http.filter.ServerFilterPhase;
 import io.micronaut.inject.ExecutableMethod;
@@ -20,7 +20,7 @@ import java.util.Optional;
 
 @Filter("/**")
 @Requires(property = "endpoints.all.basic-auth")
-public class BasicAuthEndpointsFilter extends OncePerRequestHttpServerFilter {
+public class BasicAuthEndpointsFilter implements HttpServerFilter {
     private final EndpointBasicAuthConfiguration endpointBasicAuthConfiguration;
 
     public BasicAuthEndpointsFilter(EndpointBasicAuthConfiguration endpointBasicAuthConfiguration) {
@@ -29,7 +29,7 @@ public class BasicAuthEndpointsFilter extends OncePerRequestHttpServerFilter {
 
     @SuppressWarnings("rawtypes")
     @Override
-    protected Publisher<MutableHttpResponse<?>> doFilterOnce(HttpRequest<?> request, ServerFilterChain chain) {
+    public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         Optional<RouteMatch> routeMatch = RouteMatchUtils.findRouteMatch(request);
         if (routeMatch.isPresent() && routeMatch.get() instanceof MethodBasedRouteMatch) {
             ExecutableMethod<?, ?> method = ((MethodBasedRouteMatch<?, ?>) routeMatch.get()).getExecutableMethod();

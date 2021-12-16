@@ -3,7 +3,7 @@ package io.kestra.storage.local;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import lombok.Getter;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.nio.file.Path;
 
 @Singleton

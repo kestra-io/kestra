@@ -13,7 +13,7 @@ import io.kestra.core.runners.Worker;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Endpoint(id = "worker", defaultSensitive = false)
 @Requires(property = "kestra.server-type", pattern = "(WORKER|STANDALONE)")

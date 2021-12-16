@@ -14,7 +14,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Endpoint(id = "scheduler", defaultSensitive = false)
 @Requires(property = "kestra.server-type", pattern = "(SCHEDULER|STANDALONE)")

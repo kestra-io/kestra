@@ -13,9 +13,9 @@ import io.kestra.core.repositories.TemplateRepositoryInterface;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 @Singleton
 @MemoryRepositoryEnabled
@@ -27,7 +27,7 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     private QueueInterface<Template> templateQueue;
 
     @Inject
-    private ApplicationEventPublisher eventPublisher;
+    private ApplicationEventPublisher<CrudEvent<Template>> eventPublisher;
 
     @Override
     public Optional<Template> findById(String namespace, String id) {

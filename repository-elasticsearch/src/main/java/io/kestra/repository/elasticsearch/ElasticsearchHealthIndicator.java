@@ -24,7 +24,7 @@ import org.reactivestreams.Publisher;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 import static io.micronaut.health.HealthStatus.DOWN;
 import static io.micronaut.health.HealthStatus.UP;

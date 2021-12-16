@@ -25,7 +25,7 @@ import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @CommandLine.Command(
     mixinStandardHelpOptions = true

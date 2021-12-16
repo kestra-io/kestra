@@ -11,7 +11,7 @@ import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Factory
 public class ValidationFactory {

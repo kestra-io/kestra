@@ -13,7 +13,7 @@ import picocli.CommandLine;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "properties",

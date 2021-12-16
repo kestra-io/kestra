@@ -27,8 +27,8 @@ import org.slf4j.Logger;
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
 @Singleton

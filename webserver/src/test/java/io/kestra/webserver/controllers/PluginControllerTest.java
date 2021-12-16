@@ -2,7 +2,7 @@ package io.kestra.webserver.controllers;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.client.RxHttpClient;
+import io.micronaut.rxjava2.http.client.RxHttpClient;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.Helpers;
 import io.kestra.core.tasks.scripts.Bash;

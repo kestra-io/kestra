@@ -4,9 +4,9 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
-import io.micronaut.http.client.RxHttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.rxjava2.http.client.RxHttpClient;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
@@ -17,7 +17,7 @@ import io.kestra.webserver.responses.PagedResults;
 
 import java.util.Arrays;
 import java.util.List;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.NO_CONTENT;

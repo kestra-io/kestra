@@ -8,7 +8,7 @@ import org.slf4j.event.Level;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 @MemoryRepositoryEnabled

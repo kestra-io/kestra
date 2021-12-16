@@ -16,8 +16,8 @@ import io.kestra.core.utils.ListUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Provides business logic to manipulate {@link Flow}

@@ -15,7 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import io.micronaut.core.annotation.Nullable;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Validated
 @Controller("/api/v1/stats")

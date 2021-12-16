@@ -10,7 +10,7 @@ import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 
 @Slf4j

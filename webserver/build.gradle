@@ -9,6 +9,7 @@ dependencies {
     implementation "io.micronaut:micronaut-management"
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"
+    implementation "io.micronaut.rxjava2:micronaut-rxjava2"
 
     // test
     testImplementation project(':core').sourceSets.test.output

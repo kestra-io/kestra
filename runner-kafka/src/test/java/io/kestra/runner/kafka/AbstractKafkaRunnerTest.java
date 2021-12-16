@@ -9,7 +9,7 @@ import io.kestra.core.utils.TestsUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @MicronautTest
 public abstract class AbstractKafkaRunnerTest {

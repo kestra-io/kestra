@@ -4,7 +4,7 @@ import com.google.common.base.CaseFormat;
 import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Slf4j

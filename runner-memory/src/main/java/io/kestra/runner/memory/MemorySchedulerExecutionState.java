@@ -5,8 +5,8 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.schedulers.SchedulerExecutionStateInterface;
 
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 @MemoryQueueEnabled

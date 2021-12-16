@@ -44,7 +44,7 @@ export default {
     },
     methods: {
         onSort(sortItem) {
-            if (!this.embed) {
+            if (!this.embed && sortItem && sortItem.sortBy) {
                 const sort = [
                     `${sortItem.sortBy}:${sortItem.sortDesc ? "desc" : "asc"}`
                 ];

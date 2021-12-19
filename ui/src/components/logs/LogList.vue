@@ -213,6 +213,7 @@
         },
         computed: {
             ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
+            ...mapState("log", ["fullscreen"]),
         },
         methods: {
             forwardEvent(type, event) {
@@ -249,7 +250,7 @@
                     params.taskId = this.taskId;
                 }
 
-                if (this.execution && this.execution.state.current === State.RUNNING) {
+                if (this.execution && this.execution.state.current === State.RUNNING && !this.fullscreen) {
                     this.$store
                         .dispatch("execution/followLogs", {
                             id: this.$route.params.id,
@@ -269,11 +270,13 @@
                             }
                         });
                 } else {
-                    this.$store.dispatch("execution/loadLogs", {
-                        executionId: this.$route.params.id,
-                        params: params,
-                    });
-                    this.closeSSE();
+                    if (!this.fullscreen){
+                        this.$store.dispatch("execution/loadLogs", {
+                            executionId: this.$route.params.id,
+                            params: params,
+                        });
+                        this.closeSSE();
+                    }
                 }
             },
             closeSSE() {

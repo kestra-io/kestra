@@ -11,6 +11,10 @@
                     <errors :code="error" />
                 </template>
             </div>
+            <b-modal hide-header hide-footer scrollable id="log-fullscreen-modal" modal-class="modal-fullscreen">
+                <!--prevent load dom in memory most of the time with v-if-->
+                <logs v-if="fullscreen" />
+            </b-modal>
         </div>
         <div id="theme-loaded" />
     </div>
@@ -23,6 +27,7 @@
     import NprogressContainer from "vue-nprogress/src/NprogressContainer";
     import Errors from "./components/errors/Errors";
     import {mapState} from "vuex";
+    import Logs from "./components/executions/Logs";
 
     export default {
         name: "App",
@@ -31,7 +36,8 @@
             TopNavBar,
             CustomToast,
             NprogressContainer,
-            Errors
+            Errors,
+            Logs
         },
         data() {
             return {
@@ -40,7 +46,8 @@
             };
         },
         computed: {
-            ...mapState("core", ["message", "error", "themes", "theme"])
+            ...mapState("core", ["message", "error", "themes", "theme"]),
+            ...mapState("log", ["fullscreen"])
         },
         created() {
             if (this.created === false) {
@@ -170,5 +177,21 @@
 
 
 <style lang="scss">
-    // @import "styles/theme-light";
+.modal-fullscreen .modal {
+    padding: 0 !important;
+}
+.modal-fullscreen .modal-dialog {
+    max-width: 100%;
+    height: 100%;
+    margin: 0;
+}
+.modal-fullscreen .modal-content {
+    border: 0;
+    border-radius: 0;
+    min-height: 100%;
+    height: auto;
+}
+.modal-fullscreen .modal-dialog {
+    max-height: 100%;
+}
 </style>

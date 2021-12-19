@@ -1,6 +1,6 @@
 <template>
     <b-button
-        @click="$bvModal.show(uuid)"
+        @click="onRestart(uuid)"
         v-if="isReplay || enabled"
         :disabled="!enabled"
         :class="!isReplay ? 'btn-info restart mr-1' : ''"
@@ -71,6 +71,10 @@
             }
         },
         methods: {
+            onRestart(uuid) {
+                this.$store.commit("log/setFullscreen", false)
+                this.$bvModal.show(uuid)
+            },
             loadRevision() {
                 this.revisionsSelected = this.execution.flowRevision
                 this.$store

@@ -10,7 +10,7 @@
     "theme": "Theme",
     "flows": "Flows",
     "flow": "Flow",
-    "invalid source" : "Invalid source code",
+    "invalid source": "Invalid source code",
     "update": "Update",
     "update ok": "is updated",
     "delete ok": "is deleted",
@@ -216,7 +216,11 @@
         "title": "Page not found",
         "content": "The requested URL was not found on this server. <span class=\"text-muted\">That’s all we know.</span>"
       }
-    }
+    },
+    "copy logs": "Copy logs",
+    "download logs": "Download logs",
+    "toggle fullscreen": "Toggle fullscreen",
+    "copied": "Copied"
   },
   "fr": {
     "id": "Identifiant",
@@ -229,7 +233,7 @@
     "theme": "Thème",
     "flows": "Flows",
     "flow": "Flow",
-    "invalid source" : "Code source invalide",
+    "invalid source": "Code source invalide",
     "update": "Mettre à jour",
     "update ok": "est mis à jour",
     "delete ok": "est effacé",
@@ -436,6 +440,10 @@
         "title": "Page introuvable",
         "content": "L'URL demandé est introuvable sur ce serveur. <span class=\"text-muted\">C'est tout ce que nous savons.</span>"
       }
-    }
+    },
+    "copy logs": "Copier les logs",
+    "download logs": "Télécharger les logs",
+    "toggle fullscreen": "Permuter le plein écran",
+    "copied": "Copié"
   }
 }

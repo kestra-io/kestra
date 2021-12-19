@@ -1,63 +1,85 @@
 <template>
     <div>
-        <b-row>
-            <b-col>
-                <div class="float-right">
-                    <b-button @click="copy">
-                        <kicon :tooltip="$t('copy logs')">
-                            <content-copy />
-                        </kicon>
-                    </b-button>
-                    <a :download="downloadName" :href="downloadContent">
-                        <b-button class="ml-2">
+        <b-navbar toggleable="lg" class="nav-filter mb-2">
+            <b-navbar-toggle target="nav-collapse" />
+            <b-collapse id="nav-collapse" is-nav>
+                <b-nav-form @submit.prevent="prevent">
+                    <b-form-input
+                        :label="$t('search')"
+                        @input="onChange"
+                        v-model="filter"
+                        :placeholder="$t('search')"
+                    />
+                    <log-level-selector
+                        v-model="level"
+                        @input="onChange"
+                    />
+                    <b-button-group>
+                        <b-button @click="copy">
+                            <kicon :tooltip="$t('copy logs')">
+                                <content-copy />
+                            </kicon>
+                        </b-button>
+                        <b-button :download="downloadName" :href="downloadContent">
                             <kicon :tooltip="$t('download logs')">
                                 <download />
                             </kicon>
                         </b-button>
-                    </a>
-                    <b-button class="ml-2" @click="toggleLogFullscreen">
-                        <kicon :tooltip="$t('toggle fullscreen')">
-                            <full-screen-exit v-if="fullscreen" />
-                            <full-screen v-else />
-                        </kicon>
-                    </b-button>
-                </div>
-            </b-col>
-        </b-row>
+                        <b-button @click="toggleLogFullscreen">
+                            <kicon :tooltip="$t('toggle fullscreen')">
+                                <full-screen-exit v-if="fullscreen" />
+                                <full-screen v-else />
+                            </kicon>
+                        </b-button>
+                    </b-button-group>
+                </b-nav-form>
+            </b-collapse>
+        </b-navbar>
 
-        <log-filters @input="onChange" :filter="filterTerm" :level="level" />
-        <log-list :level="level" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" :filter="filterTerm" />
+        <log-list :level="level" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" :filter="filter" />
+
+        <b-modal
+            hide-footer
+            scrollable
+            visible
+            id="log-fullscreen-modal"
+            modal-class="fullscreen"
+            v-if="fullscreen"
+            @close="toggleLogFullscreen"
+        >
+            <log-list v-if="fullscreen" :full-screen-modal="true" :level="level" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" />
+        </b-modal>
     </div>
 </template>
 <script>
     import LogList from "../logs/LogList";
-    import LogFilters from "../logs/LogFilters";
     import {mapState} from "vuex";
     import FullScreenExit from "vue-material-design-icons/FullscreenExit.vue";
     import FullScreen from "vue-material-design-icons/Fullscreen.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Kicon from "../Kicon";
-    
+    import LogLevelSelector from "../logs/LogLevelSelector";
+
     export default {
         components: {
-            LogList, 
-            LogFilters, 
-            Kicon, 
-            FullScreenExit, 
+            LogList,
+            LogLevelSelector,
+            Kicon,
+            FullScreenExit,
             FullScreen,
             Download,
             ContentCopy,
         },
+        data() {
+            return {
+                fullscreen: false,
+                level: (this.$route.query.level || "INFO"),
+                filter: (this.$route.query.q || undefined)
+            };
+        },
         computed: {
             ...mapState("execution", ["execution", "taskRun", "logs"]),
-            ...mapState("log", ["fullscreen"]),
-            filterTerm() {
-                return (this.$route.query.q || "").toLowerCase();
-            },
-            level() {
-                return this.$route.query.level || "INFO";
-            },
             downloadContent() {
                 return "data:text/plain;base64," + btoa(this.contentAsText)
             },
@@ -69,16 +91,14 @@
             }
         },
         methods: {
-            onChange(event) {
-                this.$router.push({query: {...this.$route.query, q: event.filter, level: event.level, page: 1}});
+            prevent(event) {
+                event.preventDefault();
+            },
+            onChange() {
+                this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
             },
             toggleLogFullscreen() {
-                this.$store.commit("log/setFullscreen", !this.fullscreen)
-                if (this.fullscreen) {
-                    this.$bvModal.show("log-fullscreen-modal")
-                } else {
-                    this.$bvModal.hide("log-fullscreen-modal")
-                }
+                this.fullscreen = !this.fullscreen;
             },
             copy () {
                 navigator.clipboard.writeText(this.contentAsText);

@@ -1,6 +1,6 @@
 <template>
     <b-button
-        @click="onChangeStatus(uuid)"
+        @click="$bvModal.show(uuid)"
         :disabled="!enabled"
     >
         <kicon :tooltip="$t('change status')">
@@ -91,10 +91,6 @@
         },
 
         methods: {
-            onChangeStatus(uuid) {
-                this.$store.commit("log/setFullscreen", false)
-                this.$bvModal.show(uuid)
-            },
             changeStatus(closeCallback) {
                 closeCallback()
 

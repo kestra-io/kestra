@@ -187,6 +187,10 @@
                 type: String,
                 default: undefined,
             },
+            fullScreenModal: {
+                type: Boolean,
+                default: false,
+            },
             excludeMetas: {
                 type: Array,
                 default: () => [],
@@ -196,6 +200,7 @@
             return {
                 showOutputs: {},
                 showMetrics: {},
+                fullscreen: false
             };
         },
         watch: {
@@ -209,11 +214,12 @@
             },
         },
         created() {
-            this.loadLogs();
+            if (!this.fullScreenModal) {
+                this.loadLogs();
+            }
         },
         computed: {
             ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
-            ...mapState("log", ["fullscreen"]),
         },
         methods: {
             forwardEvent(type, event) {
@@ -250,7 +256,7 @@
                     params.taskId = this.taskId;
                 }
 
-                if (this.execution && this.execution.state.current === State.RUNNING && !this.fullscreen) {
+                if (this.execution && this.execution.state.current === State.RUNNING) {
                     this.$store
                         .dispatch("execution/followLogs", {
                             id: this.$route.params.id,
@@ -270,13 +276,11 @@
                             }
                         });
                 } else {
-                    if (!this.fullscreen){
-                        this.$store.dispatch("execution/loadLogs", {
-                            executionId: this.$route.params.id,
-                            params: params,
-                        });
-                        this.closeSSE();
-                    }
+                    this.$store.dispatch("execution/loadLogs", {
+                        executionId: this.$route.params.id,
+                        params: params,
+                    });
+                    this.closeSSE();
                 }
             },
             closeSSE() {

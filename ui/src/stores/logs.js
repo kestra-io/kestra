@@ -4,8 +4,7 @@ export default {
     state: {
         logs: undefined,
         total: 0,
-        level: "INFO",
-        fullscreen: false
+        level: "INFO"
     },
     actions: {
         findLogs({commit}, options) {
@@ -25,8 +24,5 @@ export default {
         setLevel(state, level) {
             state.level = level
         },
-        setFullscreen(state, value) {
-            state.fullscreen = value
-        }
     },
 }

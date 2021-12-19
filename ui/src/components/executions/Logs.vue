@@ -47,7 +47,7 @@
             FullScreenExit, 
             FullScreen,
             Download,
-            ContentCopy
+            ContentCopy,
         },
         computed: {
             ...mapState("execution", ["execution", "taskRun", "logs"]),
@@ -74,6 +74,11 @@
             },
             toggleLogFullscreen() {
                 this.$store.commit("log/setFullscreen", !this.fullscreen)
+                if (this.fullscreen) {
+                    this.$bvModal.show("log-fullscreen-modal")
+                } else {
+                    this.$bvModal.hide("log-fullscreen-modal")
+                }
             },
             copy () {
                 navigator.clipboard.writeText(this.contentAsText);

@@ -106,6 +106,7 @@ public class KafkaStreamService {
     public static class Stream extends KafkaStreams {
         private final Logger logger;
         private KafkaStreamsMetrics metrics;
+        private boolean hasStarted = false;
 
         private Stream(Topology topology, Properties props, MetricRegistry meterRegistry, Logger logger) {
             super(topology, props);
@@ -133,8 +134,28 @@ public class KafkaStreamService {
             this.setGlobalStateRestoreListener(new StateRestoreLoggerListeners(logger));
 
             this.setStateListener((newState, oldState) -> {
-                if (logger.isInfoEnabled()) {
+                if (newState == State.RUNNING) {
+                    this.hasStarted = true;
+                }
+
+                if (
+                    (newState == State.REBALANCING && this.hasStarted) ||
+                    newState == State.NOT_RUNNING ||
+                    newState == State.PENDING_SHUTDOWN
+                ) {
+                    log.warn("Switching stream state from {} to {}", oldState, newState);
+                } else if (
+                    newState == State.PENDING_ERROR ||
+                    newState == State.ERROR
+                ) {
+                    log.error("Switching stream state from {} to {}", oldState, newState);
+                } else {
                     logger.info("Switching stream state from {} to {}", oldState, newState);
+                }
+
+                if (newState == State.ERROR) {
+                    logger.warn("Shutdown now due to ERROR state");
+                    System.exit(-1);
                 }
 
                 if (listener != null) {

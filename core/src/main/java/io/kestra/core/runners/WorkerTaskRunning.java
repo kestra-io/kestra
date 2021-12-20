@@ -17,6 +17,9 @@ public class WorkerTaskRunning {
     private Task task;
 
     @NotNull
+    private RunContext runContext;
+
+    @NotNull
     private WorkerInstance workerInstance;
 
     @NotNull
@@ -28,6 +31,7 @@ public class WorkerTaskRunning {
             .partition(partition)
             .taskRun(workerTask.getTaskRun())
             .task(workerTask.getTask())
+            .runContext(workerTask.getRunContext())
             .build();
     }
 }

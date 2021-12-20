@@ -1,6 +1,7 @@
 package io.kestra.runner.kafka.streams;
 
 import com.google.common.collect.Streams;
+import io.kestra.core.runners.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -11,9 +12,6 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
-import io.kestra.core.runners.WorkerInstance;
-import io.kestra.core.runners.WorkerTask;
-import io.kestra.core.runners.WorkerTaskRunning;
 import io.kestra.core.services.WorkerInstanceService;
 import io.kestra.runner.kafka.KafkaExecutor;
 
@@ -126,6 +124,7 @@ public class WorkerInstanceTransformer implements ValueTransformerWithKey<String
                 .filter(r -> r.getWorkerInstance().getWorkerUuid().toString().equals(workerInstance.getWorkerUuid().toString()))
                 .map(r -> WorkerTask.builder()
                     .taskRun(r.getTaskRun().onRunningResend())
+                    .runContext(r.getRunContext())
                     .task(r.getTask())
                     .build()
                 )

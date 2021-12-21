@@ -124,6 +124,14 @@ abstract public class AbstractBash extends Task {
     )
     protected Map<String, String> env;
 
+    @Builder.Default
+    @Schema(
+        title = "Use `WARNING` state if any stdErr is sent"
+    )
+    @PluginProperty(dynamic = false)
+    @NotNull
+    protected Boolean warningOnStdErr = true;
+
     @Getter(AccessLevel.NONE)
     protected transient Path workingDirectory;
 
@@ -215,6 +223,7 @@ abstract public class AbstractBash extends Task {
             .exitCode(runResult.getExitCode())
             .stdOutLineCount(runResult.getStdOut().getLogsCount())
             .stdErrLineCount(runResult.getStdErr().getLogsCount())
+            .warningOnStdErr(this.warningOnStdErr)
             .vars(outputsVars)
             .files(uploaded)
             .outputFiles(uploaded)

@@ -53,7 +53,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, Bash.class);
 
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(11));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(12));
 
         generate = jsonSchemaGenerator.outputs(Task.class, Bash.class);
 

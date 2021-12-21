@@ -1,0 +1,13 @@
+id: bash-warning
+namespace: io.kestra.tests
+
+tasks:
+  - id: failed
+    type: io.kestra.core.tasks.scripts.Bash
+    commands:
+      - 'echo "error" >> /dev/stderr'
+
+errors:
+  - id: error
+    type: io.kestra.core.tasks.debugs.Echo
+    format: second {{task.id}}

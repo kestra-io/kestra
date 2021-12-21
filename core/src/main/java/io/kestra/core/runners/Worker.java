@@ -442,6 +442,9 @@ public class Worker implements Runnable, Closeable {
                 }
 
                 taskState = io.kestra.core.models.flows.State.Type.SUCCESS;
+                if (taskOutput != null && taskOutput.finalState().isPresent()) {
+                    taskState = taskOutput.finalState().get();
+                }
             } catch (net.jodah.failsafe.TimeoutExceededException e) {
                 this.exceptionHandler(this, new TimeoutExceededException(workerTask.getTask().getTimeout(), e));
             } catch (Exception e) {

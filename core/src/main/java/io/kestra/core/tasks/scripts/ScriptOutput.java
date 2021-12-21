@@ -1,12 +1,16 @@
 package io.kestra.core.tasks.scripts;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.Output;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 import javax.validation.constraints.NotNull;
 
 @Builder
@@ -47,4 +51,12 @@ public class ScriptOutput implements io.kestra.core.models.tasks.Output {
     )
     @PluginProperty(additionalProperties = URI.class)
     private final Map<String, URI> outputFiles;
+
+    @JsonIgnore
+    private Boolean warningOnStdErr;
+
+    @Override
+    public Optional<State.Type> finalState() {
+        return this.warningOnStdErr != null && this.stdErrLineCount > 0 ? Optional.of(State.Type.WARNING) : Output.super.finalState();
+    }
 }

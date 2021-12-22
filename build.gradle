@@ -102,10 +102,11 @@ allprojects {
         implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.30'
 
         // jackson
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.0'
-        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.13.0'
-        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: '2.13.0'
-        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: '2.13.0'
+        implementation group: 'com.fasterxml.jackson', name: 'jackson-bom', version: jacksonVersion, ext: 'pom'
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.module', name: 'jackson-module-parameter-names', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-guava', version: jacksonVersion
 
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'

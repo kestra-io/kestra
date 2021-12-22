@@ -87,7 +87,7 @@
                         </router-link>
                     </template>
                     <template #cell(id)="row">
-                        <code>{{ row.item.id | id }}</code>
+                        <id :value="row.item.id" :shrink="true" />
                     </template>
 
                     <template #cell(trigger)="row">
@@ -118,6 +118,7 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import State from "../../utils/state";
     import qb from "../../utils/queryBuilder";
+    import Id from "../Id";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -133,7 +134,8 @@
             StateGlobalChart,
             TriggerAvatar,
             DateAgo,
-            Kicon
+            Kicon,
+            Id
         },
         props: {
             embed: {

@@ -794,3 +794,10 @@ $modal-size: ("sm": $modal-sm, "md": $modal-md, "lg": $modal-lg, "xl": $modal-xl
         }
     }
 }
+
+.tooltip.auto-width {
+    .tooltip-inner {
+        white-space: nowrap;
+        max-width: none;
+    }
+}

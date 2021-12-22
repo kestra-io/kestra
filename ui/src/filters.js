@@ -1,8 +1,6 @@
 import Vue from "vue"
 import Utils from "./utils/utils";
 
-Vue.filter("id", value => value ? value.toString().substr(0, 8) : "");
-
 Vue.filter("humanizeDuration", (value, options) => {
     return Utils.humanDuration(value, options);
 });
@@ -22,4 +20,3 @@ Vue.filter("date", (dateString, format) => {
     }
     return Vue.moment(dateString).format(f)
 })
-Vue.filter("ellipsis", (text, len) => text.length > len ? text.substr(0, len) + "..." : text.substr(0, len))

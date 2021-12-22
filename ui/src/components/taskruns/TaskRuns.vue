@@ -100,13 +100,13 @@
                         </router-link>
                     </template>
                     <template #cell(id)="row">
-                        <code>{{ row.item.id | id }}</code>
+                        <id :value="row.item.id" :shrink="true" />
                     </template>
                     <template #cell(executionId)="row">
-                        <code>{{ row.item.executionId | id }}</code>
+                        <id :value="row.item.executionId" :shrink="true" />
                     </template>
                     <template #cell(taskId)="row">
-                        <code v-b-tooltip.hover :title="row.item.taskId">{{ row.item.taskId | ellipsis(25) }} </code>
+                        <id :value="row.item.taskId + row.item.taskId + row.item.taskId + row.item.taskId" :shrink="true" :size="25" />
                     </template>
                 </b-table>
             </template>
@@ -132,6 +132,7 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import State from "../../utils/state";
     import qb from "../../utils/queryBuilder";
+    import Id from "../Id";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -146,7 +147,8 @@
             StatusFilterButtons,
             StateGlobalChart,
             DateAgo,
-            Kicon
+            Kicon,
+            Id
         },
         data() {
             return {
@@ -168,16 +170,16 @@
                 };
                 return [
                     {
+                        key: "executionId",
+                        label: title("execution"),
+                    },
+                    {
                         key: "taskId",
                         label: title("task")
                     },
                     {
                         key: "id",
                         label: title("id")
-                    },
-                    {
-                        key: "executionId",
-                        label: title("execution"),
                     },
                     {
                         key: "taskRunList.state.startDate",

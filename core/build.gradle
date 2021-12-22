@@ -16,7 +16,7 @@ dependencies {
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.8'
 
     // serializers
-    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion', version: jacksonVersion
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion'
 
     // utils
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.4'

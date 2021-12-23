@@ -224,8 +224,8 @@
                     let tooltip = `${this.$t("duration")} : ${Utils.humanDuration(duration)}`
 
                     if (runningState.length > 0) {
-                        tooltip += `\n${this.$t("queued duration")} : ${Utils.humanDuration(ts(runningState[0].date) - startTs)}`;
-                        tooltip += `\n${this.$t("running duration")} : ${Utils.humanDuration(stopTs - ts(runningState[0].date))}`;
+                        tooltip += `\n${this.$t("queued duration")} : ${Utils.humanDuration((ts(runningState[0].date) - startTs) / 1000)}`;
+                        tooltip += `\n${this.$t("running duration")} : ${Utils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
                     }
 
                     let width = (stop / executionDelta) * 100

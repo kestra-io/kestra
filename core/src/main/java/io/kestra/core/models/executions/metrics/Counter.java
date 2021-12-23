@@ -17,11 +17,12 @@ import java.util.Map;
 @NoArgsConstructor
 public final class Counter extends AbstractMetricEntry<Double> {
     @NotNull
-    private Double value;
+    @JsonInclude
+    private final String type = "counter";
 
     @NotNull
-    @JsonInclude
-    protected String type = "counter";
+    @EqualsAndHashCode.Exclude
+    private Double value;
 
     private Counter(@NotNull String name, @NotNull Double value, String... tags) {
         super(name, tags);
@@ -50,5 +51,10 @@ public final class Counter extends AbstractMetricEntry<Double> {
         meterRegistry
             .counter(this.metricName(prefix), this.tagsAsArray(tags))
             .increment(this.value);
+    }
+
+    @Override
+    public void increment(Double value) {
+        this.value = this.value + value;
     }
 }

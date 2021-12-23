@@ -9,27 +9,29 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 
 import javax.validation.constraints.NotNull;
+import java.time.Duration;
 import java.util.Map;
 
 @ToString
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-public class Timer extends AbstractMetricEntry<java.time.Duration> {
+public class Timer extends AbstractMetricEntry<Duration> {
     @NotNull
     @JsonInclude
-    protected String type = "timer";
+    private final String type = "timer";
 
     @NotNull
-    private java.time.Duration value;
+    @EqualsAndHashCode.Exclude
+    private Duration value;
 
-    private Timer(@NotNull String name, @NotNull java.time.Duration value, String... tags) {
+    private Timer(@NotNull String name, @NotNull Duration value, String... tags) {
         super(name, tags);
 
         this.value = value;
     }
 
-    public static Timer of(@NotNull String name, @NotNull java.time.Duration value, String... tags) {
+    public static Timer of(@NotNull String name, @NotNull Duration value, String... tags) {
         return new Timer(name, value, tags);
     }
 
@@ -38,5 +40,10 @@ public class Timer extends AbstractMetricEntry<java.time.Duration> {
         meterRegistry
             .timer(this.metricName(prefix), this.tagsAsArray(tags))
             .record(this.value);
+    }
+
+    @Override
+    public void increment(Duration value) {
+        this.value = this.value.plus(value);
     }
 }

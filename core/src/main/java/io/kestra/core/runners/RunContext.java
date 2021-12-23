@@ -433,8 +433,16 @@ public class RunContext {
         return this.metrics;
     }
 
-    public RunContext metric(AbstractMetricEntry<?> metricEntry) {
-        this.metrics.add(metricEntry);
+    public <T> RunContext metric(AbstractMetricEntry<T> metricEntry) {
+        int index = this.metrics.indexOf(metricEntry);
+
+        if (index >= 0) {
+            @SuppressWarnings("unchecked")
+            AbstractMetricEntry<T> current = (AbstractMetricEntry<T>) this.metrics.get(index);
+            current.increment(metricEntry.getValue());
+        } else {
+            this.metrics.add(metricEntry);
+        }
 
         try {
             metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());

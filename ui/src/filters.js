@@ -5,6 +5,10 @@ Vue.filter("humanizeDuration", (value, options) => {
     return Utils.humanDuration(value, options);
 });
 
+Vue.filter("humanizeNumber", (value) => {
+    return parseInt(value).toLocaleString(localStorage.getItem("lang") || "en")
+});
+
 Vue.filter("cap", value => value ? value.toString().capitalize() : "");
 
 Vue.filter("lower", value => value ? value.toString().toLowerCase() : "");

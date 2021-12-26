@@ -220,7 +220,8 @@
     "copy logs": "Copy logs",
     "download logs": "Download logs",
     "toggle fullscreen": "Toggle fullscreen",
-    "copied": "Copied"
+    "copied": "Copied",
+    "tags": "Tags"
   },
   "fr": {
     "id": "Identifiant",
@@ -444,6 +445,7 @@
     "copy logs": "Copier les logs",
     "download logs": "Télécharger les logs",
     "toggle fullscreen": "Permuter le plein écran",
-    "copied": "Copié"
+    "copied": "Copié",
+    "tags": "Tags"
   }
 }

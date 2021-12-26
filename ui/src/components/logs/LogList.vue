@@ -117,13 +117,11 @@
                         </template>
 
                         <!-- Metrics -->
-                        <vars
+                        <metrics
                             v-if="showMetrics[currentTaskRun.id + '-' + index]"
-                            :title="$t('metrics')"
-                            :execution="execution"
-                            class="table-unrounded mt-1"
                             :key="`metrics-${index}-${currentTaskRun.id}`"
-                            :data="convertMetric(attempt.metrics)"
+                            class="table-unrounded mt-1"
+                            :data="attempt.metrics"
                         />
                     </template>
                     <!-- Outputs -->
@@ -146,6 +144,7 @@
     import Restart from "../executions/Restart";
     import ChangeStatus from "../executions/ChangeStatus";
     import Vars from "../executions/Vars";
+    import Metrics from "../executions/Metrics";
     import Clock from "vue-material-design-icons/Clock";
     import LocationExit from "vue-material-design-icons/LocationExit";
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";
@@ -154,7 +153,6 @@
     import SubFlowLink from "../flows/SubFlowLink"
     import Kicon from "../Kicon"
     import Duration from "../layout/Duration";
-    import Utils from "../../utils/utils";
 
     export default {
         components: {
@@ -164,6 +162,7 @@
             Clock,
             LocationExit,
             Vars,
+            Metrics,
             ChartAreaspline,
             Status,
             SubFlowLink,
@@ -301,15 +300,6 @@
                         log.attemptNumber === attemptNumber
                     );
                 });
-            },
-            convertMetric(metrics) {
-                return (metrics || []).reduce((accumulator, r) => {
-                    accumulator[r.name] =
-                        r.type === "timer"
-                            ? Utils.humanDuration(parseInt(r.value * 1000))
-                            : r.value;
-                    return accumulator;
-                }, Object.create(null));
             },
         },
         beforeDestroy() {

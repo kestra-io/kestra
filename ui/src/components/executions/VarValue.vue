@@ -56,7 +56,7 @@
         },
         props: {
             value: {
-                type: [String, Object],
+                type: [String, Object, Boolean, Number],
                 required: true
             },
             execution: {

@@ -34,7 +34,6 @@ public class ElasticsearchConfig {
     String pathPrefix;
     Boolean strictDeprecationMode;
     Boolean trustAllSsl;
-
     BasicAuth basicAuth;
 
     @Getter
@@ -84,7 +83,7 @@ public class ElasticsearchConfig {
     }
 
     public Header[] defaultHeaders() {
-        return Arrays.stream(this.httpHosts)
+        return Arrays.stream(this.defaultHeaders)
             .map(header -> {
                 String[] nameAndValue = header.split(":");
                 return new BasicHeader(nameAndValue[0], nameAndValue[1]);

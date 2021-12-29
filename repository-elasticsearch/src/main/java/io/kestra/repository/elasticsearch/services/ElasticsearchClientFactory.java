@@ -63,10 +63,6 @@ public class ElasticsearchClientFactory {
             builder.setPathPrefix(config.getPathPrefix());
         }
 
-        if (config.getPathPrefix() != null) {
-            builder.setPathPrefix(config.getPathPrefix());
-        }
-
         if (config.getStrictDeprecationMode() != null) {
             builder.setStrictDeprecationMode(config.getStrictDeprecationMode());
         }

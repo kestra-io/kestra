@@ -81,7 +81,7 @@
         computed: {
             ...mapState("execution", ["execution", "taskRun", "logs"]),
             downloadContent() {
-                return "data:text/plain;base64," + btoa(this.contentAsText)
+                return "data:text/plain;base64," + Buffer.from(this.contentAsText, "utf8").toString("base64");
             },
             contentAsText() {
                 return this.logs.map(l => `${l.timestamp} | ${l.level} | ${l.message}`).join("\n")

@@ -54,8 +54,6 @@
                 {{ key }}: <strong>{{ value }}</strong>
             </b-badge>
         </template>
-
-
     </b-table>
 </template>
 

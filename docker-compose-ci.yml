@@ -2,13 +2,12 @@ version: "3.6"
 
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper
+    image: confluentinc/cp-zookeeper:7.0.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
 
   kafka:
-    image: confluentinc/cp-kafka
-
+    image: confluentinc/cp-kafka:7.0.0
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -22,7 +21,7 @@ services:
       - 9092:9092
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.4.2
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.0
     environment:
       discovery.type: single-node
       ES_JAVA_OPTS: "-Xms256m -Xmx256m"

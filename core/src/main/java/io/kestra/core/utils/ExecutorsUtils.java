@@ -5,8 +5,8 @@ import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class ExecutorsUtils {

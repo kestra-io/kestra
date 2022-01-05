@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class RetryUtils {

@@ -7,7 +7,7 @@ import io.kestra.core.repositories.TriggerRepositoryInterface;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 @MemoryRepositoryEnabled

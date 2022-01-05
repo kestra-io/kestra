@@ -11,6 +11,7 @@ tasks:
     interval: PT0.250S
     maxAttempt: 5
     maxDuration: PT15S
+    warningOnRetry: true
 
 errors:
   - id: never-happen

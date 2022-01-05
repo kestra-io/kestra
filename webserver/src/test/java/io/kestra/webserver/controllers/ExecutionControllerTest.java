@@ -18,13 +18,13 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.client.RxHttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
-import io.micronaut.http.client.sse.RxSseClient;
 import io.micronaut.http.sse.Event;
 import io.micronaut.runtime.server.EmbeddedServer;
+import io.micronaut.rxjava2.http.client.RxHttpClient;
+import io.micronaut.rxjava2.http.client.sse.RxSseClient;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -32,8 +32,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;

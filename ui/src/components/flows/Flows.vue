@@ -34,6 +34,7 @@
                         :responsive="true"
                         striped
                         hover
+                        sort-by="id"
                         :items="flows"
                         :fields="fields"
                         ref="table"
@@ -275,7 +276,7 @@
                         q: this.loadQuery(),
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
-                        sort: this.$route.query.sort
+                        sort: this.$route.query.sort || "id:asc"
                     })
                     .then(flows => {
                         this.dailyGroupByFlowReady = false;

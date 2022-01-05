@@ -9,7 +9,7 @@ import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.Await;
 
 import java.time.Duration;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton

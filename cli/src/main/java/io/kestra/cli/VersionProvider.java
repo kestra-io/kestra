@@ -4,8 +4,8 @@ import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
 import picocli.CommandLine;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 class VersionProvider implements CommandLine.IVersionProvider {
     private static io.kestra.core.utils.VersionProvider versionProvider;

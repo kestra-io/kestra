@@ -7,7 +7,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.schedulers.SchedulerExecutionStateInterface;
 
 import java.util.Optional;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Slf4j
 @KafkaQueueEnabled

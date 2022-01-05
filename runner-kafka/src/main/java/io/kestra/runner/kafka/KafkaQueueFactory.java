@@ -13,9 +13,9 @@ import io.kestra.core.runners.*;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Factory;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 @Factory
 @KafkaQueueEnabled

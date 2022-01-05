@@ -37,7 +37,7 @@ import org.apache.kafka.streams.state.Stores;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @KafkaQueueEnabled
 @Singleton

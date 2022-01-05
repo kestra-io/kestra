@@ -10,7 +10,7 @@ import java.io.FileInputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.Objects;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

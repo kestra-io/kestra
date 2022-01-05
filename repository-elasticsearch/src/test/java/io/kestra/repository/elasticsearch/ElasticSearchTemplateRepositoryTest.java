@@ -5,7 +5,7 @@ import org.junit.jupiter.api.AfterEach;
 import io.kestra.core.repositories.AbstractTemplateRepositoryTest;
 
 import java.io.IOException;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @MicronautTest
 class ElasticSearchTemplateRepositoryTest extends AbstractTemplateRepositoryTest {

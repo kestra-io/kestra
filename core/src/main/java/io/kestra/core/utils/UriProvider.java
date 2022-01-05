@@ -7,7 +7,7 @@ import io.kestra.core.models.flows.Flow;
 
 import java.net.URI;
 import io.micronaut.core.annotation.Nullable;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class UriProvider {

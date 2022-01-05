@@ -10,7 +10,11 @@
   height: 100%;
   z-index: 1000;
   opacity: 1.0;
-  background: white;
+  background: #303e67;
+}
+
+.theme-dark #loader-wrapper {
+  background-color: #1b1e2a;
 }
 
 #loader {
@@ -23,7 +27,7 @@
   margin: -75px 0 0 -75px;
   border-radius: 50%;
   border: 3px solid transparent;
-  border-top-color: #1AA5DE;
+  border-top-color: #192A4E;
   -webkit-animation: spin 2s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
   animation: spin 2s linear infinite; /* Chrome, Firefox 16+, IE 10+, Opera */
 }
@@ -37,7 +41,7 @@
   bottom: 5px;
   border-radius: 50%;
   border: 3px solid transparent;
-  border-top-color: #F04124;
+  border-top-color: #4F83A5;
   -webkit-animation: spin 3s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
   animation: spin 3s linear infinite; /* Chrome, Firefox 16+, IE 10+, Opera */
 }
@@ -51,7 +55,7 @@
   bottom: 15px;
   border-radius: 50%;
   border: 3px solid transparent;
-  border-top-color: #FBD10B;
+  border-top-color: #9EBFD5;
   -webkit-animation: spin 1.5s linear infinite; /* Chrome, Opera 15+, Safari 5+ */
   animation: spin 1.5s linear infinite; /* Chrome, Firefox 16+, IE 10+, Opera */
 }

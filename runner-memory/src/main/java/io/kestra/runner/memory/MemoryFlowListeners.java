@@ -14,9 +14,9 @@ import io.kestra.core.services.FlowListenersInterface;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Slf4j

@@ -21,9 +21,9 @@ import io.kestra.core.tasks.scripts.Bash;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -56,11 +56,11 @@ public abstract class AbstractFlowRepositoryTest {
         FlowListener.reset();
     }
 
-    private static Flow.FlowBuilder builder() {
+    private static Flow.FlowBuilder<?, ?> builder() {
         return builder(IdUtils.create(), "test");
     }
 
-    private static Flow.FlowBuilder builder(String flowId, String taskId) {
+    private static Flow.FlowBuilder<?, ?> builder(String flowId, String taskId) {
         return Flow.builder()
             .id(flowId)
             .namespace("io.kestra.unittest")
@@ -294,6 +294,41 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.UPDATE).count(), is(1L));
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count(), is(1L));
     }
+
+
+    @Test
+    void removeTriggerDelete() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        triggerQueue.receive(trigger -> {
+            assertThat(trigger, is(nullValue()));
+            countDownLatch.countDown();
+        });
+
+        String flowId = IdUtils.create();
+
+        Flow flow = Flow.builder()
+            .id(flowId)
+            .namespace("io.kestra.unittest")
+            .triggers(Collections.singletonList(AbstractSchedulerTest.UnitTest.builder()
+                .id("sleep")
+                .type(AbstractSchedulerTest.UnitTest.class.getName())
+                .build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
+            .build();
+
+        Flow save = flowRepository.create(flow);
+
+        assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
+
+        flowRepository.delete(save);
+        countDownLatch.await();
+
+        assertThat(FlowListener.getEmits().size(), is(2));
+        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count(), is(1L));
+        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count(), is(1L));
+    }
+
 
     @Singleton
     public static class FlowListener implements ApplicationEventListener<CrudEvent<Flow>> {

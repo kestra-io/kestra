@@ -41,7 +41,7 @@
                                 <div class="task-duration">
                                     <small class="mr-1">
                                         <clock />
-                                        {{ attempt.state.duration | humanizeDuration }}
+                                        <duration class="ml-2" :histories="attempt.state.histories" />
                                     </small>
                                 </div>
 
@@ -117,13 +117,11 @@
                         </template>
 
                         <!-- Metrics -->
-                        <vars
+                        <metrics
                             v-if="showMetrics[currentTaskRun.id + '-' + index]"
-                            :title="$t('metrics')"
-                            :execution="execution"
-                            class="table-unrounded mt-1"
                             :key="`metrics-${index}-${currentTaskRun.id}`"
-                            :data="convertMetric(attempt.metrics)"
+                            class="table-unrounded mt-1"
+                            :data="attempt.metrics"
                         />
                     </template>
                     <!-- Outputs -->
@@ -142,11 +140,11 @@
 </template>
 <script>
     import {mapState} from "vuex";
-    import humanizeDuration from "humanize-duration";
     import LogLine from "./LogLine";
     import Restart from "../executions/Restart";
     import ChangeStatus from "../executions/ChangeStatus";
     import Vars from "../executions/Vars";
+    import Metrics from "../executions/Metrics";
     import Clock from "vue-material-design-icons/Clock";
     import LocationExit from "vue-material-design-icons/LocationExit";
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";
@@ -154,6 +152,7 @@
     import Status from "../Status";
     import SubFlowLink from "../flows/SubFlowLink"
     import Kicon from "../Kicon"
+    import Duration from "../layout/Duration";
 
     export default {
         components: {
@@ -163,10 +162,12 @@
             Clock,
             LocationExit,
             Vars,
+            Metrics,
             ChartAreaspline,
             Status,
             SubFlowLink,
             Kicon,
+            Duration
         },
         props: {
             level: {
@@ -185,6 +186,10 @@
                 type: String,
                 default: undefined,
             },
+            fullScreenModal: {
+                type: Boolean,
+                default: false,
+            },
             excludeMetas: {
                 type: Array,
                 default: () => [],
@@ -194,6 +199,7 @@
             return {
                 showOutputs: {},
                 showMetrics: {},
+                fullscreen: false
             };
         },
         watch: {
@@ -207,7 +213,9 @@
             },
         },
         created() {
-            this.loadLogs();
+            if (!this.fullScreenModal) {
+                this.loadLogs();
+            }
         },
         computed: {
             ...mapState("execution", ["execution", "taskRun", "task", "logs"]),
@@ -293,15 +301,6 @@
                     );
                 });
             },
-            convertMetric(metrics) {
-                return (metrics || []).reduce((accumulator, r) => {
-                    accumulator[r.name] =
-                        r.type === "timer"
-                            ? humanizeDuration(parseInt(r.value * 1000))
-                            : r.value;
-                    return accumulator;
-                }, Object.create(null));
-            },
         },
         beforeDestroy() {
             if (this.sse) {
@@ -331,6 +330,10 @@
         margin-top: $paragraph-margin-bottom * 1.5;
         line-height: $btn-line-height;
 
+        .theme-dark & {
+            background-color: var(--gray-100);
+        }
+
         .attempt-number {
             background: var(--gray-400);
             padding: $btn-padding-y $btn-padding-x;
@@ -347,8 +350,13 @@
             text-overflow: ellipsis;
         }
 
+        small {
+            color: var(--gray-500);
+        }
+
         .task-duration {
             white-space: nowrap;
+
         }
 
         .task-status {

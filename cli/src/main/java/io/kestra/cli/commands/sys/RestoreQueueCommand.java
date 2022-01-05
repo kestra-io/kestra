@@ -6,7 +6,7 @@ import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "restore-queue",

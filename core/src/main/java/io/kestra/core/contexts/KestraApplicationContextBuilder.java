@@ -22,9 +22,9 @@ import java.util.*;
  */
 public class KestraApplicationContextBuilder implements ApplicationContextConfiguration {
     private ClassLoader classLoader = getClass().getClassLoader();
-    private List<String> environments = new ArrayList<>();
-    private List<String> packages = new ArrayList<>();
-    private Map<String, Object> properties = new LinkedHashMap<>();
+    private final List<String> environments = new ArrayList<>();
+    private final List<String> packages = new ArrayList<>();
+    private final Map<String, Object> properties = new LinkedHashMap<>();
     private PluginRegistry pluginRegistry;
 
     public KestraApplicationContextBuilder() {
@@ -78,7 +78,6 @@ public class KestraApplicationContextBuilder implements ApplicationContextConfig
         }
         return this;
     }
-
 
     @SuppressWarnings("MagicNumber")
     public @NonNull ApplicationContext build() {

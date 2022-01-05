@@ -11,7 +11,7 @@ import io.kestra.core.utils.Await;
 import picocli.CommandLine;
 
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "indexer",

@@ -20,6 +20,7 @@ public class FirstDefinedEvalHelper implements Helper<String> {
         this.variableRenderer = variableRenderer;
     }
 
+    @SuppressWarnings("unchecked")
     @SneakyThrows
     @Override
     public CharSequence apply(final String value, final Options options) {

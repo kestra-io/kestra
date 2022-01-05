@@ -16,7 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "standalone",

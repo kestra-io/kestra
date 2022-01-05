@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 /**
  * Provides business logic to manipulate {@link WorkerInstance}

@@ -37,6 +37,8 @@
                     :responsive="true"
                     striped
                     hover
+                    sort-by="state.startDate"
+                    sort-desc
                     :items="executions"
                     :fields="fields"
                     @row-dblclicked="onRowDoubleClick"
@@ -54,22 +56,26 @@
                             </kicon>
                         </router-link>
                     </template>
-                    <template #cell(startDate)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(state.startDate)="row">
                         <date-ago :inverted="true" :date="row.item.state.startDate" />
                     </template>
-                    <template #cell(endDate)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(state.endDate)="row">
                         <span v-if="!isRunning(row.item)">
                             <date-ago :inverted="true" :date="row.item.state.endDate" />
                         </span>
                     </template>
-                    <template #cell(current)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(state.current)="row">
                         <status
                             class="status"
                             :status="row.item.state.current"
                             size="sm"
                         />
                     </template>
-                    <template #cell(duration)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(state.duration)="row">
                         <span v-if="isRunning(row.item)">{{ durationFrom(row.item) | humanizeDuration }}</span>
                         <span v-else>{{ row.item.state.duration | humanizeDuration }}</span>
                     </template>
@@ -81,7 +87,7 @@
                         </router-link>
                     </template>
                     <template #cell(id)="row">
-                        <code>{{ row.item.id | id }}</code>
+                        <id :value="row.item.id" :shrink="true" />
                     </template>
 
                     <template #cell(trigger)="row">
@@ -112,6 +118,7 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import State from "../../utils/state";
     import qb from "../../utils/queryBuilder";
+    import Id from "../Id";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -127,7 +134,8 @@
             StateGlobalChart,
             TriggerAvatar,
             DateAgo,
-            Kicon
+            Kicon,
+            Id
         },
         props: {
             embed: {
@@ -151,13 +159,6 @@
                 flowTriggerDetails: undefined
             };
         },
-        beforeMount() {
-            if (this.$route.query.sort === undefined) {
-                this.$router.push({
-                    query: {...this.$route.query, ...{sort: "state.startDate:desc"}}
-                });
-            }
-        },
         computed: {
             ...mapState("execution", ["executions", "total"]),
             ...mapState("stat", ["daily"]),
@@ -176,22 +177,19 @@
                         label: title("id")
                     },
                     {
-                        key: "startDate",
+                        key: "state.startDate",
                         label: title("start date"),
                         sortable: true,
-                        sortKey: "state.startDate"
                     },
                     {
-                        key: "endDate",
+                        key: "state.endDate",
                         label: title("end date"),
                         sortable: true,
-                        sortKey: "state.endDate"
                     },
                     {
-                        key: "duration",
+                        key: "state.duration",
                         label: title("duration"),
                         sortable: true,
-                        sortKey: "state.duration"
                     },
                 ]
 
@@ -212,11 +210,10 @@
 
                 fields.push(
                     {
-                        key: "current",
+                        key: "state.current",
                         label: title("state"),
                         class: "text-center",
                         sortable: true,
-                        sortKey: "state.current"
                     },
                     {
                         key: "trigger",

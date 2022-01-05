@@ -1,6 +1,6 @@
 <template>
     <sidebar-menu
-        :menu="menu"
+        :menu="disabledCurrentRoute(menu)"
         @toggle-collapse="onToggleCollapse"
         width="268px"
         :collapsed="collapsed"
@@ -55,25 +55,18 @@
                 this.collapsed = folded;
                 localStorage.setItem("menuCollapsed", folded ? "true" : "false");
                 this.$emit("onMenuCollapse", folded);
-            }
-        },
-        created() {
-            this.$store.dispatch("misc/loadVersion")
-        },
-        data() {
-            return {
-                collapsed: localStorage.getItem("menuCollapsed") === "true"
-            };
-        },
-        mounted() {
-            this.$el.querySelectorAll(".vsm--item span").forEach(e => {
-                //empty icon name on mouseover
-                e.setAttribute("title","")
-            })
-        },
-        computed: {
-            ...mapState("misc", ["version"]),
-            menu() {
+            },
+            disabledCurrentRoute(items) {
+                return items
+                    .map(r => {
+                        if (r.href === this.$route.path) {
+                            delete r.href;
+                        }
+
+                        return r;
+                    })
+            },
+            generateMenu() {
                 return [
                     {
                         href: "/flows",
@@ -152,6 +145,31 @@
                     }
                 ];
             }
+
+        },
+        created() {
+            this.menu = this.disabledCurrentRoute(this.generateMenu());
+            this.$store.dispatch("misc/loadVersion")
+        },
+        watch: {
+            $route() {
+                this.menu = this.disabledCurrentRoute(this.generateMenu());
+            }
+        },
+        data() {
+            return {
+                collapsed: localStorage.getItem("menuCollapsed") === "true",
+                menu: []
+            };
+        },
+        mounted() {
+            this.$el.querySelectorAll(".vsm--item span").forEach(e => {
+                //empty icon name on mouseover
+                e.setAttribute("title","")
+            })
+        },
+        computed: {
+            ...mapState("misc", ["version"])
         }
     };
 </script>
@@ -206,6 +224,10 @@
         span.version {
             opacity: 0;
         }
+    }
+
+    /deep/ a.vsm--link_active[href="#"] {
+        cursor: initial !important;
     }
 
     /deep/ .vsm--item {

@@ -24,7 +24,8 @@ jobs:
     name: Check & Publish
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -190,13 +191,13 @@ jobs:
           push: true
           tags: ${{ format('kestra/kestra:{0}-full', steps.vars.outputs.tag) }}
           build-args: |
-            KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }} io.kestra.storage:storage-gcs:LATEST io.kestra.storage:storage-minio:LATEST io.kestra.plugin:plugin-compress:LATEST io.kestra.plugin:plugin-aws:LATEST io.kestra.plugin:plugin-fs:LATEST io.kestra.plugin:plugin-gcp:LATEST io.kestra.plugin:plugin-googleworkspace:LATEST io.kestra.plugin:plugin-kubernetes:LATEST io.kestra.plugin:plugin-serdes:LATEST io.kestra.plugin:plugin-singer:LATEST io.kestra.plugin:plugin-notifications:LATEST io.kestra.plugin:plugin-crypto:LATEST io.kestra.plugin:plugin-jdbc-mysql:LATEST io.kestra.plugin:plugin-jdbc-postgres:LATEST io.kestra.plugin:plugin-jdbc-vertica:LATEST io.kestra.plugin:plugin-jdbc-clickhouse:LATEST io.kestra.plugin:plugin-jdbc-oracle:LATEST io.kestra.plugin:plugin-script-groovy:LATEST io.kestra.plugin:plugin-script-jython:LATEST io.kestra.plugin:plugin-script-nashorn:LATEST
+            KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }} io.kestra.storage:storage-gcs:LATEST io.kestra.storage:storage-minio:LATEST io.kestra.plugin:plugin-aws:LATEST io.kestra.plugin:plugin-compress:LATEST io.kestra.plugin:plugin-crypto:LATEST io.kestra.plugin:plugin-elasticsearch:LATEST io.kestra.plugin:plugin-fs:LATEST io.kestra.plugin:plugin-gcp:LATEST io.kestra.plugin:plugin-googleworkspace:LATEST io.kestra.plugin:plugin-jdbc-clickhouse:LATEST io.kestra.plugin:plugin-jdbc-mysql:LATEST io.kestra.plugin:plugin-jdbc-oracle:LATEST io.kestra.plugin:plugin-jdbc-postgres:LATEST io.kestra.plugin:plugin-jdbc-redshift:LATEST io.kestra.plugin:plugin-jdbc-vertica:LATEST io.kestra.plugin:plugin-kubernetes:LATEST io.kestra.plugin:plugin-mongodb:LATEST io.kestra.plugin:plugin-notifications:LATEST io.kestra.plugin:plugin-script-groovy:LATEST io.kestra.plugin:plugin-script-jython:LATEST io.kestra.plugin:plugin-script-nashorn:LATEST io.kestra.plugin:plugin-serdes:LATEST io.kestra.plugin:plugin-singer:LATEST
             APT_PACKAGES=python3-pip python3-wheel python3-setuptools python3-virtualenv nodejs
 
       # Slack
       - name: Slack notification
         uses: 8398a7/action-slack@v3
-        if: always()
+        if: ${{ always() && env.SLACK_WEBHOOK_URL != 0 }}
         with:
           status: ${{ job.status }}
           job_name: Check & Publish

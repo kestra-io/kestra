@@ -8,7 +8,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

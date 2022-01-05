@@ -7,28 +7,22 @@ import io.micronaut.health.HealthStatus;
 import io.micronaut.management.endpoint.health.HealthEndpoint;
 import io.micronaut.management.health.indicator.HealthIndicator;
 import io.micronaut.management.health.indicator.HealthResult;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
-import org.opensearch.action.ActionListener;
-import org.opensearch.action.admin.cluster.health.ClusterHealthRequest;
-import org.opensearch.action.admin.cluster.health.ClusterHealthResponse;
-import org.opensearch.client.*;
+import org.opensearch.client.Request;
+import org.opensearch.client.Response;
+import org.opensearch.client.ResponseListener;
+import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.cluster.health.ClusterHealthStatus;
-import org.opensearch.common.Strings;
-import org.opensearch.common.xcontent.ToXContent;
-import org.opensearch.common.xcontent.XContentBuilder;
-import org.opensearch.common.xcontent.XContentFactory;
 import org.reactivestreams.Publisher;
 
 import java.io.IOException;
 import java.util.Map;
-import javax.inject.Singleton;
 
 import static io.micronaut.health.HealthStatus.DOWN;
 import static io.micronaut.health.HealthStatus.UP;
-import static java.util.Collections.emptyMap;
 import static org.opensearch.cluster.health.ClusterHealthStatus.GREEN;
 import static org.opensearch.cluster.health.ClusterHealthStatus.YELLOW;
 

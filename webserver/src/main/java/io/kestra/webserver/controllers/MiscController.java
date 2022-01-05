@@ -9,7 +9,7 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.utils.VersionProvider;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @Slf4j
 @Controller

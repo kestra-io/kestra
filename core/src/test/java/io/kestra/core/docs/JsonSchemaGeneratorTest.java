@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -53,7 +53,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, Bash.class);
 
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(11));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(12));
 
         generate = jsonSchemaGenerator.outputs(Task.class, Bash.class);
 

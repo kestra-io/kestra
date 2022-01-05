@@ -1,9 +1,9 @@
 package io.kestra.core.runners;
 
-import lombok.Builder;
-import lombok.Data;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
+import lombok.Builder;
+import lombok.Data;
 
 import javax.validation.constraints.NotNull;
 

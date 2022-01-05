@@ -3,7 +3,7 @@ package io.kestra.core.tasks.flows;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class FlowTest extends AbstractMemoryRunnerTest {
     @Inject

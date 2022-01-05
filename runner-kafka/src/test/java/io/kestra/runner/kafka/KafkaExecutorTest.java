@@ -38,7 +38,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -83,7 +83,7 @@ class KafkaExecutorTest {
         properties.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kafka-stream-unit/" + UUID.randomUUID());
 
         // @TODO
-        properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE);
+        properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);
 
         Topology topology = stream.topology().build();
 
@@ -635,7 +635,6 @@ class KafkaExecutorTest {
     private void changeStatus(Task task, TaskRun taskRun, State.Type state) {
         this.workerTaskResultInput()
             .pipeInput("unittest", WorkerTaskResult.builder()
-                .task(task)
                 .taskRun(taskRun.withState(state))
                 .build()
             );

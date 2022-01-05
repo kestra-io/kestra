@@ -16,8 +16,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;

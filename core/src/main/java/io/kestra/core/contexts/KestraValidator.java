@@ -1,8 +1,8 @@
 package io.kestra.core.contexts;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.Replaces;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospectionReference;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
@@ -30,7 +30,8 @@ public class KestraValidator extends DefaultValidator {
         super(configuration);
     }
 
-    protected @Nullable BeanIntrospection<Object> getBeanIntrospection(@NonNull Object object) {
+    protected @Nullable
+    BeanIntrospection<Object> getBeanIntrospection(@NonNull Object object) {
         //noinspection ConstantConditions
         if (object == null) {
             return null;

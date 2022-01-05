@@ -8,8 +8,8 @@ import org.opensearch.client.RestClientBuilder;
 import org.opensearch.client.RestHighLevelClient;
 import io.kestra.repository.elasticsearch.configs.ElasticsearchConfig;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 
 @Requires(beans = ElasticsearchConfig.class)
@@ -57,10 +57,6 @@ public class ElasticsearchClientFactory {
 
         if (config.getDefaultHeaders() != null) {
             builder.setDefaultHeaders(config.defaultHeaders());
-        }
-
-        if (config.getPathPrefix() != null) {
-            builder.setPathPrefix(config.getPathPrefix());
         }
 
         if (config.getPathPrefix() != null) {

@@ -88,14 +88,14 @@ public class Node extends AbstractBash implements RunnableTask<ScriptOutput> {
         title = "The node interpreter to use",
         description = "Set the node interpreter path to use"
     )
-    private final String nodePath = "/usr/bin/node";
+    private final String nodePath = "node";
 
     @Builder.Default
     @Schema(
         title = "The npm binary to use",
         description = "Set the npm binary path for node dependencies setup"
     )
-    private final String npmPath = "/usr/bin/npm";
+    private final String npmPath = "npm";
 
     @Schema(
         title = "node command args",

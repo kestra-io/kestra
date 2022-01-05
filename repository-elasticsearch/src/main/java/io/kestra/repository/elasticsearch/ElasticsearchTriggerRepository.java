@@ -12,8 +12,8 @@ import io.kestra.core.utils.ExecutorsUtils;
 
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 @ElasticSearchRepositoryEnabled

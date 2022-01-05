@@ -4,7 +4,7 @@ import io.micronaut.context.annotation.Replaces;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.Thread.UncaughtExceptionHandler;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton

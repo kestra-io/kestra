@@ -23,18 +23,17 @@ import org.opensearch.search.builder.SearchSourceBuilder;
 
 import java.util.List;
 import java.util.Optional;
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchTemplateRepository extends AbstractElasticSearchRepository<Template> implements TemplateRepositoryInterface {
     private static final String INDEX_NAME = "templates";
-
     private final QueueInterface<Template> templateQueue;
-    private ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher<CrudEvent<Template>> eventPublisher;
 
     @Inject
     public ElasticSearchTemplateRepository(
@@ -43,7 +42,7 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
         ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.TEMPLATE_NAMED) QueueInterface<Template> templateQueue,
-        ApplicationEventPublisher eventPublisher
+        ApplicationEventPublisher<CrudEvent<Template>> eventPublisher
     ) {
         super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Template.class);
 

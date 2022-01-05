@@ -37,6 +37,8 @@
                     :responsive="true"
                     striped
                     hover
+                    sort-by="taskRunList.state.startDate"
+                    sort-desc
                     :items="taskruns"
                     :fields="fields"
                     @row-dblclicked="onRowDoubleClick"
@@ -54,22 +56,26 @@
                             </kicon>
                         </router-link>
                     </template>
-                    <template #cell(startDate)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.state.startDate)="row">
                         <date-ago :inverted="true" :date="row.item.state.startDate" />
                     </template>
-                    <template #cell(endDate)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.state.endDate)="row">
                         <span v-if="!isRunning(row.item)">
                             <date-ago :inverted="true" :date="row.item.state.endDate" />
                         </span>
                     </template>
-                    <template #cell(current)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.state.current)="row">
                         <status
                             class="status"
                             :status="row.item.state.current"
                             size="sm"
                         />
                     </template>
-                    <template #cell(duration)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.state.duration)="row">
                         <span v-if="isRunning(row.item)">
                             {{ durationFrom(row.item) | humanizeDuration }}
                         </span>
@@ -77,21 +83,30 @@
                             {{ row.item.state.duration | humanizeDuration }}
                         </span>
                     </template>
-                    <template #cell(flowId)="row">
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.flowId.keyword)="row">
                         <router-link
                             :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.flowId}}"
                         >
                             {{ row.item.flowId }}
                         </router-link>
                     </template>
+                    <!-- eslint-disable-next-line -->
+                    <template #cell(taskRunList.namespace.keyword)="row">
+                        <router-link
+                            :to="{name: 'taskruns/list', query: {namespace: row.item.namespace}}"
+                        >
+                            {{ row.item.namespace }}
+                        </router-link>
+                    </template>
                     <template #cell(id)="row">
-                        <code>{{ row.item.id | id }}</code>
+                        <id :value="row.item.id" :shrink="true" />
                     </template>
                     <template #cell(executionId)="row">
-                        <code>{{ row.item.executionId | id }}</code>
+                        <id :value="row.item.executionId" :shrink="true" />
                     </template>
                     <template #cell(taskId)="row">
-                        <code v-b-tooltip.hover :title="row.item.taskId">{{ row.item.taskId | ellipsis(25) }} </code>
+                        <id :value="row.item.taskId + row.item.taskId + row.item.taskId + row.item.taskId" :shrink="true" :size="25" />
                     </template>
                 </b-table>
             </template>
@@ -117,6 +132,7 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import State from "../../utils/state";
     import qb from "../../utils/queryBuilder";
+    import Id from "../Id";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -131,20 +147,14 @@
             StatusFilterButtons,
             StateGlobalChart,
             DateAgo,
-            Kicon
+            Kicon,
+            Id
         },
         data() {
             return {
                 dailyReady: false,
                 isDefaultNamespaceAllow: true,
             };
-        },
-        beforeMount() {
-            if (this.$route.query.sort === undefined) {
-                this.$router.push({
-                    query: {...this.$route.query, ...{sort: "taskRunList.state.startDate:desc"}}
-                });
-            }
         },
         computed: {
             ...mapState("taskrun", ["taskruns", "total", "maxTaskRunSetting"]),
@@ -160,6 +170,10 @@
                 };
                 return [
                     {
+                        key: "executionId",
+                        label: title("execution"),
+                    },
+                    {
                         key: "taskId",
                         label: title("task")
                     },
@@ -168,45 +182,35 @@
                         label: title("id")
                     },
                     {
-                        key: "executionId",
-                        label: title("execution"),
-                    },
-                    {
-                        key: "startDate",
+                        key: "taskRunList.state.startDate",
                         label: title("start date"),
                         sortable: true,
-                        sortKey: "taskRunList.state.startDate"
                     },
                     {
-                        key: "endDate",
+                        key: "taskRunList.state.endDate",
                         label: title("end date"),
                         sortable: true,
-                        sortKey: "taskRunList.state.endDate"
                     },
                     {
-                        key: "duration",
+                        key: "taskRunList.state.duration",
                         label: title("duration"),
                         sortable: true,
-                        sortKey: "taskRunList.state.duration"
                     },
                     {
-                        key: "namespace",
+                        key: "taskRunList.namespace.keyword",
                         label: title("namespace"),
                         sortable: true,
-                        sortKey: "taskRunList.namespace.keyword"
                     },
                     {
-                        key: "flowId",
+                        key: "taskRunList.flowId.keyword",
                         label: title("flow"),
                         sortable: true,
-                        sortKey: "taskRunList.flowId.keyword"
                     },
                     {
-                        key: "current",
+                        key: "taskRunList.state.current",
                         label: title("state"),
                         class: "text-center",
                         sortable: true,
-                        sortKey: "taskRunList.state.current"
                     },
                     {
                         key: "details",
@@ -239,8 +243,9 @@
                 let query = this.queryWithFilter();
 
                 if (query.namespace) {
-                    filter.push(`taskRunList.namespace:${query.namespace}*`)
+                    filter.push(`${!stats ? "taskRunList.namespace" : "namespace"}:${query.namespace}*`)
                 }
+
 
                 if (query.q) {
                     filter.push(qb.toLucene(query.q));
@@ -274,7 +279,7 @@
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         q: this.loadQuery(false),
-                        sort: this.$route.query.sort,
+                        sort: this.$route.query.sort || "taskRunList.state.startDate:desc",
                         state: this.$route.query.status
                     })
                     .finally(callback);

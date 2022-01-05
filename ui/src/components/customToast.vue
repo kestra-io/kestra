@@ -9,8 +9,8 @@
         <b-table
             class="mt-2 mb-0"
             small
-            :responsive="true"
             v-if="items && items.length > 0"
+            :responsive="true"
             striped
             hover
             :items="items"
@@ -61,11 +61,4 @@
         }
     };
 </script>
-<style lang="scss">
-    @import "../styles/variable";
-    #app-toast {
-        table {
-            background-color: $white;
-        }
-    }
-</style>
+

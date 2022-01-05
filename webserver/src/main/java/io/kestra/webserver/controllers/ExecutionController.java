@@ -42,8 +42,8 @@ import io.kestra.webserver.utils.PageableUtils;
 import org.reactivestreams.Publisher;
 
 import io.micronaut.core.annotation.Nullable;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -89,7 +89,7 @@ public class ExecutionController {
     protected QueueInterface<ExecutionKilled> killQueue;
 
     @Inject
-    private ApplicationEventPublisher eventPublisher;
+    private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)

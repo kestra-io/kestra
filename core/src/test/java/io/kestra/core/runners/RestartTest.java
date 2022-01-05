@@ -2,7 +2,7 @@ package io.kestra.core.runners;
 
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class RestartTest extends AbstractMemoryRunnerTest {
     @Inject

@@ -13,7 +13,7 @@ import io.kestra.runner.kafka.services.KafkaAdminService;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 

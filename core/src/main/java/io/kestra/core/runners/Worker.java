@@ -192,6 +192,14 @@ public class Worker implements Runnable, Closeable {
             }
             State.Type state = lastAttempt.getState().getCurrent();
 
+            if (workerTask.getTask().getRetry() != null &&
+                workerTask.getTask().getRetry().getWarningOnRetry() &&
+                finalWorkerTask.getTaskRun().getAttempts().size() > 0 &&
+                state == State.Type.SUCCESS
+            ) {
+                state = State.Type.WARNING;
+            }
+
             // emit
             finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
 
@@ -434,6 +442,9 @@ public class Worker implements Runnable, Closeable {
                 }
 
                 taskState = io.kestra.core.models.flows.State.Type.SUCCESS;
+                if (taskOutput != null && taskOutput.finalState().isPresent()) {
+                    taskState = taskOutput.finalState().get();
+                }
             } catch (net.jodah.failsafe.TimeoutExceededException e) {
                 this.exceptionHandler(this, new TimeoutExceededException(workerTask.getTask().getTimeout(), e));
             } catch (Exception e) {

@@ -7,7 +7,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.services.KafkaStreamSourceService;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

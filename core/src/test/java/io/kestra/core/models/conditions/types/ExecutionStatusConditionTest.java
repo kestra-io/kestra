@@ -11,7 +11,7 @@ import io.kestra.core.utils.TestsUtils;
 
 import java.util.Collections;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

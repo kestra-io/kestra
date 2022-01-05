@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.debugs;
 
+import io.micronaut.core.annotation.NonNull;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;

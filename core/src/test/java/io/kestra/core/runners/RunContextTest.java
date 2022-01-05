@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -17,13 +18,15 @@ import org.slf4j.event.Level;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -41,6 +44,9 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Inject
     RunContextFactory runContextFactory;
+
+    @Inject
+    MetricRegistry metricRegistry;
 
     @Test
     void logs() throws TimeoutException {
@@ -150,5 +156,32 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
         taskDefaultsCaseTest.invalidTaskDefaults();
+    }
+
+    @Test
+    void metricsIncrement() {
+        RunContext runContext = runContextFactory.of();
+
+        Counter counter = Counter.of("counter", 12D);
+        runContext.metric(counter);
+        runContext.metric(Counter.of("counter", 30D));
+
+        Timer timer = Timer.of("duration", Duration.ofSeconds(12));
+        runContext.metric(timer);
+        runContext.metric(Timer.of("duration", Duration.ofSeconds(30)));
+
+        runContext.metric(Counter.of("counter", 123D, "key", "value"));
+        runContext.metric(Timer.of("duration", Duration.ofSeconds(123), "key", "value"));
+
+        assertThat(runContext.metrics().get(runContext.metrics().indexOf(counter)).getValue(), is(42D));
+        assertThat(metricRegistry.counter("counter").count(), is(42D));
+        assertThat(runContext.metrics().get(runContext.metrics().indexOf(timer)).getValue(), is(Duration.ofSeconds(42)));
+        assertThat(metricRegistry.timer("duration").totalTime(TimeUnit.SECONDS), is(42D));
+
+        assertThat(runContext.metrics().get(2).getValue(), is(123D));
+        assertThat(runContext.metrics().get(2).getTags().size(), is(1));
+
+        assertThat(runContext.metrics().get(3).getValue(), is(Duration.ofSeconds(123)));
+        assertThat(runContext.metrics().get(3).getTags().size(), is(1));
     }
 }

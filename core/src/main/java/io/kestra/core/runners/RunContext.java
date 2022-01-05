@@ -29,14 +29,9 @@ import java.io.*;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @NoArgsConstructor
 public class RunContext {
@@ -396,14 +391,22 @@ public class RunContext {
 
     @SuppressWarnings("unchecked")
     private String taskStateFilePathPrefix(Task task) {
+        Map<String, String> taskrun = (Map<String, String>) this.getVariables().get("taskrun");
+
+        List<String> paths = new ArrayList<>(Arrays.asList(
+            "tasks",
+            ((Map<String, String>) this.getVariables().get("flow")).get("namespace"),
+            ((Map<String, String>) this.getVariables().get("flow")).get("id"),
+            task.getId()
+        ));
+
+        if (taskrun.containsKey("value")) {
+            paths.add(taskrun.get("value"));
+        }
+
         return "/" + String.join(
             "/",
-            Arrays.asList(
-                "tasks",
-                ((Map<String, String>) this.getVariables().get("flow")).get("namespace"),
-                ((Map<String, String>) this.getVariables().get("flow")).get("id"),
-                task.getId()
-            )
+            paths
         );
     }
 
@@ -430,8 +433,16 @@ public class RunContext {
         return this.metrics;
     }
 
-    public RunContext metric(AbstractMetricEntry<?> metricEntry) {
-        this.metrics.add(metricEntry);
+    public <T> RunContext metric(AbstractMetricEntry<T> metricEntry) {
+        int index = this.metrics.indexOf(metricEntry);
+
+        if (index >= 0) {
+            @SuppressWarnings("unchecked")
+            AbstractMetricEntry<T> current = (AbstractMetricEntry<T>) this.metrics.get(index);
+            current.increment(metricEntry.getValue());
+        } else {
+            this.metrics.add(metricEntry);
+        }
 
         try {
             metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());

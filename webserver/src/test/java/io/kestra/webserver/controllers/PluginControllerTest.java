@@ -2,7 +2,7 @@ package io.kestra.webserver.controllers;
 
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
-import io.micronaut.http.client.RxHttpClient;
+import io.micronaut.rxjava2.http.client.RxHttpClient;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.Helpers;
 import io.kestra.core.tasks.scripts.Bash;
@@ -75,7 +75,7 @@ class PluginControllerTest {
             assertThat(doc.getMarkdown(), containsString("io.kestra.core.tasks.scripts.Bash"));
             assertThat(doc.getMarkdown(), containsString("Exit if any non true return value"));
             assertThat(doc.getMarkdown(), containsString("The standard output line count"));
-            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(11));
+            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size(), is(12));
             assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size(), is(6));
         });
     }

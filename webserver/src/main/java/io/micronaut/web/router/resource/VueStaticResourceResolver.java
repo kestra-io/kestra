@@ -4,7 +4,7 @@ import io.micronaut.context.annotation.Replaces;
 import io.micronaut.core.io.ResourceLoader;
 import io.micronaut.core.util.CollectionUtils;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;

@@ -1,6 +1,7 @@
 package io.kestra.repository.memory;
 
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.templates.Template;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.value.ValueException;
@@ -17,9 +18,9 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import org.apache.commons.lang3.NotImplementedException;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,7 +40,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     private QueueInterface<Trigger> triggerQueue;
 
     @Inject
-    private ApplicationEventPublisher eventPublisher;
+    private ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
 
     @Inject
     private ModelValidator modelValidator;

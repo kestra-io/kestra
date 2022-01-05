@@ -25,7 +25,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class JsonSchemaGenerator {

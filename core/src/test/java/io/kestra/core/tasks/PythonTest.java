@@ -1,7 +1,9 @@
 package io.kestra.core.tasks;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.tasks.scripts.AbstractBash;
 import io.kestra.core.tasks.scripts.ScriptOutput;
+import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.runners.RunContext;
@@ -14,7 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -79,6 +81,31 @@ class PythonTest {
             .inputFiles(files)
             .requirements(Collections.singletonList("requests"))
             .build();
+
+        ScriptOutput run = python.run(runContext);
+
+        assertThat(run.getExitCode(), is(0));
+        assertThat(run.getVars().get("extract"), is("200"));
+    }
+
+    @Test
+    void docker() throws Exception {
+        Map<String, String> files = new HashMap<>();
+        files.put("main.py", "import requests; print('::{\"outputs\": {\"extract\":\"' + str(requests.get('http://google.com').status_code) + '\"}}::')");
+
+        Python python = Python.builder()
+            .id("test-python-task")
+            .type(Python.class.getName())
+            .inputFiles(files)
+            .runner(AbstractBash.Runner.DOCKER)
+            .dockerOptions(AbstractBash.DockerOptions.builder()
+                .image("python")
+                .build()
+            )
+            .requirements(Collections.singletonList("requests"))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, python, ImmutableMap.of());
 
         ScriptOutput run = python.run(runContext);
 

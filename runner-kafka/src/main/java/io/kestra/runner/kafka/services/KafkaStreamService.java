@@ -1,13 +1,11 @@
 package io.kestra.runner.kafka.services;
 
-import io.kestra.runner.kafka.ConsumerInterceptor;
-import io.kestra.runner.kafka.KafkaDeserializationExceptionHandler;
-import io.kestra.runner.kafka.KafkaExecutorProductionExceptionHandler;
-import io.kestra.runner.kafka.ProducerInterceptor;
+import io.kestra.runner.kafka.*;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.binder.kafka.KafkaStreamsMetrics;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.context.event.ApplicationEventPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -17,16 +15,18 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.StreamsException;
+import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.processor.StateRestoreListener;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.runner.kafka.configs.ClientConfig;
 import io.kestra.runner.kafka.configs.StreamDefaultsConfig;
+import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
 @Singleton
@@ -48,6 +48,9 @@ public class KafkaStreamService {
     private KafkaConfigService kafkaConfigService;
 
     @Inject
+    private ApplicationEventPublisher<KafkaStreamEndpoint.Event> eventPublisher;
+
+    @Inject
     private MetricRegistry metricRegistry;
 
     @Value("${kestra.server.metrics.kafka.stream:true}")
@@ -57,7 +60,15 @@ public class KafkaStreamService {
         return this.of(clientId, groupId, topology, new Properties());
     }
 
+    public KafkaStreamService.Stream of(Class<?> clientId, Class<?> groupId, Topology topology, Logger logger) {
+        return this.of(clientId, groupId, topology, new Properties(), logger);
+    }
+
     public KafkaStreamService.Stream of(Class<?> clientId, Class<?> groupId, Topology topology, Properties properties) {
+        return this.of(clientId, groupId, topology, properties, null);
+    }
+
+    public KafkaStreamService.Stream of(Class<?> clientId, Class<?> groupId, Topology topology, Properties properties, Logger logger) {
         properties.putAll(clientConfig.getProperties());
 
         if (this.streamConfig.getProperties() != null) {
@@ -86,13 +97,18 @@ public class KafkaStreamService {
             );
         }
 
-        return new Stream(topology, properties, metricsEnabled ? metricRegistry : null);
+        Stream stream = new Stream(topology, properties, metricsEnabled ? metricRegistry : null, logger);
+        eventPublisher.publishEvent(new KafkaStreamEndpoint.Event(clientId.getName(), stream));
+
+        return stream;
     }
 
     public static class Stream extends KafkaStreams {
+        private final Logger logger;
         private KafkaStreamsMetrics metrics;
+        private boolean hasStarted = false;
 
-        private Stream(Topology topology, Properties props, MetricRegistry meterRegistry) {
+        private Stream(Topology topology, Properties props, MetricRegistry meterRegistry, Logger logger) {
             super(topology, props);
 
             if (meterRegistry != null) {
@@ -105,19 +121,41 @@ public class KafkaStreamService {
                 );
                 meterRegistry.bind(metrics);
             }
+
+            this.logger = logger != null ? logger : log;
         }
 
         public synchronized void start(final KafkaStreams.StateListener listener) throws IllegalStateException, StreamsException {
-            this.setUncaughtExceptionHandler((thread, e) -> {
-                log.error("Uncaught exception in Kafka Stream " + thread.getName() + ", closing !", e);
-                System.exit(1);
+            this.setUncaughtExceptionHandler(e -> {
+                log.error("Uncaught exception in Kafka Stream, closing !", e);
+                return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_APPLICATION;
             });
 
-            this.setGlobalStateRestoreListener(new StateRestoreLoggerListeners());
+            this.setGlobalStateRestoreListener(new StateRestoreLoggerListeners(logger));
 
             this.setStateListener((newState, oldState) -> {
-                if (log.isInfoEnabled()) {
-                    log.info("Switching stream state from {} to {}", oldState, newState);
+                if (newState == State.RUNNING) {
+                    this.hasStarted = true;
+                }
+
+                if (
+                    (newState == State.REBALANCING && this.hasStarted) ||
+                    newState == State.NOT_RUNNING ||
+                    newState == State.PENDING_SHUTDOWN
+                ) {
+                    log.warn("Switching stream state from {} to {}", oldState, newState);
+                } else if (
+                    newState == State.PENDING_ERROR ||
+                    newState == State.ERROR
+                ) {
+                    log.error("Switching stream state from {} to {}", oldState, newState);
+                } else {
+                    logger.info("Switching stream state from {} to {}", oldState, newState);
+                }
+
+                if (newState == State.ERROR) {
+                    logger.warn("Shutdown now due to ERROR state");
+                    System.exit(-1);
                 }
 
                 if (listener != null) {
@@ -153,10 +191,16 @@ public class KafkaStreamService {
     }
 
     public static class StateRestoreLoggerListeners implements StateRestoreListener {
+        private final Logger logger;
+
+        public StateRestoreLoggerListeners(Logger logger) {
+            this.logger = logger;
+        }
+
         @Override
         public void onRestoreStart(TopicPartition topicPartition, String storeName, long startingOffset, long endingOffset) {
-            if (log.isDebugEnabled()) {
-                log.debug(
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                     "Starting restore topic '{}', partition '{}', store '{}' from {} to {}",
                     topicPartition.topic(),
                     topicPartition.partition(),
@@ -169,9 +213,9 @@ public class KafkaStreamService {
 
         @Override
         public void onBatchRestored(TopicPartition topicPartition, String storeName, long batchEndOffset, long numRestored) {
-            if (log.isTraceEnabled()) {
-                log.trace(
-                    "Restore done for topic '{}', partition '{}', store '{}' at offset {} with {} records",
+            if (logger.isTraceEnabled()) {
+                logger.trace(
+                    "Restore batch for topic '{}', partition '{}', store '{}' at offset {} with {} records",
                     topicPartition.topic(),
                     topicPartition.partition(),
                     storeName,
@@ -183,8 +227,8 @@ public class KafkaStreamService {
 
         @Override
         public void onRestoreEnd(TopicPartition topicPartition, String storeName, long totalRestored) {
-            if (log.isDebugEnabled()) {
-                log.debug(
+            if (logger.isDebugEnabled()) {
+                logger.debug(
                     "Restore ended for topic '{}', partition '{}', store '{}'",
                     topicPartition.topic(),
                     topicPartition.partition(),

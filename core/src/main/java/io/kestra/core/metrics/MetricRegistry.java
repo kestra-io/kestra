@@ -12,8 +12,8 @@ import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.schedulers.SchedulerExecutionWithTrigger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Slf4j
@@ -150,12 +150,10 @@ public class MetricRegistry {
      */
     public String[] tags(WorkerTaskResult workerTaskResult, String... tags) {
         return ArrayUtils.addAll(
-            ArrayUtils.addAll(
-                this.tags(workerTaskResult.getTask()),
-                tags
-            ),
+            tags,
             TAG_NAMESPACE_ID, workerTaskResult.getTaskRun().getNamespace(),
             TAG_FLOW_ID, workerTaskResult.getTaskRun().getFlowId(),
+            TAG_TASK_ID, workerTaskResult.getTaskRun().getTaskId(),
             TAG_STATE, workerTaskResult.getTaskRun().getState().getCurrent().name()
         );
     }

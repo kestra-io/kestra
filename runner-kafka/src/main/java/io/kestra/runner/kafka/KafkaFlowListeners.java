@@ -27,8 +27,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 @Slf4j
@@ -53,10 +53,10 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         kafkaAdminService.createIfNotExist(Flow.class);
         kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_FLOWLAST);
 
-        KafkaStreamService.Stream buillLastVersion = kafkaStreamService.of(FlowListenerBuild.class, FlowListenerBuild.class, new FlowListenerBuild().topology());
+        KafkaStreamService.Stream buillLastVersion = kafkaStreamService.of(FlowListenerBuild.class, FlowListenerBuild.class, new FlowListenerBuild().topology(), log);
         buillLastVersion.start();
 
-        stream = kafkaStreamService.of(FlowListener.class, FlowListener.class, new FlowListener().topology());
+        stream = kafkaStreamService.of(FlowListener.class, FlowListener.class, new FlowListener().topology(), log);
         stream.start((newState, oldState) -> {
             if (newState == KafkaStreams.State.RUNNING) {
                 try {

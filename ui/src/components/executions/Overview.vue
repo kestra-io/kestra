@@ -10,7 +10,7 @@
                 <status :status="execution.state.current" />
             </b-col>
         </b-row>
-        <b-table :responsive="true" striped hover :items="freshItems" class="mb-0">
+        <b-table :responsive="true" striped hover :items="items" class="mb-0">
             <template #cell(value)="row">
                 <router-link
                     v-if="row.item.link"
@@ -20,6 +20,9 @@
                 </router-link>
                 <span v-else-if="row.item.date">
                     <date-ago :date="row.item.value" />
+                </span>
+                <span v-else-if="row.item.duration">
+                    <duration :histories="row.item.value" />
                 </span>
                 <span v-else>
                     <span v-if="row.item.key === $t('revision')">
@@ -53,17 +56,17 @@
     import {mapState} from "vuex";
     import Status from "../Status";
     import Vars from "./Vars";
-    import humanizeDuration from "humanize-duration";
     import Restart from "./Restart";
     import Kill from "./Kill";
     import State from "../../utils/state";
     import DateAgo from "../layout/DateAgo";
     import Crud from "override/components/auth/Crud";
+    import Duration from "../layout/Duration";
 
-    const ts = date => new Date(date).getTime();
 
     export default {
         components: {
+            Duration,
             Status,
             Restart,
             Vars,
@@ -71,42 +74,12 @@
             DateAgo,
             Crud
         },
-        data() {
-            return {
-                freshItems: undefined
-            }
-        },
-        created() {
-            const refreshValues = () => {
-                const updatedItems = []
-                if (this.items){
-                    for (let item of this.items) {
-                        if (item.key === this.$t("duration")) {
-                            item.value = this.duration()
-                        }
-                        updatedItems.push(item)
-                    }
-                }
-                this.freshItems = updatedItems
-                if (!this.execution || State.isRunning(this.execution.state.current)) {
-                    setTimeout(refreshValues,100)
-                }
-
-            }
-            setTimeout(refreshValues,300)
-        },
         methods: {
             forwardEvent(type, event) {
                 this.$emit(type, event);
             },
             restart() {
                 this.$emit("follow");
-            },
-            duration () {
-                const startTs = this.execution.state.histories[0].date;
-                const delta = ts(this.stop()) - ts(startTs);
-                const duration = this.$moment.duration(delta);
-                return humanizeDuration(duration)
             },
             stop() {
                 if (!this.execution || State.isRunning(this.execution.state.current)) {
@@ -118,7 +91,6 @@
                 }
             }
         },
-
         watch: {
             $route() {
                 if (this.execution.id !== this.$route.params.id) {
@@ -148,7 +120,7 @@
                     },
                     {key: this.$t("created date"), value: this.execution.state.histories[0].date, date: true},
                     {key: this.$t("updated date"), value: this.stop(), date: true},
-                    {key: this.$t("duration"), value: this.duration()},
+                    {key: this.$t("duration"), value: this.execution.state.histories, duration: true},
                     {key: this.$t("steps"), value: stepCount}
                 ];
 

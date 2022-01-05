@@ -3,27 +3,31 @@ package io.kestra.core.models.executions;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.core.annotation.Introspected;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
+import io.micronaut.core.annotation.Introspected;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 
-import javax.validation.constraints.NotNull;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.validation.constraints.NotNull;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
     @JsonSubTypes.Type(value = Counter.class, name = "counter"),
     @JsonSubTypes.Type(value = Timer.class, name = "timer"),
 })
+@ToString
+@EqualsAndHashCode
 @Getter
 @NoArgsConstructor
 @Introspected
-abstract public class AbstractMetricEntry <T> {
+abstract public class AbstractMetricEntry<T> {
     abstract public String getType();
 
     @NotNull
@@ -71,4 +75,6 @@ abstract public class AbstractMetricEntry <T> {
     abstract public T getValue();
 
     abstract public void register(MetricRegistry meterRegistry, String prefix, Map<String, String> tags);
+
+    abstract public void increment(T value);
 }

@@ -81,7 +81,7 @@ public abstract class AbstractPython extends AbstractBash {
     @PluginProperty(dynamic = true)
     @NotNull
     @NotEmpty
-    private final String pythonPath = "/usr/bin/python3";
+    private final String pythonPath = "python";
 
     @Schema(
         title = "Python command args",
@@ -110,7 +110,7 @@ public abstract class AbstractPython extends AbstractBash {
         }
 
         renderer.addAll(Arrays.asList(
-            this.pythonPath + " -m virtualenv " + workingDirectory + " -p " + this.pythonPath + " > /dev/null",
+            this.pythonPath + " -m venv " + workingDirectory + " > /dev/null",
             "./bin/pip install pip --upgrade > /dev/null",
             requirementsAsString
         ));

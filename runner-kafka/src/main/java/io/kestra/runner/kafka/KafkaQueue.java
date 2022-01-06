@@ -94,13 +94,13 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
                     ),
                     (metadata, e) -> {
                         if (e != null) {
-                            log.error("Failed to produce '{}' with metadata '{}'", e, metadata);
+                            log.error("Failed to produce on '{}' with key '{}', metadata '{}' ", this.cls, key,  metadata, e);
                         }
                     }
                 )
                 .get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new QueueException("Failed to produce", e);
+            throw new QueueException("Failed to produce on '" + this.cls + "' with key '" +  key + "': ", e);
         }
     }
 

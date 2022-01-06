@@ -11,6 +11,7 @@ import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.validation.validator.DefaultValidator;
 import io.micronaut.validation.validator.ValidatorConfiguration;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
@@ -19,9 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+@Singleton
 @Replaces(DefaultValidator.class)
 @Slf4j
-
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class KestraValidator extends DefaultValidator {
     private Map<String, BeanIntrospectionReference<Object>> introspectionMap;

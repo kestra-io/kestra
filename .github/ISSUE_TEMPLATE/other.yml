@@ -1,0 +1,8 @@
+name: Other
+description: Something different
+body:
+  - type: textarea
+    attributes:
+      label: Issue description
+    validations:
+      required: true

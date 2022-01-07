@@ -1,0 +1,7 @@
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/kestra-io/kestra/discussions
+    about: Ask questions about Kestra on Github
+  - name: Chat
+    url: https://discord.gg/NMG39WKGth
+    about: Chat with us on Discord.

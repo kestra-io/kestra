@@ -1,0 +1,15 @@
+name: Feature request
+description: Create a new feature request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the feature you want for Kestra to implement, before that check if there is already an existing issue to add it.
+  - type: textarea
+    attributes:
+      label: Feature description
+      placeholder: Tell us what feature you would like for Kestra to have and what problem is it going to solve
+    validations:
+      required: true
+labels:
+  - enhancement

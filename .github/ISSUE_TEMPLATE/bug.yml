@@ -1,0 +1,54 @@
+name: Bug Report
+description: File a bug report
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting an issue, please review the task list below before submitting the issue. Your issue report will be closed if the issue is incomplete and the below tasks not completed.
+
+        NOTE: If you are unsure about something and the issue is more of a question a better place to ask questions is on [Github Discussions](https://github.com/kestra-io/kestra/discussions) or [Discord](https://discord.gg/NMG39WKGth).
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: A concise description of what you expected to happen.
+      placeholder: Tell us what should happen
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Actual Behaviour
+      description: A concise description of what you're experiencing.
+      placeholder: Tell us what happens instead
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Steps To Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. In this environment...
+        2. With this config...
+        3. Run '...'
+        4. See error...
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Environment Information
+      description: Environment information where the problem occurs.
+      value: |
+        - Kestra Version:
+        - Operating System (OS / Docker / Kubernetes):
+        - Java Version (If not docker):
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Example flow
+      description: Example flow source.
+      placeholder: |
+        If relevant, an example flow
+    validations:
+      required: false
+labels:
+  - bug

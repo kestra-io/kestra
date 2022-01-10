@@ -6,15 +6,17 @@ import io.kestra.core.docs.DocumentationGenerator;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
 import picocli.CommandLine;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
-import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "doc",
@@ -33,6 +35,9 @@ public class PluginDocCommand extends AbstractCommand {
 
     @CommandLine.Option(names = {"--core"}, description = "Also write core tasks docs files")
     private boolean core = false;
+
+    @CommandLine.Option(names = {"--icons"}, description = "Also write icon for each task")
+    private boolean icons = false;
 
     @Override
     public Integer call() throws Exception {
@@ -65,6 +70,19 @@ public class PluginDocCommand extends AbstractCommand {
                                     file,
                                     Charsets.UTF_8
                                 ).write(s.getBody());
+                            stdOut("Generate doc in: {0}", file);
+
+                            if (s.getIcon() != null && this.icons) {
+                                File iconFile = new File(
+                                    file.getParent(),
+                                    file.getName().substring(0, file.getName().lastIndexOf(".")) + ".svg"
+                                );
+
+                                com.google.common.io.Files
+                                    .asByteSink(iconFile)
+                                    .write(Base64.getDecoder().decode(s.getIcon().getBytes(StandardCharsets.UTF_8)));
+                                stdOut("Generate icon in: {0}", iconFile);
+                            }
 
                             stdOut("Generate doc in: {0}", file);
                         } catch (IOException e) {

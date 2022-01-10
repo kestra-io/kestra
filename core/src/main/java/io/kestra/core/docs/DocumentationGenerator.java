@@ -90,7 +90,8 @@ public class DocumentationGenerator {
 
         return Collections.singletonList(new Document(
             docPath(plugin),
-            render("index", builder.build())
+            render("index", builder.build()),
+            null
         ));
     }
 
@@ -102,7 +103,8 @@ public class DocumentationGenerator {
                 try {
                     return new Document(
                         docPath(registeredPlugin, type, pluginDocumentation),
-                        render(pluginDocumentation)
+                        render(pluginDocumentation),
+                        pluginDocumentation.getIcon()
                     );
                 } catch (IOException e) {
                     throw new RuntimeException(e);

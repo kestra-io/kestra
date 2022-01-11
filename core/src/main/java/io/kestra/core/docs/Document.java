@@ -12,4 +12,5 @@ import lombok.ToString;
 public class Document {
     private final String path;
     private final String body;
+    private final String icon;
 }

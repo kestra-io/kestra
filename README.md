@@ -21,4 +21,4 @@
 * The official Kestra documentation can be found under: [kestra.io](https://kestra.io)
 
 ## License
-Apache 2.0 © [Nigh Tech](https://nigh.tech)
+Apache 2.0 © [Kestra Technologies](https://kestra.io)

@@ -31,4 +31,7 @@
 
     <!-- HealthCheck that report an exception -->
     <logger name="io.micronaut.management.health.indicator.HealthResult" level="OFF" />
+
+    <!-- Elastic deprecation warning that is not compatible with OpenSearch, we must disable all warnings ... -->
+    <logger name="org.opensearch.client.RestClient" level="ERROR" />
 </included>

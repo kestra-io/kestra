@@ -34,6 +34,7 @@
 
                 this.$emit("rendered", outHtml);
 
+                // eslint-disable-next-line vue/no-async-in-computed-properties
                 this.$nextTick(() => {
                     Prism.highlightAll();
                 });

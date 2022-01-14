@@ -70,9 +70,13 @@ jobs:
 
       # JDK
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'adopt'
           java-version: 11
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
 
       # Gradle check
       - name: Build with Gradle
@@ -86,7 +90,7 @@ jobs:
           ./gradlew check jacoco --no-daemon
 
       # Codecov
-      - uses: codecov/codecov-action@v1
+      - uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -128,13 +132,13 @@ jobs:
 
       # Upload artifacts
       - name: Upload jar
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: jar
           path: build/libs/
 
       - name: Upload Executable
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: exe
           path: build/executable/

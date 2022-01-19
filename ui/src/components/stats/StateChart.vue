@@ -56,7 +56,7 @@
                         callbacks: {
                             label: function(context) {
                                 if (context.dataset.yAxisID === "yAxesB" && context.raw !== 0) {
-                                    return context.dataset.label + ": " + Utils.humanDuration(context.raw * 1000);
+                                    return context.dataset.label + ": " + Utils.humanDuration(context.raw);
                                 } else if (context.formattedValue !== "0") {
                                     return context.dataset.label + ": " + context.formattedValue
                                 }

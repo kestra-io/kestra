@@ -50,7 +50,7 @@
                         },
                         callbacks: {
                             label: function(context) {
-                                return Utils.humanDuration(context.raw * 1000);
+                                return Utils.humanDuration(context.raw);
                             }
                         }
                     }

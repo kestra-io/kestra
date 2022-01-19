@@ -30,7 +30,10 @@ public class StaticFilter implements HttpServerFilter {
     @Value("${kestra.webserver.google-analytics}")
     protected String googleAnalytics;
 
-    @SuppressWarnings("deprecation")
+    @Nullable
+    @Value("${kestra.webserver.html-head}")
+    protected String htmlHead;
+
     @Override
     public Publisher<MutableHttpResponse<?>> doFilter(HttpRequest<?> request, ServerFilterChain chain) {
         return Publishers
@@ -74,6 +77,8 @@ public class StaticFilter implements HttpServerFilter {
         if (googleAnalytics != null) {
             line = line.replace("KESTRA_GOOGLE_ANALYTICS = null;", "KESTRA_GOOGLE_ANALYTICS = '" + this.googleAnalytics + "';");
         }
+
+        line = line.replace("<meta name=\"html-head\" content=\"replace\">", this.htmlHead == null ? "" : this.htmlHead);
 
         return line;
     }

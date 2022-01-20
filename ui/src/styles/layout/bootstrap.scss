@@ -224,6 +224,10 @@ code[class*="language-"], pre[class*="language-"] {
 
 table {
     font-size: $font-size-sm;
+
+    thead th .sr-only {
+        display: none;
+    }
 }
 
 .table-responsive {

@@ -232,6 +232,9 @@ kestra:
   variables:
     env-vars-prefix: KESTRA_
     globals: {}
+    disable-handlebars: true
+    cacheEnabled: true
+    cacheSize: 1000
 
   metrics:
     prefix: kestra

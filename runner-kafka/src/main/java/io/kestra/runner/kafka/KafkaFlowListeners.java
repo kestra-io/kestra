@@ -1,6 +1,5 @@
 package io.kestra.runner.kafka;
 
-import com.google.common.collect.Streams;
 import io.kestra.runner.kafka.services.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +12,6 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.errors.InvalidStateStoreException;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
@@ -40,6 +38,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
     private SafeKeyValueStore<String, Flow> store;
     private final List<Consumer<List<Flow>>> consumers = new ArrayList<>();
     private final KafkaStreamService.Stream stream;
+    private List<Flow> flows;
 
     @Inject
     public KafkaFlowListeners(
@@ -72,6 +71,9 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                     log.warn(e.getMessage(), e);
                 }
             } else {
+                synchronized (this) {
+                    flows = null;
+                }
                 this.send(new ArrayList<>());
             }
         });
@@ -180,6 +182,10 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                 .filter((key, value) -> value != null)
                 .toStream()
                 .peek((key, value) -> {
+                    synchronized (this) {
+                        flows = null;
+                    }
+
                     send(flows());
                 });
 
@@ -199,10 +205,17 @@ public class KafkaFlowListeners implements FlowListenersInterface {
             return Collections.emptyList();
         }
 
-        return this.store
-            .toStream()
-            .filter(flow -> flow != null && !flow.isDeleted())
-            .collect(Collectors.toList());
+        synchronized (this) {
+            if (this.flows == null) {
+                this.flows = this.store
+                    .toStream()
+                    .filter(flow -> flow != null && !flow.isDeleted())
+                    .collect(Collectors.toList());
+            }
+        }
+
+        //noinspection ConstantConditions
+        return this.flows == null ? new ArrayList<>() : this.flows;
     }
 
     private void send(List<Flow> flows) {

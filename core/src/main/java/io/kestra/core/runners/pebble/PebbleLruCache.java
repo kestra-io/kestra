@@ -24,9 +24,8 @@ public class PebbleLruCache implements PebbleCache<Object, PebbleTemplate> {
     public PebbleTemplate computeIfAbsent(Object key, Function<? super Object, ? extends PebbleTemplate> mappingFunction) {
         try {
             return cache.get(key, () -> mappingFunction.apply(key));
-        } catch (ExecutionException e) {
-            log.warn("Error during cache compute", e);
-
+        } catch (Exception e) {
+            // we retry the mapping function in order to let the exception be thrown instead of being capture by cache
             return mappingFunction.apply(key);
         }
     }

@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.*;
+
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
@@ -35,10 +37,10 @@ public class VariableRenderer {
 
     @SuppressWarnings("unchecked")
     @Inject
-    public VariableRenderer(ApplicationContext applicationContext, VariableConfiguration variableConfiguration) {
-        this.variableConfiguration = variableConfiguration;
+    public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
+        this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
 
-        if (!variableConfiguration.getDisableHandlebars()) {
+        if (!this.variableConfiguration.getDisableHandlebars()) {
             this.handlebars = new Handlebars()
                 .with(EscapingStrategy.NOOP)
                 .registerHelpers(ConditionalHelpers.class)
@@ -71,7 +73,7 @@ public class VariableRenderer {
         PebbleEngine.Builder pebbleBuilder = new PebbleEngine.Builder()
             .registerExtensionCustomizer(ExtensionCustomizer::new)
             .strictVariables(true)
-            .cacheActive(variableConfiguration.getCacheEnabled())
+            .cacheActive(this.variableConfiguration.getCacheEnabled())
 
             .newLineTrimming(false)
             .autoEscaping(false);
@@ -79,8 +81,8 @@ public class VariableRenderer {
         applicationContext.getBeansOfType(AbstractExtension.class)
             .forEach(pebbleBuilder::extension);
 
-        if (variableConfiguration.getCacheEnabled()) {
-            pebbleBuilder.templateCache(new PebbleLruCache(variableConfiguration.getCacheSize()));
+        if (this.variableConfiguration.getCacheEnabled()) {
+            pebbleBuilder.templateCache(new PebbleLruCache(this.variableConfiguration.getCacheSize()));
         }
 
         pebbleEngine = pebbleBuilder.build();
@@ -103,7 +105,7 @@ public class VariableRenderer {
                 compiledTemplate.evaluate(writer, variables);
                 current = writer.toString();
             } catch (IOException | PebbleException e) {
-                if (variableConfiguration.disableHandlebars) {
+                if (this.variableConfiguration.disableHandlebars) {
                     if (e instanceof PebbleException) {
                         throw properPebbleException((PebbleException) e);
                     }
@@ -186,6 +188,12 @@ public class VariableRenderer {
     @Getter
     @ConfigurationProperties("kestra.variables")
     public static class VariableConfiguration {
+        public VariableConfiguration() {
+            this.disableHandlebars = true;
+            this.cacheEnabled = true;
+            this.cacheSize = 1000;
+        }
+
         Boolean disableHandlebars;
         Boolean cacheEnabled;
         Integer cacheSize;

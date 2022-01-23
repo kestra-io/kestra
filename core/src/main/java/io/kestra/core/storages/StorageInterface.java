@@ -1,16 +1,20 @@
 package io.kestra.core.storages;
 
-import io.micronaut.core.annotation.Introspected;
+import com.google.common.base.Charsets;
+import com.google.common.hash.Hashing;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.utils.Slugify;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.Nullable;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +55,29 @@ public interface StorageInterface {
                 taskRun.getExecutionId()
             )
         );
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    default String statePrefix(String namespace, String flowId, @Nullable String name, @Nullable String value) {
+        ArrayList<String> paths = new ArrayList<>(List.of(
+            namespace.replace(".", "/"),
+            Slugify.of(flowId),
+            "states"
+        ));
+
+        if (name != null) {
+            paths.add(name);
+        }
+
+        if (value != null) {
+            paths.add(Hashing
+                .goodFastHash(64)
+                .hashString(value, Charsets.UTF_8)
+                .toString()
+            );
+        }
+
+        return String.join("/", paths);
     }
 
     default Optional<String> extractExecutionId(URI path) {

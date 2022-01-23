@@ -390,37 +390,28 @@ public class RunContext {
     }
 
     @SuppressWarnings("unchecked")
-    private String taskStateFilePathPrefix(Task task) {
+    private String taskStateFilePathPrefix(String name) {
         Map<String, String> taskrun = (Map<String, String>) this.getVariables().get("taskrun");
 
-        List<String> paths = new ArrayList<>(Arrays.asList(
-            "tasks",
+        return "/" + this.storageInterface.statePrefix(
             ((Map<String, String>) this.getVariables().get("flow")).get("namespace"),
             ((Map<String, String>) this.getVariables().get("flow")).get("id"),
-            task.getId()
-        ));
-
-        if (taskrun.containsKey("value")) {
-            paths.add(taskrun.get("value"));
-        }
-
-        return "/" + String.join(
-            "/",
-            paths
+            name,
+            taskrun.getOrDefault("value", null)
         );
     }
 
-    public InputStream getTaskStateFile(Task task, String name) throws IOException {
-        URI uri = URI.create(this.taskStateFilePathPrefix(task));
+    public InputStream getTaskStateFile(String state, String name) throws IOException {
+        URI uri = URI.create(this.taskStateFilePathPrefix(state));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
        return this.storageInterface.get(resolve);
     }
 
-    public URI putTaskStateFile(File file, Task task, String name) throws IOException {
+    public URI putTaskStateFile(File file, String state, String name) throws IOException {
         return this.putTempFile(
             file,
-            this.taskStateFilePathPrefix(task),
+            this.taskStateFilePathPrefix(state),
             name
         );
     }

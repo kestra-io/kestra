@@ -49,7 +49,7 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public InputStream get(URI uri) throws FileNotFoundException {
+    public InputStream get(URI uri) throws IOException {
         return new BufferedInputStream(new FileInputStream(getPath(URI.create(uri.getPath()))
             .toAbsolutePath()
             .toString())
@@ -57,13 +57,13 @@ public class LocalStorage implements StorageInterface {
     }
 
     @Override
-    public Long size(URI uri) throws FileNotFoundException {
+    public Long size(URI uri) throws IOException {
         try {
             return Files.size(getPath(URI.create(uri.getPath())));
         } catch (NoSuchFileException e) {
             throw new FileNotFoundException("Unable to find file at '" + uri + "'");
         } catch (IOException e) {
-            throw new FileNotFoundException("Unable to find file at '" + uri + "' with message '" + e.getMessage() + "'");
+            throw new IOException("Unable to find file at '" + uri + "' with message '" + e.getMessage() + "'");
         }
     }
 

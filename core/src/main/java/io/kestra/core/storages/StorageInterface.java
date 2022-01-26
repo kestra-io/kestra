@@ -2,6 +2,7 @@ package io.kestra.core.storages;
 
 import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
+import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -23,14 +24,19 @@ import java.util.regex.Pattern;
 
 @Introspected
 public interface StorageInterface {
-    InputStream get(URI uri) throws FileNotFoundException;
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    InputStream get(URI uri) throws IOException;
 
-    Long size(URI uri) throws FileNotFoundException;
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    Long size(URI uri) throws IOException;
 
+    @Retryable(includes = {IOException.class})
     URI put(URI uri, InputStream data) throws IOException;
 
+    @Retryable(includes = {IOException.class})
     boolean delete(URI uri) throws IOException;
 
+    @Retryable(includes = {IOException.class})
     List<URI> deleteByPrefix(URI storagePrefix) throws IOException;
 
     default String executionPrefix(Flow flow, Execution execution) {
@@ -91,7 +97,7 @@ public interface StorageInterface {
         return Optional.of(matcher.group(2));
     }
 
-    default URI uri(Flow flow, Execution execution, String inputName, String file) throws  URISyntaxException {
+    default URI uri(Flow flow, Execution execution, String inputName, String file) throws URISyntaxException {
         return new URI("/" + String.join(
             "/",
             Arrays.asList(
@@ -103,6 +109,7 @@ public interface StorageInterface {
         ));
     }
 
+    @Retryable(includes = {IOException.class})
     default URI from(Flow flow, Execution execution, String input, File file) throws IOException {
         try {
             return this.put(
@@ -114,6 +121,7 @@ public interface StorageInterface {
         }
     }
 
+    @Retryable(includes = {IOException.class})
     default URI from(Flow flow, Execution execution, Input input, File file) throws IOException {
         return this.from(flow, execution, input.getName(), file);
     }

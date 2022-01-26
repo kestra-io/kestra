@@ -340,7 +340,7 @@ public class RunContext {
         return runContextLogger.logger();
     }
 
-    public InputStream uriToInputStream(URI uri) throws FileNotFoundException {
+    public InputStream uriToInputStream(URI uri) throws IOException {
         if (uri.getScheme().equals("kestra")) {
             return this.storageInterface.get(uri);
         }

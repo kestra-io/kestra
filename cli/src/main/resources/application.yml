@@ -39,6 +39,12 @@ endpoints:
     write-sensitive: false
 
 kestra:
+  retries:
+    attempts: 5
+    multiplier: 2.0
+    delay: 1s
+    maxDelay: ""
+
   kafka:
     defaults:
       topic-prefix: "kestra_"

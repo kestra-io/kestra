@@ -242,6 +242,10 @@ table {
             border-radius: 0;
         }
     }
+
+    td {
+        word-break: break-all;
+    }
 }
 
 .table {

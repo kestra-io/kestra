@@ -378,7 +378,7 @@ public class ExecutionController {
     public HttpResponse<FileMetas> filesize(
         String executionId,
         @QueryValue(value = "path") URI path
-    ) throws FileNotFoundException {
+    ) throws IOException {
         HttpResponse<FileMetas> httpResponse =this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file/metas?path=" + path);
         if (httpResponse != null) {
             return httpResponse;

@@ -6,7 +6,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import java.util.Optional;
 
 public class MemoryFlowExecutor implements FlowExecutorInterface {
-    private FlowRepositoryInterface flowRepositoryInterface;
+    private final FlowRepositoryInterface flowRepositoryInterface;
 
     public MemoryFlowExecutor(FlowRepositoryInterface flowRepositoryInterface) {
         this.flowRepositoryInterface = flowRepositoryInterface;

@@ -111,7 +111,7 @@ kestra:
           segment.bytes: "10485760"
 
       executor:
-        name: "${kestra.kafka.defaults.topic-prefix}executor-executor-changelog"
+        name: "${kestra.kafka.defaults.topic-prefix}executor_main-executor-changelog"
         cls: io.kestra.core.runners.Executor
         properties:
           cleanup.policy: "delete,compact"

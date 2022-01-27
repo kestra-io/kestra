@@ -1,7 +1,7 @@
 package io.kestra.runner.kafka.streams;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.runners.AbstractExecutor;
+import io.kestra.core.runners.ExecutorService;
 import io.kestra.core.runners.Executor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,23 +18,22 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ExecutorNextTransformer implements ValueTransformerWithKey<String, Executor, Executor> {
     private final String storeName;
-    private final AbstractExecutor abstractExecutor;
+    private final ExecutorService executorService;
     private KeyValueStore<String, Store> store;
 
-    public ExecutorNextTransformer(String storeName, AbstractExecutor abstractExecutor) {
+    public ExecutorNextTransformer(String storeName, ExecutorService executorService) {
         this.storeName = storeName;
-        this.abstractExecutor = abstractExecutor;
+        this.executorService = executorService;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
-        this.store = (KeyValueStore<String, Store>) context.getStateStore(this.storeName);
+        this.store = context.getStateStore(this.storeName);
     }
 
     @Override
     public Executor transform(final String key, final Executor value) {
-        Executor executor = abstractExecutor.process(value);
+        Executor executor = executorService.process(value);
 
         if (executor.getNexts().size() == 0) {
             return value;
@@ -57,7 +56,7 @@ public class ExecutorNextTransformer implements ValueTransformerWithKey<String, 
         store.addAll(groups.get(false));
         this.store.put(key, store);
 
-        Execution newExecution = abstractExecutor.onNexts(
+        Execution newExecution = executorService.onNexts(
             value.getFlow(),
             value.getExecution(),
             executor.getNexts()

@@ -2,6 +2,7 @@ package io.kestra.runner.kafka.streams;
 
 import com.google.common.collect.Streams;
 import io.kestra.core.runners.*;
+import io.kestra.runner.kafka.executors.ExecutorWorkerRunning;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -13,7 +14,6 @@ import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
 import io.kestra.core.services.WorkerInstanceService;
-import io.kestra.runner.kafka.KafkaExecutor;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,10 +29,9 @@ public class WorkerInstanceTransformer implements ValueTransformerWithKey<String
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
-        this.instanceStore = (KeyValueStore<String, WorkerInstance>) context.getStateStore(KafkaExecutor.WORKERINSTANCE_STATE_STORE_NAME);
-        this.runningStore = (KeyValueStore<String, ValueAndTimestamp<WorkerTaskRunning>>) context.getStateStore(KafkaExecutor.WORKER_RUNNING_STATE_STORE_NAME);
+        this.instanceStore = context.getStateStore(ExecutorWorkerRunning.WORKERINSTANCE_STATE_STORE_NAME);
+        this.runningStore = context.getStateStore(ExecutorWorkerRunning.WORKER_RUNNING_STATE_STORE_NAME);
     }
 
     @Override

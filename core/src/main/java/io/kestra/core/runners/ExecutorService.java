@@ -12,34 +12,43 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.ConditionService;
+import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
-import static io.kestra.core.utils.Rethrow.throwPredicate;
 
-public abstract class AbstractExecutor implements Runnable, Closeable {
-    protected static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractExecutor.class);
+@Singleton
+@Slf4j
+public class ExecutorService {
+    @Inject
+    protected ApplicationContext applicationContext;
 
+    @Inject
     protected RunContextFactory runContextFactory;
+
+    @Inject
     protected MetricRegistry metricRegistry;
+
+    @Inject
     protected ConditionService conditionService;
+
     protected FlowExecutorInterface flowExecutorInterface;
 
-    public AbstractExecutor(
-        RunContextFactory runContextFactory,
-        MetricRegistry metricRegistry,
-        ConditionService conditionService
-    ) {
-        this.runContextFactory = runContextFactory;
-        this.metricRegistry = metricRegistry;
-        this.conditionService = conditionService;
+    protected FlowExecutorInterface flowExecutorInterface() {
+        // bean is injected late, so we need to wait
+        if (this.flowExecutorInterface == null) {
+            this.flowExecutorInterface = applicationContext.getBean(FlowExecutorInterface.class);
+        }
+
+        return this.flowExecutorInterface;
     }
 
     public Executor process(Executor executor) {
@@ -250,7 +259,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
                             ImmutableMap.of()
                     );
                 } catch (Exception e) {
-                    log.warn("Unable to save output on taskRun '{}'", taskRun, e);
+                    executor.getFlow().logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
                 }
 
                 return taskRun;
@@ -510,7 +519,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
                 );
 
                 try {
-                    Execution execution = flowTask.createExecution(runContext, flowExecutorInterface);
+                    Execution execution = flowTask.createExecution(runContext, flowExecutorInterface());
 
                     WorkerTaskExecution workerTaskExecution = WorkerTaskExecution.builder()
                         .task(flowTask)
@@ -552,7 +561,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         return resultExecutor;
     }
 
-    protected static void log(Logger log, Boolean in, WorkerTask value) {
+    public void log(Logger log, Boolean in, WorkerTask value) {
         log.debug(
             "{} {} : {}",
             in ? "<< IN " : ">> OUT",
@@ -561,7 +570,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         );
     }
 
-    protected static void log(Logger log, Boolean in, WorkerTaskResult value) {
+    public void log(Logger log, Boolean in, WorkerTaskResult value) {
         log.debug(
             "{} {} : {}",
             in ? "<< IN " : ">> OUT",
@@ -570,7 +579,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         );
     }
 
-    protected static void log(Logger log, Boolean in, Execution value) {
+    public void log(Logger log, Boolean in, Execution value) {
         log.debug(
             "{} {} [key='{}']\n{}",
             in ? "<< IN " : ">> OUT",
@@ -580,7 +589,7 @@ public abstract class AbstractExecutor implements Runnable, Closeable {
         );
     }
 
-    protected static void log(Logger log, Boolean in, Executor value) {
+    public void log(Logger log, Boolean in, Executor value) {
         log.debug(
             "{} {} [key='{}', from='{}', offset='{}']\n{}",
             in ? "<< IN " : ">> OUT",

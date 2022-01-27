@@ -1,22 +1,19 @@
 package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.context.ApplicationContext;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.AbstractExecutor;
 import io.kestra.core.runners.StandAloneRunner;
 import io.kestra.core.utils.Await;
-import io.kestra.runner.kafka.KafkaExecutor;
+import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Optional;
-import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "standalone",

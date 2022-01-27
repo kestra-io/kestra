@@ -5,17 +5,17 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
 
 @Singleton
 public class FlowTriggerCaseTest {
@@ -49,7 +49,8 @@ public class FlowTriggerCaseTest {
 
         logEntryQueue.receive(logEntry -> {
             if (logEntry.getMessage().contains("Failed to trigger flow") &&
-                    logEntry.getTriggerId().equals("listen-flow-invalid")
+                logEntry.getTriggerId() != null &&
+                logEntry.getTriggerId().equals("listen-flow-invalid")
             ) {
                 countDownLatch.countDown();
             }

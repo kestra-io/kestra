@@ -123,6 +123,10 @@ public class KafkaStreamService {
             }
 
             this.logger = logger != null ? logger : log;
+
+            if (this.logger.isTraceEnabled()) {
+                this.logger.trace(topology.describe().toString());
+            }
         }
 
         public synchronized void start(final KafkaStreams.StateListener listener) throws IllegalStateException, StreamsException {

@@ -17,16 +17,18 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.runner.kafka.configs.ClientConfig;
 import io.kestra.runner.kafka.configs.StreamDefaultsConfig;
+import io.kestra.runner.kafka.executors.ExecutorMain;
+import io.kestra.runner.kafka.executors.ExecutorFlowTrigger;
+import io.kestra.runner.kafka.executors.ExecutorWorkerRunning;
+import io.kestra.runner.kafka.executors.KafkaExecutorInterface;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.*;
-import org.apache.kafka.streams.processor.StateStore;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.test.TestRecord;
 import org.junit.jupiter.api.AfterEach;
@@ -51,7 +53,13 @@ class KafkaExecutorTest {
     ApplicationContext applicationContext;
 
     @Inject
-    KafkaExecutor stream;
+    ExecutorMain executorMain;
+
+    @Inject
+    ExecutorFlowTrigger executorFlowTrigger;
+
+    @Inject
+    ExecutorWorkerRunning executorWorkerRunning;
 
     @Inject
     ClientConfig clientConfig;
@@ -70,12 +78,12 @@ class KafkaExecutorTest {
 
     TopologyTestDriver testTopology;
 
-    static WorkerInstance workerInstance = workerInstance();
-
     @BeforeEach
     void init() throws IOException, URISyntaxException {
         TestsUtils.loads(repositoryLoader);
+    }
 
+    void startStream(KafkaExecutorInterface kafkaExecutorInterface) {
         Properties properties = new Properties();
         properties.putAll(clientConfig.getProperties());
         properties.putAll(streamConfig.getProperties());
@@ -85,18 +93,24 @@ class KafkaExecutorTest {
         // @TODO
         properties.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, StreamsConfig.EXACTLY_ONCE_V2);
 
-        Topology topology = stream.topology().build();
+        Topology topology = kafkaExecutorInterface.topology().build();
 
         if (log.isTraceEnabled()) {
             log.trace(topology.describe().toString());
         }
 
+        if (testTopology != null) {
+            testTopology.close();
+        }
+
         testTopology = new TopologyTestDriver(topology, properties);
 
-        applicationContext.registerSingleton(new KafkaTemplateExecutor(
-            testTopology.getKeyValueStore("template"),
-            "template"
-        ));
+        if (kafkaExecutorInterface.getClass() == ExecutorMain.class) {
+            applicationContext.registerSingleton(new KafkaTemplateExecutor(
+                testTopology.getKeyValueStore("template"),
+                "template"
+            ));
+        }
     }
 
     @AfterEach
@@ -108,6 +122,8 @@ class KafkaExecutorTest {
 
     @Test
     void standard() {
+        startStream(this.executorMain);
+
         Flow flow = flowRepository.findById("io.kestra.tests", "logs").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
 
@@ -136,6 +152,8 @@ class KafkaExecutorTest {
 
     @Test
     void concurrent() {
+        startStream(this.executorMain);
+
         Flow flow = flowRepository.findById("io.kestra.tests", "logs").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
 
@@ -165,6 +183,8 @@ class KafkaExecutorTest {
 
     @Test
     void killed() {
+        startStream(this.executorMain);
+
         Flow flow = flowRepository.findById("io.kestra.tests", "logs").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
 
@@ -204,6 +224,8 @@ class KafkaExecutorTest {
 
     @Test
     void killedAlreadyFinished() {
+        startStream(this.executorMain);
+
         Flow flow = flowRepository.findById("io.kestra.tests", "logs").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
 
@@ -225,6 +247,8 @@ class KafkaExecutorTest {
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void killedParallel(boolean killed) {
+        startStream(this.executorMain);
+
         Flow flow = flowRepository.findById("io.kestra.tests", "parallel").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
 
@@ -290,6 +314,8 @@ class KafkaExecutorTest {
 
     @Test
     void eachNull() {
+        startStream(this.executorMain);
+
         Flow flow = flowRepository.findById("io.kestra.tests", "each-null").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
 
@@ -305,6 +331,8 @@ class KafkaExecutorTest {
 
     @Test
     void parallel() {
+        startStream(this.executorMain);
+
         Flow flow = flowRepository.findById("io.kestra.tests", "parallel").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
 
@@ -368,6 +396,8 @@ class KafkaExecutorTest {
 
     @Test
     void eachParallelNested() throws InternalException {
+        startStream(this.executorMain);
+
         Flow flow = flowRepository.findById("io.kestra.tests", "each-parallel-nested").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
 
@@ -424,6 +454,8 @@ class KafkaExecutorTest {
 
     @Test
     void flowTrigger() {
+        startStream(this.executorMain);
+
         Flow triggerFlow = flowRepository.findById("io.kestra.tests", "trigger-flow-listener-no-inputs").orElseThrow();
         this.flowInput().pipeInput(triggerFlow.uid(), triggerFlow);
 
@@ -440,16 +472,22 @@ class KafkaExecutorTest {
         firstExecution = runningAndSuccessSequential(firstFlow, firstExecution, 0);
         assertThat(firstExecution.getState().getCurrent(), is(State.Type.SUCCESS));
 
+        io.kestra.runner.kafka.streams.ExecutorFlowTrigger executorFlowTrigger = executorFlowTriggerOutput().readRecord().value();
+        assertThat(executorFlowTrigger.getFlowHavingTrigger().getId(), is("trigger-flow-listener-no-inputs"));
+
+        startStream(this.executorFlowTrigger);
+
+        executorFlowTriggerInput().pipeInput(executorFlowTrigger.getFlowHavingTrigger().uid(), executorFlowTrigger);
+
         Execution triggerExecution = executionOutput().readRecord().getValue();
         assertThat(triggerExecution.getState().getCurrent(), is(State.Type.CREATED));
-
-        triggerExecution = runningAndSuccessSequential(triggerFlow, triggerExecution, 0);
-
-        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(triggerExecution.getFlowId(), is("trigger-flow-listener-no-inputs"));
     }
 
     @Test
     void multipleTrigger() {
+        startStream(this.executorMain);
+
         Flow flowA = flowRepository.findById("io.kestra.tests", "trigger-multiplecondition-flow-a").orElseThrow();
         this.flowInput().pipeInput(flowA.uid(), flowA);
 
@@ -469,19 +507,33 @@ class KafkaExecutorTest {
         executionB = runningAndSuccessSequential(flowB, executionB, 0);
         assertThat(executionB.getState().getCurrent(), is(State.Type.SUCCESS));
 
+        // get trigger
+        io.kestra.runner.kafka.streams.ExecutorFlowTrigger executorFlowTriggerA = executorFlowTriggerOutput().readRecord().value();
+        assertThat(executorFlowTriggerA.getExecution().getFlowId(), is("trigger-multiplecondition-flow-a"));
+        io.kestra.runner.kafka.streams.ExecutorFlowTrigger executorFlowTriggerB = executorFlowTriggerOutput().readRecord().value();
+        assertThat(executorFlowTriggerB.getExecution().getFlowId(), is("trigger-multiplecondition-flow-b"));
+
+        startStream(this.executorFlowTrigger);
+        this.flowInput().pipeInput(flowA.uid(), flowA);
+        this.flowInput().pipeInput(flowB.uid(), flowB);
+        this.flowInput().pipeInput(triggerFlow.uid(), triggerFlow);
+
+        executorFlowTriggerInput().pipeInput(executorFlowTriggerA.getFlowHavingTrigger().uid(), executorFlowTriggerA);
+        executorFlowTriggerInput().pipeInput(executorFlowTriggerB.getFlowHavingTrigger().uid(), executorFlowTriggerB);
+
         // trigger start
         Execution triggerExecution = executionOutput().readRecord().getValue();
         assertThat(triggerExecution.getState().getCurrent(), is(State.Type.CREATED));
-
-        triggerExecution = runningAndSuccessSequential(triggerFlow, triggerExecution, 0);
-        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(triggerExecution.getFlowId(), is("trigger-multiplecondition-listener"));
     }
 
     @Test
     void workerRebalanced() {
+        startStream(this.executorMain);
+
+        // start an execution to generate some id
         Flow flow = flowRepository.findById("io.kestra.tests", "logs").orElseThrow();
         this.flowInput().pipeInput(flow.uid(), flow);
-        this.workerInstanceInput().pipeInput(workerInstance.getWorkerUuid().toString(), workerInstance);
 
         Execution execution = createExecution(flow);
 
@@ -489,7 +541,19 @@ class KafkaExecutorTest {
         String taskRunId = execution.getTaskRunList().get(0).getId();
 
         assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
-        assertThat(this.workerTaskOutput().readRecord().value().getTaskRun().getState().getCurrent(), is(State.Type.CREATED));
+
+        WorkerTask workerTask = this.workerTaskOutput().readRecord().value();
+        assertThat(workerTask.getTaskRun().getState().getCurrent(), is(State.Type.CREATED));
+
+        // start worker running stream
+        startStream(this.executorWorkerRunning);
+
+        WorkerInstance startInstance = workerInstance();
+        this.workerInstanceInput().pipeInput(startInstance.getWorkerUuid().toString(), startInstance);
+
+        // add a running
+        WorkerTaskRunning running = WorkerTaskRunning.of(workerTask, startInstance, 0);
+        this.workerTaskRunningInput().pipeInput(running.getTaskRun().getId(), running);
 
         // declare a new worker instance
         WorkerInstance newInstance = workerInstance();
@@ -508,9 +572,10 @@ class KafkaExecutorTest {
         assertThat(workerTaskRunningRecord.key(), is(taskRunId));
     }
 
-
     @Test
     void invalidStore() throws JsonProcessingException {
+        startStream(this.executorMain);
+
         KeyValueStore<String, String> flow = this.testTopology.getKeyValueStore("flow");
         flow.put("io.kestra.unittest_invalid_1", JacksonMapper.ofJson().writeValueAsString(Map.of(
             "id", "invalid",
@@ -525,7 +590,6 @@ class KafkaExecutorTest {
             )
         )));
 
-
         Flow triggerFlow = flowRepository.findById("io.kestra.tests", "trigger-flow-listener-no-inputs").orElseThrow();
         this.flowInput().pipeInput(triggerFlow.uid(), triggerFlow);
 
@@ -538,14 +602,9 @@ class KafkaExecutorTest {
         firstExecution = runningAndSuccessSequential(firstFlow, firstExecution, 0);
         assertThat(firstExecution.getState().getCurrent(), is(State.Type.SUCCESS));
 
-        Execution triggerExecution = executionOutput().readRecord().getValue();
-        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.CREATED));
-
-        triggerExecution = runningAndSuccessSequential(triggerFlow, triggerExecution, 0);
-
-        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
+        io.kestra.runner.kafka.streams.ExecutorFlowTrigger executorFlowTrigger = executorFlowTriggerOutput().readRecord().value();
+        assertThat(executorFlowTrigger.getFlowHavingTrigger().getId(), is("trigger-flow-listener-no-inputs"));
     }
-
 
     private Execution createExecution(Flow flow) {
         Execution execution = Execution.builder()
@@ -596,6 +655,7 @@ class KafkaExecutorTest {
 
 
         // add to running queue
+        /*
         TaskRun taskRun = execution.getTaskRunList().get(index);
         WorkerTaskRunning workerTaskRunning = WorkerTaskRunning.of(
             WorkerTask.builder()
@@ -607,6 +667,8 @@ class KafkaExecutorTest {
             0
         );
         this.workerTaskRunningInput().pipeInput(taskRun.getId(), workerTaskRunning);
+
+         */
 
         if (lastState == State.Type.CREATED) {
             return execution;
@@ -665,6 +727,25 @@ class KafkaExecutorTest {
                 kafkaAdminService.getTopicName(Execution.class),
                 Serdes.String().serializer(),
                 JsonSerde.of(Execution.class).serializer()
+            );
+    }
+
+    private TestInputTopic<String, io.kestra.runner.kafka.streams.ExecutorFlowTrigger> executorFlowTriggerInput() {
+        return this.testTopology
+            .createInputTopic(
+                kafkaAdminService.getTopicName(io.kestra.runner.kafka.streams.ExecutorFlowTrigger.class),
+                Serdes.String().serializer(),
+                JsonSerde.of(io.kestra.runner.kafka.streams.ExecutorFlowTrigger.class).serializer()
+            );
+    }
+
+
+    private TestOutputTopic<String, io.kestra.runner.kafka.streams.ExecutorFlowTrigger> executorFlowTriggerOutput() {
+        return this.testTopology
+            .createOutputTopic(
+                kafkaAdminService.getTopicName(io.kestra.runner.kafka.streams.ExecutorFlowTrigger.class),
+                Serdes.String().deserializer(),
+                JsonSerde.of(io.kestra.runner.kafka.streams.ExecutorFlowTrigger.class).deserializer()
             );
     }
 

@@ -23,6 +23,7 @@ import io.kestra.core.utils.Slugify;
 import io.micronaut.context.ApplicationContext;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.core5.http.ConnectionClosedException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -186,7 +187,8 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
                     .maxAttempt(5)
                     .build()
             ).run(
-                InternalServerErrorException.class,
+                (bool, throwable) -> throwable instanceof InternalServerErrorException ||
+                    throwable.getCause() instanceof ConnectionClosedException,
                 () -> {
                     pull
                         .withTag(!imageParse.tag.equals("") ? imageParse.tag : "latest")

@@ -22,6 +22,7 @@ import io.kestra.runner.kafka.configs.ClientConfig;
 import io.kestra.runner.kafka.configs.StreamDefaultsConfig;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
@@ -97,8 +98,17 @@ public class KafkaStreamService {
             );
         }
 
+        if (properties.containsKey(StreamsConfig.STATE_DIR_CONFIG)) {
+            File stateDir = new File((String) properties.get(StreamsConfig.STATE_DIR_CONFIG));
+
+            if (!stateDir.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                stateDir.mkdirs();
+            }
+        }
+
         Stream stream = new Stream(topology, properties, metricsEnabled ? metricRegistry : null, logger);
-        eventPublisher.publishEvent(new KafkaStreamEndpoint.Event(clientId.getName(), stream));
+        eventPublisher.publishEventAsync(new KafkaStreamEndpoint.Event(clientId.getName(), stream));
 
         return stream;
     }

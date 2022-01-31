@@ -66,7 +66,6 @@ public class KafkaExecutor implements ExecutorInterface {
 
         this.streams = this.kafkaExecutors
             .stream()
-            .parallel()
             .map(executor -> {
                 Properties properties = new Properties();
                 // build

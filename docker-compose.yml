@@ -14,7 +14,7 @@ volumes:
 
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper
+    image: confluentinc/cp-zookeeper:7.0.1
     volumes:
       - zookeeper-data:/var/lib/zookeeper/data
       - zookeeper-log:/var/lib/zookeeper/log
@@ -24,7 +24,7 @@ services:
       ZOOKEEPER_TOOLS_LOG4J_LOGLEVEL: WARN
 
   kafka:
-    image: confluentinc/cp-kafka
+    image: confluentinc/cp-kafka:7.0.1
     volumes:
       - kafka-data:/var/lib/kafka
     environment:

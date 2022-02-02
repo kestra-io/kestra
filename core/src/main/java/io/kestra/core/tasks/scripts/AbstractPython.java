@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
@@ -116,5 +117,15 @@ public abstract class AbstractPython extends AbstractBash {
         ));
 
         return String.join("\n", renderer);
+    }
+
+    @Override
+    protected Map<String, String> finalEnv() throws IOException {
+        Map<String, String> env = super.finalEnv();
+
+        // python buffer log by default, so we force unbuffer to have the whole log
+        env.put("PYTHONUNBUFFERED", "true");
+
+        return env;
     }
 }

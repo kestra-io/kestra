@@ -54,6 +54,7 @@ public class Extension extends AbstractExtension {
         filters.put("timestampNano", new TimestampNanoFilter());
         filters.put("jq", new JqFilter());
         filters.put("json", new JsonFilter());
+        filters.put("keys", new KeysFilter());
         filters.put("slugify", new SlugifyFilter());
         filters.put("substringBefore", new SubstringBeforeFilter());
         filters.put("substringBeforeLast", new SubstringBeforeLastFilter());

@@ -31,6 +31,7 @@ import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.Stores;
 
@@ -138,7 +139,7 @@ public class KafkaScheduler extends AbstractScheduler {
                     JsonSerde.of(Executor.class)
                 ),
                 kafkaAdminService.getTopicName(Executor.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Executor.class)),
+                Consumed.with(Serdes.String(), JsonSerde.of(Executor.class)).withName("GlobalStore.Executor"),
                 () -> new GlobalStateProcessor<>(STATESTORE_EXECUTOR)
             );
 
@@ -150,7 +151,7 @@ public class KafkaScheduler extends AbstractScheduler {
                     JsonSerde.of(Trigger.class)
                 ),
                 kafkaAdminService.getTopicName(Trigger.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Trigger.class)),
+                Consumed.with(Serdes.String(), JsonSerde.of(Trigger.class)).withName("GlobalStore.Trigger"),
                 () -> new GlobalStateLockProcessor<>(STATESTORE_TRIGGER, triggerLock)
             );
 

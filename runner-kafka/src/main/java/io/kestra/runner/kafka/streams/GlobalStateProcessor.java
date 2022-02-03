@@ -1,23 +1,36 @@
 package io.kestra.runner.kafka.streams;
 
+import com.google.common.collect.Streams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
+
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class GlobalStateProcessor <T> implements Processor<String, T> {
     private final String storeName;
+    private final Consumer<List<T>> consumer;
     private KeyValueStore<String, T> store;
 
     public GlobalStateProcessor(String storeName) {
-        this.storeName = storeName;
+        this(storeName, null);
     }
 
-    @SuppressWarnings("unchecked")
+    public GlobalStateProcessor(String storeName, Consumer<List<T>> consumer) {
+        this.storeName = storeName;
+        this.consumer = consumer;
+    }
+
     @Override
     public void init(ProcessorContext context) {
-        this.store = (KeyValueStore<String, T>) context.getStateStore(this.storeName);
+        this.store = context.getStateStore(this.storeName);
+
+        this.send();
     }
 
     @Override
@@ -26,6 +39,17 @@ public class GlobalStateProcessor <T> implements Processor<String, T> {
             this.store.delete(key);
         } else {
             this.store.put(key, value);
+        }
+
+        this.send();
+    }
+
+    @SuppressWarnings("UnstableApiUsage")
+    private void send() {
+        if (consumer != null) {
+            try (KeyValueIterator<String, T> all = this.store.all()) {
+                consumer.accept(Streams.stream(all).map(e -> e.value).collect(Collectors.toList()));
+            }
         }
     }
 

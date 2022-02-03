@@ -46,7 +46,7 @@ public class ExecutorWorkerRunning implements KafkaExecutorInterface {
                 JsonSerde.of(WorkerInstance.class)
             ),
             kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_EXECUTOR_WORKERINSTANCE),
-            Consumed.with(Serdes.String(), JsonSerde.of(WorkerInstance.class)).withName("GlobalStore.ExecutorWorkerInstace"),
+            Consumed.with(Serdes.String(), JsonSerde.of(WorkerInstance.class)).withName("GlobalStore.ExecutorWorkerInstance"),
             () -> new GlobalStateProcessor<>(WORKERINSTANCE_STATE_STORE_NAME)
         );
 

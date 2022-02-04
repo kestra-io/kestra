@@ -35,9 +35,9 @@ public class FlowListenersRestoreCommand extends AbstractCommand {
         super.call();
 
         FlowListenersInterface flowListeners = applicationContext.getBean(FlowListenersInterface.class);
-
         AtomicReference<ZonedDateTime> lastTime = new AtomicReference<>(ZonedDateTime.now());
 
+        flowListeners.run();
         flowListeners.listen(flows -> {
             long count = flows.stream().filter(flow -> !flow.isDeleted()).count();
 

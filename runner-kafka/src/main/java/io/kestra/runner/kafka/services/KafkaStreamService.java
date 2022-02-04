@@ -108,7 +108,7 @@ public class KafkaStreamService {
         }
 
         Stream stream = new Stream(topology, properties, metricsEnabled ? metricRegistry : null, logger);
-        eventPublisher.publishEventAsync(new KafkaStreamEndpoint.Event(clientId.getName(), stream));
+        eventPublisher.publishEvent(new KafkaStreamEndpoint.Event(clientId.getName(), stream));
 
         return stream;
     }

@@ -35,6 +35,8 @@ public class DefaultScheduler extends AbstractScheduler {
     @SuppressWarnings("unchecked")
     @Override
     public void run() {
+        flowListeners.run();
+
         QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         QueueInterface<Trigger> triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
 

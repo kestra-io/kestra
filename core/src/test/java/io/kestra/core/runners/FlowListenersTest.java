@@ -37,6 +37,8 @@ abstract public class FlowListenersTest {
     }
 
     public void suite(FlowListenersInterface flowListenersService) {
+        flowListenersService.run();
+
         AtomicInteger count = new AtomicInteger();
         var ref = new Ref();
 

@@ -46,7 +46,7 @@ import jakarta.inject.Singleton;
 public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
-    private final FlowListenersInterface flowListeners;
+    protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final MetricRegistry metricRegistry;
     private final ConditionService conditionService;
@@ -91,6 +91,8 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
     @Override
     public void run() {
+        flowListeners.run();
+
         ScheduledFuture<?> handle = scheduleExecutor.scheduleAtFixedRate(
             this::handle,
             0,

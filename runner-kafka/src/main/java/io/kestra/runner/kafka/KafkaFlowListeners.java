@@ -17,7 +17,6 @@ import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.services.FlowListenersInterface;
-import io.kestra.core.services.FlowService;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 
 import java.util.ArrayList;
@@ -33,18 +32,20 @@ import jakarta.inject.Singleton;
 @KafkaQueueEnabled
 public class KafkaFlowListeners implements FlowListenersInterface {
     private final KafkaAdminService kafkaAdminService;
+    private final KafkaStreamService kafkaStreamService;
     private SafeKeyValueStore<String, Flow> store;
     private final List<Consumer<List<Flow>>> consumers = new ArrayList<>();
-    private final KafkaStreamService.Stream stream;
+    private KafkaStreamService.Stream stream;
     private List<Flow> flows;
 
     @Inject
-    public KafkaFlowListeners(
-        KafkaAdminService kafkaAdminService,
-        KafkaStreamService kafkaStreamService
-    ) {
+    public KafkaFlowListeners(KafkaAdminService kafkaAdminService, KafkaStreamService kafkaStreamService) {
         this.kafkaAdminService = kafkaAdminService;
+        this.kafkaStreamService = kafkaStreamService;
+    }
 
+    @Override
+    public void run() {
         kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_FLOWLAST);
 
         stream = kafkaStreamService.of(FlowListener.class, FlowListener.class, new FlowListener().topology(), log);

@@ -53,6 +53,7 @@ public class KafkaExecutor implements ExecutorInterface {
         kafkaAdminService.createIfNotExist(WorkerTaskResult.class);
         kafkaAdminService.createIfNotExist(Execution.class);
         kafkaAdminService.createIfNotExist(Flow.class);
+        kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_FLOWLAST);
         kafkaAdminService.createIfNotExist(Executor.class);
         kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_EXECUTOR_WORKERINSTANCE);
         kafkaAdminService.createIfNotExist(ExecutionKilled.class);
@@ -66,6 +67,7 @@ public class KafkaExecutor implements ExecutorInterface {
 
         this.streams = this.kafkaExecutors
             .stream()
+            .parallel()
             .map(executor -> {
                 Properties properties = new Properties();
                 // build

@@ -34,6 +34,9 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
     protected KafkaAdminService kafkaAdminService;
 
     @Inject
+    protected KafkaExecutor kafkaExecutor;
+
+    @Inject
     protected FlowRepositoryInterface flowRepositoryInterface;
 
     protected KafkaQueue<Executor> executorQueue;
@@ -57,6 +60,8 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
         Flow flow = SchedulerThreadTest.createThreadFlow();
 
         flowRepositoryInterface.create(flow);
+
+        kafkaExecutor.run();
 
         // scheduler
         try (AbstractScheduler scheduler = new KafkaScheduler(

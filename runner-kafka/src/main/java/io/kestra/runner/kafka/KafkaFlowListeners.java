@@ -33,8 +33,6 @@ import jakarta.inject.Singleton;
 @KafkaQueueEnabled
 public class KafkaFlowListeners implements FlowListenersInterface {
     private final KafkaAdminService kafkaAdminService;
-    private final FlowService flowService;
-
     private SafeKeyValueStore<String, Flow> store;
     private final List<Consumer<List<Flow>>> consumers = new ArrayList<>();
     private final KafkaStreamService.Stream stream;
@@ -43,17 +41,11 @@ public class KafkaFlowListeners implements FlowListenersInterface {
     @Inject
     public KafkaFlowListeners(
         KafkaAdminService kafkaAdminService,
-        KafkaStreamService kafkaStreamService,
-        FlowService flowService
+        KafkaStreamService kafkaStreamService
     ) {
         this.kafkaAdminService = kafkaAdminService;
-        this.flowService = flowService;
 
-        kafkaAdminService.createIfNotExist(Flow.class);
         kafkaAdminService.createIfNotExist(KafkaStreamSourceService.TOPIC_FLOWLAST);
-
-        KafkaStreamService.Stream buillLastVersion = kafkaStreamService.of(FlowListenerBuild.class, FlowListenerBuild.class, new FlowListenerBuild().topology(), log);
-        buillLastVersion.start();
 
         stream = kafkaStreamService.of(FlowListener.class, FlowListener.class, new FlowListener().topology(), log);
         stream.start((newState, oldState) -> {
@@ -77,94 +69,6 @@ public class KafkaFlowListeners implements FlowListenersInterface {
                 this.send(new ArrayList<>());
             }
         });
-    }
-
-    public class FlowListenerBuild {
-        public Topology topology() {
-            StreamsBuilder builder = new KafkaStreamsBuilder();
-
-            KStream<String, Flow> stream = builder
-                .stream(
-                    kafkaAdminService.getTopicName(Flow.class),
-                    Consumed.with(Serdes.String(), JsonSerde.of(Flow.class, false))
-                );
-
-            KStream<String, Flow> result = KafkaStreamSourceService.logIfEnabled(
-                log,
-                stream,
-                (key, value) -> log.trace(
-                    "Flow in '{}.{}' with revision {}",
-                    value.getNamespace(),
-                    value.getId(),
-                    value.getRevision()
-                ),
-                "flow-in"
-            )
-                .filter((key, value) -> value != null, Named.as("notNull"))
-                .selectKey((key, value) -> value.uidWithoutRevision(), Named.as("rekey"))
-                .groupBy(
-                    (String key, Flow value) -> value.uidWithoutRevision(),
-                    Grouped.<String, Flow>as("grouped")
-                        .withKeySerde(Serdes.String())
-                        .withValueSerde(JsonSerde.of(Flow.class, false))
-                )
-                .aggregate(
-                    AllFlowRevision::new,
-                    (key, value, aggregate) -> {
-                        aggregate.revisions.add(value);
-
-                        return aggregate;
-                    },
-                    Materialized.<String, AllFlowRevision, KeyValueStore<Bytes, byte[]>>as("list")
-                        .withKeySerde(Serdes.String())
-                        .withValueSerde(JsonSerde.of(AllFlowRevision.class, false))
-                )
-                .mapValues(
-                    (readOnlyKey, value) -> {
-                        List<Flow> flows = new ArrayList<>(flowService
-                            .keepLastVersion(value.revisions));
-
-                        if (flows.size() > 1) {
-                            throw new IllegalArgumentException("Too many flows (" + flows.size() + ")");
-                        }
-
-                        return flows.size() == 0 ? null : flows.get(0);
-                    },
-                    Named.as("last")
-                )
-                .toStream();
-
-            KafkaStreamSourceService.logIfEnabled(
-                log,
-                result,
-                (key, value) -> log.trace(
-                    "Flow out '{}.{}' with revision {}",
-                    value.getNamespace(),
-                    value.getId(),
-                    value.getRevision()
-                ),
-                "Flow-out"
-            )
-                .to(
-                    kafkaAdminService.getTopicName(KafkaStreamSourceService.TOPIC_FLOWLAST),
-                    Produced.with(Serdes.String(), JsonSerde.of(Flow.class))
-                );
-
-            Topology topology = builder.build();
-
-            if (log.isTraceEnabled()) {
-                log.trace(topology.describe().toString());
-            }
-
-            return topology;
-        }
-
-    }
-
-    @NoArgsConstructor
-    @Getter
-    public static class AllFlowRevision {
-        private final List<Flow> revisions = new ArrayList<>();
     }
 
     public class FlowListener {

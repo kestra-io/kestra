@@ -24,7 +24,7 @@ public class FlowListenersRestoreCommand extends AbstractCommand {
     private ApplicationContext applicationContext;
 
     @CommandLine.Option(names = {"--timeout"}, description = "Timeout before quit, considering we complete the restore")
-    private Duration timeout = Duration.ofSeconds(15);
+    private Duration timeout = Duration.ofSeconds(60);
 
     public FlowListenersRestoreCommand() {
         super(false);
@@ -39,12 +39,16 @@ public class FlowListenersRestoreCommand extends AbstractCommand {
         AtomicReference<ZonedDateTime> lastTime = new AtomicReference<>(ZonedDateTime.now());
 
         flowListeners.listen(flows -> {
-            stdOut("Received {0} flows", flows.size());
+            long count = flows.stream().filter(flow -> !flow.isDeleted()).count();
 
-            lastTime.set(ZonedDateTime.now());
+            stdOut("Received {0} active flows", count);
+
+            if (count > 0) {
+                lastTime.set(ZonedDateTime.now());
+            }
         });
 
-        // we can't know when it's over to wait no more flow received
+        // we can't know when it's over, wait no more flow received
         Await.until(() -> lastTime.get().compareTo(ZonedDateTime.now().minus(this.timeout)) < 0);
 
         return 0;

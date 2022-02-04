@@ -61,6 +61,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     private final Map<String, ZonedDateTime> lastEvaluate = new ConcurrentHashMap<>();
     private final Map<String, ZonedDateTime> evaluateRunning = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> evaluateRunningCount = new ConcurrentHashMap<>();
+    private final Map<String, Trigger> triggerStateSaved = new ConcurrentHashMap<>();
 
     @Getter
     private List<FlowWithTrigger> schedulable = new ArrayList<>();
@@ -392,10 +393,6 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         return triggerState
             .findLast(f.getTriggerContext())
             .orElseGet(() -> {
-                // we don't find, so never started execution, create a trigger context with previous date in the past.
-                // this allows some edge case when the evaluation loop of schedulers will change second
-                // between start and end
-
                 ZonedDateTime nextDate = f.getPollingTrigger().nextEvaluationDate(Optional.empty());
 
                 Trigger build = Trigger.builder()
@@ -407,7 +404,22 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                     .updatedDate(Instant.now())
                     .build();
 
-                triggerState.save(build);
+                // we don't find, so never started execution, create a trigger context with previous date in the past.
+                // this allows some edge case when the evaluation loop of schedulers will change second
+                // between start and end
+                // but since we could have some changed on the flow in meantime, we wait 1 min before saving them.
+                if (triggerStateSaved.containsKey(build.uid())) {
+                    Trigger cachedTrigger = triggerStateSaved.get(build.uid());
+
+                    if (cachedTrigger.getUpdatedDate() != null && Instant.now().isAfter(cachedTrigger.getUpdatedDate().plusSeconds(60))) {
+                        triggerState.save(build);
+                        triggerStateSaved.remove(build.uid());
+                    }
+
+                    return cachedTrigger;
+                } else {
+                    triggerStateSaved.put(build.uid(), build);
+                }
 
                 return build;
             });

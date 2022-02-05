@@ -57,7 +57,7 @@
 <script>
     import * as cytoscape from "cytoscape";
     import * as dagre from "cytoscape-dagre";
-    import * as nodeHtmlLabel  from "cytoscape-node-html-label";
+    import * as cytoscapeDomNode  from "cytoscape-dom-node";
     import {MountingPortal} from "portal-vue"
 
     import TreeNode from "./TreeNode";
@@ -187,16 +187,26 @@
                     const isEdge = this.isEdgeNode(node);
                     const cluster = clusters[node.uid];
 
-                    nodes.push({
+                    const nodeData = {
                         data: {
                             id: node.uid,
                             label: isEdge ? node.task.id : undefined,
                             type: isEdge ? "task" : "dot",
                             cls: node.type,
                             parent: cluster ? cluster.uid : undefined,
-                            relationType: node.relationType
+                            relationType: node.relationType,
                         },
-                    });
+                    };
+
+                    if (this.isEdgeNode(node)) {
+                        let div = document.createElement("div");
+                        div.className = "node-binder"
+                        div.id = `node-${node.uid.hashCode()}`
+
+                        nodeData.data.dom = div
+                    }
+
+                    nodes.push(nodeData);
                 }
 
                 return nodes;
@@ -332,16 +342,6 @@
             },
             onReady(cy) {
                 cy.autolock(true);
-                cy.nodeHtmlLabel([
-                    {
-                        query: "node[type = \"task\"]",
-                        tpl: d => {
-                            return `<div class="node-binder" id="node-${d.id.hashCode()}" />`;
-                        }
-                    }
-                ], {
-                    enablePointerEvents: true
-                });
 
                 this.bindNodes();
             },
@@ -351,7 +351,8 @@
                 // plugins
                 try {
                     cytoscape.use(dagre);
-                    cytoscape.use(nodeHtmlLabel);
+                    cytoscape.use(cytoscapeDomNode);
+
                     // eslint-disable-next-line no-empty
                 } catch (ignored) {}
 
@@ -385,6 +386,8 @@
                     minZoom: 0.2,
                     maxZoom: 2
                 });
+
+                this.cy.domNode();
             },
             bindNodes() {
                 let ready = true;
@@ -399,6 +402,8 @@
                 }
 
                 if (ready) {
+                    this.cy.fit(null, 50);
+
                     this.ready = true;
                 } else {
                     setTimeout(this.bindNodes, 50);

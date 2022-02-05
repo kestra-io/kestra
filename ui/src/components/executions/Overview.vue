@@ -151,7 +151,7 @@
     };
 </script>
 <style scoped lang="scss">
-/deep/ thead {
+::v-deep thead {
     display: none;
 }
 

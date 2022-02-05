@@ -338,7 +338,7 @@ table {
     }
 }
 
-/deep/ .log-wrapper .attempt-wrapper {
+::v-deep .log-wrapper .attempt-wrapper {
     margin-bottom: 0;
 }
 

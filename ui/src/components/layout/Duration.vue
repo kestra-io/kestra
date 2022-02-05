@@ -90,7 +90,7 @@
 
 <style lang="scss" scoped>
 .duration-tt {
-    /deep/ .tooltip-inner {
+    ::v-deep .tooltip-inner {
         text-align: left;
         white-space: nowrap;
         max-width: none;

@@ -97,7 +97,7 @@
 </script>
 
 <style scoped lang="scss">
-/deep/ thead tr:not(.top) {
+::v-deep thead tr:not(.top) {
     display: none;
 }
 

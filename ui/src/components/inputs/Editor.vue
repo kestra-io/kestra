@@ -271,7 +271,7 @@
 <style scoped lang="scss">
 @import "../../styles/variable";
 
-/deep/ .editor-container {
+::v-deep .editor-container {
     position: relative;
     max-width: 100%;
     display: flex;

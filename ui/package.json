@@ -65,22 +65,22 @@
     "eslint-plugin-jest": "^26.0.0",
     "eslint-plugin-vue": "^8.4.1",
     "jest-transform-stub": "^2.0.0",
-    "monaco-editor-webpack-plugin": "^5.0.0",
     "monaco-editor": "^0.29.1",
-    "node-sass": "^5.0.0",
+    "monaco-editor-webpack-plugin": "^5.0.0",
+    "sass": "^1.49.7",
     "sass-loader": "^10.1.1",
     "vue-jest": "^3.0.7",
     "vue-template-compiler": "^2.6.14"
-  },
-  "postcss": {
-    "plugins": {
-      "autoprefixer": {}
-    }
   },
   "babel": {
     "presets": [
       "@babel/preset-env"
     ]
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
   },
   "browserslist": [
     "> 1%",

@@ -74,7 +74,7 @@ select {
     width: auto;
 }
 
-/deep/ .text-total {
+::v-deep .text-total {
     color: $pagination-color !important;
     font-weight: normal;
 }

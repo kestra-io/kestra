@@ -226,15 +226,15 @@
         }
     }
 
-    /deep/ a.vsm--link_active[href="#"] {
+    ::v-deep a.vsm--link_active[href="#"] {
         cursor: initial !important;
     }
 
-    /deep/ .vsm--item {
+    ::v-deep .vsm--item {
         transition: opacity 0.2s;
     }
 
-    /deep/ .menu-icon {
+    ::v-deep .menu-icon {
         font-size: 1.5em;
         background-color: transparent !important;
         padding-bottom: 15px;

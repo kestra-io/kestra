@@ -165,12 +165,12 @@
     margin-left: 10px;
     margin-right: 10px;
 }
-/deep/ .mx-datepicker {
+::v-deep .mx-datepicker {
     margin-right: 5px;
 
 }
 
-/deep/ .mx-datepicker-popup {
+::v-deep .mx-datepicker-popup {
     height: 272px;
 
     .mx-datepicker-sidebar {

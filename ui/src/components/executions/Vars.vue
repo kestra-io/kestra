@@ -100,15 +100,15 @@
 </script>
 
 <style scoped lang="scss">
-/deep/ thead tr:not(.top) {
+::v-deep thead tr:not(.top) {
     display: none;
 }
 
-/deep/ td.key {
+::v-deep td.key {
     width: 150px;
 }
 
-/deep/ .b-table-stacked {
+::v-deep .b-table-stacked {
     td.key {
         width: 100%;
     }

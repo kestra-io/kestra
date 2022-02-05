@@ -7,6 +7,7 @@
     export default {}
 </script>
 <style lang="scss" >
+    @use "sass:math";
     @import "../../styles/variable";
 
     .bottom-line {
@@ -24,7 +25,7 @@
             margin-left: $spacer;
 
             span:first-child {
-                margin-right: $spacer / 3;
+                margin-right: math.div($spacer, 3);
             }
         }
     }

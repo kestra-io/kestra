@@ -269,6 +269,7 @@
     };
 </script>
 <style scoped lang="scss">
+@use "sass:math";
 @import "../../styles/variable";
 
 ::v-deep .editor-container {
@@ -313,7 +314,7 @@
         }
 
         p {
-            margin-bottom: $spacer/2;
+            margin-bottom: math.div($spacer, 2);
             &:last-child {
                 display: none;
             }

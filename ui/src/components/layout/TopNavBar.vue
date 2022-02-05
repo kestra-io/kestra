@@ -46,6 +46,7 @@
     };
 </script>
 <style lang="scss" scoped>
+@use "sass:math";
 @import "../../styles/variable";
 
 .menu-collapsed {
@@ -80,7 +81,7 @@
     .navbar-text {
         h1 {
             color: var(--primary);
-            margin-bottom: $headings-margin-bottom / 2;
+            margin-bottom: math.div($headings-margin-bottom, 2);
             font-weight: bold;
 
             .theme-dark & {

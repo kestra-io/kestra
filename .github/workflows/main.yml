@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: '3.x'
           architecture: 'x64'
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2
         with:
           node-version: '12'
           check-latest: true
@@ -53,7 +53,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Npm cache
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -61,7 +61,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Node cache
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: node
           key: ${{ runner.os }}-node-${{ hashFiles('ui/*.gradle') }}

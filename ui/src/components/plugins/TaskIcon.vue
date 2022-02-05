@@ -78,6 +78,7 @@
 </script>
 
 <style lang="scss" scoped>
+    @use "sass:math";
     @import "../../styles/_variable.scss";
     div.wrapper {
         height: 100%;
@@ -85,7 +86,7 @@
         font-size: $font-size-xs;
 
         > .icon {
-            margin: $btn-padding-x-sm / 2 ;
+            margin: math.div($btn-padding-x-sm, 2);
             height: calc(100% - 25px);
             display: block;
             background-size: contain;
@@ -106,7 +107,7 @@
             width: 100%;
             bottom: 0;
             text-align: center;
-            padding: $btn-padding-y-sm / 2 1px ;
+            padding: math.div($btn-padding-y-sm, 2) 1px ;
         }
 
         &.flowable {

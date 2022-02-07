@@ -172,13 +172,22 @@
                     })
                 }
 
-                this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KEY_S, () => {
-                    this.$emit("onSave", editor.getValue())
+                this.editor.addAction({
+                    id: "kestra-save",
+                    label: "Save",
+                    keybindings: [
+                        KeyMod.CtrlCmd | KeyCode.KeyS,
+                    ],
+                    contextMenuGroupId: "navigation",
+                    contextMenuOrder: 1.5,
+                    run: (ed) => {
+                        this.$emit("onSave", ed.getValue())
+                    }
                 });
 
                 if (this.input) {
-                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KEY_F, () => {})
-                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KEY_H, () => {})
+                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyF, () => {})
+                    this.editor.addCommand(KeyMod.CtrlCmd | KeyCode.KeyH, () => {})
                     this.editor.addCommand(KeyCode.F1, () => {})
                 }
 

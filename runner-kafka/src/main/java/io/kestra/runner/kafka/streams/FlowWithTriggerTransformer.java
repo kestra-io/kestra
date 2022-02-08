@@ -34,7 +34,7 @@ public class FlowWithTriggerTransformer implements Transformer<String, Executor,
     @Override
     public Iterable<KeyValue<String, ExecutorFlowTrigger>> transform(String key, Executor value) {
         List<Flow> allFlows = flowService
-            .keepLastVersion(flowStore.toStream().map(ValueAndTimestamp::value))
+            .keepLastVersion(flowStore.all().map(ValueAndTimestamp::value))
             .collect(Collectors.toList());
 
         return flowService.flowWithFlowTrigger(allFlows.stream())

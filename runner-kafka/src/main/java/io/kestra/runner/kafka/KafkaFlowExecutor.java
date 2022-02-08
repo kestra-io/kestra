@@ -27,7 +27,7 @@ public class KafkaFlowExecutor implements FlowExecutorInterface {
                 .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "." + id + "'"));
         } else {
             return flowService.keepLastVersion(
-                this.store.toStream(),
+                this.store.all(),
                 namespace,
                 id
             );

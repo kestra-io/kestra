@@ -86,7 +86,7 @@ class SafeKeyValueStoreTest {
         Optional<Flow> validOne = safeKeyValueStore.get("validOne2");
         assertThat(validOne.isEmpty(), is(false));
 
-        List<Flow> list = safeKeyValueStore.toStream().filter(flow -> !flow.isDeleted()).collect(Collectors.toList());
+        List<Flow> list = safeKeyValueStore.all().filter(flow -> !flow.isDeleted()).collect(Collectors.toList());
         assertThat(list.size(), is(3));
     }
 }

@@ -1,8 +1,6 @@
 package io.kestra.runner.kafka;
 
 import io.kestra.runner.kafka.services.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -113,7 +111,7 @@ public class KafkaFlowListeners implements FlowListenersInterface {
         synchronized (this) {
             if (this.flows == null) {
                 this.flows = this.store
-                    .toStream()
+                    .all()
                     .filter(flow -> flow != null && !flow.isDeleted())
                     .collect(Collectors.toList());
             }

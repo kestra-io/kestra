@@ -9,7 +9,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "@vue/composition-api": "^1.4.5",
+    "@vue/composition-api": "^1.4.6",
     "axios": "^0.25.0",
     "bootstrap": "^4.6.1",
     "bootstrap-vue": "^2.21.2",

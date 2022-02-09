@@ -5,7 +5,7 @@ import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.WorkerTaskExecution;
 import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.runner.kafka.services.SafeKeyValueStore;
+import io.kestra.runner.kafka.KafkaFlowExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -18,21 +18,19 @@ import java.util.Optional;
 public class WorkerTaskExecutionTransformer implements ValueTransformerWithKey<String, Executor, WorkerTaskResult> {
     private final String workerTaskExecutionStoreName;
     private final RunContextFactory runContextFactory;
+    private final KafkaFlowExecutor kafkaFlowExecutor;
 
     private KeyValueStore<String, ValueAndTimestamp<WorkerTaskExecution>> workerTaskExecutionStore;
-    private SafeKeyValueStore<String, ValueAndTimestamp<Flow>> flowStore;
 
-    public WorkerTaskExecutionTransformer(RunContextFactory runContextFactory, String workerTaskExecutionStoreName) {
+    public WorkerTaskExecutionTransformer(RunContextFactory runContextFactory, String workerTaskExecutionStoreName, KafkaFlowExecutor kafkaFlowExecutor) {
         this.runContextFactory = runContextFactory;
         this.workerTaskExecutionStoreName = workerTaskExecutionStoreName;
+        this.kafkaFlowExecutor = kafkaFlowExecutor;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
-        var flowStore = (KeyValueStore<String, ValueAndTimestamp<Flow>>) context.getStateStore("flow");
-        this.flowStore = new SafeKeyValueStore<>(flowStore, flowStore.name());
-        this.workerTaskExecutionStore = (KeyValueStore<String, ValueAndTimestamp<WorkerTaskExecution>>) context.getStateStore(this.workerTaskExecutionStoreName);
+        this.workerTaskExecutionStore = context.getStateStore(this.workerTaskExecutionStoreName);
     }
 
     @Override
@@ -44,12 +42,12 @@ public class WorkerTaskExecutionTransformer implements ValueTransformerWithKey<S
 
         WorkerTaskExecution workerTaskExecution = workerTaskExecutionStoreValue.value();
 
-        Optional<ValueAndTimestamp<Flow>> flowValueAndTimestamp = this.flowStore.get(Flow.uid(value.getExecution()));
-        if (flowValueAndTimestamp.isEmpty()) {
+        Optional<Flow> flowOptional = this.kafkaFlowExecutor.findByExecution(value.getExecution());
+        if (flowOptional.isEmpty()) {
             return null;
         }
 
-        Flow flow = flowValueAndTimestamp.get().value();
+        Flow flow = flowOptional.get();
 
         return workerTaskExecution
             .getTask()

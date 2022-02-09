@@ -40,8 +40,6 @@ public class ExecutorTriggerCleaner implements KafkaExecutorInterface {
 
         KStream<String, Executor> executorKStream = kafkaStreamSourceService.executorKStream(builder);
 
-        kafkaStreamSourceService.flowGlobalKTable(builder);
-        kafkaStreamSourceService.templateGlobalKTable(builder);
         KStream<String, Executor> executionWithFlowKStream = kafkaStreamSourceService.executorWithFlow(executorKStream, false);
 
         GlobalKTable<String, Trigger> triggerGlobalKTable = kafkaStreamSourceService.triggerGlobalKTable(builder);

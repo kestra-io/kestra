@@ -3,34 +3,68 @@ package io.kestra.runner.kafka;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.services.FlowService;
-import io.kestra.runner.kafka.services.SafeKeyValueStore;
-import io.micronaut.context.ApplicationContext;
+import io.kestra.core.utils.Await;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 
-import java.util.Optional;
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
+@Singleton
 public class KafkaFlowExecutor implements FlowExecutorInterface {
-    private final FlowService flowService;
-    private final SafeKeyValueStore<String, Flow> store;
+    @Inject
+    private FlowService flowService;
+    private Map<String, Flow> flows;
+    private Map<String, Flow> flowsLast;
 
-    public KafkaFlowExecutor(ReadOnlyKeyValueStore<String, Flow> store, String name, ApplicationContext applicationContext) {
-        this.store = new SafeKeyValueStore<>(store, name);
-        this.flowService = applicationContext.getBean(FlowService.class);
+    public synchronized void setFlows(List<Flow> flows) {
+        this.flows = flows
+            .stream()
+            .map(flow -> new AbstractMap.SimpleEntry<>(
+                flow.uid(),
+                flow
+            ))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        this.flowsLast = flowService.keepLastVersion(flows)
+            .stream()
+            .map(flow -> new AbstractMap.SimpleEntry<>(
+                flow.uidWithoutRevision(),
+                flow
+            ))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    @SneakyThrows
+    private void await() {
+        if (flows == null) {
+            Await.until(() -> this.flows != null, Duration.ofMillis(100), Duration.ofMinutes(5));
+        }
     }
 
     @Override
-    public Flow findById(String namespace, String id, Optional<Integer> revision, String fromNamespace, String fromId) {
+    public Collection<Flow> allLastVersion() {
+        this.await();
+
+        return this.flowsLast.values();
+    }
+
+    @Override
+    public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
+        this.await();
+
         if (revision.isPresent()) {
-            return this.store.get(Flow.uid(namespace, id, revision))
-                .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "." + id + "'"));
-        } else {
-            return flowService.keepLastVersion(
-                this.store.all(),
-                namespace,
-                id
-            );
+            String uid = Flow.uid(namespace, id, revision);
+
+            return Optional.ofNullable(this.flows.get(uid));
         }
+
+        String uid = Flow.uidWithoutRevision(namespace, id);
+
+        return Optional.ofNullable(this.flowsLast.get(uid));
     }
 }

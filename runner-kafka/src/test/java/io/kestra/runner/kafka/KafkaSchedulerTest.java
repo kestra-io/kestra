@@ -13,6 +13,7 @@ import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
 import io.kestra.runner.kafka.services.KafkaProducerService;
+import io.micronaut.context.annotation.Property;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,7 @@ import jakarta.inject.Inject;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+@Property(name = "kestra.server-type", value = "EXECUTOR")
 class KafkaSchedulerTest extends AbstractSchedulerTest {
     @Inject
     protected KafkaFlowListeners flowListeners;

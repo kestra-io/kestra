@@ -4,11 +4,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tasks.debugs.Echo;
+import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.TopologyTestDriver;
+import org.apache.kafka.streams.kstream.Consumed;
+import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +23,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -38,7 +43,14 @@ class SafeKeyValueStoreTest {
         properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "unit-test");
 
         StreamsBuilder builder = new KafkaStreamsBuilder();
-        kafkaStreamSourceService.flowGlobalKTable(builder);
+        builder
+            .globalTable(
+                kafkaAdminService.getTopicName(Flow.class),
+                Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)).withName("GlobalKTable.Flow"),
+                Materialized.<String, Flow, KeyValueStore<Bytes, byte[]>>as("flow")
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(JsonSerde.of(Flow.class))
+            );
 
         Topology topology = builder.build();
 

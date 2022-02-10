@@ -6,10 +6,13 @@ import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.flows.Template;
+import io.kestra.core.utils.Await;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 
 @Slf4j
@@ -33,13 +36,24 @@ public class FlowJoinerTransformer implements ValueTransformerWithKey<String, Ex
 
     @Override
     public Executor transform(String key, Executor executor) {
-        Optional<Flow> flowState = flowExecutorInterface.findByExecution(executor.getExecution());
+        Instant start = Instant.now();
 
-        if (flowState.isEmpty()) {
-            return null;
-        }
+        // pooling of new flow can be delayed on ExecutorStore, we maybe need to wait that the flow is updated
+        Flow flow = Await.until(
+            () -> {
+                Optional<Flow> flowState = flowExecutorInterface.findByExecution(executor.getExecution());
 
-        Flow flow = flowState.get();
+                if (flowState.isEmpty() && start.plusSeconds(60).isBefore(Instant.now())) {
+                    log.warn("Unable to find flow with namespace: '" + executor.getExecution().getNamespace() +
+                        ", id: " + executor.getExecution().getFlowId() + "', " +
+                        "revision '" + executor.getExecution().getFlowRevision() + "' " +
+                        "since '" + start  + "'");
+                }
+
+                return flowState.orElse(null);
+            },
+            Duration.ofMillis(100)
+        );
 
         if (!withDefaults) {
             return executor.withFlow(flow);

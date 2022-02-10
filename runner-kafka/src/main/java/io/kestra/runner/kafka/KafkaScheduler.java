@@ -11,17 +11,20 @@ import io.kestra.core.runners.Executor;
 import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.schedulers.DefaultScheduler;
 import io.kestra.core.schedulers.SchedulerExecutionWithTrigger;
-import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.serializers.JsonSerde;
-import io.kestra.runner.kafka.services.*;
+import io.kestra.runner.kafka.services.KafkaAdminService;
+import io.kestra.runner.kafka.services.KafkaProducerService;
+import io.kestra.runner.kafka.services.KafkaStreamService;
+import io.kestra.runner.kafka.services.KafkaStreamsBuilder;
 import io.kestra.runner.kafka.streams.GlobalStateLockProcessor;
 import io.kestra.runner.kafka.streams.GlobalStateProcessor;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -30,15 +33,13 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.Stores;
 
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import jakarta.inject.Singleton;
 
 @KafkaQueueEnabled
 @Singleton

@@ -51,8 +51,6 @@ public class ExecutorMain implements KafkaExecutorInterface {
     private static final String TRIGGER_DEDUPLICATION_STATE_STORE_NAME = "trigger_deduplication";
     private static final String NEXTS_DEDUPLICATION_STATE_STORE_NAME = "next_deduplication";
 
-    protected FlowExecutorInterface flowExecutorInterface;
-
     @Inject
     private KafkaAdminService kafkaAdminService;
 
@@ -77,23 +75,8 @@ public class ExecutorMain implements KafkaExecutorInterface {
     @Inject
     private RunContextFactory runContextFactory;
 
-    @Override
-    public void onCreated(ApplicationContext applicationContext, KafkaStreamService.Stream stream) {
-        applicationContext.registerSingleton(new KafkaTemplateExecutor(
-            stream.store(StoreQueryParameters.fromNameAndType("template", QueryableStoreTypes.keyValueStore())),
-            "template"
-        ));
-
-        if (flowExecutorInterface == null) {
-            this.flowExecutorInterface = new KafkaFlowExecutor(
-                stream.store(StoreQueryParameters.fromNameAndType("flow", QueryableStoreTypes.keyValueStore())),
-                "flow",
-                applicationContext
-            );
-        }
-
-        applicationContext.registerSingleton(this.flowExecutorInterface);
-    }
+    @Inject
+    private KafkaFlowExecutor kafkaFlowExecutor;
 
     public StreamsBuilder topology() {
         StreamsBuilder builder = new KafkaStreamsBuilder();
@@ -138,8 +121,6 @@ public class ExecutorMain implements KafkaExecutorInterface {
         KStream<String, Executor> executionKStream = this.joinWorkerResult(workerTaskResultKStream, executionWithKilled);
 
         // handle state on execution
-        GlobalKTable<String, Flow> flowKTable = kafkaStreamSourceService.flowGlobalKTable(builder);
-        GlobalKTable<String, Template> templateKTable = kafkaStreamSourceService.templateGlobalKTable(builder);
         KStream<String, Executor> stream = kafkaStreamSourceService.executorWithFlow(executionKStream, true);
 
         stream = this.handleExecutor(stream);
@@ -380,7 +361,7 @@ public class ExecutorMain implements KafkaExecutorInterface {
             )
             .filter((key, value) -> value != null, Named.as("HandleExecutorFlowTriggerTopic.deduplicationNotNull"))
             .flatTransform(
-                () -> new FlowWithTriggerTransformer(flowService),
+                () -> new FlowWithTriggerTransformer(kafkaFlowExecutor, flowService),
                 Named.as("HandleExecutorFlowTriggerTopic.flatMapToExecutorFlowTrigger")
             )
             .to(
@@ -563,7 +544,7 @@ public class ExecutorMain implements KafkaExecutorInterface {
                 Named.as("HandleWorkerTaskExecution.isTerminated")
             )
             .transformValues(
-                () -> new WorkerTaskExecutionTransformer(runContextFactory, workerTaskExecutionKTable.queryableStoreName()),
+                () -> new WorkerTaskExecutionTransformer(runContextFactory, workerTaskExecutionKTable.queryableStoreName(), kafkaFlowExecutor),
                  Named.as("HandleWorkerTaskExecution.transform"),
                 workerTaskExecutionKTable.queryableStoreName()
             )

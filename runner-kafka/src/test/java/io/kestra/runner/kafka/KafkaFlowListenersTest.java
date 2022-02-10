@@ -9,6 +9,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.services.KafkaProducerService;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.Serdes;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+@Property(name = "kestra.server-type", value = "EXECUTOR")
 class KafkaFlowListenersTest extends FlowListenersTest {
     @Inject
     ApplicationContext applicationContext;

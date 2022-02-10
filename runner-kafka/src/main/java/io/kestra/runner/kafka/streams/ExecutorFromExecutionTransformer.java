@@ -19,10 +19,9 @@ public class ExecutorFromExecutionTransformer implements ValueTransformerWithKey
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
         this.context = context;
-        this.store = (KeyValueStore<String, Executor>) context.getStateStore(this.storeName);
+        this.store = context.getStateStore(this.storeName);
     }
 
     @Override

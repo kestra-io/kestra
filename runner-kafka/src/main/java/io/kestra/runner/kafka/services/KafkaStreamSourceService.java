@@ -1,21 +1,20 @@
 package io.kestra.runner.kafka.services;
 
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.runners.Executor;
+import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.tasks.flows.Template;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.streams.FlowJoinerTransformer;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.slf4j.Logger;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class KafkaStreamSourceService {
@@ -28,27 +27,11 @@ public class KafkaStreamSourceService {
     @Inject
     private TaskDefaultService taskDefaultService;
 
-    public GlobalKTable<String, Flow> flowGlobalKTable(StreamsBuilder builder) {
-        return builder
-            .globalTable(
-                kafkaAdminService.getTopicName(Flow.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)).withName("GlobalKTable.Flow"),
-                Materialized.<String, Flow, KeyValueStore<Bytes, byte[]>>as("flow")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(Flow.class))
-            );
-    }
+    @Inject
+    private FlowExecutorInterface flowExecutorInterface;
 
-    public GlobalKTable<String, Template> templateGlobalKTable(StreamsBuilder builder) {
-        return builder
-            .globalTable(
-                kafkaAdminService.getTopicName(Template.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Template.class)).withName("GlobalKTable.Template"),
-                Materialized.<String, Template, KeyValueStore<Bytes, byte[]>>as("template")
-                    .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde.of(Template.class))
-            );
-    }
+    @Inject
+    private Template.TemplateExecutorInterface templateExecutorInterface;
 
     public KStream<String, Executor> executorKStream(StreamsBuilder builder) {
         return builder
@@ -73,7 +56,7 @@ public class KafkaStreamSourceService {
         return executionKStream
             .filter((key, value) -> value != null, Named.as("ExecutorWithFlow.filterNotNull"))
             .transformValues(
-                () -> new FlowJoinerTransformer(withDefaults, taskDefaultService)
+                () -> new FlowJoinerTransformer(flowExecutorInterface, templateExecutorInterface, withDefaults, taskDefaultService)
             );
     }
 

@@ -3,10 +3,10 @@ package io.kestra.runner.kafka.executors;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.services.FlowService;
+import io.kestra.runner.kafka.KafkaFlowExecutor;
 import io.kestra.runner.kafka.KafkaQueueEnabled;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
-import io.kestra.runner.kafka.services.KafkaStreamSourceService;
 import io.kestra.runner.kafka.services.KafkaStreamsBuilder;
 import io.kestra.runner.kafka.streams.FlowTriggerWithExecutionTransformer;
 import jakarta.inject.Inject;
@@ -34,12 +34,10 @@ public class ExecutorFlowTrigger implements KafkaExecutorInterface {
     private FlowService flowService;
 
     @Inject
-    private KafkaStreamSourceService kafkaStreamSourceService;
+    private KafkaFlowExecutor kafkaFlowExecutor;
 
     public StreamsBuilder topology() {
         StreamsBuilder builder = new KafkaStreamsBuilder();
-
-        kafkaStreamSourceService.flowGlobalKTable(builder);
 
         // trigger
         builder.addStateStore(
@@ -62,6 +60,7 @@ public class ExecutorFlowTrigger implements KafkaExecutorInterface {
             .transformValues(
                 () -> new FlowTriggerWithExecutionTransformer(
                     TRIGGER_MULTIPLE_STATE_STORE_NAME,
+                    kafkaFlowExecutor,
                     flowService
                 ),
                 Named.as("ExecutorFlowTrigger.transformToExecutionList"),

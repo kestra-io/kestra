@@ -10,12 +10,10 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -116,13 +114,14 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
 
         Map<String, String> flowVars = (Map<String, String>) runContext.getVariables().get("flow");
 
-        io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findById(
+        io.kestra.core.models.flows.Flow flow = flowExecutorInterface.findByIdFromFlowTask(
             runContext.render(this.namespace),
             runContext.render(this.flowId),
             this.revision != null ? Optional.of(this.revision) : Optional.empty(),
             flowVars.get("namespace"),
             flowVars.get("id")
-        );
+        )
+            .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + namespace + "." + id + "' with revision + '" + revision + "'"));
 
         return runnerUtils
             .newExecution(

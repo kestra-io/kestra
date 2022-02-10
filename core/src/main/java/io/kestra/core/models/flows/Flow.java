@@ -118,6 +118,13 @@ public class Flow implements DeletedInterface {
         ));
     }
 
+    public static String uidWithoutRevision(String namespace, String id) {
+        return String.join("_", Arrays.asList(
+            namespace,
+            id
+        ));
+    }
+
     public static String uidWithoutRevision(Execution execution) {
         return String.join("_", Arrays.asList(
             execution.getNamespace(),

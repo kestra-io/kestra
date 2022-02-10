@@ -100,7 +100,7 @@ public class MemoryExecutor implements ExecutorInterface {
             flow = Template.injectTemplate(
                 flow,
                 execution,
-                templateExecutorInterface::findById
+                (namespace, id) -> templateExecutorInterface.findById(namespace, id).orElse(null)
             );
         } catch (InternalException e) {
             log.warn("Failed to inject template",  e);

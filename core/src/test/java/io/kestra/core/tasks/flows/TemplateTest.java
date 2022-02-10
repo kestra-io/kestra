@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.ListenersTest;
 import io.kestra.core.tasks.debugs.Echo;
 import org.junit.jupiter.api.Test;
@@ -43,7 +44,10 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
         .namespace("io.kestra.tests")
         .tasks(Collections.singletonList(Echo.builder().id("test").type(Echo.class.getName()).format("{{ parent.outputs.args['my-forward'] }}").build())).build();
 
-    public static void withTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, QueueInterface<LogEntry> logQueue) throws TimeoutException {
+    public static void withTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException {
+        templateRepository.create(TEMPLATE_1);
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/with-template.yaml")));
+
         List<LogEntry> logs = new ArrayList<>();
         logQueue.receive(logs::add);
 
@@ -66,9 +70,6 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
 
     @Test
     void withTemplate() throws TimeoutException, IOException, URISyntaxException {
-        templateRepository.create(TEMPLATE_1);
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/with-template.yaml")));
-
-        TemplateTest.withTemplate(runnerUtils, templateRepository, logQueue);
+        TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logQueue);
     }
 }

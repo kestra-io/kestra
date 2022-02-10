@@ -52,6 +52,11 @@ public class ExecutorService {
     }
 
     public Executor process(Executor executor) {
+        // previous failed (flow join can fail), just forward
+        if (executor.getException() != null) {
+            return executor;
+        }
+
         try {
             executor = this.handleRestart(executor);
             executor = this.handleEnd(executor);

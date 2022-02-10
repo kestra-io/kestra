@@ -246,7 +246,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void withTemplate() throws Exception {
-        TemplateTest.withTemplate(runnerUtils, templateRepository, logsQueue);
+        TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
     }
 
     @Test

@@ -12,8 +12,7 @@ import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
 
 import java.time.Duration;
-import java.time.Instant;
-import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 public class FlowJoinerTransformer implements ValueTransformerWithKey<String, Executor, Executor> {
@@ -36,24 +35,23 @@ public class FlowJoinerTransformer implements ValueTransformerWithKey<String, Ex
 
     @Override
     public Executor transform(String key, Executor executor) {
-        Instant start = Instant.now();
+        Flow flow;
 
-        // pooling of new flow can be delayed on ExecutorStore, we maybe need to wait that the flow is updated
-        Flow flow = Await.until(
-            () -> {
-                Optional<Flow> flowState = flowExecutorInterface.findByExecution(executor.getExecution());
-
-                if (flowState.isEmpty() && start.plusSeconds(60).isBefore(Instant.now())) {
-                    log.warn("Unable to find flow with namespace: '" + executor.getExecution().getNamespace() +
-                        ", id: " + executor.getExecution().getFlowId() + "', " +
-                        "revision '" + executor.getExecution().getFlowRevision() + "' " +
-                        "since '" + start  + "'");
-                }
-
-                return flowState.orElse(null);
-            },
-            Duration.ofMillis(100)
-        );
+        try {
+            // pooling of new flow can be delayed on ExecutorStore, we maybe need to wait that the flow is updated
+            flow = Await.until(
+                () -> flowExecutorInterface.findByExecution(executor.getExecution()).orElse(null),
+                Duration.ofMillis(100),
+                Duration.ofMinutes(5)
+            );
+        } catch (TimeoutException e) {
+            return executor.withException(
+                new Exception("Unable to find flow with namespace: '" + executor.getExecution().getNamespace() + "'" +
+                    ", id: '" + executor.getExecution().getFlowId() + "', " +
+                    "revision '" + executor.getExecution().getFlowRevision() + "'"),
+                "joinFlow"
+            );
+        }
 
         if (!withDefaults) {
             return executor.withFlow(flow);

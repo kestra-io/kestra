@@ -62,6 +62,8 @@ services:
     command: server standalone
     volumes:
       - kestra-data:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra:/tmp/kestra
     environment:
       KESTRA_CONFIGURATION: |
         kestra:
@@ -80,7 +82,10 @@ services:
               base-path: "/app/storage"
           queue:
             type: kafka
-
+          tasks:
+            tmp-dir:
+              path: /tmp/kestra/tmp
+          url: http://localhost:8080/
     ports:
       - "8080:8080"
     links:

@@ -98,6 +98,10 @@ public abstract class AbstractDate {
             return (ZonedDateTime) value;
         }
 
+        if (value instanceof Long) {
+            return Instant.ofEpochSecond((Long) value).atZone(zoneId);
+        }
+
         if (existingFormat != null) {
             return ZonedDateTime.parse((String) value, DateTimeFormatter.ofPattern(existingFormat));
         }

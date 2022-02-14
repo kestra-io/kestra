@@ -62,6 +62,18 @@ class DateFilterTest {
     }
 
     @Test
+    void timestampCompare() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            "{{ (zoned | timestamp) > (zoned | dateAdd(-1, 'DAYS') | timestamp) }}",
+            ImmutableMap.of(
+                "zoned", NOW
+            )
+        );
+
+        assertThat(render, is("true"));
+    }
+
+    @Test
     void instantnano() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(
             "{{ zoned | timestampNano(timeZone=\"Europe/Paris\") }}",

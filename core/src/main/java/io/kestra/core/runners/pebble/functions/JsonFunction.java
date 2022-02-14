@@ -12,7 +12,7 @@ import io.kestra.core.runners.pebble.AbstractDate;
 import java.util.List;
 import java.util.Map;
 
-public class JsonFunction extends AbstractDate implements Function {
+public class JsonFunction implements Function {
     final static ObjectMapper MAPPER = new ObjectMapper();
     private static final TypeReference<Object> TYPE_REFERENCE = new TypeReference<>() {};
 

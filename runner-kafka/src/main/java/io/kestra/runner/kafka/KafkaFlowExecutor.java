@@ -4,6 +4,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Await;
+import io.kestra.runner.kafka.services.SafeKeyValueStore;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
@@ -18,18 +19,10 @@ import java.util.stream.Collectors;
 public class KafkaFlowExecutor implements FlowExecutorInterface {
     @Inject
     private FlowService flowService;
-    private Map<String, Flow> flows;
+    private SafeKeyValueStore<String, Flow> store;
     private Map<String, Flow> flowsLast;
 
     public synchronized void setFlows(List<Flow> flows) {
-        this.flows = flows
-            .stream()
-            .map(flow -> new AbstractMap.SimpleEntry<>(
-                flow.uid(),
-                flow
-            ))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
         this.flowsLast = flowService.keepLastVersion(flows)
             .stream()
             .map(flow -> new AbstractMap.SimpleEntry<>(
@@ -39,10 +32,14 @@ public class KafkaFlowExecutor implements FlowExecutorInterface {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    public synchronized void setStore(SafeKeyValueStore<String, Flow> store) {
+        this.store = store;
+    }
+
     @SneakyThrows
     private void await() {
-        if (flows == null) {
-            Await.until(() -> this.flows != null, Duration.ofMillis(100), Duration.ofMinutes(5));
+        if (flowsLast == null || store == null) {
+            Await.until(() -> this.flowsLast != null && store != null, Duration.ofMillis(100), Duration.ofMinutes(5));
         }
     }
 
@@ -57,14 +54,17 @@ public class KafkaFlowExecutor implements FlowExecutorInterface {
     public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
         this.await();
 
-        if (revision.isPresent()) {
-            String uid = Flow.uid(namespace, id, revision);
+        String uid = Flow.uidWithoutRevision(namespace, id);
+        Flow flowLast = this.flowsLast.get(uid);
 
-            return Optional.ofNullable(this.flows.get(uid));
+        if (revision.isEmpty()) {
+            return Optional.ofNullable(flowLast);
         }
 
-        String uid = Flow.uidWithoutRevision(namespace, id);
+        if (flowLast != null && revision.get().equals(flowLast.getRevision())) {
+            return Optional.of(flowLast);
+        }
 
-        return Optional.ofNullable(this.flowsLast.get(uid));
+        return this.store.get(Flow.uid(namespace, id, revision));
     }
 }

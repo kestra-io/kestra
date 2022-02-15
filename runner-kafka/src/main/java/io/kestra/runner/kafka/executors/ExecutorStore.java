@@ -46,7 +46,8 @@ public class ExecutorStore implements KafkaExecutorInterface {
             Consumed.with(Serdes.String(), JsonSerde.of(Flow.class)).withName("GlobalStore.Flow"),
             () -> new GlobalInMemoryStateProcessor<>(
                 FLOW_STATE_STORE_NAME,
-                flows -> kafkaFlowExecutor.setFlows(flows)
+                flows -> kafkaFlowExecutor.setFlows(flows),
+                store -> kafkaFlowExecutor.setStore(store)
             )
         );
 

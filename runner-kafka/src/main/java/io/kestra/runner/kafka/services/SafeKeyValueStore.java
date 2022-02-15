@@ -41,6 +41,12 @@ public class SafeKeyValueStore <K, V> {
         return toStream(all, kvKeyValue -> kvKeyValue.value);
     }
 
+    public Stream<KeyValue<K, V>> allWithKey() {
+        KeyValueIterator<K, V> all = this.store.all();
+
+        return toStream(all, kvKeyValue -> new KeyValue<>(kvKeyValue.key, kvKeyValue.value));
+    }
+
     public Stream<V> prefix(String prefix) {
         KeyValueIterator<K, V> all = this.store.prefixScan(prefix, new StringSerializer());
 

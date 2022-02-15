@@ -15,18 +15,28 @@ import java.util.stream.Collectors;
 public class GlobalInMemoryStateProcessor<T> implements Processor<String, T, Void, Void> {
     private final String storeName;
     private final Consumer<List<T>> consumer;
+    private final Consumer<SafeKeyValueStore<String, T>> storeConsumer;
     private KeyValueStore<String, T> store;
     private SafeKeyValueStore<String, T> safeStore;
 
     public GlobalInMemoryStateProcessor(String storeName, Consumer<List<T>> consumer) {
+        this(storeName, consumer, null);
+    }
+
+    public GlobalInMemoryStateProcessor(String storeName, Consumer<List<T>> consumer, Consumer<SafeKeyValueStore<String, T>> storeConsumer) {
         this.storeName = storeName;
         this.consumer = consumer;
+        this.storeConsumer = storeConsumer;
     }
 
     @Override
     public void init(ProcessorContext<Void, Void> context) {
         this.store = context.getStateStore(this.storeName);
         this.safeStore = new SafeKeyValueStore<>(this.store, this.store.name());
+
+        if (this.storeConsumer != null) {
+            this.storeConsumer.accept(this.safeStore);
+        }
 
         this.send();
     }

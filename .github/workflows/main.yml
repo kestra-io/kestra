@@ -186,6 +186,7 @@ jobs:
           context: .
           push: true
           tags: ${{ format('kestra/kestra:{0}', steps.vars.outputs.tag) }}
+          platforms: linux/amd64,linux/arm64
 
       - name: Push to Docker Hub Full
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')

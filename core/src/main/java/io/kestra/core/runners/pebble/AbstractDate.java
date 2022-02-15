@@ -103,7 +103,7 @@ public abstract class AbstractDate {
         }
 
         if (existingFormat != null) {
-            return ZonedDateTime.parse((String) value, DateTimeFormatter.ofPattern(existingFormat));
+            return ZonedDateTime.parse((String) value, formatter(existingFormat));
         }
 
         return ZonedDateTime.parse((String) value);

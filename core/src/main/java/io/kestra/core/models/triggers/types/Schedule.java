@@ -117,23 +117,41 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     private Map<String, String> inputs;
 
     @Override
-    public ZonedDateTime nextEvaluationDate(Optional<? extends TriggerContext> last) {
-        if (last.isPresent()) {
-            return computeNextEvaluationDate(last.get().getDate()).orElse(null);
-        } else {
-            if (backfill != null && backfill.getStart() != null) {
-                return backfill.getStart();
-            }
+    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
+        ExecutionTime executionTime = this.executionTime();
 
-            return computeNextEvaluationDate(ZonedDateTime.now()).orElse(null);
+        // previous present & scheduleConditions
+        if (last.isPresent() && this.scheduleConditions != null) {
+
+            Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
+                executionTime,
+                conditionContext,
+                last.get().getDate(),
+                true
+            );
+
+            if (next.isPresent()) {
+                return next.get().truncatedTo(ChronoUnit.SECONDS);
+            }
         }
+
+        // previous present but no scheduleConditions
+        if (last.isPresent()) {
+            return computeNextEvaluationDate(executionTime, last.get().getDate()).orElse(null);
+        }
+
+        // no previous present but backfill
+        if (backfill != null && backfill.getStart() != null) {
+            return backfill.getStart();
+        }
+
+        // no previous present & no backfill, just provide now
+        return computeNextEvaluationDate(executionTime, ZonedDateTime.now()).orElse(null);
     }
 
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
-        Cron parse = CRON_PARSER.parse(this.cron);
         RunContext runContext = conditionContext.getRunContext();
-
-        ExecutionTime executionTime = ExecutionTime.forCron(parse);
+        ExecutionTime executionTime = this.executionTime();
         Output output = this.output(executionTime, context.getDate()).orElse(null);
 
         if (output == null || output.getDate() == null) {
@@ -208,7 +226,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         Output.OutputBuilder<?, ?> outputBuilder = Output.builder()
             .date(next.get());
 
-        computeNextEvaluationDate(next.get())
+        computeNextEvaluationDate(executionTime, next.get())
             .ifPresent(outputBuilder::next);
 
         executionTime.lastExecution(date)
@@ -226,10 +244,13 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         ));
     }
 
-    private Optional<ZonedDateTime> computeNextEvaluationDate(ZonedDateTime date) {
+    private ExecutionTime executionTime() {
         Cron parse = CRON_PARSER.parse(this.cron);
-        ExecutionTime executionTime = ExecutionTime.forCron(parse);
 
+        return ExecutionTime.forCron(parse);
+    }
+
+    private Optional<ZonedDateTime> computeNextEvaluationDate(ExecutionTime executionTime, ZonedDateTime date) {
         return executionTime.nextExecution(date).map(zonedDateTime -> zonedDateTime.truncatedTo(ChronoUnit.SECONDS));
     }
 
@@ -237,18 +258,16 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         Output.OutputBuilder<?, ?> outputBuilder = Output.builder()
             .date(output.getDate());
 
-        this.truePreviousNextDateWithCondition(executionTime, conditionContext, output, true)
+        this.truePreviousNextDateWithCondition(executionTime, conditionContext, output.getDate(), true)
             .ifPresent(outputBuilder::next);
 
-        this.truePreviousNextDateWithCondition(executionTime, conditionContext, output, false)
+        this.truePreviousNextDateWithCondition(executionTime, conditionContext, output.getDate(), false)
             .ifPresent(outputBuilder::previous);
 
         return outputBuilder.build();
     }
 
-    private Optional<ZonedDateTime> truePreviousNextDateWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, Output output, boolean next) {
-        ZonedDateTime toTestDate = output.getDate();
-
+    private Optional<ZonedDateTime> truePreviousNextDateWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime toTestDate, boolean next) {
         while (
             (next && toTestDate.getYear() < ZonedDateTime.now().getYear() + 10) ||
                 (!next && toTestDate.getYear() > ZonedDateTime.now().getYear() - 10)
@@ -292,7 +311,6 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
         return true;
     }
-
 
     @SuperBuilder
     @ToString

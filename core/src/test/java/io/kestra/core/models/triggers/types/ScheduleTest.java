@@ -123,7 +123,7 @@ class ScheduleTest {
     @Test
     void noBackfillNextDate() {
         Schedule trigger = Schedule.builder().cron("0 0 * * *").build();
-        ZonedDateTime next = trigger.nextEvaluationDate(Optional.empty());
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.empty());
 
         assertThat(next.getDayOfMonth(), is(ZonedDateTime.now().plusDays(1).getDayOfMonth()));
     }
@@ -132,7 +132,7 @@ class ScheduleTest {
     void noBackfillNextDateContext() {
         Schedule trigger = Schedule.builder().cron("0 0 * * *").build();
         ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
-        ZonedDateTime next = trigger.nextEvaluationDate(Optional.of(triggerContext(date, trigger)));
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.of(triggerContext(date, trigger)));
 
         assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(date.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)));
     }
@@ -145,7 +145,7 @@ class ScheduleTest {
             .cron("0 0 * * *")
             .backfill(Schedule.ScheduleBackfill.builder().start(date).build())
             .build();
-        ZonedDateTime next = trigger.nextEvaluationDate(Optional.empty());
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.empty());
 
         assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(date.format(DateTimeFormatter.ISO_LOCAL_DATE)));
     }
@@ -157,7 +157,7 @@ class ScheduleTest {
             .backfill(Schedule.ScheduleBackfill.builder().start(ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]")).build())
             .build();
         ZonedDateTime date = ZonedDateTime.parse("2020-03-01T00:00:00+01:00[Europe/Paris]");
-        ZonedDateTime next = trigger.nextEvaluationDate(Optional.of(triggerContext(date, trigger)));
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.of(triggerContext(date, trigger)));
 
         assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(next.format(DateTimeFormatter.ISO_LOCAL_DATE)));
     }
@@ -165,7 +165,7 @@ class ScheduleTest {
     @Test
     void emptyBackfillStartDate() {
         Schedule trigger = Schedule.builder().cron("0 0 * * *").backfill(Schedule.ScheduleBackfill.builder().build()).build();
-        ZonedDateTime next = trigger.nextEvaluationDate(Optional.empty());
+        ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.empty());
 
         assertThat(next.getDayOfMonth(), is(ZonedDateTime.now().plusDays(1).getDayOfMonth()));
     }

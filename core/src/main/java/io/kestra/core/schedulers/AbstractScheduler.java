@@ -193,7 +193,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
                         return FlowWithPollingTriggerNextDate.of(
                             f,
-                            f.getPollingTrigger().nextEvaluationDate(Optional.of(lastTrigger))
+                            f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.of(lastTrigger))
                         );
                     }
                 })
@@ -395,7 +395,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         return triggerState
             .findLast(f.getTriggerContext())
             .orElseGet(() -> {
-                ZonedDateTime nextDate = f.getPollingTrigger().nextEvaluationDate(Optional.empty());
+                ZonedDateTime nextDate = f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.empty());
 
                 Trigger build = Trigger.builder()
                     .date(nextDate.compareTo(now) < 0 ? nextDate : now)

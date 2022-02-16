@@ -246,7 +246,7 @@
     cursor: pointer;
     display: flex;
     width: 200px;
-    border: 1px solid var(--gray-600);
+    background: var(--gray-100);
 
     .btn, .card-header {
         border-radius: 0 !important;
@@ -262,14 +262,14 @@
         width: 35px;
         height: 51px;
         background: var(--white);
-        border-right: 1px solid var(--gray-500);
+        border-right: 1px solid var(--table-border-color);
         position: relative;
     }
 
     .status-color {
         width: 10px;
         height: 51px;
-        border-right: 1px solid var(--gray-500);
+        border-right: 1px solid var(--table-border-color);
     }
 
     .is-success {
@@ -290,17 +290,20 @@
 
     .task-content {
         flex-grow: 1;
-        background-color: var(--light);
         width: 38px;
 
         .card-header {
             height: 25px;
             padding: 2px;
             margin: 0;
-            border-bottom: 1px solid var(--gray-500);
-            background: var(--gray-200);
+            border-bottom: 1px solid var(--table-border-color);
             flex: 1;
             flex-wrap: nowrap;
+
+            background-color: var(--gray-200);
+            .theme-dark & {
+                background-color: var(--gray-300);
+            }
 
             .icon-wrapper {
                 display: inline-block;

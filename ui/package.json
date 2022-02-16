@@ -31,7 +31,6 @@
     "md5": "^2.3.0",
     "moment": "^2.29.1",
     "moment-range": "4.0.2",
-    "portal-vue": "^2.1.7",
     "prismjs": "^1.26.0",
     "qs": "^6.10.3",
     "throttle-debounce": "^3.0.1",

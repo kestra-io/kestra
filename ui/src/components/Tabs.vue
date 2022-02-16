@@ -13,6 +13,12 @@
                             :to="to(tab)"
                         >
                             {{ tab.title }}
+                            <b-badge
+                                pill
+                                v-if="tab.count !== undefined"
+                            >
+                                {{ tab.count }}
+                            </b-badge>
                         </b-nav-item>
                     </b-nav>
                 </div>

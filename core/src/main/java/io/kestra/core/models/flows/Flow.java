@@ -141,7 +141,7 @@ public class Flow implements DeletedInterface {
             .flatMap(Collection::stream);
     }
 
-    private List<Task> allTasksWithChilds() {
+    public List<Task> allTasksWithChilds() {
         return allTasks()
             .flatMap(this::allTasksWithChilds)
             .collect(Collectors.toList());

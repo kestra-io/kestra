@@ -100,21 +100,30 @@ export default {
                 };
             }
         },
+        deleteConfirmMessage() {
+            return new Promise((resolve) => {
+                resolve(this.$t("delete confirm", {name: this.item.id}));
+            });
+        },
         deleteFile() {
             if (this.item) {
                 const item = this.item;
-                this.$toast()
-                    .confirm(this.$t("delete confirm", {name: item.id}), () => {
-                        return this.$store
-                            .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item)
-                            .then(() => {
-                                return this.$router.push({
-                                    name: this.dataType + "s/list"
-                                });
-                            })
-                            .then(() => {
-                                this.$toast().deleted(item.id);
-                            })
+
+                this.deleteConfirmMessage()
+                    .then(message => {
+                        this.$toast()
+                            .confirm(message, () => {
+                                return this.$store
+                                    .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item)
+                                    .then(() => {
+                                        return this.$router.push({
+                                            name: this.dataType + "s/list"
+                                        });
+                                    })
+                                    .then(() => {
+                                        this.$toast().deleted(item.id);
+                                    })
+                            });
                     });
             }
         },

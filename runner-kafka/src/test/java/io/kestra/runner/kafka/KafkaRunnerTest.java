@@ -12,6 +12,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.tasks.flows.EachSequentialTest;
 import io.kestra.core.tasks.flows.FlowCaseTest;
 import io.kestra.core.tasks.flows.TemplateTest;
+import io.kestra.core.tasks.flows.WorkerTest;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
@@ -49,6 +50,9 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Inject
     private FlowCaseTest flowCaseTest;
+
+    @Inject
+    private WorkerTest.Suite workerTest;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -274,5 +278,20 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Test
     public void invalidOutputs() throws Exception {
         flowCaseTest.invalidOutputs();
+    }
+
+    @Test
+    public void workerSuccess() throws Exception {
+        workerTest.success(runnerUtils);
+    }
+
+    @Test
+    public void workerFailed() throws Exception {
+        workerTest.failed(runnerUtils);
+    }
+
+    @Test
+    public void workerEach() throws Exception {
+        workerTest.each(runnerUtils);
     }
 }

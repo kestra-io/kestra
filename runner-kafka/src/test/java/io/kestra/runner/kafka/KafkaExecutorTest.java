@@ -469,6 +469,56 @@ class KafkaExecutorTest {
     }
 
     @Test
+    void workerSuccess() throws InternalException {
+        startStream(this.executorStore);
+
+        Flow flow = flowRepository.findById("io.kestra.tests", "worker").orElseThrow();
+        this.flowInput().pipeInput(flow.uid(), flow);
+
+        io.kestra.core.tasks.flows.Worker worker = (io.kestra.core.tasks.flows.Worker) flow.findTaskByTaskId("worker");
+        Task first = flow.findTaskByTaskId("first");
+        Task second = flow.findTaskByTaskId("second");
+
+        startStream(this.executorMain);
+
+        Execution execution = createExecution(flow);
+
+        for (int i = 0; i < 2; i++) {
+            execution = executionOutput().readRecord().value();
+        }
+
+        assertThat(execution.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RUNNING));
+
+        for (Task task : List.of(first, second)) {
+            WorkerTask workerTask = worker.workerTask(execution.getTaskRunList().get(0), task, new RunContext());
+            TaskRun taskRun = workerTask.getTaskRun();
+
+            taskRun = taskRun.withState(State.Type.RUNNING);
+            this.workerTaskResultInput().pipeInput(new WorkerTaskResult(workerTask.withTaskRun(taskRun)));
+
+            taskRun = taskRun.withState(State.Type.SUCCESS);
+            this.workerTaskResultInput().pipeInput(new WorkerTaskResult(workerTask.withTaskRun(taskRun)));
+        }
+
+        for (int i = 0; i < 5; i++) {
+            execution = executionOutput().readRecord().value();
+        }
+
+        assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().get(3).getState().getCurrent(), is(State.Type.CREATED));
+
+        this.changeStatus(flow.findTaskByTaskId(execution.getTaskRunList().get(3).getTaskId()), execution.getTaskRunList().get(3), State.Type.RUNNING);
+        this.changeStatus(flow.findTaskByTaskId(execution.getTaskRunList().get(3).getTaskId()), execution.getTaskRunList().get(3), State.Type.SUCCESS);
+
+        for (int i = 0; i < 2; i++) {
+            execution = executionOutput().readRecord().value();
+        }
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+    @Test
     void flowTrigger() {
         startStream(this.executorStore);
 
@@ -708,23 +758,6 @@ class KafkaExecutorTest {
             assertThat(execution.getTaskRunList(), hasSize(index + 1));
             assertThat(execution.getTaskRunList().get(index).getState().getCurrent(), is(State.Type.CREATED));
         }
-
-
-        // add to running queue
-        /*
-        TaskRun taskRun = execution.getTaskRunList().get(index);
-        WorkerTaskRunning workerTaskRunning = WorkerTaskRunning.of(
-            WorkerTask.builder()
-                .taskRun(taskRun)
-                .task(task)
-                .runContext(new RunContext())
-                .build(),
-            workerInstance,
-            0
-        );
-        this.workerTaskRunningInput().pipeInput(taskRun.getId(), workerTaskRunning);
-
-         */
 
         if (lastState == State.Type.CREATED) {
             return execution;

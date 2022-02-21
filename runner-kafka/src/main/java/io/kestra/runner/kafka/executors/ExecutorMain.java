@@ -18,6 +18,8 @@ import io.kestra.runner.kafka.services.KafkaAdminService;
 import io.kestra.runner.kafka.services.KafkaStreamSourceService;
 import io.kestra.runner.kafka.services.KafkaStreamsBuilder;
 import io.kestra.runner.kafka.streams.*;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
-import org.apache.kafka.streams.*;
+import org.apache.kafka.streams.KeyValue;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.Stores;
@@ -34,9 +37,6 @@ import org.slf4j.event.Level;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @KafkaQueueEnabled
 @Singleton
@@ -232,6 +232,8 @@ public class ExecutorMain implements KafkaExecutorInterface {
             .transformValues(
                 () -> new ExecutorJoinerTransformer(
                     EXECUTOR_STATE_STORE_NAME,
+                    this.executorService,
+                    this.kafkaStreamSourceService,
                     this.metricRegistry
                 ),
                 Named.as("JoinWorkerResult.transformValues"),
@@ -425,7 +427,7 @@ public class ExecutorMain implements KafkaExecutorInterface {
 
         // not flowable > to WorkerTask
         KStream<String, WorkerTask> resultNotFlowable = dedupWorkerTask
-            .filter((key, value) -> !value.getTask().isFlowable(), Named.as("HandleWorkerTaskNotFlowable.filterIsNotFlowable"))
+            .filter((key, value) -> value.getTask().isSendToWorkerTask(), Named.as("HandleWorkerTaskNotFlowable.filterIsNotFlowable"))
             .map((key, value) -> new KeyValue<>(queueService.key(value), value), Named.as("HandleWorkerTaskNotFlowable.mapWithKey"))
             .selectKey(
                 (key, value) -> queueService.key(value),

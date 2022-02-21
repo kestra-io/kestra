@@ -12,6 +12,7 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.tasks.flows.Worker;
 import io.kestra.core.tasks.flows.Pause;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -599,6 +600,27 @@ public class ExecutorService {
         }
 
         return resultExecutor;
+    }
+
+    public Execution addDynamicTaskRun(Execution execution, Flow flow, WorkerTaskResult workerTaskResult) throws InternalException {
+        // if parent, can be a Worker task that generate dynamic tasks
+        if (workerTaskResult.getTaskRun().getParentTaskRunId() != null) {
+            try {
+                execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getId());
+            } catch (InternalException e) {
+                TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getParentTaskRunId());
+                Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
+
+                if (parentTask instanceof Worker) {
+                    ArrayList<TaskRun> taskRuns = new ArrayList<>(execution.getTaskRunList());
+                    taskRuns.add(workerTaskResult.getTaskRun());
+
+                    return execution.withTaskRunList(taskRuns);
+                }
+            }
+        }
+
+        return null;
     }
 
     public boolean canBePurged(final Executor executor) {

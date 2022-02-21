@@ -1,0 +1,43 @@
+id: worker-each
+namespace: io.kestra.tests
+
+tasks:
+  - id: 1_each
+    type: io.kestra.core.tasks.flows.EachSequential
+    value: '["s1"]'
+    tasks:
+    - id: 1-1_each
+      type: io.kestra.core.tasks.flows.EachSequential
+      value: '["s2"]'
+      tasks:
+        - id: 1-1-1_each
+          type: io.kestra.core.tasks.flows.EachSequential
+          value: '["s3"]'
+          tasks:
+            - id: 1-1-1-1_return
+              type: io.kestra.core.tasks.debugs.Return
+              format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+            - id: worker
+              type: io.kestra.core.tasks.flows.Worker
+              tasks:
+                - id: first
+                  type: io.kestra.core.tasks.scripts.Bash
+                  outputFiles:
+                    - out
+                  commands:
+                    - 'echo "{{ taskrun.id }}" > {{ outputFiles.out }}'
+                    - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
+                    - |
+                      echo '::{"outputs": {"taskrun":"{{ taskrun.id }}"}}::'
+                - id: second
+                  type: io.kestra.core.tasks.scripts.Bash
+                  inputFiles:
+                    in.txt: "{{ outputs.first.s1.s2.s3.files.out }}"
+                  commands:
+                    - |
+                      echo '::{"outputs": {"taskrun":"'$(cat in.txt)'"}}::'
+                    - |
+                      echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::'
+  - id: 2_end
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{ outputs.second.s1.s2.s3.vars.stay }}"

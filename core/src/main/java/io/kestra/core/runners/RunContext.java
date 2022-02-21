@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
@@ -190,11 +191,7 @@ public class RunContext {
         }
 
         if (task != null) {
-            builder
-                .put("task", ImmutableMap.of(
-                    "id", task.getId(),
-                    "type", task.getType()
-                ));
+            builder.put("task", this.variables(task));
         }
 
         if (taskRun != null) {
@@ -287,17 +284,85 @@ public class RunContext {
         return builder.build();
     }
 
-    public RunContext forWorker(ApplicationContext applicationContext, TaskRun taskRun) {
-        this.initBean(applicationContext);
-        this.initLogger(taskRun);
+    private Map<String, Object> variables(Task task) {
+        return ImmutableMap.of(
+            "id", task.getId(),
+            "type", task.getType()
+        );
+    }
 
-        HashMap<String, Object> clone = new HashMap<>(this.variables);
+    @SuppressWarnings("unchecked")
+    public RunContext updateVariables(WorkerTaskResult workerTaskResult, TaskRun parent) {
+        Map<String, Object> variables = new HashMap<>(this.variables);
+
+        HashMap<String, Object> outputs = this.variables.containsKey("outputs") ?
+            new HashMap<>((Map<String, Object>) this.variables.get("outputs")) :
+            new HashMap<>();
+
+
+        Map<String, Object> result = new HashMap<>();
+        Map<String, Object> current = result;
+
+        if (variables.containsKey("parents")) {
+            for (Map<String, Map<String, String>> t : Lists.reverse((List<Map<String, Map<String, String>>>) variables.get("parents"))) {
+                if (t.get("taskrun") != null && t.get("taskrun").get("value") != null) {
+                    HashMap<String, Object> item = new HashMap<>();
+                    current.put(t.get("taskrun").get("value"), item);
+                    current = item;
+                }
+            }
+        }
+
+        if (parent.getValue() != null) {
+            HashMap<String, Object> item = new HashMap<>();
+            current.put(parent.getValue(), item);
+            current = item;
+        }
+
+        if (workerTaskResult.getTaskRun().getOutputs() != null) {
+            current.putAll(workerTaskResult.getTaskRun().getOutputs());
+        }
+
+        outputs.put(workerTaskResult.getTaskRun().getTaskId(), result);
+
+        variables.remove("outputs");
+        variables.put("outputs", outputs);
+
+        return this.clone(variables);
+    }
+
+    private RunContext clone(Map<String, Object> variables) {
+        RunContext runContext = new RunContext();
+        runContext.variableRenderer = this.variableRenderer;
+        runContext.applicationContext = this.applicationContext;
+        runContext.storageInterface = this.storageInterface;
+        runContext.storageOutputPrefix = this.storageOutputPrefix;
+        runContext.storageExecutionPrefix = this.storageExecutionPrefix;
+        runContext.envPrefix = this.envPrefix;
+        runContext.variables = variables;
+        runContext.metrics = new ArrayList<>();
+        runContext.meterRegistry = this.meterRegistry;
+        runContext.runContextLogger = this.runContextLogger;
+        runContext.tempBasedPath = this.tempBasedPath;
+        runContext.temporaryDirectory = this.temporaryDirectory;
+
+        return runContext;
+    }
+
+    public RunContext forWorker(ApplicationContext applicationContext, WorkerTask workerTask) {
+        this.initBean(applicationContext);
+        this.initLogger(workerTask.getTaskRun());
+
+        Map<String, Object> clone = new HashMap<>(this.variables);
 
         clone.remove("taskrun");
-        clone.put("taskrun", this.variables(taskRun));
+        clone.put("taskrun", this.variables(workerTask.getTaskRun()));
+
+        clone.remove("task");
+        clone.put("task", this.variables(workerTask.getTask()));
 
         this.variables = ImmutableMap.copyOf(clone);
-        this.storageExecutionPrefix = URI.create("/" + this.storageInterface.executionPrefix(taskRun));
+        this.storageExecutionPrefix = URI.create("/" + this.storageInterface.executionPrefix(workerTask.getTaskRun()));
 
         return this;
     }
@@ -551,17 +616,6 @@ public class RunContext {
             this.cleanTemporaryDirectory();
         } catch (IOException ex) {
             logger().warn("Unable to cleanup worker task", ex);
-        }
-    }
-
-    public WorkerTask cleanup(WorkerTask workerTask) {
-        try {
-            this.cleanTemporaryDirectory();
-            return MAPPER.readValue(MAPPER.writeValueAsString(workerTask), WorkerTask.class);
-        } catch (IOException ex) {
-            logger().warn("Unable to cleanup worker task", ex);
-
-            return workerTask;
         }
     }
 

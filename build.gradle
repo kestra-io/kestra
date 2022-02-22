@@ -11,7 +11,7 @@ plugins {
     id 'org.gradle.test-retry' version '1.3.1'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.41.0"
+    id "com.github.ben-manes.versions" version "0.42.0"
 
     // front
     id 'org.siouan.frontend-jdk11' version '6.0.0' apply false
@@ -19,7 +19,7 @@ plugins {
     // release
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
     id 'net.researchgate.release' version '2.8.1'
-    id "com.gorylenko.gradle-git-properties" version "2.3.2"
+    id "com.gorylenko.gradle-git-properties" version "2.4.0"
     id 'signing'
     id 'ru.vyarus.pom' version '2.2.1' apply false
     id 'ru.vyarus.github-info' version '1.3.0' apply false
@@ -96,10 +96,10 @@ allprojects {
         api "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
 
         // logs
-        implementation "org.slf4j:slf4j-api:1.7.32"
-        implementation "ch.qos.logback:logback-classic:1.2.9"
+        implementation "org.slf4j:slf4j-api:1.7.36"
+        implementation "ch.qos.logback:logback-classic:1.2.10"
         implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.17.1'
-        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.33'
+        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.36'
 
         // jackson
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'

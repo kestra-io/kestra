@@ -46,10 +46,8 @@ public class Await {
         }
     }
 
-    public static <T> T until(Supplier<T> supplier, Duration sleep) {
-        AtomicReference<T> result = new AtomicReference<>();
-
-        Await.until(() -> {
+    private static <T> BooleanSupplier untilSupplier(Supplier<T> supplier, AtomicReference<T> result) {
+        return () -> {
             T t = supplier.get();
             if (t != null) {
                 result.set(t);
@@ -57,9 +55,22 @@ public class Await {
             } else {
                 return false;
             }
-        }, sleep);
+        };
+    }
+
+    public static <T> T until(Supplier<T> supplier, Duration sleep, Duration timeout) throws TimeoutException {
+        AtomicReference<T> result = new AtomicReference<>();
+
+        Await.until(untilSupplier(supplier, result), sleep, timeout);
 
         return result.get();
     }
 
+    public static <T> T until(Supplier<T> supplier, Duration sleep) {
+        AtomicReference<T> result = new AtomicReference<>();
+
+        Await.until(untilSupplier(supplier, result), sleep);
+
+        return result.get();
+    }
 }

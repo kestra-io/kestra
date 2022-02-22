@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Endpoint(id = "kafkastreams", defaultSensitive = false)
-@Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
+@Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE|SCHEDULER)")
 @KafkaQueueEnabled
 public class KafkaStreamEndpoint implements ApplicationEventListener<KafkaStreamEndpoint.Event>  {
     private Map<String, KafkaStreamService.Stream> streams;

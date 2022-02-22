@@ -28,6 +28,10 @@ public class PluginUsage {
         KestraApplicationContext context = (KestraApplicationContext) applicationContext;
         PluginRegistry pluginRegistry = context.getPluginRegistry();
 
+        if (pluginRegistry == null) {
+            return List.of();
+        }
+
         return pluginRegistry.getPlugins()
             .stream()
             .map(registeredPlugin -> PluginUsage.builder()

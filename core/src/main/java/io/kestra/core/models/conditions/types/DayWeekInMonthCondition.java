@@ -32,7 +32,7 @@ import javax.validation.constraints.NotNull;
             code = {
                 "- conditions:",
                 "    - type: io.kestra.core.models.conditions.types.DayWeekInMonthCondition",
-                "      dayOfWeek: io.kestra.core.models.conditions.types.DayWeekInMonthCondition",
+                "      dayOfWeek: MONDAY",
                 "      dayInMonth: FIRST",
             }
         )

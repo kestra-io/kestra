@@ -27,10 +27,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.AbstractMap;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -190,12 +187,8 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     protected io.kestra.core.models.templates.Template findTemplate(ApplicationContext applicationContext) throws IllegalVariableEvaluationException {
         TemplateExecutorInterface templateExecutor = applicationContext.getBean(TemplateExecutorInterface.class);
 
-        io.kestra.core.models.templates.Template template = templateExecutor.findById(this.namespace, this.templateId);
-        if (template == null) {
-            throw new IllegalVariableEvaluationException("Can't find flow template '" + this.namespace + "." + this.templateId + "'");
-        }
-
-        return template;
+        return templateExecutor.findById(this.namespace, this.templateId)
+            .orElseThrow(() -> new IllegalVariableEvaluationException("Can't find flow template '" + this.namespace + "." + this.templateId + "'"));
     }
 
     @SuperBuilder(toBuilder = true)
@@ -280,15 +273,15 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     }
 
     public interface TemplateExecutorInterface {
-        io.kestra.core.models.templates.Template findById(String namespace, String templateId);
+        Optional<io.kestra.core.models.templates.Template> findById(String namespace, String templateId);
     }
 
     public static class MemoryTemplateExecutor implements io.kestra.core.tasks.flows.Template.TemplateExecutorInterface {
         @Inject
         private TemplateRepositoryInterface templateRepository;
 
-        public io.kestra.core.models.templates.Template findById(String namespace, String templateId) {
-            return this.templateRepository.findById(namespace, templateId).orElse(null);
+        public Optional<io.kestra.core.models.templates.Template> findById(String namespace, String templateId) {
+            return this.templateRepository.findById(namespace, templateId);
         }
     }
 

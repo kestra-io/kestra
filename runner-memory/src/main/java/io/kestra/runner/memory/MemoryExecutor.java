@@ -21,58 +21,69 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+
+import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @MemoryQueueEnabled
-public class MemoryExecutor extends AbstractExecutor {
-    private final FlowRepositoryInterface flowRepository;
-    private final QueueInterface<Execution> executionQueue;
-    private final QueueInterface<WorkerTask> workerTaskQueue;
-    private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
-    private final QueueInterface<LogEntry> logQueue;
-    private final FlowService flowService;
-    private final TaskDefaultService taskDefaultService;
-    private final Template.TemplateExecutorInterface templateExecutorInterface;
+@Slf4j
+public class MemoryExecutor implements ExecutorInterface {
     private static final MemoryMultipleConditionStorage multipleConditionStorage = new MemoryMultipleConditionStorage();
-
     private static final ConcurrentHashMap<String, ExecutionState> EXECUTIONS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, WorkerTaskExecution> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
-
     private List<Flow> allFlows;
 
     @Inject
-    public MemoryExecutor(
-        RunContextFactory runContextFactory,
-        FlowRepositoryInterface flowRepository,
-        @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        @Named(QueueFactoryInterface.WORKERTASK_NAMED) QueueInterface<WorkerTask> workerTaskQueue,
-        @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED) QueueInterface<WorkerTaskResult> workerTaskResultQueue,
-        @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
-        MetricRegistry metricRegistry,
-        FlowService flowService,
-        ConditionService conditionService,
-        TaskDefaultService taskDefaultService,
-        Template.TemplateExecutorInterface templateExecutorInterface
-    ) {
-        super(runContextFactory, metricRegistry, conditionService);
+    private ApplicationContext applicationContext;
 
-        this.flowRepository = flowRepository;
-        this.executionQueue = executionQueue;
-        this.workerTaskQueue = workerTaskQueue;
-        this.workerTaskResultQueue = workerTaskResultQueue;
-        this.logQueue = logQueue;
-        this.flowService = flowService;
-        this.conditionService = conditionService;
-        this.taskDefaultService = taskDefaultService;
-        this.flowExecutorInterface = new MemoryFlowExecutor(this.flowRepository);
-        this.templateExecutorInterface = templateExecutorInterface;
-    }
+    @Inject
+    private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    @Named(QueueFactoryInterface.EXECUTION_NAMED)
+    private QueueInterface<Execution> executionQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASK_NAMED)
+    private QueueInterface<WorkerTask> workerTaskQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
+    private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    private QueueInterface<LogEntry> logQueue;
+
+    @Inject
+    private FlowService flowService;
+
+    @Inject
+    private TaskDefaultService taskDefaultService;
+
+    @Inject
+    private Template.TemplateExecutorInterface templateExecutorInterface;
+
+    @Inject
+    private ExecutorService executorService;
+
+    @Inject
+    private ConditionService conditionService;
+
+    @Inject
+    private RunContextFactory runContextFactory;
+
+    @Inject
+    private MetricRegistry metricRegistry;
 
     @Override
     public void run() {
+        applicationContext.registerSingleton(new MemoryFlowExecutor(this.flowRepository));
+
         this.allFlows = this.flowRepository.findAll();
         this.executionQueue.receive(MemoryExecutor.class, this::executionQueue);
         this.workerTaskResultQueue.receive(MemoryExecutor.class, this::workerTaskResultQueue);
@@ -89,7 +100,7 @@ public class MemoryExecutor extends AbstractExecutor {
             flow = Template.injectTemplate(
                 flow,
                 execution,
-                templateExecutorInterface::findById
+                (namespace, id) -> templateExecutorInterface.findById(namespace, id).orElse(null)
             );
         } catch (InternalException e) {
             log.warn("Failed to inject template",  e);
@@ -107,14 +118,14 @@ public class MemoryExecutor extends AbstractExecutor {
             Executor executor = new Executor(execution, null).withFlow(flow);
 
             if (log.isDebugEnabled()) {
-                log(log, true, executor);
+                executorService.log(log, true, executor);
             }
 
-            executor = this.process(executor);
+            executor = executorService.process(executor);
 
             if (executor.getNexts().size() > 0 && deduplicateNexts(execution, executor.getNexts())) {
                 executor.withExecution(
-                    this.onNexts(executor.getFlow(), executor.getExecution(), executor.getNexts()),
+                    executorService.onNexts(executor.getFlow(), executor.getExecution(), executor.getNexts()),
                     "onNexts"
                 );
             }
@@ -224,7 +235,7 @@ public class MemoryExecutor extends AbstractExecutor {
 
     private void toExecution(Executor executor) {
         if (log.isDebugEnabled()) {
-            log(log, false, executor);
+            executorService.log(log, false, executor);
         }
 
         // emit for other consumer than executor
@@ -242,7 +253,7 @@ public class MemoryExecutor extends AbstractExecutor {
     private void workerTaskResultQueue(WorkerTaskResult message) {
         synchronized (this) {
             if (log.isDebugEnabled()) {
-                log(log, true, message);
+                executorService.log(log, true, message);
             }
 
             metricRegistry

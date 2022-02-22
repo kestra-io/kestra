@@ -39,6 +39,12 @@ endpoints:
     write-sensitive: false
 
 kestra:
+  retries:
+    attempts: 5
+    multiplier: 2.0
+    delay: 1s
+    maxDelay: ""
+
   kafka:
     defaults:
       topic-prefix: "kestra_"
@@ -105,7 +111,7 @@ kestra:
           segment.bytes: "10485760"
 
       executor:
-        name: "${kestra.kafka.defaults.topic-prefix}executor-executor-changelog"
+        name: "${kestra.kafka.defaults.topic-prefix}executor_main-executor-changelog"
         cls: io.kestra.core.runners.Executor
         properties:
           cleanup.policy: "delete,compact"
@@ -232,6 +238,9 @@ kestra:
   variables:
     env-vars-prefix: KESTRA_
     globals: {}
+    disable-handlebars: true
+    cache-enabled: true
+    cache-size: 1000
 
   metrics:
     prefix: kestra

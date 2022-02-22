@@ -13,6 +13,9 @@ import io.kestra.core.tasks.flows.EachSequentialTest;
 import io.kestra.core.tasks.flows.FlowCaseTest;
 import io.kestra.core.tasks.flows.TemplateTest;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.context.annotation.Property;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.junit.jupiter.api.Test;
 
@@ -22,13 +25,12 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Property(name = "kestra.server-type", value = "EXECUTOR")
 class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     @Inject
     private RestartCaseTest restartCaseTest;
@@ -199,7 +201,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
         );
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getExecutionId().equals(execution.getId())).count(), is(63L));
+        assertThat(logs.stream().filter(logEntry -> logEntry.getExecutionId().equals(execution.getId())).count(), is(greaterThan(60L)));
     }
 
     @Test
@@ -244,7 +246,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void withTemplate() throws Exception {
-        TemplateTest.withTemplate(runnerUtils, templateRepository, logsQueue);
+        TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
     }
 
     @Test

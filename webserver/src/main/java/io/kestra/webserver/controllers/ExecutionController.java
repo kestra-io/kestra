@@ -322,21 +322,27 @@ public class ExecutionController {
             throw new NoSuchElementException("Unable to find flow id '" + executionId + "'");
         }
 
-        // maybe redirect to correct execution
         String prefix = storageInterface.executionPrefix(flow.get(), execution.get());
-        if (!path.getPath().substring(1).startsWith(prefix)) {
-            Optional<String> redirectedExecution = storageInterface.extractExecutionId(path);
-
-            if (redirectedExecution.isPresent()) {
-                return HttpResponse.redirect(URI.create((basePath != null? basePath : "") +
-                    redirect.replace("{executionId}", redirectedExecution.get()))
-                );
-            }
-
-            throw new IllegalArgumentException("Invalid prefix path");
+        if (path.getPath().substring(1).startsWith(prefix)) {
+            return null;
         }
 
-        return null;
+        // maybe state
+        prefix = storageInterface.statePrefix(flow.get().getNamespace(), flow.get().getId(), null, null);
+        if (path.getPath().substring(1).startsWith(prefix)) {
+            return null;
+        }
+
+        // maybe redirect to correct execution
+        Optional<String> redirectedExecution = storageInterface.extractExecutionId(path);
+
+        if (redirectedExecution.isPresent()) {
+            return HttpResponse.redirect(URI.create((basePath != null? basePath : "") +
+                redirect.replace("{executionId}", redirectedExecution.get()))
+            );
+        }
+
+        throw new IllegalArgumentException("Invalid prefix path");
     }
     /**
      * Download file binary from uri parameter
@@ -372,7 +378,7 @@ public class ExecutionController {
     public HttpResponse<FileMetas> filesize(
         String executionId,
         @QueryValue(value = "path") URI path
-    ) throws FileNotFoundException {
+    ) throws IOException {
         HttpResponse<FileMetas> httpResponse =this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file/metas?path=" + path);
         if (httpResponse != null) {
             return httpResponse;

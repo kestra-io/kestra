@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface PollingTriggerInterface {
     Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception;
 
-    default ZonedDateTime nextEvaluationDate(Optional<? extends TriggerContext> last) {
+    default ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
         return ZonedDateTime.now();
     }
 

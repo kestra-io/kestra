@@ -46,7 +46,7 @@ import jakarta.inject.Singleton;
 public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
-    private final FlowListenersInterface flowListeners;
+    protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final MetricRegistry metricRegistry;
     private final ConditionService conditionService;
@@ -61,6 +61,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
     private final Map<String, ZonedDateTime> lastEvaluate = new ConcurrentHashMap<>();
     private final Map<String, ZonedDateTime> evaluateRunning = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> evaluateRunningCount = new ConcurrentHashMap<>();
+    private final Map<String, Trigger> triggerStateSaved = new ConcurrentHashMap<>();
 
     @Getter
     private List<FlowWithTrigger> schedulable = new ArrayList<>();
@@ -90,6 +91,8 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
     @Override
     public void run() {
+        flowListeners.run();
+
         ScheduledFuture<?> handle = scheduleExecutor.scheduleAtFixedRate(
             this::handle,
             0,
@@ -190,7 +193,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
                         return FlowWithPollingTriggerNextDate.of(
                             f,
-                            f.getPollingTrigger().nextEvaluationDate(Optional.of(lastTrigger))
+                            f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.of(lastTrigger))
                         );
                     }
                 })
@@ -392,11 +395,7 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         return triggerState
             .findLast(f.getTriggerContext())
             .orElseGet(() -> {
-                // we don't find, so never started execution, create a trigger context with previous date in the past.
-                // this allows some edge case when the evaluation loop of schedulers will change second
-                // between start and end
-
-                ZonedDateTime nextDate = f.getPollingTrigger().nextEvaluationDate(Optional.empty());
+                ZonedDateTime nextDate = f.getPollingTrigger().nextEvaluationDate(f.getConditionContext(), Optional.empty());
 
                 Trigger build = Trigger.builder()
                     .date(nextDate.compareTo(now) < 0 ? nextDate : now)
@@ -407,7 +406,22 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
                     .updatedDate(Instant.now())
                     .build();
 
-                triggerState.save(build);
+                // we don't find, so never started execution, create a trigger context with previous date in the past.
+                // this allows some edge case when the evaluation loop of schedulers will change second
+                // between start and end
+                // but since we could have some changed on the flow in meantime, we wait 1 min before saving them.
+                if (triggerStateSaved.containsKey(build.uid())) {
+                    Trigger cachedTrigger = triggerStateSaved.get(build.uid());
+
+                    if (cachedTrigger.getUpdatedDate() != null && Instant.now().isAfter(cachedTrigger.getUpdatedDate().plusSeconds(60))) {
+                        triggerState.save(build);
+                        triggerStateSaved.remove(build.uid());
+                    }
+
+                    return cachedTrigger;
+                } else {
+                    triggerStateSaved.put(build.uid(), build);
+                }
 
                 return build;
             });

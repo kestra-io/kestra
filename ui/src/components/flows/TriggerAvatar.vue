@@ -64,10 +64,11 @@
 </script>
 
 <style lang="scss" scoped>
+@use "sass:math";
 @import "../../styles/_variable.scss";
 
 .b-avatar {
-    margin-right: $badge-pill-padding-x / 2;
+    margin-right: math.div($badge-pill-padding-x, 2);
 }
 
 </style>

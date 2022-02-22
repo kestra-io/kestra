@@ -12,6 +12,7 @@ import oshi.hardware.NetworkIF;
 import oshi.software.os.OperatingSystem;
 
 import java.lang.management.ManagementFactory;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -83,7 +84,8 @@ public class HostUsage {
             processorIdentifier,
             processorsCount
         )
-            .filter(s -> s.equals("unknown"))
+            .filter(Objects::nonNull)
+            .filter(s -> !s.equals("unknown"))
             .map(s -> String.format("%08x", s.hashCode()))
             .collect(Collectors.joining("-"));
 

@@ -27,9 +27,8 @@ public class DeduplicationTransformer<K, V, SV> implements ValueTransformerWithK
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
-        this.store = (KeyValueStore<String, SV>) context.getStateStore(this.storeName);
+        this.store = context.getStateStore(this.storeName);
     }
 
     @Override

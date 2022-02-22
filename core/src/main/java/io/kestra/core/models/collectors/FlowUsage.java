@@ -32,6 +32,7 @@ public class FlowUsage {
             .namespacesCount(allFlows
                 .stream()
                 .map(Flow::getNamespace)
+                .distinct()
                 .count()
             )
             .taskTypeCount(allFlows

@@ -13,8 +13,8 @@ public class RetryEvents {
     void onRetry(final RetryEvent event) {
         log.info(
             "Retry from '{}.{}()', attempt {}, overallDelay {}",
-            event.getSource().getExecutableMethod().getClass().getName(),
-            event.getSource().getName(),
+            event.getSource().getTarget().getClass().getName(),
+            event.getSource().getExecutableMethod().getName(),
             event.getRetryState().currentAttempt(),
             event.getRetryState().getOverallDelay()
         );

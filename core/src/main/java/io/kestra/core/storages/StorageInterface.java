@@ -1,16 +1,21 @@
 package io.kestra.core.storages;
 
-import io.micronaut.core.annotation.Introspected;
+import com.google.common.base.Charsets;
+import com.google.common.hash.Hashing;
+import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.utils.Slugify;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.Nullable;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -19,14 +24,19 @@ import java.util.regex.Pattern;
 
 @Introspected
 public interface StorageInterface {
-    InputStream get(URI uri) throws FileNotFoundException;
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    InputStream get(URI uri) throws IOException;
 
-    Long size(URI uri) throws FileNotFoundException;
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    Long size(URI uri) throws IOException;
 
+    @Retryable(includes = {IOException.class})
     URI put(URI uri, InputStream data) throws IOException;
 
+    @Retryable(includes = {IOException.class})
     boolean delete(URI uri) throws IOException;
 
+    @Retryable(includes = {IOException.class})
     List<URI> deleteByPrefix(URI storagePrefix) throws IOException;
 
     default String executionPrefix(Flow flow, Execution execution) {
@@ -53,6 +63,29 @@ public interface StorageInterface {
         );
     }
 
+    @SuppressWarnings("UnstableApiUsage")
+    default String statePrefix(String namespace, String flowId, @Nullable String name, @Nullable String value) {
+        ArrayList<String> paths = new ArrayList<>(List.of(
+            namespace.replace(".", "/"),
+            Slugify.of(flowId),
+            "states"
+        ));
+
+        if (name != null) {
+            paths.add(name);
+        }
+
+        if (value != null) {
+            paths.add(Hashing
+                .goodFastHash(64)
+                .hashString(value, Charsets.UTF_8)
+                .toString()
+            );
+        }
+
+        return String.join("/", paths);
+    }
+
     default Optional<String> extractExecutionId(URI path) {
         Pattern pattern = Pattern.compile("^/(.+)/executions/([^/]+)/", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(path.getPath());
@@ -64,7 +97,7 @@ public interface StorageInterface {
         return Optional.of(matcher.group(2));
     }
 
-    default URI uri(Flow flow, Execution execution, String inputName, String file) throws  URISyntaxException {
+    default URI uri(Flow flow, Execution execution, String inputName, String file) throws URISyntaxException {
         return new URI("/" + String.join(
             "/",
             Arrays.asList(
@@ -76,6 +109,7 @@ public interface StorageInterface {
         ));
     }
 
+    @Retryable(includes = {IOException.class})
     default URI from(Flow flow, Execution execution, String input, File file) throws IOException {
         try {
             return this.put(
@@ -87,6 +121,7 @@ public interface StorageInterface {
         }
     }
 
+    @Retryable(includes = {IOException.class})
     default URI from(Flow flow, Execution execution, Input input, File file) throws IOException {
         return this.from(flow, execution, input.getName(), file);
     }

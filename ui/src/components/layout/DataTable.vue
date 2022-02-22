@@ -50,8 +50,8 @@
 </script>
 
 <style scoped lang="scss">
+@use "sass:math";
 @import "../../styles/variable";
-
 
 small {
     padding: $pagination-padding-y-sm $pagination-padding-x-sm;
@@ -59,14 +59,14 @@ small {
 }
 
 
-/deep/ th {
+::v-deep th {
     white-space: nowrap;
 }
 
-/deep/ .badge {
+::v-deep .badge {
     font-size: 100%;
-    margin-right: $spacer/4;
-    margin-bottom: $spacer/4;
+    margin-right: math.div($spacer, 4);
+    margin-bottom: math.div($spacer, 4);
     padding: $badge-padding-y $badge-padding-y;
 
     .badge {

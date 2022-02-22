@@ -11,13 +11,13 @@ import io.kestra.core.utils.ExecutorsUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
 @Slf4j
 public class StandAloneRunner implements RunnerInterface, Closeable {
-    @Setter private ExecutorService poolExecutor;
+    @Setter private java.util.concurrent.ExecutorService poolExecutor;
     @Setter protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
     @Setter protected boolean schedulerEnabled = true;
 
@@ -47,7 +47,7 @@ public class StandAloneRunner implements RunnerInterface, Closeable {
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
 
-        poolExecutor.execute(applicationContext.getBean(AbstractExecutor.class));
+        poolExecutor.execute(applicationContext.getBean(ExecutorInterface.class));
 
         Worker worker = new Worker(applicationContext, workerThread);
         applicationContext.registerSingleton(worker);

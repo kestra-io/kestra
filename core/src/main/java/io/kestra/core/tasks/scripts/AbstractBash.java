@@ -143,6 +143,10 @@ abstract public class AbstractBash extends Task {
         return this.inputFiles != null ? new HashMap<>(this.inputFiles) : new HashMap<>();
     }
 
+    protected Map<String, String> finalEnv() throws IOException {
+        return this.env != null ? new HashMap<>(this.env) : new HashMap<>();
+    }
+
     protected List<String> finalCommandsWithInterpreter(String commandAsString) throws IOException {
         return BashService.finalCommandsWithInterpreter(
             this.interpreter,
@@ -198,7 +202,7 @@ abstract public class AbstractBash extends Task {
             logger,
             workingDirectory,
             finalCommandsWithInterpreter(commandAsString),
-            this.env,
+            this.finalEnv(),
             (inputStream, isStdErr) -> {
                 AbstractLogThread thread = new LogThread(logger, inputStream, isStdErr, runContext);
                 thread.setName("bash-log-" + (isStdErr ? "-err" : "-out"));

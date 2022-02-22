@@ -1,14 +1,15 @@
 package io.kestra.runner.kafka.streams;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.streams.processor.Processor;
-import org.apache.kafka.streams.processor.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Processor;
+import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.util.Map;
 
 @Slf4j
-public class GlobalStateLockProcessor<T> implements Processor<String, T> {
+public class GlobalStateLockProcessor<T> implements Processor<String, T, Void, Void> {
     private final String storeName;
     private final Map<String, T> lock;
     private KeyValueStore<String, T> store;
@@ -25,14 +26,14 @@ public class GlobalStateLockProcessor<T> implements Processor<String, T> {
     }
 
     @Override
-    public void process(String key, T value) {
-        if (value == null) {
-            this.store.delete(key);
+    public void process(Record<String, T> record) {
+        if (record.value() == null) {
+            this.store.delete(record.key());
         } else {
-            this.store.put(key, value);
+            this.store.put(record.key(), record.value());
         }
 
-        this.lock.remove(key);
+        this.lock.remove(record.key());
     }
 
     @Override

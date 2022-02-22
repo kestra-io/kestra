@@ -18,10 +18,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 /**
  * Provides business logic to manipulate {@link Condition}
  */
+@Singleton
 public class ConditionService {
     @Inject
     private RunContextFactory runContextFactory;
@@ -96,7 +98,6 @@ public class ConditionService {
             .multipleConditionStorage(multipleConditionStorage)
             .build();
     }
-
 
     public ConditionContext conditionContext(RunContext runContext, Flow flow, @Nullable Execution execution) {
         return this.conditionContext(runContext, flow, execution, null);

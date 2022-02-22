@@ -62,6 +62,30 @@ class DateFilterTest {
     }
 
     @Test
+    void timestampCompare() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            "{{ (zoned | timestamp) > (zoned | dateAdd(-1, 'DAYS') | timestamp) }}",
+            ImmutableMap.of(
+                "zoned", NOW
+            )
+        );
+
+        assertThat(render, is("true"));
+    }
+
+    @Test
+    void dateRfc() throws IllegalVariableEvaluationException {
+        String render = variableRenderer.render(
+            "{{ 'Tue, 08 Feb 2022 19:38:26 GMT' | date(existingFormat='rfc_1123_date_time', timeZone=\"Europe/Paris\") }}",
+            ImmutableMap.of(
+                "zoned", NOW
+            )
+        );
+
+        assertThat(render, is("2022-02-08T20:38:26.000000+01:00"));
+    }
+
+    @Test
     void instantnano() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(
             "{{ zoned | timestampNano(timeZone=\"Europe/Paris\") }}",

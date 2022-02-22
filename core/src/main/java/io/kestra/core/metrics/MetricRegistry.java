@@ -215,6 +215,16 @@ public class MetricRegistry {
         );
     }
 
+
+    /**
+     * Return globals tags
+     *
+     * @return tags to applied to metrics
+     */
+    public Tags tags(String... tags) {
+        return Tags.of(tags);
+    }
+
     /**
      * Attach a {@link MeterBinder} to current registry
      *

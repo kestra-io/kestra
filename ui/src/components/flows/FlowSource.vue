@@ -7,7 +7,7 @@
 </template>
 <script>
     import {mapGetters} from "vuex";
-    import FlowEdit from "./FlowEdit";
+    import FlowEdit from "override/components/flows/FlowEdit";
     export default {
         name: "FlowSource",
         components: {FlowEdit},

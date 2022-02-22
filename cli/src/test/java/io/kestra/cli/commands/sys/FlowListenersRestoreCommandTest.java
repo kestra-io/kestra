@@ -46,8 +46,8 @@ class FlowListenersRestoreCommandTest {
 
             thread.join();
 
-            assertThat(out.toString(), containsString("Received 1 flows"));
-            assertThat(out.toString(), containsString("Received 5 flows"));
+            assertThat(out.toString(), containsString("Received 1 active flows"));
+            assertThat(out.toString(), containsString("Received 5 active flows"));
         }
     }
 }

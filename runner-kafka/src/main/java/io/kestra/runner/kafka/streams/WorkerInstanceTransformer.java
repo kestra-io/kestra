@@ -1,7 +1,11 @@
 package io.kestra.runner.kafka.streams;
 
 import com.google.common.collect.Streams;
-import io.kestra.core.runners.*;
+import io.kestra.core.runners.WorkerInstance;
+import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.WorkerTaskRunning;
+import io.kestra.core.services.WorkerInstanceService;
+import io.kestra.runner.kafka.executors.ExecutorWorkerRunning;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -12,15 +16,12 @@ import org.apache.kafka.streams.processor.ProcessorContext;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.ValueAndTimestamp;
-import io.kestra.core.services.WorkerInstanceService;
-import io.kestra.runner.kafka.KafkaExecutor;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-@SuppressWarnings("UnstableApiUsage")
 public class WorkerInstanceTransformer implements ValueTransformerWithKey<String, WorkerInstance, List<WorkerInstanceTransformer.Result>> {
     private KeyValueStore<String, WorkerInstance> instanceStore;
     private KeyValueStore<String, ValueAndTimestamp<WorkerTaskRunning>> runningStore;
@@ -29,13 +30,13 @@ public class WorkerInstanceTransformer implements ValueTransformerWithKey<String
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void init(final ProcessorContext context) {
-        this.instanceStore = (KeyValueStore<String, WorkerInstance>) context.getStateStore(KafkaExecutor.WORKERINSTANCE_STATE_STORE_NAME);
-        this.runningStore = (KeyValueStore<String, ValueAndTimestamp<WorkerTaskRunning>>) context.getStateStore(KafkaExecutor.WORKER_RUNNING_STATE_STORE_NAME);
+        this.instanceStore = context.getStateStore(ExecutorWorkerRunning.WORKERINSTANCE_STATE_STORE_NAME);
+        this.runningStore = context.getStateStore(ExecutorWorkerRunning.WORKER_RUNNING_STATE_STORE_NAME);
     }
 
     @Override
+    @SuppressWarnings("UnstableApiUsage")
     public List<Result> transform(final String key, final WorkerInstance value) {
         log.trace("Incoming instance: {} {}", key, value);
 

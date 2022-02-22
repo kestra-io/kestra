@@ -82,6 +82,7 @@
 </script>
 
 <style lang="scss">
+    @use "sass:math";
     @import "../../styles/_variable.scss";
 
     .plugins-list {
@@ -99,7 +100,7 @@
                 margin-left: $spacer;
                 h6 {
                     font-size: $h6-font-size * 0.8;
-                    margin-bottom: $spacer / 3;
+                    margin-bottom: math.div($spacer, 3);
                 }
             }
         }

@@ -8,7 +8,6 @@ import com.github.jknack.handlebars.helper.*;
 import com.mitchellbosecke.pebble.PebbleEngine;
 import com.mitchellbosecke.pebble.error.AttributeNotFoundException;
 import com.mitchellbosecke.pebble.error.PebbleException;
-import com.mitchellbosecke.pebble.error.RootAttributeNotFoundException;
 import com.mitchellbosecke.pebble.extension.AbstractExtension;
 import com.mitchellbosecke.pebble.template.PebbleTemplate;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -16,31 +15,32 @@ import io.kestra.core.runners.handlebars.VariableRendererPlugins;
 import io.kestra.core.runners.handlebars.helpers.*;
 import io.kestra.core.runners.pebble.ExtensionCustomizer;
 import io.kestra.core.runners.pebble.JsonWriter;
+import io.kestra.core.runners.pebble.PebbleLruCache;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Value;
+import io.micronaut.context.annotation.ConfigurationProperties;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.*;
+
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.Getter;
 
 @Singleton
 public class VariableRenderer {
     private Handlebars handlebars;
     private final PebbleEngine pebbleEngine;
-    private final boolean disableHandleBars;
+    private final VariableConfiguration variableConfiguration;
 
     @SuppressWarnings("unchecked")
     @Inject
-    public VariableRenderer(
-        ApplicationContext applicationContext,
-        @Value("${kestra.variables.disable-handlebars:true}") boolean disableHandleBars
-    ) {
-        this.disableHandleBars = disableHandleBars;
+    public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
+        this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
 
-        if (!disableHandleBars) {
+        if (!this.variableConfiguration.getDisableHandlebars()) {
             this.handlebars = new Handlebars()
                 .with(EscapingStrategy.NOOP)
                 .registerHelpers(ConditionalHelpers.class)
@@ -73,12 +73,17 @@ public class VariableRenderer {
         PebbleEngine.Builder pebbleBuilder = new PebbleEngine.Builder()
             .registerExtensionCustomizer(ExtensionCustomizer::new)
             .strictVariables(true)
-            .cacheActive(false)
+            .cacheActive(this.variableConfiguration.getCacheEnabled())
+
             .newLineTrimming(false)
             .autoEscaping(false);
 
         applicationContext.getBeansOfType(AbstractExtension.class)
             .forEach(pebbleBuilder::extension);
+
+        if (this.variableConfiguration.getCacheEnabled()) {
+            pebbleBuilder.templateCache(new PebbleLruCache(this.variableConfiguration.getCacheSize()));
+        }
 
         pebbleEngine = pebbleBuilder.build();
     }
@@ -100,7 +105,7 @@ public class VariableRenderer {
                 compiledTemplate.evaluate(writer, variables);
                 current = writer.toString();
             } catch (IOException | PebbleException e) {
-                if (disableHandleBars) {
+                if (this.variableConfiguration.disableHandlebars) {
                     if (e instanceof PebbleException) {
                         throw properPebbleException((PebbleException) e);
                     }
@@ -178,5 +183,19 @@ public class VariableRenderer {
         }
 
         return result;
+    }
+
+    @Getter
+    @ConfigurationProperties("kestra.variables")
+    public static class VariableConfiguration {
+        public VariableConfiguration() {
+            this.disableHandlebars = true;
+            this.cacheEnabled = true;
+            this.cacheSize = 1000;
+        }
+
+        Boolean disableHandlebars;
+        Boolean cacheEnabled;
+        Integer cacheSize;
     }
 }

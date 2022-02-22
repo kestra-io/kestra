@@ -11,17 +11,20 @@ import io.kestra.core.runners.Executor;
 import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.schedulers.DefaultScheduler;
 import io.kestra.core.schedulers.SchedulerExecutionWithTrigger;
-import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.serializers.JsonSerde;
-import io.kestra.runner.kafka.services.*;
+import io.kestra.runner.kafka.services.KafkaAdminService;
+import io.kestra.runner.kafka.services.KafkaProducerService;
+import io.kestra.runner.kafka.services.KafkaStreamService;
+import io.kestra.runner.kafka.services.KafkaStreamsBuilder;
 import io.kestra.runner.kafka.streams.GlobalStateLockProcessor;
 import io.kestra.runner.kafka.streams.GlobalStateProcessor;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -30,14 +33,13 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StoreQueryParameters;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.state.QueryableStoreTypes;
 import org.apache.kafka.streams.state.Stores;
 
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import jakarta.inject.Singleton;
 
 @KafkaQueueEnabled
 @Singleton
@@ -50,8 +52,6 @@ public class KafkaScheduler extends AbstractScheduler {
     private final KafkaAdminService kafkaAdminService;
     private final KafkaStreamService kafkaStreamService;
     private final QueueInterface<Trigger> triggerQueue;
-    private final ConditionService conditionService;
-    private final KafkaStreamSourceService kafkaStreamSourceService;
     private final QueueService queueService;
     private final KafkaProducer<String, Object> kafkaProducer;
     private final TopicsConfig topicsConfigTrigger;
@@ -75,8 +75,6 @@ public class KafkaScheduler extends AbstractScheduler {
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.kafkaAdminService = applicationContext.getBean(KafkaAdminService.class);
         this.kafkaStreamService = applicationContext.getBean(KafkaStreamService.class);
-        this.conditionService = applicationContext.getBean(ConditionService.class);
-        this.kafkaStreamSourceService = applicationContext.getBean(KafkaStreamSourceService.class);
         this.queueService = applicationContext.getBean(QueueService.class);
         this.kafkaProducer = applicationContext.getBean(KafkaProducerService.class).of(
             KafkaScheduler.class,
@@ -87,43 +85,6 @@ public class KafkaScheduler extends AbstractScheduler {
         this.topicsConfigExecution = KafkaQueue.topicsConfig(applicationContext, Execution.class);
 
         this.kafkaProducer.initTransactions();
-    }
-
-    public class SchedulerCleaner {
-        private StreamsBuilder topology() {
-            StreamsBuilder builder = new KafkaStreamsBuilder();
-
-            KStream<String, Executor> executorKStream = kafkaStreamSourceService.executorKStream(builder);
-
-            kafkaStreamSourceService.flowGlobalKTable(builder);
-            kafkaStreamSourceService.templateGlobalKTable(builder);
-            KStream<String, Executor> executionWithFlowKStream = kafkaStreamSourceService.executorWithFlow(executorKStream, false);
-
-            GlobalKTable<String, Trigger> triggerGlobalKTable = kafkaStreamSourceService.triggerGlobalKTable(builder);
-
-            executionWithFlowKStream
-                .filter(
-                    (key, value) -> value.getExecution().getTrigger() != null,
-                    Named.as("cleanTrigger-hasTrigger-filter")
-                )
-                .filter(
-                    (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
-                    Named.as("cleanTrigger-terminated-filter")
-                )
-                .join(
-                    triggerGlobalKTable,
-                    (key, executionWithFlow) -> Trigger.uid(executionWithFlow.getExecution()),
-                    (execution, trigger) -> trigger.resetExecution(),
-                    Named.as("cleanTrigger-join")
-                )
-                .selectKey((key, value) -> queueService.key(value))
-                .to(
-                    kafkaAdminService.getTopicName(Trigger.class),
-                    Produced.with(Serdes.String(), JsonSerde.of(Trigger.class))
-                );
-
-            return builder;
-        }
     }
 
     public class SchedulerState {
@@ -138,7 +99,7 @@ public class KafkaScheduler extends AbstractScheduler {
                     JsonSerde.of(Executor.class)
                 ),
                 kafkaAdminService.getTopicName(Executor.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Executor.class)),
+                Consumed.with(Serdes.String(), JsonSerde.of(Executor.class)).withName("GlobalStore.Executor"),
                 () -> new GlobalStateProcessor<>(STATESTORE_EXECUTOR)
             );
 
@@ -150,7 +111,7 @@ public class KafkaScheduler extends AbstractScheduler {
                     JsonSerde.of(Trigger.class)
                 ),
                 kafkaAdminService.getTopicName(Trigger.class),
-                Consumed.with(Serdes.String(), JsonSerde.of(Trigger.class)),
+                Consumed.with(Serdes.String(), JsonSerde.of(Trigger.class)).withName("GlobalStore.Trigger"),
                 () -> new GlobalStateLockProcessor<>(STATESTORE_TRIGGER, triggerLock)
             );
 
@@ -220,9 +181,6 @@ public class KafkaScheduler extends AbstractScheduler {
         this.executionState = new KafkaSchedulerExecutionState(
             stateStream.store(StoreQueryParameters.fromNameAndType(STATESTORE_EXECUTOR, QueryableStoreTypes.keyValueStore()))
         );
-
-        this.cleanTriggerStream = this.init(SchedulerCleaner.class, new SchedulerCleaner().topology());
-        this.cleanTriggerStream.start();
     }
 
     @Override

@@ -37,9 +37,11 @@ public class MemoryFlowListeners implements FlowListenersInterface {
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue
     ) {
         this.flowQueue = flowQueue;
-
         this.flows = flowRepository.findAll();
+    }
 
+    @Override
+    public void run() {
         this.flowQueue.receive(flow -> {
             if (flow.isDeleted()) {
                 this.remove(flow);

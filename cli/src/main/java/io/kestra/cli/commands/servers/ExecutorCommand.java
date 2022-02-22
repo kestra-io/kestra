@@ -1,11 +1,11 @@
 package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.runners.ExecutorInterface;
 import io.micronaut.context.ApplicationContext;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.models.ServerType;
-import io.kestra.core.runners.AbstractExecutor;
 import io.kestra.core.utils.Await;
 import picocli.CommandLine;
 
@@ -36,12 +36,12 @@ public class ExecutorCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        AbstractExecutor abstractExecutor = applicationContext.getBean(AbstractExecutor.class);
-        abstractExecutor.run();
+        ExecutorInterface executorService = applicationContext.getBean(ExecutorInterface.class);
+        executorService.run();
 
         log.info("Executor started");
 
-        this.shutdownHook(abstractExecutor::close);
+        this.shutdownHook(executorService::close);
 
         Await.until(() -> !this.applicationContext.isRunning());
 

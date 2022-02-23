@@ -492,6 +492,8 @@ class KafkaExecutorTest {
         io.kestra.runner.kafka.streams.ExecutorFlowTrigger executorFlowTrigger = executorFlowTriggerOutput().readRecord().value();
         assertThat(executorFlowTrigger.getFlowHavingTrigger().getId(), is("trigger-flow-listener-no-inputs"));
 
+        assertThat(executorFlowTriggerOutput().isEmpty(), is(true));
+
         startStream(this.executorFlowTrigger);
 
         executorFlowTriggerInput().pipeInput(executorFlowTrigger.getFlowHavingTrigger().uid(), executorFlowTrigger);
@@ -499,6 +501,8 @@ class KafkaExecutorTest {
         Execution triggerExecution = executionOutput().readRecord().getValue();
         assertThat(triggerExecution.getState().getCurrent(), is(State.Type.CREATED));
         assertThat(triggerExecution.getFlowId(), is("trigger-flow-listener-no-inputs"));
+
+        assertThat(executionOutput().isEmpty(), is(true));
     }
 
     @Test

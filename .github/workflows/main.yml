@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: '3.x'
           architecture: 'x64'
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3.0.0
         with:
           node-version: '12'
           check-latest: true

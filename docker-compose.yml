@@ -3,8 +3,6 @@ version: "3.6"
 volumes:
   zookeeper-data:
     driver: local
-  zookeeper-log:
-    driver: local
   kafka-data:
     driver: local
   elasticsearch-data:
@@ -14,30 +12,26 @@ volumes:
 
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.0.1
+    image: 'bitnami/zookeeper:latest'
     volumes:
-      - zookeeper-data:/var/lib/zookeeper/data
-      - zookeeper-log:/var/lib/zookeeper/log
+      - zookeeper-data:/bitnami/zookeeper
     environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
       ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: WARN
-      ZOOKEEPER_TOOLS_LOG4J_LOGLEVEL: WARN
+      ZOO_LOG_LEVEL: "WARN"
 
   kafka:
-    image: confluentinc/cp-kafka:7.0.1
+    image: 'bitnami/kafka:latest'
     volumes:
-      - kafka-data:/var/lib/kafka
+      - kafka-data:/bitnami
     environment:
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
-      KAFKA_LOG4J_LOGGERS: "kafka=WARN,kafka.producer.async.DefaultEventHandler=WARN,kafka.controller=WARN,state.change.logger=WARN"
-      KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
-      KAFKA_TOOLS_LOG4J_LOGLEVEL: WARN
-    links:
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    depends_on:
       - zookeeper
 
   elasticsearch:
@@ -59,7 +53,7 @@ services:
 
   kestra:
     image: kestra/kestra:develop-full
-    command: server standalone
+    entrypoint: /usr/bin/wait-for-it -t 60 kafka:9092 && /usr/bin/wait-for-it -t 60 elasticsearch:9200 && /app/kestra server standalone
     volumes:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
@@ -71,6 +65,10 @@ services:
             client:
               properties:
                 bootstrap.servers: kafka:9092
+            defaults:
+              stream:
+                properties:
+                  state.dir: "/tmp/kestra/kafka-streams/"
           elasticsearch:
             client:
               http-hosts: http://elasticsearch:9200
@@ -88,6 +86,7 @@ services:
           url: http://localhost:8080/
     ports:
       - "8080:8080"
-    links:
+    depends_on:
       - kafka
       - zookeeper
+      - elasticsearch

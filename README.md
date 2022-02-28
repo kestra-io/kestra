@@ -5,7 +5,7 @@
 </p>
 
 <h1 align="center" style="border-bottom: none">
-    Kestra, Infinitely scalable open source orchestration & scheduling platform. <br>
+    Infinitely scalable open source orchestration & scheduling platform. <br>
 </h1>
 
 <div align="center">
@@ -108,7 +108,7 @@ tasks:
     destinationTable: kestra-prd.demo.customer_copy
     format: AVRO
     from: "{{outputs.avroWriter.uri }}"
-    writeDisposition: WRITE_TRUNCATE*
+    writeDisposition: WRITE_TRUNCATE
   - id: aggregate
     type: io.kestra.plugin.gcp.bigquery.Query
     description: Aggregate some data from loaded files
@@ -138,7 +138,8 @@ Make sure you have already installed:
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### Launch Kestra
-- Download the compose file [here](https://github.com/kestra-io/kestra/blob/develop/docker-compose.yml)
+- Download the compose file [here](https://github.com/kestra-io/kestra/blob/develop/docker-compose.yml) and save it with the name `docker-compose.yml`, for linux and macos, you can run `wget https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml`
+- Run `docker-compose pull`
 - Run `docker-compose up -d`
 - Open `http://localhost:8080` on your browser
 - Follow [this tutorial](https://kestra.io/docs/getting-started/) to create your first flow.

@@ -5,22 +5,22 @@
 </p>
 
 <h1 align="center" style="border-bottom: none">
-    Kestra, Infinitely scalable open source orchestration & scheduling platform. <br>
+    Infinitely scalable open source orchestration & scheduling platform. <br>
 </h1>
 
 <div align="center">
-  <a href="/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?style=flat-square" alt="License" /></a>
   <a href="https://github.com/kestra-io/kestra/pulse"><img src="https://img.shields.io/github/commit-activity/m/kestra-io/kestra?style=flat-square" alt="Commits-per-month"></a>
-  <a href="/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra.svg?style=flat-square" alt="Github star" /></a>
-  <a href="/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?style=flat-square" alt="Last Version" /></a>
+  <a href="https://github.com/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra.svg?style=flat-square" alt="Github star" /></a>
+  <a href="https://github.com/kestra-io/kestra/releases"><img src="https://img.shields.io/github/tag-pre/kestra-io/kestra.svg?style=flat-square" alt="Last Version" /></a>
   <a href="https://hub.docker.com/r/kestra/kestra"><img src="https://img.shields.io/docker/pulls/kestra/kestra.svg?style=flat-square" alt="Docker pull" /></a>
   <a href="https://artifacthub.io/packages/helm/kestra/kestra"><img src="https://img.shields.io/badge/Artifact%20Hub-kestra-417598?style=flat-square&logo=artifacthub" alt="Artifact Hub" /></a>
   <a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?style=flat-square" alt="Kestra infinitely scalable orchestration and scheduling platform"></a>
   <a href="https://discord.gg/5RgZmkW"><img src="https://img.shields.io/discord/903344083391631471?label=Discord&style=flat-square" alt="Discord"></a>
-  <a href="/kestra-io/kestra/discussions"><img src="https://img.shields.io/github/discussions/kestra-io/kestra?style=flat-square" alt="Github discussions"></a>
+  <a href="https://github.com/kestra-io/kestra/discussions"><img src="https://img.shields.io/github/discussions/kestra-io/kestra?style=flat-square" alt="Github discussions"></a>
   <a href="https://twitter.com/kestra_io"><img src="https://img.shields.io/twitter/follow/kestra_io?style=flat-square" alt="Twitter" /></a>
   <a href="https://app.codecov.io/gh/kestra-io/kestra"><img src="https://img.shields.io/codecov/c/github/kestra-io/kestra?style=flat-square&token=It6L7BTaWK" alt="Code Cov" /></a>
-  <a href="/kestra-io/kestra/actions"><img src="https://img.shields.io/github/workflow/status/kestra-io/kestra/Main/develop?style=flat-square" alt="Github Actions" /></a>
+  <a href="https://github.com/kestra-io/kestra/actions"><img src="https://img.shields.io/github/workflow/status/kestra-io/kestra/Main/develop?style=flat-square" alt="Github Actions" /></a>
 </div>
 
 <br />
@@ -37,6 +37,10 @@
 
 <p align="center"><img src="https://kestra.io/video.gif" alt="modern data orchestration and scheduling platform " width="640px" /></p>
 
+
+## Demo
+
+Play with our [demo app](https://demo.kestra.io)!
 
 ## What is Kestra ?
 Kestra is an infinitely scalable orchestration and scheduling platform, creating, running, scheduling, and monitoring millions of complex pipelines.
@@ -57,16 +61,19 @@ namespace: my.company.teams
 inputs:
   - type: FILE
     name: uploaded
+    description: A Csv file to be uploaded through API or UI
 
 tasks:
-  - id: "archive"
-    type: "io.kestra.plugin.gcp.gcs.Upload"
-    description: "Archive the file on Google Cloud Storage bucket"
+  - id: archive
+    type: io.kestra.plugin.gcp.gcs.Upload
+    description: Archive the file on Google Cloud Storage bucket
     from: "{{ inputs.uploaded }}"
     to: "gs://my_bucket/archives/{{ execution.id }}.csv"
-  - id: "csvReader"
-    type: "io.kestra.plugin.serdes.csv.CsvReader"
+
+  - id: csvReader
+    type: io.kestra.plugin.serdes.csv.CsvReader
     from: "{{ inputs.uploaded }}"
+
   - id: fileTransform
     type: io.kestra.plugin.scripts.nashorn.FileTransform
     description: This task will anonymize the contactName with a custom nashorn script (javascript over jvm). This show that you able to handle custom transformation or remapping in the ETL way
@@ -75,6 +82,7 @@ tasks:
       if (row['contactName']) {
         row['contactName'] = "*".repeat(row['contactName'].length);
       }
+
   - id: avroWriter
     type: io.kestra.plugin.serdes.avro.AvroWriter
     description: This file will convert the file from Kestra internal storage to avro. Again, we handling ETL since the conversion is done by Kestra before loading the data in BigQuery. This allow you to have some control before loading and to reject wrong data as soon as possible.
@@ -100,6 +108,7 @@ tasks:
             { "name": "city", "type": ["null", "string"] }
           ]
       }
+
   - id: load
     type: io.kestra.plugin.gcp.bigquery.Load
     description: Simply load the generated from avro task to BigQuery
@@ -108,7 +117,8 @@ tasks:
     destinationTable: kestra-prd.demo.customer_copy
     format: AVRO
     from: "{{outputs.avroWriter.uri }}"
-    writeDisposition: WRITE_TRUNCATE*
+    writeDisposition: WRITE_TRUNCATE
+
   - id: aggregate
     type: io.kestra.plugin.gcp.bigquery.Query
     description: Aggregate some data from loaded files
@@ -138,7 +148,8 @@ Make sure you have already installed:
 - [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### Launch Kestra
-- Download the compose file [here](https://github.com/kestra-io/kestra/blob/develop/docker-compose.yml)
+- Download the compose file [here](https://github.com/kestra-io/kestra/blob/develop/docker-compose.yml) and save it with the name `docker-compose.yml`, for linux and macos, you can run `wget https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml`
+- Run `docker-compose pull`
 - Run `docker-compose up -d`
 - Open `http://localhost:8080` on your browser
 - Follow [this tutorial](https://kestra.io/docs/getting-started/) to create your first flow.
@@ -147,10 +158,6 @@ Make sure you have already installed:
   - [Deploy Kestra](https://kestra.io/docs/administrator-guide/)
   - Use our [terraform provider](https://kestra.io/docs/terraform/)
   - Develop your [own plugins](https://kestra.io/docs/plugin-developer-guide/)
-
-
-
-
 
 ## Plugins
 Kestra is built on [plugin systems](https://kestra.io/plugins/). You can find your plugin to interact with your provider; alternatively, you can follow [simple steps](https://kestra.io/docs/plugin-developer-guide/) to develop your own plugin. Here are the official plugins that are available:
@@ -217,9 +224,24 @@ Kestra is built on [plugin systems](https://kestra.io/plugins/). You can find yo
 
 This list is growing quickly as we are actively building more plugins, and we welcome contributions!
 
+## Community Support
+
+Join our community if you need help, want to chat or have any other questions for us:
+
+- [GitHub](https://github.com/kestra-io/kestra/discussions) - Discussion forums and updates from the Kestra team
+- [Twitter](https://twitter.com/kestra_io) - For all the latest Kestra news
+- [Discord](https://discord.gg/5RgZmkW) - Join the conversation! Get all the latest updates and chat to the devs
+
+
 ## Roadmap
 
 See the [open issues](https://github.com/kestra-io/kestra/issues) for a list of proposed features (and known issues) or look at the [project board](https://github.com/orgs/kestra-io/projects/2).
+
+## Developing locally & Contributing
+
+We love contributions big or small, check out [our guide](https://github.com/kestra-io/kestra/blob/master/CONTRIBUTING.md) on how to get started.
+
+See our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/) for developing Kestra plugins.
 
 
 ## License

@@ -53,7 +53,10 @@ services:
 
   kestra:
     image: kestra/kestra:develop-full
-    entrypoint: /usr/bin/wait-for-it -t 60 kafka:9092 && /usr/bin/wait-for-it -t 60 elasticsearch:9200 && /app/kestra server standalone
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - "/usr/bin/wait-for-it -t 60 kafka:9092 && /usr/bin/wait-for-it -t 60 elasticsearch:9200 && /app/kestra server standalone"
     volumes:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock

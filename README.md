@@ -239,7 +239,7 @@ See the [open issues](https://github.com/kestra-io/kestra/issues) for a list of 
 
 ## Developing locally & Contributing
 
-We love contributions big or small, check out [our guide](https://github.com/kestra-io/kestra/blob/master/CONTRIBUTING.md) on how to get started.
+We love contributions big or small, check out [our guide](https://github.com/kestra-io/kestra/blob/develop/.github/CONTRIBUTING.md) on how to get started.
 
 See our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/) for developing Kestra plugins.
 

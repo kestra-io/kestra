@@ -155,15 +155,18 @@ abstract public class AbstractCommand implements Callable<Integer> {
     }
 
     protected void shutdownHook(Rethrow.RunnableChecked<Exception> run) {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.warn("Receiving shutdown ! Try to graceful exit");
+        Runtime.getRuntime().addShutdownHook(new Thread(
+            () -> {
+                log.warn("Receiving shutdown ! Try to graceful exit");
 
-            try {
-                run.run();
-            } catch (Exception e) {
-                log.error("Failed to close gracefully!", e);
-            }
-        }));
+                try {
+                    run.run();
+                } catch (Exception e) {
+                    log.error("Failed to close gracefully!", e);
+                }
+            },
+            "command-shutdown"
+        ));
     }
 
     @SuppressWarnings({"unused"})

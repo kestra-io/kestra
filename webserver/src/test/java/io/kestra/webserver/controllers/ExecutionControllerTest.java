@@ -191,7 +191,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
         assertThat(e.getResponse().getBody(String.class).isPresent(), is(true));
-        assertThat(e.getResponse().getBody(String.class).get(), containsString("No task found to restart execution from !"));
+        assertThat(e.getResponse().getBody(String.class).get(), containsString("No task found"));
     }
 
     @Test
@@ -209,7 +209,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
         assertThat(e.getResponse().getBody(String.class).isPresent(), is(true));
-        assertThat(e.getResponse().getBody(String.class).get(), containsString("No failed task found to restart execution from !"));
+        assertThat(e.getResponse().getBody(String.class).get(), containsString("No task found to restart"));
     }
 
     @Test

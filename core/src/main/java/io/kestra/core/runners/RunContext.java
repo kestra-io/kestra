@@ -38,17 +38,21 @@ import java.util.stream.Stream;
 public class RunContext {
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
 
-    private VariableRenderer variableRenderer;
+    // Injected
     private ApplicationContext applicationContext;
+    private VariableRenderer variableRenderer;
     private StorageInterface storageInterface;
+    private String envPrefix;
+    private MetricRegistry meterRegistry;
+    private Path tempBasedPath;
+
     private URI storageOutputPrefix;
     private URI storageExecutionPrefix;
-    private String envPrefix;
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
-    private MetricRegistry meterRegistry;
     private RunContextLogger runContextLogger;
-    private Path tempBasedPath;
+    private final List<WorkerTaskResult> dynamicWorkerTaskResult = new ArrayList<>();
+
     protected transient Path temporaryDirectory;
 
     /**
@@ -570,6 +574,14 @@ public class RunContext {
         values.add(CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, clsName));
 
         return String.join(".", values);
+    }
+
+    public void dynamicWorkerResult(List<WorkerTaskResult> workerTaskResults) {
+        dynamicWorkerTaskResult.addAll(workerTaskResults);
+    }
+
+    public List<WorkerTaskResult> dynamicWorkerResults() {
+        return dynamicWorkerTaskResult;
     }
 
     public synchronized Path tempDir() {

@@ -43,7 +43,7 @@ describe("TreeNode", () => {
         expect(wrapper.vm.task.id).toBe("1-2");
         expect(wrapper.vm.state).toBe("SUCCESS");
         expect(wrapper.vm.taskRuns).toHaveLength(3);
-        expect(wrapper.vm.duration).toBe(0.633852);
+        expect(wrapper.vm.duration).toBe(0.000633852);
     })
 
     it("sorting state", () => {

@@ -53,14 +53,24 @@ services:
 
   kestra:
     image: kestra/kestra:develop-full
+    # build:
+    #   context: .
+    #   args:
+    #     KESTRA_PLUGINS: --repositories=https://s01.oss.sonatype.org/content/repositories/snapshots io.kestra.storage:storage-gcs:LATEST io.kestra.storage:storage-minio:LATEST io.kestra.plugin:plugin-aws:LATEST io.kestra.plugin:plugin-compress:LATEST io.kestra.plugin:plugin-crypto:LATEST io.kestra.plugin:plugin-elasticsearch:LATEST io.kestra.plugin:plugin-fs:LATEST io.kestra.plugin:plugin-gcp:LATEST io.kestra.plugin:plugin-googleworkspace:LATEST io.kestra.plugin:plugin-jdbc-clickhouse:LATEST io.kestra.plugin:plugin-jdbc-mysql:LATEST io.kestra.plugin:plugin-jdbc-oracle:LATEST io.kestra.plugin:plugin-jdbc-postgres:LATEST io.kestra.plugin:plugin-jdbc-redshift:LATEST io.kestra.plugin:plugin-jdbc-sqlserver:LATEST io.kestra.plugin:plugin-jdbc-vertica:LATEST io.kestra.plugin:plugin-jdbc-vectorwise:LATEST io.kestra.plugin:plugin-kafka:LATEST io.kestra.plugin:plugin-kubernetes:LATEST io.kestra.plugin:plugin-mongodb:LATEST io.kestra.plugin:plugin-notifications:LATEST io.kestra.plugin:plugin-script-groovy:LATEST io.kestra.plugin:plugin-script-jython:LATEST io.kestra.plugin:plugin-script-nashorn:LATEST io.kestra.plugin:plugin-serdes:LATEST io.kestra.plugin:plugin-singer:LATEST
+    #     APT_PACKAGES: curl wait-for-it zip unzip
     entrypoint: /bin/bash
     command:
       - -c
-      - "/usr/bin/wait-for-it -t 60 kafka:9092 && /usr/bin/wait-for-it -t 60 elasticsearch:9200 && /app/kestra server standalone"
+      - |
+        /usr/bin/wait-for-it -t 60 kafka:9092 && \
+        /usr/bin/wait-for-it -t 60 elasticsearch:9200 && \
+        curl -s -o /tmp/examples.zip https://kestra.io/examples.zip && \
+        unzip -o -d /tmp/examples /tmp/examples.zip > /dev/null && \
+        /app/kestra server standalone --flow-path=/tmp/examples
     volumes:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/kestra:/tmp/kestra
+      - /tmp/kestra-wd:/tmp/kestra-wd
     environment:
       KESTRA_CONFIGURATION: |
         kestra:
@@ -71,7 +81,7 @@ services:
             defaults:
               stream:
                 properties:
-                  state.dir: "/tmp/kestra/kafka-streams/"
+                  state.dir: "/tmp/kestra-wd/kafka-streams/"
           elasticsearch:
             client:
               http-hosts: http://elasticsearch:9200
@@ -85,10 +95,10 @@ services:
             type: kafka
           tasks:
             tmp-dir:
-              path: /tmp/kestra/tmp
+              path: /tmp/kestra-wd/tmp
           url: http://localhost:8080/
     ports:
-      - "8080:8080"
+      - "28080:8080"
     depends_on:
       - kafka
       - zookeeper

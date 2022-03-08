@@ -229,6 +229,10 @@ public class Worker implements Runnable, Closeable {
             )
             .get(() -> this.runAttempt(current.get()));
 
+        // save dynamic WorkerResults since cleanUpTransient will remove them
+        List<WorkerTaskResult> dynamicWorkerResults = finalWorkerTask.getRunContext().dynamicWorkerResults();
+
+        // remove tmp directory
         if (cleanUp) {
             finalWorkerTask.getRunContext().cleanup();
         }
@@ -259,7 +263,7 @@ public class Worker implements Runnable, Closeable {
         // So we just tryed to failed the status of the worker task, in this case, no log can't be happend, just
         // changing status must work in order to finish current task (except if we are near the upper bound size).
         try {
-            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask);
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
             this.workerTaskResultQueue.emit(workerTaskResult);
             return workerTaskResult;
         } catch (QueueException e) {
@@ -267,7 +271,7 @@ public class Worker implements Runnable, Closeable {
                 .withTaskRun(workerTask.getTaskRun()
                     .withState(State.Type.FAILED)
                 );
-            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask);
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
             this.workerTaskResultQueue.emit(workerTaskResult);
             return workerTaskResult;
         } finally {
@@ -382,7 +386,6 @@ public class Worker implements Runnable, Closeable {
             .build();
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     public AtomicInteger getMetricRunningCount(WorkerTask workerTask) {
         String[] tags = this.metricRegistry.tags(workerTask);
         Arrays.sort(tags);

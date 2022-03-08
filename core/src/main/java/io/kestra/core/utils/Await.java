@@ -22,7 +22,7 @@ public class Await {
             try {
                 Thread.sleep(sleep.toMillis());
             } catch (InterruptedException e) {
-                throw new RuntimeException("Can't sleep");
+                throw new RuntimeException("Can't sleep:" + e.getMessage());
             }
         }
     }
@@ -40,7 +40,7 @@ public class Await {
                 try {
                     Thread.sleep(sleep.toMillis());
                 } catch (InterruptedException e) {
-                    throw new RuntimeException("Can't sleep");
+                    throw new RuntimeException("Can't sleep:" + e.getMessage());
                 }
             }
         }

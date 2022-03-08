@@ -10,13 +10,13 @@ import java.util.List;
 @Getter
 public class GraphCluster extends AbstractGraphTask {
     @JsonIgnore
-    private Graph<AbstractGraphTask, Relation> graph = new Graph<>();
+    private final Graph<AbstractGraphTask, Relation> graph = new Graph<>();
 
     @JsonIgnore
-    private GraphClusterRoot root;
+    private final GraphClusterRoot root;
 
     @JsonIgnore
-    private GraphClusterEnd end;
+    private final GraphClusterEnd end;
 
     public GraphCluster() {
         super();
@@ -35,11 +35,5 @@ public class GraphCluster extends AbstractGraphTask {
 
         graph.addNode(this.root);
         graph.addNode(this.end);
-    }
-
-    public GraphCluster(GraphCluster graphTask, TaskRun taskRun, List<String> values) {
-        super(graphTask.getTask(), taskRun, values, graphTask.getRelationType());
-
-        this.graph = graphTask.graph;
     }
 }

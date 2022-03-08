@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.DynamicTask;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -603,6 +604,13 @@ public class ExecutorService {
     }
 
     public Execution addDynamicTaskRun(Execution execution, Flow flow, WorkerTaskResult workerTaskResult) throws InternalException {
+        ArrayList<TaskRun> taskRuns = new ArrayList<>(execution.getTaskRunList());
+
+        // declared dynamic tasks
+        if (workerTaskResult.getDynamicTaskRuns() != null) {
+            taskRuns.addAll(workerTaskResult.getDynamicTaskRuns());
+        }
+
         // if parent, can be a Worker task that generate dynamic tasks
         if (workerTaskResult.getTaskRun().getParentTaskRunId() != null) {
             try {
@@ -612,15 +620,12 @@ public class ExecutorService {
                 Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
 
                 if (parentTask instanceof Worker) {
-                    ArrayList<TaskRun> taskRuns = new ArrayList<>(execution.getTaskRunList());
                     taskRuns.add(workerTaskResult.getTaskRun());
-
-                    return execution.withTaskRunList(taskRuns);
                 }
             }
         }
 
-        return null;
+        return taskRuns.size() > execution.getTaskRunList().size() ? execution.withTaskRunList(taskRuns) : null;
     }
 
     public boolean canBePurged(final Executor executor) {

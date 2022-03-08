@@ -68,7 +68,7 @@
 
                         <template #cell(id)="row">
                             <router-link
-                                :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.id, tab: 'executions'}}"
+                                :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.id}}"
                             >
                                 {{ row.item.id }}
                             </router-link>

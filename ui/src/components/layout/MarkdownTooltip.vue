@@ -14,7 +14,7 @@
             hide-backdrop
             hide-footer
             modal-class="right"
-            size="xl"
+            size="lg"
             v-if="modal"
         >
             <markdown class="markdown-tooltip" :source="description" />

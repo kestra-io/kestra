@@ -16,5 +16,5 @@ dependencies {
 
     testImplementation group: 'org.apache.kafka', name: 'kafka-streams-test-utils', version: kafkaVersion
 
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.3.1'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.4.0'
 }

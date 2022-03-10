@@ -17,7 +17,7 @@
     import {computed, defineComponent, ref} from "@vue/composition-api"
     import {BarChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
-    import {defaultConfig, tooltip} from "../../utils/charts.js";
+    import {defaultConfig, tooltip, chartClick} from "../../utils/charts.js";
     import State from "../../utils/state";
 
     export default defineComponent({
@@ -27,6 +27,10 @@
                 type: Array,
                 required: true
             },
+            duration: {
+                type: Boolean,
+                default: () => false
+            },
             global: {
                 type: Boolean,
                 default: () => false
@@ -34,7 +38,18 @@
             big: {
                 type: Boolean,
                 default: () => false
-            }
+            },
+            namespace: {
+                type: String,
+                required: false,
+                default: undefined
+            },
+            flowId: {
+                type: String,
+                required: false,
+                default: undefined
+            },
+
         },
         setup(props, {root}) {
             let duration = root.$i18n.t("duration")
@@ -45,6 +60,19 @@
             const dataReady = computed(() => props.data.length > 0)
 
             const options = computed(() => defaultConfig({
+                onClick: (e, elements) => {
+                    if (elements.length > 0 && elements[0].index !== undefined && elements[0].datasetIndex !== undefined ) {
+                        chartClick(
+                            root,
+                            {
+                                date: e.chart.data.labels[elements[0].index],
+                                status: e.chart.data.datasets[elements[0].datasetIndex].label,
+                                namespace: props.namespace,
+                                flowId: props.flowId
+                            }
+                        )
+                    }
+                },
                 plugins: {
                     tooltip: {
                         external: function (context) {
@@ -109,16 +137,14 @@
 
                 return {
                     labels: props.data.map(r => r.startDate),
-                    datasets: props.big || props.global ?
+                    datasets: props.big || props.global || props.duration ?
                         [{
-                            order: 2,
                             type: "line",
                             label: duration,
                             fill: "start",
                             pointRadius: 0,
-                            opacity: 0.5,
                             borderWidth: 0.2,
-                            backgroundColor: !darkTheme ? "#eaf0f9" : "#292e40",
+                            backgroundColor: Utils.hexToRgba(!darkTheme ? "#eaf0f9" : "#292e40", 0.5),
                             borderColor: !darkTheme ? "#7081b9" : "#7989b4",
                             yAxisID: "yAxesB",
                             data: props.data

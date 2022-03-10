@@ -68,3 +68,54 @@ export function defaultConfig(override) {
         }
     }, override);
 }
+
+export function chartClick(self, event) {
+    const query = {};
+
+    if (event.date) {
+        query.start = self.$moment(event.date).toISOString(true);
+        query.end = self.$moment(event.date).add(1, "d").toISOString(true);
+    }
+
+    if (event.startDate) {
+        query.start = self.$moment(event.startDate).toISOString(true);
+    }
+
+    if (event.endDate) {
+        query.end = self.$moment(event.endDate).toISOString(true);
+    }
+
+    if (event.status) {
+        query.status = event.status.toUpperCase();
+    }
+
+    if (self.$route.query.namespace) {
+        query.namespace = self.$route.query.namespace;
+    }
+
+    if (self.$route.query.q) {
+        query.q = self.$route.query.q;
+    }
+
+    if (event.namespace && event.flowId) {
+        self.$router.push({
+            name: "flows/update",
+            params: {
+                namespace: event.namespace,
+                id: event.flowId,
+                tab: "executions",
+            },
+            query: query
+        });
+    }
+
+    if (event.namespace) {
+        query.namespace = event.namespace;
+    }
+
+    self.$router.push({
+        name: "executions/list",
+        params: {tab: "executions"},
+        query: query
+    });
+}

@@ -66,6 +66,7 @@
 
 
     .executions-charts {
+        user-select: none;
         top: 0;
         height: 100%;
         display: flex;

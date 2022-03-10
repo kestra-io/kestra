@@ -54,13 +54,9 @@
 
                         <template #cell(state)="row">
                             <state-chart
-                                v-if="dailyGroupByFlowReady"
-                                :data="chartData(row)"
-                            />
-                        </template>
-
-                        <template #cell(duration)="row">
-                            <duration-chart
+                                :duration="true"
+                                :namespace="row.item.namespace"
+                                :flow-id="row.item.id"
                                 v-if="dailyGroupByFlowReady"
                                 :data="chartData(row)"
                             />
@@ -68,7 +64,7 @@
 
                         <template #cell(id)="row">
                             <router-link
-                                :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.id, tab: 'executions'}}"
+                                :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.id}}"
                             >
                                 {{ row.item.id }}
                             </router-link>
@@ -132,7 +128,6 @@
     import DataTable from "../layout/DataTable";
     import SearchField from "../layout/SearchField";
     import StateChart from "../stats/StateChart";
-    import DurationChart from "../stats/DurationChart";
     import StateGlobalChart from "../stats/StateGlobalChart";
     import TriggerAvatar from "./TriggerAvatar";
     import MarkdownTooltip from "../layout/MarkdownTooltip"
@@ -150,7 +145,6 @@
             DataTable,
             SearchField,
             StateChart,
-            DurationChart,
             StateGlobalChart,
             TriggerAvatar,
             MarkdownTooltip,
@@ -199,16 +193,9 @@
                             label: title("execution statistics"),
                             sortable: false,
                             class: "row-graph"
-                        },
-                        {
-                            key: "duration",
-                            label: title("duration"),
-                            sortable: false,
-                            class: "row-graph"
                         }
                     );
                 }
-
 
                 fields.push(
                     {

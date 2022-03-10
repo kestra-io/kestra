@@ -17,3 +17,12 @@ triggers:
       - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
         namespace: io.kestra.tests
         flowId: trigger-flow
+  - id: listen-flow-failed
+    type: io.kestra.core.models.triggers.types.Flow
+    conditions:
+      - type: io.kestra.core.models.conditions.types.ExecutionStatusCondition
+        in:
+          - FAILED
+      - type: io.kestra.core.models.conditions.types.ExecutionFlowCondition
+        namespace: io.kestra.tests
+        flowId: other-flow

@@ -27,7 +27,11 @@ public class FlowWithTriggerTransformer implements Transformer<String, Executor,
 
     @Override
     public Iterable<KeyValue<String, ExecutorFlowTrigger>> transform(String key, Executor value) {
+        // flowWithFlowTrigger return 1 result per flow per trigger but since we analysed the whole flow on FlowTrigger
+        // we deduplicate by flow
         return flowService.flowWithFlowTrigger(kafkaFlowExecutor.allLastVersion().stream())
+            .stream()
+            .collect(Collectors.toMap(o -> o.getFlow().uidWithoutRevision(), p -> p, (p, q) -> p)).values()
             .stream()
             .map(f -> KeyValue.pair(f.getFlow().uidWithoutRevision(), new ExecutorFlowTrigger(f.getFlow(), value.getExecution())))
             .collect(Collectors.toList());

@@ -37,6 +37,8 @@ endpoints:
     details-visible: ANONYMOUS
   loggers:
     write-sensitive: false
+  env:
+    enabled: true
 
 kestra:
   retries:

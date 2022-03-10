@@ -28,35 +28,41 @@ class JacksonMapperTest {
     @Test
     void json() throws IOException {
         TimeZone timeZone = TimeZone.getDefault();
-        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Athens"));
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("Europe/Athens"));
 
-        ObjectMapper mapper = JacksonMapper.ofJson();
+            ObjectMapper mapper = JacksonMapper.ofJson();
 
-        Pojo original = pojo();
+            Pojo original = pojo();
 
-        String s = mapper.writeValueAsString(original);
-        Pojo deserialize = mapper.readValue(s, Pojo.class);
+            String s = mapper.writeValueAsString(original);
+            Pojo deserialize = mapper.readValue(s, Pojo.class);
 
-        test(original, deserialize);
-
-        TimeZone.setDefault(timeZone);
+            test(original, deserialize);
+        }
+        finally {
+            TimeZone.setDefault(timeZone);
+        }
     }
 
     @Test
     void ion() throws IOException {
         TimeZone timeZone = TimeZone.getDefault();
-        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Athens"));
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("Europe/Athens"));
 
-        ObjectMapper mapper = JacksonMapper.ofIon();
+            ObjectMapper mapper = JacksonMapper.ofIon();
 
-        Pojo original = pojo();
+            Pojo original = pojo();
 
-        String s = mapper.writeValueAsString(original);
-        assertThat(s, containsString("nullable:null"));
-        Pojo deserialize = mapper.readValue(s, Pojo.class);
-        test(original, deserialize);
-
-        TimeZone.setDefault(timeZone);
+            String s = mapper.writeValueAsString(original);
+            assertThat(s, containsString("nullable:null"));
+            Pojo deserialize = mapper.readValue(s, Pojo.class);
+            test(original, deserialize);
+        }
+        finally {
+            TimeZone.setDefault(timeZone);
+        }
     }
 
     void test(Pojo original, Pojo deserialize) {

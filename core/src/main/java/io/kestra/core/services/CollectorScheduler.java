@@ -10,6 +10,7 @@ import jakarta.inject.Singleton;
 @Singleton
 @Slf4j
 @Requires(property = "kestra.anonymous-usage-report.enabled", value = "true")
+@Requires(property = "kestra.server-type")
 public class CollectorScheduler {
     @Inject
     protected CollectorService collectorService;

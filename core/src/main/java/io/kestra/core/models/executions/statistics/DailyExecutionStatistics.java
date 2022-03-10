@@ -30,7 +30,8 @@ public class DailyExecutionStatistics {
         State.Type.SUCCESS, 0L,
         State.Type.WARNING, 0L,
         State.Type.FAILED, 0L,
-        State.Type.KILLED, 0L
+        State.Type.KILLED, 0L,
+        State.Type.PAUSED, 0L
     ));
 
     @Value

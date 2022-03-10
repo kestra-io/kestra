@@ -13,7 +13,7 @@ public final class TestThreadUncaughtExceptionHandlers implements UncaughtExcept
     @Override
     public void uncaughtException(Thread t, Throwable e) {
         try {
-            log.error("Caught an exception in {}. Shutting down.", t, e);
+            log.error("Caught an exception in {}. Keep it running.", t, e);
         } catch (Throwable errorInLogging) {
             System.err.println(e.getMessage());
             System.err.println(errorInLogging.getMessage());

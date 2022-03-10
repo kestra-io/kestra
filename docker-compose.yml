@@ -3,8 +3,6 @@ version: "3.6"
 volumes:
   zookeeper-data:
     driver: local
-  zookeeper-log:
-    driver: local
   kafka-data:
     driver: local
   elasticsearch-data:
@@ -14,30 +12,26 @@ volumes:
 
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.0.1
+    image: 'bitnami/zookeeper:latest'
     volumes:
-      - zookeeper-data:/var/lib/zookeeper/data
-      - zookeeper-log:/var/lib/zookeeper/log
+      - zookeeper-data:/bitnami/zookeeper
     environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
       ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_LOG4J_ROOT_LOGLEVEL: WARN
-      ZOOKEEPER_TOOLS_LOG4J_LOGLEVEL: WARN
+      ZOO_LOG_LEVEL: "WARN"
 
   kafka:
-    image: confluentinc/cp-kafka:7.0.1
+    image: 'bitnami/kafka:latest'
     volumes:
-      - kafka-data:/var/lib/kafka
+      - kafka-data:/bitnami
     environment:
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
-      KAFKA_LOG4J_LOGGERS: "kafka=WARN,kafka.producer.async.DefaultEventHandler=WARN,kafka.controller=WARN,state.change.logger=WARN"
-      KAFKA_LOG4J_ROOT_LOGLEVEL: WARN
-      KAFKA_TOOLS_LOG4J_LOGLEVEL: WARN
-    links:
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    depends_on:
       - zookeeper
 
   elasticsearch:
@@ -59,11 +53,24 @@ services:
 
   kestra:
     image: kestra/kestra:develop-full
-    command: server standalone
+    # build:
+    #   context: .
+    #   args:
+    #     KESTRA_PLUGINS: --repositories=https://s01.oss.sonatype.org/content/repositories/snapshots io.kestra.storage:storage-gcs:LATEST io.kestra.storage:storage-minio:LATEST io.kestra.plugin:plugin-aws:LATEST io.kestra.plugin:plugin-compress:LATEST io.kestra.plugin:plugin-crypto:LATEST io.kestra.plugin:plugin-elasticsearch:LATEST io.kestra.plugin:plugin-fs:LATEST io.kestra.plugin:plugin-gcp:LATEST io.kestra.plugin:plugin-googleworkspace:LATEST io.kestra.plugin:plugin-jdbc-clickhouse:LATEST io.kestra.plugin:plugin-jdbc-mysql:LATEST io.kestra.plugin:plugin-jdbc-oracle:LATEST io.kestra.plugin:plugin-jdbc-postgres:LATEST io.kestra.plugin:plugin-jdbc-redshift:LATEST io.kestra.plugin:plugin-jdbc-sqlserver:LATEST io.kestra.plugin:plugin-jdbc-vertica:LATEST io.kestra.plugin:plugin-jdbc-vectorwise:LATEST io.kestra.plugin:plugin-kafka:LATEST io.kestra.plugin:plugin-kubernetes:LATEST io.kestra.plugin:plugin-mongodb:LATEST io.kestra.plugin:plugin-notifications:LATEST io.kestra.plugin:plugin-script-groovy:LATEST io.kestra.plugin:plugin-script-jython:LATEST io.kestra.plugin:plugin-script-nashorn:LATEST io.kestra.plugin:plugin-serdes:LATEST io.kestra.plugin:plugin-singer:LATEST
+    #     APT_PACKAGES: curl wait-for-it zip unzip
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        /usr/bin/wait-for-it -t 60 kafka:9092 && \
+        /usr/bin/wait-for-it -t 60 elasticsearch:9200 && \
+        curl -s -o /tmp/examples.zip https://kestra.io/examples.zip && \
+        unzip -o -d /tmp/examples /tmp/examples.zip > /dev/null && \
+        /app/kestra server standalone --flow-path=/tmp/examples
     volumes:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/kestra:/tmp/kestra
+      - /tmp/kestra-wd:/tmp/kestra-wd
     environment:
       KESTRA_CONFIGURATION: |
         kestra:
@@ -71,6 +78,10 @@ services:
             client:
               properties:
                 bootstrap.servers: kafka:9092
+            defaults:
+              stream:
+                properties:
+                  state.dir: "/tmp/kestra-wd/kafka-streams/"
           elasticsearch:
             client:
               http-hosts: http://elasticsearch:9200
@@ -84,10 +95,11 @@ services:
             type: kafka
           tasks:
             tmp-dir:
-              path: /tmp/kestra/tmp
+              path: /tmp/kestra-wd/tmp
           url: http://localhost:8080/
     ports:
-      - "8080:8080"
-    links:
+      - "28080:8080"
+    depends_on:
       - kafka
       - zookeeper
+      - elasticsearch

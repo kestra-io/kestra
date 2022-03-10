@@ -221,7 +221,7 @@
                 return result[0];
             },
             duration() {
-                return this.taskRuns ? this.taskRuns.reduce((inc, taskRun) => inc + taskRun.state.duration, 0) : null;
+                return this.taskRuns ? this.taskRuns.reduce((inc, taskRun) => inc + this.$moment.duration(taskRun.state.duration).asMilliseconds() / 1000, 0) : null;
             },
             nodeClass() {
                 return {

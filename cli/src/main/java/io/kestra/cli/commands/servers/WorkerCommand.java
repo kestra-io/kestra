@@ -21,7 +21,7 @@ public class WorkerCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Option(names = {"-t", "--thread"}, description = "the number of concurrent threads to launch")
+    @CommandLine.Option(names = {"-t", "--thread"}, description = "the max number of concurrent threads to launch")
     private int thread = Runtime.getRuntime().availableProcessors();
 
     public WorkerCommand() {

@@ -9,6 +9,7 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.config.ConfigResource;
+import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.TopicExistsException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.runner.kafka.configs.ClientConfig;
@@ -127,7 +128,7 @@ public class KafkaAdminService implements AutoCloseable {
         try {
             this.of().createTopics(Collections.singletonList(newTopic)).all().get();
             log.info("Topic '{}' created", newTopic.name());
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (ExecutionException | InterruptedException | TimeoutException e) {
             if (e.getCause() instanceof TopicExistsException) {
                 try {
                     adminClient

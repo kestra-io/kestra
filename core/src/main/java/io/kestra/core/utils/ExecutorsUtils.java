@@ -3,8 +3,8 @@ package io.kestra.core.utils;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.ExecutorServiceMetrics;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -20,6 +20,20 @@ public class ExecutorsUtils {
         return this.wrap(
             name,
             Executors.newCachedThreadPool(
+                threadFactoryBuilder.build(name + "_%d")
+            )
+        );
+    }
+
+    public ExecutorService maxCachedThreadPool(int minThread, int maxThread, String name) {
+        return this.wrap(
+            name,
+            new ThreadPoolExecutor(
+                minThread,
+                maxThread,
+                60L,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(),
                 threadFactoryBuilder.build(name + "_%d")
             )
         );

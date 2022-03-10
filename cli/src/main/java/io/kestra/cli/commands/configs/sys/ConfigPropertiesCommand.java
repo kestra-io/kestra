@@ -1,19 +1,12 @@
 package io.kestra.cli.commands.configs.sys;
 
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.env.Environment;
-import io.micronaut.context.env.PropertySource;
-import io.micronaut.core.order.Ordered;
-import io.micronaut.management.endpoint.env.EnvironmentEndpoint;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.serializers.JacksonMapper;
-import picocli.CommandLine;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.management.endpoint.env.EnvironmentEndpoint;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
+import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "properties",

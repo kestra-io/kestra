@@ -1,5 +1,5 @@
 <template>
-    <logs-wrapper :restore-url="false" />
+    <logs-wrapper :restore-url="false" :prevent-route-info="true" />
 </template>
 
 <script>

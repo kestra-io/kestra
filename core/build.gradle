@@ -13,24 +13,24 @@ processResources.dependsOn copyGradleProperties
 
 dependencies {
     // log
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.8'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.10'
 
     // serializers
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion'
 
     // utils
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.4'
-    implementation 'com.github.oshi:oshi-core:6.0.0'
+    implementation 'com.github.oshi:oshi-core:6.1.4'
     implementation 'io.pebbletemplates:pebble:3.1.5'
 
     // scheduler
     implementation group: 'com.cronutils', name: 'cron-utils', version: '9.1.6'
 
     // process
-    implementation ('com.github.docker-java:docker-java:3.2.12') {
+    implementation ('com.github.docker-java:docker-java:3.2.13') {
         exclude group: 'com.github.docker-java', module: 'docker-java-transport-jersey'
     }
-    implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.2.12'
+    implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.2.13'
 
     // schema
     implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.22.0'
@@ -43,7 +43,7 @@ dependencies {
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
 
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.2.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.3.1'
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
     testImplementation "io.micronaut:micronaut-http-server-netty"

@@ -156,6 +156,7 @@ public class VariableRenderer {
         Map<String, Object> map = new HashMap<>();
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
+            String key = this.render(r.getKey(), variables);
             Object value = r.getValue();
 
             if (r.getValue() instanceof Map) {
@@ -167,7 +168,7 @@ public class VariableRenderer {
             }
 
             map.putIfAbsent(
-                r.getKey(),
+                key,
                 value
             );
         }

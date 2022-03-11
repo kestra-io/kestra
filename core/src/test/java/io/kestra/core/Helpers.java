@@ -20,7 +20,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class Helpers {
-    public static long FLOWS_COUNT = 47;
+    public static long FLOWS_COUNT = 48;
 
     public static ApplicationContext applicationContext() throws URISyntaxException {
         return applicationContext(

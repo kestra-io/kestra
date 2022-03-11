@@ -375,11 +375,15 @@ public class RunContext {
         );
     }
 
-    private URI putTempFile(File file, String prefix, String name) throws IOException {
+    private URI putTempFile(InputStream inputStream, String prefix, String name) throws IOException {
         URI uri = URI.create(prefix);
-        URI resolve = uri.resolve(uri.getPath() + "/" + (name != null ? name : file.getName()));
+        URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
-        URI put = this.storageInterface.put(resolve, new BufferedInputStream(new FileInputStream(file)));
+        return this.storageInterface.put(resolve, new BufferedInputStream(inputStream));
+    }
+
+    private URI putTempFile(File file, String prefix, String name) throws IOException {
+        URI put = this.putTempFile(new FileInputStream(file), prefix, (name != null ? name : file.getName()));
 
         boolean delete = file.delete();
         if (!delete) {
@@ -408,12 +412,27 @@ public class RunContext {
        return this.storageInterface.get(resolve);
     }
 
+    public URI putTaskStateFile(byte[] content, String state, String name) throws IOException {
+        return this.putTempFile(
+            new ByteArrayInputStream(content),
+            this.taskStateFilePathPrefix(state),
+            name
+        );
+    }
+
     public URI putTaskStateFile(File file, String state, String name) throws IOException {
         return this.putTempFile(
             file,
             this.taskStateFilePathPrefix(state),
             name
         );
+    }
+
+    public boolean deleteTaskStateFile(String state, String name) throws IOException {
+        URI uri = URI.create(this.taskStateFilePathPrefix(state));
+        URI resolve = uri.resolve(uri.getPath() + "/" + name);
+
+        return this.storageInterface.delete(resolve);
     }
 
     public List<URI> purgeStorageExecution() throws IOException {

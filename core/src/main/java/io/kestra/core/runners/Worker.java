@@ -73,11 +73,7 @@ public class Worker implements Runnable, Closeable {
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
 
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
-        this.executors = executorsUtils.maxCachedThreadPool(
-            Math.min(Runtime.getRuntime().availableProcessors(), thread),
-            thread,
-            "worker"
-        );
+        this.executors = executorsUtils.maxCachedThreadPool(thread,"worker");
     }
 
     @Override

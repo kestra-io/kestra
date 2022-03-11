@@ -98,7 +98,7 @@ services:
               path: /tmp/kestra-wd/tmp
           url: http://localhost:8080/
     ports:
-      - "28080:8080"
+      - "8080:8080"
     depends_on:
       - kafka
       - zookeeper

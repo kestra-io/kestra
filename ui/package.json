@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@vue/composition-api": "^1.4.5",
+    "ansi-to-html": "^0.7.2",
     "axios": "^0.25.0",
     "bootstrap": "^4.6.1",
     "bootstrap-vue": "^2.21.2",

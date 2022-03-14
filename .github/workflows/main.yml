@@ -128,7 +128,7 @@ jobs:
 
       # Artifact
       - name: Download executable
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: exe
 
@@ -233,7 +233,7 @@ jobs:
     steps:
       # Artifact
       - name: Download executable
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: exe
 

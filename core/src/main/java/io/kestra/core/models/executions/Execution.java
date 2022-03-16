@@ -444,15 +444,17 @@ public class Execution implements DeletedInterface {
      * @return a new execution with taskrun failed if possible or execution failed is other case
      */
     public FailedExecutionWithLog failedExecutionFromExecutor(Exception e) {
-        log.warn(
-            "[namespace: {}] [flow: {}] [execution: {}] Flow failed from executor in {} with exception '{}'",
-            this.getNamespace(),
-            this.getFlowId(),
-            this.getId(),
-            this.getState().humanDuration(),
-            e.getMessage(),
-            e
-        );
+        if (log.isWarnEnabled()) {
+            log.warn(
+                "[namespace: {}] [flow: {}] [execution: {}] Flow failed from executor in {} with exception '{}'",
+                this.getNamespace(),
+                this.getFlowId(),
+                this.getId(),
+                this.getState().humanDuration(),
+                e.getMessage(),
+                e
+            );
+        }
 
         return this
             .findLastNotTerminated()

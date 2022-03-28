@@ -401,7 +401,7 @@ public class RunContext {
             ((Map<String, String>) this.getVariables().get("flow")).get("namespace"),
             ((Map<String, String>) this.getVariables().get("flow")).get("id"),
             name,
-            taskrun.getOrDefault("value", null)
+            taskrun != null ? taskrun.getOrDefault("value", null) : null
         );
     }
 

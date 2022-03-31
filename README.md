@@ -46,7 +46,7 @@ Play with our [demo app](https://demo.kestra.io)!
 Kestra is an infinitely scalable orchestration and scheduling platform, creating, running, scheduling, and monitoring millions of complex pipelines.
 
 - 🔀 **Any kind of workflow**: Workflows can start simple and progress to more complex systems with branching, parallel, dynamic tasks, flow dependencies
-- 🎓‍ **Easy to learn**: Flows are in simple, descriptive language defined in YAML;u don't need to be a developer to create a new flow.
+- 🎓‍ **Easy to learn**: Flows are in simple, descriptive language defined in YAML—you don't need to be a developer to create a new flow.
 - 🔣 **Easy to extend**: Plugins are everywhere in Kestra, many are available from the Kestra core team, but you can create one easily.
 - 🆙 **Any triggers**: Kestra is event-based at heart—you can trigger an execution from API, schedule, detection, events
 - 💻 **A rich user interface**: The built-in web interface allows you to create, run, and monitor all your flows—no need to deploy your flows, just edit them.

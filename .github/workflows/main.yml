@@ -41,7 +41,7 @@ jobs:
 
       # Caches
       - name: Gradle cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
@@ -51,7 +51,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Npm cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -59,7 +59,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Node cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: node
           key: ${{ runner.os }}-node-${{ hashFiles('ui/*.gradle') }}
@@ -200,7 +200,7 @@ jobs:
 
       # Caches
       - name: Gradle cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
@@ -210,7 +210,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Npm cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -218,7 +218,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Node cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: node
           key: ${{ runner.os }}-node-${{ hashFiles('ui/*.gradle') }}

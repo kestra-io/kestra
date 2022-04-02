@@ -58,7 +58,7 @@ The frontend is located on `/ui` folder.
 
 - `npm install`
 - create a files `ui/.env.development.local` with content `VUE_APP_API_URL=http://localhost:8080` (or your actual server url)
-- `npm run server` will start the development server with hot reload.
+- `npm run serve` will start the development server with hot reload.
 
 
 #### Develop plugins

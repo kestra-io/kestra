@@ -25,7 +25,10 @@ public class FlowUsage {
     private final Map<String, Long> triggerTypeCount;
 
     public static FlowUsage of(FlowRepositoryInterface flowRepository) {
-        List<Flow> allFlows = flowRepository.findAll();
+        List<Flow> allFlows = flowRepository.findAll()
+            .stream()
+            .filter(flow -> !flow.getNamespace().startsWith("io.kestra.demo"))
+            .collect(Collectors.toList());
 
         return FlowUsage.builder()
             .count(allFlows.size())

@@ -48,10 +48,15 @@ cd kestra
 #### Develop backend
 Open the cloned repository in your favorite IDE. In most of decent IDE, gradle build will be detected and all dependencies will be downloaded.
 
-- You may need to enable java annotation processors since we have using it a lot.
-- The main class is `io.kestra.cli.App`
-- pass as program arguments the server you want to develop, for example `server standalone` will the [standalone server](https://kestra.io/docs/administrator-guide/servers/#kestra-standalone-development-environment-servers)
-- There is also a lot of unit test that will help you to validate your code (and you must provide unit test for any pull request).
+- You may need to enable java annotation processors since we are using it a lot.
+- The main class is `io.kestra.cli.App` from module `kestra.cli.main`
+- Pass as program arguments the server you want to develop, for example `server standalone` will the [standalone server](https://kestra.io/docs/administrator-guide/servers/#kestra-standalone-development-environment-servers)
+- ![Intellij Idea Configuration ](https://user-images.githubusercontent.com/2064609/161399626-1b681add-cfa8-4e0e-a843-2631cc59758d.png) Intellij Idea configuration can be found in screenshot below.
+  - `MICRONAUT_ENVIRONMENTS`: can be set any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`
+  - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on the startup.
+- You can also use the gradle task `./gradlew runStandalone` that will run a standalone server with `MICRONAUT_ENVIRONMENTS=override` and plugins path `local/plugins`
+- The server start by default on port 8080 and is reachable on `http://localhost:8080`
+
 
 #### Develop frontend
 The frontend is located on `/ui` folder.
@@ -59,7 +64,8 @@ The frontend is located on `/ui` folder.
 - `npm install`
 - create a files `ui/.env.development.local` with content `VUE_APP_API_URL=http://localhost:8080` (or your actual server url)
 - `npm run serve` will start the development server with hot reload.
-
+- The server start by default on port 8090 and is reachable on `http://localhost:8090`
+- You can run `npm run build` in order to build the front-end that will be delivered from the backend (without running the `npm serve`) above.
 
 #### Develop plugins
 A complete documentation for developing plugin can be found [here](https://kestra.io/docs/plugin-developer-guide/).

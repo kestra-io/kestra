@@ -351,11 +351,16 @@ abstract public class AbstractBash extends Task {
         @PluginProperty(dynamic = true)
         protected List<String> entryPoint;
 
-
         @Schema(
             title = "Docker extra host to use"
         )
         @PluginProperty(dynamic = true)
         protected List<String> extraHosts;
+
+        @Schema(
+            title = "Docker network mode to use"
+        )
+        @PluginProperty(dynamic = true)
+        protected String networkMode;
     }
 }

@@ -30,6 +30,10 @@ public class StandAloneCommand extends AbstractCommand {
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
     private File flowPath;
 
+
+    @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker thread")
+    private Integer workerThread;
+
     public StandAloneCommand() {
         super(true);
     }
@@ -55,6 +59,11 @@ public class StandAloneCommand extends AbstractCommand {
         }
 
         StandAloneRunner standAloneRunner = applicationContext.getBean(StandAloneRunner.class);
+
+        if (this.workerThread != null) {
+            standAloneRunner.setWorkerThread(this.workerThread);
+        }
+
         standAloneRunner.run();
 
         this.shutdownHook(standAloneRunner::close);

@@ -24,8 +24,6 @@ jobs:
     name: Check & Publish
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    env:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
@@ -43,7 +41,7 @@ jobs:
 
       # Caches
       - name: Gradle cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
@@ -53,7 +51,7 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Npm cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -61,7 +59,7 @@ jobs:
             ${{ runner.os }}-npm-
 
       - name: Node cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: node
           key: ${{ runner.os }}-node-${{ hashFiles('ui/*.gradle') }}
@@ -98,6 +96,135 @@ jobs:
       - name: Build jars
         run: ./gradlew executableJar --no-daemon
 
+      # Upload artifacts
+      - name: Upload jar
+        uses: actions/upload-artifact@v2
+        with:
+          name: jar
+          path: build/libs/
+
+      - name: Upload Executable
+        uses: actions/upload-artifact@v2
+        with:
+          name: exe
+          path: build/executable/
+
+      # GitHub Release
+      - name: Create GitHub release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          files: |
+            build/executable/*
+
+  docker:
+    name: Publish docker
+    runs-on: ubuntu-latest
+    needs: check
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
+    strategy:
+      matrix:
+        image:
+          - name: ""
+            plugins: ""
+            packages: ""
+          - name: "-full"
+            plugins: io.kestra.storage:storage-gcs:LATEST io.kestra.storage:storage-minio:LATEST io.kestra.plugin:plugin-aws:LATEST io.kestra.plugin:plugin-compress:LATEST io.kestra.plugin:plugin-crypto:LATEST io.kestra.plugin:plugin-debezium-mysql:LATEST io.kestra.plugin:plugin-debezium-postgres:LATEST io.kestra.plugin:plugin-elasticsearch:LATEST io.kestra.plugin:plugin-fs:LATEST io.kestra.plugin:plugin-gcp:LATEST io.kestra.plugin:plugin-googleworkspace:LATEST io.kestra.plugin:plugin-jdbc-clickhouse:LATEST io.kestra.plugin:plugin-jdbc-mysql:LATEST io.kestra.plugin:plugin-jdbc-oracle:LATEST io.kestra.plugin:plugin-jdbc-postgres:LATEST io.kestra.plugin:plugin-jdbc-redshift:LATEST io.kestra.plugin:plugin-jdbc-snowflake:LATEST io.kestra.plugin:plugin-jdbc-sqlserver:LATEST io.kestra.plugin:plugin-jdbc-vertica:LATEST io.kestra.plugin:plugin-jdbc-vectorwise:LATEST io.kestra.plugin:plugin-kafka:LATEST io.kestra.plugin:plugin-kubernetes:LATEST io.kestra.plugin:plugin-mongodb:LATEST io.kestra.plugin:plugin-notifications:LATEST io.kestra.plugin:plugin-script-groovy:LATEST io.kestra.plugin:plugin-script-jython:LATEST io.kestra.plugin:plugin-script-nashorn:LATEST io.kestra.plugin:plugin-serdes:LATEST io.kestra.plugin:plugin-singer:LATEST io.kestra.plugin:plugin-spark:LATEST
+            packages: python3-pip python3-wheel python3-setuptools python3-virtualenv nodejs curl wait-for-it zip unzip
+    steps:
+      - uses: actions/checkout@v2
+
+      # Artifact
+      - name: Download executable
+        uses: actions/download-artifact@v3
+        with:
+          name: exe
+          path: build/executable
+
+      - name: Copy exe to image
+        run: |
+          cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
+
+      # Vars
+      - name: Set image name
+        id: vars
+        run: |
+          TAG=${GITHUB_REF#refs/*/}
+          if [[ $TAG = "master" ]]
+          then
+            echo ::set-output name=tag::latest
+            echo ::set-output name=plugins::
+          else
+            echo ::set-output name=tag::${TAG}
+            echo ::set-output name=plugins::--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots ${{ matrix.image.plugins }}
+          fi
+
+      # Docker setup
+      - name: Set up QEMU
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
+        uses: docker/setup-buildx-action@v1
+
+      # Docker Login
+      - name: Login to DockerHub
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # Docker Build and push
+      - name: Push to Docker Hub
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ format('kestra/kestra:{0}{1}', steps.vars.outputs.tag, matrix.image.name) }}
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }}
+            APT_PACKAGES=${{ matrix.image.packages }}
+
+  maven:
+    name: Publish to Maven
+    runs-on: ubuntu-latest
+    needs: check
+    if: github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v2
+
+      # Caches
+      - name: Gradle cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle*.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Npm cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Node cache
+        uses: actions/cache@v3
+        with:
+          path: node
+          key: ${{ runner.os }}-node-${{ hashFiles('ui/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       # Publish
       - name: Publish package to Sonatype
         if: github.ref == 'refs/heads/develop'
@@ -108,6 +235,7 @@ jobs:
           SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
           SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
         run: |
+          mkdir -p ~/.gradle/
           echo "signing.keyId=${SONATYPE_GPG_KEYID}" > ~/.gradle/gradle.properties
           echo "signing.password=${SONATYPE_GPG_PASSWORD}" >> ~/.gradle/gradle.properties
           echo "signing.secretKeyRingFile=${HOME}/.gradle/secring.gpg" >> ~/.gradle/gradle.properties
@@ -130,97 +258,23 @@ jobs:
           echo ${SONATYPE_GPG_FILE} | base64 -d > ~/.gradle/secring.gpg
           ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository --no-daemon
 
-      # Upload artifacts
-      - name: Upload jar
-        uses: actions/upload-artifact@v2
-        with:
-          name: jar
-          path: build/libs/
-
-      - name: Upload Executable
-        uses: actions/upload-artifact@v2
-        with:
-          name: exe
-          path: build/executable/
-
-      - name: Copy exe to image
-        run: |
-          cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
-          find docker
-
-      # Vars
-      - name: Set image name
-        id: vars
-        run: |
-          TAG=${GITHUB_REF#refs/*/}
-          if [[ $TAG = "master" ]]
-          then
-            echo ::set-output name=tag::latest
-            echo ::set-output name=plugins::
-          else
-            echo ::set-output name=tag::${TAG}
-            echo ::set-output name=plugins::--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots
-          fi
-
-      # Docker setup
-      - name: Set up QEMU
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
-        uses: docker/setup-qemu-action@v1
-
-      - name: Set up Docker Buildx
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
-        uses: docker/setup-buildx-action@v1
-
-      # Docker Login
-      - name: Login to DockerHub
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Push to Docker Hub
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: ${{ format('kestra/kestra:{0}', steps.vars.outputs.tag) }}
-          platforms: linux/amd64,linux/arm64
-
-      - name: Push to Docker Hub Full
-        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: ${{ format('kestra/kestra:{0}-full', steps.vars.outputs.tag) }}
-          platforms: linux/amd64,linux/arm64
-          build-args: |
-            KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }} io.kestra.storage:storage-gcs:LATEST io.kestra.storage:storage-minio:LATEST io.kestra.plugin:plugin-aws:LATEST io.kestra.plugin:plugin-compress:LATEST io.kestra.plugin:plugin-crypto:LATEST io.kestra.plugin:plugin-elasticsearch:LATEST io.kestra.plugin:plugin-fs:LATEST io.kestra.plugin:plugin-gcp:LATEST io.kestra.plugin:plugin-googleworkspace:LATEST io.kestra.plugin:plugin-jdbc-clickhouse:LATEST io.kestra.plugin:plugin-jdbc-mysql:LATEST io.kestra.plugin:plugin-jdbc-oracle:LATEST io.kestra.plugin:plugin-jdbc-postgres:LATEST io.kestra.plugin:plugin-jdbc-redshift:LATEST io.kestra.plugin:plugin-jdbc-sqlserver:LATEST io.kestra.plugin:plugin-jdbc-vertica:LATEST io.kestra.plugin:plugin-jdbc-vectorwise:LATEST io.kestra.plugin:plugin-kafka:LATEST io.kestra.plugin:plugin-kubernetes:LATEST io.kestra.plugin:plugin-mongodb:LATEST io.kestra.plugin:plugin-notifications:LATEST io.kestra.plugin:plugin-script-groovy:LATEST io.kestra.plugin:plugin-script-jython:LATEST io.kestra.plugin:plugin-script-nashorn:LATEST io.kestra.plugin:plugin-serdes:LATEST io.kestra.plugin:plugin-singer:LATEST
-            APT_PACKAGES=python3-pip python3-wheel python3-setuptools python3-virtualenv nodejs curl wait-for-it zip unzip
-
-      # GitHub Release
-      - name: Create GitHub release
-        uses: "marvinpinto/action-automatic-releases@latest"
-        if: startsWith(github.ref, 'refs/tags/v')
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          draft: true
-          files: |
-            build/executable/*
-
+  end:
+    runs-on: ubuntu-latest
+    needs:
+      - check
+      - maven
+      - docker
+    if: always()
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
       # Slack
       - name: Slack notification
-        uses: 8398a7/action-slack@v3
+        uses: Gamesight/slack-workflow-status@master
         if: ${{ always() && env.SLACK_WEBHOOK_URL != 0 }}
         with:
-          status: ${{ job.status }}
-          job_name: Check & Publish
-          fields: repo,commit,action,ref,job,took
-          username: GitHub Actions
-          icon_emoji: ':github-actions:'
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: '#git'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          name: GitHub Actions
+          icon_emoji: ':github-actions:'

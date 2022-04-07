@@ -63,7 +63,6 @@ public interface StorageInterface {
         );
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     default String statePrefix(String namespace, String flowId, @Nullable String name, @Nullable String value) {
         ArrayList<String> paths = new ArrayList<>(List.of(
             namespace.replace(".", "/"),

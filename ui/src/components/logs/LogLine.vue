@@ -10,10 +10,13 @@
                 {{ meta.value }}
             </span>
         </span>
-        <span class="message">{{ log.message }}</span>
+        <span class="message" v-html="message" />
     </div>
 </template>
 <script>
+    import Convert from "ansi-to-html"
+    let convert = new Convert();
+
     export default {
         props: {
             log: {
@@ -66,6 +69,9 @@
                     this.log.message.toLowerCase().includes(this.filter)
                 );
             },
+            message() {
+                return convert.toHtml(this.log.message);
+            }
         },
     };
 </script>

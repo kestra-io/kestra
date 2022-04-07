@@ -172,6 +172,10 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
                 hostConfig.withExtraHosts(runContext.render(abstractBash.getDockerOptions().getExtraHosts(), additionalVars).toArray(String[]::new));
             }
 
+            if (abstractBash.getDockerOptions().getNetworkMode() != null) {
+                hostConfig.withNetworkMode(runContext.render(abstractBash.getDockerOptions().getNetworkMode(), additionalVars));
+            }
+
             container
                 .withHostConfig(hostConfig)
                 .withCmd(commandsWithInterpreter)

@@ -84,7 +84,11 @@ public class State {
     }
 
     public String humanDuration() {
-        return DurationFormatUtils.formatDurationHMS(getDuration().toMillis());
+        try {
+            return DurationFormatUtils.formatDurationHMS(getDuration().toMillis());
+        } catch (Throwable e) {
+            return getDuration().toString();
+        }
     }
 
     @JsonIgnore

@@ -511,6 +511,11 @@ public class ExecutionController {
         return HttpResponse.noContent();
     }
 
+    private boolean isStopFollow(Flow flow, Execution execution) {
+        return conditionService.isTerminatedWithListeners(flow, execution) &&
+            execution.getState().getCurrent() != State.Type.PAUSED;
+    }
+
     /**
      * Trigger a new execution for current flow and follow execution
      *
@@ -531,7 +536,7 @@ public class ExecutionController {
                 );
                 Flow flow = flowRepository.findByExecution(execution);
 
-                if (conditionService.isTerminatedWithListeners(flow, execution)) {
+                if (this.isStopFollow(flow, execution)) {
                     emitter.onNext(Event.of(execution).id("end"));
                     emitter.onComplete();
                     return;
@@ -546,7 +551,7 @@ public class ExecutionController {
 
                         emitter.onNext(Event.of(current).id("progress"));
 
-                        if (conditionService.isTerminatedWithListeners(flow, current)) {
+                        if (this.isStopFollow(flow, execution)) {
                             emitter.onNext(Event.of(current).id("end"));
                             emitter.onComplete();
                         }

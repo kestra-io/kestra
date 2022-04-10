@@ -38,6 +38,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -549,6 +550,33 @@ class KafkaExecutorTest {
         Execution triggerExecution = executionOutput().readRecord().getValue();
         assertThat(triggerExecution.getState().getCurrent(), is(State.Type.CREATED));
         assertThat(triggerExecution.getFlowId(), is("trigger-multiplecondition-listener"));
+    }
+
+    @Test
+    void paused() {
+        startStream(this.executorStore);
+
+        Flow flow = flowRepository.findById("io.kestra.tests", "pause-delay").orElseThrow();
+        this.flowInput().pipeInput(flow.uid(), flow);
+
+
+        startStream(this.executorMain);
+
+        Execution execution = createExecution(flow);
+        assertThat(execution.getState().getCurrent(), is(State.Type.CREATED));
+
+        execution = executionOutput().readRecord().getValue();
+        execution = executionOutput().readRecord().getValue();
+        execution = executionOutput().readRecord().getValue();
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
+        this.testTopology.advanceWallClockTime(Duration.ofSeconds(10));
+
+        execution = executionOutput().readRecord().getValue();
+        assertThat(execution.getState().getCurrent(), is(State.Type.RESTARTED));
+
+        execution = executionOutput().readRecord().getValue();
+        assertThat(execution.getState().getCurrent(), is(State.Type.RUNNING));
     }
 
     @Test

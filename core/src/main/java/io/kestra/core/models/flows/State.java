@@ -91,6 +91,14 @@ public class State {
         }
     }
 
+    public Instant maxDate() {
+        if (this.histories.size() == 0) {
+            return Instant.now();
+        }
+
+        return this.histories.get(this.histories.size() - 1).getDate();
+    }
+
     @JsonIgnore
     public boolean isTerninated() {
         return this.current.isTerninated();

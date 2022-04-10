@@ -12,14 +12,20 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.flows.Template;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import io.micronaut.context.ApplicationContext;
@@ -36,6 +42,7 @@ public class MemoryExecutor implements ExecutorInterface {
     private static final ConcurrentHashMap<String, ExecutionState> EXECUTIONS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, WorkerTaskExecution> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
     private List<Flow> allFlows;
+    private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
 
     @Inject
     private ApplicationContext applicationContext;
@@ -80,6 +87,9 @@ public class MemoryExecutor implements ExecutorInterface {
     @Inject
     private MetricRegistry metricRegistry;
 
+    @Inject
+    private ExecutionService executionService;
+
     @Override
     public void run() {
         applicationContext.registerSingleton(new MemoryFlowExecutor(this.flowRepository));
@@ -111,8 +121,7 @@ public class MemoryExecutor implements ExecutorInterface {
 
     private void handleExecution(ExecutionState state) {
         synchronized (this) {
-            Flow flow = this.flowRepository.findByExecution(state.execution);
-            flow = transform(flow, state.execution);
+            final Flow flow = transform(this.flowRepository.findByExecution(state.execution), state.execution);
 
             Execution execution = state.execution;
             Executor executor = new Executor(execution, null).withFlow(flow);
@@ -159,6 +168,38 @@ public class MemoryExecutor implements ExecutorInterface {
                 executor.getWorkerTaskResults()
                     .forEach(workerTaskResultQueue::emit);
             }
+
+            if (executor.getExecutionDelays().size() > 0) {
+                executor.getExecutionDelays()
+                    .forEach(workerTaskResultDelay -> {
+                        long between = ChronoUnit.MICROS.between(Instant.now(), workerTaskResultDelay.getDate());
+
+                        if (between <= 0) {
+                            between = 1;
+                        }
+
+                        schedulerDelay.schedule(
+                            () -> {
+                                try {
+                                    ExecutionState executionState = EXECUTIONS.get(workerTaskResultDelay.getExecutionId());
+
+                                    Execution markAsExecution = executionService.markAs(
+                                        executionState.execution,
+                                        workerTaskResultDelay.getTaskRunId(),
+                                        State.Type.RUNNING
+                                    );
+
+                                    executionQueue.emit(markAsExecution);
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            between,
+                            TimeUnit.MICROSECONDS
+                        );
+                    });
+            }
+
 
             if (executor.getWorkerTaskExecutions().size() > 0) {
                 executor.getWorkerTaskExecutions()
@@ -245,7 +286,7 @@ public class MemoryExecutor implements ExecutorInterface {
         this.handleExecution(saveExecution(executor.getExecution()));
 
         // delete if ended
-        if (conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())) {
+        if (executorService.canBePurged(executor)) {
             EXECUTIONS.remove(executor.getExecution().getId());
         }
     }

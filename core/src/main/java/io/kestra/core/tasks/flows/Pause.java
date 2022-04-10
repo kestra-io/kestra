@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +29,7 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Pause current execution and wait for a manual approval"
+    title = "Pause current execution and wait for a manual approval or a delay"
 )
 @Plugin(
     examples = {
@@ -54,6 +55,12 @@ import java.util.Optional;
     }
 )
 public class Pause extends Sequential implements FlowableTask<VoidOutput> {
+    @Schema(
+        title = "Duration of the pause.",
+        description = "If null, a manual approval is need, if not, the delay before automatically continue the execution"
+    )
+    private Duration delay;
+
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (this.needPause(parentTaskRun) || parentTaskRun.getState().getCurrent() == State.Type.PAUSED) {

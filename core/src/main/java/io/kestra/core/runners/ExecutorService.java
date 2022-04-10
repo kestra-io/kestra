@@ -12,6 +12,7 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.tasks.flows.Pause;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -20,6 +21,7 @@ import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -368,7 +370,40 @@ public class ExecutorService {
             return executor;
         }
 
+        executor = this.handlePausedDelay(executor, list);
+
         return executor.withWorkerTaskResults(list, "handleChildWorkerTaskResult");
+    }
+
+    private Executor handlePausedDelay(Executor executor, List<WorkerTaskResult> workerTaskResults) throws InternalException {
+        List<ExecutionDelay> list = workerTaskResults
+            .stream()
+            .filter(workerTaskResult -> workerTaskResult.getTaskRun().getState().getCurrent() == State.Type.PAUSED)
+            .map(throwFunction(workerTaskResult -> {
+                Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
+
+                if (task instanceof Pause) {
+                    Pause pauseTask = (Pause) task;
+
+                    if (pauseTask.getDelay() != null) {
+                        return ExecutionDelay.builder()
+                            .taskRunId(workerTaskResult.getTaskRun().getId())
+                            .executionId(executor.getExecution().getId())
+                            .date(workerTaskResult.getTaskRun().getState().maxDate().plus(pauseTask.getDelay()))
+                            .build();
+                    }
+                }
+
+                return null;
+            }))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+
+        if (list.size() == 0) {
+            return executor;
+        }
+
+        return executor.withWorkerTaskDelays(list, "handlePausedDelay");
     }
 
     private Executor handleChildWorkerCreatedKilling(Executor executor) throws InternalException {
@@ -564,6 +599,18 @@ public class ExecutorService {
         }
 
         return resultExecutor;
+    }
+
+    public boolean canBePurged(final Executor executor) {
+        return conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())
+            // we don't purge pause execution in order to be able to restart automatically in case of delay
+            && executor.getExecution().getState().getCurrent() != State.Type.PAUSED
+            // we don't purge killed execution in order to have feedback about child running tasks
+            // this can be killed lately (after the executor kill the execution), but we want to keep
+            // feedback about the actual state (killed or not)
+            // @TODO: this can lead to infinite state store for most executor topic
+            && executor.getExecution().getState().getCurrent() != State.Type.KILLED;
+
     }
 
     public void log(Logger log, Boolean in, WorkerTask value) {

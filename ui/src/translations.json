@@ -180,8 +180,12 @@
     "input": "Input",
     "variables": "Variables",
     "download": "Download",
-    "plugins": {
+    "documentation": {
       "documentation": "Documentation",
+      "developer": "Developer Guide",
+      "github": "GitHub Issues"
+    },
+    "plugins": {
       "name": "Plugin",
       "names": "Plugins",
       "please": "Please choose a task on the right to see its documentation"
@@ -405,8 +409,12 @@
     "input": "Entré",
     "variables": "Variables",
     "download": "Télécharger",
-    "plugins": {
+    "documentation": {
       "documentation": "Documentation",
+      "developer": "Guide développeur",
+      "github": "Bugs GitHub"
+    },
+    "plugins": {
       "name": "Plugin",
       "names": "Plugins",
       "please": "Veuillez choisir une tache sur la droite afin de voir sa documentation"

@@ -34,7 +34,7 @@
             ...mapState("plugin", ["plugin", "plugins"]),
             routeInfo() {
                 return {
-                    title: this.$route.params.cls ? this.$route.params.cls : this.$t("plugins.documentation"),
+                    title: this.$route.params.cls ? this.$route.params.cls : this.$t("plugins.names"),
                     breadcrumb: [
                         {
                             label: this.$t("plugins.names"),

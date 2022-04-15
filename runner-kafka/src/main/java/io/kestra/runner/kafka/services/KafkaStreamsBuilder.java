@@ -10,7 +10,7 @@ public class KafkaStreamsBuilder extends StreamsBuilder {
     @Override
     public synchronized Topology build() {
         Properties properties = new Properties();
-        properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
+        properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION_CONFIG, StreamsConfig.OPTIMIZE);
 
         return super.build(properties);
     }

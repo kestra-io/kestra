@@ -245,7 +245,7 @@ Join our community if you need help, want to chat or have any other questions fo
 
 - [GitHub](https://github.com/kestra-io/kestra/discussions) - Discussion forums and updates from the Kestra team
 - [Twitter](https://twitter.com/kestra_io) - For all the latest Kestra news
-- [Discord](https://discord.gg/5RgZmkW) - Join the conversation! Get all the latest updates and chat to the devs
+- [Discord](https://discord.gg/NMG39WKGth) - Join the conversation! Get all the latest updates and chat to the devs
 
 
 ## Roadmap

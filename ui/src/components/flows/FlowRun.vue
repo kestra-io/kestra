@@ -77,7 +77,7 @@
         mounted() {
             setTimeout(() => {
                 const input = this.$el.querySelector("input")
-                if (input) {
+                if (input && !input.className.includes("mx-input")) {
                     input.focus()
                 }
             }, 500)

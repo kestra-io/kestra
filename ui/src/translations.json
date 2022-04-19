@@ -225,7 +225,9 @@
     "download logs": "Download logs",
     "toggle fullscreen": "Toggle fullscreen",
     "copied": "Copied",
-    "tags": "Tags"
+    "tags": "Tags",
+    "disabled flow title": "This flow is disabled",
+    "disabled flow desc": "This flow is disabled, please enable it in order to execute it."
   },
   "fr": {
     "id": "Identifiant",
@@ -454,6 +456,8 @@
     "download logs": "Télécharger les logs",
     "toggle fullscreen": "Permuter le plein écran",
     "copied": "Copié",
-    "tags": "Tags"
+    "tags": "Tags",
+    "disabled flow title": "Ce flux est désactivé",
+    "disabled flow desc": "Ce flux est désactivé, veuillez le réactiver pour l'exécuter."
   }
 }

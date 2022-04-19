@@ -127,8 +127,10 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
         this.schedulable = flows
             .stream()
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
+            .filter(flow -> !flow.isDisabled())
             .flatMap(flow -> flow.getTriggers()
                 .stream()
+                .filter(abstractTrigger -> !abstractTrigger.isDisabled())
                 .map(trigger -> {
                     RunContext runContext = runContextFactory.of(flow, trigger);
 

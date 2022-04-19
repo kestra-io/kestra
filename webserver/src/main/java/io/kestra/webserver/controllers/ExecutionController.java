@@ -256,6 +256,10 @@ public class ExecutionController {
             return null;
         }
 
+        if (find.get().isDisabled()) {
+            throw new IllegalStateException("Cannot execute disabled flow");
+        }
+
         Optional<Webhook> webhook = (find.get().getTriggers() == null ? new ArrayList<AbstractTrigger>() : find.get()
             .getTriggers())
             .stream()
@@ -286,6 +290,7 @@ public class ExecutionController {
      * @param namespace The flow namespace
      * @param id The flow id
      * @return execution created
+     * @throws IllegalStateException if the flow is disabled
      */
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
@@ -298,6 +303,10 @@ public class ExecutionController {
         Optional<Flow> find = flowRepository.findById(namespace, id);
         if (find.isEmpty()) {
             return null;
+        }
+
+        if (find.get().isDisabled()) {
+            throw new IllegalStateException("Cannot execute disabled flow");
         }
 
         Execution current = runnerUtils.newExecution(
@@ -492,14 +501,14 @@ public class ExecutionController {
      * Kill an execution and stop all works
      *
      * @param executionId the execution id to kill
-     * @throws IllegalArgumentException if the executions is already finished
+     * @throws IllegalStateException if the executions is already finished
      */
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/{executionId}/kill", produces = MediaType.TEXT_JSON)
     public HttpResponse<?> kill(String executionId) {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isPresent() && execution.get().getState().isTerninated()) {
-            throw new IllegalArgumentException("Execution is already finished, can't kill it");
+            throw new IllegalStateException("Execution is already finished, can't kill it");
         }
 
         killQueue.emit(ExecutionKilled

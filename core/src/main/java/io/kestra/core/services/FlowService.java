@@ -78,8 +78,10 @@ public class FlowService {
     public List<FlowWithFlowTrigger> flowWithFlowTrigger(Stream<Flow> flowStream) {
         return flowStream
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
+            .filter(flow -> !flow.isDisabled())
             .flatMap(flow -> flow.getTriggers()
                 .stream()
+                .filter(abstractTrigger -> !abstractTrigger.isDisabled())
                 .map(trigger -> new FlowWithTrigger(flow, trigger))
             )
             .filter(f -> f.getTrigger() instanceof io.kestra.core.models.triggers.types.Flow)
@@ -99,8 +101,10 @@ public class FlowService {
     public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
         return flowStream
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
+            .filter(flow -> !flow.isDisabled())
             .flatMap(flow -> flow.getTriggers()
                 .stream()
+                .filter(abstractTrigger -> !abstractTrigger.isDisabled())
                 .map(trigger -> new FlowWithTrigger(flow, trigger))
             )
             .filter(f -> conditionService.isValid(

@@ -83,6 +83,10 @@ public class Flow implements DeletedInterface {
 
     @NotNull
     @Builder.Default
+    boolean disabled = false;
+
+    @NotNull
+    @Builder.Default
     boolean deleted = false;
 
     public Logger logger() {
@@ -312,6 +316,7 @@ public class Flow implements DeletedInterface {
             this.listeners,
             this.triggers,
             this.taskDefaults,
+            this.disabled,
             true
         );
     }

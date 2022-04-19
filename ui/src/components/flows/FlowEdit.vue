@@ -11,7 +11,7 @@
                         </kicon>
                     </b-button>
 
-                    <trigger-flow v-if="flow && canExecute" :flow-id="flow.id" :namespace="flow.namespace" />
+                    <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
 
                     <b-button @click="save" v-if="canSave" variant="primary">
                         <kicon :tooltip="'(Ctrl + s)'">

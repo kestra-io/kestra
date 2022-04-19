@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.conditions.Condition;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -41,4 +42,8 @@ abstract public class AbstractTrigger {
         title = "List of Conditions in order to limit the flow trigger."
     )
     private List<Condition> conditions;
+
+    @NotNull
+    @Builder.Default
+    private boolean disabled = false;
 }

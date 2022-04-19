@@ -7,7 +7,13 @@
         <span v-for="(meta, x) in metaWithValue" :key="x">
             <span class="header-badge bg-light text-dark property">
                 <span>{{ meta.key }}</span>
-                {{ meta.value }}
+                <template v-if="meta.router">
+                    <router-link :to="meta.router">{{ meta.value }}</router-link>
+                </template>
+                <template v-else>
+                    {{ meta.value }}
+                </template>
+
             </span>
         </span>
         <span class="message" v-html="message" />
@@ -49,7 +55,25 @@
                 excludes.push.apply(excludes, this.excludeMetas);
                 for (const key in this.log) {
                     if (this.log[key] && !excludes.includes(key)) {
-                        metaWithValue.push({key, value: this.log[key]});
+                        let meta = {key, value: this.log[key]};
+                        if (key === "executionId") {
+                            meta["router"] = {name: "executions/update", params: {
+                                namespace: this.log["namespace"],
+                                flowId: this.log["flowId"],
+                                id: this.log[key]
+                            }};
+                        }
+
+                        if (key === "namespace") {
+                            meta["router"] = {name: "flows/list", query: {namespace: this.log[key]}};
+                        }
+
+
+                        if (key === "flowId") {
+                            meta["router"] = {name: "flows/update", params: {namespace: this.log["namespace"], id: this.log[key]}};
+                        }
+
+                        metaWithValue.push(meta);
                     }
                 }
                 return metaWithValue;
@@ -100,6 +124,11 @@ div.line {
         vertical-align: baseline;
         margin-right: 10px;
 
+        & a {
+            margin-left: 6px;
+            color: var(--dark);
+        }
+
         &.log-level {
             white-space: pre;
         }
@@ -114,9 +143,7 @@ div.line {
             }
         }
 
-
-
-        .theme-dark &.bg-light {
+        .theme-dark &.bg-light, .theme-dark &.bg-light a {
             background-color: var(--gray-200-lighten-5) !important;
             color: var(--gray-600) !important;
 

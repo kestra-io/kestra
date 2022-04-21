@@ -154,7 +154,11 @@ jobs:
           if [[ $TAG = "master" ]]
           then
             echo ::set-output name=tag::latest
-            echo ::set-output name=plugins::
+            echo ::set-output name=plugins::${{ matrix.image.plugins }}
+          elif [[ $TAG == v* ]]
+          then
+            echo ::set-output name=tag::${TAG}
+            echo ::set-output name=plugins::${{ matrix.image.plugins }}
           else
             echo ::set-output name=tag::${TAG}
             echo ::set-output name=plugins::--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots ${{ matrix.image.plugins }}

@@ -184,8 +184,8 @@ public class RunContext {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
             .put("envs", envVariables());
 
-        if (applicationContext.getProperties("kestra.variables.globals").size() > 0) {
-            builder.put("globals", applicationContext.getProperties("kestra.variables.globals"));
+        if (applicationContext.getProperty("kestra.variables.globals", Map.class).isPresent()) {
+            builder.put("globals", applicationContext.getProperty("kestra.variables.globals", Map.class).get());
         }
 
         if (flow != null) {

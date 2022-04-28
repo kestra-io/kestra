@@ -120,6 +120,11 @@ public class ErrorController {
     }
 
     @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, IllegalStateException e) {
+        return jsonError(request, e, HttpStatus.CONFLICT, "Illegal state");
+    }
+
+    @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidFormatException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid format");
     }

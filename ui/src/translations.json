@@ -180,8 +180,12 @@
     "input": "Input",
     "variables": "Variables",
     "download": "Download",
-    "plugins": {
+    "documentation": {
       "documentation": "Documentation",
+      "developer": "Developer Guide",
+      "github": "GitHub Issues"
+    },
+    "plugins": {
       "name": "Plugin",
       "names": "Plugins",
       "please": "Please choose a task on the right to see its documentation"
@@ -221,7 +225,9 @@
     "download logs": "Download logs",
     "toggle fullscreen": "Toggle fullscreen",
     "copied": "Copied",
-    "tags": "Tags"
+    "tags": "Tags",
+    "disabled flow title": "This flow is disabled",
+    "disabled flow desc": "This flow is disabled, please enable it in order to execute it."
   },
   "fr": {
     "id": "Identifiant",
@@ -405,8 +411,12 @@
     "input": "Entré",
     "variables": "Variables",
     "download": "Télécharger",
-    "plugins": {
+    "documentation": {
       "documentation": "Documentation",
+      "developer": "Guide développeur",
+      "github": "Bugs GitHub"
+    },
+    "plugins": {
       "name": "Plugin",
       "names": "Plugins",
       "please": "Veuillez choisir une tache sur la droite afin de voir sa documentation"
@@ -446,6 +456,8 @@
     "download logs": "Télécharger les logs",
     "toggle fullscreen": "Permuter le plein écran",
     "copied": "Copié",
-    "tags": "Tags"
+    "tags": "Tags",
+    "disabled flow title": "Ce flux est désactivé",
+    "disabled flow desc": "Ce flux est désactivé, veuillez le réactiver pour l'exécuter."
   }
 }

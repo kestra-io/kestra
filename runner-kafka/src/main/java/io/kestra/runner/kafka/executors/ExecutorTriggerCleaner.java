@@ -47,22 +47,26 @@ public class ExecutorTriggerCleaner implements KafkaExecutorInterface {
         executionWithFlowKStream
             .filter(
                 (key, value) -> value.getExecution().getTrigger() != null,
-                Named.as("cleanTrigger-hasTrigger-filter")
+                Named.as("TriggerCleaner.hasTriggerFilter")
             )
             .filter(
                 (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
-                Named.as("cleanTrigger-terminated-filter")
+                Named.as("TriggerCleaner.terminatedFilter")
             )
             .join(
                 triggerGlobalKTable,
                 (key, executionWithFlow) -> Trigger.uid(executionWithFlow.getExecution()),
                 (execution, trigger) -> trigger.resetExecution(),
-                Named.as("cleanTrigger-join")
+                Named.as("TriggerCleaner.join")
             )
-            .selectKey((key, value) -> queueService.key(value))
+            .selectKey(
+                (key, value) -> queueService.key(value),
+                Named.as("TriggerCleaner.selectKey")
+            )
             .to(
                 kafkaAdminService.getTopicName(Trigger.class),
                 Produced.with(Serdes.String(), JsonSerde.of(Trigger.class))
+                    .withName("To.Trigger")
             );
 
         return builder;

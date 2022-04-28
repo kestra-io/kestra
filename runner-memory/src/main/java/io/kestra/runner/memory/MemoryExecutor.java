@@ -12,21 +12,26 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.flows.Template;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Singleton
 @MemoryQueueEnabled
@@ -36,6 +41,7 @@ public class MemoryExecutor implements ExecutorInterface {
     private static final ConcurrentHashMap<String, ExecutionState> EXECUTIONS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, WorkerTaskExecution> WORKERTASKEXECUTIONS_WATCHER = new ConcurrentHashMap<>();
     private List<Flow> allFlows;
+    private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
 
     @Inject
     private ApplicationContext applicationContext;
@@ -80,6 +86,9 @@ public class MemoryExecutor implements ExecutorInterface {
     @Inject
     private MetricRegistry metricRegistry;
 
+    @Inject
+    private ExecutionService executionService;
+
     @Override
     public void run() {
         applicationContext.registerSingleton(new MemoryFlowExecutor(this.flowRepository));
@@ -111,8 +120,7 @@ public class MemoryExecutor implements ExecutorInterface {
 
     private void handleExecution(ExecutionState state) {
         synchronized (this) {
-            Flow flow = this.flowRepository.findByExecution(state.execution);
-            flow = transform(flow, state.execution);
+            final Flow flow = transform(this.flowRepository.findByExecution(state.execution), state.execution);
 
             Execution execution = state.execution;
             Executor executor = new Executor(execution, null).withFlow(flow);
@@ -136,7 +144,7 @@ public class MemoryExecutor implements ExecutorInterface {
                 toExecution(executor);
             }
 
-            if (executor.getWorkerTasks().size() > 0){
+            if (executor.getWorkerTasks().size() > 0) {
                 List<WorkerTask> workerTasksDedup = executor.getWorkerTasks().stream()
                     .filter(workerTask -> this.deduplicateWorkerTask(execution, workerTask.getTaskRun()))
                     .collect(Collectors.toList());
@@ -144,7 +152,7 @@ public class MemoryExecutor implements ExecutorInterface {
                 // WorkerTask not flowable to workerTask
                 workerTasksDedup
                     .stream()
-                    .filter(workerTask -> !workerTask.getTask().isFlowable())
+                    .filter(workerTask -> workerTask.getTask().isSendToWorkerTask())
                     .forEach(workerTaskQueue::emit);
 
                 // WorkerTask not flowable to workerTaskResult as Running
@@ -159,6 +167,38 @@ public class MemoryExecutor implements ExecutorInterface {
                 executor.getWorkerTaskResults()
                     .forEach(workerTaskResultQueue::emit);
             }
+
+            if (executor.getExecutionDelays().size() > 0) {
+                executor.getExecutionDelays()
+                    .forEach(workerTaskResultDelay -> {
+                        long between = ChronoUnit.MICROS.between(Instant.now(), workerTaskResultDelay.getDate());
+
+                        if (between <= 0) {
+                            between = 1;
+                        }
+
+                        schedulerDelay.schedule(
+                            () -> {
+                                try {
+                                    ExecutionState executionState = EXECUTIONS.get(workerTaskResultDelay.getExecutionId());
+
+                                    Execution markAsExecution = executionService.markAs(
+                                        executionState.execution,
+                                        workerTaskResultDelay.getTaskRunId(),
+                                        State.Type.RUNNING
+                                    );
+
+                                    executionQueue.emit(markAsExecution);
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            between,
+                            TimeUnit.MICROSECONDS
+                        );
+                    });
+            }
+
 
             if (executor.getWorkerTaskExecutions().size() > 0) {
                 executor.getWorkerTaskExecutions()
@@ -245,7 +285,7 @@ public class MemoryExecutor implements ExecutorInterface {
         this.handleExecution(saveExecution(executor.getExecution()));
 
         // delete if ended
-        if (conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())) {
+        if (executorService.canBePurged(executor)) {
             EXECUTIONS.remove(executor.getExecution().getId());
         }
     }
@@ -256,13 +296,16 @@ public class MemoryExecutor implements ExecutorInterface {
                 executorService.log(log, true, message);
             }
 
-            metricRegistry
-                .counter(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
-                .increment();
+            // send metrics on terminated
+            if (message.getTaskRun().getState().isTerninated()) {
+                metricRegistry
+                    .counter(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                    .increment();
 
-            metricRegistry
-                .timer(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
-                .record(message.getTaskRun().getState().getDuration());
+                metricRegistry
+                    .timer(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                    .record(message.getTaskRun().getState().getDuration());
+            }
 
             // save WorkerTaskResult on current QueuedExecution
             EXECUTIONS.compute(message.getTaskRun().getExecutionId(), (s, executionState) -> {
@@ -271,7 +314,11 @@ public class MemoryExecutor implements ExecutorInterface {
                 }
 
                 if (executionState.execution.hasTaskRunJoinable(message.getTaskRun())) {
-                     return executionState.from(message);
+                    try {
+                        return executionState.from(message, this.executorService, this.flowRepository);
+                    } catch (InternalException e) {
+                        return new ExecutionState(executionState, executionState.execution.failedExecutionFromExecutor(e).getExecution());
+                    }
                 } else {
                     return executionState;
                 }
@@ -361,11 +408,21 @@ public class MemoryExecutor implements ExecutorInterface {
             return new ExecutionState(this, newExecution);
         }
 
-        public ExecutionState from(WorkerTaskResult workerTaskResult) {
+        public ExecutionState from(WorkerTaskResult workerTaskResult, ExecutorService executorService, FlowRepositoryInterface flowRepository) throws InternalException {
             this.taskRuns.compute(
                 taskRunKey(workerTaskResult.getTaskRun()),
                 (key, taskRun) -> workerTaskResult.getTaskRun()
             );
+
+            Execution execution = executorService.addDynamicTaskRun(
+                this.execution,
+                flowRepository.findByExecution(this.execution),
+                workerTaskResult
+            );
+
+            if (execution != null) {
+                return new ExecutionState(this, execution);
+            }
 
             return this;
         }

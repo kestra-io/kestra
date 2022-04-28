@@ -3,7 +3,9 @@ package io.kestra.runner.kafka.streams;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.Executor;
+import io.kestra.core.runners.ExecutorService;
 import io.kestra.core.runners.WorkerTaskResult;
+import io.kestra.runner.kafka.services.KafkaStreamSourceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.kstream.ValueTransformerWithKey;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -12,12 +14,16 @@ import org.apache.kafka.streams.state.KeyValueStore;
 @Slf4j
 public class ExecutorJoinerTransformer implements ValueTransformerWithKey<String, Executor, Executor> {
     private final String storeName;
+    private final ExecutorService executorService;
+    private final KafkaStreamSourceService kafkaStreamSourceService;
     private final MetricRegistry metricRegistry;
     private KeyValueStore<String, Executor> store;
     private ProcessorContext context;
 
-    public ExecutorJoinerTransformer(String storeName, MetricRegistry metricRegistry) {
+    public ExecutorJoinerTransformer(String storeName, ExecutorService executorService, KafkaStreamSourceService kafkaStreamSourceService, MetricRegistry metricRegistry) {
         this.storeName = storeName;
+        this.executorService = executorService;
+        this.kafkaStreamSourceService = kafkaStreamSourceService;
         this.metricRegistry = metricRegistry;
     }
 
@@ -57,27 +63,41 @@ public class ExecutorJoinerTransformer implements ValueTransformerWithKey<String
             return executor;
         }
 
+        kafkaStreamSourceService.joinFlow(executor, true);
+
         try {
-            Execution newExecution = executor.getExecution().withTaskRun(workerTaskResult.getTaskRun());
+            Execution newExecution = executorService.addDynamicTaskRun(
+                executor.getExecution(),
+                executor.getFlow(),
+                workerTaskResult
+            );
+
+            if (newExecution != null) {
+                executor = executor.withExecution(newExecution, "addDynamicTaskRun");
+            }
+
+            newExecution = executor.getExecution().withTaskRun(workerTaskResult.getTaskRun());
             executor = executor.withExecution(newExecution, "joinWorkerResult");
         } catch (Exception e) {
             return executor.withException(e, "joinWorkerResult");
         }
 
-        // send metrics
-        metricRegistry
-            .counter(
-                MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT,
-                metricRegistry.tags(workerTaskResult)
-            )
-            .increment();
+        // send metrics on terminated
+        if (workerTaskResult.getTaskRun().getState().isTerninated()) {
+            metricRegistry
+                .counter(
+                    MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT,
+                    metricRegistry.tags(workerTaskResult)
+                )
+                .increment();
 
-        metricRegistry
-            .timer(
-                MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION,
-                metricRegistry.tags(workerTaskResult)
-            )
-            .record(workerTaskResult.getTaskRun().getState().getDuration());
+            metricRegistry
+                .timer(
+                    MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION,
+                    metricRegistry.tags(workerTaskResult)
+                )
+                .record(workerTaskResult.getTaskRun().getState().getDuration());
+        }
 
         return executor;
     }

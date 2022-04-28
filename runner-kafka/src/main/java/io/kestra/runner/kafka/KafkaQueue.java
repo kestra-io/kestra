@@ -214,7 +214,7 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
     private List<TopicPartition> listTopicPartition() throws ExecutionException, InterruptedException {
         return this.adminClient
             .describeTopics(Collections.singleton(topicsConfig.getName()))
-            .all()
+            .allTopicNames()
             .get()
             .entrySet()
             .stream()

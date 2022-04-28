@@ -3,6 +3,7 @@ package io.kestra.cli.plugins;
 import com.google.common.collect.ImmutableList;
 import io.micronaut.context.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
@@ -103,10 +104,19 @@ public class PluginDownloader {
 
         if (localRepositoryPath == null) {
             try {
-                localRepositoryPath = Files.createTempDirectory(this.getClass().getSimpleName().toLowerCase())
+                final String tempDirectory = Files.createTempDirectory(this.getClass().getSimpleName().toLowerCase())
                     .toAbsolutePath()
                     .toString();
-                new File(localRepositoryPath).deleteOnExit();
+
+                localRepositoryPath = tempDirectory;
+
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    try {
+                        FileUtils.deleteDirectory(new File(tempDirectory));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

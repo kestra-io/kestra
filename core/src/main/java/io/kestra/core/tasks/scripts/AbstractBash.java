@@ -203,13 +203,7 @@ abstract public class AbstractBash extends Task {
             workingDirectory,
             finalCommandsWithInterpreter(commandAsString),
             this.finalEnv(),
-            (inputStream, isStdErr) -> {
-                AbstractLogThread thread = new LogThread(logger, inputStream, isStdErr, runContext);
-                thread.setName("bash-log-" + (isStdErr ? "-err" : "-out"));
-                thread.start();
-
-                return thread;
-            }
+            this.defaultLogSupplier(logger, runContext)
         );
 
         // upload output files
@@ -232,6 +226,16 @@ abstract public class AbstractBash extends Task {
             .files(uploaded)
             .outputFiles(uploaded)
             .build();
+    }
+
+    protected LogSupplier defaultLogSupplier(Logger logger, RunContext runContext) {
+        return (inputStream, isStdErr) -> {
+            AbstractLogThread thread = new LogThread(logger, inputStream, isStdErr, runContext);
+            thread.setName("bash-log-" + (isStdErr ? "-err" : "-out"));
+            thread.start();
+
+            return thread;
+        };
     }
 
     protected RunResult run(RunContext runContext, Logger logger, Path workingDirectory, List<String> commandsWithInterpreter, Map<String, String> env,  LogSupplier logSupplier) throws Exception {

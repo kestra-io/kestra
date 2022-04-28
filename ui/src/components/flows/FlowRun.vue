@@ -1,5 +1,9 @@
 <template>
     <div class="container" v-if="flow">
+        <b-alert v-if="flow.disabled" variant="warning" show>
+            <strong>{{ $t('disabled flow title') }}</strong><br>
+            {{ $t('disabled flow desc') }}
+        </b-alert>
         <b-form v-hotkey="keymap" @submit.prevent="onSubmit">
             <b-form-group
                 v-for="input in flow.inputs"
@@ -49,7 +53,7 @@
                 <small v-if="input.description" class="form-text text-muted">{{ input.description }}</small>
             </b-form-group>
             <b-form-group class="text-right mb-0">
-                <b-button type="submit" variant="primary" v-b-tooltip.hover.top="'(Ctrl + Enter)'">
+                <b-button type="submit" variant="primary" :disabled="flow.disabled" v-b-tooltip.hover.top="'(Ctrl + Enter)'">
                     {{ $t('launch execution') }}
                     <trigger title />
                 </b-button>
@@ -73,7 +77,7 @@
         mounted() {
             setTimeout(() => {
                 const input = this.$el.querySelector("input")
-                if (input) {
+                if (input && !input.className.includes("mx-input")) {
                     input.focus()
                 }
             }, 500)

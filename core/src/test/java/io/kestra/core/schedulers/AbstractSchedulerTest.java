@@ -42,7 +42,7 @@ abstract public class AbstractSchedulerTest {
     }
 
     protected  static Flow createFlow(List<AbstractTrigger> triggers, List<TaskDefault> list) {
-        Flow.FlowBuilder flow = Flow.builder()
+        Flow.FlowBuilder<?, ?> flow = Flow.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .inputs(List.of(Input.builder()

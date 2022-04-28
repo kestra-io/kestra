@@ -1,6 +1,6 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <b-button v-hotkey="keymap" @click="onSubmit" v-b-tooltip.hover.top="'(Ctrl + Enter)'">
+        <b-button :disabled="disabled" v-hotkey="keymap" @click="onSubmit" v-b-tooltip.hover.top="'(Ctrl + Enter)'">
             <kicon>
                 <flash /> {{ $t('New execution') }}
             </kicon>
@@ -31,6 +31,10 @@
             namespace: {
                 type: String,
                 required: true
+            },
+            disabled: {
+                type: Boolean,
+                default: false
             },
         },
         created() {

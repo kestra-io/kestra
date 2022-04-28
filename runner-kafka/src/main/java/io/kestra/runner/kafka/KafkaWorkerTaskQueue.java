@@ -5,6 +5,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.ConsumerGroupMetadata;
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -122,9 +123,10 @@ public class KafkaWorkerTaskQueue implements WorkerTaskQueueInterface {
                         });
 
                         // we commit first all offset before submit task to worker
+
                         kafkaProducer.sendOffsetsToTransaction(
                             KafkaConsumerService.maxOffsets(records),
-                            kafkaConfigService.getConsumerGroupName(consumerGroup)
+                            new ConsumerGroupMetadata(kafkaConfigService.getConsumerGroupName(consumerGroup))
                         );
                         kafkaProducer.commitTransaction();
 

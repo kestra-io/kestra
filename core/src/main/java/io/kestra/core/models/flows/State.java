@@ -52,6 +52,15 @@ public class State {
         this.histories.add(new History(this.current, Instant.now()));
     }
 
+    public static State of(Type state, List<History> histories) {
+        State result = new State(state);
+
+        result.histories.removeIf(history -> true);
+        result.histories.addAll(histories);
+
+        return result;
+    }
+
     public State withState(Type state) {
         if (this.current == state) {
             log.warn("Can't change state, already " + current);
@@ -89,6 +98,14 @@ public class State {
         } catch (Throwable e) {
             return getDuration().toString();
         }
+    }
+
+    public Instant maxDate() {
+        if (this.histories.size() == 0) {
+            return Instant.now();
+        }
+
+        return this.histories.get(this.histories.size() - 1).getDate();
     }
 
     @JsonIgnore

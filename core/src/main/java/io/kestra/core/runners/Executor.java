@@ -23,6 +23,7 @@ public class Executor {
     private final List<TaskRun> nexts = new ArrayList<>();
     private final List<WorkerTask> workerTasks = new ArrayList<>();
     private final List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
+    private final List<ExecutionDelay> executionDelays = new ArrayList<>();
     private WorkerTaskResult joined;
     private final List<WorkerTaskExecution> workerTaskExecutions = new ArrayList<>();
 
@@ -73,6 +74,13 @@ public class Executor {
 
     public Executor withWorkerTaskResults(List<WorkerTaskResult> workerTaskResults, String from) {
         this.workerTaskResults.addAll(workerTaskResults);
+        this.from.add(from);
+
+        return this;
+    }
+
+    public Executor withWorkerTaskDelays(List<ExecutionDelay> executionDelays, String from) {
+        this.executionDelays.addAll(executionDelays);
         this.from.add(from);
 
         return this;

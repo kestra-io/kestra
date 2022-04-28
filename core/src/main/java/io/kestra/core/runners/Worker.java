@@ -1,10 +1,13 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.Hashing;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.tasks.Task;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import lombok.Getter;
@@ -43,6 +46,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 public class Worker implements Runnable, Closeable {
+    private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
+
     private final ApplicationContext applicationContext;
     private final WorkerTaskQueueInterface workerTaskQueue;
     private final QueueInterface<WorkerTaskResult> workerTaskResultQueue;
@@ -97,7 +102,35 @@ public class Worker implements Runnable, Closeable {
         this.workerTaskQueue.receive(
             Worker.class,
             workerTask -> {
-                executors.execute(() -> this.run(workerTask));
+                executors.execute(() -> {
+                    if (workerTask.getTask() instanceof RunnableTask) {
+                        this.run(workerTask, true);
+                    } else if (workerTask.getTask() instanceof io.kestra.core.tasks.flows.Worker) {
+                        RunContext runContext = workerTask.getRunContext();
+
+                        try {
+                            io.kestra.core.tasks.flows.Worker workerTasks = (io.kestra.core.tasks.flows.Worker) workerTask.getTask();
+
+                            for (Task currentTask : workerTasks.getTasks()) {
+                                WorkerTask currentWorkerTask = workerTasks.workerTask(
+                                    workerTask.getTaskRun(),
+                                    currentTask,
+                                    runContext
+                                );
+
+                                WorkerTaskResult workerTaskResult = this.run(currentWorkerTask, false);
+
+                                if (workerTaskResult.getTaskRun().getState().isFailed()) {
+                                    break;
+                                }
+
+                                runContext = runContext.updateVariables(workerTaskResult, workerTask.getTaskRun());
+                            }
+                        } finally {
+                            runContext.cleanup();
+                        }
+                    }
+                });
             }
         );
     }
@@ -106,7 +139,17 @@ public class Worker implements Runnable, Closeable {
         return ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
-    private void run(WorkerTask workerTask) throws QueueException {
+    private WorkerTask cleanUpTransient(WorkerTask workerTask) {
+        try {
+            return MAPPER.readValue(MAPPER.writeValueAsString(workerTask), WorkerTask.class);
+        } catch (JsonProcessingException e) {
+            log.warn("Unable to cleanup transient", e);
+
+            return workerTask;
+        }
+    }
+
+    private WorkerTaskResult run(WorkerTask workerTask, Boolean cleanUp) throws QueueException {
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, metricRegistry.tags(workerTask))
             .increment();
@@ -137,86 +180,102 @@ public class Worker implements Runnable, Closeable {
         workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING));
         this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
 
-        if (workerTask.getTask() instanceof RunnableTask) {
-            // killed cased
-            if (killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
-                workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.KILLED));
-                this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask));
+        // killed cased
+        if (killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
+            workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(State.Type.KILLED));
 
-                this.logTerminated(workerTask);
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask);
+            this.workerTaskResultQueue.emit(workerTaskResult);
 
-                return;
-            }
+            this.logTerminated(workerTask);
 
-            AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
+            return workerTaskResult;
+        }
 
-            // run
-            WorkerTask finalWorkerTask = Failsafe
-                .with(AbstractRetry.<WorkerTask>retryPolicy(workerTask.getTask().getRetry())
-                    .handleResultIf(result -> result.getTaskRun().lastAttempt() != null &&
-                        Objects.requireNonNull(result.getTaskRun().lastAttempt()).getState().getCurrent() == State.Type.FAILED
-                    )
-                    .onRetry(e -> {
-                        WorkerTask lastResult = e.getLastResult();
+        AtomicReference<WorkerTask> current = new AtomicReference<>(workerTask);
 
-                        lastResult = lastResult.getRunContext().cleanup(lastResult);
-
-                        current.set(lastResult);
-
-                        metricRegistry
-                            .counter(
-                                MetricRegistry.METRIC_WORKER_RETRYED_COUNT,
-                                metricRegistry.tags(
-                                    current.get(),
-                                    MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(e.getAttemptCount())
-                                )
-                            )
-                            .increment();
-
-                        this.workerTaskResultQueue.emit(
-                            new WorkerTaskResult(lastResult)
-                        );
-                    })/*,
-                    Fallback.of(current::get)*/
+        // run
+        WorkerTask finalWorkerTask = Failsafe
+            .with(AbstractRetry.<WorkerTask>retryPolicy(workerTask.getTask().getRetry())
+                .handleResultIf(result -> result.getTaskRun().lastAttempt() != null &&
+                    Objects.requireNonNull(result.getTaskRun().lastAttempt()).getState().getCurrent() == State.Type.FAILED
                 )
-                .get(() -> this.runAttempt(current.get()));
+                .onRetry(e -> {
+                    WorkerTask lastResult = e.getLastResult();
 
-            finalWorkerTask = finalWorkerTask.getRunContext().cleanup(finalWorkerTask);
+                    if (cleanUp) {
+                        lastResult.getRunContext().cleanup();
+                    }
 
-            // get last state
-            TaskRunAttempt lastAttempt = finalWorkerTask.getTaskRun().lastAttempt();
-            if (lastAttempt == null) {
-                throw new IllegalStateException("Can find lastAttempt on taskRun '" +
-                    finalWorkerTask.getTaskRun().toString(true) + "'"
-                );
-            }
-            State.Type state = lastAttempt.getState().getCurrent();
+                    lastResult = this.cleanUpTransient(lastResult);
 
-            if (workerTask.getTask().getRetry() != null &&
-                workerTask.getTask().getRetry().getWarningOnRetry() &&
-                finalWorkerTask.getTaskRun().getAttempts().size() > 0 &&
-                state == State.Type.SUCCESS
-            ) {
-                state = State.Type.WARNING;
-            }
+                    current.set(lastResult);
 
-            // emit
-            finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
+                    metricRegistry
+                        .counter(
+                            MetricRegistry.METRIC_WORKER_RETRYED_COUNT,
+                            metricRegistry.tags(
+                                current.get(),
+                                MetricRegistry.TAG_ATTEMPT_COUNT, String.valueOf(e.getAttemptCount())
+                            )
+                        )
+                        .increment();
 
-            // if resulting object can't be emitted (mostly size of message), we just can't emit it like that.
-            // So we just tryed to failed the status of the worker task, in this case, no log can't be happend, just
-            // changing status must work in order to finish current task (except if we are near the upper bound size).
-            try {
-                this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
-            } catch (QueueException e) {
-                finalWorkerTask = workerTask
-                    .withTaskRun(workerTask.getTaskRun()
-                        .withState(State.Type.FAILED)
+                    this.workerTaskResultQueue.emit(
+                        new WorkerTaskResult(lastResult)
                     );
-                this.workerTaskResultQueue.emit(new WorkerTaskResult(finalWorkerTask));
-            } finally {
-                this.logTerminated(finalWorkerTask);
-            }
+                })/*,
+                Fallback.of(current::get)*/
+            )
+            .get(() -> this.runAttempt(current.get()));
+
+        // save dynamic WorkerResults since cleanUpTransient will remove them
+        List<WorkerTaskResult> dynamicWorkerResults = finalWorkerTask.getRunContext().dynamicWorkerResults();
+
+        // remove tmp directory
+        if (cleanUp) {
+            finalWorkerTask.getRunContext().cleanup();
+        }
+
+        finalWorkerTask = this.cleanUpTransient(finalWorkerTask);
+
+        // get last state
+        TaskRunAttempt lastAttempt = finalWorkerTask.getTaskRun().lastAttempt();
+        if (lastAttempt == null) {
+            throw new IllegalStateException("Can find lastAttempt on taskRun '" +
+                finalWorkerTask.getTaskRun().toString(true) + "'"
+            );
+        }
+        State.Type state = lastAttempt.getState().getCurrent();
+
+        if (workerTask.getTask().getRetry() != null &&
+            workerTask.getTask().getRetry().getWarningOnRetry() &&
+            finalWorkerTask.getTaskRun().getAttempts().size() > 0 &&
+            state == State.Type.SUCCESS
+        ) {
+            state = State.Type.WARNING;
+        }
+
+        // emit
+        finalWorkerTask = finalWorkerTask.withTaskRun(finalWorkerTask.getTaskRun().withState(state));
+
+        // if resulting object can't be emitted (mostly size of message), we just can't emit it like that.
+        // So we just tryed to failed the status of the worker task, in this case, no log can't be happend, just
+        // changing status must work in order to finish current task (except if we are near the upper bound size).
+        try {
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
+            this.workerTaskResultQueue.emit(workerTaskResult);
+            return workerTaskResult;
+        } catch (QueueException e) {
+            finalWorkerTask = workerTask
+                .withTaskRun(workerTask.getTaskRun()
+                    .withState(State.Type.FAILED)
+                );
+            WorkerTaskResult workerTaskResult = new WorkerTaskResult(finalWorkerTask, dynamicWorkerResults);
+            this.workerTaskResultQueue.emit(workerTaskResult);
+            return workerTaskResult;
+        } finally {
+            this.logTerminated(finalWorkerTask);
         }
     }
 
@@ -248,7 +307,7 @@ public class Worker implements Runnable, Closeable {
 
         RunContext runContext = workerTask
             .getRunContext()
-            .forWorker(this.applicationContext, workerTask.getTaskRun());
+            .forWorker(this.applicationContext, workerTask);
 
         Logger logger = runContext.logger();
 
@@ -327,7 +386,6 @@ public class Worker implements Runnable, Closeable {
             .build();
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     public AtomicInteger getMetricRunningCount(WorkerTask workerTask) {
         String[] tags = this.metricRegistry.tags(workerTask);
         Arrays.sort(tags);

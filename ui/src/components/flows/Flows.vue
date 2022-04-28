@@ -37,6 +37,7 @@
                         sort-by="id"
                         :items="flows"
                         :fields="fields"
+                        :tbody-tr-class="rowClasses"
                         ref="table"
                         show-empty
                     >
@@ -287,6 +288,9 @@
                             }
                         }
                     })
+            },
+            rowClasses(flow) {
+                return flow.disabled ? ["disabled"] : [];
             }
         }
     };

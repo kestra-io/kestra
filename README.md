@@ -170,43 +170,53 @@ Kestra is built on [plugin systems](https://kestra.io/plugins/). You can find yo
     </tr>
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-gcp#bigquery">Big Query</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-cassandra">Cassandra</a></td>
         <td><a href="https://kestra.io/plugins/plugin-serdes#csv">CSV</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-jdbc-clickhouse">ClickHouse</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-jdbc-clickhouse">ClickHouse</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-debezium-mysql">Debezium MYSQL</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-debezium-postgres">Debezium Postgres</a></td>
+    </tr>
+    <tr>
+        <td><a href="https://kestra.io/plugins/plugin-debezium-sqlserver">Debezium Microsoft SQL Server</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-dbt">DBT</a></td>
         <td><a href="https://kestra.io/plugins/plugin-elasticsearch">ElasticSearch</a></td>
+    </tr>
+    <tr>
         <td><a href="https://kestra.io/plugins/plugin-notifications#mail">Email</a></td>
         <td><a href="https://kestra.io/plugins/plugin-gcp#gcs">Google Cloud Storage</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-googleworkspace#drive">Google Drive</a></td>
     </tr>
     <tr>
-        <td><a href="https://kestra.io/plugins/plugin-googleworkspace#drive">Google Drive</a></td>
         <td><a href="https://kestra.io/plugins/plugin-googleworkspace#sheets">Google Sheets</a></td>
         <td><a href="https://kestra.io/plugins/plugin-scripts-groovy">Groovy</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-fs#http">Http</a></td>
     </tr>
     <tr>
-        <td><a href="https://kestra.io/plugins/plugin-fs#http">Http</a></td>
         <td><a href="https://kestra.io/plugins/plugin-serdes#json">JSON</a></td>
         <td><a href="https://kestra.io/plugins/plugin-scripts-jython">Jython</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-kafka">Kafka</a></td>
     </tr>
     <tr>
-        <td><a href="https://kestra.io/plugins/plugin-kafka">Kafka</a></td>
         <td><a href="https://kestra.io/plugins/plugin-kubernetes">Kubernetes</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-sqlserver">Microsoft SQL Server</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-mongodb">MongoDb</a></td>
     </tr>
     <tr>
-        <td><a href="https://kestra.io/plugins/plugin-mongodb">MongoDb</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-mysql">MySQL</a></td>
         <td><a href="https://kestra.io/plugins/plugin-scripts-nashorn">Nashorn</a></td>
+        <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Node">Node</a></td>
     </tr>
     <tr>
-        <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Node">Node</a></td>
         <td><a href="https://kestra.io/plugins/plugin-crypto#openpgp">Open PGP</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-oracle">Oracle</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-jdbc-postgres">Postgres</a></td>
     </tr>
     <tr>
-        <td><a href="https://kestra.io/plugins/plugin-jdbc-postgres">Postgres</a></td>
         <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Python">Python</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-redshift">Redshift</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-jdbc-snowflake">Snowflake</a></td>
     </tr>
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-fs#sftp">SFTP</a></td>
@@ -214,9 +224,14 @@ Kestra is built on [plugin systems](https://kestra.io/plugins/). You can find yo
         <td><a href="https://kestra.io/plugins/plugin-notifications#slack">Slack</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-spark">Spark</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-vectorwise">Vectorwise</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-vertica">Vertica</a></td>
+    </tr>
+    <tr>
         <td><a href="https://kestra.io/plugins/plugin-serdes#xml">XML</a></td>
+        <td></td>
+        <td></td>
     </tr>
 </table>
 
@@ -230,7 +245,7 @@ Join our community if you need help, want to chat or have any other questions fo
 
 - [GitHub](https://github.com/kestra-io/kestra/discussions) - Discussion forums and updates from the Kestra team
 - [Twitter](https://twitter.com/kestra_io) - For all the latest Kestra news
-- [Discord](https://discord.gg/5RgZmkW) - Join the conversation! Get all the latest updates and chat to the devs
+- [Discord](https://discord.gg/NMG39WKGth) - Join the conversation! Get all the latest updates and chat to the devs
 
 
 ## Roadmap

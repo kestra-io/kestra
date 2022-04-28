@@ -139,7 +139,6 @@ public class ExecutorFlowLast implements KafkaExecutorInterface {
     }
 
     @Getter
-    @Jacksonized
     @AllArgsConstructor
     public static class FlowWithPrevious {
         private Flow flow;

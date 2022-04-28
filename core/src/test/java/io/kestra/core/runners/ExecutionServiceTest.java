@@ -7,14 +7,14 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.tasks.debugs.Return;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -96,6 +96,20 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count(), greaterThan(1L));
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count(), greaterThan(1L));
         assertThat(restart.getTaskRunList().get(0).getId(), is(restart.getTaskRunList().get(0).getId()));
+    }
+
+    @Test
+    void restartDynamic() throws Exception {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "worker", null, (f, e) -> ImmutableMap.of("failed", "true"));
+        assertThat(execution.getTaskRunList(), hasSize(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+
+        Execution restart = executionService.restart(execution, null);
+        assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getState().getHistories(), hasSize(4));
+
+        assertThat(restart.getTaskRunList().get(0).getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getTaskRunList().get(0).getState().getHistories(), hasSize(4));
     }
 
     @Test

@@ -2,6 +2,7 @@
     <sidebar-menu
         :menu="disabledCurrentRoute(menu)"
         @toggle-collapse="onToggleCollapse"
+        :show-one-child="true"
         width="268px"
         :collapsed="collapsed"
     >
@@ -32,7 +33,11 @@
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline";
     import NotebookOutline from "vue-material-design-icons/NotebookOutline";
-    import BookOutline from "vue-material-design-icons/BookOutline";
+    import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline";
+    import FileCodeOutline from "vue-material-design-icons/FileCodeOutline";
+    import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended";
+    import Discord from "vue-material-design-icons/Discord";
+    import Github from "vue-material-design-icons/Github";
     import CogOutline from "vue-material-design-icons/CogOutline";
     import {mapState} from "vuex";
 
@@ -41,7 +46,11 @@
     Vue.component("ExecutionMenuIcon", TimelineClockOutline);
     Vue.component("TaskRunMenuIcon", TimelineTextOutline);
     Vue.component("LogMenuIcon", NotebookOutline);
-    Vue.component("DocumentationMenuIcon", BookOutline);
+    Vue.component("DocumentationMenuIcon", BookMultipleOutline);
+    Vue.component("DocumentationDeveloperMenuIcon", FileCodeOutline);
+    Vue.component("DocumentationPluginsMenuIcon", GoogleCirclesExtended);
+    Vue.component("Discord", Discord);
+    Vue.component("Github", Github);
     Vue.component("SettingMenuIcon", CogOutline);
 
     export default {
@@ -122,15 +131,52 @@
                         },
                     },
                     {
-                        href: "/plugins",
                         alias: [
                             "/plugins*"
                         ],
-                        title: this.$t("plugins.documentation"),
+                        title: this.$t("documentation.documentation"),
                         icon: {
                             element: "DocumentationMenuIcon",
                             class: "menu-icon"
-                        }
+                        },
+                        child: [
+                            {
+                                href: "https://kestra.io/docs/",
+                                title: this.$t("documentation.developer"),
+                                icon: {
+                                    element: "DocumentationDeveloperMenuIcon",
+                                    class: "menu-icon"
+                                },
+                                external: true
+                            },
+                            {
+                                href: "/plugins",
+                                title: this.$t("plugins.names"),
+                                icon: {
+                                    element: "DocumentationPluginsMenuIcon",
+                                    class: "menu-icon"
+                                },
+                            },
+                            {
+                                href: "https://discord.gg/NMG39WKGth",
+                                title: "Discord",
+                                icon: {
+                                    element: "Discord",
+                                    class: "menu-icon"
+                                },
+                                external: true
+                            },
+                            {
+                                href: "https://github.com/kestra-io/kestra/issues",
+                                title: this.$t("documentation.github"),
+                                icon: {
+                                    element: "Github",
+                                    class: "menu-icon"
+                                },
+                                external: true
+                            },
+
+                        ]
                     },
                     {
                         href: "/settings",
@@ -234,6 +280,12 @@
         transition: opacity 0.2s;
     }
 
+    ::v-deep .vsm--dropdown {
+        .vsm--title {
+            top: 3px;
+        }
+    }
+
     ::v-deep .menu-icon {
         font-size: 1.5em;
         background-color: transparent !important;
@@ -242,6 +294,16 @@
         svg {
             top: 3px;
             left: 3px;
+        }
+    }
+
+
+    ::v-deep .vsm--dropdown_mobile-item {
+        .vsm--item {
+            .vsm--title {
+                left: 0;
+                position: relative;
+            }
         }
     }
 </style>

@@ -186,6 +186,8 @@ public class RunContext {
 
         if (applicationContext.getProperty("kestra.variables.globals", Map.class).isPresent()) {
             builder.put("globals", applicationContext.getProperty("kestra.variables.globals", Map.class).get());
+        } else {
+            builder.put("globals", Map.of());
         }
 
         if (flow != null) {

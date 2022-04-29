@@ -26,13 +26,13 @@ public class MetricRegistry {
     public final static String METRIC_WORKER_ENDED_COUNT = "worker.ended.count";
     public final static String METRIC_WORKER_ENDED_DURATION = "worker.ended.duration";
 
-    public final static String KESTRA_EXECUTOR_TASKRUN_NEXT_COUNT = "executor.taskrun.next.count";
-    public final static String KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT = "executor.taskrun.ended.count";
-    public final static String KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION = "executor.taskrun.ended.duration";
-    public final static String KESTRA_EXECUTOR_WORKERTASKRESULT_COUNT = "executor.workertaskresult.count";
-    public final static String KESTRA_EXECUTOR_EXECUTION_STARTED_COUNT = "executor.execution.started.count";
-    public final static String KESTRA_EXECUTOR_EXECUTION_END_COUNT = "executor.execution.end.count";
-    public final static String METRIC_EXECUTOR_EXECUTION_DURATION = "executor.execution.duration";
+    public final static String EXECUTOR_TASKRUN_NEXT_COUNT = "executor.taskrun.next.count";
+    public final static String EXECUTOR_TASKRUN_ENDED_COUNT = "executor.taskrun.ended.count";
+    public final static String EXECUTOR_TASKRUN_ENDED_DURATION = "executor.taskrun.ended.duration";
+    public final static String EXECUTOR_WORKERTASKRESULT_COUNT = "executor.workertaskresult.count";
+    public final static String EXECUTOR_EXECUTION_STARTED_COUNT = "executor.execution.started.count";
+    public final static String EXECUTOR_EXECUTION_END_COUNT = "executor.execution.end.count";
+    public final static String EXECUTOR_EXECUTION_DURATION = "executor.execution.duration";
 
     public final static String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
     public final static String METRIC_INDEXER_REQUEST_DURATION = "indexer.request.duration";
@@ -50,6 +50,8 @@ public class MetricRegistry {
     public final static String SCHEDULER_EVALUATE_DURATION = "scheduler.evaluate.duration";
     public final static String SCHEDULER_EXECUTION_RUNNING_DURATION = "scheduler.execution.running.duration";
     public final static String SCHEDULER_EXECUTION_MISSING_DURATION = "scheduler.execution.missing.duration";
+
+    public final static String STREAMS_STATE_COUNT = "stream.state.count";
 
     public final static String TAG_TASK_TYPE = "task_type";
     public final static String TAG_FLOW_ID = "flow_id";

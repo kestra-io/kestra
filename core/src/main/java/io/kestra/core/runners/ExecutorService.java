@@ -8,7 +8,6 @@ import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.DynamicTask;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -118,7 +117,7 @@ public class ExecutorService {
 
         if (execution.getState().getCurrent() == State.Type.CREATED) {
             metricRegistry
-                .counter(MetricRegistry.KESTRA_EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(execution))
+                .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(execution))
                 .increment();
 
             flow.logger().info(
@@ -132,7 +131,7 @@ public class ExecutorService {
         }
 
         metricRegistry
-            .counter(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_NEXT_COUNT, metricRegistry.tags(execution))
+            .counter(MetricRegistry.EXECUTOR_TASKRUN_NEXT_COUNT, metricRegistry.tags(execution))
             .increment(nexts.size());
 
         return newExecution;
@@ -201,7 +200,7 @@ public class ExecutorService {
             .peek(workerTaskResult -> {
                 metricRegistry
                     .counter(
-                        MetricRegistry.KESTRA_EXECUTOR_WORKERTASKRESULT_COUNT,
+                        MetricRegistry.EXECUTOR_WORKERTASKRESULT_COUNT,
                         metricRegistry.tags(workerTaskResult)
                     )
                     .increment();
@@ -296,11 +295,11 @@ public class ExecutorService {
         }
 
         metricRegistry
-            .counter(MetricRegistry.KESTRA_EXECUTOR_EXECUTION_END_COUNT, metricRegistry.tags(newExecution))
+            .counter(MetricRegistry.EXECUTOR_EXECUTION_END_COUNT, metricRegistry.tags(newExecution))
             .increment();
 
         metricRegistry
-            .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION, metricRegistry.tags(newExecution))
+            .timer(MetricRegistry.EXECUTOR_EXECUTION_DURATION, metricRegistry.tags(newExecution))
             .record(newExecution.getState().getDuration());
 
         return executor.withExecution(newExecution, "onEnd");
@@ -481,7 +480,7 @@ public class ExecutorService {
         }
 
         metricRegistry
-            .counter(MetricRegistry.KESTRA_EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(executor.getExecution()))
+            .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(executor.getExecution()))
             .increment();
 
         executor.getFlow().logger().info(

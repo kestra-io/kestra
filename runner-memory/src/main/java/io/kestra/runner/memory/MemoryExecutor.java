@@ -299,11 +299,11 @@ public class MemoryExecutor implements ExecutorInterface {
             // send metrics on terminated
             if (message.getTaskRun().getState().isTerninated()) {
                 metricRegistry
-                    .counter(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                    .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
                     .increment();
 
                 metricRegistry
-                    .timer(MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                    .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
                     .record(message.getTaskRun().getState().getDuration());
             }
 

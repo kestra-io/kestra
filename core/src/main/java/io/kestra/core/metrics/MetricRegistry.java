@@ -51,14 +51,12 @@ public class MetricRegistry {
     public final static String SCHEDULER_EXECUTION_RUNNING_DURATION = "scheduler.execution.running.duration";
     public final static String SCHEDULER_EXECUTION_MISSING_DURATION = "scheduler.execution.missing.duration";
 
-    public final static String TAG_TASK_ID = "task_id";
     public final static String TAG_TASK_TYPE = "task_type";
     public final static String TAG_FLOW_ID = "flow_id";
     public final static String TAG_NAMESPACE_ID = "namespace_id";
     public final static String TAG_TRIGGER_ID = "trigger_id";
     public final static String TAG_STATE = "state";
     public final static String TAG_ATTEMPT_COUNT = "attempt_count";
-    public final static String TAG_VALUE = "value";
 
     @Inject
     private MeterRegistry meterRegistry;
@@ -153,7 +151,6 @@ public class MetricRegistry {
             tags,
             TAG_NAMESPACE_ID, workerTaskResult.getTaskRun().getNamespace(),
             TAG_FLOW_ID, workerTaskResult.getTaskRun().getFlowId(),
-            TAG_TASK_ID, workerTaskResult.getTaskRun().getTaskId(),
             TAG_STATE, workerTaskResult.getTaskRun().getState().getCurrent().name()
         );
     }
@@ -166,7 +163,6 @@ public class MetricRegistry {
      */
     public String[] tags(Task task) {
         return new String[]{
-            TAG_TASK_ID, task.getId(),
             TAG_TASK_TYPE, task.getType(),
         };
     }

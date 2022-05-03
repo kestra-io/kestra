@@ -18,6 +18,8 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.slf4j.event.Level;
 
 import java.util.List;
@@ -37,43 +39,29 @@ public class LogController {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     protected QueueInterface<LogEntry> logQueue;
 
-    /**
-     * Search for logs
-     *
-     * @param query The lucene query
-     * @param page The current page
-     * @param size The current page size
-     * @param sort The sort of current page
-     * @return Paged log result
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/search", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Logs"}, summary = "Search for logs")
     public PagedResults<LogEntry> find(
-        @QueryValue(value = "q") String query,
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size,
-        @Nullable @QueryValue(value = "minLevel") Level minLevel,
-        @Nullable @QueryValue(value = "sort") List<String> sort
-    ) {
+        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String query,
+        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "The min log level filter") @Nullable @QueryValue(value = "minLevel") Level minLevel
+        ) {
         return PagedResults.of(
             logRepository.find(query, PageableUtils.from(page, size, sort), minLevel)
         );
     }
 
-    /**
-     * Get execution log
-     *
-     * @param executionId The execution identifier
-
-     * @return Paged log result
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/{executionId}", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Logs"}, summary = "Get logs for a specific execution")
     public List<LogEntry> findByExecution(
-        String executionId,
-        @Nullable @QueryValue(value = "minLevel") Level minLevel,
-        @Nullable @QueryValue(value = "taskRunId") String taskRunId,
-        @Nullable @QueryValue(value = "taskId") String taskId
+        @Parameter(description = "The execution id") String executionId,
+        @Parameter(description = "The min log level filter") @Nullable @QueryValue(value = "minLevel") Level minLevel,
+        @Parameter(description = "The taskrun id") @Nullable @QueryValue(value = "taskRunId") String taskRunId,
+        @Parameter(description = "The task id") @Nullable @QueryValue(value = "taskId") String taskId
     ) {
         if (taskId != null) {
             return logRepository.findByExecutionIdAndTaskId(executionId, taskId, minLevel);
@@ -84,15 +72,13 @@ public class LogController {
         }
     }
 
-    /**
-     * Follow log for a specific execution
-     *
-     * @param executionId The execution id to follow
-     * @return execution log sse event
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
-    public Flowable<Event<LogEntry>> follow(String executionId, @Nullable @QueryValue(value = "minLevel") Level minLevel) {
+    @Operation(tags = {"Logs"}, summary = "Follow log for a specific execution")
+    public Flowable<Event<LogEntry>> follow(
+        @Parameter(description = "The execution id") String executionId,
+        @Parameter(description = "The min log level filter") @Nullable @QueryValue(value = "minLevel") Level minLevel
+    ) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
         List<String> levels = LogEntry.findLevelsByMin(minLevel);
 

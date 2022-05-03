@@ -9,6 +9,9 @@ micronaut:
       ui:
         paths: classpath:ui
         mapping: /ui/**
+      static:
+        paths: classpath:static
+        mapping: /static/**
   server:
     max-request-size: 10GB
     multipart:

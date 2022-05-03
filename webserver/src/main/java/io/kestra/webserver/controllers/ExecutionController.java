@@ -15,6 +15,11 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.apache.commons.io.FilenameUtils;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
@@ -93,12 +98,13 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Search for executions")
     public PagedResults<Execution> find(
-        @QueryValue(value = "q") String query,
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size,
-        @Nullable @QueryValue(value = "state") List<State.Type> state,
-        @Nullable @QueryValue(value = "sort") List<String> sort
+        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String query,
+        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "A state filter") @Nullable @QueryValue(value = "state") List<State.Type> state
     ) {
         return PagedResults.of(
             executionRepository
@@ -108,12 +114,13 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "taskruns/search", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Search for taskruns")
     public PagedResults<TaskRun> findTaskRun(
-        @QueryValue(value = "q") String query,
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size,
+        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String query,
+        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
         @Nullable @QueryValue(value = "state") List<State.Type> state,
-        @Nullable @QueryValue(value = "sort") List<String> sort
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort
     ) {
         return PagedResults.of(
             executionRepository
@@ -123,19 +130,17 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "taskruns/maxTaskRunSetting")
+    @Hidden
     public Integer maxTaskRunSetting() {
         return executionRepository.maxTaskRunSetting();
     }
 
-    /**
-     * Get an execution flow tree
-     *
-     * @param executionId The execution identifier
-     * @return the flow tree  with the provided identifier
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/graph", produces = MediaType.TEXT_JSON)
-    public FlowGraph flowGraph(String executionId) throws IllegalVariableEvaluationException {
+    @Operation(tags = {"Executions"}, summary = "Generate a graph for an execution")
+    public FlowGraph flowGraph(
+        @Parameter(description = "The execution id") String executionId
+    ) throws IllegalVariableEvaluationException {
         return executionRepository
             .findById(executionId)
             .map(throwFunction(execution -> {
@@ -152,94 +157,63 @@ public class ExecutionController {
             .orElse(null);
     }
 
-    /**
-     * Get a execution
-     *
-     * @param executionId The execution identifier
-     * @return the execution with the provided identifier
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}", produces = MediaType.TEXT_JSON)
-    public Execution get(String executionId) {
+    @Operation(tags = {"Executions"}, summary = "Get an execution")
+    public Execution get(
+        @Parameter(description = "The execution id") String executionId
+    ) {
         return executionRepository
             .findById(executionId)
             .orElse(null);
     }
 
-    /**
-     * Find and returns all executions for a specific namespace and flow identifier
-     *
-     * @param namespace The flow namespace
-     * @param flowId The flow identifier
-     * @param page The number of result pages to return
-     * @param size The number of result by page
-     * @return a list of found executions
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Search for executions for a flow")
     public PagedResults<Execution> findByFlowId(
-        @QueryValue(value = "namespace") String namespace,
-        @QueryValue(value = "flowId") String flowId,
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size) {
+        @Parameter(description = "The flow namespace") @QueryValue(value = "namespace") String namespace,
+        @Parameter(description = "The flow id") @QueryValue(value = "flowId") String flowId,
+        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size
+    ) {
         return PagedResults.of(
             executionRepository
                 .findByFlowId(namespace, flowId, Pageable.from(page, size))
         );
     }
 
-    /**
-     * Trigger a new execution for a webhook trigger
-     *
-     * @param namespace The flow namespace
-     * @param id The flow id
-     * @param key The webhook trigger uid
-     * @return execution created
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Trigger a new execution by POST webhook trigger")
     public Execution webhookTriggerPost(
-        String namespace,
-        String id,
-        String key,
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The webhook trigger uid") String key,
         HttpRequest<String> request
     ) {
         return this.webhook(namespace, id, key, request);
     }
 
-    /**
-     * Trigger a new execution for a webhook trigger
-     *
-     * @param namespace The flow namespace
-     * @param id The flow id
-     * @param key The webhook trigger uid
-     * @return execution created
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Trigger a new execution by GET webhook trigger")
     public Execution webhookTriggerGet(
-        String namespace,
-        String id,
-        String key,
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The webhook trigger uid") String key,
         HttpRequest<String> request
     ) {
         return this.webhook(namespace, id, key, request);
     }
 
-    /**
-     * Trigger a new execution for a webhook trigger
-     *
-     * @param namespace The flow namespace
-     * @param id The flow id
-     * @param key The webhook trigger uid
-     * @return execution created
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "executions/webhook/{namespace}/{id}/{key}", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Trigger a new execution by PUT webhook trigger")
     public Execution webhookTriggerPut(
-        String namespace,
-        String id,
-        String key,
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The webhook trigger uid") String key,
         HttpRequest<String> request
     ) {
         return this.webhook(namespace, id, key, request);
@@ -284,19 +258,13 @@ public class ExecutionController {
         return execution.get();
     }
 
-    /**
-     * Trigger a new execution for current flow
-     *
-     * @param namespace The flow namespace
-     * @param id The flow id
-     * @return execution created
-     * @throws IllegalStateException if the flow is disabled
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/trigger/{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(tags = {"Executions"}, summary = "Trigger a new execution for a flow")
+    @ApiResponse(responseCode = "409", description = "if the flow is disabled")
     public Execution trigger(
-        String namespace,
-        String id,
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
         @Nullable Map<String, String> inputs,
         @Nullable Publisher<StreamingFileUpload> files
     ) {
@@ -353,17 +321,13 @@ public class ExecutionController {
 
         throw new IllegalArgumentException("Invalid prefix path");
     }
-    /**
-     * Download file binary from uri parameter
-     *
-     * @param path The file URI to return
-     * @return data binary content
-     */
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/file", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(tags = {"Executions"}, summary = "Download file for an execution")
     public HttpResponse<StreamedFile> file(
-        String executionId,
-        @QueryValue(value = "path") URI path
+        @Parameter(description = "The execution id") String executionId,
+        @Parameter(description = "The internal storage uri") @QueryValue(value = "path") URI path
     ) throws IOException, URISyntaxException {
         HttpResponse<StreamedFile> httpResponse = this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file?path=" + path);
         if (httpResponse != null) {
@@ -376,17 +340,12 @@ public class ExecutionController {
         );
     }
 
-    /**
-     * Get file meta information from given path
-     *
-     * @param path The file URI to gather metas values
-     * @return metadata about given file
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/file/metas", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Get file meta information for an execution")
     public HttpResponse<FileMetas> filesize(
-        String executionId,
-        @QueryValue(value = "path") URI path
+        @Parameter(description = "The execution id") String executionId,
+        @Parameter(description = "The internal storage uri") @QueryValue(value = "path") URI path
     ) throws IOException {
         HttpResponse<FileMetas> httpResponse =this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file/metas?path=" + path);
         if (httpResponse != null) {
@@ -399,18 +358,13 @@ public class ExecutionController {
         );
     }
 
-    /**
-     * Restart a new execution from an old one
-     *
-     * @param executionId the origin execution id to clone
-     * @return the restarted execution
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/{executionId}/restart", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Restart a new execution from an old one")
     public Execution restart(
-        String executionId,
-        @Nullable @QueryValue(value = "revision") Integer revision
-        ) throws Exception {
+        @Parameter(description = "The execution id") String executionId,
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue(value = "revision") Integer revision
+    ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
             return null;
@@ -425,19 +379,13 @@ public class ExecutionController {
         return restart;
     }
 
-    /**
-     * Create a new execution from an old one and start it from a specified task run id
-     *
-     * @param executionId the origin execution id to clone
-     * @param taskRunId the reference taskRun id
-     * @return the restarted execution
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/{executionId}/replay", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Create a new execution from an old one and start it from a specified task run id")
     public Execution replay(
-        String executionId,
-        @Nullable @QueryValue(value = "taskRunId") String taskRunId,
-        @Nullable @QueryValue(value = "revision") Integer revision
+        @Parameter(description = "the original execution id to clone") String executionId,
+        @Parameter(description = "The taskrun id") @Nullable @QueryValue(value = "taskRunId") String taskRunId,
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue(value = "revision") Integer revision
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
@@ -469,16 +417,13 @@ public class ExecutionController {
         }
     }
 
-    /**
-     * Create a new execution from an old one and start it from a specified task run id
-     *
-     * @param executionId the origin execution id to clone
-     * @param stateRequest the taskRun id &amp; state to apply
-     * @return the restarted execution
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/{executionId}/state", produces = MediaType.TEXT_JSON)
-    public Execution changeState(String executionId, @Body StateRequest stateRequest) throws Exception {
+    @Operation(tags = {"Executions"}, summary = "Change state for a taskrun in an execution")
+    public Execution changeState(
+        @Parameter(description = "The execution id") String executionId,
+        @Parameter(description = "the taskRun id and state to apply") @Body StateRequest stateRequest
+    ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
             return null;
@@ -497,15 +442,18 @@ public class ExecutionController {
         State.Type state;
     }
 
-    /**
-     * Kill an execution and stop all works
-     *
-     * @param executionId the execution id to kill
-     * @throws IllegalStateException if the executions is already finished
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/{executionId}/kill", produces = MediaType.TEXT_JSON)
-    public HttpResponse<?> kill(String executionId) {
+    @Operation(tags = {"Executions"}, summary = "Kill an execution")
+    @ApiResponses(
+        value = {
+            @ApiResponse(responseCode = "204", description = "On success"),
+            @ApiResponse(responseCode = "409", description = "if the executions is already finished")
+        }
+    )
+    public HttpResponse<?> kill(
+        @Parameter(description = "The execution id") String executionId
+    ) {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isPresent() && execution.get().getState().isTerninated()) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
@@ -525,15 +473,12 @@ public class ExecutionController {
             execution.getState().getCurrent() != State.Type.PAUSED;
     }
 
-    /**
-     * Trigger a new execution for current flow and follow execution
-     *
-     * @param executionId The execution id to follow
-     * @return execution sse event
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
-    public Flowable<Event<Execution>> follow(String executionId) {
+    @Operation(tags = {"Executions"}, summary = "Follow an execution")
+    public Flowable<Event<Execution>> follow(
+        @Parameter(description = "The execution id") String executionId
+    ) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
 
         return Flowable

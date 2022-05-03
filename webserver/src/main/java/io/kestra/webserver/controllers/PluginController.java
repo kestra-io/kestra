@@ -12,6 +12,8 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -33,7 +35,8 @@ public class PluginController {
 
     @Get
     @ExecuteOn(TaskExecutors.IO)
-    public List<Plugin> search() throws HttpStatusException {
+    @Operation(tags = {"Plugins"}, summary = "Get list of plugins")
+    public List<Plugin> search() {
         return pluginService
             .allPlugins()
             .stream()
@@ -42,7 +45,8 @@ public class PluginController {
     }
 
     @Get(uri = "icons")
-    public Map<String, PluginIcon> icons() throws HttpStatusException {
+    @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
+    public Map<String, PluginIcon> icons() {
         return pluginService
             .allPlugins()
             .stream()
@@ -69,7 +73,10 @@ public class PluginController {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Get(uri = "{cls}")
     @ExecuteOn(TaskExecutors.IO)
-    public Doc pluginDocumentation(String cls) throws HttpStatusException, IOException {
+    @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
+    public Doc pluginDocumentation(
+        @Parameter(description = "The plugin full class name") String cls
+    ) throws IOException {
         ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(
             pluginService.allPlugins(),
             cls

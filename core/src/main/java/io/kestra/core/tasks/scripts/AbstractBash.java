@@ -366,5 +366,13 @@ abstract public class AbstractBash extends Task {
         )
         @PluginProperty(dynamic = true)
         protected String networkMode;
+
+        @Schema(
+            title = "List of volumes to mount",
+            description = "Must be a valid mount expression as string, example : `/home/user:/app`\n\n" +
+                "Volumes mount are disabled by default for security reasons, you must enabled on server configuration with `kestra.tasks.scripts.docker.volume-enabled` to `true`"
+        )
+        @PluginProperty(dynamic = true)
+        protected List<String> volumes;
     }
 }

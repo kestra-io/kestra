@@ -154,7 +154,7 @@ public class KafkaStreamService {
 
         public synchronized void start(final KafkaStreams.StateListener listener) throws IllegalStateException, StreamsException {
             this.setUncaughtExceptionHandler(e -> {
-                log.error("Uncaught exception in Kafka Stream, closing !", e);
+                this.logger.error("Uncaught exception in Kafka Stream, closing !", e);
                 return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_APPLICATION;
             });
 
@@ -182,12 +182,12 @@ public class KafkaStreamService {
                     newState == State.NOT_RUNNING ||
                     newState == State.PENDING_SHUTDOWN
                 ) {
-                    log.warn("Switching stream state from {} to {}", oldState, newState);
+                    this.logger.warn("Switching stream state from {} to {}", oldState, newState);
                 } else if (
                     newState == State.PENDING_ERROR ||
                     newState == State.ERROR
                 ) {
-                    log.error("Switching stream state from {} to {}", oldState, newState);
+                    this.logger.error("Switching stream state from {} to {}", oldState, newState);
                 } else {
                     logger.info("Switching stream state from {} to {}", oldState, newState);
                 }

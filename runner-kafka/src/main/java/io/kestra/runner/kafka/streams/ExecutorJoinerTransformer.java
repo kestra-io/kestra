@@ -86,14 +86,14 @@ public class ExecutorJoinerTransformer implements ValueTransformerWithKey<String
         if (workerTaskResult.getTaskRun().getState().isTerninated()) {
             metricRegistry
                 .counter(
-                    MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_COUNT,
+                    MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT,
                     metricRegistry.tags(workerTaskResult)
                 )
                 .increment();
 
             metricRegistry
                 .timer(
-                    MetricRegistry.KESTRA_EXECUTOR_TASKRUN_ENDED_DURATION,
+                    MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION,
                     metricRegistry.tags(workerTaskResult)
                 )
                 .record(workerTaskResult.getTaskRun().getState().getDuration());

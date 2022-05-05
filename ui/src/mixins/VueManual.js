@@ -23,11 +23,14 @@ export default {
             this.manualComponents.push(mount);
 
             return mount;
+        },
+        destroyedManualComponent() {
+            (this.manualComponents || []).forEach(value => {
+                value.$destroy();
+            });
         }
     },
     destroyed() {
-        (this.manualComponents || []).forEach(value => {
-            value.$destroy();
-        });
+        this.destroyedManualComponent();
     }
 }

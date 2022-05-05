@@ -25,6 +25,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import io.micronaut.core.annotation.Nullable;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
@@ -37,85 +41,72 @@ public class FlowController {
     @Inject
     private FlowRepositoryInterface flowRepository;
 
-    /**
-     * @param namespace The flow namespace
-     * @param id        The flow id
-     * @return flow tree found
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
-    public FlowGraph flowGraph(String namespace, String id, Optional<Integer> revision) throws IllegalVariableEvaluationException {
+    @Operation(tags = {"Flows"}, summary = "Generate a graph for a flow")
+    public FlowGraph flowGraph(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The flow revision") Optional<Integer> revision
+    ) throws IllegalVariableEvaluationException {
         return flowRepository
             .findById(namespace, id, revision)
             .map(throwFunction(FlowGraph::of))
             .orElse(null);
     }
 
-    /**
-     * @param namespace The flow namespace
-     * @param id        The flow id
-     * @return flow found
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
-    public Flow index(String namespace, String id) {
+    @Operation(tags = {"Flows"}, summary = "Get a flow")
+    public Flow index(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id
+    ) {
         return flowRepository
             .findById(namespace, id)
             .orElse(null);
     }
 
-    /**
-     * @param namespace The flow namespace
-     * @param id The flow id
-     * @return flow revisions found
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/revisions", produces = MediaType.TEXT_JSON)
-    public List<Flow> revisions(String namespace, String id) {
+    @Operation(tags = {"Flows"}, summary = "Get revisions for a flow")
+    public List<Flow> revisions(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id
+    ) {
         return flowRepository.findRevisions(namespace, id);
     }
 
-    /**
-     * @param query The flow query that is a lucene string
-     * @param page  Page in flow pagination
-     * @param size  Element count in pagination selection
-     * @return flow list
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Flows"}, summary = "Search for flows")
     public PagedResults<Flow> find(
-        @QueryValue(value = "q") String query, //Search by namespace using lucene
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size,
-        @Nullable @QueryValue(value = "sort") List<String> sort
+        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String query,
+        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort
     ) throws HttpStatusException {
         return PagedResults.of(flowRepository.find(query, PageableUtils.from(page, size, sort)));
     }
 
-    /**
-     * @param query The flow query that is a lucene string
-     * @param page  Page in flow pagination
-     * @param size  Element count in pagination selection
-     * @return flow search list
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/source", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Flows"}, summary = "Search for flows source code")
     public PagedResults<SearchResult<Flow>> source(
-        @QueryValue(value = "q") String query, //Search by namespace using lucene
-        @QueryValue(value = "page", defaultValue = "1") int page,
-        @QueryValue(value = "size", defaultValue = "10") int size,
-        @Nullable @QueryValue(value = "sort") List<String> sort
+        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String query,
+        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort
     ) throws HttpStatusException {
         return PagedResults.of(flowRepository.findSourceCode(query, PageableUtils.from(page, size, sort)));
     }
 
-    /**
-     * @param flow The flow content
-     * @return flow created
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Post(produces = MediaType.TEXT_JSON)
-    public HttpResponse<Flow> create(@Body @Valid Flow flow) throws ConstraintViolationException {
+    @Operation(tags = {"Flows"}, summary = "Create a flow")
+    public HttpResponse<Flow> create(
+        @Parameter(description = "The flow") @Body @Valid Flow flow
+    ) throws ConstraintViolationException {
         if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
                 "Flow id already exists",
@@ -129,15 +120,18 @@ public class FlowController {
         return HttpResponse.ok(flowRepository.create(flow));
     }
 
-    /**
-     * @param namespace The namespace to update
-     * @param flows The flows content, all flow will be created / updated for this namespace.
-     *                  Flow in repository but not in {@code flows} will also be deleted
-     * @return flows created or updated
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON)
-    public List<Flow> updateNamespace(String namespace, @Body @Valid  List<Flow> flows) throws ConstraintViolationException {
+    @Operation(
+        tags = {"Flows"},
+        summary = "Update a complete namespace",
+        description = "All flow will be created / updated for this namespace.\n" +
+            "Flow that already created but not in `flows` will be deleted"
+    )
+    public List<Flow> updateNamespace(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows
+    ) throws ConstraintViolationException {
         // control namespace to update
         Set<ManualConstraintViolation<Flow>> invalids = flows
             .stream()
@@ -199,14 +193,14 @@ public class FlowController {
             .collect(Collectors.toList());
     }
 
-    /**
-     * @param namespace flow namespace
-     * @param id        flow id to update
-     * @return flow updated
-     */
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
-    public HttpResponse<Flow> update(String namespace, String id, @Body @Valid Flow flow) throws ConstraintViolationException {
+    @Operation(tags = {"Flows"}, summary = "Update a flow")
+    public HttpResponse<Flow> update(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The flow") @Body @Valid Flow flow
+    ) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
 
         if (existingFlow.isEmpty()) {
@@ -216,15 +210,15 @@ public class FlowController {
         return HttpResponse.ok(flowRepository.update(flow, existingFlow.get()));
     }
 
-    /**
-     * @param namespace flow namespace
-     * @param id        flow id to update
-     * @param taskId    taskId id to update
-     * @return flow updated
-     */
     @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
-    public HttpResponse<Flow> updateTask(String namespace, String id, String taskId, @Valid @Body Task task) throws ConstraintViolationException {
+    @Operation(tags = {"Flows"}, summary = "Update a single task on a flow")
+    public HttpResponse<Flow> updateTask(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The task id") String taskId,
+        @Parameter(description = "The task") @Valid @Body Task task
+    ) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
 
         if (existingFlow.isEmpty()) {
@@ -244,14 +238,16 @@ public class FlowController {
         }
     }
 
-    /**
-     * @param namespace flow namespace
-     * @param id        flow id to delete
-     * @return Http 204 on delete or Http 404 when not found
-     */
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
-    public HttpResponse<Void> delete(String namespace, String id) {
+    @Operation(tags = {"Flows"}, summary = "Delete a flow")
+    @ApiResponses(
+        @ApiResponse(responseCode = "204", description = "On success")
+    )
+    public HttpResponse<Void> delete(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id
+    ) {
         Optional<Flow> flow = flowRepository.findById(namespace, id);
         if (flow.isPresent()) {
             flowRepository.delete(flow.get());
@@ -261,11 +257,9 @@ public class FlowController {
         }
     }
 
-    /**
-     * @return The flow's namespaces set
-     */
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "distinct-namespaces", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Flows"}, summary = "List all distinct namespaces")
     public List<String> listDistinctNamespace() {
         return flowRepository.findDistinctNamespace();
     }

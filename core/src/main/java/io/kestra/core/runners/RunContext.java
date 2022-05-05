@@ -186,6 +186,8 @@ public class RunContext {
 
         if (applicationContext.getProperty("kestra.variables.globals", Map.class).isPresent()) {
             builder.put("globals", applicationContext.getProperty("kestra.variables.globals", Map.class).get());
+        } else {
+            builder.put("globals", Map.of());
         }
 
         if (flow != null) {
@@ -544,20 +546,6 @@ public class RunContext {
             builder
                 .put(MetricRegistry.TAG_FLOW_ID, ((Map<String, String>) this.variables.get("flow")).get("id"))
                 .put(MetricRegistry.TAG_NAMESPACE_ID, ((Map<String, String>) this.variables.get("flow")).get("namespace"));
-        }
-
-        if (this.variables.containsKey("task")) {
-            builder
-                .put(MetricRegistry.TAG_TASK_ID, ((Map<String, String>) this.variables.get("task")).get("id"))
-                .put(MetricRegistry.TAG_TASK_TYPE, ((Map<String, String>) this.variables.get("task")).get("type"));
-        }
-
-        if (this.variables.containsKey("taskrun")) {
-            Map<String, String> taskrun = (Map<String, String>) this.variables.get("taskrun");
-
-            if (taskrun.containsValue("value")) {
-                builder.put(MetricRegistry.TAG_VALUE, taskrun.get("value"));
-            }
         }
 
         return builder.build();

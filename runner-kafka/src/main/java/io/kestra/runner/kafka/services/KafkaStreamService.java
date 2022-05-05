@@ -7,6 +7,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -115,11 +116,23 @@ public class KafkaStreamService {
 
     public static class Stream extends KafkaStreams {
         private final Logger logger;
+
+        private final MetricRegistry meterRegistry;
+
+        private final String[] tags;
+
         private KafkaStreamsMetrics metrics;
+
         private boolean hasStarted = false;
 
         private Stream(Topology topology, Properties props, MetricRegistry meterRegistry, Logger logger) {
             super(topology, props);
+            this.meterRegistry = meterRegistry;
+
+            tags = new String[]{
+                "client_class_id",
+                (String) props.get(CommonClientConfigs.CLIENT_ID_CONFIG)
+            };
 
             if (meterRegistry != null) {
                 metrics = new KafkaStreamsMetrics(
@@ -141,13 +154,25 @@ public class KafkaStreamService {
 
         public synchronized void start(final KafkaStreams.StateListener listener) throws IllegalStateException, StreamsException {
             this.setUncaughtExceptionHandler(e -> {
-                log.error("Uncaught exception in Kafka Stream, closing !", e);
+                this.logger.error("Uncaught exception in Kafka Stream, closing !", e);
                 return StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.SHUTDOWN_APPLICATION;
             });
 
             this.setGlobalStateRestoreListener(new StateRestoreLoggerListeners(logger));
 
             this.setStateListener((newState, oldState) -> {
+                meterRegistry.gauge(
+                    MetricRegistry.STREAMS_STATE_COUNT,
+                    0,
+                    ArrayUtils.addAll(tags, "state", oldState.name())
+                );
+
+                meterRegistry.gauge(
+                    MetricRegistry.STREAMS_STATE_COUNT,
+                    1,
+                    ArrayUtils.addAll(tags, "state", newState.name())
+                );
+
                 if (newState == State.RUNNING) {
                     this.hasStarted = true;
                 }
@@ -157,12 +182,12 @@ public class KafkaStreamService {
                     newState == State.NOT_RUNNING ||
                     newState == State.PENDING_SHUTDOWN
                 ) {
-                    log.warn("Switching stream state from {} to {}", oldState, newState);
+                    this.logger.warn("Switching stream state from {} to {}", oldState, newState);
                 } else if (
                     newState == State.PENDING_ERROR ||
                     newState == State.ERROR
                 ) {
-                    log.error("Switching stream state from {} to {}", oldState, newState);
+                    this.logger.error("Switching stream state from {} to {}", oldState, newState);
                 } else {
                     logger.info("Switching stream state from {} to {}", oldState, newState);
                 }

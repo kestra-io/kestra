@@ -41,8 +41,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class DockerScriptRunner implements ScriptRunnerInterface {
     private final RetryUtils retryUtils;
 
+    private final Boolean volumesEnabled;
+
     public DockerScriptRunner(ApplicationContext applicationContext) {
         this.retryUtils = applicationContext.getBean(RetryUtils.class);
+        this.volumesEnabled = applicationContext.getProperty("kestra.tasks.scripts.docker.volume-enabled", Boolean.class).orElse(false);
     }
 
     private DockerClient getDockerClient(AbstractBash abstractBash, RunContext runContext, Path workingDirectory) throws IllegalVariableEvaluationException, IOException {
@@ -170,6 +173,14 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
 
             if (abstractBash.getDockerOptions().getExtraHosts() != null) {
                 hostConfig.withExtraHosts(runContext.render(abstractBash.getDockerOptions().getExtraHosts(), additionalVars).toArray(String[]::new));
+            }
+
+            if (this.volumesEnabled && abstractBash.getDockerOptions().getVolumes() != null) {
+                hostConfig.withBinds(runContext.render(abstractBash.getDockerOptions().getVolumes())
+                    .stream()
+                    .map(Bind::parse)
+                    .collect(Collectors.toList())
+                );
             }
 
             if (abstractBash.getDockerOptions().getNetworkMode() != null) {

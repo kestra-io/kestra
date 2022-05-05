@@ -59,6 +59,7 @@
         cy: undefined,
         watch: {
             flowGraph() {
+                this.destroyedManualComponent()
                 this.generateGraph();
             }
         },

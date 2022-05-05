@@ -31,7 +31,7 @@ public class StatsController {
     @Post(uri = "executions/daily", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions")
     public List<DailyExecutionStatistics> dailyStatistics(
-        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String q,
+        @Parameter(description = "Lucene string filter") String q,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
     ) {
@@ -49,7 +49,7 @@ public class StatsController {
     @Post(uri = "taskruns/daily", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for taskRuns")
     public List<DailyExecutionStatistics> taskRunsDailyStatistics(
-        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String q,
+        @Parameter(description = "Lucene string filter") String q,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
     ) {
@@ -65,7 +65,7 @@ public class StatsController {
     @Post(uri = "executions/daily/group-by-flow", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions group by namespaces and flows")
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
-        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String q,
+        @Parameter(description = "Lucene string filter") String q,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
         @Parameter(description = "Return only namespace result and skip flows") @Nullable Boolean namespaceOnly

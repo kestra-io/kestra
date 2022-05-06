@@ -171,7 +171,7 @@ jobs:
 
       - name: Set up Docker Buildx
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || startsWith(github.ref, 'refs/tags/v')
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       # Docker Login
       - name: Login to DockerHub

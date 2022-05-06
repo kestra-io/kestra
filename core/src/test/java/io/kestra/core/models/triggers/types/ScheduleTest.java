@@ -301,6 +301,33 @@ class ScheduleTest {
         }
     }
 
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void lateMaximumDelay() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .cron("* * * * *")
+            .lateMaximumDelay(Duration.ofMinutes(5))
+            .build();
+
+        ZonedDateTime date = ZonedDateTime.now().minusMinutes(15);
+        ZonedDateTime expected = ZonedDateTime.now().minusMinutes(4)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS);
+
+        Optional<Execution> evaluate = trigger.evaluate(
+            conditionContext(),
+            TriggerContext.builder()
+                .date(date)
+                .build()
+        );
+
+        assertThat(evaluate.isPresent(), is(true));
+        var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
+        assertThat(dateFromVars(vars.get("date"), date), is(expected));
+
+    }
+
     private ConditionContext conditionContext() {
         return ConditionContext.builder()
             .runContext(runContextFactory.of())

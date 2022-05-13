@@ -36,7 +36,7 @@
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline";
     import FileCodeOutline from "vue-material-design-icons/FileCodeOutline";
     import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended";
-    import Discord from "vue-material-design-icons/Discord";
+    import Slack from "vue-material-design-icons/Slack";
     import Github from "vue-material-design-icons/Github";
     import CogOutline from "vue-material-design-icons/CogOutline";
     import {mapState} from "vuex";
@@ -49,7 +49,7 @@
     Vue.component("DocumentationMenuIcon", BookMultipleOutline);
     Vue.component("DocumentationDeveloperMenuIcon", FileCodeOutline);
     Vue.component("DocumentationPluginsMenuIcon", GoogleCirclesExtended);
-    Vue.component("Discord", Discord);
+    Vue.component("Slack", Slack);
     Vue.component("Github", Github);
     Vue.component("SettingMenuIcon", CogOutline);
 
@@ -158,10 +158,10 @@
                                 },
                             },
                             {
-                                href: "https://discord.gg/NMG39WKGth",
-                                title: "Discord",
+                                href: "https://join.slack.com/t/kestra-io/shared_invite/zt-193shv281-rK9QOEfZC2_vEbDO7Uxtbw",
+                                title: "Slack",
                                 icon: {
-                                    element: "Discord",
+                                    element: "Slack",
                                     class: "menu-icon"
                                 },
                                 external: true

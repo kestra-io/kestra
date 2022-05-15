@@ -209,6 +209,8 @@ kestra:
     defaults:
       table-prefix: "kestra_"
     tables:
+      queues:
+        table: "${kestra.jdbc.defaults.table-prefix}queues"
       flows:
         table: "${kestra.jdbc.defaults.table-prefix}flows"
         cls: io.kestra.core.models.flows.Flow

@@ -12,6 +12,14 @@ public class JdbcConfiguration {
     @Inject
     private List<TableConfig> tableConfigs;
 
+    public TableConfig tableConfig(String name) {
+        return this.tableConfigs
+            .stream()
+            .filter(tableConfig -> tableConfig.getName().equals(name))
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("Unable to find table config for name '" + name + "'"));
+    }
+
     public TableConfig tableConfig(Class<?> cls) {
         return this.tableConfigs
             .stream()

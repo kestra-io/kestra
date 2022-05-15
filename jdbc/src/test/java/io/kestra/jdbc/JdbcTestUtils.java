@@ -9,6 +9,8 @@ import org.jooq.SQLDialect;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.jooq.impl.DSL;
+
 import javax.sql.DataSource;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
@@ -29,18 +31,23 @@ public class JdbcTestUtils {
 
     @SneakyThrows
     public void drop() {
-        dslContext.meta()
-            .getTables()
-            .stream()
-            .filter(throwPredicate(table ->
-                (dslContext.dialect() == SQLDialect.MYSQL && table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
-                dslContext.dialect() != SQLDialect.MYSQL
-            ))
-            .filter(table -> !table.getName().equals("flyway_schema_history"))
-            .forEach(t -> dslContext.truncate(t.getName()).execute());
+        dslContext.transaction((configuration) -> {
+            DSL.using(configuration)
+                .meta()
+                .getTables()
+                .stream()
+                .filter(throwPredicate(table ->
+                    (dslContext.dialect() == SQLDialect.MYSQL && table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
+                        dslContext.dialect() != SQLDialect.MYSQL
+                ))
+                .filter(table -> !table.getName().equals("flyway_schema_history"))
+                .forEach(t -> dslContext.truncate(t.getName()).execute());
+        });
     }
 
     public void migrate() {
-        flywayMigrator.run(config, dataSource);
+        dslContext.transaction((configuration) -> {
+            flywayMigrator.run(config, dataSource);
+        });
     }
 }

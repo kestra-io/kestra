@@ -27,10 +27,7 @@ CREATE TYPE ${prefix}queue_type AS ENUM (
     'io.kestra.core.models.executions.Execution',
     'io.kestra.core.models.flows.Flow',
     'io.kestra.core.models.templates.Template',
-    'io.kestra.core.runners.Executor',
     'io.kestra.core.models.executions.ExecutionKilled',
-    'io.kestra.runner.kafka.streams.ExecutorFlowTrigger',
-    'io.kestra.core.runners.WorkerTaskExecution',
     'io.kestra.core.runners.WorkerTask',
     'io.kestra.core.runners.WorkerTaskResult',
     'io.kestra.core.runners.WorkerInstance',
@@ -41,7 +38,7 @@ CREATE TYPE ${prefix}queue_type AS ENUM (
 
 CREATE TABLE ${prefix}queues (
     "offset" SERIAL PRIMARY KEY,
-    type ${prefix}queue_type,
+    type ${prefix}queue_type NOT NULL,
     key VARCHAR(250) NOT NULL,
     value JSONB NOT NULL,
     consumers ${prefix}queue_consumers[]

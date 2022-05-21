@@ -1,3 +1,34 @@
+CREATE TYPE state_type AS ENUM (
+    'CREATED',
+    'RUNNING',
+    'PAUSED',
+    'RESTARTED',
+    'KILLING',
+    'SUCCESS',
+    'WARNING',
+    'FAILED',
+    'KILLED'
+);
+
+CREATE TYPE queue_consumers AS ENUM (
+    'indexer',
+    'executor',
+    'worker'
+);
+
+CREATE TYPE queue_type AS ENUM (
+    'io.kestra.core.models.executions.Execution',
+    'io.kestra.core.models.flows.Flow',
+    'io.kestra.core.models.templates.Template',
+    'io.kestra.core.models.executions.ExecutionKilled',
+    'io.kestra.core.runners.WorkerTask',
+    'io.kestra.core.runners.WorkerTaskResult',
+    'io.kestra.core.runners.WorkerInstance',
+    'io.kestra.core.runners.WorkerTaskRunning',
+    'io.kestra.core.models.executions.LogEntry',
+    'io.kestra.core.models.triggers.Trigger'
+);
+
 CREATE OR REPLACE FUNCTION FULLTEXT_REPLACE(text, text) RETURNS text
 AS 'SELECT REGEXP_REPLACE(COALESCE($1, ''''), ''[^a-zA-Z\d:]'', $2, ''g'');'
     LANGUAGE SQL
@@ -16,39 +47,34 @@ AS 'SELECT TO_TSQUERY(''simple'', FULLTEXT_REPLACE($1, '':* & '') || '':*'');'
     IMMUTABLE
     RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION STATE_FROMTEXT(text) RETURNS state_type
+AS 'SELECT CAST($1 AS state_type);'
+    LANGUAGE SQL
+    IMMUTABLE;
 
-CREATE TYPE ${prefix}queue_consumers AS ENUM (
-    'indexer',
-    'executor',
-    'worker'
-);
+CREATE OR REPLACE FUNCTION PARSE_ISO8601_DATETIME(text) RETURNS timestamp
+AS 'SELECT $1::timestamp;'
+    LANGUAGE SQL
+    IMMUTABLE;
 
-CREATE TYPE ${prefix}queue_type AS ENUM (
-    'io.kestra.core.models.executions.Execution',
-    'io.kestra.core.models.flows.Flow',
-    'io.kestra.core.models.templates.Template',
-    'io.kestra.core.models.executions.ExecutionKilled',
-    'io.kestra.core.runners.WorkerTask',
-    'io.kestra.core.runners.WorkerTaskResult',
-    'io.kestra.core.runners.WorkerInstance',
-    'io.kestra.core.runners.WorkerTaskRunning',
-    'io.kestra.core.models.executions.LogEntry',
-    'io.kestra.core.models.triggers.Trigger'
-);
+CREATE OR REPLACE FUNCTION PARSE_ISO8601_DURATION(text) RETURNS interval
+AS 'SELECT $1::interval;'
+    LANGUAGE SQL
+    IMMUTABLE;
 
-CREATE TABLE ${prefix}queues (
+CREATE TABLE queues (
     "offset" SERIAL PRIMARY KEY,
-    type ${prefix}queue_type NOT NULL,
+    type queue_type NOT NULL,
     key VARCHAR(250) NOT NULL,
     value JSONB NOT NULL,
-    consumers ${prefix}queue_consumers[]
+    consumers queue_consumers[]
 );
 
-CREATE INDEX ${prefix}queues_key ON ${prefix}queues (type, key);
-CREATE INDEX ${prefix}queues_consumers ON ${prefix}queues (type, consumers);
+CREATE INDEX queues_key ON queues (type, key);
+CREATE INDEX queues_consumers ON queues (type, consumers);
 
 
-CREATE TABLE ${prefix}flows (
+CREATE TABLE flows (
     key VARCHAR(250) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL,
     deleted BOOL NOT NULL GENERATED ALWAYS AS (CAST(value ->> 'deleted' AS BOOL)) STORED,
@@ -62,15 +88,15 @@ CREATE TABLE ${prefix}flows (
     source_code TEXT NOT NULL
 );
 
-CREATE INDEX ${prefix}flows_id ON ${prefix}flows (id);
-CREATE INDEX ${prefix}flows_namespace ON ${prefix}flows (namespace);
-CREATE INDEX ${prefix}flows_revision ON ${prefix}flows (revision);
-CREATE INDEX ${prefix}flows_deleted ON ${prefix}flows (deleted);
-CREATE INDEX ${prefix}flows_fulltext ON ${prefix}flows USING GIN (fulltext);
-CREATE INDEX ${prefix}flows_source_code ON ${prefix}flows USING GIN (FULLTEXT_INDEX(source_code));
+CREATE INDEX flows_id ON flows (id);
+CREATE INDEX flows_namespace ON flows (namespace);
+CREATE INDEX flows_revision ON flows (revision);
+CREATE INDEX flows_deleted ON flows (deleted);
+CREATE INDEX flows_fulltext ON flows USING GIN (fulltext);
+CREATE INDEX flows_source_code ON flows USING GIN (FULLTEXT_INDEX(source_code));
 
 
-CREATE TABLE ${prefix}templates (
+CREATE TABLE templates (
     key VARCHAR(250) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL,
     deleted BOOL NOT NULL GENERATED ALWAYS AS (CAST(value ->> 'deleted' AS BOOL)) STORED,
@@ -82,7 +108,45 @@ CREATE TABLE ${prefix}templates (
     )) STORED
 );
 
-CREATE INDEX ${prefix}templates_namespace ON ${prefix}flows (namespace);
-CREATE INDEX ${prefix}templates_revision ON ${prefix}flows (revision);
-CREATE INDEX ${prefix}templates_deleted ON ${prefix}flows (deleted);
-CREATE INDEX ${prefix}templates_fulltext ON ${prefix}templates USING GIN (fulltext);
+CREATE INDEX templates_namespace ON flows (namespace);
+CREATE INDEX templates_revision ON flows (revision);
+CREATE INDEX templates_deleted ON flows (deleted);
+CREATE INDEX templates_fulltext ON templates USING GIN (fulltext);
+
+
+CREATE TABLE executions (
+    key VARCHAR(250) NOT NULL PRIMARY KEY,
+    value JSONB NOT NULL,
+    deleted BOOL NOT NULL GENERATED ALWAYS AS (CAST(value ->> 'deleted' AS bool)) STORED,
+    id VARCHAR(100) NOT NULL GENERATED ALWAYS AS (value ->> 'id') STORED,
+    namespace VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'namespace') STORED,
+    flow_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'flowId') STORED,
+    state_current state_type NOT NULL GENERATED ALWAYS AS (STATE_FROMTEXT(value #>> '{state, current}')) STORED,
+    state_duration BIGINT NOT NULL GENERATED ALWAYS AS (EXTRACT(MILLISECONDS FROM PARSE_ISO8601_DURATION(value #>> '{state, duration}'))) STORED,
+    start_date TIMESTAMP NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value #>> '{state, startDate}')) STORED,
+    fulltext TSVECTOR GENERATED ALWAYS AS (
+        FULLTEXT_INDEX(CAST(value ->> 'namespace' AS varchar)) ||
+        FULLTEXT_INDEX(CAST(value ->> 'flowId' AS varchar)) ||
+        FULLTEXT_INDEX(CAST(value ->> 'id' AS varchar))
+    ) STORED
+);
+
+CREATE INDEX executions_id ON executions (id);
+CREATE INDEX executions_namespace ON executions (namespace);
+CREATE INDEX executions_flowId ON executions (flow_id);
+CREATE INDEX executions_state_current ON executions (state_current);
+CREATE INDEX executions_start_date ON executions (start_date);
+CREATE INDEX executions_state_duration ON executions (state_duration);
+CREATE INDEX executions_deleted ON executions (deleted);
+CREATE INDEX executions_fulltext ON executions USING GIN (fulltext);
+
+
+CREATE TABLE triggers (
+    key VARCHAR(250) NOT NULL PRIMARY KEY,
+    value JSONB NOT NULL,
+    namespace VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'namespace') STORED,
+    flow_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'flowId') STORED,
+    trigger_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'triggerId') STORED
+);
+
+CREATE INDEX triggers_namespace__flow_id__trigger_id ON triggers (namespace, flow_id, trigger_id);

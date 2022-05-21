@@ -42,8 +42,9 @@ public class ElasticsearchTriggerRepository extends AbstractElasticSearchReposit
         return this.scroll(INDEX_NAME, sourceBuilder);
     }
 
+    @Override
     @VisibleForTesting
-    Trigger save(Trigger trigger) {
+    public Trigger save(Trigger trigger) {
         this.putRequest(INDEX_NAME, trigger.uid(), trigger);
 
         return trigger;

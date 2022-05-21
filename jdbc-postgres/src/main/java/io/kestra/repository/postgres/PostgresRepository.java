@@ -11,8 +11,9 @@ import org.jooq.impl.DSL;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
-public class PostgresRepository<T extends DeletedInterface> extends AbstractJdbcRepository<T> {
+public class PostgresRepository<T> extends AbstractJdbcRepository<T> {
     public PostgresRepository(Class<T> cls, ApplicationContext applicationContext) {
         super(cls, applicationContext);
     }
@@ -27,26 +28,27 @@ public class PostgresRepository<T extends DeletedInterface> extends AbstractJdbc
     }
 
     @SneakyThrows
-    public void persist(T entity, Map<Field<Object>, Object> fields) {
-        if (fields == null) {
-            fields = this.persistFields(entity);
-        }
+    public void persist(T entity, @Nullable  Map<Field<Object>, Object> fields) {
+        Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
         String json = mapper.writeValueAsString(entity);
-        fields.replace(DSL.field("value"), DSL.val(JSONB.valueOf(json)));
+        finalFields.replace(DSL.field("value"), DSL.val(JSONB.valueOf(json)));
 
-        InsertOnDuplicateSetMoreStep<Record> insert = dslContext.insertInto(table)
+        dslContext.transaction(configuration -> DSL
+            .using(configuration)
+            .insertInto(table)
             .set(DSL.field(DSL.quotedName("key")), queueService.key(entity))
-            .set(fields)
+            .set(finalFields)
             .onConflict(DSL.field(DSL.quotedName("key")))
             .doUpdate()
-            .set(fields);
+            .set(finalFields)
+            .execute()
+        );
 
-        insert.execute();
     }
 
     @SuppressWarnings("unchecked")
-    public <R extends Record, E> ArrayListTotal<E> fetchPage(SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper) {
+    public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper) {
         Result<Record> results = this.limit(
             this.dslContext.select(DSL.asterisk(), DSL.count().over().as("total_count"))
                 .from(this

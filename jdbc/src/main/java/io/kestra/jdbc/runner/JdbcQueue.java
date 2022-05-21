@@ -76,13 +76,11 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             log.trace("New message: topic '{}', value {}", this.cls.getName(), message);
         }
 
-        dslContext.transaction(configuration -> {
-            DSLContext ctx = DSL.using(configuration);
-
-            ctx.insertInto(table)
-                .set(this.produceFields(key, message))
-                .execute();
-        });
+        dslContext.transaction(configuration -> DSL.using(configuration)
+            .insertInto(table)
+            .set(this.produceFields(key, message))
+            .execute()
+        );
     }
 
     @Override
@@ -92,10 +90,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public void delete(T message) throws QueueException {
-        DeleteConditionStep<Record> delete = dslContext.delete(table)
-            .where(DSL.field(DSL.quotedName("key")).eq(queueService.key(message)));
-
-        delete.execute();
+        dslContext.transaction(configuration -> DSL
+            .using(configuration)
+            .delete(table)
+            .where(DSL.field(DSL.quotedName("key")).eq(queueService.key(message)))
+            .execute()
+        );
     }
 
     public String consumerGroupName(Class<?> group) {
@@ -119,7 +119,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         dslContext.transaction(configuration -> {
             DSLContext ctx = DSL.using(configuration);
 
-            Integer integer = ctx
+            Integer integer = DSL
+                .using(configuration)
                 .select(DSL.max(DSL.field(DSL.quotedName("offset"))).as("max"))
                 .from(table)
                 .fetchAny("max", Integer.class);

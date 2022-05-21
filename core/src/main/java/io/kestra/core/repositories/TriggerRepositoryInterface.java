@@ -10,4 +10,7 @@ public interface TriggerRepositoryInterface {
     Optional<Trigger> findLast(TriggerContext trigger);
 
     List<Trigger> findAll();
+
+    Trigger save(Trigger trigger);
 }
+

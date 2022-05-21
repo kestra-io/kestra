@@ -5,17 +5,18 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
-import org.jooq.Record1;
-import org.jooq.Select;
-import org.jooq.SelectConditionStep;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.validation.ConstraintViolationException;
@@ -35,36 +36,73 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
 
     @Override
     public Optional<Template> findById(String namespace, String id) {
-        Select<Record1<Object>> from = jdbcRepository.getDslContext().select(DSL.field("value"))
-            .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter())
-            .and(DSL.field("namespace").eq(namespace))
-            .and(DSL.field("id").eq(id));
+        return jdbcRepository
+            .getDslContext()
+            .transactionResult(configuration -> {
+                Select<Record1<Object>> from = DSL
+                    .using(configuration)
+                    .select(DSL.field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter())
+                    .and(DSL.field("namespace").eq(namespace))
+                    .and(DSL.field("id").eq(id));
 
-        return this.jdbcRepository.fetchOne(from);
+                return this.jdbcRepository.fetchOne(from);
+            });
     }
 
     @Override
     public List<Template> findAll() {
-        SelectConditionStep<Record1<Object>> select = this.jdbcRepository
+        return this.jdbcRepository
             .getDslContext()
-            .select(DSL.field("value"))
-            .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter());
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(DSL.field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter());
 
-        return this.jdbcRepository.fetch(select);
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+
+    public ArrayListTotal<Template> find(String query, Pageable pageable) {
+        return this.jdbcRepository
+            .getDslContext()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = context
+                    .select(
+                        DSL.field("value")
+                    )
+                    .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter());
+
+                if (query != null) {
+                    select.and(this.jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query));
+                }
+
+                return this.jdbcRepository.fetchPage(context, select, pageable);
+            });
     }
 
     @Override
     public List<Template> findByNamespace(String namespace) {
-        SelectConditionStep<Record1<Object>> select = this.jdbcRepository
+        return this.jdbcRepository
             .getDslContext()
-            .select(DSL.field("value"))
-            .from(this.jdbcRepository.getTable())
-            .where(DSL.field("namespace").eq(namespace))
-            .and(this.defaultFilter());
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(DSL.field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(DSL.field("namespace").eq(namespace))
+                    .and(this.defaultFilter());
 
-        return this.jdbcRepository.fetch(select);
+                return this.jdbcRepository.fetch(select);
+            });
     }
 
     @Override
@@ -113,11 +151,14 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
     public List<String> findDistinctNamespace() {
         return this.jdbcRepository
             .getDslContext()
-            .select(DSL.field("namespace"))
-            .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter())
-            .groupBy(DSL.grouping(DSL.field("namespace")))
-            .fetch()
-            .map(record -> record.getValue("namespace", String.class));
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .select(DSL.field("namespace"))
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter())
+                .groupBy(DSL.grouping(DSL.field("namespace")))
+                .fetch()
+                .map(record -> record.getValue("namespace", String.class))
+            );
     }
 }

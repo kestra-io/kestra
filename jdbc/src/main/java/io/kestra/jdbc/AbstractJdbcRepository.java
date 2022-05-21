@@ -3,7 +3,6 @@ package io.kestra.jdbc;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
@@ -20,7 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public abstract class AbstractJdbcRepository<T extends DeletedInterface> {
+public abstract class AbstractJdbcRepository<T> {
     protected static final ObjectMapper mapper = JacksonMapper.ofJson();
 
     protected final QueueService queueService;
@@ -59,17 +58,17 @@ public abstract class AbstractJdbcRepository<T extends DeletedInterface> {
     }
 
     public void persist(T entity, Map<Field<Object>, Object> fields) {
-        if (fields == null) {
-            fields = this.persistFields(entity);
-        }
+        Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
-        InsertOnDuplicateSetMoreStep<Record> insert = dslContext.insertInto(table)
+        dslContext.transaction(configuration -> DSL
+            .using(configuration)
+            .insertInto(table)
             .set(DSL.field(DSL.quotedName("key")), queueService.key(entity))
-            .set(fields)
+            .set(finalFields)
             .onDuplicateKeyUpdate()
-            .set(fields);
-
-        insert.execute();
+            .set(finalFields)
+            .execute()
+        );
     }
 
     public <R extends Record> T map(R record) {
@@ -91,10 +90,10 @@ public abstract class AbstractJdbcRepository<T extends DeletedInterface> {
             .map(this::map);
     }
 
-    abstract public <R extends Record, E> ArrayListTotal<E> fetchPage(SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper);
+    abstract public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper);
 
-    public <R extends Record> ArrayListTotal<T> fetchPage(SelectConditionStep<R> select, Pageable pageable) {
-        return this.fetchPage(select, pageable, this::map);
+    public <R extends Record> ArrayListTotal<T> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable) {
+        return this.fetchPage(context, select, pageable, this::map);
     }
 
     @SneakyThrows

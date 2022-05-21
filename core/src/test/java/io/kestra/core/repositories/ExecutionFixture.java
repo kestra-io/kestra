@@ -1,4 +1,4 @@
-package io.kestra.repository.elasticsearch;
+package io.kestra.core.repositories;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;

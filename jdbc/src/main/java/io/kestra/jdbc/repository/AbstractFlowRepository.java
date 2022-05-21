@@ -44,34 +44,47 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
 
     @Override
     public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
-        Select<Record1<Object>> from;
+        return jdbcRepository
+            .getDslContext()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                Select<Record1<Object>> from;
 
-        if (revision.isPresent()) {
-            from = jdbcRepository.getDslContext().select(DSL.field("value"))
-                .from(jdbcRepository.getTable())
-                .where(DSL.field("namespace").eq(namespace))
-                .and(DSL.field("id").eq(id))
-                .and(DSL.field("revision").eq(revision.get()));
-        } else {
-            from = jdbcRepository.getDslContext().select(DSL.field("value"))
-                .from(this.lastRevision(true))
-                .where(this.defaultFilter())
-                .and(DSL.field("namespace").eq(namespace))
-                .and(DSL.field("id").eq(id));
-        }
+                if (revision.isPresent()) {
+                    from = context
+                        .select(DSL.field("value"))
+                        .from(jdbcRepository.getTable())
+                        .where(DSL.field("namespace").eq(namespace))
+                        .and(DSL.field("id").eq(id))
+                        .and(DSL.field("revision").eq(revision.get()));
+                } else {
+                    from = context
+                        .select(DSL.field("value"))
+                        .from(this.lastRevision(true))
+                        .where(this.defaultFilter())
+                        .and(DSL.field("namespace").eq(namespace))
+                        .and(DSL.field("id").eq(id));
+                }
 
-        return this.jdbcRepository.fetchOne(from);
+                return this.jdbcRepository.fetchOne(from);
+            });
     }
 
     @Override
     public List<Flow> findRevisions(String namespace, String id) {
-        Select<Record1<Object>> select = jdbcRepository.getDslContext().select(DSL.field("value"))
-            .from(jdbcRepository.getTable())
-            .where(DSL.field("namespace").eq(namespace))
-            .and(DSL.field("id").eq(id))
-            .orderBy(DSL.field("revision").asc());
+        return jdbcRepository
+            .getDslContext()
+            .transactionResult(configuration -> {
+                Select<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(DSL.field("value"))
+                    .from(jdbcRepository.getTable())
+                    .where(DSL.field("namespace").eq(namespace))
+                    .and(DSL.field("id").eq(id))
+                    .orderBy(DSL.field("revision").asc());
 
-        return this.jdbcRepository.fetch(select);
+                return this.jdbcRepository.fetch(select);
+            });
     }
 
     protected Table<Record> lastRevision(boolean asterisk) {
@@ -91,45 +104,65 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
                 .as("revision_rows")
         );
 
-        return jdbcRepository.getDslContext().select(DSL.asterisk())
-            .from(
-                jdbcRepository.getDslContext().select(fields)
-                    .from(jdbcRepository.getTable())
-                    .asTable("rev_ord")
-            )
-            .where(DSL.field("revision_rows").eq(1))
-            .asTable("rev");
+        return jdbcRepository
+            .getDslContext()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                return context.select(DSL.asterisk())
+                    .from(
+                        context.select(fields)
+                            .from(jdbcRepository.getTable())
+                            .asTable("rev_ord")
+                    )
+                    .where(DSL.field("revision_rows").eq(1))
+                    .asTable("rev");
+            });
     }
 
     @Override
     public List<Flow> findAll() {
-        SelectConditionStep<Record1<Object>> select = this.jdbcRepository
+        return this.jdbcRepository
             .getDslContext()
-            .select(DSL.field("value"))
-            .from(lastRevision(true))
-            .where(this.defaultFilter());
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(DSL.field("value"))
+                    .from(lastRevision(true))
+                    .where(this.defaultFilter());
 
-        return this.jdbcRepository.fetch(select);
+                return this.jdbcRepository.fetch(select);
+            });
     }
 
     @Override
     public List<Flow> findAllWithRevisions() {
-        SelectJoinStep<Record1<Object>> select = jdbcRepository.getDslContext().select(DSL.field("value"))
-            .from(jdbcRepository.getTable());
+        return jdbcRepository
+            .getDslContext()
+            .transactionResult(configuration -> {
+                SelectJoinStep<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(DSL.field("value"))
+                    .from(jdbcRepository.getTable());
 
-        return this.jdbcRepository.fetch(select);
+                return this.jdbcRepository.fetch(select);
+            });
     }
 
     @Override
     public List<Flow> findByNamespace(String namespace) {
-        SelectConditionStep<Record1<Object>> select = this.jdbcRepository
+        return this.jdbcRepository
             .getDslContext()
-            .select(DSL.field("value"))
-            .from(lastRevision(true))
-            .where(DSL.field("namespace").eq(namespace))
-            .and(this.defaultFilter());
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(DSL.field("value"))
+                    .from(lastRevision(true))
+                    .where(DSL.field("namespace").eq(namespace))
+                    .and(this.defaultFilter());
 
-        return this.jdbcRepository.fetch(select);
+                return this.jdbcRepository.fetch(select);
+            });
     }
 
     @Override
@@ -233,11 +266,14 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
     public List<String> findDistinctNamespace() {
         return this.jdbcRepository
             .getDslContext()
-            .select(DSL.field("namespace"))
-            .from(lastRevision(false))
-            .where(this.defaultFilter())
-            .groupBy(DSL.grouping(DSL.field("namespace")))
-            .fetch()
-            .map(record -> record.getValue("namespace", String.class));
+            .transactionResult(configuration -> DSL
+                .using(configuration)
+                .select(DSL.field("namespace"))
+                .from(lastRevision(false))
+                .where(this.defaultFilter())
+                .groupBy(DSL.grouping(DSL.field("namespace")))
+                .fetch()
+                .map(record -> record.getValue("namespace", String.class))
+            );
     }
 }

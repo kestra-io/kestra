@@ -12,8 +12,6 @@ flyway:
       enabled: true
       locations:
         - classpath:migrations/mysql
-      placeholders:
-        prefix: ""
 
 kestra:
   queue:
@@ -22,22 +20,21 @@ kestra:
     type: mysql
 
   jdbc:
-    table-prefix: ""
     tables:
       queues:
-        table: "${kestra.jdbc.table-prefix}queues"
+        table: "queues"
       flows:
-        table: "${kestra.jdbc.table-prefix}flows"
+        table: "flows"
         cls: io.kestra.core.models.flows.Flow
       executions:
-        table: "${kestra.jdbc.table-prefix}executions"
+        table: "executions"
         cls: io.kestra.core.models.executions.Execution
       templates:
-        table: "${kestra.jdbc.table-prefix}templates"
+        table: "templates"
         cls: io.kestra.core.models.templates.Template
       triggers:
-        table: "${kestra.jdbc.table-prefix}triggers"
+        table: "triggers"
         cls: io.kestra.core.models.triggers.Trigger
       logs:
-        table: "${kestra.jdbc.table-prefix}logs"
+        table: "logs"
         cls: io.kestra.core.models.executions.LogEntry

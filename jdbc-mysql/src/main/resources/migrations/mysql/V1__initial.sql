@@ -1,4 +1,25 @@
-CREATE TABLE ${prefix}queues (
+DELIMITER //
+CREATE FUNCTION PARSE_ISO8601_DURATION(duration VARCHAR(20))
+    RETURNS bigint
+    LANGUAGE SQL
+    CONTAINS SQL
+    DETERMINISTIC
+BEGIN
+RETURN
+    CASE
+        WHEN duration LIKE 'P%DT%H%M%.%S' THEN TO_SECONDS(STR_TO_DATE(duration, 'P%dDT%HH%iM%s.%fS.%f'))
+        WHEN duration LIKE 'P%DT%H%M%S' THEN TO_SECONDS(STR_TO_DATE(duration, 'P%dDT%HH%iM%sS.%f'))
+        WHEN duration LIKE 'PT%H%M%.%S' THEN TO_SECONDS(STR_TO_DATE(duration, 'PT%HH%iM%s.%fS.%f'))
+        WHEN duration LIKE 'PT%H%M%S' THEN TO_SECONDS(STR_TO_DATE(duration, 'PT%HH%iM%sS.%f'))
+        WHEN duration LIKE 'PT%M%.%S' THEN TO_SECONDS(STR_TO_DATE(duration, 'PT%iM%s.%fS.%f'))
+        WHEN duration LIKE 'PT%M%S' THEN TO_SECONDS(STR_TO_DATE(duration, 'PT%iM%sS.%f'))
+        WHEN duration LIKE 'PT%.%S' THEN TO_SECONDS(STR_TO_DATE(duration, 'PT%s.%fS.%f'))
+        WHEN duration LIKE 'PT%S' THEN TO_SECONDS(STR_TO_DATE(duration, 'PT%sS.%f'))
+        END;
+END //
+DELIMITER ;
+
+CREATE TABLE queues (
     `offset` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `type` ENUM(
         'io.kestra.core.models.executions.Execution',
@@ -22,10 +43,10 @@ CREATE TABLE ${prefix}queues (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE `${prefix}flows` (
+CREATE TABLE `flows` (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
-    `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL ,
+    `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
     `id` VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.id') STORED NOT NULL,
     `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
     `revision` INT UNSIGNED GENERATED ALWAYS AS (value ->> '$.revision') STORED NOT NULL,
@@ -39,10 +60,10 @@ CREATE TABLE `${prefix}flows` (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-CREATE TABLE `${prefix}templates` (
+CREATE TABLE `templates` (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
-    `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL ,
+    `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
     `id` VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.id') STORED NOT NULL,
     `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
     INDEX ix_id (id),
@@ -52,3 +73,42 @@ CREATE TABLE `${prefix}templates` (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
+CREATE TABLE `executions` (
+    `key` VARCHAR(250) NOT NULL PRIMARY KEY,
+    `value` JSON NOT NULL,
+    `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
+    `id` VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.id') STORED NOT NULL,
+    `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
+    `flow_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.flowId') STORED NOT NULL,
+    `state_current` ENUM(
+        'CREATED',
+        'RUNNING',
+        'PAUSED',
+        'RESTARTED',
+        'KILLING',
+        'SUCCESS',
+        'WARNING',
+        'FAILED',
+        'KILLED'
+    ) GENERATED ALWAYS AS (value ->> '$.state.current') STORED NOT NULL,
+    `state_duration` BIGINT GENERATED ALWAYS AS (value ->> '$.state.duration' * 1000) STORED NOT NULL,
+    `start_date` TIMESTAMP GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.state.startDate' , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED NOT NULL,
+    INDEX ix_executions_id (id),
+    INDEX ix_executions_namespace (namespace),
+    INDEX ix_executions_flowId (flow_id),
+    INDEX ix_executions_state_current (state_current),
+    INDEX ix_executions_start_date (start_date),
+    INDEX ix_executions_state_duration (state_duration),
+    INDEX ix_executions_deleted (deleted),
+    FULLTEXT ix_fulltext (namespace, flow_id, id)
+) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+CREATE TABLE triggers (
+    `key` VARCHAR(250) NOT NULL PRIMARY KEY,
+    `value` JSON NOT NULL,
+    `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
+    `flow_id`  VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.flowId') STORED NOT NULL,
+    `trigger_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.triggerId') STORED NOT NULL,
+    INDEX ix_executions_id (namespace, flow_id, trigger_id)
+) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

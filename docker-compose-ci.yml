@@ -39,6 +39,8 @@ services:
       MYSQL_USER: kestra
       MYSQL_PASSWORD: k3str4
       MYSQL_ROOT_PASSWORD: "p4ssw0rd"
+    command:
+      - --log-bin-trust-function-creators=1
     ports:
       - 3306:3306
 

@@ -6,6 +6,9 @@ import io.kestra.jdbc.repository.AbstractTemplateRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.jooq.Condition;
+
+import java.util.Collections;
 
 @Singleton
 @PostgresRepositoryEnabled
@@ -13,5 +16,10 @@ public class PostgresTemplateRepository extends AbstractTemplateRepository imple
     @Inject
     public PostgresTemplateRepository(ApplicationContext applicationContext) {
         super(new PostgresRepository<>(Template.class, applicationContext), applicationContext);
+    }
+
+    @Override
+    protected Condition findCondition(String query) {
+        return this.jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query);
     }
 }

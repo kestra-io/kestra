@@ -298,7 +298,9 @@ abstract public class AbstractElasticSearchRepository<T> {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(query);
 
-        if (pageable != null) {
+        if (pageable != null && pageable.getSize() == -1) {
+            sourceBuilder.size(1000);
+        } else if (pageable != null) {
             sourceBuilder
                 .size(pageable.getSize())
                 .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));

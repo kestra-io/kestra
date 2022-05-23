@@ -66,6 +66,7 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
             });
     }
 
+    abstract protected Condition findCondition(String query);
 
     public ArrayListTotal<Template> find(String query, Pageable pageable) {
         return this.jdbcRepository
@@ -82,7 +83,7 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
                     .where(this.defaultFilter());
 
                 if (query != null) {
-                    select.and(this.jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query));
+                    select.and(this.findCondition(query));
                 }
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);

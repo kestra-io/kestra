@@ -10,6 +10,15 @@ CREATE TYPE state_type AS ENUM (
     'KILLED'
 );
 
+CREATE TYPE log_level AS ENUM (
+    'ERROR',
+    'WARN',
+    'INFO',
+    'DEBUG',
+    'TRACE'
+);
+
+
 CREATE TYPE queue_consumers AS ENUM (
     'indexer',
     'executor',
@@ -52,6 +61,11 @@ AS 'SELECT CAST($1 AS state_type);'
     LANGUAGE SQL
     IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION LOGLEVEL_FROMTEXT(text) RETURNS log_level
+AS 'SELECT CAST($1 AS log_level);'
+    LANGUAGE SQL
+    IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION PARSE_ISO8601_DATETIME(text) RETURNS timestamp
 AS 'SELECT $1::timestamp;'
     LANGUAGE SQL
@@ -62,6 +76,7 @@ AS 'SELECT $1::interval;'
     LANGUAGE SQL
     IMMUTABLE;
 
+/* ----------------------- queues ----------------------- */
 CREATE TABLE queues (
     "offset" SERIAL PRIMARY KEY,
     type queue_type NOT NULL,
@@ -74,6 +89,7 @@ CREATE INDEX queues_key ON queues (type, key);
 CREATE INDEX queues_consumers ON queues (type, consumers);
 
 
+/* ----------------------- flows ----------------------- */
 CREATE TABLE flows (
     key VARCHAR(250) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL,
@@ -96,6 +112,7 @@ CREATE INDEX flows_fulltext ON flows USING GIN (fulltext);
 CREATE INDEX flows_source_code ON flows USING GIN (FULLTEXT_INDEX(source_code));
 
 
+/* ----------------------- templates ----------------------- */
 CREATE TABLE templates (
     key VARCHAR(250) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL,
@@ -114,6 +131,7 @@ CREATE INDEX templates_deleted ON flows (deleted);
 CREATE INDEX templates_fulltext ON templates USING GIN (fulltext);
 
 
+/* ----------------------- executions ----------------------- */
 CREATE TABLE executions (
     key VARCHAR(250) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL,
@@ -133,7 +151,7 @@ CREATE TABLE executions (
 
 CREATE INDEX executions_id ON executions (id);
 CREATE INDEX executions_namespace ON executions (namespace);
-CREATE INDEX executions_flowId ON executions (flow_id);
+CREATE INDEX executions_flow_id ON executions (flow_id);
 CREATE INDEX executions_state_current ON executions (state_current);
 CREATE INDEX executions_start_date ON executions (start_date);
 CREATE INDEX executions_state_duration ON executions (state_duration);
@@ -141,6 +159,7 @@ CREATE INDEX executions_deleted ON executions (deleted);
 CREATE INDEX executions_fulltext ON executions USING GIN (fulltext);
 
 
+/* ----------------------- triggers ----------------------- */
 CREATE TABLE triggers (
     key VARCHAR(250) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL,
@@ -150,3 +169,39 @@ CREATE TABLE triggers (
 );
 
 CREATE INDEX triggers_namespace__flow_id__trigger_id ON triggers (namespace, flow_id, trigger_id);
+
+
+/* ----------------------- logs ----------------------- */
+CREATE TABLE logs (
+    key SERIAL PRIMARY KEY,
+    value JSONB NOT NULL,
+    deleted BOOL NOT NULL GENERATED ALWAYS AS (CAST(value ->> 'deleted' AS bool)) STORED,
+    namespace VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'namespace') STORED,
+    flow_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'flowId') STORED,
+    task_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'taskId') STORED,
+    execution_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'executionId') STORED,
+    taskrun_id VARCHAR(150) GENERATED ALWAYS AS (value ->> 'taskRunId') STORED,
+    attempt_number INT NOT NULL GENERATED ALWAYS AS (CAST(value ->> 'attemptNumber' AS INTEGER)) STORED,
+    trigger_id VARCHAR(150) GENERATED ALWAYS AS (value ->> 'triggerId') STORED,
+    level log_level NOT NULL GENERATED ALWAYS AS (LOGLEVEL_FROMTEXT(value ->> 'level')) STORED,
+    timestamp TIMESTAMP NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'timestamp')) STORED,
+    fulltext TSVECTOR GENERATED ALWAYS AS (
+        FULLTEXT_INDEX(CAST(value ->> 'namespace' AS varchar)) ||
+        FULLTEXT_INDEX(CAST(value ->> 'flowId' AS varchar)) ||
+        FULLTEXT_INDEX(CAST(value ->> 'taskId' AS varchar)) ||
+        FULLTEXT_INDEX(CAST(value ->> 'executionId' AS varchar)) ||
+        FULLTEXT_INDEX(CAST(value ->> 'taskRunId' AS varchar)) ||
+        FULLTEXT_INDEX(COALESCE(CAST(value ->> 'triggerId' AS varchar), '')) ||
+        FULLTEXT_INDEX(COALESCE(CAST(value ->> 'message' AS varchar), '')) ||
+        FULLTEXT_INDEX(COALESCE(CAST(value ->> 'thread' AS varchar), ''))
+    ) STORED
+);
+
+CREATE INDEX logs_namespace ON logs (namespace);
+CREATE INDEX logs_flowId ON logs (flow_id);
+CREATE INDEX logs_task_id ON logs (task_id);
+CREATE INDEX logs_execution_id ON logs (execution_id);
+CREATE INDEX logs_taskrun_id ON logs (taskrun_id);
+CREATE INDEX logs_trigger_id ON logs (trigger_id);
+CREATE INDEX logs_timestamp ON logs (timestamp);
+CREATE INDEX logs_fulltext ON logs USING GIN (fulltext);

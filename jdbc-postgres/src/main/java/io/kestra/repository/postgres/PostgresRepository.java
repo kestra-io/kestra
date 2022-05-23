@@ -20,6 +20,10 @@ public class PostgresRepository<T> extends AbstractJdbcRepository<T> {
 
     @Override
     public Condition fullTextCondition(List<String> fields, String query) {
+        if (query == null || query.equals("*")) {
+            return DSL.trueCondition();
+        }
+
         if (fields.size() > 1) {
             throw new IllegalArgumentException("Invalid fullTextCondition" + fields);
         }
@@ -28,11 +32,19 @@ public class PostgresRepository<T> extends AbstractJdbcRepository<T> {
     }
 
     @SneakyThrows
-    public void persist(T entity, @Nullable  Map<Field<Object>, Object> fields) {
-        Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
+    @Override
+    public Map<Field<Object>, Object> persistFields(T entity) {
+        Map<Field<Object>, Object> fields = super.persistFields(entity);
 
         String json = mapper.writeValueAsString(entity);
-        finalFields.replace(DSL.field("value"), DSL.val(JSONB.valueOf(json)));
+        fields.replace(DSL.field("value"), DSL.val(JSONB.valueOf(json)));
+
+        return fields;
+    }
+
+    @SneakyThrows
+    public void persist(T entity, @Nullable  Map<Field<Object>, Object> fields) {
+        Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
         dslContext.transaction(configuration -> DSL
             .using(configuration)
@@ -44,7 +56,6 @@ public class PostgresRepository<T> extends AbstractJdbcRepository<T> {
             .set(finalFields)
             .execute()
         );
-
     }
 
     @SuppressWarnings("unchecked")

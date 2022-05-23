@@ -2,27 +2,27 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
@@ -162,6 +162,71 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
                     .and(this.defaultFilter());
 
                 return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    @SuppressWarnings("unchecked")
+    private <R extends Record, E> SelectConditionStep<R> fullTextSelect(DSLContext context, List<Field<Object>> field) {
+        ArrayList<Field<Object>> fields = new ArrayList<>(Collections.singletonList(DSL.field("value")));
+
+        if (field != null) {
+            fields.addAll(field);
+        }
+
+        return (SelectConditionStep<R>) context
+            .select(fields)
+            .hint(context.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
+            .from(lastRevision(false))
+            .join(jdbcRepository.getTable().as("ft"))
+            .on(
+                DSL.field("ft.key").eq(DSL.field("rev.key"))
+                    .and(DSL.field("ft.revision").eq(DSL.field("rev.revision")))
+            )
+            .where(this.defaultFilter());
+    }
+
+    abstract protected Condition findCondition(String query);
+
+    public ArrayListTotal<Flow> find(String query, Pageable pageable) {
+        return this.jdbcRepository
+            .getDslContext()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = this.fullTextSelect(context, Collections.emptyList());
+
+                if (query != null) {
+                    select.and(this.findCondition(query));
+                }
+
+                return this.jdbcRepository.fetchPage(context, select, pageable);
+            });
+    }
+
+    abstract protected Condition findSourceCodeCondition(String query);
+
+    @Override
+    public ArrayListTotal<SearchResult<Flow>> findSourceCode(String query, Pageable pageable) {
+        return this.jdbcRepository
+            .getDslContext()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record> select = this.fullTextSelect(context, Collections.singletonList(DSL.field("source_code")));
+
+                if (query != null) {
+                    select.and(this.findSourceCodeCondition(query));
+                }
+
+                return this.jdbcRepository.fetchPage(
+                    context,
+                    select,
+                    pageable,
+                    record -> new SearchResult<>(
+                        this.jdbcRepository.map(record),
+                        this.jdbcRepository.fragments(query, record.getValue("value", String.class))
+                    )
+                );
             });
     }
 

@@ -142,6 +142,10 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     protected <R extends Record> Select<R> limit(SelectConditionStep<R> select, Pageable pageable) {
+       if (pageable.getSize() == -1) {
+           return select;
+       }
+
         return select
             .limit(pageable.getSize())
             .offset(pageable.getOffset() - pageable.getSize());

@@ -48,6 +48,8 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
             });
     }
 
+    abstract protected Condition findCondition(String query);
+
     public ArrayListTotal<Execution> find(String query, Pageable pageable, List<State.Type> state) {
         return this.jdbcRepository
             .getDslContext()
@@ -67,8 +69,8 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                         .in(state.stream().map(Enum::name).collect(Collectors.toList())));
                 }
 
-                if (query != null && !query.equals("*")) {
-                    select.and(this.jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query));
+                if (query != null) {
+                    select.and(this.findCondition(query));
                 }
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -166,8 +168,8 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                     .and(DSL.field("start_date").greaterOrEqual(finalStartDate.toInstant()))
                     .and(DSL.field("start_date").lessOrEqual(finalEndDate.toInstant()));
 
-                if (query != null && !query.equals("*")) {
-                    select = select.and(this.jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query));
+                if (query != null) {
+                    select.and(this.findCondition(query));
                 }
 
                 List<Field<?>> groupFields = new ArrayList<>();
@@ -308,8 +310,8 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                     .and(DSL.field("start_date").greaterOrEqual(finalStartDate.toInstant()))
                     .and(DSL.field("start_date").lessOrEqual(finalEndDate.toInstant()));
 
-                if (query != null && !query.equals("*")) {
-                    select = select.and(this.jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query));
+                if (query != null) {
+                    select.and(this.findCondition(query));
                 }
 
                 // add flow & namespace filters

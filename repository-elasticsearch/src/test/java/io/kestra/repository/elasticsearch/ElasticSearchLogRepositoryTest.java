@@ -1,14 +1,14 @@
 package io.kestra.repository.elasticsearch;
 
-import io.kestra.core.repositories.AbstractTriggerRepositoryTest;
+import io.kestra.core.repositories.AbstractLogRepositoryTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 
 import java.io.IOException;
 
-class ElasticSearchTriggerRepositoryTest extends AbstractTriggerRepositoryTest {
+class ElasticSearchLogRepositoryTest extends AbstractLogRepositoryTest {
     @Inject
-    ElasticsearchTriggerRepository elasticsearchTriggerRepository;
+    ElasticSearchLogRepository elasticSearchLogRepository;
 
     @Inject
     private ElasticSearchRepositoryTestUtils utils;
@@ -16,6 +16,6 @@ class ElasticSearchTriggerRepositoryTest extends AbstractTriggerRepositoryTest {
     @AfterEach
     protected void tearDown() throws IOException {
         utils.tearDown();
-        elasticsearchTriggerRepository.initMapping();
+        elasticSearchLogRepository.initMapping();
     }
 }

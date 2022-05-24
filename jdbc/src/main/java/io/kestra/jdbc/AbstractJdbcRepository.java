@@ -58,16 +58,29 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     public void persist(T entity, Map<Field<Object>, Object> fields) {
+        dslContext.transaction(configuration ->
+            this.persist(entity, DSL.using(configuration), fields)
+        );
+    }
+
+    public void persist(T entity, DSLContext dslContext, Map<Field<Object>, Object> fields) {
         Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
-        dslContext.transaction(configuration -> DSL
-            .using(configuration)
+        dslContext
             .insertInto(table)
             .set(DSL.field(DSL.quotedName("key")), queueService.key(entity))
             .set(finalFields)
             .onDuplicateKeyUpdate()
             .set(finalFields)
-            .execute()
+            .execute();
+    }
+
+    public void delete(T entity) {
+        dslContext.transaction(configuration ->
+            DSL.using(configuration)
+                .delete(table)
+                .where(DSL.field(DSL.quotedName("key")).eq(queueService.key(entity)))
+                .execute()
         );
     }
 

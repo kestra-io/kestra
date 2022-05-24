@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.WorkerInstance;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
@@ -36,6 +37,8 @@ public class QueueService {
             return ((ExecutionKilled) object).getExecutionId();
         } else if (object.getClass() == Trigger.class) {
             return ((Trigger) object).uid();
+        } else if (object.getClass() == MultipleConditionWindow.class) {
+            return ((MultipleConditionWindow) object).uid();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

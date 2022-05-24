@@ -205,3 +205,18 @@ CREATE INDEX logs_taskrun_id ON logs (taskrun_id);
 CREATE INDEX logs_trigger_id ON logs (trigger_id);
 CREATE INDEX logs_timestamp ON logs (timestamp);
 CREATE INDEX logs_fulltext ON logs USING GIN (fulltext);
+
+
+/* ----------------------- multipleconditions ----------------------- */
+CREATE TABLE multipleconditions (
+    key VARCHAR(250) NOT NULL PRIMARY KEY,
+    value JSONB NOT NULL,
+    namespace VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'namespace') STORED,
+    flow_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'flowId') STORED,
+    condition_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'conditionId') STORED,
+    start_date TIMESTAMP NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'start')) STORED,
+    end_date TIMESTAMP NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'end')) STORED
+);
+
+CREATE INDEX multipleconditions_namespace__flow_id__condition_id ON multipleconditions (namespace, flow_id, condition_id);
+CREATE INDEX multipleconditions_namespace__start_date__end_date ON multipleconditions (start_date, end_date);

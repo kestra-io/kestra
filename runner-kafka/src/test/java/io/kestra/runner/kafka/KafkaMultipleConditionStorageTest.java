@@ -2,12 +2,12 @@ package io.kestra.runner.kafka;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageTest;
+import io.kestra.core.models.triggers.multipleflows.AbstractMultipleConditionStorageTest;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 
 import java.util.*;
 
-class KafkaMultipleConditionStorageTest extends MultipleConditionStorageTest {
+class KafkaMultipleConditionStorageTest extends AbstractMultipleConditionStorageTest {
     MockKeyValueStore<String, MultipleConditionWindow> store;
 
     protected MultipleConditionStorageInterface multipleConditionStorage() {

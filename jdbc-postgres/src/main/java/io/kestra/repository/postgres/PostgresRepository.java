@@ -43,19 +43,17 @@ public class PostgresRepository<T> extends AbstractJdbcRepository<T> {
     }
 
     @SneakyThrows
-    public void persist(T entity, @Nullable  Map<Field<Object>, Object> fields) {
+    public void persist(T entity, DSLContext context, @Nullable  Map<Field<Object>, Object> fields) {
         Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
-        dslContext.transaction(configuration -> DSL
-            .using(configuration)
+        context
             .insertInto(table)
             .set(DSL.field(DSL.quotedName("key")), queueService.key(entity))
             .set(finalFields)
             .onConflict(DSL.field(DSL.quotedName("key")))
             .doUpdate()
             .set(finalFields)
-            .execute()
-        );
+            .execute();
     }
 
     @SuppressWarnings("unchecked")

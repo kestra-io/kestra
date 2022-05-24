@@ -1,6 +1,7 @@
 package io.kestra.core.models.triggers.multipleflows;
 
 import com.google.common.collect.ImmutableMap;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.conditions.types.ExecutionFlowCondition;
@@ -19,16 +20,13 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-public class MultipleConditionStorageTest {
+@MicronautTest(transactional = false)
+public abstract class AbstractMultipleConditionStorageTest {
     private static final String NAMESPACE = "io.kestra.unit";
 
-    protected MultipleConditionStorageInterface multipleConditionStorage() {
-        return new MemoryMultipleConditionStorage();
-    }
+    abstract protected MultipleConditionStorageInterface multipleConditionStorage();
 
-    protected void save(MultipleConditionStorageInterface multipleConditionStorage, Flow flow, List<MultipleConditionWindow> multipleConditionWindows) {
-        ((MemoryMultipleConditionStorage) multipleConditionStorage).save(multipleConditionWindows);
-    }
+    abstract protected void save(MultipleConditionStorageInterface multipleConditionStorage, Flow flow, List<MultipleConditionWindow> multipleConditionWindows);
 
     @Test
     void daily() {
@@ -43,7 +41,7 @@ public class MultipleConditionStorageTest {
         assertThat(window.getStart().toLocalTime(), is(LocalTime.parse("00:00:00")));
         assertThat(window.getStart().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
 
-        assertThat(window.getEnd().toLocalTime(), is(LocalTime.parse("23:59:59.999999999")));
+        assertThat(window.getEnd().toLocalTime(), is(LocalTime.parse("23:59:59.999")));
         assertThat(window.getEnd().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
     }
 
@@ -60,7 +58,7 @@ public class MultipleConditionStorageTest {
         assertThat(window.getStart().toLocalTime(), is(LocalTime.parse("20:00:00")));
         assertThat(window.getStart().toLocalDate(), is(ZonedDateTime.now().minusDays(1).toLocalDate()));
 
-        assertThat(window.getEnd().toLocalTime(), is(LocalTime.parse("19:59:59.999999999")));
+        assertThat(window.getEnd().toLocalTime(), is(LocalTime.parse("19:59:59.999")));
         assertThat(window.getEnd().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
     }
 

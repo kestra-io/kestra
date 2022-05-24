@@ -1,6 +1,8 @@
 package io.kestra.runner.kafka;
 
+import io.kestra.core.runners.FlowListeners;
 import io.kestra.runner.kafka.services.*;
+import io.micronaut.context.annotation.Replaces;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
@@ -28,6 +30,7 @@ import jakarta.inject.Singleton;
 @Singleton
 @Slf4j
 @KafkaQueueEnabled
+@Replaces(FlowListeners.class)
 public class KafkaFlowListeners implements FlowListenersInterface {
     private final KafkaAdminService kafkaAdminService;
     private final KafkaStreamService kafkaStreamService;

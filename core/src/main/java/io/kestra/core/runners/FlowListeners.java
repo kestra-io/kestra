@@ -1,4 +1,4 @@
-package io.kestra.runner.memory;
+package io.kestra.core.runners;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,8 +20,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @Slf4j
-@MemoryQueueEnabled
-public class MemoryFlowListeners implements FlowListenersInterface {
+public class FlowListeners implements FlowListenersInterface {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
     private static final TypeReference<List<Flow>> TYPE_REFERENCE = new TypeReference<>(){};
 
@@ -32,7 +31,7 @@ public class MemoryFlowListeners implements FlowListenersInterface {
     private final List<Consumer<List<Flow>>> consumers = new ArrayList<>();
 
     @Inject
-    public MemoryFlowListeners(
+    public FlowListeners(
         FlowRepositoryInterface flowRepository,
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue
     ) {

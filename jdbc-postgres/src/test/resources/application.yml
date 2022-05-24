@@ -18,6 +18,10 @@ kestra:
     type: postgres
   repository:
     type: postgres
+  storage:
+    type: local
+    local:
+      base-path: /tmp/unittest
 
   jdbc:
     tables:

@@ -8,7 +8,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @PostgresQueueEnabled
-public class PostgresMultipleConditionStorage  extends AbstractJdbcMultipleConditionStorage {
+public class PostgresMultipleConditionStorage extends AbstractJdbcMultipleConditionStorage {
     public PostgresMultipleConditionStorage(ApplicationContext applicationContext) {
         super(new PostgresRepository<>(MultipleConditionWindow.class, applicationContext));
     }

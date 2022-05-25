@@ -220,3 +220,10 @@ CREATE TABLE multipleconditions (
 
 CREATE INDEX multipleconditions_namespace__flow_id__condition_id ON multipleconditions (namespace, flow_id, condition_id);
 CREATE INDEX multipleconditions_namespace__start_date__end_date ON multipleconditions (start_date, end_date);
+
+
+/* ----------------------- workertaskexecutions ----------------------- */
+CREATE TABLE workertaskexecutions (
+    key VARCHAR(250) NOT NULL PRIMARY KEY,
+    value JSONB NOT NULL
+);

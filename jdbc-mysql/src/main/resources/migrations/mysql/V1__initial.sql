@@ -198,3 +198,9 @@ CREATE TABLE multipleconditions (
     INDEX namespace__flow_id__condition_id (namespace, flow_id, condition_id),
     INDEX start_date__end_date (start_date, end_date)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+CREATE TABLE workertaskexecutions (
+    `key` VARCHAR(250) NOT NULL PRIMARY KEY,
+    `value` JSON NOT NULL
+) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

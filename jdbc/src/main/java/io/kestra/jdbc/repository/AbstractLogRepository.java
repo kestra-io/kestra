@@ -76,16 +76,8 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
 
     @Override
     public LogEntry save(LogEntry log) {
-        Map<Field<Object>, Object> finalFields = this.jdbcRepository.persistFields(log);
-
-        this.jdbcRepository
-            .getDslContext()
-            .transaction(configuration -> DSL
-                .using(configuration)
-                .insertInto(this.jdbcRepository.getTable())
-                .set(finalFields)
-                .execute()
-            );
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(log);
+        this.jdbcRepository.persist(log, fields);
 
         return log;
     }

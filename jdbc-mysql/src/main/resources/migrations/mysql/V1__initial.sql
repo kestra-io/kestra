@@ -135,15 +135,15 @@ CREATE TABLE triggers (
 
 
 CREATE TABLE logs (
-    `key` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `key` VARCHAR(30) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL,
     `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
     `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
     `flow_id`  VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.flowId') STORED NOT NULL,
-    `task_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskId') STORED NOT NULL,
+    `task_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskId') STORED,
     `execution_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.executionId') STORED NOT NULL,
     `taskrun_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskRunId') STORED,
-    `attempt_number` INT GENERATED ALWAYS AS (value ->> '$.attemptNumber') STORED NOT NULL,
+    `attempt_number` INT GENERATED ALWAYS AS (value ->> '$.attemptNumber') STORED,
     `trigger_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.triggerId') STORED,
     `message` TEXT GENERATED ALWAYS AS (value ->> '$.message') STORED,
     `thread` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.thread') STORED,

@@ -117,6 +117,28 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(next.getResults().containsKey("a"), is(false));
     }
 
+    @Test
+    void expired() throws Exception {
+        MultipleConditionStorageInterface multipleConditionStorage = multipleConditionStorage();
+
+        Pair<Flow, MultipleCondition> pair = mockFlow(Duration.ofSeconds(2), Duration.ofMinutes(0).negated());
+
+        MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+        this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
+        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight());
+
+        assertThat(window.getResults().get("a"), is(true));
+
+        List<MultipleConditionWindow> expired = multipleConditionStorage.expired();
+        assertThat(expired.size(), is(0));
+
+        Thread.sleep(2005);
+
+        expired = multipleConditionStorage.expired();
+        assertThat(expired.size(), is(1));
+    }
+
     private static Pair<Flow, MultipleCondition> mockFlow(Duration window, Duration advance) {
         MultipleCondition multipleCondition = MultipleCondition.builder()
             .id("condition-multiple")

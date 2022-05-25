@@ -5,6 +5,7 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import io.kestra.jdbc.repository.AbstractRepository;
+import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
@@ -53,8 +54,8 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractRepos
                     .select(DSL.field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        DSL.field("start_date").lt(now)
-                            .and(DSL.field("end_date").gt(now))
+                        DSL.field("start_date").lt(now.toInstant())
+                            .and(DSL.field("end_date").lt(now.toInstant()))
                     );
 
                 return this.jdbcRepository.fetch(select);
@@ -62,10 +63,16 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractRepos
     }
 
     public synchronized void save(List<MultipleConditionWindow> multipleConditionWindows) {
-        multipleConditionWindows
-            .forEach(window -> {
-                Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(window);
-                this.jdbcRepository.persist(window, fields);
+        this.jdbcRepository
+            .getDslContext()
+            .transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                multipleConditionWindows
+                    .forEach(window -> {
+                        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(window);
+                        this.jdbcRepository.persist(window, context, fields);
+                    });
             });
     }
 

@@ -48,7 +48,7 @@ public class PostgresRepository<T> extends AbstractJdbcRepository<T> {
 
         context
             .insertInto(table)
-            .set(DSL.field(DSL.quotedName("key")), queueService.key(entity))
+            .set(DSL.field(DSL.quotedName("key")), key(entity))
             .set(finalFields)
             .onConflict(DSL.field(DSL.quotedName("key")))
             .doUpdate()

@@ -9,6 +9,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcConfiguration;
 import io.micronaut.context.ApplicationContext;
 import lombok.SneakyThrows;
@@ -65,7 +66,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return new HashMap<>(ImmutableMap
             .of(
                 DSL.field(DSL.quotedName("type")), this.cls.getName(),
-                DSL.field(DSL.quotedName("key")), key,
+                DSL.field(DSL.quotedName("key")), key != null ? key : IdUtils.create(),
                 DSL.field(DSL.quotedName("value")), mapper.writeValueAsString(message)
             )
         );

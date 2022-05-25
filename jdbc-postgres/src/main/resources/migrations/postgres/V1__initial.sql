@@ -71,6 +71,11 @@ AS 'SELECT $1::timestamp;'
     LANGUAGE SQL
     IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION PARSE_ISO8601_TIMESTAMP(text) RETURNS int
+AS 'SELECT EXTRACT(epoch FROM $1::timestamptz AT TIME ZONE ''utc'') ;'
+    LANGUAGE SQL
+    IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION PARSE_ISO8601_DURATION(text) RETURNS interval
 AS 'SELECT $1::interval;'
     LANGUAGE SQL
@@ -173,24 +178,24 @@ CREATE INDEX triggers_namespace__flow_id__trigger_id ON triggers (namespace, flo
 
 /* ----------------------- logs ----------------------- */
 CREATE TABLE logs (
-    key SERIAL PRIMARY KEY,
+    key VARCHAR(30) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL,
     deleted BOOL NOT NULL GENERATED ALWAYS AS (CAST(value ->> 'deleted' AS bool)) STORED,
     namespace VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'namespace') STORED,
     flow_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'flowId') STORED,
-    task_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'taskId') STORED,
+    task_id VARCHAR(150) GENERATED ALWAYS AS (value ->> 'taskId') STORED,
     execution_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'executionId') STORED,
     taskrun_id VARCHAR(150) GENERATED ALWAYS AS (value ->> 'taskRunId') STORED,
-    attempt_number INT NOT NULL GENERATED ALWAYS AS (CAST(value ->> 'attemptNumber' AS INTEGER)) STORED,
+    attempt_number INT GENERATED ALWAYS AS (CAST(value ->> 'attemptNumber' AS INTEGER)) STORED,
     trigger_id VARCHAR(150) GENERATED ALWAYS AS (value ->> 'triggerId') STORED,
     level log_level NOT NULL GENERATED ALWAYS AS (LOGLEVEL_FROMTEXT(value ->> 'level')) STORED,
     timestamp TIMESTAMP NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'timestamp')) STORED,
     fulltext TSVECTOR GENERATED ALWAYS AS (
         FULLTEXT_INDEX(CAST(value ->> 'namespace' AS varchar)) ||
         FULLTEXT_INDEX(CAST(value ->> 'flowId' AS varchar)) ||
-        FULLTEXT_INDEX(CAST(value ->> 'taskId' AS varchar)) ||
+        FULLTEXT_INDEX(COALESCE(CAST(value ->> 'taskId' AS varchar), '')) ||
         FULLTEXT_INDEX(CAST(value ->> 'executionId' AS varchar)) ||
-        FULLTEXT_INDEX(CAST(value ->> 'taskRunId' AS varchar)) ||
+        FULLTEXT_INDEX(COALESCE(CAST(value ->> 'taskRunId' AS varchar), '')) ||
         FULLTEXT_INDEX(COALESCE(CAST(value ->> 'triggerId' AS varchar), '')) ||
         FULLTEXT_INDEX(COALESCE(CAST(value ->> 'message' AS varchar), '')) ||
         FULLTEXT_INDEX(COALESCE(CAST(value ->> 'thread' AS varchar), ''))
@@ -214,8 +219,8 @@ CREATE TABLE multipleconditions (
     namespace VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'namespace') STORED,
     flow_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'flowId') STORED,
     condition_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'conditionId') STORED,
-    start_date TIMESTAMP NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'start')) STORED,
-    end_date TIMESTAMP NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'end')) STORED
+    start_date INT NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_TIMESTAMP(value ->> 'start')) STORED,
+    end_date INT NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_TIMESTAMP(value ->> 'end')) STORED
 );
 
 CREATE INDEX multipleconditions_namespace__flow_id__condition_id ON multipleconditions (namespace, flow_id, condition_id);

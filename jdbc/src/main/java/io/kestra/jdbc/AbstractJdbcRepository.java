@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -46,6 +47,16 @@ public abstract class AbstractJdbcRepository<T> {
 
     abstract public Condition fullTextCondition(List<String> fields, String query);
 
+    protected String key(T entity) {
+        String key = queueService.key(entity);
+
+        if (key != null) {
+            return key;
+        }
+
+        return IdUtils.create();
+    }
+
     @SneakyThrows
     public Map<Field<Object>, Object> persistFields(T entity) {
         return new HashMap<>(ImmutableMap
@@ -68,7 +79,7 @@ public abstract class AbstractJdbcRepository<T> {
 
         dslContext
             .insertInto(table)
-            .set(DSL.field(DSL.quotedName("key")), queueService.key(entity))
+            .set(DSL.field(DSL.quotedName("key")), key(entity))
             .set(finalFields)
             .onDuplicateKeyUpdate()
             .set(finalFields)
@@ -79,7 +90,7 @@ public abstract class AbstractJdbcRepository<T> {
         dslContext.transaction(configuration ->
             DSL.using(configuration)
                 .delete(table)
-                .where(DSL.field(DSL.quotedName("key")).eq(queueService.key(entity)))
+                .where(DSL.field(DSL.quotedName("key")).eq(key(entity)))
                 .execute()
         );
     }

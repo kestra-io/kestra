@@ -111,7 +111,7 @@ public abstract class AbstractPython extends AbstractBash {
         }
 
         renderer.addAll(Arrays.asList(
-            this.pythonPath + " -m venv " + workingDirectory + " > /dev/null",
+            this.pythonPath + " -m venv --system-site-packages " + workingDirectory + " > /dev/null",
             "./bin/pip install pip --upgrade > /dev/null",
             requirementsAsString
         ));

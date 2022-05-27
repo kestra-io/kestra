@@ -1,10 +1,14 @@
-version: "3.6"
-
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.0.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+    healthcheck:
+      test: nc -z localhost 2181 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   kafka:
     image: confluentinc/cp-kafka:7.0.0
@@ -15,8 +19,14 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: 'false'
-    links:
-      - zookeeper
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: echo "exit" | curl -s -f telnet://localhost:9092 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
     ports:
       - 9092:9092
 
@@ -31,6 +41,11 @@ services:
         hard: -1
     ports:
       - 9200:9200
+    healthcheck:
+      test: curl -s -f localhost:9200/_cat/health >/dev/null || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   mysql:
     image: mysql

@@ -18,6 +18,10 @@ kestra:
     type: mysql
   repository:
     type: mysql
+  storage:
+    type: local
+    local:
+      base-path: /tmp/unittest
 
   jdbc:
     tables:
@@ -44,3 +48,6 @@ kestra:
       workertaskexecutions:
         table: "workertaskexecutions"
         cls: io.kestra.core.runners.WorkerTaskExecution
+      executorstate:
+        table: "executorstate"
+        cls: io.kestra.jdbc.runner.JdbcExecutorState

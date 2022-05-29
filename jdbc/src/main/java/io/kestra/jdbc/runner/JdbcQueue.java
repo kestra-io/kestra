@@ -16,10 +16,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.impl.DSL;
-import org.jooq.impl.DataSourceConnectionProvider;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import javax.transaction.Transactional;
 
 @Slf4j
 public abstract class JdbcQueue<T> implements QueueInterface<T> {
@@ -45,6 +42,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final String prefix;
 
+    protected final JdbcQueueIndexer jdbcQueueIndexer;
+
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         if (poolExecutor == null) {
             ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
@@ -59,6 +58,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         this.table = DSL.table(jdbcConfiguration.tableConfig("queues").getTable());
         this.prefix = ""; // @TODO
+
+        this.jdbcQueueIndexer = applicationContext.getBean(JdbcQueueIndexer.class);
     }
 
     @SneakyThrows
@@ -77,11 +78,16 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             log.trace("New message: topic '{}', value {}", this.cls.getName(), message);
         }
 
-        dslContext.transaction(configuration -> DSL.using(configuration)
-            .insertInto(table)
-            .set(this.produceFields(key, message))
-            .execute()
-        );
+        dslContext.transaction(configuration -> {
+            DSLContext context = DSL.using(configuration);
+
+            jdbcQueueIndexer.accept(context, message);
+
+            context
+                .insertInto(table)
+                .set(this.produceFields(key, message))
+                .execute();
+        });
     }
 
     @Override

@@ -4,18 +4,18 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.jdbc.AbstractJdbcRepository;
+import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 @Singleton
-public abstract class AbstractLogRepository extends AbstractRepository implements LogRepositoryInterface {
+public abstract class AbstractLogRepository extends AbstractRepository implements LogRepositoryInterface, JdbcIndexerInterface<LogEntry> {
     protected AbstractJdbcRepository<LogEntry> jdbcRepository;
 
     public AbstractLogRepository(AbstractJdbcRepository<LogEntry> jdbcRepository) {
@@ -80,6 +80,14 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
         this.jdbcRepository.persist(log, fields);
 
         return log;
+    }
+
+    @Override
+    public LogEntry save(DSLContext dslContext, LogEntry logEntry) {
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(logEntry);
+        this.jdbcRepository.persist(logEntry, dslContext, fields);
+
+        return logEntry;
     }
 
     private List<LogEntry> query(Condition condition, Level minLevel) {

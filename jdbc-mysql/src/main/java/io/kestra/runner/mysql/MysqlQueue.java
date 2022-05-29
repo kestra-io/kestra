@@ -50,7 +50,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
                     "ORDER BY offset ASC" + "\n" +
                     "LIMIT 10" + "\n" +
                     "FOR UPDATE SKIP LOCKED",
-                "indexer",
+                consumerGroup,
                 this.cls.getName()
             )
             .fetch();
@@ -61,10 +61,13 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
         ctx
             .query(
                 "UPDATE " + table.getName() + "\n" +
-                    "SET consumers = CONCAT(consumers, '" + consumerGroup + "')\n" +
-                    "WHERE offset IN (" + offsets.stream()
-                    .map(Object::toString)
-                    .collect(Collectors.joining(",")) + ")",
+                    "SET consumers = CONCAT_WS(',', consumers, '" + consumerGroup + "')\n" +
+                    "WHERE offset IN (" +
+                    offsets
+                        .stream()
+                        .map(Object::toString)
+                        .collect(Collectors.joining(",")) +
+                    ")",
                 consumerGroup
             )
             .execute();

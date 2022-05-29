@@ -8,10 +8,14 @@ import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.runners.Executor;
 import io.kestra.jdbc.AbstractJdbcRepository;
-import io.micronaut.context.ApplicationContext;
+import io.kestra.jdbc.runner.AbstractExecutorStateStorage;
+import io.kestra.jdbc.runner.JdbcExecutorState;
+import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
@@ -21,15 +25,18 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 @Singleton
-public abstract class AbstractExecutionRepository extends AbstractRepository implements ExecutionRepositoryInterface {
+public abstract class AbstractExecutionRepository extends AbstractRepository implements ExecutionRepositoryInterface, JdbcIndexerInterface<Execution> {
     protected AbstractJdbcRepository<Execution> jdbcRepository;
+    protected AbstractExecutorStateStorage executorStateStorage;
 
-    public AbstractExecutionRepository(AbstractJdbcRepository<Execution> jdbcRepository, ApplicationContext applicationContext) {
+    public AbstractExecutionRepository(AbstractJdbcRepository<Execution> jdbcRepository, AbstractExecutorStateStorage executorStateStorage) {
         this.jdbcRepository = jdbcRepository;
+        this.executorStateStorage = executorStateStorage;
     }
 
     @Override
@@ -368,5 +375,46 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
         this.jdbcRepository.persist(execution, fields);
 
         return execution;
+    }
+
+    @Override
+    public Execution save(DSLContext dslContext, Execution execution) {
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(execution);
+        this.jdbcRepository.persist(execution, dslContext, fields);
+
+        return execution;
+    }
+
+    public Executor lock(String executionId, Function<Pair<Execution, JdbcExecutorState>, Pair<Executor, JdbcExecutorState>> function) {
+        return this.jdbcRepository
+            .getDslContext()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectForUpdateOfStep<Record1<Object>> from = context
+                    .select(DSL.field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(DSL.field("id").eq(executionId))
+                    .forUpdate();
+
+                Optional<Execution> execution = this.jdbcRepository.fetchOne(from);
+
+                // not ready for now, skip and wait for a first state
+                if (execution.isEmpty()) {
+                    return null;
+                }
+
+                JdbcExecutorState jdbcExecutorState = executorStateStorage.get(context, execution.get());
+                Pair<Executor, JdbcExecutorState> pair = function.apply(Pair.of(execution.get(), jdbcExecutorState));
+
+                if (pair != null) {
+                    this.jdbcRepository.persist(pair.getKey().getExecution(), context, null);
+                    this.executorStateStorage.save(context, pair.getRight());
+
+                    return pair.getKey();
+                }
+
+                return null;
+            });
     }
 }

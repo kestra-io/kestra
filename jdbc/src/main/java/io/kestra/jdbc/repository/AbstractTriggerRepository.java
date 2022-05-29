@@ -4,11 +4,9 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.jdbc.AbstractJdbcRepository;
+import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import jakarta.inject.Singleton;
-import org.jooq.Field;
-import org.jooq.Record1;
-import org.jooq.SelectConditionStep;
-import org.jooq.SelectJoinStep;
+import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import java.util.List;
@@ -16,7 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Singleton
-public abstract class AbstractTriggerRepository extends AbstractRepository implements TriggerRepositoryInterface {
+public abstract class AbstractTriggerRepository extends AbstractRepository implements TriggerRepositoryInterface, JdbcIndexerInterface<Trigger> {
     protected AbstractJdbcRepository<Trigger> jdbcRepository;
 
     public AbstractTriggerRepository(AbstractJdbcRepository<Trigger> jdbcRepository) {
@@ -60,6 +58,14 @@ public abstract class AbstractTriggerRepository extends AbstractRepository imple
     public Trigger save(Trigger trigger) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
         this.jdbcRepository.persist(trigger, fields);
+
+        return trigger;
+    }
+
+    @Override
+    public Trigger save(DSLContext dslContext, Trigger trigger) {
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
+        this.jdbcRepository.persist(trigger, dslContext, fields);
 
         return trigger;
     }

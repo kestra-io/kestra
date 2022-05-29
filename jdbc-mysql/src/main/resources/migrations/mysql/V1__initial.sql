@@ -143,7 +143,7 @@ CREATE TABLE logs (
     `task_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskId') STORED,
     `execution_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.executionId') STORED NOT NULL,
     `taskrun_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.taskRunId') STORED,
-    `attempt_number` INT GENERATED ALWAYS AS (value ->> '$.attemptNumber') STORED,
+    `attempt_number` INT GENERATED ALWAYS AS (IF(value ->> '$.attemptNumber' = 'null', NULL, value ->> '$.attemptNumber')) STORED,
     `trigger_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.triggerId') STORED,
     `message` TEXT GENERATED ALWAYS AS (value ->> '$.message') STORED,
     `thread` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.thread') STORED,
@@ -201,6 +201,12 @@ CREATE TABLE multipleconditions (
 
 
 CREATE TABLE workertaskexecutions (
+    `key` VARCHAR(250) NOT NULL PRIMARY KEY,
+    `value` JSON NOT NULL
+) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+CREATE TABLE executorstate (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -3,6 +3,7 @@ package io.kestra.repository.postgres;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.jdbc.repository.AbstractExecutionRepository;
+import io.kestra.jdbc.runner.AbstractExecutorStateStorage;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -14,8 +15,8 @@ import java.util.Collections;
 @PostgresRepositoryEnabled
 public class PostgresExecutionRepository extends AbstractExecutionRepository implements ExecutionRepositoryInterface {
     @Inject
-    public PostgresExecutionRepository(ApplicationContext applicationContext) {
-        super(new PostgresRepository<>(Execution.class, applicationContext), applicationContext);
+    public PostgresExecutionRepository(ApplicationContext applicationContext, AbstractExecutorStateStorage executorStateStorage) {
+        super(new PostgresRepository<>(Execution.class, applicationContext), executorStateStorage);
     }
 
     @Override

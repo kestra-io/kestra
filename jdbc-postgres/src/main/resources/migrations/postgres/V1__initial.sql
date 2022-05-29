@@ -232,3 +232,10 @@ CREATE TABLE workertaskexecutions (
     key VARCHAR(250) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL
 );
+
+
+/* ----------------------- executorstate ----------------------- */
+CREATE TABLE executorstate (
+    key VARCHAR(250) NOT NULL PRIMARY KEY,
+    value JSONB NOT NULL
+);

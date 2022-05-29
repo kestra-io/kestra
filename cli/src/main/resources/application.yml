@@ -230,6 +230,9 @@ kestra:
       workertaskexecutions:
         table: "workertaskexecutions"
         cls: io.kestra.core.runners.WorkerTaskExecution
+      executorstate:
+        table: "executorstate"
+        cls: io.kestra.jdbc.runner.JdbcExecutorState
 
   elasticsearch:
     defaults:

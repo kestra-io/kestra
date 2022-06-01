@@ -18,26 +18,4 @@ public class PostgresMultipleConditionStorage extends AbstractJdbcMultipleCondit
     public PostgresMultipleConditionStorage(ApplicationContext applicationContext) {
         super(new PostgresRepository<>(MultipleConditionWindow.class, applicationContext));
     }
-
-    @Override
-    public List<MultipleConditionWindow> expired() {
-        ZonedDateTime now = ZonedDateTime.now();
-
-        // bug on postgres with timestamp, use unix integer
-
-        return this.jdbcRepository
-            .getDslContext()
-            .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(DSL.field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(
-                        DSL.field("start_date").lessOrEqual((int) now.toInstant().getEpochSecond())
-                            .and(DSL.field("end_date").lessOrEqual((int) now.toInstant().getEpochSecond()))
-                    );
-
-                return this.jdbcRepository.fetch(select);
-            });
-    }
 }

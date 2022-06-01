@@ -54,8 +54,8 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractRepos
                     .select(DSL.field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        DSL.field("start_date").lt(now.toInstant())
-                            .and(DSL.field("end_date").lt(now.toInstant()))
+                        DSL.field("start_date").lt(now.toOffsetDateTime())
+                            .and(DSL.field("end_date").lt(now.toOffsetDateTime()))
                     );
 
                 return this.jdbcRepository.fetch(select);

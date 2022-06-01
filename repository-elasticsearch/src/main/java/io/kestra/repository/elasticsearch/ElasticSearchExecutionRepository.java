@@ -291,33 +291,39 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     }
 
     private BoolQueryBuilder filters(String query, ZonedDateTime startDate, ZonedDateTime endDate, String namespace, String flowId, List<State.Type> state) {
-        BoolQueryBuilder bool = this.defaultFilter();
+        return this.filters(query, startDate, endDate, namespace, flowId, state, false);
+    }
+
+    private BoolQueryBuilder filters(String query, ZonedDateTime startDate, ZonedDateTime endDate, String namespace, String flowId, List<State.Type> state, boolean isTaskRun) {
+        String prefix = isTaskRun ? "taskRunList." : "";
+
+        BoolQueryBuilder bool = isTaskRun ? QueryBuilders.boolQuery() : this.defaultFilter();
 
         if (query != null) {
-            bool.must(queryString(query).field("*.fulltext"));
+            if (isTaskRun) {
+                bool.must(queryString(query));
+            } else {
+                bool.must(queryString(query).field("*.fulltext"));
+            }
         }
 
         if (flowId != null && namespace != null) {
-            bool = bool.must(QueryBuilders.matchQuery("flowId", flowId));
-            bool = bool.must(QueryBuilders.matchQuery("namespace", namespace));
+            bool = bool.must(QueryBuilders.matchQuery(prefix + "flowId", flowId));
+            bool = bool.must(QueryBuilders.matchQuery(prefix + "namespace", namespace));
         } else if (namespace != null) {
-            bool = bool.must(QueryBuilders.prefixQuery("namespace", namespace));
+            bool = bool.must(QueryBuilders.prefixQuery(prefix + "namespace", namespace));
         }
 
         if (startDate != null) {
-            bool.must(QueryBuilders.rangeQuery("state.startDate").gte(startDate));
+            bool.must(QueryBuilders.rangeQuery(prefix + "state.startDate").gte(startDate));
         }
 
         if (endDate != null) {
-            bool.must(QueryBuilders.rangeQuery("state.startDate").lte(endDate));
+            bool.must(QueryBuilders.rangeQuery(prefix + "state.startDate").lte(endDate));
         }
 
         if (state != null) {
-            bool = bool.must(QueryBuilders.termsQuery("state.current", stateConvert(state)));
-        }
-
-        if (query != null) {
-            bool.must(queryString(query).field("*.fulltext"));
+            bool = bool.must(QueryBuilders.termsQuery(prefix + "state.current", stateConvert(state)));
         }
 
         return bool;
@@ -411,15 +417,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         @javax.annotation.Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> states
     ) {
-        BoolQueryBuilder filterAggQuery = QueryBuilders.boolQuery();
-
-        if (query != null) {
-            filterAggQuery.must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
-        }
-
-        if (states != null) {
-            filterAggQuery = filterAggQuery.must(QueryBuilders.termsQuery("taskRunList.state.current", stateConvert(states)));
-        }
+        BoolQueryBuilder filterAggQuery = filters(query, startDate, endDate, namespace, flowId, states, true);
 
         NestedAggregationBuilder nestedAgg = AggregationBuilders
             .nested("NESTED", "taskRunList")
@@ -434,12 +432,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                     )
             );
 
-        BoolQueryBuilder mainQuery = this.defaultFilter()
-            .filter(QueryBuilders.nestedQuery(
-                "taskRunList",
-                query != null ? QueryBuilders.queryStringQuery(query).field("*.fulltext") : QueryBuilders.matchAllQuery(),
-                ScoreMode.Total
-            ));
+        BoolQueryBuilder mainQuery = this.defaultFilter();
 
         SearchSourceBuilder sourceBuilder = this.searchSource(mainQuery, Optional.of(List.of(nestedAgg)), null)
             .fetchSource(false);

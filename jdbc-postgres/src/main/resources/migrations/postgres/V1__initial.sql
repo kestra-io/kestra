@@ -223,8 +223,8 @@ CREATE TABLE multipleconditions (
     namespace VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'namespace') STORED,
     flow_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'flowId') STORED,
     condition_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'conditionId') STORED,
-    start_date INT NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_TIMESTAMP(value ->> 'start')) STORED,
-    end_date INT NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_TIMESTAMP(value ->> 'end')) STORED
+    start_date TIMESTAMPTZ NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'start')) STORED,
+    end_date TIMESTAMPTZ NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'end')) STORED
 );
 
 CREATE INDEX multipleconditions_namespace__flow_id__condition_id ON multipleconditions (namespace, flow_id, condition_id);

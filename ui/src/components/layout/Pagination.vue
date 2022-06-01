@@ -21,7 +21,7 @@
             />
         </div>
 
-        <small v-if="max" class="d-sm-none d-md text-total">
+        <small v-if="max" class="d-md-none d-lg-block total btn-outline-light mr-1">
             {{ $t('Max displayable') }}: {{ max }}
         </small>
 

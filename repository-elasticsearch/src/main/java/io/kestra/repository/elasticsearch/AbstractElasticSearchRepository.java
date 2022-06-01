@@ -112,17 +112,16 @@ abstract public class AbstractElasticSearchRepository<T> {
             return QueryBuilders.queryStringQuery("*");
         }
 
-        String lucene;
-
         List<String> words = Arrays.stream(query.split("[^a-zA-Z0-9_.-]+"))
             .filter(r -> !r.equals(""))
             .map(QueryParser::escape)
             .collect(Collectors.toList());
 
+        String lucene = "(*" + String.join("*", words) + "*)^3 OR (*" + String.join("* AND *", words) + "*)";
+
+
         if (words.size() == 1) {
-            lucene = "(" + query + ")^5 OR " + query;
-        } else {
-            lucene = "(*" + String.join("*", words) + "*)^3 OR (*" + String.join("* AND *", words) + "*)";
+            lucene = "(" + query + ")^5 OR " + lucene;
         }
 
         return QueryBuilders.queryStringQuery(lucene);

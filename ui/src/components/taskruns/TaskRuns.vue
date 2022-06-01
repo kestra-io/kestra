@@ -131,8 +131,8 @@
     import Kicon from "../Kicon"
     import RestoreUrl from "../../mixins/restoreUrl";
     import State from "../../utils/state";
-    import qb from "../../utils/queryBuilder";
     import Id from "../Id";
+    import _merge from "lodash/merge";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -228,6 +228,9 @@
                     .toDate();
             }
         },
+        created() {
+            this.$store.dispatch("taskrun/maxTaskRunSetting");
+        },
         methods: {
             isRunning(item){
                 return State.isRunning(item.state.current);
@@ -238,50 +241,32 @@
                     params: {namespace: item.namespace, flowId: item.flowId, id: item.executionId, tab: "gantt"},
                 });
             },
-            loadQuery(stats) {
-                let filter = []
-                let query = this.queryWithFilter();
+            loadQuery(base, stats) {
+                let queryFilter = this.queryWithFilter();
 
-                if (query.namespace) {
-                    filter.push(`${!stats ? "taskRunList.namespace" : "namespace"}:${query.namespace}*`)
+                if (stats) {
+                    delete queryFilter["startDate"];
+                    delete queryFilter["endDate"];
                 }
 
-
-                if (query.q) {
-                    filter.push(qb.toLucene(query.q));
-                }
-
-                if (query.start && !stats) {
-                    filter.push(`taskRunList.state.startDate:[${query.start} TO *]`)
-                }
-
-                if (query.end && !stats) {
-                    filter.push(`taskRunList.state.endDate:[* TO ${query.end}]`)
-                }
-
-                return filter.join(" AND ") || "*"
+                return _merge(base, queryFilter)
             },
             loadData(callback) {
                 this.$store
-                    .dispatch("stat/taskRunDaily", {
-                        q: this.loadQuery(true),
+                    .dispatch("stat/taskRunDaily", this.loadQuery({
                         startDate: this.$moment(this.startDate).startOf("day").add(-1, "day").toISOString(true),
                         endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
-                    })
+                    }, true))
                     .then(() => {
                         this.dailyReady = true;
                     });
 
-                this.$store.dispatch("taskrun/maxTaskRunSetting");
-
                 this.$store
-                    .dispatch("taskrun/findTaskRuns", {
+                    .dispatch("taskrun/findTaskRuns", this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
-                        q: this.loadQuery(false),
-                        sort: this.$route.query.sort || "taskRunList.state.startDate:desc",
-                        state: this.$route.query.status
-                    })
+                        state: this.$route.query.status ? [this.$route.query.status] : this.statuses
+                    }, false))
                     .finally(callback);
             },
             durationFrom(item) {

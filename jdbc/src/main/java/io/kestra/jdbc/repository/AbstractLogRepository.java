@@ -11,8 +11,10 @@ import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 @Singleton
 public abstract class AbstractLogRepository extends AbstractRepository implements LogRepositoryInterface, JdbcIndexerInterface<LogEntry> {
@@ -24,7 +26,13 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
 
     abstract protected Condition findCondition(String query);
 
-    public ArrayListTotal<LogEntry> find(String query, Pageable pageable, Level minLevel) {
+    public ArrayListTotal<LogEntry> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable Level minLevel,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate
+    ) {
         return this.jdbcRepository
             .getDslContext()
             .transactionResult(configuration -> {
@@ -37,11 +45,19 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
                     .where(this.defaultFilter());
 
                 if (minLevel != null) {
-                    select.and(minLevel(minLevel));
+                    select = select.and(minLevel(minLevel));
                 }
 
                 if (query != null) {
-                    select.and(this.findCondition(query));
+                    select = select.and(this.findCondition(query));
+                }
+
+                if (startDate != null) {
+                    select = select.and(DSL.field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
+                }
+
+                if (endDate != null) {
+                    select = select.and(DSL.field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
                 }
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -112,7 +128,7 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
             });
     }
 
-    private static Condition minLevel(Level minLevel) {
+    protected Condition minLevel(Level minLevel) {
         return DSL.field("level").in(LogEntry.findLevelsByMin(minLevel));
     }
 }

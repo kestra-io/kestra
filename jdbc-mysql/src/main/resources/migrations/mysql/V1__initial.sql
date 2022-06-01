@@ -113,11 +113,13 @@ CREATE TABLE `executions` (
     ) GENERATED ALWAYS AS (value ->> '$.state.current') STORED NOT NULL,
     `state_duration` BIGINT GENERATED ALWAYS AS (value ->> '$.state.duration' * 1000) STORED NOT NULL,
     `start_date` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.state.startDate' , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED NOT NULL,
+    `end_date` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.state.endDate' , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED,
     INDEX ix_id (id),
     INDEX ix_namespace (namespace),
     INDEX ix_flowId (flow_id),
     INDEX ix_state_current (state_current),
     INDEX ix_start_date (start_date),
+    INDEX ix_end_date (end_date),
     INDEX ix_state_duration (state_duration),
     INDEX ix_deleted (deleted),
     FULLTEXT ix_fulltext (namespace, flow_id, id)

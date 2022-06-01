@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers;
 
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -11,7 +12,6 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import io.reactivex.schedulers.Schedulers;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.slf4j.event.Level;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import io.micronaut.core.annotation.Nullable;
@@ -43,14 +44,16 @@ public class LogController {
     @Get(uri = "logs/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Logs"}, summary = "Search for logs")
     public PagedResults<LogEntry> find(
-        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String query,
+        @Parameter(description = "Lucene string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "The min log level filter") @Nullable @QueryValue(value = "minLevel") Level minLevel
-        ) {
+        @Parameter(description = "The min log level filter") @Nullable @QueryValue(value = "minLevel") Level minLevel,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
+    ) {
         return PagedResults.of(
-            logRepository.find(query, PageableUtils.from(page, size, sort), minLevel)
+            logRepository.find(PageableUtils.from(page, size, sort), query, minLevel, startDate, endDate)
         );
     }
 

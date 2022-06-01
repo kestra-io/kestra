@@ -23,6 +23,7 @@ import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import java.util.*;
+import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
@@ -187,7 +188,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
 
     abstract protected Condition findCondition(String query);
 
-    public ArrayListTotal<Flow> find(String query, Pageable pageable) {
+    public ArrayListTotal<Flow> find(Pageable pageable, @Nullable String query, @Nullable String namespace) {
         return this.jdbcRepository
             .getDslContext()
             .transactionResult(configuration -> {
@@ -199,6 +200,10 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
                     select.and(this.findCondition(query));
                 }
 
+                if (namespace != null) {
+                    select.and(DSL.field("namespace").likeIgnoreCase(namespace + "%"));
+                }
+
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
@@ -206,7 +211,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
     abstract protected Condition findSourceCodeCondition(String query);
 
     @Override
-    public ArrayListTotal<SearchResult<Flow>> findSourceCode(String query, Pageable pageable) {
+    public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String namespace) {
         return this.jdbcRepository
             .getDslContext()
             .transactionResult(configuration -> {
@@ -218,13 +223,17 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
                     select.and(this.findSourceCodeCondition(query));
                 }
 
+                if (namespace != null) {
+                    select.and(DSL.field("namespace").likeIgnoreCase(namespace + "%"));
+                }
+
                 return this.jdbcRepository.fetchPage(
                     context,
                     select,
                     pageable,
                     record -> new SearchResult<>(
                         this.jdbcRepository.map(record),
-                        this.jdbcRepository.fragments(query, record.getValue("value", String.class))
+                        this.jdbcRepository.fragments(query, record.getValue("source_code", String.class))
                     )
                 );
             });
@@ -334,9 +343,9 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
             .transactionResult(configuration -> DSL
                 .using(configuration)
                 .select(DSL.field("namespace"))
-                .from(lastRevision(false))
+                .from(lastRevision(true))
                 .where(this.defaultFilter())
-                .groupBy(DSL.grouping(DSL.field("namespace")))
+                .groupBy(DSL.field("namespace"))
                 .fetch()
                 .map(record -> record.getValue("namespace", String.class))
             );

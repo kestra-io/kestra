@@ -57,7 +57,15 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
 
     abstract protected Condition findCondition(String query);
 
-    public ArrayListTotal<Execution> find(String query, Pageable pageable, List<State.Type> state) {
+    public ArrayListTotal<Execution> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<State.Type> state
+    ) {
         return this.jdbcRepository
             .getDslContext()
             .transactionResult(configuration -> {
@@ -70,6 +78,21 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                     .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter());
+
+                if (flowId != null && namespace != null) {
+                    select = select.and(DSL.field("namespace").eq(namespace));
+                    select = select.and(DSL.field("flow_id").eq(flowId));
+                } else if (namespace != null) {
+                    select = select.and(DSL.field("namespace").likeIgnoreCase(namespace + "%"));
+                }
+
+                if (startDate != null) {
+                    select = select.and(DSL.field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
+                }
+
+                if (endDate != null) {
+                    select = select.and(DSL.field("end_date").lessOrEqual(endDate.toOffsetDateTime()));
+                }
 
                 if (state != null) {
                     select = select.and(DSL.field("state_current")
@@ -105,7 +128,15 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
     }
 
     @Override
-    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, List<State.Type> state) {
+    public ArrayListTotal<TaskRun> findTaskRun(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<State.Type> states
+    ) {
         throw new UnsupportedOperationException();
     }
 
@@ -115,7 +146,14 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
     }
 
     @Override
-    public List<DailyExecutionStatistics> dailyStatistics(String query, ZonedDateTime startDate, ZonedDateTime endDate, boolean isTaskRun) {
+    public List<DailyExecutionStatistics> dailyStatistics(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        boolean isTaskRun
+    ) {
         if (isTaskRun) {
             throw new UnsupportedOperationException();
         }
@@ -172,8 +210,8 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                     .select(selectFields)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter())
-                    .and(DSL.field("start_date").greaterOrEqual(finalStartDate.toInstant()))
-                    .and(DSL.field("start_date").lessOrEqual(finalEndDate.toInstant()));
+                    .and(DSL.field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
+                    .and(DSL.field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
                 if (query != null) {
                     select.and(this.findCondition(query));
@@ -190,8 +228,16 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
             });
     }
 
+
     @Override
-    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query, ZonedDateTime startDate, ZonedDateTime endDate, boolean groupByNamespaceOnly) {
+    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        boolean groupByNamespaceOnly
+    ) {
         List<Field<?>> fields = new ArrayList<>();
 
         fields.add(DSL.date(DSL.field("start_date", Date.class)).as("start_date"));
@@ -270,6 +316,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
         if (result == null) {
             return DailyExecutionStatistics.builder()
                 .startDate(date.toLocalDate())
+                .duration(DailyExecutionStatistics.Duration.builder().build())
                 .build();
         }
 
@@ -298,7 +345,12 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
     }
 
     @Override
-    public List<ExecutionCount> executionCounts(List<Flow> flows, String query, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public List<ExecutionCount> executionCounts(
+        List<Flow> flows,
+        @Nullable List<State.Type> states,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate
+    ) {
         ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
         ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
 
@@ -314,11 +366,12 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                     ))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter())
-                    .and(DSL.field("start_date").greaterOrEqual(finalStartDate.toInstant()))
-                    .and(DSL.field("start_date").lessOrEqual(finalEndDate.toInstant()));
+                    .and(DSL.field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
+                    .and(DSL.field("end_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
-                if (query != null) {
-                    select.and(this.findCondition(query));
+                if (states != null) {
+                    select = select.and(DSL.field("state_current")
+                        .in(states.stream().map(Enum::name).collect(Collectors.toList())));
                 }
 
                 // add flow & namespace filters
@@ -416,5 +469,20 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
 
                 return null;
             });
+    }
+
+    @Override
+    public Function<String, String> sortMapping() throws IllegalArgumentException {
+        Map<String, String> mapper = Map.of(
+            "id", "id",
+            "state.startDate", "start_date",
+            "state.endDate", "end_date",
+            "state.duration", "state_duration",
+            "namespace", "namespace",
+            "flowId", "flow_id",
+            "state.current", "state_current"
+        );
+
+        return mapper::get;
     }
 }

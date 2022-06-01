@@ -225,11 +225,6 @@ public class JdbcExecutor implements ExecutorInterface {
                     });
             }
 
-            // Listeners need the last emit
-            if (conditionService.isTerminatedWithListeners(flow, execution)) {
-                this.executionQueue.emit(execution);
-            }
-
             // multiple condition
             if (
                 conditionService.isTerminatedWithListeners(flow, execution) &&

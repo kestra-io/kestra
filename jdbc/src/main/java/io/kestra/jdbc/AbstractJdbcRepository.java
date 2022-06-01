@@ -141,11 +141,10 @@ public abstract class AbstractJdbcRepository<T> {
                 if (i < 0) {
                     return r;
                 } else {
-                    return r.substring(0, i) + "<mark>" + r.substring(i, i + query.length()) + "</mark>" + r.substring(i + query.length());
+                    return r.substring(0, i) + "[mark]" + r.substring(i, i + query.length()) + "[/mark]" + r.substring(i + query.length());
                 }
             })
             .collect(Collectors.toList());
-
 
         return Collections.singletonList(String.join("\n", fragments));
     }

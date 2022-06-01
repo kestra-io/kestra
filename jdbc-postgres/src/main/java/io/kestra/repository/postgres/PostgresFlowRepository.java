@@ -30,6 +30,6 @@ public class PostgresFlowRepository extends AbstractFlowRepository {
 
     @Override
     protected Condition findSourceCodeCondition(String query) {
-        return DSL.condition("source_code @@ TO_TSQUERY('simple', ?)", query);
+        return this.jdbcRepository.fullTextCondition(Collections.singletonList("FULLTEXT_INDEX(source_code)"), query);
     }
 }

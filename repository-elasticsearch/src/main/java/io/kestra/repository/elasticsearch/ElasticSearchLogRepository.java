@@ -15,10 +15,13 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import org.slf4j.event.Level;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
+import javax.annotation.Nullable;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
@@ -36,12 +39,29 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     }
 
     @Override
-    public ArrayListTotal<LogEntry> find(String query, Pageable pageable, Level minLevel) {
-        BoolQueryBuilder bool = this.defaultFilter()
-            .must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
+    public ArrayListTotal<LogEntry> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable Level minLevel,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate
+    ) {
+        BoolQueryBuilder bool = this.defaultFilter();
+
+        if (query != null) {
+            bool.must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
+        }
 
         if (minLevel != null) {
             bool.must(minLevel(minLevel));
+        }
+
+        if (startDate != null) {
+            bool.must(QueryBuilders.rangeQuery("timestamp").gte(startDate));
+        }
+
+        if (endDate != null) {
+            bool.must(QueryBuilders.rangeQuery("timestamp").lte(endDate));
         }
 
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable)

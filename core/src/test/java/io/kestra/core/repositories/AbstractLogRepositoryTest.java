@@ -19,7 +19,7 @@ public abstract class AbstractLogRepositoryTest {
     @Inject
     protected LogRepositoryInterface logRepository;
 
-    private static LogEntry.LogEntryBuilder logEntry() {
+    private static LogEntry.LogEntryBuilder logEntry(Level level) {
         return LogEntry.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -28,25 +28,28 @@ public abstract class AbstractLogRepositoryTest {
             .taskRunId(IdUtils.create())
             .attemptNumber(0)
             .timestamp(Instant.now())
-            .level(Level.INFO)
+            .level(level)
             .thread("")
             .message("john doe");
     }
 
     @Test
     void all() {
-        LogEntry.LogEntryBuilder builder = logEntry();
+        LogEntry.LogEntryBuilder builder = logEntry(Level.INFO);
 
-        ArrayListTotal<LogEntry> find = logRepository.find("*", Pageable.UNPAGED, null);
+        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, null, null, null, null);
         assertThat(find.size(), is(0));
 
         LogEntry save = logRepository.save(builder.build());
 
-        find = logRepository.find("doe", Pageable.UNPAGED, null);
+        find = logRepository.find(Pageable.UNPAGED, "doe", null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.get(0).getExecutionId(), is(save.getExecutionId()));
 
-        find = logRepository.find("*", Pageable.UNPAGED, null);
+        find = logRepository.find(Pageable.UNPAGED,  "doe", Level.WARN,null, null);
+        assertThat(find.size(), is(0));
+
+        find = logRepository.find(Pageable.UNPAGED, null, null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.get(0).getExecutionId(), is(save.getExecutionId()));
 

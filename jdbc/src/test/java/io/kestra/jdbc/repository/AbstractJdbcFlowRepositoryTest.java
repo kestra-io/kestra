@@ -27,16 +27,16 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
 
     @Test
     void find() {
-        List<Flow> save = flowRepository.find(null, Pageable.from(1, 100, Sort.of(Sort.Order.asc("id"))));
+        List<Flow> save = flowRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc("id"))), null, null);
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
 
-        save = flowRepository.find("trigger-multiplecondition", Pageable.from(1, 10, Sort.UNSORTED));
+        save = flowRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "trigger-multiplecondition", null);
         assertThat((long) save.size(), is(3L));
     }
 
     @Test
     void findSourceCode() {
-        List<SearchResult<Flow>> search = flowRepository.findSourceCode("io.kestra.core.models.conditions.types.MultipleCondition", Pageable.from(1, 10, Sort.UNSORTED));
+        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.core.models.conditions.types.MultipleCondition", null);
 
         assertThat((long) search.size(), is(1L));
 
@@ -47,7 +47,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 .equals("trigger-multiplecondition-listener"))
             .findFirst()
             .orElseThrow();
-        assertThat(flow.getFragments().get(0), containsString("types.MultipleCondition</mark>"));
+        assertThat(flow.getFragments().get(0), containsString("types.MultipleCondition[/mark]"));
     }
 
     @BeforeEach

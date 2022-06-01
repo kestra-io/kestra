@@ -18,7 +18,7 @@
                 </template>
 
                 <template #table>
-                    <div v-if="search === undefined">
+                    <div v-if="search === undefined || search.length === 0">
                         <b-alert variant="light" class="text-muted" show>
                             {{ $t('no result') }}
                         </b-alert>
@@ -52,8 +52,8 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTable from "../layout/DataTable";
     import SearchField from "../layout/SearchField";
-    import qb from "../../utils/queryBuilder";
     import _escape from "lodash/escape"
+    import _merge from "lodash/merge";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -89,30 +89,19 @@
                     .replaceAll("[mark]", "<mark>")
                     .replaceAll("[/mark]", "</mark>")
             },
-            loadQuery() {
-                let filter = []
-                let query = this.queryWithFilter();
+            loadQuery(base) {
+                let queryFilter = this.queryWithFilter();
 
-                if (query.namespace) {
-                    filter.push(`namespace:${query.namespace}*`)
-                }
-
-                if (query.q) {
-                    filter.push(qb.toLucene(query.q));
-                }
-
-                return filter.join(" AND ") || "*"
+                return _merge(base, queryFilter)
             },
             loadData(callback) {
-                const query = this.loadQuery();
-                if (query !== "*") {
+                if (this.$route.query["q"] !== undefined) {
                     this.$store
-                        .dispatch("flow/searchFlows", {
-                            q: query,
+                        .dispatch("flow/searchFlows", this.loadQuery({
                             size: parseInt(this.$route.query.size || 25),
                             page: parseInt(this.$route.query.page || 1),
                             sort: this.$route.query.sort
-                        })
+                        }))
                         .finally(() => {
                             this.saveRestoreUrl();
                         })
@@ -121,6 +110,7 @@
                     this.$store.commit("flow/setSearch", undefined);
                     callback();
                 }
+
             }
         }
     };

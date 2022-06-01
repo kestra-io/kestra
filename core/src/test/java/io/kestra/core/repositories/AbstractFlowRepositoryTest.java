@@ -332,6 +332,11 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count(), is(1L));
     }
 
+    @Test
+    void findDistinctNamespace() {
+        List<String> distinctNamespace = flowRepository.findDistinctNamespace();
+        assertThat((long) distinctNamespace.size(), is(2L));
+    }
 
     @Singleton
     public static class FlowListener implements ApplicationEventListener<CrudEvent<Flow>> {

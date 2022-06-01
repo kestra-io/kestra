@@ -5,6 +5,7 @@ import io.micronaut.data.model.Pageable;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 
+import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Optional;
@@ -41,9 +42,9 @@ public interface FlowRepositoryInterface {
 
     List<Flow> findByNamespace(String namespace);
 
-    ArrayListTotal<Flow> find(String query, Pageable pageable);
+    ArrayListTotal<Flow> find(Pageable pageable, @Nullable String query, @Nullable String namespace);
 
-    ArrayListTotal<SearchResult<Flow>> findSourceCode(String query, Pageable pageable);
+    ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String namespace);
 
     List<String> findDistinctNamespace();
 

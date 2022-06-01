@@ -31,30 +31,37 @@ public class StatsController {
     @Post(uri = "executions/daily", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions")
     public List<DailyExecutionStatistics> dailyStatistics(
-        @Parameter(description = "Lucene string filter") String q,
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
+        @Parameter(description = "A flow id filter") @Nullable String flowId,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
     ) {
         // @TODO: seems to be converted back to utc by micronaut
         return executionRepository.dailyStatistics(
-            q,
+            query,
+            namespace,
+            flowId,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             false
         );
     }
 
-
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "taskruns/daily", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for taskRuns")
     public List<DailyExecutionStatistics> taskRunsDailyStatistics(
-        @Parameter(description = "Lucene string filter") String q,
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
+        @Parameter(description = "A flow id filter") @Nullable String flowId,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
     ) {
         return executionRepository.dailyStatistics(
-            q,
+            query,
+            namespace,
+            flowId,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             true
@@ -65,14 +72,18 @@ public class StatsController {
     @Post(uri = "executions/daily/group-by-flow", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions group by namespaces and flows")
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
-        @Parameter(description = "Lucene string filter") String q,
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
+        @Parameter(description = "A flow id filter") @Nullable String flowId,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
         @Parameter(description = "Return only namespace result and skip flows") @Nullable Boolean namespaceOnly
     ) {
 
         return executionRepository.dailyGroupByFlowStatistics(
-            q,
+            query,
+            namespace,
+            flowId,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             namespaceOnly != null && namespaceOnly

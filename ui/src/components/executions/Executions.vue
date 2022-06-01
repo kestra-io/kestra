@@ -14,8 +14,8 @@
                     @input="onDataTableValue('status', $event)"
                 />
                 <date-range
-                    :start="$route.query.start"
-                    :end="$route.query.end"
+                    :start-date="$route.query.startDate"
+                    :end-date="$route.query.endDate"
                     @input="onDataTableValue($event)"
                 />
                 <refresh-button class="float-right" @onRefresh="load" />
@@ -37,7 +37,7 @@
                     :responsive="true"
                     striped
                     hover
-                    sort-by="state.startDate"
+                    sort-by="startDate"
                     sort-desc
                     :items="executions"
                     :fields="fields"
@@ -117,8 +117,8 @@
     import Kicon from "../Kicon"
     import RestoreUrl from "../../mixins/restoreUrl";
     import State from "../../utils/state";
-    import qb from "../../utils/queryBuilder";
     import Id from "../Id";
+    import _merge from "lodash/merge";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -247,58 +247,43 @@
                 return State.isRunning(item.state.current);
             },
             onStatusChange() {
-
                 this.load(this.onDataLoaded);
             },
-            loadQuery(stats) {
-                let filter = [];
-                let query = this.queryWithFilter();
+            loadQuery(base, stats) {
+                let queryFilter = this.queryWithFilter();
 
-                if (query.namespace) {
-                    filter.push(`namespace:${query.namespace}*`)
-                }
-
-                if (query.q) {
-                    filter.push(qb.toLucene(query.q));
-                }
-
-                if (query.start && !stats) {
-                    filter.push(`state.startDate:[${query.start} TO *]`)
-                }
-
-                if (query.end && !stats) {
-                    filter.push(`state.endDate:[* TO ${query.end}]`)
+                if (stats) {
+                    delete queryFilter["startDate"];
+                    delete queryFilter["endDate"];
                 }
 
                 if (this.$route.name === "flows/update") {
-                    filter.push(`namespace:${this.$route.params.namespace}`);
-                    filter.push(`flowId:${this.$route.params.id}`);
+                    queryFilter["namespace"] = this.$route.params.namespace;
+                    queryFilter["flowId"] = this.$route.params.id;
                 }
 
-                return filter.join(" AND ") || "*"
+                return _merge(base, queryFilter)
             },
             loadData(callback) {
                 if (this.embed === false) {
                     this.dailyReady = false;
 
                     this.$store
-                        .dispatch("stat/daily", {
-                            q: this.loadQuery(true),
+                        .dispatch("stat/daily", this.loadQuery({
                             startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
                             endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
-                        })
+                        }, true))
                         .then(() => {
                             this.dailyReady = true;
                         });
                 }
 
-                this.$store.dispatch("execution/findExecutions", {
+                this.$store.dispatch("execution/findExecutions", this.loadQuery({
                     size: parseInt(this.$route.query.size || this.internalPageSize),
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
-                    q: this.loadQuery(false),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.status ? [this.$route.query.status] : this.statuses
-                }).finally(callback);
+                }, false)).finally(callback);
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000

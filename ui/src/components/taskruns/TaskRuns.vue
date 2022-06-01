@@ -14,8 +14,8 @@
                     @input="onDataTableValue('status', $event)"
                 />
                 <date-range
-                    :start="$route.query.start"
-                    :end="$route.query.end"
+                    :start-date="$route.query.startDate"
+                    :end-date="$route.query.endDate"
                     @input="onDataTableValue($event)"
                 />
                 <refresh-button class="float-right" @onRefresh="load" />

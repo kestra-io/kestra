@@ -136,11 +136,11 @@
             }
         },
         props: {
-            start: {
+            startDate: {
                 type: String,
                 default: undefined
             },
-            end: {
+            endDate: {
                 type: String,
                 default: undefined
             }
@@ -148,14 +148,14 @@
         methods: {
             onDate(value) {
                 this.$emit("input", {
-                    "start": value[0] ? moment(value[0]).toISOString(true) : undefined,
-                    "end": value[1] ? moment(value[1]).toISOString(true) : undefined
+                    "startDate": value[0] ? moment(value[0]).toISOString(true) : undefined,
+                    "endDate": value[1] ? moment(value[1]).toISOString(true) : undefined
                 });
             }
         },
         computed: {
             date() {
-                return [new Date(this.start), new Date(this.end)];
+                return [new Date(this.startDate), new Date(this.endDate)];
             }
         }
     };

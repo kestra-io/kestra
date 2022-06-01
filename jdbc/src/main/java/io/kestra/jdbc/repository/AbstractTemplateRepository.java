@@ -157,7 +157,7 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
                 .select(DSL.field("namespace"))
                 .from(this.jdbcRepository.getTable())
                 .where(this.defaultFilter())
-                .groupBy(DSL.grouping(DSL.field("namespace")))
+                .groupBy(DSL.field("namespace"))
                 .fetch()
                 .map(record -> record.getValue("namespace", String.class))
             );

@@ -39,14 +39,14 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
 
     @Test
     void find() {
-        List<Flow> save = flowRepository.find("*", Pageable.from(1, 100, Sort.UNSORTED));
+        List<Flow> save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null);
 
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
     }
 
     @Test
     void findSourceCode() {
-        List<SearchResult<Flow>> search = flowRepository.findSourceCode("*types.MultipleCondition*", Pageable.from(1, 10, Sort.UNSORTED));
+        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "*types.MultipleCondition*", null);
 
         assertThat((long) search.size(), is(1L));
         assertThat(search.get(0).getModel().getId(), is("trigger-multiplecondition-listener"));

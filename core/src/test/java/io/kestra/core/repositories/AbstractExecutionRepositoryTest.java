@@ -105,7 +105,7 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void find() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find("*", Pageable.from(1, 10), null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
     }
@@ -114,7 +114,7 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findTaskRun() {
         inject();
 
-        ArrayListTotal<TaskRun> executions = executionRepository.findTaskRun("*", Pageable.from(1, 10), null);
+        ArrayListTotal<TaskRun> executions = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(71L));
         assertThat(executions.size(), is(10));
     }
@@ -155,7 +155,9 @@ public abstract class AbstractExecutionRepositoryTest {
         Thread.sleep(500);
 
         Map<String, Map<String, List<DailyExecutionStatistics>>> result = executionRepository.dailyGroupByFlowStatistics(
-            "*",
+            null,
+            null,
+            null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             false
@@ -180,7 +182,9 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(second.getExecutionCounts().get(State.Type.CREATED), is(0L));
 
         result = executionRepository.dailyGroupByFlowStatistics(
-            "*",
+            null,
+            null,
+            null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             true
@@ -210,7 +214,9 @@ public abstract class AbstractExecutionRepositoryTest {
         Thread.sleep(500);
 
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
-            "*",
+            null,
+            null,
+            null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             false
@@ -235,7 +241,9 @@ public abstract class AbstractExecutionRepositoryTest {
         }
 
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
-            "*",
+            null,
+            null,
+            null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             true
@@ -270,7 +278,7 @@ public abstract class AbstractExecutionRepositoryTest {
                 new io.kestra.core.models.executions.statistics.Flow(NAMESPACE, "third"),
                 new Flow(NAMESPACE, "missing")
             ),
-            "*",
+            null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now()
         );

@@ -6,9 +6,12 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import org.slf4j.event.Level;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.inject.Singleton;
+
+import javax.annotation.Nullable;
 
 @Singleton
 @MemoryRepositoryEnabled
@@ -31,7 +34,13 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<LogEntry> find(String query, Pageable pageable, Level minLevel) {
+    public ArrayListTotal<LogEntry> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable Level minLevel,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate
+    ) {
         throw new UnsupportedOperationException();
     }
 

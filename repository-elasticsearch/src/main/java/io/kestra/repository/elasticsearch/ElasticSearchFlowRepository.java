@@ -15,10 +15,7 @@ import org.opensearch.action.search.SearchResponse;
 import org.opensearch.client.RequestOptions;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.common.text.Text;
-import org.opensearch.index.query.BoolQueryBuilder;
-import org.opensearch.index.query.MatchQueryBuilder;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.index.query.*;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import org.opensearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.opensearch.search.sort.FieldSortBuilder;
@@ -41,6 +38,8 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+
+import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
@@ -188,9 +187,16 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public ArrayListTotal<Flow> find(String query, Pageable pageable) {
-        BoolQueryBuilder bool = this.defaultFilter()
-            .must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
+    public ArrayListTotal<Flow> find(Pageable pageable, @Nullable String query, @Nullable String namespace) {
+        BoolQueryBuilder bool = this.defaultFilter();
+
+        if (query != null) {
+            bool.must(queryString(query).field("*.fulltext"));
+        }
+
+        if (namespace != null) {
+            bool.must(QueryBuilders.prefixQuery("namespace", namespace));
+        }
 
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
         sourceBuilder.fetchSource("*", "sourceCode");
@@ -199,9 +205,13 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public ArrayListTotal<SearchResult<Flow>> findSourceCode(String query, Pageable pageable) {
+    public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String namespace) {
         BoolQueryBuilder bool = this.defaultFilter()
-            .must(QueryBuilders.queryStringQuery(query).field("sourceCode"));
+            .must(queryString(query).field("sourceCode"));
+
+        if (namespace != null) {
+            bool.must(QueryBuilders.prefixQuery("namespace", namespace));
+        }
 
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
         sourceBuilder.fetchSource("*", "sourceCode");

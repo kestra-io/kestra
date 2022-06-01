@@ -25,19 +25,31 @@ public class ExecutionUsage {
             .atStartOfDay(ZoneId.systemDefault())
             .minusDays(1);
 
+        List<DailyExecutionStatistics> dailyTaskRunsCount = null;
+
+        try {
+            dailyTaskRunsCount = executionRepository.dailyStatistics(
+                null,
+                null,
+                null,
+                startDate,
+                ZonedDateTime.now(),
+                true
+            );
+        } catch (UnsupportedOperationException ignored) {
+
+        }
+
         return ExecutionUsage.builder()
             .dailyExecutionsCount(executionRepository.dailyStatistics(
-                "*",
+                null,
+                null,
+                null,
                 startDate,
                 ZonedDateTime.now(),
                 false
             ))
-            .dailyTaskRunsCount(executionRepository.dailyStatistics(
-                "*",
-                startDate,
-                ZonedDateTime.now(),
-                true
-            ))
+            .dailyTaskRunsCount(dailyTaskRunsCount)
             .build();
     }
 }

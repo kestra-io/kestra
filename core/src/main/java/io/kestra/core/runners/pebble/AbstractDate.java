@@ -6,6 +6,7 @@ import com.mitchellbosecke.pebble.template.EvaluationContext;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
 import java.util.*;
 
@@ -102,10 +103,26 @@ public abstract class AbstractDate {
             return Instant.ofEpochSecond((Long) value).atZone(zoneId);
         }
 
-        if (existingFormat != null) {
-            return ZonedDateTime.parse((String) value, formatter(existingFormat));
+        try {
+            if (existingFormat != null) {
+                return ZonedDateTime.parse((String) value, formatter(existingFormat));
+            } else {
+                return ZonedDateTime.parse((String) value);
+            }
+        } catch (DateTimeParseException e) {
+            try {
+                if (existingFormat != null) {
+                    return LocalDateTime.parse((String) value, formatter(existingFormat)).atZone(zoneId);
+                } else {
+                    return LocalDateTime.parse((String) value).atZone(zoneId);
+                }
+            } catch (DateTimeParseException e2) {
+                if (existingFormat != null) {
+                    return LocalDate.parse((String) value, formatter(existingFormat)).atStartOfDay().atZone(zoneId);
+                } else {
+                    return LocalDate.parse((String) value).atStartOfDay().atZone(zoneId);
+                }
+            }
         }
-
-        return ZonedDateTime.parse((String) value);
     }
 }

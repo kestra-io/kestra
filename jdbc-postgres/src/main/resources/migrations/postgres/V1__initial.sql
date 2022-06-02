@@ -243,3 +243,13 @@ CREATE TABLE executorstate (
     key VARCHAR(250) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL
 );
+
+
+/* ----------------------- executorstate ----------------------- */
+CREATE TABLE executordelayed (
+    key VARCHAR(250) NOT NULL PRIMARY KEY,
+    value JSONB NOT NULL,
+    date TIMESTAMPTZ NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(value ->> 'date')) STORED
+);
+
+CREATE INDEX executordelayed_date ON executordelayed (date);

@@ -28,7 +28,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
         map.put(
             DSL.field(DSL.quotedName("type")),
-            DSL.field("CAST(? AS " + this.prefix + "queue_type)", this.cls.getName())
+            DSL.field("CAST(? AS queue_type)", this.cls.getName())
         );
 
         return map;
@@ -43,7 +43,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
                     "FROM " + table.getName() + "\n" +
                     "WHERE 1 = 1" + "\n" +
                     (offset != 0 ? "AND \"offset\" > ?" + "\n" : "") +
-                    "AND type = CAST(? AS " + this.prefix + "queue_type)" + "\n" +
+                    "AND type = CAST(? AS queue_type)" + "\n" +
                     "ORDER BY \"offset\" ASC" + "\n" +
                     "LIMIT 10" + "\n" +
                     "FOR UPDATE SKIP LOCKED",
@@ -62,9 +62,9 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
                     "FROM " + table.getName() + "\n" +
                     "WHERE (" +
                     "  \"consumers\" IS NULL" + "\n" +
-                    "  OR NOT(CAST(? AS " + this.prefix + "queue_consumers) = ANY(\"consumers\"))" + "\n" +
+                    "  OR NOT(CAST(? AS queue_consumers) = ANY(\"consumers\"))" + "\n" +
                     ")" + "\n" +
-                    "AND type = CAST(? AS " + this.prefix + "queue_type)" + "\n" +
+                    "AND type = CAST(? AS queue_type)" + "\n" +
                     "ORDER BY \"offset\" ASC" + "\n" +
                     "LIMIT 10" + "\n" +
                     "FOR UPDATE SKIP LOCKED",

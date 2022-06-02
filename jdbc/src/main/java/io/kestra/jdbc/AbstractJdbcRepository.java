@@ -87,12 +87,16 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     public void delete(T entity) {
-        dslContext.transaction(configuration ->
-            DSL.using(configuration)
-                .delete(table)
-                .where(DSL.field(DSL.quotedName("key")).eq(key(entity)))
-                .execute()
-        );
+        dslContext.transaction(configuration -> {
+            this.delete(DSL.using(configuration), entity);
+        });
+    }
+
+    public void delete(DSLContext dslContext, T entity) {
+        dslContext
+            .delete(table)
+            .where(DSL.field(DSL.quotedName("key")).eq(key(entity)))
+            .execute();
     }
 
     public <R extends Record> T map(R record) {

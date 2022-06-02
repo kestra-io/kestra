@@ -22,8 +22,6 @@ public class JdbcQueueIndexer {
     public JdbcQueueIndexer(ApplicationContext applicationContext) {
         applicationContext.getBeansOfType(JdbcIndexerInterface.class)
             .forEach(saveRepositoryInterface -> {
-//                Class<?> genericInterfaces = (Class<?>) saveRepositoryInterface.getClass().getGenericInterfaces()[0];
-//                String typeName = ((ParameterizedType) genericInterfaces.getGenericInterfaces()[0]).getActualTypeArguments()[0].getTypeName();
                 String typeName = ((ParameterizedType) ((Class<?>) saveRepositoryInterface.getClass()
                     .getGenericSuperclass()).getGenericInterfaces()[1]).getActualTypeArguments()[0].getTypeName();
 

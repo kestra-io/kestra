@@ -8,10 +8,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.tasks.flows.EachSequentialTest;
-import io.kestra.core.tasks.flows.FlowCaseTest;
-import io.kestra.core.tasks.flows.TemplateTest;
-import io.kestra.core.tasks.flows.WorkerTest;
+import io.kestra.core.tasks.flows.*;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -67,6 +64,9 @@ public abstract class JdbcRunnerTest {
 
     @Inject
     private WorkerTest.Suite workerTest;
+
+    @Inject
+    private PauseTest.Suite pauseTest;
 
     @BeforeEach
     void init() throws IOException, URISyntaxException {
@@ -211,5 +211,15 @@ public abstract class JdbcRunnerTest {
     @Test
     public void workerEach() throws Exception {
         workerTest.each(runnerUtils);
+    }
+
+    @Test
+    public void pauseRun() throws Exception {
+        pauseTest.run(runnerUtils);
+    }
+
+    @Test
+    public void pauseRunDelay() throws Exception {
+        pauseTest.runDelay(runnerUtils);
     }
 }

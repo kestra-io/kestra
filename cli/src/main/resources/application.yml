@@ -233,6 +233,9 @@ kestra:
       executorstate:
         table: "executorstate"
         cls: io.kestra.jdbc.runner.JdbcExecutorState
+      executordelayed:
+        table: "executordelayed"
+        cls: io.kestra.core.runners.ExecutionDelay
 
   elasticsearch:
     defaults:

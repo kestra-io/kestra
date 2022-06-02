@@ -11,14 +11,14 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.FlowListenersInterface;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.runners.Executor;
+import io.kestra.core.runners.ExecutorService;
+import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.Template;
 import io.kestra.core.utils.Await;
 import io.kestra.jdbc.repository.AbstractExecutionRepository;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -30,12 +30,17 @@ import org.slf4j.event.Level;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Singleton
 @JdbcRunnerEnabled
 @Slf4j
 public class JdbcExecutor implements ExecutorInterface {
+    private final ScheduledExecutorService schedulerDelay = Executors.newSingleThreadScheduledExecutor();
+
+    private Boolean isShutdown = false;
+
     @Inject
     private ApplicationContext applicationContext;
 
@@ -91,6 +96,12 @@ public class JdbcExecutor implements ExecutorInterface {
     @Inject
     private AbstractWorkerTaskExecutionStorage workerTaskExecutionStorage;
 
+    @Inject
+    private ExecutionService executionService;
+
+    @Inject
+    private AbstractExecutionDelayStorage abstractExecutionDelayStorage;
+
     private List<Flow> allFlows;
 
     @SneakyThrows
@@ -105,10 +116,38 @@ public class JdbcExecutor implements ExecutorInterface {
 
         this.executionQueue.receive(Executor.class, this::executionQueue);
         this.workerTaskResultQueue.receive(Executor.class, this::workerTaskResultQueue);
+
+        ScheduledFuture<?> handle = schedulerDelay.scheduleAtFixedRate(
+            this::executionDelaySend,
+            0,
+            1,
+            TimeUnit.SECONDS
+        );
+
+        // look at exception on the main thread
+        Thread schedulerDelayThread = new Thread(
+            () -> {
+                Await.until(handle::isDone);
+
+                try {
+                    handle.get();
+                } catch (ExecutionException | InterruptedException e) {
+                    if (e.getCause().getClass() != CannotCreateTransactionException.class) {
+                        log.error("Executor fatal exception", e);
+
+                        applicationContext.close();
+                        Runtime.getRuntime().exit(1);
+                    }
+                }
+            },
+            "jdbc-delay"
+        );
+
+        schedulerDelayThread.start();
     }
 
     private void executionQueue(Execution message) {
-        executionRepository.lock(message.getId(), pair -> {
+        Executor result = executionRepository.lock(message.getId(), pair -> {
             Execution execution = pair.getLeft();
             JdbcExecutorState executorState = pair.getRight();
 
@@ -126,14 +165,6 @@ public class JdbcExecutor implements ExecutorInterface {
                     executorService.onNexts(executor.getFlow(), executor.getExecution(), executor.getNexts()),
                     "onNexts"
                 );
-            }
-
-            if (executor.getException() != null) {
-                toExecution(
-                    handleFailedExecutionFromExecutor(executor, executor.getException())
-                );
-            } else if (executor.isExecutionUpdated()) {
-                toExecution(executor);
             }
 
             // worker task
@@ -164,39 +195,11 @@ public class JdbcExecutor implements ExecutorInterface {
                     .forEach(workerTaskResultQueue::emit);
             }
 
-
-//            // schedulerDelay
-//            if (executor.getExecutionDelays().size() > 0) {
-//                executor.getExecutionDelays()
-//                    .forEach(workerTaskResultDelay -> {
-//                        long between = ChronoUnit.MICROS.between(Instant.now(), workerTaskResultDelay.getDate());
-//
-//                        if (between <= 0) {
-//                            between = 1;
-//                        }
-//
-//                        schedulerDelay.schedule(
-//                            () -> {
-//                                try {
-//                                    ExecutionState executionState = EXECUTIONS.get(workerTaskResultDelay.getExecutionId());
-//
-//                                    Execution markAsExecution = executionService.markAs(
-//                                        executionState.execution,
-//                                        workerTaskResultDelay.getTaskRunId(),
-//                                        State.Type.RUNNING
-//                                    );
-//
-//                                    executionQueue.emit(markAsExecution);
-//                                } catch (Exception e) {
-//                                    throw new RuntimeException(e);
-//                                }
-//                            },
-//                            between,
-//                            TimeUnit.MICROSECONDS
-//                        );
-//                    });
-//            }
-
+            // schedulerDelay
+            if (executor.getExecutionDelays().size() > 0) {
+                executor.getExecutionDelays()
+                    .forEach(executionDelay -> abstractExecutionDelayStorage.save(executionDelay));
+            }
 
             // worker task execution watchers
             if (executor.getWorkerTaskExecutions().size() > 0) {
@@ -206,10 +209,14 @@ public class JdbcExecutor implements ExecutorInterface {
                     .getWorkerTaskExecutions()
                     .forEach(workerTaskExecution -> {
                         String log = "Create new execution for flow '" +
-                            workerTaskExecution.getExecution().getNamespace() + "'." + workerTaskExecution.getExecution().getFlowId() +
-                            "' with id '" + workerTaskExecution.getExecution().getId() + "' from task '" + workerTaskExecution.getTask().getId() +
+                            workerTaskExecution.getExecution()
+                                .getNamespace() + "'." + workerTaskExecution.getExecution().getFlowId() +
+                            "' with id '" + workerTaskExecution.getExecution()
+                            .getId() + "' from task '" + workerTaskExecution.getTask().getId() +
                             "' and taskrun '" + workerTaskExecution.getTaskRun().getId() +
-                            (workerTaskExecution.getTaskRun().getValue() != null  ? " (" +  workerTaskExecution.getTaskRun().getValue() + ")" : "") + "'";
+                            (workerTaskExecution.getTaskRun()
+                                .getValue() != null ? " (" + workerTaskExecution.getTaskRun()
+                                .getValue() + ")" : "") + "'";
 
                         JdbcExecutor.log.info(log);
 
@@ -268,6 +275,10 @@ public class JdbcExecutor implements ExecutorInterface {
                 executorState
             );
         });
+
+        if (result != null) {
+            this.toExecution(result);
+        }
     }
 
 
@@ -330,6 +341,19 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private void toExecution(Executor executor) {
+        boolean shouldSend = false;
+
+        if (executor.getException() != null) {
+            executor = handleFailedExecutionFromExecutor(executor, executor.getException());
+            shouldSend = true;
+        } else if (executor.isExecutionUpdated()) {
+            shouldSend = true;
+        }
+
+        if (!shouldSend) {
+            return;
+        }
+
         if (log.isDebugEnabled()) {
             executorService.log(log, false, executor);
         }
@@ -343,7 +367,6 @@ public class JdbcExecutor implements ExecutorInterface {
         }
     }
 
-
     private Flow transform(Flow flow, Execution execution) {
         try {
             flow = Template.injectTemplate(
@@ -356,6 +379,39 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         return taskDefaultService.injectDefaults(flow, execution);
+    }
+
+    private void executionDelaySend() {
+        if (isShutdown) {
+            return;
+        }
+
+        abstractExecutionDelayStorage.get(executionDelay -> {
+            Executor result = executionRepository.lock(executionDelay.getExecutionId(), pair -> {
+                Executor executor = new Executor(pair.getLeft(), null);
+
+                try {
+                    Execution markAsExecution = executionService.markAs(
+                        pair.getKey(),
+                        executionDelay.getTaskRunId(),
+                        State.Type.RUNNING
+                    );
+
+                    executor = executor.withExecution(markAsExecution, "pausedRestart");
+                } catch (Exception e) {
+                    executor = handleFailedExecutionFromExecutor(executor, e);
+                }
+
+                return Pair.of(
+                    executor,
+                    pair.getRight()
+                );
+            });
+
+            if (result != null) {
+                this.toExecution(result);
+            }
+        });
     }
 
     private boolean deduplicateNexts(Execution execution, JdbcExecutorState executorState, List<TaskRun> taskRuns) {
@@ -414,6 +470,8 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Override
     public void close() throws IOException {
+        isShutdown = true;
+        schedulerDelay.shutdown();
         executionQueue.close();
         workerTaskQueue.close();
         workerTaskResultQueue.close();

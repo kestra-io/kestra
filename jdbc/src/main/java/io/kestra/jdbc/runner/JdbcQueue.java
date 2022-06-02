@@ -12,6 +12,7 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.JdbcConfiguration;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
@@ -25,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import javax.sql.DataSource;
 
 @Slf4j
 public abstract class JdbcQueue<T> implements QueueInterface<T> {
@@ -38,11 +40,13 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final DSLContext dslContext;
 
+    protected final DataSource dataSource;
+
     protected final Table<Record> table;
 
-    protected final String prefix;
-
     protected final JdbcQueueIndexer jdbcQueueIndexer;
+
+    protected Boolean isShutdown = false;
 
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         if (poolExecutor == null) {
@@ -53,11 +57,11 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;
         this.dslContext = applicationContext.getBean(DSLContext.class);
+        this.dataSource = applicationContext.getBean(DataSource.class);
 
         JdbcConfiguration jdbcConfiguration = applicationContext.getBean(JdbcConfiguration.class);
 
         this.table = DSL.table(jdbcConfiguration.tableConfig("queues").getTable());
-        this.prefix = ""; // @TODO
 
         this.jdbcQueueIndexer = applicationContext.getBean(JdbcQueueIndexer.class);
     }
@@ -178,12 +182,19 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         });
     }
 
+    @SuppressWarnings("BusyWait")
     private Runnable poll(Runnable runnable) {
         AtomicBoolean running = new AtomicBoolean(true);
 
         poolExecutor.execute(() -> {
-            while (running.get()) {
-                runnable.run();
+            while (running.get() && !this.isShutdown) {
+                try {
+                    runnable.run();
+                } catch (CannotCreateTransactionException e) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Can't poll on receive", e);
+                    }
+                }
 
                 try {
                     Thread.sleep(500);
@@ -213,10 +224,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public void pause() {
-        // @TODO
+        this.isShutdown = true;
     }
 
     @Override
     public void close() throws IOException {
+        this.isShutdown = true;
+        poolExecutor.shutdown();
     }
 }

@@ -197,8 +197,8 @@ CREATE TABLE multipleconditions (
             )
         )
     ) STORED NOT NULL,
-    INDEX namespace__flow_id__condition_id (namespace, flow_id, condition_id),
-    INDEX start_date__end_date (start_date, end_date)
+    INDEX ix_namespace__flow_id__condition_id (namespace, flow_id, condition_id),
+    INDEX ix_start_date__end_date (start_date, end_date)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
@@ -211,4 +211,22 @@ CREATE TABLE workertaskexecutions (
 CREATE TABLE executorstate (
     `key` VARCHAR(250) NOT NULL PRIMARY KEY,
     `value` JSON NOT NULL
+) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+CREATE TABLE executordelayed (
+    `key` VARCHAR(250) NOT NULL PRIMARY KEY,
+    `value` JSON NOT NULL,
+    `date` DATETIME(6) GENERATED ALWAYS AS (
+        IF(
+            SUBSTRING(value ->> '$.date', LENGTH(value ->> '$.date'), LENGTH(value ->> '$.date')) = 'Z',
+            STR_TO_DATE(value ->> '$.date', '%Y-%m-%dT%H:%i:%s.%fZ'),
+            CONVERT_TZ(
+                STR_TO_DATE(SUBSTRING(value ->> '$.date', 1, LENGTH(value ->> '$.date') - 6), '%Y-%m-%dT%H:%i:%s.%f'),
+                SUBSTRING(value ->> '$.date', LENGTH(value ->> '$.date') - 5, 5),
+                'UTC'
+            )
+        )
+    ) STORED NOT NULL,
+    INDEX ix_date (`date`)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

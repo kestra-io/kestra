@@ -60,7 +60,11 @@ CREATE TABLE queues (
         'executor',
         'worker',
         'scheduler'
-    )
+    ),
+    `updated` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX ix_type__consumers (type, consumers, offset),
+    INDEX ix_type__offset (type, offset),
+    INDEX ix_updated (updated)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
@@ -72,10 +76,8 @@ CREATE TABLE `flows` (
     `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
     `revision` INT UNSIGNED GENERATED ALWAYS AS (value ->> '$.revision') STORED NOT NULL,
     `source_code` TEXT NOT NULL,
-    INDEX ix_id (id),
-    INDEX ix_namespace (namespace),
-    INDEX ix_revision (revision),
-    INDEX ix_deleted (deleted),
+    INDEX ix_namespace (deleted, namespace),
+    INDEX ix_namespace__id__revision (deleted, namespace, id, revision),
     FULLTEXT ix_fulltext (namespace, id),
     FULLTEXT ix_source_code (source_code)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -87,9 +89,8 @@ CREATE TABLE `templates` (
     `deleted` BOOL GENERATED ALWAYS AS (value ->> '$.deleted' = 'true') STORED NOT NULL,
     `id` VARCHAR(100) GENERATED ALWAYS AS (value ->> '$.id') STORED NOT NULL,
     `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
-    INDEX ix_id (id),
-    INDEX ix_namespace (namespace),
-    INDEX ix_deleted (deleted),
+    INDEX ix_namespace (deleted, namespace),
+    INDEX ix_namespace__id (deleted, namespace, id),
     FULLTEXT ix_fulltext (namespace, id)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -115,14 +116,12 @@ CREATE TABLE `executions` (
     `state_duration` BIGINT GENERATED ALWAYS AS (value ->> '$.state.duration' * 1000) STORED NOT NULL,
     `start_date` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.state.startDate' , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED NOT NULL,
     `end_date` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.state.endDate' , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED,
-    INDEX ix_id (id),
-    INDEX ix_namespace (namespace),
-    INDEX ix_flowId (flow_id),
-    INDEX ix_state_current (state_current),
-    INDEX ix_start_date (start_date),
-    INDEX ix_end_date (end_date),
-    INDEX ix_state_duration (state_duration),
-    INDEX ix_deleted (deleted),
+    INDEX ix_namespace (deleted, namespace),
+    INDEX ix_flowId (deleted, flow_id),
+    INDEX ix_state_current (deleted, state_current),
+    INDEX ix_start_date (deleted, start_date),
+    INDEX ix_end_date (deleted, end_date),
+    INDEX ix_state_duration (deleted, state_duration),
     FULLTEXT ix_fulltext (namespace, flow_id, id)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -134,7 +133,6 @@ CREATE TABLE triggers (
     `flow_id`  VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.flowId') STORED NOT NULL,
     `trigger_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.triggerId') STORED NOT NULL,
     `execution_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.executionId') STORED ,
-    INDEX ix_namespace__flow_id__trigger_id (namespace, flow_id, trigger_id),
     INDEX ix_execution_id (execution_id)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -160,14 +158,11 @@ CREATE TABLE logs (
         'TRACE'
     ) GENERATED ALWAYS AS (value ->> '$.level') STORED NOT NULL,
     `timestamp` DATETIME(6) GENERATED ALWAYS AS (STR_TO_DATE(value ->> '$.timestamp' , '%Y-%m-%dT%H:%i:%s.%fZ')) STORED NOT NULL,
-
-    INDEX ix_namespace (namespace),
-    INDEX ix_flowId (flow_id),
-    INDEX ix_task_id (task_id),
-    INDEX ix_execution_id (execution_id),
-    INDEX ix_taskrun_id (taskrun_id),
-    INDEX ix_trigger_id (trigger_id),
-    INDEX ix_timestamp (timestamp),
+    INDEX ix_namespace (deleted, namespace),
+    INDEX ix_execution_id (deleted, execution_id),
+    INDEX ix_execution_id__task_id (deleted, execution_id, task_id),
+    INDEX ix_execution_id__taskrun_id (deleted, execution_id, taskrun_id),
+    INDEX ix_timestamp (deleted, timestamp),
     FULLTEXT ix_fulltext (namespace, flow_id, task_id, execution_id, taskrun_id, trigger_id, message, thread)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

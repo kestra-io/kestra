@@ -31,11 +31,7 @@ public abstract class AbstractTriggerRepository extends AbstractRepository imple
                     .using(configuration)
                     .select(DSL.field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(
-                        DSL.field("namespace").eq(trigger.getNamespace())
-                            .and(DSL.field("flow_id").eq(trigger.getFlowId()))
-                            .and(DSL.field("trigger_id").eq(trigger.getTriggerId()))
-                    );
+                    .where(DSL.field(DSL.quotedName("key")).eq(trigger.uid()));
 
                 return this.jdbcRepository.fetchOne(select);
             });

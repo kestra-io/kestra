@@ -237,6 +237,11 @@ kestra:
         table: "executordelayed"
         cls: io.kestra.core.runners.ExecutionDelay
 
+    queues:
+      min-poll-interval: 100ms
+      max-poll-interval: 1000ms
+      poll-switch-interval: 5s
+
   elasticsearch:
     defaults:
       indice-prefix: "kestra_"

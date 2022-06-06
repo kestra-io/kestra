@@ -84,17 +84,31 @@ CREATE OR REPLACE FUNCTION PARSE_ISO8601_DURATION(text) RETURNS interval
     IMMUTABLE
     RETURN $1::interval;;
 
+CREATE OR REPLACE FUNCTION UPDATE_UPDATED_DATETIME() RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated = now();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+
 /* ----------------------- queues ----------------------- */
 CREATE TABLE queues (
     "offset" SERIAL PRIMARY KEY,
     type queue_type NOT NULL,
     key VARCHAR(250) NOT NULL,
     value JSONB NOT NULL,
-    consumers queue_consumers[]
+    consumers queue_consumers[],
+    updated timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX queues_key ON queues (type, key);
-CREATE INDEX queues_consumers ON queues (type, consumers);
+CREATE INDEX queues_type__consumers ON queues (type, consumers, "offset");
+CREATE INDEX queues_type__offset ON queues (type, "offset");
+CREATE INDEX queues_updated ON queues ("updated");
+
+CREATE TRIGGER queues_updated BEFORE UPDATE
+    ON queues FOR EACH ROW EXECUTE PROCEDURE
+    UPDATE_UPDATED_DATETIME();
 
 
 /* ----------------------- flows ----------------------- */
@@ -112,10 +126,8 @@ CREATE TABLE flows (
     source_code TEXT NOT NULL
 );
 
-CREATE INDEX flows_id ON flows (id);
-CREATE INDEX flows_namespace ON flows (namespace);
-CREATE INDEX flows_revision ON flows (revision);
-CREATE INDEX flows_deleted ON flows (deleted);
+CREATE INDEX flows_namespace ON flows (deleted, namespace);
+CREATE INDEX flows_namespace__id__revision ON flows (deleted, namespace, id, revision);
 CREATE INDEX flows_fulltext ON flows USING GIN (fulltext);
 CREATE INDEX flows_source_code ON flows USING GIN (FULLTEXT_INDEX(source_code));
 
@@ -133,9 +145,8 @@ CREATE TABLE templates (
     )) STORED
 );
 
-CREATE INDEX templates_namespace ON flows (namespace);
-CREATE INDEX templates_revision ON flows (revision);
-CREATE INDEX templates_deleted ON flows (deleted);
+CREATE INDEX templates_namespace ON templates (deleted, namespace);
+CREATE INDEX templates_namespace__id__revision ON templates (deleted, namespace, id);
 CREATE INDEX templates_fulltext ON templates USING GIN (fulltext);
 
 
@@ -144,7 +155,6 @@ CREATE TABLE executions (
     key VARCHAR(250) NOT NULL PRIMARY KEY,
     value JSONB NOT NULL,
     deleted BOOL NOT NULL GENERATED ALWAYS AS (CAST(value ->> 'deleted' AS bool)) STORED,
-    id VARCHAR(100) NOT NULL GENERATED ALWAYS AS (value ->> 'id') STORED,
     namespace VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'namespace') STORED,
     flow_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'flowId') STORED,
     state_current state_type NOT NULL GENERATED ALWAYS AS (STATE_FROMTEXT(value #>> '{state, current}')) STORED,
@@ -158,14 +168,12 @@ CREATE TABLE executions (
     ) STORED
 );
 
-CREATE INDEX executions_id ON executions (id);
-CREATE INDEX executions_namespace ON executions (namespace);
-CREATE INDEX executions_flow_id ON executions (flow_id);
-CREATE INDEX executions_state_current ON executions (state_current);
-CREATE INDEX executions_start_date ON executions (start_date);
-CREATE INDEX executions_end_date ON executions (end_date);
-CREATE INDEX executions_state_duration ON executions (state_duration);
-CREATE INDEX executions_deleted ON executions (deleted);
+CREATE INDEX executions_namespace ON executions (deleted, namespace);
+CREATE INDEX executions_flow_id ON executions (deleted, flow_id);
+CREATE INDEX executions_state_current ON executions (deleted, state_current);
+CREATE INDEX executions_start_date ON executions (deleted, start_date);
+CREATE INDEX executions_end_date ON executions (deleted, end_date);
+CREATE INDEX executions_state_duration ON executions (deleted, state_duration);
 CREATE INDEX executions_fulltext ON executions USING GIN (fulltext);
 
 
@@ -179,7 +187,6 @@ CREATE TABLE triggers (
     execution_id VARCHAR(150) GENERATED ALWAYS AS (value ->> 'executionId') STORED
 );
 
-CREATE INDEX triggers_namespace__flow_id__trigger_id ON triggers (namespace, flow_id, trigger_id);
 CREATE INDEX triggers_execution_id ON triggers (execution_id);
 
 
@@ -209,13 +216,11 @@ CREATE TABLE logs (
     ) STORED
 );
 
-CREATE INDEX logs_namespace ON logs (namespace);
-CREATE INDEX logs_flowId ON logs (flow_id);
-CREATE INDEX logs_task_id ON logs (task_id);
-CREATE INDEX logs_execution_id ON logs (execution_id);
-CREATE INDEX logs_taskrun_id ON logs (taskrun_id);
-CREATE INDEX logs_trigger_id ON logs (trigger_id);
-CREATE INDEX logs_timestamp ON logs (timestamp);
+CREATE INDEX logs_namespace ON logs (deleted, namespace);
+CREATE INDEX logs_execution_id ON logs (deleted, execution_id);
+CREATE INDEX logs_execution_id__task_id ON logs (deleted, execution_id, task_id);
+CREATE INDEX logs_execution_id__taskrun_id ON logs (deleted, execution_id, taskrun_id);
+CREATE INDEX logs_timestamp ON logs (deleted, timestamp);
 CREATE INDEX logs_fulltext ON logs USING GIN (fulltext);
 
 
@@ -231,7 +236,7 @@ CREATE TABLE multipleconditions (
 );
 
 CREATE INDEX multipleconditions_namespace__flow_id__condition_id ON multipleconditions (namespace, flow_id, condition_id);
-CREATE INDEX multipleconditions_namespace__start_date__end_date ON multipleconditions (start_date, end_date);
+CREATE INDEX multipleconditions_start_date__end_date ON multipleconditions (start_date, end_date);
 
 
 /* ----------------------- workertaskexecutions ----------------------- */

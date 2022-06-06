@@ -17,10 +17,8 @@ import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
-import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
-import java.sql.SQLTransientException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -51,7 +49,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                     .select(DSL.field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter())
-                    .and(DSL.field("id").eq(id));
+                    .and(DSL.field(DSL.quotedName("key")).eq(id));
 
                 return this.jdbcRepository.fetchOne(from);
             });
@@ -450,7 +448,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                 SelectForUpdateOfStep<Record1<Object>> from = context
                     .select(DSL.field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(DSL.field("id").eq(executionId))
+                    .where(DSL.field(DSL.quotedName("key")).eq(executionId))
                     .forUpdate();
 
                 Optional<Execution> execution = this.jdbcRepository.fetchOne(from);

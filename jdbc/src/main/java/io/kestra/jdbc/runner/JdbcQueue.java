@@ -13,20 +13,27 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.DSLContextWrapper;
 import io.kestra.jdbc.JdbcConfiguration;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.sql.DataSource;
 
 @Slf4j
@@ -43,9 +50,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final DataSource dataSource;
 
+    protected final Configuration configuration;
+
     protected final Table<Record> table;
 
     protected final JdbcQueueIndexer jdbcQueueIndexer;
+
 
     protected Boolean isShutdown = false;
 
@@ -59,6 +69,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.cls = cls;
         this.dslContextWrapper = applicationContext.getBean(DSLContextWrapper.class);
         this.dataSource = applicationContext.getBean(DataSource.class);
+        this.configuration = applicationContext.getBean(Configuration.class);
 
         JdbcConfiguration jdbcConfiguration = applicationContext.getBean(JdbcConfiguration.class);
 
@@ -141,7 +152,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         });
 
         return this.poll(() -> {
-            dslContextWrapper.transaction(configuration -> {
+            return dslContextWrapper.transactionResult(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
                 Result<Record> fetch = this.receiveFetch(ctx, maxOffset.get());
@@ -153,6 +164,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
                     maxOffset.set(offsets.get(offsets.size() - 1));
                 }
+
+                return fetch.size();
             });
         });
     }
@@ -162,7 +175,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         String consumerGroupName = consumerGroupName(consumerGroup);
 
         return this.poll(() -> {
-            dslContextWrapper.transaction(configuration -> {
+            return dslContextWrapper.transactionResult(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
                 Result<Record> fetch = this.receiveFetch(ctx, consumerGroupName);
@@ -177,18 +190,29 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                     );
                 }
 
+                return fetch.size();
             });
         });
     }
 
     @SuppressWarnings("BusyWait")
-    private Runnable poll(Runnable runnable) {
+    private Runnable poll(Supplier<Integer> runnable) {
         AtomicBoolean running = new AtomicBoolean(true);
+        AtomicLong sleep = new AtomicLong(configuration.getMaxPollInterval().toMillis());
+        AtomicReference<ZonedDateTime> lastPoll = new AtomicReference<>(ZonedDateTime.now());
 
         poolExecutor.execute(() -> {
             while (running.get() && !this.isShutdown) {
                 try {
-                    runnable.run();
+                    Integer count = runnable.get();
+                    if (count > 0) {
+                        lastPoll.set(ZonedDateTime.now());
+                    }
+
+                    sleep.set(lastPoll.get().plus(configuration.getPollSwitchInterval()).compareTo(ZonedDateTime.now()) < 0 ?
+                        configuration.getMaxPollInterval().toMillis() :
+                        configuration.getMinPollInterval().toMillis()
+                    );
                 } catch (CannotCreateTransactionException e) {
                     if (log.isDebugEnabled()) {
                         log.debug("Can't poll on receive", e);
@@ -196,13 +220,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 }
 
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(sleep.get());
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }
         });
-
 
         return () -> {
             running.set(false);
@@ -230,5 +253,13 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     public void close() throws IOException {
         this.isShutdown = true;
         poolExecutor.shutdown();
+    }
+
+    @ConfigurationProperties("kestra.jdbc.queues")
+    @Getter
+    public static class Configuration {
+        Duration minPollInterval;
+        Duration maxPollInterval;
+        Duration pollSwitchInterval;
     }
 }

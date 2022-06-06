@@ -33,4 +33,8 @@ public abstract class AbstractExecutorStateStorage {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(jdbcExecutorState);
         this.jdbcRepository.persist(jdbcExecutorState, dslContext, fields);
     }
+
+    public void delete(Execution execution) {
+        this.jdbcRepository.delete(new JdbcExecutorState(execution.getId()));
+    }
 }

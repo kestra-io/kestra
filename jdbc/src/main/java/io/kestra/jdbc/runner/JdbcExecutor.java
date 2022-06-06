@@ -102,6 +102,9 @@ public class JdbcExecutor implements ExecutorInterface {
     @Inject
     private AbstractExecutionDelayStorage abstractExecutionDelayStorage;
 
+    @Inject
+    private AbstractExecutorStateStorage executorStateStorage;
+
     private List<Flow> allFlows;
 
     @SneakyThrows
@@ -278,6 +281,10 @@ public class JdbcExecutor implements ExecutorInterface {
 
         if (result != null) {
             this.toExecution(result);
+
+            if (executorService.canBePurged(result)) {
+                executorStateStorage.delete(result.getExecution());
+            }
         }
     }
 

@@ -1,6 +1,5 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
@@ -59,7 +58,7 @@ public class PostgresRepository<T> extends AbstractJdbcRepository<T> {
     @SuppressWarnings("unchecked")
     public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper) {
         Result<Record> results = this.limit(
-            this.dslContext.select(DSL.asterisk(), DSL.count().over().as("total_count"))
+            context.select(DSL.asterisk(), DSL.count().over().as("total_count"))
                 .from(this
                     .sort(select, pageable)
                     .asTable("page")

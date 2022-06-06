@@ -27,7 +27,7 @@ public abstract class AbstractJdbcRepository<T> {
     protected final Class<T> cls;
 
     @Getter
-    protected final DSLContext dslContext;
+    protected final DSLContextWrapper dslContextWrapper;
 
     @Getter
     protected final Table<Record> table;
@@ -38,7 +38,7 @@ public abstract class AbstractJdbcRepository<T> {
     ) {
         this.cls = cls;
         this.queueService = applicationContext.getBean(QueueService.class);
-        this.dslContext = applicationContext.getBean(DSLContext.class);
+        this.dslContextWrapper = applicationContext.getBean(DSLContextWrapper.class);
 
         JdbcConfiguration jdbcConfiguration = applicationContext.getBean(JdbcConfiguration.class);
 
@@ -69,7 +69,7 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     public void persist(T entity, Map<Field<Object>, Object> fields) {
-        dslContext.transaction(configuration ->
+        dslContextWrapper.transaction(configuration ->
             this.persist(entity, DSL.using(configuration), fields)
         );
     }
@@ -87,7 +87,7 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     public void delete(T entity) {
-        dslContext.transaction(configuration -> {
+        dslContextWrapper.transaction(configuration -> {
             this.delete(DSL.using(configuration), entity);
         });
     }

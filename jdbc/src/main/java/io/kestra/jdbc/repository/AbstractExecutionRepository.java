@@ -17,8 +17,10 @@ import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
+import java.sql.SQLTransientException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -42,7 +44,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
     @Override
     public Optional<Execution> findById(String id) {
         return jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 Select<Record1<Object>> from = DSL
                     .using(configuration)
@@ -67,7 +69,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
         @Nullable List<State.Type> state
     ) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
@@ -110,7 +112,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
     @Override
     public ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
@@ -203,7 +205,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
         ));
 
         return jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<?> select = DSL
                     .using(configuration)
@@ -355,10 +357,11 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
         ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
 
         List<ExecutionCount> result = this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<?> select = this.jdbcRepository
-                    .getDslContext()
+                DSLContext dslContext = DSL.using(configuration);
+
+                SelectConditionStep<?> select = dslContext
                     .select(List.of(
                         DSL.field("namespace"),
                         DSL.field("flow_id"),
@@ -440,7 +443,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
 
     public Executor lock(String executionId, Function<Pair<Execution, JdbcExecutorState>, Pair<Executor, JdbcExecutorState>> function) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 

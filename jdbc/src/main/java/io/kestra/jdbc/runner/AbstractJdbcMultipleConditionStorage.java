@@ -26,7 +26,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractRepos
     @Override
     public Optional<MultipleConditionWindow> get(Flow flow, String conditionId) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
@@ -47,7 +47,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractRepos
         ZonedDateTime now = ZonedDateTime.now();
 
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
@@ -64,7 +64,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractRepos
 
     public synchronized void save(List<MultipleConditionWindow> multipleConditionWindows) {
         this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transaction(configuration -> {
                 DSLContext context = DSL.using(configuration);
 

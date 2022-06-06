@@ -86,14 +86,18 @@ public class FlowListeners implements FlowListenersInterface {
     }
 
     private void notifyConsumers() {
-        this.consumers
-            .forEach(consumer -> consumer.accept(new ArrayList<>(this.flows)));
+        synchronized (this) {
+            this.consumers
+                .forEach(consumer -> consumer.accept(new ArrayList<>(this.flows)));
+        }
     }
 
     @Override
-    public void listen(Consumer<List<Flow>> consumer) {
-        consumers.add(consumer);
-        consumer.accept(new ArrayList<>(this.flows()));
+    public synchronized void listen(Consumer<List<Flow>> consumer) {
+        synchronized (this) {
+            consumers.add(consumer);
+            consumer.accept(new ArrayList<>(this.flows()));
+        }
     }
 
     @SneakyThrows

@@ -1,6 +1,5 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
@@ -40,7 +39,7 @@ public class MysqlRepository<T>  extends AbstractJdbcRepository<T> {
             .fetch()
             .map(mapper);
 
-        return dslContext.transactionResult(configuration -> new ArrayListTotal<>(
+        return dslContextWrapper.transactionResult(configuration -> new ArrayListTotal<>(
             map,
             DSL.using(configuration).fetchOne("SELECT FOUND_ROWS()").into(Integer.class)
         ));

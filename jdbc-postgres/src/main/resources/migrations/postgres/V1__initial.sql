@@ -22,7 +22,8 @@ CREATE TYPE log_level AS ENUM (
 CREATE TYPE queue_consumers AS ENUM (
     'indexer',
     'executor',
-    'worker'
+    'worker',
+    'scheduler'
 );
 
 CREATE TYPE queue_type AS ENUM (
@@ -174,10 +175,12 @@ CREATE TABLE triggers (
     value JSONB NOT NULL,
     namespace VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'namespace') STORED,
     flow_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'flowId') STORED,
-    trigger_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'triggerId') STORED
+    trigger_id VARCHAR(150) NOT NULL GENERATED ALWAYS AS (value ->> 'triggerId') STORED,
+    execution_id VARCHAR(150) GENERATED ALWAYS AS (value ->> 'executionId') STORED
 );
 
 CREATE INDEX triggers_namespace__flow_id__trigger_id ON triggers (namespace, flow_id, trigger_id);
+CREATE INDEX triggers_execution_id ON triggers (execution_id);
 
 
 /* ----------------------- logs ----------------------- */

@@ -1,6 +1,7 @@
 package io.kestra.repository.elasticsearch;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.models.executions.Execution;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.builder.SearchSourceBuilder;
@@ -32,6 +33,17 @@ public class ElasticsearchTriggerRepository extends AbstractElasticSearchReposit
 
     public Optional<Trigger> findLast(TriggerContext trigger) {
         return this.rawGetRequest(INDEX_NAME, trigger.uid());
+    }
+
+    @Override
+    public Optional<Trigger> findByExecution(Execution execution) {
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(QueryBuilders.termQuery("executionId", execution.getId()))
+            .size(1);
+
+        List<Trigger> query = this.query(INDEX_NAME, sourceBuilder);
+
+        return query.size() > 0 ? Optional.of(query.get(0)) : Optional.empty();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
@@ -34,6 +35,23 @@ public abstract class AbstractTriggerRepository extends AbstractRepository imple
                         DSL.field("namespace").eq(trigger.getNamespace())
                             .and(DSL.field("flow_id").eq(trigger.getFlowId()))
                             .and(DSL.field("trigger_id").eq(trigger.getTriggerId()))
+                    );
+
+                return this.jdbcRepository.fetchOne(select);
+            });
+    }
+
+    @Override
+    public Optional<Trigger> findByExecution(Execution execution) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                SelectConditionStep<Record1<Object>> select = DSL
+                    .using(configuration)
+                    .select(DSL.field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(
+                        DSL.field("execution_id").eq(execution.getId())
                     );
 
                 return this.jdbcRepository.fetchOne(select);

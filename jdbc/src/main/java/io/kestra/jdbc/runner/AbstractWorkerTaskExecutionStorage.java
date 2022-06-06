@@ -22,7 +22,7 @@ public abstract class AbstractWorkerTaskExecutionStorage extends AbstractReposit
 
     public Optional<WorkerTaskExecution> get(String executionId) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
@@ -38,7 +38,7 @@ public abstract class AbstractWorkerTaskExecutionStorage extends AbstractReposit
 
     public void save(List<WorkerTaskExecution> workerTaskExecutions) {
         this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transaction(configuration -> {
                 DSLContext context = DSL.using(configuration);
 

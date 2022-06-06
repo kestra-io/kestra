@@ -1,6 +1,5 @@
 package io.kestra.jdbc;
 
-import com.zaxxer.hikari.HikariConfig;
 import io.micronaut.flyway.FlywayConfigurationProperties;
 import io.micronaut.flyway.FlywayMigrator;
 import lombok.SneakyThrows;
@@ -18,7 +17,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Singleton
 public class JdbcTestUtils {
     @Inject
-    private DSLContext dslContext;
+    private DSLContextWrapper dslContextWrapper;
 
     @Inject
     private FlywayMigrator flywayMigrator;
@@ -31,14 +30,16 @@ public class JdbcTestUtils {
 
     @SneakyThrows
     public void drop() {
-        dslContext.transaction((configuration) -> {
-            DSL.using(configuration)
+        dslContextWrapper.transaction((configuration) -> {
+            DSLContext dslContext = DSL.using(configuration);
+
+            dslContext
                 .meta()
                 .getTables()
                 .stream()
                 .filter(throwPredicate(table ->
-                    (dslContext.dialect() == SQLDialect.MYSQL && table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
-                        dslContext.dialect() != SQLDialect.MYSQL
+                    (configuration.dialect() == SQLDialect.MYSQL && table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
+                        configuration.dialect() != SQLDialect.MYSQL
                 ))
                 .filter(table -> !table.getName().equals("flyway_schema_history"))
                 .forEach(t -> dslContext.truncate(t.getName()).execute());
@@ -46,7 +47,7 @@ public class JdbcTestUtils {
     }
 
     public void migrate() {
-        dslContext.transaction((configuration) -> {
+        dslContextWrapper.transaction((configuration) -> {
             flywayMigrator.run(config, dataSource);
         });
     }

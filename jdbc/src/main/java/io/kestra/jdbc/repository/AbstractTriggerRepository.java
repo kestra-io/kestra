@@ -24,7 +24,7 @@ public abstract class AbstractTriggerRepository extends AbstractRepository imple
     @Override
     public Optional<Trigger> findLast(TriggerContext trigger) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
@@ -43,7 +43,7 @@ public abstract class AbstractTriggerRepository extends AbstractRepository imple
     @Override
     public List<Trigger> findAll() {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectJoinStep<Record1<Object>> select = DSL
                     .using(configuration)

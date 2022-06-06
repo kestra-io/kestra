@@ -34,7 +34,7 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
         @Nullable ZonedDateTime endDate
     ) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
@@ -108,7 +108,7 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
 
     private List<LogEntry> query(Condition condition, Level minLevel) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)

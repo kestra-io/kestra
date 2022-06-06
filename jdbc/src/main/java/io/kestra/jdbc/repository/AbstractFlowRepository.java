@@ -46,7 +46,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
     @Override
     public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
         return jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
                 Select<Record1<Object>> from;
@@ -74,7 +74,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
     @Override
     public List<Flow> findRevisions(String namespace, String id) {
         return jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 Select<Record1<Object>> select = DSL
                     .using(configuration)
@@ -106,7 +106,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
         );
 
         return jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
@@ -124,7 +124,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
     @Override
     public List<Flow> findAll() {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
@@ -139,7 +139,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
     @Override
     public List<Flow> findAllWithRevisions() {
         return jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectJoinStep<Record1<Object>> select = DSL
                     .using(configuration)
@@ -153,7 +153,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
     @Override
     public List<Flow> findByNamespace(String namespace) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
@@ -190,7 +190,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
 
     public ArrayListTotal<Flow> find(Pageable pageable, @Nullable String query, @Nullable String namespace) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
@@ -213,7 +213,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
     @Override
     public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String namespace) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
@@ -339,7 +339,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
     @Override
     public List<String> findDistinctNamespace() {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> DSL
                 .using(configuration)
                 .select(DSL.field("namespace"))

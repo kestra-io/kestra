@@ -10,6 +10,7 @@ import io.kestra.core.queues.QueueService;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.jdbc.DSLContextWrapper;
 import io.kestra.jdbc.JdbcConfiguration;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -38,7 +39,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final Class<T> cls;
 
-    protected final DSLContext dslContext;
+    protected final DSLContextWrapper dslContextWrapper;
 
     protected final DataSource dataSource;
 
@@ -56,7 +57,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;
-        this.dslContext = applicationContext.getBean(DSLContext.class);
+        this.dslContextWrapper = applicationContext.getBean(DSLContextWrapper.class);
         this.dataSource = applicationContext.getBean(DataSource.class);
 
         JdbcConfiguration jdbcConfiguration = applicationContext.getBean(JdbcConfiguration.class);
@@ -82,7 +83,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             log.trace("New message: topic '{}', value {}", this.cls.getName(), message);
         }
 
-        dslContext.transaction(configuration -> {
+        dslContextWrapper.transaction(configuration -> {
             DSLContext context = DSL.using(configuration);
 
             jdbcQueueIndexer.accept(context, message);
@@ -101,7 +102,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public void delete(T message) throws QueueException {
-        dslContext.transaction(configuration -> DSL
+        dslContextWrapper.transaction(configuration -> DSL
             .using(configuration)
             .delete(table)
             .where(DSL.field(DSL.quotedName("key")).eq(queueService.key(message)))
@@ -127,9 +128,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         AtomicInteger maxOffset = new AtomicInteger();
 
         // fetch max offset
-        dslContext.transaction(configuration -> {
-            DSLContext ctx = DSL.using(configuration);
-
+        dslContextWrapper.transaction(configuration -> {
             Integer integer = DSL
                 .using(configuration)
                 .select(DSL.max(DSL.field(DSL.quotedName("offset"))).as("max"))
@@ -142,7 +141,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         });
 
         return this.poll(() -> {
-            dslContext.transaction(configuration -> {
+            dslContextWrapper.transaction(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
                 Result<Record> fetch = this.receiveFetch(ctx, maxOffset.get());
@@ -163,7 +162,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         String consumerGroupName = consumerGroupName(consumerGroup);
 
         return this.poll(() -> {
-            dslContext.transaction(configuration -> {
+            dslContextWrapper.transaction(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
                 Result<Record> fetch = this.receiveFetch(ctx, consumerGroupName);

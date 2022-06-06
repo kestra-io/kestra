@@ -16,7 +16,6 @@ import jakarta.inject.Singleton;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.validation.ConstraintViolationException;
@@ -37,7 +36,7 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
     @Override
     public Optional<Template> findById(String namespace, String id) {
         return jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 Select<Record1<Object>> from = DSL
                     .using(configuration)
@@ -54,7 +53,7 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
     @Override
     public List<Template> findAll() {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
@@ -70,7 +69,7 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
 
     public ArrayListTotal<Template> find(String query, Pageable pageable) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
@@ -93,7 +92,7 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
     @Override
     public List<Template> findByNamespace(String namespace) {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
@@ -151,7 +150,7 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
     @Override
     public List<String> findDistinctNamespace() {
         return this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transactionResult(configuration -> DSL
                 .using(configuration)
                 .select(DSL.field("namespace"))

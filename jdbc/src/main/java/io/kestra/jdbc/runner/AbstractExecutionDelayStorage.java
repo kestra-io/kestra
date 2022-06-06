@@ -23,7 +23,7 @@ public abstract class AbstractExecutionDelayStorage extends AbstractRepository {
         ZonedDateTime now = ZonedDateTime.now();
 
         this.jdbcRepository
-            .getDslContext()
+            .getDslContextWrapper()
             .transaction(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)

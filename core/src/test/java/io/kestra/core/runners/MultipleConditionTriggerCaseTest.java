@@ -67,7 +67,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
         // trigger is done
-        countDownLatch.await(5, TimeUnit.SECONDS);
+        countDownLatch.await(10, TimeUnit.SECONDS);
         assertThat(ended.size(), is(3));
 
         Execution triggerExecution = ended.entrySet()

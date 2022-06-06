@@ -43,7 +43,7 @@ import jakarta.inject.Singleton;
 
 @Slf4j
 @Singleton
-public abstract class AbstractScheduler implements Runnable, AutoCloseable {
+public abstract class AbstractScheduler implements Scheduler {
     protected final ApplicationContext applicationContext;
     private final QueueInterface<Execution> executionQueue;
     protected final FlowListenersInterface flowListeners;
@@ -109,13 +109,15 @@ public abstract class AbstractScheduler implements Runnable, AutoCloseable {
 
                 try {
                     handle.get();
+                } catch (CancellationException ignored) {
+
                 } catch (ExecutionException | InterruptedException e) {
                     log.error("Executor fatal exception", e);
                     applicationContext.close();
                     Runtime.getRuntime().exit(1);
                 }
             },
-            "executor-listener"
+            "scheduler-listener"
         );
 
         thread.start();

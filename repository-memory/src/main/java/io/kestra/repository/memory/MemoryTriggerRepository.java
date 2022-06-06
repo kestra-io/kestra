@@ -21,6 +21,11 @@ public class MemoryTriggerRepository implements TriggerRepositoryInterface {
     }
 
     @Override
+    public Optional<Trigger> findByExecution(Execution execution) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public List<Trigger> findAll() {
         return this.triggers;
     }

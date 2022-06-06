@@ -58,7 +58,8 @@ CREATE TABLE queues (
     `consumers` SET(
         'indexer',
         'executor',
-        'worker'
+        'worker',
+        'scheduler'
     )
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -132,7 +133,9 @@ CREATE TABLE triggers (
     `namespace` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.namespace') STORED NOT NULL,
     `flow_id`  VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.flowId') STORED NOT NULL,
     `trigger_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.triggerId') STORED NOT NULL,
-    INDEX ix_executions_id (namespace, flow_id, trigger_id)
+    `execution_id` VARCHAR(150) GENERATED ALWAYS AS (value ->> '$.executionId') STORED ,
+    INDEX ix_namespace__flow_id__trigger_id (namespace, flow_id, trigger_id),
+    INDEX ix_execution_id (execution_id)
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 

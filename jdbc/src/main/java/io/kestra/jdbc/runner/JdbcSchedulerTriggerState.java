@@ -24,7 +24,8 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
 
     @Override
     public Trigger save(Trigger trigger) {
-        // noop save with trigger queue
+        triggerRepository.save(trigger);
+
         return trigger;
     }
 }

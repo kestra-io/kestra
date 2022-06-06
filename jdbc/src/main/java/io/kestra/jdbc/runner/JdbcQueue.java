@@ -258,8 +258,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     @ConfigurationProperties("kestra.jdbc.queues")
     @Getter
     public static class Configuration {
-        Duration minPollInterval;
-        Duration maxPollInterval;
-        Duration pollSwitchInterval;
+        Duration minPollInterval = Duration.ofMillis(100);
+        Duration maxPollInterval = Duration.ofMillis(500);
+        Duration pollSwitchInterval = Duration.ofSeconds(30);
     }
 }

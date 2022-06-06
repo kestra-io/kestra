@@ -99,7 +99,7 @@ CREATE TABLE queues (
     key VARCHAR(250) NOT NULL,
     value JSONB NOT NULL,
     consumers queue_consumers[],
-    updated timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX queues_type__consumers ON queues (type, consumers, "offset");

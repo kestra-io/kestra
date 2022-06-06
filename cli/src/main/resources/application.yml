@@ -242,6 +242,11 @@ kestra:
       max-poll-interval: 1000ms
       poll-switch-interval: 5s
 
+    cleaner:
+      initial-delay: 1h
+      fixed-delay: 1h
+      retention: 7d
+
   elasticsearch:
     defaults:
       indice-prefix: "kestra_"

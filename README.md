@@ -16,7 +16,7 @@
   <a href="https://hub.docker.com/r/kestra/kestra"><img src="https://img.shields.io/docker/pulls/kestra/kestra.svg?style=flat-square" alt="Docker pull" /></a>
   <a href="https://artifacthub.io/packages/helm/kestra/kestra"><img src="https://img.shields.io/badge/Artifact%20Hub-kestra-417598?style=flat-square&logo=artifacthub" alt="Artifact Hub" /></a>
   <a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?style=flat-square" alt="Kestra infinitely scalable orchestration and scheduling platform"></a>
-  <a href="https://discord.gg/5RgZmkW"><img src="https://img.shields.io/discord/903344083391631471?label=Discord&style=flat-square" alt="Discord"></a>
+  <a href="https://join.slack.com/t/kestra-io/shared_invite/zt-193shv281-rK9QOEfZC2_vEbDO7Uxtbw"><img src="https://img.shields.io/badge/Slack-chat-400d40?style=flat-square&logo=slack" alt="Slack"></a>
   <a href="https://github.com/kestra-io/kestra/discussions"><img src="https://img.shields.io/github/discussions/kestra-io/kestra?style=flat-square" alt="Github discussions"></a>
   <a href="https://twitter.com/kestra_io"><img src="https://img.shields.io/twitter/follow/kestra_io?style=flat-square" alt="Twitter" /></a>
   <a href="https://app.codecov.io/gh/kestra-io/kestra"><img src="https://img.shields.io/codecov/c/github/kestra-io/kestra?style=flat-square&token=It6L7BTaWK" alt="Code Cov" /></a>
@@ -29,7 +29,7 @@
     <a href="https://kestra.io/"><b>Website</b></a> •
     <a href="https://twitter.com/kestra_io"><b>Twitter</b></a> •
     <a href="https://www.linkedin.com/company/kestra/"><b>Linked In</b></a> •
-    <a href="https://discord.gg/NMG39WKGth"><b>Discord</b></a> •
+    <a href="https://join.slack.com/t/kestra-io/shared_invite/zt-193shv281-rK9QOEfZC2_vEbDO7Uxtbw"><b>Slack</b></a> •
     <a href="https://kestra.io/docs/"><b>Documentation</b></a>
 </p>
 
@@ -245,7 +245,7 @@ Join our community if you need help, want to chat or have any other questions fo
 
 - [GitHub](https://github.com/kestra-io/kestra/discussions) - Discussion forums and updates from the Kestra team
 - [Twitter](https://twitter.com/kestra_io) - For all the latest Kestra news
-- [Discord](https://discord.gg/NMG39WKGth) - Join the conversation! Get all the latest updates and chat to the devs
+- [Slack](https://join.slack.com/t/kestra-io/shared_invite/zt-193shv281-rK9QOEfZC2_vEbDO7Uxtbw) - Join the conversation! Get all the latest updates and chat to the devs
 
 
 ## Roadmap

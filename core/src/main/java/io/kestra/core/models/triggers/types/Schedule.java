@@ -41,6 +41,7 @@ import javax.validation.constraints.NotNull;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@io.kestra.core.validations.Schedule
 @Schema(
     title = "Schedule a flow based on cron date",
     description = "Kestra is able to trigger flow based on Schedule (aka the time). If you need to wait another system " +
@@ -116,13 +117,21 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @PluginProperty(dynamic = true)
     private Map<String, String> inputs;
 
+    @Schema(
+        title = "The maximum late delay accepted",
+        description = "If the schedule didn't start after this delay, the execution will be skip."
+    )
+    private Duration lateMaximumDelay;
+
+    @Getter(AccessLevel.NONE)
+    private transient ExecutionTime executionTime;
+
     @Override
     public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
         ExecutionTime executionTime = this.executionTime();
 
         // previous present & scheduleConditions
         if (last.isPresent() && this.scheduleConditions != null) {
-
             Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
                 executionTime,
                 conditionContext,
@@ -152,7 +161,12 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTime executionTime = this.executionTime();
-        Output output = this.output(executionTime, context.getDate()).orElse(null);
+        ZonedDateTime previousDate = context.getDate();
+
+        Output output = this.output(executionTime, previousDate).orElse(null);
+
+        // if max delay reach, we calculate a new date
+        output = this.handleMaxDelay(output);
 
         if (output == null || output.getDate() == null) {
             return Optional.empty();
@@ -161,7 +175,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         ZonedDateTime next = output.getDate();
 
         // we try at the exact time / standard behaviour
-        boolean isReady = next.compareTo(context.getDate()) == 0;
+        boolean isReady = next.compareTo(previousDate) == 0;
 
         // in case on cron expression changed, the next date will never match, so we allow past operation to start
         boolean isLate = next.compareTo(ZonedDateTime.now().minus(Duration.ofMinutes(1))) < 0;
@@ -174,6 +188,8 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         if (next.compareTo(ZonedDateTime.now().plus(Duration.ofSeconds(1))) > 0) {
             return Optional.empty();
         }
+
+
 
         // inject outputs variables for scheduleCondition
         conditionContext = conditionContext(conditionContext, output);
@@ -244,10 +260,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         ));
     }
 
-    private ExecutionTime executionTime() {
-        Cron parse = CRON_PARSER.parse(this.cron);
+    private synchronized ExecutionTime executionTime() {
+        if (this.executionTime == null) {
+            Cron parse = CRON_PARSER.parse(this.cron);
 
-        return ExecutionTime.forCron(parse);
+            this.executionTime = ExecutionTime.forCron(parse);
+        }
+
+        return this.executionTime;
     }
 
     private Optional<ZonedDateTime> computeNextEvaluationDate(ExecutionTime executionTime, ZonedDateTime date) {
@@ -297,6 +317,32 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         }
 
         return Optional.empty();
+    }
+
+    private Output handleMaxDelay(Output output) {
+        if (output == null) {
+            return null;
+        }
+
+        if (this.lateMaximumDelay == null) {
+            return output;
+        }
+
+        while (
+            (output.getDate().getYear() < ZonedDateTime.now().getYear() + 10) ||
+                (output.getDate().getYear() > ZonedDateTime.now().getYear() - 10)
+        ) {
+            if (output.getDate().plus(this.lateMaximumDelay).compareTo(ZonedDateTime.now()) < 0) {
+                output = this.output(executionTime, output.getNext()).orElse(null);
+                if (output == null) {
+                    return null;
+                }
+            } else {
+                return output;
+            }
+        }
+
+        return output;
     }
 
     private boolean validateScheduleCondition(ConditionContext conditionContext) {

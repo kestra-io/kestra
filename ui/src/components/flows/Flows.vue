@@ -290,7 +290,7 @@
                     })
             },
             rowClasses(flow) {
-                return flow.disabled ? ["disabled"] : [];
+                return flow && flow.disabled ? ["disabled"] : [];
             }
         }
     };

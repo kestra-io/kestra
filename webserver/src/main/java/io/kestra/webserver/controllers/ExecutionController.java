@@ -505,7 +505,7 @@ public class ExecutionController {
 
                         emitter.onNext(Event.of(current).id("progress"));
 
-                        if (this.isStopFollow(flow, execution)) {
+                        if (this.isStopFollow(flow, current)) {
                             emitter.onNext(Event.of(current).id("end"));
                             emitter.onComplete();
                         }

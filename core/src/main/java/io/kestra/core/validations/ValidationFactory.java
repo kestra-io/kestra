@@ -58,6 +58,25 @@ public class ValidationFactory {
         };
     }
 
+
+    @Singleton
+    ConstraintValidator<Schedule, io.kestra.core.models.triggers.types.Schedule> scheduleValidator() {
+        return (value, annotationMetadata, context) -> {
+            if (value == null) {
+                return true;
+            }
+
+            if (value.getBackfill() != null && value.getBackfill().getStart() != null && value.getLateMaximumDelay() != null) {
+                context.messageTemplate("invalid schedule: backfill and lateMaximumDelay are incompatible options");
+
+                return false;
+            }
+
+            return true;
+        };
+    }
+
+
     @Singleton
     ConstraintValidator<JsonString, String> jsonStringValidator() {
         return (value, annotationMetadata, context) -> {

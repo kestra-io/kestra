@@ -47,6 +47,7 @@ public class Extension extends AbstractExtension {
         Map<String, Filter> filters = new HashMap<>();
 
         filters.put("chunk", new ChunkFilter());
+        filters.put("className", new ClassNameFilter());
         filters.put("date", new DateFilter());
         filters.put("dateAdd", new DateAddFilter());
         filters.put("timestamp", new TimestampFilter());
@@ -55,6 +56,7 @@ public class Extension extends AbstractExtension {
         filters.put("jq", new JqFilter());
         filters.put("json", new JsonFilter());
         filters.put("keys", new KeysFilter());
+        filters.put("number", new NumberFilter());
         filters.put("slugify", new SlugifyFilter());
         filters.put("substringBefore", new SubstringBeforeFilter());
         filters.put("substringBeforeLast", new SubstringBeforeLastFilter());

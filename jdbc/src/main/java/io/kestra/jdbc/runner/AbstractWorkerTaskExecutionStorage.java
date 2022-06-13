@@ -26,10 +26,10 @@ public abstract class AbstractWorkerTaskExecutionStorage extends AbstractReposit
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(AbstractRepository.field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        DSL.field(DSL.quotedName("key")).eq(executionId)
+                        AbstractRepository.field("key").eq(executionId)
                     );
 
                 return this.jdbcRepository.fetchOne(select);

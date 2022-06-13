@@ -22,7 +22,6 @@ public abstract class AbstractJdbcTemplateRepositoryTest extends io.kestra.core.
     JdbcTestUtils jdbcTestUtils;
 
     @Test
-    @Disabled("TODO: Seems to have issue with autocommit on mysql ?")
     void find() {
         templateRepository.create(builder("io.kestra.unitest").build());
         templateRepository.create(builder("com.kestra.test").build());

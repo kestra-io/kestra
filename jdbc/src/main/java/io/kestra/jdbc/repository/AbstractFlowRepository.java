@@ -49,22 +49,22 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                Select<Record1<Object>> from;
+                Select<Record1<String>> from;
 
                 if (revision.isPresent()) {
                     from = context
-                        .select(DSL.field("value"))
+                        .select(field("value", String.class))
                         .from(jdbcRepository.getTable())
-                        .where(DSL.field("namespace").eq(namespace))
-                        .and(DSL.field("id").eq(id))
-                        .and(DSL.field("revision").eq(revision.get()));
+                        .where(field("namespace").eq(namespace))
+                        .and(field("id", String.class).eq(id))
+                        .and(field("revision", Integer.class).eq(revision.get()));
                 } else {
                     from = context
-                        .select(DSL.field("value"))
+                        .select(field("value", String.class))
                         .from(this.lastRevision(true))
                         .where(this.defaultFilter())
-                        .and(DSL.field("namespace").eq(namespace))
-                        .and(DSL.field("id").eq(id));
+                        .and(field("namespace", String.class).eq(namespace))
+                        .and(field("id", String.class).eq(id));
                 }
 
                 return this.jdbcRepository.fetchOne(from);
@@ -76,13 +76,13 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                Select<Record1<Object>> select = DSL
+                Select<Record1<String>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value", String.class))
                     .from(jdbcRepository.getTable())
-                    .where(DSL.field("namespace").eq(namespace))
-                    .and(DSL.field("id").eq(id))
-                    .orderBy(DSL.field("revision").asc());
+                    .where(field("namespace", String.class).eq(namespace))
+                    .and(field("id", String.class).eq(id))
+                    .orderBy(field("revision", Integer.class).asc());
 
                 return this.jdbcRepository.fetch(select);
             });
@@ -93,15 +93,15 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
         if (asterisk) {
             fields.add(DSL.asterisk());
         } else {
-            fields.add(DSL.field(DSL.quotedName("key")));
-            fields.add(DSL.field("revision"));
+            fields.add(field("key", String.class));
+            fields.add(field("revision", Integer.class));
         }
 
         fields.add(
             DSL.rowNumber()
                 .over()
-                .partitionBy(DSL.field("namespace"), DSL.field("id"))
-                .orderBy(DSL.field("revision").desc())
+                .partitionBy(field("namespace"), field("id"))
+                .orderBy(field("revision").desc())
                 .as("revision_rows")
         );
 
@@ -116,7 +116,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
                             .from(jdbcRepository.getTable())
                             .asTable("rev_ord")
                     )
-                    .where(DSL.field("revision_rows").eq(1))
+                    .where(field("revision_rows").eq(1))
                     .asTable("rev");
             });
     }
@@ -128,7 +128,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(lastRevision(true))
                     .where(this.defaultFilter());
 
@@ -143,7 +143,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
             .transactionResult(configuration -> {
                 SelectJoinStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(jdbcRepository.getTable());
 
                 return this.jdbcRepository.fetch(select);
@@ -157,9 +157,9 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(lastRevision(true))
-                    .where(DSL.field("namespace").eq(namespace))
+                    .where(field("namespace").eq(namespace))
                     .and(this.defaultFilter());
 
                 return this.jdbcRepository.fetch(select);
@@ -168,7 +168,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
 
     @SuppressWarnings("unchecked")
     private <R extends Record, E> SelectConditionStep<R> fullTextSelect(DSLContext context, List<Field<Object>> field) {
-        ArrayList<Field<Object>> fields = new ArrayList<>(Collections.singletonList(DSL.field("value")));
+        ArrayList<Field<Object>> fields = new ArrayList<>(Collections.singletonList(field("value")));
 
         if (field != null) {
             fields.addAll(field);
@@ -180,8 +180,8 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
             .from(lastRevision(false))
             .join(jdbcRepository.getTable().as("ft"))
             .on(
-                DSL.field("ft.key").eq(DSL.field("rev.key"))
-                    .and(DSL.field("ft.revision").eq(DSL.field("rev.revision")))
+                DSL.field(DSL.quotedName("ft", "key")).eq(DSL.field(DSL.field(DSL.quotedName("rev", "key"))))
+                    .and(DSL.field(DSL.quotedName("ft", "revision")).eq(DSL.field(DSL.quotedName("rev", "revision"))))
             )
             .where(this.defaultFilter());
     }
@@ -201,7 +201,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
                 }
 
                 if (namespace != null) {
-                    select.and(DSL.field("namespace").likeIgnoreCase(namespace + "%"));
+                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
                 }
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -217,14 +217,14 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
-                SelectConditionStep<Record> select = this.fullTextSelect(context, Collections.singletonList(DSL.field("source_code")));
+                SelectConditionStep<Record> select = this.fullTextSelect(context, Collections.singletonList(field("source_code")));
 
                 if (query != null) {
                     select.and(this.findSourceCodeCondition(query));
                 }
 
                 if (namespace != null) {
-                    select.and(DSL.field("namespace").likeIgnoreCase(namespace + "%"));
+                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
                 }
 
                 return this.jdbcRepository.fetchPage(
@@ -295,7 +295,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
         }
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(flow);
-        fields.put(DSL.field("source_code"), JacksonMapper.ofYaml().writeValueAsString(flow));
+        fields.put(field("source_code"), JacksonMapper.ofYaml().writeValueAsString(flow));
 
         this.jdbcRepository.persist(flow, fields);
 
@@ -325,7 +325,7 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
         Flow deleted = flow.toDeleted();
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted);
-        fields.put(DSL.field("source_code"), JacksonMapper.ofYaml().writeValueAsString(deleted));
+        fields.put(field("source_code"), JacksonMapper.ofYaml().writeValueAsString(deleted));
 
         this.jdbcRepository.persist(deleted, fields);
 
@@ -342,10 +342,10 @@ public abstract class AbstractFlowRepository extends AbstractRepository implemen
             .getDslContextWrapper()
             .transactionResult(configuration -> DSL
                 .using(configuration)
-                .select(DSL.field("namespace"))
+                .select(field("namespace"))
                 .from(lastRevision(true))
                 .where(this.defaultFilter())
-                .groupBy(DSL.field("namespace"))
+                .groupBy(field("namespace"))
                 .fetch()
                 .map(record -> record.getValue("namespace", String.class))
             );

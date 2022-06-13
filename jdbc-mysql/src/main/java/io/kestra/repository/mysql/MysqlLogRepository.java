@@ -19,7 +19,10 @@ public class MysqlLogRepository extends AbstractLogRepository {
 
     @Override
     protected Condition findCondition(String query) {
-        return this.jdbcRepository.fullTextCondition(Arrays.asList("namespace", "flow_id", "task_id", "execution_id", "taskrun_id", "trigger_id", "message", "thread"), query);
+        return this.jdbcRepository.fullTextCondition(
+            Arrays.asList("namespace", "flow_id", "task_id", "execution_id", "taskrun_id", "trigger_id", "message", "thread"),
+            query
+        );
     }
 }
 

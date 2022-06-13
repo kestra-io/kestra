@@ -29,9 +29,9 @@ public abstract class AbstractTriggerRepository extends AbstractRepository imple
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(DSL.field(DSL.quotedName("key")).eq(trigger.uid()));
+                    .where(field("key").eq(trigger.uid()));
 
                 return this.jdbcRepository.fetchOne(select);
             });
@@ -44,10 +44,10 @@ public abstract class AbstractTriggerRepository extends AbstractRepository imple
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        DSL.field("execution_id").eq(execution.getId())
+                        field("execution_id").eq(execution.getId())
                     );
 
                 return this.jdbcRepository.fetchOne(select);
@@ -61,7 +61,7 @@ public abstract class AbstractTriggerRepository extends AbstractRepository imple
             .transactionResult(configuration -> {
                 SelectJoinStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable());
 
                 return this.jdbcRepository.fetch(select);

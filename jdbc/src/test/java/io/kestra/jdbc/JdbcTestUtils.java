@@ -17,7 +17,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Singleton
 public class JdbcTestUtils {
     @Inject
-    private DSLContextWrapper dslContextWrapper;
+    protected DSLContextWrapper dslContextWrapper;
 
     @Inject
     private FlywayMigrator flywayMigrator;
@@ -37,9 +37,8 @@ public class JdbcTestUtils {
                 .meta()
                 .getTables()
                 .stream()
-                .filter(throwPredicate(table ->
-                    (configuration.dialect() == SQLDialect.MYSQL && table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
-                        configuration.dialect() != SQLDialect.MYSQL
+                .filter(throwPredicate(table -> (table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
+                    configuration.dialect() == SQLDialect.POSTGRES
                 ))
                 .filter(table -> !table.getName().equals("flyway_schema_history"))
                 .forEach(t -> dslContext.truncate(t.getName()).execute());

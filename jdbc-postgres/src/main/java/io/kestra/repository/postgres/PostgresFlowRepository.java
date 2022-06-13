@@ -1,19 +1,13 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.repository.AbstractFlowRepository;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.*;
-import org.jooq.impl.DSL;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 @Singleton
 @PostgresRepositoryEnabled

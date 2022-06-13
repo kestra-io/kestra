@@ -1,12 +1,17 @@
 package io.kestra.jdbc;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.jdbc.repository.AbstractRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -16,12 +21,39 @@ import org.apache.commons.lang3.StringUtils;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
+import java.io.IOException;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public abstract class AbstractJdbcRepository<T> {
-    protected static final ObjectMapper mapper = JacksonMapper.ofJson();
+    protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
+
+    static {
+        final SimpleModule module = new SimpleModule();
+        module.addSerializer(Instant.class, new JsonSerializer<>() {
+            @Override
+            public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+                jsonGenerator.writeString(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                    .withZone(ZoneOffset.UTC)
+                    .format(instant)
+                );
+            }
+        });
+
+        module.addSerializer(ZonedDateTime.class, new JsonSerializer<>() {
+            @Override
+            public void serialize(ZonedDateTime instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+                jsonGenerator.writeString(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+                    .format(instant)
+                );
+            }
+        });
+
+        MAPPER.registerModule(module);
+    }
 
     protected final QueueService queueService;
     protected final Class<T> cls;
@@ -60,7 +92,7 @@ public abstract class AbstractJdbcRepository<T> {
     @SneakyThrows
     public Map<Field<Object>, Object> persistFields(T entity) {
         return new HashMap<>(ImmutableMap
-            .of(DSL.field("value"), mapper.writeValueAsString(entity))
+            .of(AbstractRepository.field("value"), MAPPER.writeValueAsString(entity))
         );
     }
 
@@ -79,7 +111,7 @@ public abstract class AbstractJdbcRepository<T> {
 
         dslContext
             .insertInto(table)
-            .set(DSL.field(DSL.quotedName("key")), key(entity))
+            .set(AbstractRepository.field("key"), key(entity))
             .set(finalFields)
             .onDuplicateKeyUpdate()
             .set(finalFields)
@@ -95,7 +127,7 @@ public abstract class AbstractJdbcRepository<T> {
     public void delete(DSLContext dslContext, T entity) {
         dslContext
             .delete(table)
-            .where(DSL.field(DSL.quotedName("key")).eq(key(entity)))
+            .where(AbstractRepository.field("key").eq(key(entity)))
             .execute();
     }
 
@@ -159,7 +191,7 @@ public abstract class AbstractJdbcRepository<T> {
                 .getSort()
                 .getOrderBy()
                 .forEach(order -> {
-                    Field<Object> field = DSL.field(order.getProperty());
+                    Field<Object> field = AbstractRepository.field(order.getProperty());
 
                     select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc() : field.desc());
                 });

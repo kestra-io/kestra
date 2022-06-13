@@ -146,7 +146,7 @@ CREATE TABLE templates (
 );
 
 CREATE INDEX templates_namespace ON templates (deleted, namespace);
-CREATE INDEX templates_namespace__id__revision ON templates (deleted, namespace, id);
+CREATE INDEX templates_namespace__id ON templates (deleted, namespace, id);
 CREATE INDEX templates_fulltext ON templates USING GIN (fulltext);
 
 

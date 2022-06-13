@@ -8,7 +8,7 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PACKAGE, ElementType.TYPE})
-@Requires(property = "kestra.queue.type", pattern = "mysql|postgres")
+@Requires(property = "kestra.queue.type", pattern = "mysql|postgres|h2")
 @DefaultImplementation
 public @interface JdbcRunnerEnabled {
 }

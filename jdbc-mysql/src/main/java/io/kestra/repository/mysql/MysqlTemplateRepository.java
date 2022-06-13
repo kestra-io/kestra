@@ -20,6 +20,6 @@ public class MysqlTemplateRepository extends AbstractTemplateRepository implemen
 
     @Override
     protected Condition findCondition(String query) {
-        return this.jdbcRepository.fullTextCondition(Arrays.asList("namespace", "flow_id", "id"), query);
+        return this.jdbcRepository.fullTextCondition(Arrays.asList("namespace", "id"), query);
     }
 }

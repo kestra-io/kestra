@@ -12,6 +12,7 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.DSLContextWrapper;
 import io.kestra.jdbc.JdbcConfiguration;
+import io.kestra.jdbc.repository.AbstractRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -82,9 +83,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     protected Map<Field<Object>, Object> produceFields(String key, T message) {
         return new HashMap<>(ImmutableMap
             .of(
-                DSL.field(DSL.quotedName("type")), this.cls.getName(),
-                DSL.field(DSL.quotedName("key")), key != null ? key : IdUtils.create(),
-                DSL.field(DSL.quotedName("value")), mapper.writeValueAsString(message)
+                AbstractRepository.field("type"), this.cls.getName(),
+                AbstractRepository.field("key"), key != null ? key : IdUtils.create(),
+                AbstractRepository.field("value"), mapper.writeValueAsString(message)
             )
         );
     }
@@ -116,7 +117,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         dslContextWrapper.transaction(configuration -> DSL
             .using(configuration)
             .delete(table)
-            .where(DSL.field(DSL.quotedName("key")).eq(queueService.key(message)))
+            .where(AbstractRepository.field("key").eq(queueService.key(message)))
             .execute()
         );
     }
@@ -142,7 +143,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         dslContextWrapper.transaction(configuration -> {
             Integer integer = DSL
                 .using(configuration)
-                .select(DSL.max(DSL.field(DSL.quotedName("offset"))).as("max"))
+                .select(DSL.max(AbstractRepository.field("offset")).as("max"))
                 .from(table)
                 .fetchAny("max", Integer.class);
 

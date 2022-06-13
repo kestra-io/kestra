@@ -20,11 +20,8 @@ public class MultipleConditionWindow {
 
     String conditionId;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm[:ss][.SSS]XXX")
     ZonedDateTime start;
 
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm[:ss][.SSS]XXX")
     ZonedDateTime end;
 
     Map<String, Boolean> results;

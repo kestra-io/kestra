@@ -1,5 +1,6 @@
 package io.kestra.runner.postgres;
 
+import io.kestra.jdbc.repository.AbstractRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.NonNull;
@@ -22,12 +23,12 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
         Map<Field<Object>, Object> map = super.produceFields(key, message);
 
         map.put(
-            DSL.field(DSL.quotedName("value")),
+            AbstractRepository.field("value"),
             JSONB.valueOf(mapper.writeValueAsString(message))
         );
 
         map.put(
-            DSL.field(DSL.quotedName("type")),
+            AbstractRepository.field("type"),
             DSL.field("CAST(? AS queue_type)", this.cls.getName())
         );
 

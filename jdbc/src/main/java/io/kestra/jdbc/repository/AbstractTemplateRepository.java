@@ -40,11 +40,11 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
             .transactionResult(configuration -> {
                 Select<Record1<Object>> from = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter())
-                    .and(DSL.field("namespace").eq(namespace))
-                    .and(DSL.field("id").eq(id));
+                    .and(field("namespace").eq(namespace))
+                    .and(field("id").eq(id));
 
                 return this.jdbcRepository.fetchOne(from);
             });
@@ -57,7 +57,7 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter());
 
@@ -75,7 +75,7 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(
-                        DSL.field("value")
+                        field("value")
                     )
                     .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
@@ -96,9 +96,9 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(DSL.field("namespace").eq(namespace))
+                    .where(field("namespace").eq(namespace))
                     .and(this.defaultFilter());
 
                 return this.jdbcRepository.fetch(select);
@@ -153,10 +153,10 @@ public abstract class AbstractTemplateRepository extends AbstractRepository impl
             .getDslContextWrapper()
             .transactionResult(configuration -> DSL
                 .using(configuration)
-                .select(DSL.field("namespace"))
+                .select(field("namespace"))
                 .from(this.jdbcRepository.getTable())
                 .where(this.defaultFilter())
-                .groupBy(DSL.field("namespace"))
+                .groupBy(field("namespace"))
                 .fetch()
                 .map(record -> record.getValue("namespace", String.class))
             );

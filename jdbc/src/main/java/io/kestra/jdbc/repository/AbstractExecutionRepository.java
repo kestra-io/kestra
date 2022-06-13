@@ -46,10 +46,10 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
             .transactionResult(configuration -> {
                 Select<Record1<Object>> from = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter())
-                    .and(DSL.field(DSL.quotedName("key")).eq(id));
+                    .and(field("key").eq(id));
 
                 return this.jdbcRepository.fetchOne(from);
             });
@@ -73,29 +73,29 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
 
                 SelectConditionStep<Record1<Object>> select = context
                     .select(
-                        DSL.field("value")
+                        field("value")
                     )
                     .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter());
 
                 if (flowId != null && namespace != null) {
-                    select = select.and(DSL.field("namespace").eq(namespace));
-                    select = select.and(DSL.field("flow_id").eq(flowId));
+                    select = select.and(field("namespace").eq(namespace));
+                    select = select.and(field("flow_id").eq(flowId));
                 } else if (namespace != null) {
-                    select = select.and(DSL.field("namespace").likeIgnoreCase(namespace + "%"));
+                    select = select.and(field("namespace").likeIgnoreCase(namespace + "%"));
                 }
 
                 if (startDate != null) {
-                    select = select.and(DSL.field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
+                    select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
                 }
 
                 if (endDate != null) {
-                    select = select.and(DSL.field("end_date").lessOrEqual(endDate.toOffsetDateTime()));
+                    select = select.and(field("end_date").lessOrEqual(endDate.toOffsetDateTime()));
                 }
 
                 if (state != null) {
-                    select = select.and(DSL.field("state_current")
+                    select = select.and(field("state_current")
                         .in(state.stream().map(Enum::name).collect(Collectors.toList())));
                 }
 
@@ -115,13 +115,11 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                 DSLContext context = DSL.using(configuration);
 
                 SelectConditionStep<Record1<Object>> select = context
-                    .select(
-                        DSL.field("value")
-                    )
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter())
-                    .and(DSL.field("namespace").eq(namespace))
-                    .and(DSL.field("flow_id").eq(id));
+                    .and(field("namespace").eq(namespace))
+                    .and(field("flow_id").eq(id));
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
@@ -160,8 +158,8 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
 
         Results results = dailyStatisticsQuery(
             List.of(
-                DSL.date(DSL.field("start_date", Date.class)).as("start_date"),
-                DSL.field("state_current", String.class)
+                DSL.date(field("start_date", Date.class)).as("start_date"),
+                field("state_current", String.class)
             ),
             query,
             startDate,
@@ -179,7 +177,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
 
     private static List<DailyExecutionStatistics> dailyStatisticsQueryMapRecord(Result<Record> records, ZonedDateTime startDate, ZonedDateTime endDate) {
         return fillMissingDate(
-            records.intoGroups(DSL.field("start_date", java.sql.Date.class)),
+            records.intoGroups(field("start_date", java.sql.Date.class)),
             startDate,
             endDate
         )
@@ -197,34 +195,40 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
         List<Field<?>> selectFields = new ArrayList<>(fields);
         selectFields.addAll(List.of(
             DSL.count().as("count"),
-            DSL.min(DSL.field("state_duration", Long.class)).as("duration_min"),
-            DSL.max(DSL.field("state_duration", Long.class)).as("duration_max"),
-            DSL.sum(DSL.field("state_duration", Long.class)).as("duration_sum")
+            DSL.min(field("state_duration", Long.class)).as("duration_min"),
+            DSL.max(field("state_duration", Long.class)).as("duration_max"),
+            DSL.sum(field("state_duration", Long.class)).as("duration_sum")
         ));
 
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<?> select = DSL
-                    .using(configuration)
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<?> select = context
                     .select(selectFields)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter())
-                    .and(DSL.field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
-                    .and(DSL.field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
+                    .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
+                    .and(field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
                 if (query != null) {
                     select.and(this.findCondition(query));
                 }
 
                 List<Field<?>> groupFields = new ArrayList<>();
-                for (int i = 1; i <= fields.size(); i++) {
-                    groupFields.add(DSL.field(String.valueOf(i)));
+                if (context.configuration().dialect() != SQLDialect.H2) {
+                    for (int i = 1; i <= fields.size(); i++) {
+                        groupFields.add(DSL.field(String.valueOf(i)));
+                    }
+                } else {
+                    groupFields = fields;
                 }
 
-                return select
-                    .groupBy(groupFields)
-                    .fetchMany();
+                SelectHavingStep<?> finalQuery = select
+                    .groupBy(groupFields);
+
+                return finalQuery.fetchMany();
             });
     }
 
@@ -240,12 +244,12 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
     ) {
         List<Field<?>> fields = new ArrayList<>();
 
-        fields.add(DSL.date(DSL.field("start_date", Date.class)).as("start_date"));
-        fields.add(DSL.field("state_current", String.class));
-        fields.add(DSL.field(DSL.field("namespace", String.class)));
+        fields.add(DSL.date(field("start_date", Date.class)).as("start_date"));
+        fields.add(field("state_current", String.class));
+        fields.add(field("namespace", String.class));
 
         if (!groupByNamespaceOnly) {
-            fields.add(DSL.field("flow_id", String.class));
+            fields.add(field("flow_id", String.class));
         }
 
         Results results = dailyStatisticsQuery(
@@ -259,7 +263,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
             .resultsOrRows()
             .get(0)
             .result()
-            .intoGroups(DSL.field("namespace", String.class))
+            .intoGroups(field("namespace", String.class))
             .entrySet()
             .stream()
             .map(e -> {
@@ -278,7 +282,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                 } else {
                     return new AbstractMap.SimpleEntry<>(
                         e.getKey(),
-                        e.getValue().intoGroups(DSL.field("flow_id", String.class))
+                        e.getValue().intoGroups(field("flow_id", String.class))
                             .entrySet()
                             .stream()
                             .map(f -> new AbstractMap.SimpleEntry<>(
@@ -361,17 +365,17 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
 
                 SelectConditionStep<?> select = dslContext
                     .select(List.of(
-                        DSL.field("namespace"),
-                        DSL.field("flow_id"),
+                        field("namespace"),
+                        field("flow_id"),
                         DSL.count().as("count")
                     ))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter())
-                    .and(DSL.field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
-                    .and(DSL.field("end_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
+                    .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
+                    .and(field("end_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
                 if (states != null) {
-                    select = select.and(DSL.field("state_current")
+                    select = select.and(field("state_current")
                         .in(states.stream().map(Enum::name).collect(Collectors.toList())));
                 }
 
@@ -380,8 +384,8 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                     flows
                         .stream()
                         .map(flow -> DSL.and(
-                            DSL.field("namespace").eq(flow.getNamespace()),
-                            DSL.field("flow_id").eq(flow.getFlowId())
+                            field("namespace").eq(flow.getNamespace()),
+                            field("flow_id").eq(flow.getFlowId())
                         ))
                         .collect(Collectors.toList())
                 ));
@@ -389,8 +393,8 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                 // map result to flow
                 return select
                     .groupBy(List.of(
-                        DSL.field("1"),
-                        DSL.field("2")
+                        field("namespace"),
+                        field("flow_id")
                     ))
                     .fetchMany()
                     .resultsOrRows()
@@ -446,9 +450,9 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                 DSLContext context = DSL.using(configuration);
 
                 SelectForUpdateOfStep<Record1<Object>> from = context
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(DSL.field(DSL.quotedName("key")).eq(executionId))
+                    .where(field("key").eq(executionId))
                     .forUpdate();
 
                 Optional<Execution> execution = this.jdbcRepository.fetchOne(from);

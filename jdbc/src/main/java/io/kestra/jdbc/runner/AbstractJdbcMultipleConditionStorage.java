@@ -30,12 +30,12 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractRepos
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        DSL.field("namespace").eq(flow.getNamespace())
-                            .and(DSL.field("flow_id").eq(flow.getId()))
-                            .and(DSL.field("condition_id").eq(conditionId))
+                        field("namespace").eq(flow.getNamespace())
+                            .and(field("flow_id").eq(flow.getId()))
+                            .and(field("condition_id").eq(conditionId))
                     );
 
                 return this.jdbcRepository.fetchOne(select);
@@ -51,11 +51,11 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractRepos
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        DSL.field("start_date").lt(now.toOffsetDateTime())
-                            .and(DSL.field("end_date").lt(now.toOffsetDateTime()))
+                        field("start_date").lt(now.toOffsetDateTime())
+                            .and(field("end_date").lt(now.toOffsetDateTime()))
                     );
 
                 return this.jdbcRepository.fetch(select);

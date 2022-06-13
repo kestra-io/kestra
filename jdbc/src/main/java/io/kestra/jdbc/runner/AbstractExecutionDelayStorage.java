@@ -27,10 +27,10 @@ public abstract class AbstractExecutionDelayStorage extends AbstractRepository {
             .transaction(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(AbstractRepository.field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        DSL.field("date").lessOrEqual(now.toOffsetDateTime())
+                        AbstractRepository.field("date").lessOrEqual(now.toOffsetDateTime())
                     );
 
                 this.jdbcRepository.fetch(select)

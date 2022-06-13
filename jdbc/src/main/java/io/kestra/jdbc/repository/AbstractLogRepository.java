@@ -39,7 +39,7 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
                 DSLContext context = DSL.using(configuration);
 
                 SelectConditionStep<Record1<Object>> select = context
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter());
@@ -53,11 +53,11 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
                 }
 
                 if (startDate != null) {
-                    select = select.and(DSL.field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
+                    select = select.and(field("timestamp").greaterOrEqual(startDate.toOffsetDateTime()));
                 }
 
                 if (endDate != null) {
-                    select = select.and(DSL.field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
+                    select = select.and(field("timestamp").lessOrEqual(endDate.toOffsetDateTime()));
                 }
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -67,7 +67,7 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
     @Override
     public List<LogEntry> findByExecutionId(String id, Level minLevel) {
         return this.query(
-            DSL.field("execution_id").eq(id),
+            field("execution_id").eq(id),
             minLevel
         );
     }
@@ -75,8 +75,8 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
     @Override
     public List<LogEntry> findByExecutionIdAndTaskId(String executionId, String taskId, Level minLevel) {
         return this.query(
-            DSL.field("execution_id").eq(executionId)
-                .and(DSL.field("task_id").eq(taskId)),
+            field("execution_id").eq(executionId)
+                .and(field("task_id").eq(taskId)),
             minLevel
         );
     }
@@ -84,8 +84,8 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
     @Override
     public List<LogEntry> findByExecutionIdAndTaskRunId(String executionId, String taskRunId, Level minLevel) {
         return this.query(
-            DSL.field("execution_id").eq(executionId)
-                .and(DSL.field("taskrun_id").eq(taskRunId)),
+            field("execution_id").eq(executionId)
+                .and(field("taskrun_id").eq(taskRunId)),
             minLevel
         );
     }
@@ -112,7 +112,7 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(DSL.field("value"))
+                    .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter());
 
@@ -123,12 +123,12 @@ public abstract class AbstractLogRepository extends AbstractRepository implement
                 }
 
                 return this.jdbcRepository.fetch(select
-                    .orderBy(DSL.field("timestamp").sort(SortOrder.ASC))
+                    .orderBy(field("timestamp").sort(SortOrder.ASC))
                 );
             });
     }
 
     protected Condition minLevel(Level minLevel) {
-        return DSL.field("level").in(LogEntry.findLevelsByMin(minLevel));
+        return field("level").in(LogEntry.findLevelsByMin(minLevel));
     }
 }

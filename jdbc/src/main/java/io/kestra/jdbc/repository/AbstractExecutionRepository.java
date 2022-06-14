@@ -39,6 +39,10 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
         this.executorStateStorage = executorStateStorage;
     }
 
+    public Boolean isTaskRunEnabled() {
+        return false;
+    }
+
     @Override
     public Optional<Execution> findById(String id) {
         return jdbcRepository

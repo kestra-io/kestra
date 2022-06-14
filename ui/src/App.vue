@@ -72,6 +72,7 @@
             },
             loadGeneralRessources() {
                 this.$store.dispatch("plugin/icons")
+                this.$store.dispatch("misc/loadConfigs")
             },
             grabThemeResources() {
                 // eslint-disable-next-line no-undef

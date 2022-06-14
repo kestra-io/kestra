@@ -7,10 +7,10 @@ import io.micronaut.core.annotation.NonNull;
 import lombok.SneakyThrows;
 import org.jooq.*;
 import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class PostgresQueue<T> extends JdbcQueue<T> {
     public PostgresQueue(Class<T> cls, ApplicationContext applicationContext) {
@@ -36,56 +36,60 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
     }
 
     protected Result<Record> receiveFetch(DSLContext ctx, @NonNull Integer offset) {
-        return ctx
-            .resultQuery(
-                "SELECT" + "\n" +
-                    "  \"value\"," + "\n" +
-                    "  \"offset\"" + "\n" +
-                    "FROM " + table.getName() + "\n" +
-                    "WHERE 1 = 1" + "\n" +
-                    (offset != 0 ? "AND \"offset\" > ?" + "\n" : "") +
-                    "AND type = CAST(? AS queue_type)" + "\n" +
-                    "ORDER BY \"offset\" ASC" + "\n" +
-                    "LIMIT 10" + "\n" +
-                    "FOR UPDATE SKIP LOCKED",
-                offset != 0 ? offset : this.cls.getName(),
-                this.cls.getName()
+        SelectConditionStep<Record2<Object, Object>> select = ctx
+            .select(
+                AbstractRepository.field("value"),
+                AbstractRepository.field("offset")
             )
-            .fetch();
+            .from(this.table)
+            .where(DSL.condition("type = CAST(? AS queue_type)", this.cls.getName()));
+
+        if (offset != 0) {
+            select = select.and(AbstractRepository.field("offset").gt(offset));
+        }
+
+        return select
+            .orderBy(AbstractRepository.field("offset").asc())
+            .limit(10)
+            .forUpdate()
+            .skipLocked()
+            .fetchMany()
+            .get(0);
     }
 
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup) {
         return ctx
-            .resultQuery(
-                "SELECT" + "\n" +
-                    "  \"value\"," + "\n" +
-                    "  \"offset\"" + "\n" +
-                    "FROM " + table.getName() + "\n" +
-                    "WHERE (" +
-                    "  \"consumers\" IS NULL" + "\n" +
-                    "  OR NOT(CAST(? AS queue_consumers) = ANY(\"consumers\"))" + "\n" +
-                    ")" + "\n" +
-                    "AND type = CAST(? AS queue_type)" + "\n" +
-                    "ORDER BY \"offset\" ASC" + "\n" +
-                    "LIMIT 10" + "\n" +
-                    "FOR UPDATE SKIP LOCKED",
-                consumerGroup,
-                this.cls.getName()
+            .select(
+                AbstractRepository.field("value"),
+                AbstractRepository.field("offset")
             )
-            .fetch();
+            .from(this.table)
+            .where(DSL.condition("type = CAST(? AS queue_type)", this.cls.getName()))
+            .and(DSL.or(List.of(
+                AbstractRepository.field("consumers").isNull(),
+                DSL.condition("NOT(CAST(? AS queue_consumers) = ANY(\"consumers\"))", consumerGroup)
+            )))
+            .orderBy(AbstractRepository.field("offset").asc())
+            .limit(10)
+            .forUpdate()
+            .skipLocked()
+            .fetchMany()
+            .get(0);
     }
 
     @Override
     protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, List<Integer> offsets) {
         ctx
-            .query(
-                "UPDATE " + table.getName() + "\n" +
-                    "SET \"consumers\" = \"consumers\" || '{" + consumerGroup + "}' \n" +
-                    "WHERE \"offset\" IN (" + offsets.stream()
-                    .map(Object::toString)
-                    .collect(Collectors.joining(",")) + ")",
-                consumerGroup
+            .update(DSL.table(table.getName()))
+            .set(
+                AbstractRepository.field("consumers"),
+                DSL.field(
+                    "\"consumers\" || ?",
+                    SQLDataType.VARCHAR(50).getArrayType(),
+                    (Object) new String[]{consumerGroup}
+                )
             )
+            .where(AbstractRepository.field("offset").in(offsets.toArray(Integer[]::new)))
             .execute();
     }
 }

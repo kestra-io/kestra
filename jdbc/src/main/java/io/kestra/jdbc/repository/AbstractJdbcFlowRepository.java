@@ -12,7 +12,6 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
-import io.kestra.jdbc.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -27,15 +26,15 @@ import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
-public abstract class AbstractFlowRepository extends AbstractRepository implements FlowRepositoryInterface {
+public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository implements FlowRepositoryInterface {
     private final QueueInterface<Flow> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
     private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
     private final ModelValidator modelValidator;
-    protected AbstractJdbcRepository<Flow> jdbcRepository;
+    protected io.kestra.jdbc.AbstractJdbcRepository<Flow> jdbcRepository;
 
     @SuppressWarnings("unchecked")
-    public AbstractFlowRepository(AbstractJdbcRepository<Flow> jdbcRepository, ApplicationContext applicationContext) {
+    public AbstractJdbcFlowRepository(io.kestra.jdbc.AbstractJdbcRepository<Flow> jdbcRepository, ApplicationContext applicationContext) {
         this.jdbcRepository = jdbcRepository;
         this.modelValidator = applicationContext.getBean(ModelValidator.class);
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);

@@ -1,14 +1,12 @@
 package io.kestra.runner.h2;
 
-import io.kestra.jdbc.repository.AbstractRepository;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.micronaut.context.ApplicationContext;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
-import org.jooq.util.h2.H2DataType;
 
-import java.sql.Types;
 import java.util.List;
 
 public class H2Queue<T> extends JdbcQueue<T> {
@@ -20,18 +18,18 @@ public class H2Queue<T> extends JdbcQueue<T> {
     protected Result<Record> receiveFetch(DSLContext ctx, Integer offset) {
         SelectConditionStep<Record2<Object, Object>> select = ctx
             .select(
-                AbstractRepository.field("value"),
-                AbstractRepository.field("offset")
+                AbstractJdbcRepository.field("value"),
+                AbstractJdbcRepository.field("offset")
             )
             .from(this.table)
-            .where(AbstractRepository.field("type").eq(this.cls.getName()));
+            .where(AbstractJdbcRepository.field("type").eq(this.cls.getName()));
 
         if (offset != 0) {
-            select = select.and(AbstractRepository.field("offset").gt(offset));
+            select = select.and(AbstractJdbcRepository.field("offset").gt(offset));
         }
 
         return select
-            .orderBy(AbstractRepository.field("offset").asc())
+            .orderBy(AbstractJdbcRepository.field("offset").asc())
             .limit(10)
             .forUpdate()
             .fetchMany()
@@ -41,16 +39,16 @@ public class H2Queue<T> extends JdbcQueue<T> {
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup) {
         return ctx
             .select(
-                AbstractRepository.field("value"),
-                AbstractRepository.field("offset")
+                AbstractJdbcRepository.field("value"),
+                AbstractJdbcRepository.field("offset")
             )
             .from(this.table)
-            .where(AbstractRepository.field("type").eq(this.cls.getName()))
+            .where(AbstractJdbcRepository.field("type").eq(this.cls.getName()))
             .and(DSL.or(List.of(
-                AbstractRepository.field("consumers").isNull(),
+                AbstractJdbcRepository.field("consumers").isNull(),
                 DSL.condition("NOT(ARRAY_CONTAINS(\"consumers\", ?))", consumerGroup)
             )))
-            .orderBy(AbstractRepository.field("offset").asc())
+            .orderBy(AbstractJdbcRepository.field("offset").asc())
             .limit(10)
             .forUpdate()
             .fetchMany()
@@ -62,14 +60,14 @@ public class H2Queue<T> extends JdbcQueue<T> {
         ctx
             .update(DSL.table(table.getName()))
             .set(
-                AbstractRepository.field("consumers"),
+                AbstractJdbcRepository.field("consumers"),
                 DSL.field(
                     "ARRAY_APPEND(COALESCE(\"consumers\", ARRAY[]), ?)",
                     SQLDataType.VARCHAR(50).getArrayType(),
                     (Object) new String[]{consumerGroup}
                 )
             )
-            .where(AbstractRepository.field("offset").in(offsets.toArray(Integer[]::new)))
+            .where(AbstractJdbcRepository.field("offset").in(offsets.toArray(Integer[]::new)))
             .execute();
     }
 }

@@ -1,7 +1,7 @@
 package io.kestra.repository.h2;
 
 import io.kestra.core.models.flows.Flow;
-import io.kestra.jdbc.repository.AbstractFlowRepository;
+import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -11,7 +11,7 @@ import java.util.List;
 
 @Singleton
 @H2RepositoryEnabled
-public class H2FlowRepository extends AbstractFlowRepository {
+public class H2FlowRepository extends AbstractJdbcFlowRepository {
     @Inject
     public H2FlowRepository(ApplicationContext applicationContext) {
         super(new H2Repository<>(Flow.class, applicationContext), applicationContext);

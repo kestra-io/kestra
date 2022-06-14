@@ -2,7 +2,7 @@ package io.kestra.repository.postgres;
 
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
-import io.kestra.jdbc.repository.AbstractLogRepository;
+import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Singleton
 @PostgresRepositoryEnabled
-public class PostgresLogRepository extends AbstractLogRepository implements LogRepositoryInterface {
+public class PostgresLogRepository extends AbstractJdbcLogRepository implements LogRepositoryInterface {
     @Inject
     public PostgresLogRepository(ApplicationContext applicationContext) {
         super(new PostgresRepository<>(LogEntry.class, applicationContext));

@@ -1,5 +1,5 @@
 datasources:
-  default:
+  mysql:
     url: jdbc:mysql://localhost:3306/kestra
     driverClassName: com.mysql.cj.jdbc.Driver
     username: kestra
@@ -8,7 +8,7 @@ datasources:
 
 flyway:
   datasources:
-    default:
+    mysql:
       enabled: true
       locations:
         - classpath:migrations/mysql
@@ -50,7 +50,7 @@ kestra:
         cls: io.kestra.core.runners.WorkerTaskExecution
       executorstate:
         table: "executorstate"
-        cls: io.kestra.jdbc.runner.JdbcExecutorState
+        cls: io.kestra.core.runners.ExecutorState
       executordelayed:
         table: "executordelayed"
         cls: io.kestra.core.runners.ExecutionDelay

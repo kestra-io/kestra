@@ -13,13 +13,13 @@ import java.time.Duration;
 import java.util.function.Predicate;
 
 @Singleton
-public class DSLContextWrapper {
+public class JooqDSLContextWrapper {
     private final DSLContext dslContext;
 
     private final RetryUtils retryUtils;
 
     @Inject
-    public DSLContextWrapper(DSLContext dslContext, RetryUtils retryUtils) {
+    public JooqDSLContextWrapper(DSLContext dslContext, RetryUtils retryUtils) {
         this.dslContext = dslContext;
         this.retryUtils = retryUtils;
     }

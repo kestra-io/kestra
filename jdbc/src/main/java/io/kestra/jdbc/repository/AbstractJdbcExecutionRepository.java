@@ -9,9 +9,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
-import io.kestra.jdbc.AbstractJdbcRepository;
-import io.kestra.jdbc.runner.AbstractExecutorStateStorage;
-import io.kestra.jdbc.runner.JdbcExecutorState;
+import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
+import io.kestra.core.runners.ExecutorState;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
@@ -30,11 +29,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 @Singleton
-public abstract class AbstractExecutionRepository extends AbstractRepository implements ExecutionRepositoryInterface, JdbcIndexerInterface<Execution> {
-    protected AbstractJdbcRepository<Execution> jdbcRepository;
-    protected AbstractExecutorStateStorage executorStateStorage;
+public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcIndexerInterface<Execution> {
+    protected io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository;
+    protected AbstractJdbcExecutorStateStorage executorStateStorage;
 
-    public AbstractExecutionRepository(AbstractJdbcRepository<Execution> jdbcRepository, AbstractExecutorStateStorage executorStateStorage) {
+    public AbstractJdbcExecutionRepository(io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository, AbstractJdbcExecutorStateStorage executorStateStorage) {
         this.jdbcRepository = jdbcRepository;
         this.executorStateStorage = executorStateStorage;
     }
@@ -447,7 +446,7 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
         return execution;
     }
 
-    public Executor lock(String executionId, Function<Pair<Execution, JdbcExecutorState>, Pair<Executor, JdbcExecutorState>> function) {
+    public Executor lock(String executionId, Function<Pair<Execution, ExecutorState>, Pair<Executor, ExecutorState>> function) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -466,8 +465,8 @@ public abstract class AbstractExecutionRepository extends AbstractRepository imp
                     return null;
                 }
 
-                JdbcExecutorState jdbcExecutorState = executorStateStorage.get(context, execution.get());
-                Pair<Executor, JdbcExecutorState> pair = function.apply(Pair.of(execution.get(), jdbcExecutorState));
+                ExecutorState executorState = executorStateStorage.get(context, execution.get());
+                Pair<Executor, ExecutorState> pair = function.apply(Pair.of(execution.get(), executorState));
 
                 if (pair != null) {
                     this.jdbcRepository.persist(pair.getKey().getExecution(), context, null);

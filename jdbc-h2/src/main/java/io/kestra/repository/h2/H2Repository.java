@@ -1,8 +1,7 @@
 package io.kestra.repository.h2;
 
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.jdbc.AbstractJdbcRepository;
-import io.kestra.jdbc.repository.AbstractRepository;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
 import lombok.SneakyThrows;
@@ -16,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
-public class H2Repository<T>  extends AbstractJdbcRepository<T> {
+public class H2Repository<T>  extends io.kestra.jdbc.AbstractJdbcRepository<T> {
     public H2Repository(Class<T> cls, ApplicationContext applicationContext) {
         super(cls, applicationContext);
     }
@@ -27,9 +26,9 @@ public class H2Repository<T>  extends AbstractJdbcRepository<T> {
 
         context
             .insertInto(table)
-            .set(AbstractRepository.field("key"), key(entity))
+            .set(AbstractJdbcRepository.field("key"), key(entity))
             .set(finalFields)
-            .onConflict(AbstractRepository.field("key"))
+            .onConflict(AbstractJdbcRepository.field("key"))
             .doUpdate()
             .set(finalFields)
             .execute();
@@ -44,7 +43,7 @@ public class H2Repository<T>  extends AbstractJdbcRepository<T> {
             throw new IllegalStateException("Too many fields for h2 '" + fields + "'");
         }
 
-        Field<Object> field = AbstractRepository.field(fields.get(0));
+        Field<Object> field = AbstractJdbcRepository.field(fields.get(0));
 
         List<LikeEscapeStep> match = Arrays
             .stream(query.split("\\p{P}|\\p{S}|\\p{Z}"))

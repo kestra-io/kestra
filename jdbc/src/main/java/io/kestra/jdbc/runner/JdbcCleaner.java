@@ -1,7 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.queues.QueueException;
-import io.kestra.jdbc.DSLContextWrapper;
+import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.JdbcConfiguration;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -23,7 +23,7 @@ import java.time.ZonedDateTime;
 @Slf4j
 @Requires(property = "kestra.jdbc.cleaner")
 public class JdbcCleaner {
-    private final DSLContextWrapper dslContextWrapper;
+    private final JooqDSLContextWrapper dslContextWrapper;
     private final Configuration configuration;
 
     protected final Table<Record> queueTable;
@@ -32,7 +32,7 @@ public class JdbcCleaner {
     public JdbcCleaner(ApplicationContext applicationContext) {
         JdbcConfiguration jdbcConfiguration = applicationContext.getBean(JdbcConfiguration.class);
 
-        this.dslContextWrapper = applicationContext.getBean(DSLContextWrapper.class);
+        this.dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
         this.configuration = applicationContext.getBean(Configuration.class);
 
         this.queueTable = DSL.table(jdbcConfiguration.tableConfig("queues").getTable());

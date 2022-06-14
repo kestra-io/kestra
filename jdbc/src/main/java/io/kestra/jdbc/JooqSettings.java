@@ -9,7 +9,6 @@ import org.jooq.conf.Settings;
 @Factory
 public class JooqSettings {
     @Singleton
-    @Named("default")
     public Settings settings() {
         return new Settings()
             .withRenderKeywordCase(RenderKeywordCase.UPPER)

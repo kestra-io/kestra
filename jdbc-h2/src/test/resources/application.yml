@@ -1,5 +1,5 @@
 datasources:
-  default:
+  h2:
     url: jdbc:h2:mem:public;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
     password: ""
@@ -7,7 +7,7 @@ datasources:
 
 flyway:
   datasources:
-    default:
+    h2:
       enabled: true
       locations:
         - classpath:migrations/h2
@@ -49,7 +49,7 @@ kestra:
         cls: io.kestra.core.runners.WorkerTaskExecution
       executorstate:
         table: "executorstate"
-        cls: io.kestra.jdbc.runner.JdbcExecutorState
+        cls: io.kestra.core.runners.ExecutorState
       executordelayed:
         table: "executordelayed"
         cls: io.kestra.core.runners.ExecutionDelay

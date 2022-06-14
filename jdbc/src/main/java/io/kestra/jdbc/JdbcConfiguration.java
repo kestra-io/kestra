@@ -10,9 +10,9 @@ import java.util.List;
 @Getter
 public class JdbcConfiguration {
     @Inject
-    private List<TableConfig> tableConfigs;
+    private List<JdbcTableConfig> tableConfigs;
 
-    public TableConfig tableConfig(String name) {
+    public JdbcTableConfig tableConfig(String name) {
         return this.tableConfigs
             .stream()
             .filter(tableConfig -> tableConfig.getName().equals(name))
@@ -20,7 +20,7 @@ public class JdbcConfiguration {
             .orElseThrow(() -> new IllegalStateException("Unable to find table config for name '" + name + "'"));
     }
 
-    public TableConfig tableConfig(Class<?> cls) {
+    public JdbcTableConfig tableConfig(Class<?> cls) {
         return this.tableConfigs
             .stream()
             .filter(tableConfig -> tableConfig.getCls() == cls)

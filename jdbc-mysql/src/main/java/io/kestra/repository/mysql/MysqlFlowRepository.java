@@ -1,7 +1,7 @@
 package io.kestra.repository.mysql;
 
 import io.kestra.core.models.flows.Flow;
-import io.kestra.jdbc.repository.AbstractFlowRepository;
+import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -12,7 +12,7 @@ import java.util.Collections;
 
 @Singleton
 @MysqlRepositoryEnabled
-public class MysqlFlowRepository extends AbstractFlowRepository {
+public class MysqlFlowRepository extends AbstractJdbcFlowRepository {
     @Inject
     public MysqlFlowRepository(ApplicationContext applicationContext) {
         super(new MysqlRepository<>(Flow.class, applicationContext), applicationContext);

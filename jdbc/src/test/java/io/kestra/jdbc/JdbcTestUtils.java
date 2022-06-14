@@ -17,7 +17,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Singleton
 public class JdbcTestUtils {
     @Inject
-    protected DSLContextWrapper dslContextWrapper;
+    protected JooqDSLContextWrapper dslContextWrapper;
 
     @Inject
     private FlywayMigrator flywayMigrator;

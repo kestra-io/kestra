@@ -38,6 +38,10 @@ public class QueueService {
             return ((MultipleConditionWindow) object).uid();
         } else if (object.getClass() == WorkerTaskExecution.class) {
             return ((WorkerTaskExecution) object).getExecution().getId();
+        } else if (object.getClass() == ExecutionDelay.class) {
+            return ((ExecutionDelay) object).getExecutionId();
+        } else if (object.getClass() == ExecutorState.class) {
+            return ((ExecutorState) object).getExecutionId();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

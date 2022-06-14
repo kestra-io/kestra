@@ -2,21 +2,21 @@ import Vue from "vue"
 export default {
     namespaced: true,
     state: {
-        version: undefined,
+        configs: undefined,
     },
 
     actions: {
-        loadVersion({commit}) {
-            return Vue.axios.get("/api/v1/version").then(response => {
-                commit("setVersion", response.data)
+        loadConfigs({commit}) {
+            return Vue.axios.get("/api/v1/configs").then(response => {
+                commit("setConfigs", response.data)
 
                 return response.data;
             })
         },
     },
     mutations: {
-        setVersion(state, version) {
-            state.version = version
+        setConfigs(state, configs) {
+            state.configs = configs
         }
     },
     getters: {}

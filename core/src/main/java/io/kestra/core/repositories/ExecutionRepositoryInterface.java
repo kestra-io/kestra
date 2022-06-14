@@ -16,6 +16,8 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 
 public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution> {
+    Boolean isTaskRunEnabled();
+
     Optional<Execution> findById(String id);
 
     ArrayListTotal<Execution> findByFlowId(String namespace, String id, Pageable pageable);

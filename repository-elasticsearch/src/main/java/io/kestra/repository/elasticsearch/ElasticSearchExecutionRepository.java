@@ -74,6 +74,10 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Execution.class);
     }
 
+    public Boolean isTaskRunEnabled() {
+        return true;
+    }
+
     @Override
     public Optional<Execution> findById(String id) {
         return this.getRequest(INDEX_NAME, id);

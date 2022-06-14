@@ -23,6 +23,10 @@ import javax.annotation.Nullable;
 public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     private final Map<String, Execution> executions = new HashMap<>();
 
+    public Boolean isTaskRunEnabled() {
+        return false;
+    }
+
     @Override
     public ArrayListTotal<Execution> find(Pageable pageable, String query, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, List<State.Type> state) {
         throw new UnsupportedOperationException();

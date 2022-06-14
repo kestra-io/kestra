@@ -13,7 +13,7 @@
         </div>
 
         <span slot="footer">
-            <span class="version">{{ version ? version.version : '' }}</span>
+            <span class="version">{{ configs ? configs.version : '' }}</span>
         </span>
 
         <span slot="toggle-icon">
@@ -118,6 +118,7 @@
                             element: "TaskRunMenuIcon",
                             class: "menu-icon"
                         },
+                        hidden: !(this.configs && this.configs.isTaskRunEnabled)
                     },
                     {
                         href: "/logs",
@@ -195,7 +196,6 @@
         },
         created() {
             this.menu = this.disabledCurrentRoute(this.generateMenu());
-            this.$store.dispatch("misc/loadVersion")
         },
         watch: {
             $route() {
@@ -215,7 +215,7 @@
             })
         },
         computed: {
-            ...mapState("misc", ["version"])
+            ...mapState("misc", ["configs"])
         }
     };
 </script>

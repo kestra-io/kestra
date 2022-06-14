@@ -84,7 +84,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
             .set(
                 AbstractRepository.field("consumers"),
                 DSL.field(
-                    "\"consumers\" || ?",
+                    "\"consumers\" || CAST(? AS queue_consumers[])",
                     SQLDataType.VARCHAR(50).getArrayType(),
                     (Object) new String[]{consumerGroup}
                 )

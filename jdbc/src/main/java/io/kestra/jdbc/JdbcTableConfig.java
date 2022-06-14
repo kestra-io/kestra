@@ -6,12 +6,12 @@ import lombok.Getter;
 
 @EachProperty("kestra.jdbc.tables")
 @Getter
-public class TableConfig {
+public class JdbcTableConfig {
     String name;
     Class<?> cls;
     String table;
 
-    public TableConfig(@Parameter String name) {
+    public JdbcTableConfig(@Parameter String name) {
         this.name = name;
     }
 }

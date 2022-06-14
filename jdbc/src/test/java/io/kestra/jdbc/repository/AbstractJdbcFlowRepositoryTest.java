@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.is;
 
 public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repositories.AbstractFlowRepositoryTest {
     @Inject
-    AbstractFlowRepository flowRepository;
+    AbstractJdbcFlowRepository flowRepository;
 
     @Inject
     JdbcTestUtils jdbcTestUtils;

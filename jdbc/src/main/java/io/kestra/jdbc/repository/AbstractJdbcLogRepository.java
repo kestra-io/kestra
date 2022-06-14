@@ -3,7 +3,6 @@ package io.kestra.jdbc.repository;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
-import io.kestra.jdbc.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
@@ -17,10 +16,10 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 @Singleton
-public abstract class AbstractLogRepository extends AbstractRepository implements LogRepositoryInterface, JdbcIndexerInterface<LogEntry> {
-    protected AbstractJdbcRepository<LogEntry> jdbcRepository;
+public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface, JdbcIndexerInterface<LogEntry> {
+    protected io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository;
 
-    public AbstractLogRepository(AbstractJdbcRepository<LogEntry> jdbcRepository) {
+    public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
     }
 

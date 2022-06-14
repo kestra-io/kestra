@@ -10,9 +10,9 @@ import io.kestra.core.queues.QueueService;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.jdbc.DSLContextWrapper;
+import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.JdbcConfiguration;
-import io.kestra.jdbc.repository.AbstractRepository;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -47,7 +47,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final Class<T> cls;
 
-    protected final DSLContextWrapper dslContextWrapper;
+    protected final JooqDSLContextWrapper dslContextWrapper;
 
     protected final DataSource dataSource;
 
@@ -68,7 +68,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;
-        this.dslContextWrapper = applicationContext.getBean(DSLContextWrapper.class);
+        this.dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
         this.dataSource = applicationContext.getBean(DataSource.class);
         this.configuration = applicationContext.getBean(Configuration.class);
 
@@ -83,9 +83,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     protected Map<Field<Object>, Object> produceFields(String key, T message) {
         return new HashMap<>(ImmutableMap
             .of(
-                AbstractRepository.field("type"), this.cls.getName(),
-                AbstractRepository.field("key"), key != null ? key : IdUtils.create(),
-                AbstractRepository.field("value"), mapper.writeValueAsString(message)
+                AbstractJdbcRepository.field("type"), this.cls.getName(),
+                AbstractJdbcRepository.field("key"), key != null ? key : IdUtils.create(),
+                AbstractJdbcRepository.field("value"), mapper.writeValueAsString(message)
             )
         );
     }
@@ -117,7 +117,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         dslContextWrapper.transaction(configuration -> DSL
             .using(configuration)
             .delete(table)
-            .where(AbstractRepository.field("key").eq(queueService.key(message)))
+            .where(AbstractJdbcRepository.field("key").eq(queueService.key(message)))
             .execute()
         );
     }
@@ -143,7 +143,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         dslContextWrapper.transaction(configuration -> {
             Integer integer = DSL
                 .using(configuration)
-                .select(DSL.max(AbstractRepository.field("offset")).as("max"))
+                .select(DSL.max(AbstractJdbcRepository.field("offset")).as("max"))
                 .from(table)
                 .fetchAny("max", Integer.class);
 

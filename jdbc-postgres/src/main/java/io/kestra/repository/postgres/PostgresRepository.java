@@ -1,8 +1,7 @@
 package io.kestra.repository.postgres;
 
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.jdbc.AbstractJdbcRepository;
-import io.kestra.jdbc.repository.AbstractRepository;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
 import lombok.SneakyThrows;
@@ -13,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public class PostgresRepository<T> extends AbstractJdbcRepository<T> {
+public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
     public PostgresRepository(Class<T> cls, ApplicationContext applicationContext) {
         super(cls, applicationContext);
     }
@@ -37,7 +36,7 @@ public class PostgresRepository<T> extends AbstractJdbcRepository<T> {
         Map<Field<Object>, Object> fields = super.persistFields(entity);
 
         String json = MAPPER.writeValueAsString(entity);
-        fields.replace(AbstractRepository.field("value"), DSL.val(JSONB.valueOf(json)));
+        fields.replace(AbstractJdbcRepository.field("value"), DSL.val(JSONB.valueOf(json)));
 
         return fields;
     }
@@ -48,9 +47,9 @@ public class PostgresRepository<T> extends AbstractJdbcRepository<T> {
 
         context
             .insertInto(table)
-            .set(AbstractRepository.field("key"), key(entity))
+            .set(AbstractJdbcRepository.field("key"), key(entity))
             .set(finalFields)
-            .onConflict(AbstractRepository.field("key"))
+            .onConflict(AbstractJdbcRepository.field("key"))
             .doUpdate()
             .set(finalFields)
             .execute();

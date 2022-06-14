@@ -1,5 +1,5 @@
 datasources:
-  default:
+  postgres:
     url: jdbc:postgresql://localhost:5432/kestra
     driverClassName: org.postgresql.Driver
     username: kestra
@@ -8,7 +8,7 @@ datasources:
 
 flyway:
   datasources:
-    default:
+    postgres:
       enabled: true
       locations:
         - classpath:migrations/postgres
@@ -50,7 +50,7 @@ kestra:
         cls: io.kestra.core.runners.WorkerTaskExecution
       executorstate:
         table: "executorstate"
-        cls: io.kestra.jdbc.runner.JdbcExecutorState
+        cls: io.kestra.core.runners.ExecutorState
       executordelayed:
         table: "executordelayed"
         cls: io.kestra.core.runners.ExecutionDelay

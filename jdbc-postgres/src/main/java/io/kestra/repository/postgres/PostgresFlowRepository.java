@@ -1,7 +1,7 @@
 package io.kestra.repository.postgres;
 
 import io.kestra.core.models.flows.Flow;
-import io.kestra.jdbc.repository.AbstractFlowRepository;
+import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -11,7 +11,7 @@ import java.util.Collections;
 
 @Singleton
 @PostgresRepositoryEnabled
-public class PostgresFlowRepository extends AbstractFlowRepository {
+public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
     @Inject
     public PostgresFlowRepository(ApplicationContext applicationContext) {
         super(new PostgresRepository<>(Flow.class, applicationContext), applicationContext);

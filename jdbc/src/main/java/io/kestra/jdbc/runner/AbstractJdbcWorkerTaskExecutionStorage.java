@@ -1,8 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.runners.WorkerTaskExecution;
-import io.kestra.jdbc.AbstractJdbcRepository;
-import io.kestra.jdbc.repository.AbstractRepository;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record1;
@@ -13,10 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public abstract class AbstractWorkerTaskExecutionStorage extends AbstractRepository {
-    protected AbstractJdbcRepository<WorkerTaskExecution> jdbcRepository;
+public abstract class AbstractJdbcWorkerTaskExecutionStorage extends AbstractJdbcRepository {
+    protected io.kestra.jdbc.AbstractJdbcRepository<WorkerTaskExecution> jdbcRepository;
 
-    public AbstractWorkerTaskExecutionStorage(AbstractJdbcRepository<WorkerTaskExecution> jdbcRepository) {
+    public AbstractJdbcWorkerTaskExecutionStorage(io.kestra.jdbc.AbstractJdbcRepository<WorkerTaskExecution> jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
     }
 
@@ -26,10 +25,10 @@ public abstract class AbstractWorkerTaskExecutionStorage extends AbstractReposit
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(AbstractRepository.field("value"))
+                    .select(AbstractJdbcRepository.field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        AbstractRepository.field("key").eq(executionId)
+                        AbstractJdbcRepository.field("key").eq(executionId)
                     );
 
                 return this.jdbcRepository.fetchOne(select);

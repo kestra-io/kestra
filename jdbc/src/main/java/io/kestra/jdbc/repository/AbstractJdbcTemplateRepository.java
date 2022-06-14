@@ -7,7 +7,6 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
-import io.kestra.jdbc.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -21,13 +20,13 @@ import java.util.Optional;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
-public abstract class AbstractTemplateRepository extends AbstractRepository implements TemplateRepositoryInterface {
+public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcRepository implements TemplateRepositoryInterface {
     private final QueueInterface<Template> templateQueue;
     private final ApplicationEventPublisher<CrudEvent<Template>> eventPublisher;
-    protected AbstractJdbcRepository<Template> jdbcRepository;
+    protected io.kestra.jdbc.AbstractJdbcRepository<Template> jdbcRepository;
 
     @SuppressWarnings("unchecked")
-    public AbstractTemplateRepository(AbstractJdbcRepository<Template> jdbcRepository, ApplicationContext applicationContext) {
+    public AbstractJdbcTemplateRepository(io.kestra.jdbc.AbstractJdbcRepository<Template> jdbcRepository, ApplicationContext applicationContext) {
         this.jdbcRepository = jdbcRepository;
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.templateQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TEMPLATE_NAMED));

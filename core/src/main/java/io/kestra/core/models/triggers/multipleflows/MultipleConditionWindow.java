@@ -1,10 +1,9 @@
 package io.kestra.core.models.triggers.multipleflows;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.kestra.core.models.flows.Flow;
 import lombok.Builder;
 import lombok.Value;
-import io.kestra.core.models.flows.Flow;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;

@@ -1,8 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.runners.ExecutionDelay;
-import io.kestra.jdbc.AbstractJdbcRepository;
-import io.kestra.jdbc.repository.AbstractRepository;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
@@ -12,10 +11,10 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public abstract class AbstractExecutionDelayStorage extends AbstractRepository {
-    protected AbstractJdbcRepository<ExecutionDelay> jdbcRepository;
+public abstract class AbstractJdbcExecutionDelayStorage extends AbstractJdbcRepository {
+    protected io.kestra.jdbc.AbstractJdbcRepository<ExecutionDelay> jdbcRepository;
 
-    public AbstractExecutionDelayStorage(AbstractJdbcRepository<ExecutionDelay> jdbcRepository) {
+    public AbstractJdbcExecutionDelayStorage(io.kestra.jdbc.AbstractJdbcRepository<ExecutionDelay> jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
     }
 
@@ -27,10 +26,10 @@ public abstract class AbstractExecutionDelayStorage extends AbstractRepository {
             .transaction(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(AbstractRepository.field("value"))
+                    .select(AbstractJdbcRepository.field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        AbstractRepository.field("date").lessOrEqual(now.toOffsetDateTime())
+                        AbstractJdbcRepository.field("date").lessOrEqual(now.toOffsetDateTime())
                     );
 
                 this.jdbcRepository.fetch(select)

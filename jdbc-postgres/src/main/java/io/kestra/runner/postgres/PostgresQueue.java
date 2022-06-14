@@ -1,6 +1,6 @@
 package io.kestra.runner.postgres;
 
-import io.kestra.jdbc.repository.AbstractRepository;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.NonNull;
@@ -23,12 +23,12 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
         Map<Field<Object>, Object> map = super.produceFields(key, message);
 
         map.put(
-            AbstractRepository.field("value"),
+            AbstractJdbcRepository.field("value"),
             JSONB.valueOf(mapper.writeValueAsString(message))
         );
 
         map.put(
-            AbstractRepository.field("type"),
+            AbstractJdbcRepository.field("type"),
             DSL.field("CAST(? AS queue_type)", this.cls.getName())
         );
 
@@ -38,18 +38,18 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
     protected Result<Record> receiveFetch(DSLContext ctx, @NonNull Integer offset) {
         SelectConditionStep<Record2<Object, Object>> select = ctx
             .select(
-                AbstractRepository.field("value"),
-                AbstractRepository.field("offset")
+                AbstractJdbcRepository.field("value"),
+                AbstractJdbcRepository.field("offset")
             )
             .from(this.table)
             .where(DSL.condition("type = CAST(? AS queue_type)", this.cls.getName()));
 
         if (offset != 0) {
-            select = select.and(AbstractRepository.field("offset").gt(offset));
+            select = select.and(AbstractJdbcRepository.field("offset").gt(offset));
         }
 
         return select
-            .orderBy(AbstractRepository.field("offset").asc())
+            .orderBy(AbstractJdbcRepository.field("offset").asc())
             .limit(10)
             .forUpdate()
             .skipLocked()
@@ -60,16 +60,16 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup) {
         return ctx
             .select(
-                AbstractRepository.field("value"),
-                AbstractRepository.field("offset")
+                AbstractJdbcRepository.field("value"),
+                AbstractJdbcRepository.field("offset")
             )
             .from(this.table)
             .where(DSL.condition("type = CAST(? AS queue_type)", this.cls.getName()))
             .and(DSL.or(List.of(
-                AbstractRepository.field("consumers").isNull(),
+                AbstractJdbcRepository.field("consumers").isNull(),
                 DSL.condition("NOT(CAST(? AS queue_consumers) = ANY(\"consumers\"))", consumerGroup)
             )))
-            .orderBy(AbstractRepository.field("offset").asc())
+            .orderBy(AbstractJdbcRepository.field("offset").asc())
             .limit(10)
             .forUpdate()
             .skipLocked()
@@ -82,14 +82,14 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
         ctx
             .update(DSL.table(table.getName()))
             .set(
-                AbstractRepository.field("consumers"),
+                AbstractJdbcRepository.field("consumers"),
                 DSL.field(
                     "\"consumers\" || CAST(? AS queue_consumers[])",
                     SQLDataType.VARCHAR(50).getArrayType(),
                     (Object) new String[]{consumerGroup}
                 )
             )
-            .where(AbstractRepository.field("offset").in(offsets.toArray(Integer[]::new)))
+            .where(AbstractJdbcRepository.field("offset").in(offsets.toArray(Integer[]::new)))
             .execute();
     }
 }

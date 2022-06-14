@@ -1,4 +1,4 @@
-package io.kestra.jdbc.runner;
+package io.kestra.core.runners;
 
 import io.kestra.core.models.flows.State;
 import lombok.Data;
@@ -9,13 +9,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @NoArgsConstructor
-public class JdbcExecutorState {
+public class ExecutorState {
     private String executionId;
     private Map<String, State.Type> workerTaskDeduplication = new ConcurrentHashMap<>();
     private Map<String, String> childDeduplication = new ConcurrentHashMap<>();
     private Boolean flowTriggerDeduplication = false;
 
-    public JdbcExecutorState(String executionId) {
+    public ExecutorState(String executionId) {
         this.executionId = executionId;
     }
 }

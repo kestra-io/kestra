@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.is;
 @MicronautTest(transactional = false)
 public abstract class AbstractWorkerTaskExecutionTest {
     @Inject
-    AbstractWorkerTaskExecutionStorage workerTaskExecutionStorage;
+    AbstractJdbcWorkerTaskExecutionStorage workerTaskExecutionStorage;
 
     @Inject
     JdbcTestUtils jdbcTestUtils;

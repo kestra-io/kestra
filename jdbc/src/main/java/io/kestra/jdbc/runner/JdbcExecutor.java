@@ -16,7 +16,7 @@ import io.kestra.core.runners.ExecutorService;
 import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.Template;
 import io.kestra.core.utils.Await;
-import io.kestra.jdbc.repository.AbstractExecutionRepository;
+import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import jakarta.inject.Inject;
@@ -48,7 +48,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
-    private AbstractExecutionRepository executionRepository;
+    private AbstractJdbcExecutionRepository executionRepository;
 
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
@@ -94,16 +94,16 @@ public class JdbcExecutor implements ExecutorInterface {
     private AbstractJdbcMultipleConditionStorage multipleConditionStorage;
 
     @Inject
-    private AbstractWorkerTaskExecutionStorage workerTaskExecutionStorage;
+    private AbstractJdbcWorkerTaskExecutionStorage workerTaskExecutionStorage;
 
     @Inject
     private ExecutionService executionService;
 
     @Inject
-    private AbstractExecutionDelayStorage abstractExecutionDelayStorage;
+    private AbstractJdbcExecutionDelayStorage abstractExecutionDelayStorage;
 
     @Inject
-    private AbstractExecutorStateStorage executorStateStorage;
+    private AbstractJdbcExecutorStateStorage executorStateStorage;
 
     private List<Flow> allFlows;
 
@@ -152,7 +152,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private void executionQueue(Execution message) {
         Executor result = executionRepository.lock(message.getId(), pair -> {
             Execution execution = pair.getLeft();
-            JdbcExecutorState executorState = pair.getRight();
+            ExecutorState executorState = pair.getRight();
 
             final Flow flow = transform(this.flowRepository.findByExecution(execution), execution);
             Executor executor = new Executor(execution, null).withFlow(flow);
@@ -421,7 +421,7 @@ public class JdbcExecutor implements ExecutorInterface {
         });
     }
 
-    private boolean deduplicateNexts(Execution execution, JdbcExecutorState executorState, List<TaskRun> taskRuns) {
+    private boolean deduplicateNexts(Execution execution, ExecutorState executorState, List<TaskRun> taskRuns) {
         return taskRuns
             .stream()
             .anyMatch(taskRun -> {
@@ -437,7 +437,7 @@ public class JdbcExecutor implements ExecutorInterface {
             });
     }
 
-    private boolean deduplicateWorkerTask(Execution execution, JdbcExecutorState executorState, TaskRun taskRun) {
+    private boolean deduplicateWorkerTask(Execution execution, ExecutorState executorState, TaskRun taskRun) {
         String deduplicationKey = taskRun.getId();
         State.Type current = executorState.getWorkerTaskDeduplication().get(deduplicationKey);
 
@@ -450,7 +450,7 @@ public class JdbcExecutor implements ExecutorInterface {
         }
     }
 
-    private boolean deduplicateFlowTrigger(Execution execution, JdbcExecutorState executorState) {
+    private boolean deduplicateFlowTrigger(Execution execution, ExecutorState executorState) {
         Boolean flowTriggerDeduplication = executorState.getFlowTriggerDeduplication();
 
         if (flowTriggerDeduplication) {

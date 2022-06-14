@@ -11,7 +11,6 @@ import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.jdbc.repository.AbstractRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -59,7 +58,7 @@ public abstract class AbstractJdbcRepository<T> {
     protected final Class<T> cls;
 
     @Getter
-    protected final DSLContextWrapper dslContextWrapper;
+    protected final JooqDSLContextWrapper dslContextWrapper;
 
     @Getter
     protected final Table<Record> table;
@@ -70,7 +69,7 @@ public abstract class AbstractJdbcRepository<T> {
     ) {
         this.cls = cls;
         this.queueService = applicationContext.getBean(QueueService.class);
-        this.dslContextWrapper = applicationContext.getBean(DSLContextWrapper.class);
+        this.dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
 
         JdbcConfiguration jdbcConfiguration = applicationContext.getBean(JdbcConfiguration.class);
 
@@ -92,7 +91,7 @@ public abstract class AbstractJdbcRepository<T> {
     @SneakyThrows
     public Map<Field<Object>, Object> persistFields(T entity) {
         return new HashMap<>(ImmutableMap
-            .of(AbstractRepository.field("value"), MAPPER.writeValueAsString(entity))
+            .of(io.kestra.jdbc.repository.AbstractJdbcRepository.field("value"), MAPPER.writeValueAsString(entity))
         );
     }
 
@@ -111,7 +110,7 @@ public abstract class AbstractJdbcRepository<T> {
 
         dslContext
             .insertInto(table)
-            .set(AbstractRepository.field("key"), key(entity))
+            .set(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key"), key(entity))
             .set(finalFields)
             .onDuplicateKeyUpdate()
             .set(finalFields)
@@ -127,7 +126,7 @@ public abstract class AbstractJdbcRepository<T> {
     public void delete(DSLContext dslContext, T entity) {
         dslContext
             .delete(table)
-            .where(AbstractRepository.field("key").eq(key(entity)))
+            .where(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key").eq(key(entity)))
             .execute();
     }
 
@@ -191,7 +190,7 @@ public abstract class AbstractJdbcRepository<T> {
                 .getSort()
                 .getOrderBy()
                 .forEach(order -> {
-                    Field<Object> field = AbstractRepository.field(order.getProperty());
+                    Field<Object> field = io.kestra.jdbc.repository.AbstractJdbcRepository.field(order.getProperty());
 
                     select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc() : field.desc());
                 });

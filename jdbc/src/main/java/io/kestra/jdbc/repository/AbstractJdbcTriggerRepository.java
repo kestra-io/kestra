@@ -4,7 +4,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.jdbc.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import jakarta.inject.Singleton;
 import org.jooq.*;
@@ -15,10 +14,10 @@ import java.util.Map;
 import java.util.Optional;
 
 @Singleton
-public abstract class AbstractTriggerRepository extends AbstractRepository implements TriggerRepositoryInterface, JdbcIndexerInterface<Trigger> {
-    protected AbstractJdbcRepository<Trigger> jdbcRepository;
+public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcRepository implements TriggerRepositoryInterface, JdbcIndexerInterface<Trigger> {
+    protected io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository;
 
-    public AbstractTriggerRepository(AbstractJdbcRepository<Trigger> jdbcRepository) {
+    public AbstractJdbcTriggerRepository(io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
     }
 

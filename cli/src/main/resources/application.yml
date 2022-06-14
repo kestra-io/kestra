@@ -45,8 +45,18 @@ endpoints:
 
 flyway:
   datasources:
-    default:
+    postgres:
       enabled: true
+      locations:
+        - classpath:migrations/postgres
+    mysql:
+      enabled: true
+      locations:
+        - classpath:migrations/mysql
+    h2:
+      enabled: true
+      locations:
+        - classpath:migrations/h2
 
 kestra:
   retries:
@@ -232,7 +242,7 @@ kestra:
         cls: io.kestra.core.runners.WorkerTaskExecution
       executorstate:
         table: "executorstate"
-        cls: io.kestra.jdbc.runner.JdbcExecutorState
+        cls: io.kestra.core.runners.ExecutorState
       executordelayed:
         table: "executordelayed"
         cls: io.kestra.core.runners.ExecutionDelay

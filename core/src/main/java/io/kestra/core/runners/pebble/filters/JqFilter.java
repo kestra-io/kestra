@@ -1,6 +1,9 @@
 package io.kestra.core.runners.pebble.filters;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.NumericNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.mitchellbosecke.pebble.error.PebbleException;
 import com.mitchellbosecke.pebble.extension.Filter;
@@ -62,6 +65,12 @@ public class JqFilter implements Filter {
                 q.apply(scope, in, v -> {
                     if (v instanceof TextNode) {
                         out.add(v.textValue());
+                    } else if (v instanceof NullNode) {
+                        out.add(null);
+                    } else if (v instanceof NumericNode) {
+                        out.add(v.numberValue());
+                    } else if (v instanceof BooleanNode) {
+                        out.add(v.booleanValue());
                     } else {
                         out.add(v);
                     }

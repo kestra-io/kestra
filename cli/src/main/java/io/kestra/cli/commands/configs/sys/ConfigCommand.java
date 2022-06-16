@@ -16,10 +16,6 @@ import picocli.CommandLine;
 )
 @Slf4j
 public class ConfigCommand extends AbstractCommand {
-    public ConfigCommand() {
-        super(false);
-    }
-
     @Override
     public Integer call() throws Exception {
         super.call();

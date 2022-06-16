@@ -16,10 +16,6 @@ public class PluginListCommand extends AbstractCommand {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
-    public PluginListCommand() {
-        super(false);
-    }
-
     @CommandLine.Option(names = {"--core"}, description = "Also write core tasks plugins")
     private boolean core = false;
 

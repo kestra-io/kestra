@@ -29,10 +29,6 @@ public class PluginDocCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0", description = "Path to write documentations files")
     private Path output = Paths.get(System.getProperty("user.dir"), "docs");
 
-    public PluginDocCommand() {
-        super(false);
-    }
-
     @CommandLine.Option(names = {"--core"}, description = "Also write core tasks docs files")
     private boolean core = false;
 

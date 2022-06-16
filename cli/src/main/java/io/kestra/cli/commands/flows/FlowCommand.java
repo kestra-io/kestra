@@ -21,10 +21,6 @@ import picocli.CommandLine;
 )
 @Slf4j
 public class FlowCommand extends AbstractCommand {
-    public FlowCommand() {
-        super(false);
-    }
-
     @SneakyThrows
     @Override
     public Integer call() throws Exception {

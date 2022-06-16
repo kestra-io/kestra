@@ -17,10 +17,6 @@ public class ConfigPropertiesCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    public ConfigPropertiesCommand() {
-        super(false);
-    }
-
     @Override
     public Integer call() throws Exception {
         super.call();

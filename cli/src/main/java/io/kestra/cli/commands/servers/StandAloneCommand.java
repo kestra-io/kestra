@@ -1,11 +1,11 @@
 package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
-import io.kestra.cli.AbstractCommand;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.StandAloneRunner;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.Map;
     description = "start a standalone server"
 )
 @Slf4j
-public class StandAloneCommand extends AbstractCommand {
+public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
@@ -30,13 +30,8 @@ public class StandAloneCommand extends AbstractCommand {
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
     private File flowPath;
 
-
     @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker thread")
     private Integer workerThread;
-
-    public StandAloneCommand() {
-        super(true);
-    }
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {

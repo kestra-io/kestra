@@ -1,10 +1,6 @@
 package io.kestra.cli.commands.flows;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Prototype;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.exceptions.MissingRequiredInput;
 import io.kestra.core.models.flows.Flow;
@@ -12,6 +8,10 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.runner.memory.MemoryRunner;
+import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
-import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "test",
@@ -31,6 +30,9 @@ import jakarta.inject.Inject;
 )
 @Slf4j
 public class FlowTestCommand extends AbstractCommand {
+    @Inject
+    private ApplicationContext applicationContext;
+
     @CommandLine.Parameters(index = "0", description = "the flow file to test")
     private Path file;
 
@@ -44,14 +46,7 @@ public class FlowTestCommand extends AbstractCommand {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
-    @Inject
-    private ApplicationContext applicationContext;
-
     private static final SecureRandom random = new SecureRandom();
-
-    public FlowTestCommand() {
-        super(false);
-    }
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {

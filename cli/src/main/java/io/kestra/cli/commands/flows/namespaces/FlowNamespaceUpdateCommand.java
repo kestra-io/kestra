@@ -1,25 +1,22 @@
 package io.kestra.cli.commands.flows.namespaces;
 
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.MutableHttpRequest;
-import io.micronaut.http.client.netty.DefaultHttpClient;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FilenameUtils;
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.commands.flows.ValidateCommand;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.client.netty.DefaultHttpClient;
+import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
 import javax.validation.ConstraintViolationException;
-
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @CommandLine.Command(
     name = "update",
@@ -36,10 +33,6 @@ public class FlowNamespaceUpdateCommand extends AbstractApiCommand {
 
     @CommandLine.Parameters(index = "1", description = "the directory containing flows to from current namespace")
     private Path directory;
-
-    public FlowNamespaceUpdateCommand() {
-        super(false);
-    }
 
     @Override
     public Integer call() throws Exception {

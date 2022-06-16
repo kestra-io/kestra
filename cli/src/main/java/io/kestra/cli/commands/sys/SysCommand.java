@@ -17,10 +17,6 @@ import picocli.CommandLine;
 )
 @Slf4j
 public class SysCommand extends AbstractCommand {
-    public SysCommand() {
-        super(false);
-    }
-
     @Override
     public Integer call() throws Exception {
         super.call();

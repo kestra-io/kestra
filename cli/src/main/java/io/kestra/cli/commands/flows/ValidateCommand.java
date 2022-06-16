@@ -24,10 +24,6 @@ public class ValidateCommand extends AbstractCommand {
     @CommandLine.Parameters(index = "0", description = "the flow file to test")
     private Path file;
 
-    public ValidateCommand() {
-        super(false);
-    }
-
     @Override
     public Integer call() throws Exception {
         super.call();

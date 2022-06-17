@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers;
 
 import io.kestra.core.models.SearchResult;
+import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -19,10 +20,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Operation;
@@ -85,9 +83,16 @@ public class FlowController {
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace,
+        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
     ) throws HttpStatusException {
-        return PagedResults.of(flowRepository.find(PageableUtils.from(page, size, sort), query, namespace));
+
+        return PagedResults.of(flowRepository.find(
+            PageableUtils.from(page, size, sort),
+            query,
+            namespace,
+            RequestUtils.toMap(labels)
+        ));
     }
 
     @ExecuteOn(TaskExecutors.IO)

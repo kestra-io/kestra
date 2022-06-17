@@ -100,7 +100,12 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .collect(Collectors.toList());
     }
 
-    public ArrayListTotal<Flow> find(Pageable pageable, @Nullable String query, @Nullable String namespace) {
+    public ArrayListTotal<Flow> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable Map<String, String> labels
+    ) {
         //TODO Non used query, returns just all at the moment
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");

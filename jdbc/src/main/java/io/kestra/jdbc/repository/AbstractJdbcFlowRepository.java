@@ -185,9 +185,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .where(this.defaultFilter());
     }
 
-    abstract protected Condition findCondition(String query);
+    abstract protected Condition findCondition(String query, Map<String, String> labels);
 
-    public ArrayListTotal<Flow> find(Pageable pageable, @Nullable String query, @Nullable String namespace) {
+    public ArrayListTotal<Flow> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable Map<String, String> labels
+    ) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -195,9 +200,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 SelectConditionStep<Record1<Object>> select = this.fullTextSelect(context, Collections.emptyList());
 
-                if (query != null) {
-                    select.and(this.findCondition(query));
-                }
+                select.and(this.findCondition(query, labels));
 
                 if (namespace != null) {
                     select.and(field("namespace").likeIgnoreCase(namespace + "%"));

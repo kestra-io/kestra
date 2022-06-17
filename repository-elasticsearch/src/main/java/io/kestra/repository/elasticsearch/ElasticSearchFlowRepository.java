@@ -187,7 +187,12 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public ArrayListTotal<Flow> find(Pageable pageable, @Nullable String query, @Nullable String namespace) {
+    public ArrayListTotal<Flow> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable Map<String, String> labels
+    ) {
         BoolQueryBuilder bool = this.defaultFilter();
 
         if (query != null) {
@@ -196,6 +201,16 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
         if (namespace != null) {
             bool.must(QueryBuilders.prefixQuery("namespace", namespace));
+        }
+
+        if (labels != null) {
+            labels.forEach((key, value) -> {
+                if (value != null) {
+                    bool.must(QueryBuilders.termQuery("labels." + key, value));
+                } else {
+                    bool.must(QueryBuilders.existsQuery("labels." + key));
+                }
+            });
         }
 
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);

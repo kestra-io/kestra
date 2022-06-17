@@ -11,7 +11,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -27,11 +30,19 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
 
     @Test
     void find() {
-        List<Flow> save = flowRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc("id"))), null, null);
+        List<Flow> save = flowRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc("id"))), null, null, null);
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
 
-        save = flowRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "trigger-multiplecondition", null);
+        save = flowRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "trigger-multiplecondition", null, null);
         assertThat((long) save.size(), is(3L));
+
+        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, Map.of("country", "FR"));
+        assertThat(save.size(), is(1));
+
+        HashMap<String, String> map = new HashMap<>();
+        map.put("region", null);
+        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, map);
+        assertThat(save.size(), is(1));
     }
 
     @Test

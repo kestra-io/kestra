@@ -77,6 +77,10 @@
                             />
                         </template>
 
+                        <template #cell(labels)="row">
+                            <labels :labels="row.item.labels" />
+                        </template>
+
                         <template #cell(triggers)="row">
                             <trigger-avatar :flow="row.item" />
                         </template>
@@ -134,6 +138,7 @@
     import TriggerAvatar from "./TriggerAvatar";
     import MarkdownTooltip from "../layout/MarkdownTooltip"
     import Kicon from "../Kicon"
+    import Labels from "../layout/Labels"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -149,7 +154,8 @@
             StateGlobalChart,
             TriggerAvatar,
             MarkdownTooltip,
-            Kicon
+            Kicon,
+            Labels
         },
         data() {
             return {
@@ -179,6 +185,11 @@
                         key: "id",
                         label: title("flow"),
                         sortable: true
+                    },
+                    {
+                        key: "labels",
+                        label: title("labels"),
+                        sortable: false
                     },
                     {
                         key: "namespace",

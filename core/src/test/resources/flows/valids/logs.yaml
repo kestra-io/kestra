@@ -1,6 +1,10 @@
 id: logs
 namespace: io.kestra.tests
 
+labels:
+  country: FR
+  region: "Nord"
+
 taskDefaults:
   - type: io.kestra.core.tasks.debugs.Echo
     values:

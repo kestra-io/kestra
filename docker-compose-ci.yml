@@ -1,17 +1,17 @@
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.0.0
+    image: confluentinc/cp-zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
     healthcheck:
       test: nc -z localhost 2181 || exit 1
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
       start_period: 10s
 
   kafka:
-    image: confluentinc/cp-kafka:7.0.0
+    image: confluentinc/cp-kafka
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -26,26 +26,30 @@ services:
       test: echo "exit" | curl -s -f telnet://localhost:9092 || exit 1
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
     ports:
       - 9092:9092
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.2.3
     environment:
       discovery.type: single-node
       ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+      xpack.security.enabled: "false"
     ulimits:
       memlock:
         soft: -1
         hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     ports:
       - 9200:9200
     healthcheck:
       test: curl -s -f localhost:9200/_cat/health >/dev/null || exit 1
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
 
   mysql:
     image: mysql

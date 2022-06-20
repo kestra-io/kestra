@@ -73,6 +73,7 @@ public class CollectorService {
                 .environments(applicationContext.getEnvironment().getActiveNames())
                 .startTime(Instant.ofEpochMilli(ManagementFactory.getRuntimeMXBean().getStartTime()))
                 .host(HostUsage.of())
+                .configurations(ConfigurationUsage.of(applicationContext))
                 .plugins(PluginUsage.of(applicationContext))
                 .build();
         }

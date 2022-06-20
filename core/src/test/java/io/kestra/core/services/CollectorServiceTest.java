@@ -33,6 +33,8 @@ class CollectorServiceTest {
             assertThat(metrics.getHost().getHardware().getLogicalProcessorCount(), notNullValue());
             assertThat(metrics.getHost().getJvm().getName(), notNullValue());
             assertThat(metrics.getHost().getOs().getFamily(), notNullValue());
+            assertThat(metrics.getConfigurations().getRepositoryType(), is("local"));
+            assertThat(metrics.getConfigurations().getQueueType(), is("memory"));
         }
     }
 }

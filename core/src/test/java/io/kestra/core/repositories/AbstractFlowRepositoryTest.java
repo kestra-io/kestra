@@ -2,10 +2,6 @@ package io.kestra.core.repositories;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
-import io.micronaut.context.event.ApplicationEventListener;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
@@ -20,11 +16,14 @@ import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.scripts.Bash;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-
+import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import javax.validation.ConstraintViolationException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -32,13 +31,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@MicronautTest
+@MicronautTest(transactional = false)
 public abstract class AbstractFlowRepositoryTest {
     @Inject
     protected FlowRepositoryInterface flowRepository;
@@ -51,7 +52,7 @@ public abstract class AbstractFlowRepositoryTest {
     private QueueInterface<Trigger> triggerQueue;
 
     @BeforeEach
-    private void init() throws IOException, URISyntaxException {
+    protected void init() throws IOException, URISyntaxException {
         TestsUtils.loads(repositoryLoader);
         FlowListener.reset();
     }
@@ -84,9 +85,11 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     protected void revision() throws JsonProcessingException {
+        String flowId = IdUtils.create();
+
         // create
         Flow flow = flowRepository.create(Flow.builder()
-            .id("AbstractFlowRepositoryTest")
+            .id(flowId)
             .namespace("io.kestra.unittest")
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
@@ -98,7 +101,7 @@ public abstract class AbstractFlowRepositoryTest {
 
         // submit new one with change
         Flow flowRev2 = Flow.builder()
-            .id("AbstractFlowRepositoryTest")
+            .id(flowId)
             .namespace("io.kestra.unittest")
             .tasks(Collections.singletonList(
                 Bash.builder()
@@ -133,11 +136,11 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(incremented3.getRevision(), is(3));
 
         // delete
-        flowRepository.delete(flow);
+        flowRepository.delete(incremented3);
 
         // revisions is still findable after delete
         revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
-        assertThat(revisions.size(), is(3));
+        assertThat(revisions.size(), is(4));
 
         Optional<Flow> findDeleted = flowRepository.findById(
             flow.getNamespace(),
@@ -150,7 +153,7 @@ public abstract class AbstractFlowRepositoryTest {
         // recreate the first one, we have a new revision
         Flow incremented4 = flowRepository.create(flow);
 
-        assertThat(incremented4.getRevision(), is(4));
+        assertThat(incremented4.getRevision(), is(5));
     }
 
     @Test
@@ -283,11 +286,11 @@ public abstract class AbstractFlowRepositoryTest {
 
         Flow updated = flowRepository.update(update, flow);
 
-        countDownLatch.await();
+        countDownLatch.await(15, TimeUnit.SECONDS);
 
         assertThat(updated.getTriggers(), is(nullValue()));
 
-        flowRepository.delete(save);
+        flowRepository.delete(updated);
 
         assertThat(FlowListener.getEmits().size(), is(3));
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count(), is(1L));
@@ -322,13 +325,18 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
 
         flowRepository.delete(save);
-        countDownLatch.await();
+        countDownLatch.await(15, TimeUnit.SECONDS);
 
         assertThat(FlowListener.getEmits().size(), is(2));
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count(), is(1L));
         assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count(), is(1L));
     }
 
+    @Test
+    void findDistinctNamespace() {
+        List<String> distinctNamespace = flowRepository.findDistinctNamespace();
+        assertThat((long) distinctNamespace.size(), is(2L));
+    }
 
     @Singleton
     public static class FlowListener implements ApplicationEventListener<CrudEvent<Flow>> {

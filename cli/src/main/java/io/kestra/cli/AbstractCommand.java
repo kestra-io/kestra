@@ -2,8 +2,10 @@ package io.kestra.cli;
 
 import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +33,8 @@ import jakarta.inject.Inject;
     mixinStandardHelpOptions = true
 )
 @Slf4j
+@Introspected
 abstract public class AbstractCommand implements Callable<Integer> {
-    private final boolean withServer;
-
     @Inject
     private ApplicationContext applicationContext;
 
@@ -61,10 +62,6 @@ abstract public class AbstractCommand implements Callable<Integer> {
         INFO,
         WARN,
         ERROR
-    }
-
-    public AbstractCommand(boolean withServer) {
-        this.withServer = withServer;
     }
 
     @Override
@@ -98,7 +95,7 @@ abstract public class AbstractCommand implements Callable<Integer> {
             this.logLevel = LogLevel.TRACE;
         }
 
-        if (this.withServer) {
+        if (this instanceof ServerCommandInterface) {
             log.info("Starting Kestra with environments {}", applicationContext.getEnvironment().getActiveNames());
         }
 
@@ -128,7 +125,7 @@ abstract public class AbstractCommand implements Callable<Integer> {
     }
 
     private void startWebserver() {
-        if (!this.withServer) {
+        if (!(this instanceof ServerCommandInterface)) {
             return;
         }
 

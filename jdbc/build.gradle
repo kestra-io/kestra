@@ -1,0 +1,11 @@
+dependencies {
+    implementation project(":core")
+
+    implementation("io.micronaut.data:micronaut-data-jdbc")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation("io.micronaut.sql:micronaut-jooq")
+    implementation("io.micronaut.flyway:micronaut-flyway")
+
+    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':runner-memory')
+}

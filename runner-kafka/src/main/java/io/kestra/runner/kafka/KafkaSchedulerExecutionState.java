@@ -1,6 +1,8 @@
 package io.kestra.runner.kafka;
 
 import io.kestra.core.runners.Executor;
+import io.kestra.core.schedulers.SchedulerExecutionState;
+import io.micronaut.context.annotation.Replaces;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore;
 import io.kestra.core.models.executions.Execution;
@@ -12,6 +14,7 @@ import jakarta.inject.Singleton;
 @Slf4j
 @KafkaQueueEnabled
 @Singleton
+@Replaces(SchedulerExecutionState.class)
 public class KafkaSchedulerExecutionState implements SchedulerExecutionStateInterface {
     private final ReadOnlyKeyValueStore<String, Executor> store;
 

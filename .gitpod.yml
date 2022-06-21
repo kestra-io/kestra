@@ -1,0 +1,9 @@
+
+tasks:
+  - init: ./gradlew build
+
+
+vscode:
+  extensions:
+    - vscjava.vscode-java-pack
+    - ms-azuretools.vscode-docker

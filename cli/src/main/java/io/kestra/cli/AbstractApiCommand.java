@@ -21,10 +21,6 @@ public abstract class AbstractApiCommand extends AbstractCommand {
     @CommandLine.Option(names = {"--user"}, description = "<user:password> Server user and password")
     protected String user;
 
-    public AbstractApiCommand(boolean withServer) {
-        super(withServer);
-    }
-
     protected DefaultHttpClient client() throws URISyntaxException {
         return new DefaultHttpClient(server.toURI());
     }

@@ -6,7 +6,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.types.Schedule;
-import io.kestra.runner.memory.MemoryFlowListeners;
+import io.kestra.core.runners.FlowListeners;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 
 class SchedulerConditionTest extends AbstractSchedulerTest {
     @Inject
-    protected MemoryFlowListeners flowListenersService;
+    protected FlowListeners flowListenersService;
 
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
@@ -58,7 +58,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
     @Test
     void schedule() throws Exception {
         // mock flow listeners
-        MemoryFlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         SchedulerExecutionStateInterface executionRepositorySpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(4);
 

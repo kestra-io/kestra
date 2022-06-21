@@ -3,10 +3,9 @@ package io.kestra.cli.commands.sys;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.services.RestoreQueueService;
 import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
-
-import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "restore-queue",
@@ -30,10 +29,6 @@ public class RestoreQueueCommand extends AbstractCommand {
 
     @CommandLine.Option(names = {"--no-triggers"}, description = "Don't send triggers")
     private boolean noTriggers = false;
-
-    public RestoreQueueCommand() {
-        super(false);
-    }
 
     @Override
     public Integer call() throws Exception {

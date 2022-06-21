@@ -14,8 +14,9 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
+
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -31,10 +32,10 @@ public class RetryUtils {
             .build();
     }
 
-    public <T, E extends Throwable> Instance<T, E> of(AbstractRetry policy, Supplier<E> failureSupplier) {
+    public <T, E extends Throwable> Instance<T, E> of(AbstractRetry policy, Function<RetryFailed, E> failureFunction) {
         return Instance.<T, E>builder()
             .policy(policy)
-            .failureSupplier(failureSupplier)
+            .failureFunction(failureFunction)
             .build();
     }
 
@@ -60,13 +61,13 @@ public class RetryUtils {
         @Builder.Default
         private final Logger logger = log;
 
-        private final Supplier<E> failureSupplier;
+        private final Function<RetryFailed, E> failureFunction;
 
         public T run(Class<E> exception, CheckedSupplier<T> run) throws E {
             return wrap(
                 Failsafe
                     .with(
-                        this.exceptionFallback(this.failureSupplier)
+                        this.exceptionFallback(this.failureFunction)
                             .handle(exception),
                         this.toPolicy(this.policy)
                             .handle(exception)
@@ -79,10 +80,23 @@ public class RetryUtils {
             return wrap(
                 Failsafe
                     .with(
-                        this.exceptionFallback(this.failureSupplier)
+                        this.exceptionFallback(this.failureFunction)
                             .handleIf((t, throwable) -> list.stream().anyMatch(cls -> cls.isInstance(throwable))),
                         this.toPolicy(this.policy)
                             .handleIf((t, throwable) -> list.stream().anyMatch(cls -> cls.isInstance(throwable)))
+                    ),
+                run
+            );
+        }
+
+        public T runRetryIf(Predicate<? extends E> predicate, CheckedSupplier<T> run) {
+            return wrap(
+                Failsafe
+                    .with(
+                        this.exceptionFallback(this.failureFunction)
+                            .handleIf(predicate),
+                        this.toPolicy(this.policy)
+                            .handleIf(predicate)
                     ),
                 run
             );
@@ -92,7 +106,7 @@ public class RetryUtils {
             return wrap(
                 Failsafe
                     .with(
-                        this.exceptionFallback(this.failureSupplier)
+                        this.exceptionFallback(this.failureFunction)
                             .handleIf(predicate),
                         this.toPolicy(this.policy)
                             .handleIf(predicate)
@@ -105,7 +119,7 @@ public class RetryUtils {
             return wrap(
                 Failsafe
                     .with(
-                        this.exceptionFallback(this.failureSupplier)
+                        this.exceptionFallback(this.failureFunction)
                             .handleResultIf(predicate),
                         this.toPolicy(this.policy)
                             .handleResultIf(predicate)
@@ -123,10 +137,12 @@ public class RetryUtils {
             }
         }
 
-        private Fallback<T> exceptionFallback(Supplier<E> failureSupplier) throws E {
+        private Fallback<T> exceptionFallback(Function<RetryFailed, E> failureFunction) {
             return Fallback
                 .ofException((ExecutionAttemptedEvent<? extends T> executionAttemptedEvent) -> {
-                    throw failureSupplier != null ? failureSupplier.get() : new RetryFailed(executionAttemptedEvent);
+                    RetryFailed retryFailed = new RetryFailed(executionAttemptedEvent);
+
+                    throw failureFunction != null ? failureFunction.apply(retryFailed) : retryFailed;
                 });
         }
 

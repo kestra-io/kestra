@@ -7,11 +7,11 @@ import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.Graph2DotService;
 import io.kestra.core.services.GraphService;
 import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "dot",
@@ -19,15 +19,11 @@ import jakarta.inject.Inject;
 )
 @Slf4j
 public class FlowDotCommand extends AbstractCommand {
-    @CommandLine.Parameters(index = "0", description = "the flow file to display")
-    private Path file;
-
     @Inject
     private ApplicationContext applicationContext;
 
-    public FlowDotCommand() {
-        super(false);
-    }
+    @CommandLine.Parameters(index = "0", description = "the flow file to display")
+    private Path file;
 
     @Override
     public Integer call() throws Exception {

@@ -13,5 +13,10 @@ include 'repository-memory'
 
 include 'indexer-kafka-elasticsearch'
 
+include 'jdbc'
+include 'jdbc-h2'
+include 'jdbc-mysql'
+include 'jdbc-postgres'
+
 include 'webserver'
 include 'ui'

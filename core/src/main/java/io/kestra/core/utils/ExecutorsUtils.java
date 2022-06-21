@@ -62,6 +62,15 @@ public class ExecutorsUtils {
         );
     }
 
+    public ExecutorService singleThreadScheduledExecutor(String name) {
+        return this.wrap(
+            name,
+            Executors.newSingleThreadScheduledExecutor(
+                threadFactoryBuilder.build(name + "_%d")
+            )
+        );
+    }
+
     private ExecutorService wrap(String name, ExecutorService executorService) {
         return ExecutorServiceMetrics.monitor(
             meterRegistry,
@@ -69,4 +78,5 @@ public class ExecutorsUtils {
             name
         );
     }
+
 }

@@ -11,10 +11,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.ExecutionService;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.Template;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -89,11 +86,16 @@ public class MemoryExecutor implements ExecutorInterface {
     @Inject
     private ExecutionService executionService;
 
+    @Inject
+    protected FlowListenersInterface flowListeners;
+
     @Override
     public void run() {
-        applicationContext.registerSingleton(new MemoryFlowExecutor(this.flowRepository));
+        flowListeners.run();
+        flowListeners.listen(flows -> this.allFlows = flows);
 
-        this.allFlows = this.flowRepository.findAll();
+        applicationContext.registerSingleton(new DefaultFlowExecutor(flowListeners, this.flowRepository));
+
         this.executionQueue.receive(MemoryExecutor.class, this::executionQueue);
         this.workerTaskResultQueue.receive(MemoryExecutor.class, this::workerTaskResultQueue);
     }

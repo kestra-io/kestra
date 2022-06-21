@@ -13,7 +13,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -39,14 +42,21 @@ class ElasticSearchFlowRepositoryTest extends AbstractFlowRepositoryTest {
 
     @Test
     void find() {
-        List<Flow> save = flowRepository.find("*", Pageable.from(1, 100, Sort.UNSORTED));
-
+        List<Flow> save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, null);
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+
+        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, Map.of("country", "FR"));
+        assertThat(save.size(), is(1));
+
+        HashMap<String, String> map = new HashMap<>();
+        map.put("region", null);
+        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, map);
+        assertThat(save.size(), is(1));
     }
 
     @Test
     void findSourceCode() {
-        List<SearchResult<Flow>> search = flowRepository.findSourceCode("*types.MultipleCondition*", Pageable.from(1, 10, Sort.UNSORTED));
+        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "*types.MultipleCondition*", null);
 
         assertThat((long) search.size(), is(1L));
         assertThat(search.get(0).getModel().getId(), is("trigger-multiplecondition-listener"));

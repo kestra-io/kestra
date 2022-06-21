@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers;
 
 import io.kestra.core.models.SearchResult;
+import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -19,10 +20,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Operation;
@@ -81,24 +79,33 @@ public class FlowController {
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Search for flows")
     public PagedResults<Flow> find(
-        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String query,
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace,
+        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
     ) throws HttpStatusException {
-        return PagedResults.of(flowRepository.find(query, PageableUtils.from(page, size, sort)));
+
+        return PagedResults.of(flowRepository.find(
+            PageableUtils.from(page, size, sort),
+            query,
+            namespace,
+            RequestUtils.toMap(labels)
+        ));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/source", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Search for flows source code")
     public PagedResults<SearchResult<Flow>> source(
-        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String query,
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace
     ) throws HttpStatusException {
-        return PagedResults.of(flowRepository.findSourceCode(query, PageableUtils.from(page, size, sort)));
+        return PagedResults.of(flowRepository.findSourceCode(PageableUtils.from(page, size, sort), query, namespace));
     }
 
     @ExecuteOn(TaskExecutors.IO)

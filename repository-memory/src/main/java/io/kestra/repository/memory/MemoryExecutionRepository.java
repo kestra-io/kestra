@@ -16,18 +16,24 @@ import java.util.*;
 import java.util.stream.Collectors;
 import jakarta.inject.Singleton;
 
+import javax.annotation.Nullable;
+
 @Singleton
 @MemoryRepositoryEnabled
 public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
-    private Map<String, Execution> executions = new HashMap<>();
+    private final Map<String, Execution> executions = new HashMap<>();
+
+    public Boolean isTaskRunEnabled() {
+        return false;
+    }
 
     @Override
-    public ArrayListTotal<Execution> find(String query, Pageable pageable, List<State.Type> state) {
+    public ArrayListTotal<Execution> find(Pageable pageable, String query, String namespace, String flowId, ZonedDateTime startDate, ZonedDateTime endDate, List<State.Type> state) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, List<State.Type> state) {
+    public ArrayListTotal<TaskRun> findTaskRun(Pageable pageable, @io.micronaut.core.annotation.Nullable String query, @io.micronaut.core.annotation.Nullable String namespace, @io.micronaut.core.annotation.Nullable String flowId, @io.micronaut.core.annotation.Nullable ZonedDateTime startDate, @io.micronaut.core.annotation.Nullable ZonedDateTime endDate, @io.micronaut.core.annotation.Nullable List<State.Type> states) {
         throw new UnsupportedOperationException();
     }
 
@@ -60,17 +66,29 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(String query, ZonedDateTime startDate, ZonedDateTime endDate, boolean groupByNamespaceOnly) {
+    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(@Nullable String query, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, boolean groupByNamespaceOnly) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<ExecutionCount> executionCounts(List<Flow> flows, String query, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public List<ExecutionCount> executionCounts(
+        List<Flow> flows,
+        @Nullable List<State.Type> states,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate
+    ) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<DailyExecutionStatistics> dailyStatistics(String query, ZonedDateTime startDate, ZonedDateTime endDate, boolean isTaskRun) {
+    public List<DailyExecutionStatistics> dailyStatistics(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        boolean isTaskRun
+    ) {
         throw new UnsupportedOperationException();
     }
 

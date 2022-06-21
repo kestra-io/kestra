@@ -1,70 +1,31 @@
-version: "3.6"
-
 volumes:
-  zookeeper-data:
-    driver: local
-  kafka-data:
-    driver: local
-  elasticsearch-data:
+  postgres-data:
     driver: local
   kestra-data:
     driver: local
 
 services:
-  zookeeper:
-    image: 'bitnami/zookeeper:latest'
+  postgres:
+    image: postgres
     volumes:
-      - zookeeper-data:/bitnami/zookeeper
+      - postgres-data:/var/lib/postgresql/data
     environment:
-      ALLOW_ANONYMOUS_LOGIN: "yes"
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOO_LOG_LEVEL: "WARN"
-
-  kafka:
-    image: 'bitnami/kafka:latest'
-    volumes:
-      - kafka-data:/bitnami
-    environment:
-      ALLOW_PLAINTEXT_LISTENER: "yes"
-      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-    depends_on:
-      - zookeeper
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.15.2
-    environment:
-      discovery.type: single-node
-      cluster.routing.allocation.disk.threshold_enabled: "false"
-      xpack.security.enabled: "false"
-      ES_JAVA_OPTS: "-Xms256m -Xmx256m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-      nofile:
-        soft: 65536
-        hard: 65536
-    volumes:
-      - elasticsearch-data:/usr/share/elasticsearch/data
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: k3str4
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "kestra"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
 
   kestra:
     image: kestra/kestra:develop-full
-    # build:
-    #   context: .
-    #   args:
-    #     KESTRA_PLUGINS: --repositories=https://s01.oss.sonatype.org/content/repositories/snapshots io.kestra.storage:storage-gcs:LATEST io.kestra.storage:storage-minio:LATEST io.kestra.plugin:plugin-aws:LATEST io.kestra.plugin:plugin-compress:LATEST io.kestra.plugin:plugin-crypto:LATEST io.kestra.plugin:plugin-elasticsearch:LATEST io.kestra.plugin:plugin-fs:LATEST io.kestra.plugin:plugin-gcp:LATEST io.kestra.plugin:plugin-googleworkspace:LATEST io.kestra.plugin:plugin-jdbc-clickhouse:LATEST io.kestra.plugin:plugin-jdbc-mysql:LATEST io.kestra.plugin:plugin-jdbc-oracle:LATEST io.kestra.plugin:plugin-jdbc-postgres:LATEST io.kestra.plugin:plugin-jdbc-redshift:LATEST io.kestra.plugin:plugin-jdbc-sqlserver:LATEST io.kestra.plugin:plugin-jdbc-vertica:LATEST io.kestra.plugin:plugin-jdbc-vectorwise:LATEST io.kestra.plugin:plugin-kafka:LATEST io.kestra.plugin:plugin-kubernetes:LATEST io.kestra.plugin:plugin-mongodb:LATEST io.kestra.plugin:plugin-notifications:LATEST io.kestra.plugin:plugin-script-groovy:LATEST io.kestra.plugin:plugin-script-jython:LATEST io.kestra.plugin:plugin-script-nashorn:LATEST io.kestra.plugin:plugin-serdes:LATEST io.kestra.plugin:plugin-singer:LATEST
-    #     APT_PACKAGES: curl wait-for-it zip unzip
     entrypoint: /bin/bash
     user: "root"
     command:
       - -c
       - |
-        /usr/bin/wait-for-it -t 60 kafka:9092 && \
-        /usr/bin/wait-for-it -t 60 elasticsearch:9200 && \
         curl -s -o /tmp/examples.zip https://kestra.io/examples.zip && \
         unzip -o -d /tmp/examples /tmp/examples.zip > /dev/null && \
         /app/kestra server standalone --flow-path=/tmp/examples --worker-thread=128
@@ -74,33 +35,27 @@ services:
       - /tmp/kestra-wd:/tmp/kestra-wd
     environment:
       KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/kestra
+            driverClassName: org.postgresql.Driver
+            username: kestra
+            password: k3str4
         kestra:
-          kafka:
-            client:
-              properties:
-                bootstrap.servers: kafka:9092
-            defaults:
-              stream:
-                properties:
-                  state.dir: "/tmp/kestra-wd/kafka-streams/"
-          elasticsearch:
-            client:
-              http-hosts: http://elasticsearch:9200
           repository:
-            type: elasticsearch
+            type: postgres
           storage:
             type: local
             local:
               base-path: "/app/storage"
           queue:
-            type: kafka
+            type: postgres
           tasks:
             tmp-dir:
               path: /tmp/kestra-wd/tmp
           url: http://localhost:8080/
     ports:
-      - "8080:8080"
+      - "28080:8080"
     depends_on:
-      - kafka
-      - zookeeper
-      - elasticsearch
+      postgres:
+        condition: service_healthy

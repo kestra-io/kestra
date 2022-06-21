@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers;
 
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -55,6 +56,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -100,32 +102,50 @@ public class ExecutionController {
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Search for executions")
     public PagedResults<Execution> find(
-        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String query,
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
+        @Parameter(description = "A flow id filter") @Nullable String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue(value = "state") List<State.Type> state
     ) {
-        return PagedResults.of(
-            executionRepository
-                .find(query, PageableUtils.from(page, size, sort), state)
-        );
+        return PagedResults.of(executionRepository.find(
+            PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
+            query,
+            namespace,
+            flowId,
+            startDate,
+            endDate,
+            state
+        ));
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "taskruns/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Search for taskruns")
     public PagedResults<TaskRun> findTaskRun(
-        @Parameter(description = "Lucene string filter") @QueryValue(value = "q") String query,
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
-        @Nullable @QueryValue(value = "state") List<State.Type> state,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
+        @Parameter(description = "A flow id filter") @Nullable String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
+        @Parameter(description = "A state filter") @Nullable @QueryValue(value = "state") List<State.Type> state
     ) {
-        return PagedResults.of(
-            executionRepository
-                .findTaskRun(query, PageableUtils.from(page, size, sort), state)
-        );
+        return PagedResults.of(executionRepository.findTaskRun(
+            PageableUtils.from(page, size, sort, executionRepository.sortMapping()),
+            query,
+            namespace,
+            flowId,
+            startDate,
+            endDate,
+            state
+        ));
     }
 
     @ExecuteOn(TaskExecutors.IO)

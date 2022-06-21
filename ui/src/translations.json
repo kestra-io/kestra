@@ -227,7 +227,8 @@
     "copied": "Copied",
     "tags": "Tags",
     "disabled flow title": "This flow is disabled",
-    "disabled flow desc": "This flow is disabled, please enable it in order to execute it."
+    "disabled flow desc": "This flow is disabled, please enable it in order to execute it.",
+    "labels": "Labels"
   },
   "fr": {
     "id": "Identifiant",
@@ -458,6 +459,7 @@
     "copied": "Copié",
     "tags": "Tags",
     "disabled flow title": "Ce flux est désactivé",
-    "disabled flow desc": "Ce flux est désactivé, veuillez le réactiver pour l'exécuter."
+    "disabled flow desc": "Ce flux est désactivé, veuillez le réactiver pour l'exécuter.",
+    "labels": "Labels"
   }
 }

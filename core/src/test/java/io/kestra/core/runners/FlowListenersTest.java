@@ -7,7 +7,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.runner.memory.MemoryFlowListeners;
 
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
@@ -18,7 +17,7 @@ import jakarta.inject.Inject;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-@MicronautTest
+@MicronautTest(transactional = false)
 abstract public class FlowListenersTest {
     @Inject
     protected FlowRepositoryInterface flowRepository;

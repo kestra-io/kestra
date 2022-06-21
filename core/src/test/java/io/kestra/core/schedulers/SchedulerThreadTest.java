@@ -1,11 +1,12 @@
 package io.kestra.core.schedulers;
 
-import io.kestra.core.models.flows.TaskDefault;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.runner.memory.MemoryFlowListeners;
+import io.kestra.core.models.flows.TaskDefault;
+import io.kestra.core.runners.FlowListeners;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
@@ -15,8 +16,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import jakarta.inject.Inject;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,7 +23,7 @@ import static org.mockito.Mockito.*;
 
 public class SchedulerThreadTest extends AbstractSchedulerTest {
     @Inject
-    protected MemoryFlowListeners flowListenersService;
+    protected FlowListeners flowListenersService;
 
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
@@ -49,7 +48,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
     @Test
     void thread() throws Exception {
         // mock flow listeners
-        MemoryFlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         SchedulerExecutionStateInterface schedulerExecutionStateSpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(2);
 

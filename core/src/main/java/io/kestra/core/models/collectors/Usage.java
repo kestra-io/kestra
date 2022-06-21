@@ -47,6 +47,9 @@ public class Usage {
     private final HostUsage host;
 
     @Valid
+    private final ConfigurationUsage configurations;
+
+    @Valid
     private final List<PluginUsage> plugins;
 
     @Valid

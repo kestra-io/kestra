@@ -5,6 +5,7 @@ import io.kestra.core.models.flows.Flow;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -32,8 +33,8 @@ public interface MultipleConditionStorageInterface {
                 .plusMinutes(multipleCondition.getWindow().toMinutes() * (now.getMinute() / multipleCondition.getWindow().toMinutes()));
         }
 
-        ZonedDateTime start = now.plus(multipleCondition.getWindowAdvance());
-        ZonedDateTime end = start.plus(multipleCondition.getWindow()).minus(Duration.ofNanos(1));
+        ZonedDateTime start = now.plus(multipleCondition.getWindowAdvance()).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime end = start.plus(multipleCondition.getWindow()).minus(Duration.ofMillis(1)).truncatedTo(ChronoUnit.MILLIS);
 
         return this.get(flow, multipleCondition.getId())
             .filter(m -> m.isValid(ZonedDateTime.now()))

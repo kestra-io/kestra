@@ -21,6 +21,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -99,7 +100,12 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .collect(Collectors.toList());
     }
 
-    public ArrayListTotal<Flow> find(String query, Pageable pageable) {
+    public ArrayListTotal<Flow> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable Map<String, String> labels
+    ) {
         //TODO Non used query, returns just all at the moment
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
@@ -109,7 +115,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<SearchResult<Flow>> findSourceCode(String query, Pageable pageable) {
+    public ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String namespace) {
         throw new NotImplementedException();
     }
 

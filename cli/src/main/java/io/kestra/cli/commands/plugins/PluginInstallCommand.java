@@ -32,11 +32,7 @@ public class PluginInstallCommand extends AbstractCommand {
     CommandLine.Model.CommandSpec spec;
 
     @Inject
-    PluginDownloader pluginDownloader;
-
-    public PluginInstallCommand() {
-        super(false);
-    }
+    private PluginDownloader pluginDownloader;
 
     @Override
     public Integer call() throws Exception {

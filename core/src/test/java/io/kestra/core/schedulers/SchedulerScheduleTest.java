@@ -1,30 +1,27 @@
 package io.kestra.core.schedulers;
 
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.types.Schedule;
-import io.kestra.runner.memory.MemoryFlowListeners;
+import io.kestra.core.runners.FlowListeners;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class SchedulerScheduleTest extends AbstractSchedulerTest {
+public class SchedulerScheduleTest extends AbstractSchedulerTest {
     @Inject
-    protected MemoryFlowListeners flowListenersService;
+    protected FlowListeners flowListenersService;
 
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
@@ -55,12 +52,22 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
             .truncatedTo(ChronoUnit.HOURS);
     }
 
+    protected AbstractScheduler scheduler(FlowListeners flowListenersServiceSpy, SchedulerExecutionStateInterface executionStateSpy) {
+        return new DefaultScheduler(
+            applicationContext,
+            flowListenersServiceSpy,
+            executionStateSpy,
+            triggerState
+        );
+    }
+
     @Test
     void schedule() throws Exception {
         // mock flow listeners
-        MemoryFlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        SchedulerExecutionStateInterface executionRepositorySpy = spy(this.executionState);
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        SchedulerExecutionStateInterface executionStateSpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(5);
+        Set<String> date = new HashSet<>();
 
         Flow flow = createScheduleFlow();
 
@@ -70,21 +77,16 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
 
         // mock the backfill execution is ended
         doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
-            .when(executionRepositorySpy)
+            .when(executionStateSpy)
             .findById(any());
 
         // scheduler
-        try (AbstractScheduler scheduler = new DefaultScheduler(
-            applicationContext,
-            flowListenersServiceSpy,
-            executionRepositorySpy,
-            triggerState
-        )) {
-
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionStateSpy)) {
             // wait for execution
-            executionQueue.receive(SchedulerScheduleTest.class, execution -> {
+            executionQueue.receive(execution -> {
                 assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
 
+                date.add((String) execution.getTrigger().getVariables().get("date"));
                 queueCount.countDown();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));
@@ -96,6 +98,7 @@ class SchedulerScheduleTest extends AbstractSchedulerTest {
             queueCount.await(1, TimeUnit.MINUTES);
 
             assertThat(queueCount.getCount(), is(0L));
+            assertThat(date.size(), is(3));
         }
     }
 }

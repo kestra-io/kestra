@@ -1,39 +1,45 @@
 package io.kestra.core.repositories;
 
-import io.micronaut.context.event.ApplicationEventListener;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-@MicronautTest
+@MicronautTest(transactional = false)
 public abstract class AbstractTemplateRepositoryTest {
     @Inject
     protected TemplateRepositoryInterface templateRepository;
 
     @BeforeEach
-    private void init() {
+    protected void init() throws IOException, URISyntaxException {
         TemplateListener.reset();
     }
 
-    private static Template.TemplateBuilder builder() {
+    protected static Template.TemplateBuilder<?, ?> builder() {
+        return builder(null);
+    }
+
+    protected static Template.TemplateBuilder<?, ?> builder(String namespace) {
         return Template.builder()
             .id(IdUtils.create())
-            .namespace("kestra.test")
+            .namespace(namespace == null ? "kestra.test" : namespace)
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()));
     }
 

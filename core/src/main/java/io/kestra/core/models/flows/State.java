@@ -126,7 +126,7 @@ public class State {
     @JsonIgnore
     public static Type[] runningTypes() {
         return Arrays.stream(Type.values())
-            .filter(Type::isRunning)
+            .filter(type -> type.isRunning() || type.isCreated())
             .toArray(Type[]::new);
     }
 

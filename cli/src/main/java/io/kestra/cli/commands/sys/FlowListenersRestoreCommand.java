@@ -1,16 +1,16 @@
 package io.kestra.cli.commands.sys;
 
-import io.micronaut.context.ApplicationContext;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.Await;
+import io.micronaut.context.ApplicationContext;
+import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.concurrent.atomic.AtomicReference;
-import jakarta.inject.Inject;
 
 @CommandLine.Command(
     name = "restore-flow-listeners",
@@ -25,10 +25,6 @@ public class FlowListenersRestoreCommand extends AbstractCommand {
 
     @CommandLine.Option(names = {"--timeout"}, description = "Timeout before quit, considering we complete the restore")
     private Duration timeout = Duration.ofSeconds(60);
-
-    public FlowListenersRestoreCommand() {
-        super(false);
-    }
 
     @Override
     public Integer call() throws Exception {

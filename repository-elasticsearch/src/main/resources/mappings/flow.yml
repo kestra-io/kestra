@@ -37,6 +37,8 @@ properties:
         type: keyword
       type:
         type: keyword
+  labels:
+    type: flattened
   deleted:
     type: boolean
   sourceCode:

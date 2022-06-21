@@ -19,10 +19,6 @@ import picocli.CommandLine;
 )
 @Slf4j
 public class PluginCommand extends AbstractCommand {
-    public PluginCommand() {
-        super(false);
-    }
-
     @SneakyThrows
     @Override
     public Integer call() throws Exception {

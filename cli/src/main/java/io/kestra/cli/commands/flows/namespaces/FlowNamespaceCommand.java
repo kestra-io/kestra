@@ -14,7 +14,5 @@ import picocli.CommandLine;
 )
 @Slf4j
 public class FlowNamespaceCommand extends AbstractCommand {
-    public FlowNamespaceCommand() {
-        super(false);
-    }
+
 }

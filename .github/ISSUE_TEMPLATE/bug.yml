@@ -6,7 +6,7 @@ body:
       value: |
         Thanks for reporting an issue, please review the task list below before submitting the issue. Your issue report will be closed if the issue is incomplete and the below tasks not completed.
 
-        NOTE: If you are unsure about something and the issue is more of a question a better place to ask questions is on [Github Discussions](https://github.com/kestra-io/kestra/discussions) or [Slack](https://join.slack.com/t/kestra-io/shared_invite/zt-193shv281-rK9QOEfZC2_vEbDO7Uxtbw).
+        NOTE: If you are unsure about something and the issue is more of a question a better place to ask questions is on [Github Discussions](https://github.com/kestra-io/kestra/discussions) or [Slack](https://api.kestra.io/v1/communities/slack/redirect).
   - type: textarea
     attributes:
       label: Expected Behavior

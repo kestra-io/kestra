@@ -118,18 +118,9 @@ public class Counts extends Task implements RunnableTask<Counts.Output> {
             .getApplicationContext()
             .getBean(ExecutionRepositoryInterface.class);
 
-        String query = null;
-        if (this.states != null) {
-            query = "state.current:(" + this.states
-                .stream()
-                .map(Enum::name)
-                .collect(Collectors.joining(" OR "))
-                + ")";
-        }
-
         List<ExecutionCount> executionCounts = executionRepository.executionCounts(
             flows,
-            query,
+            this.states,
             startDate != null ? ZonedDateTime.parse(runContext.render(startDate)) : null,
             endDate != null ? ZonedDateTime.parse(runContext.render(endDate)) : null
         );

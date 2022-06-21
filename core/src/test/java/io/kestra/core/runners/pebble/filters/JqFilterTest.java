@@ -10,6 +10,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import jakarta.inject.Inject;
 
@@ -108,5 +109,23 @@ class JqFilterTest {
 
         String render = variableRenderer.render("{{ vars | jq(\".second[]\") }}", vars);
         assertThat(render, is("[1,2,3]"));
+    }
+
+    @Test
+    void typed() throws IllegalVariableEvaluationException {
+        HashMap<String, Object> value = new HashMap<>();
+        value.put("string", "string");
+        value.put("int", 1);
+        value.put("float", 1.123F);
+        value.put("bool", true);
+        value.put("null", null);
+
+        ImmutableMap<String, Object> vars = ImmutableMap.of("vars", value);
+
+        assertThat(variableRenderer.render("{{ vars | jq(\".string\") | first | className }}", vars), is("java.lang.String"));
+        assertThat(variableRenderer.render("{{ vars | jq(\".int\") | first | className }}", vars), is("java.lang.Integer"));
+        assertThat(variableRenderer.render("{{ vars | jq(\".float\") | first | className }}", vars), is("java.lang.Float"));
+        assertThat(variableRenderer.render("{{ vars | jq(\".bool\") | first | className }}", vars), is("java.lang.Boolean"));
+        assertThat(variableRenderer.render("{{ vars | jq(\".null\") | first | className }}", vars), is(""));
     }
 }

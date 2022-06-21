@@ -15,8 +15,8 @@
                         @input="onDataTableValue('level', $event)"
                     />
                     <date-range
-                        :start="$route.query.start"
-                        :end="$route.query.end"
+                        :start-date="$route.query.startDate"
+                        :end-date="$route.query.endDate"
                         @input="onDataTableValue($event)"
                     />
                     <refresh-button class="float-right" @onRefresh="load" />
@@ -51,7 +51,6 @@
     import LogLine from "../logs/LogLine";
     import {mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
-    import qb from "../../utils/queryBuilder";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
     import NamespaceSelect from "../namespace/NamespaceSelect";
@@ -60,6 +59,7 @@
     import LogLevelSelector from "./LogLevelSelector";
     import DataTable from "../../components/layout/DataTable";
     import RefreshButton from "../../components/layout/RefreshButton";
+    import _merge from "lodash/merge";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -93,42 +93,26 @@
             }
         },
         methods: {
-            loadQuery() {
-                let filter = []
-                let query = this.queryWithFilter();
-
-                if (query.namespace) {
-                    filter.push(`namespace:${query.namespace}*`)
-                }
-
-                if (query.start) {
-                    filter.push(`timestamp:[${query.start} TO *]`)
-                }
-
-                if (query.end) {
-                    filter.push(`timestamp:[* TO ${query.end}]`)
-                }
-
-                if (query.q) {
-                    filter.push(qb.toTextLucene(query.q));
-                }
+            loadQuery(base) {
+                let queryFilter = this.queryWithFilter();
 
                 if (this.isFlowEdit) {
-                    filter.push(`namespace:${this.$route.params.namespace}`)
-                    filter.push(`flowId:${this.$route.params.id}`)
+                    queryFilter["namespace"] = this.$route.params.namespace;
+                    queryFilter["flowId"] = this.$route.params.id;
                 }
 
-                return filter.join(" AND ") || "*"
+                delete queryFilter["level"];
+
+                return _merge(base, queryFilter)
             },
             load() {
                 this.isLoading = true
                 this.$store
-                    .dispatch("log/findLogs", {
-                        q: this.loadQuery(),
+                    .dispatch("log/findLogs", this.loadQuery({
                         page: this.$route.query.page || this.internalPageNumber,
                         size: this.$route.query.size || this.internalPageSize,
                         minLevel: this.$route.query.level || this.logLevel
-                    })
+                    }))
                     .finally(() => {
                         this.isLoading = false
                         this.saveRestoreUrl();

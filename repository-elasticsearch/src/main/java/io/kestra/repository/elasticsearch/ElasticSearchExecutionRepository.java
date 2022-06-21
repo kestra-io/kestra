@@ -10,7 +10,6 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.utils.ExecutorsUtils;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import org.apache.lucene.search.join.ScoreMode;
 import org.opensearch.action.search.SearchRequest;
@@ -50,6 +49,8 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import javax.annotation.Nullable;
+
 @Singleton
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepository<Execution> implements ExecutionRepositoryInterface {
@@ -73,6 +74,10 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Execution.class);
     }
 
+    public Boolean isTaskRunEnabled() {
+        return true;
+    }
+
     @Override
     public Optional<Execution> findById(String id) {
         return this.getRequest(INDEX_NAME, id);
@@ -81,6 +86,8 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     @Override
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
         @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         boolean groupByNamespaceOnly
@@ -106,7 +113,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
             );
 
         SearchSourceBuilder sourceBuilder = this.searchSource(
-            this.dateFilters(query, startDate, endDate),
+            this.filters(query, startDate, endDate, namespace, flowId, null),
             Optional.of(Collections.singletonList(
                 agg
             )),
@@ -121,16 +128,16 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
 
             ((ParsedStringTerms) searchResponse.getAggregations().get(NAMESPACE_AGG)).getBuckets()
                 .forEach(namespaceBucket -> {
-                    final String namespace = namespaceBucket.getKeyAsString();
+                    final String currentNamespace = namespaceBucket.getKeyAsString();
 
                     if (groupByNamespaceOnly) {
-                        this.parseDateAgg(namespaceBucket, result, namespace, "*");
+                        this.parseDateAgg(namespaceBucket, result, currentNamespace, "*");
                     } else {
                         ((ParsedStringTerms) namespaceBucket.getAggregations().get(FLOW_AGG)).getBuckets()
                             .forEach(flowBucket -> {
-                                final String flowId = flowBucket.getKeyAsString();
+                                final String currentFlowId = flowBucket.getKeyAsString();
 
-                                this.parseDateAgg(flowBucket, result, namespace, flowId);
+                                this.parseDateAgg(flowBucket, result, currentNamespace, currentFlowId);
                             });
                     }
             });
@@ -174,7 +181,12 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     }
 
     @Override
-    public List<ExecutionCount> executionCounts(List<Flow> flows, String query, ZonedDateTime startDate, ZonedDateTime endDate) {
+    public List<ExecutionCount> executionCounts(
+        List<Flow> flows,
+        @javax.annotation.Nullable List<State.Type> states,
+        @javax.annotation.Nullable ZonedDateTime startDate,
+        @javax.annotation.Nullable ZonedDateTime endDate
+    ) {
         if (startDate == null) {
             startDate = ZonedDateTime.now().minusDays(30);
         }
@@ -184,7 +196,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         }
 
         SearchSourceBuilder sourceBuilder = this.searchSource(
-            this.dateFilters(query, startDate, endDate),
+            this.filters(null, startDate, endDate, null, null, states),
             Optional.of(Collections.singletonList(
                 AggregationBuilders.filters(
                     "FILTERS",
@@ -228,6 +240,8 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     @Override
     public List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         boolean isTaskRun
@@ -248,7 +262,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         }
 
         SearchSourceBuilder sourceBuilder = this.searchSource(
-            this.dateFilters(query, startDate, endDate),
+            this.filters(query, startDate, endDate, namespace, flowId, null),
             Optional.of(Collections.singletonList(
                 agg
             )),
@@ -280,19 +294,40 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         }
     }
 
-    private BoolQueryBuilder dateFilters(String query, ZonedDateTime startDate, ZonedDateTime endDate) {
-        BoolQueryBuilder bool = this.defaultFilter();
+    private BoolQueryBuilder filters(String query, ZonedDateTime startDate, ZonedDateTime endDate, String namespace, String flowId, List<State.Type> state) {
+        return this.filters(query, startDate, endDate, namespace, flowId, state, false);
+    }
 
-        bool.must(QueryBuilders.rangeQuery("state.startDate")
-            .gte(startDate)
-        );
+    private BoolQueryBuilder filters(String query, ZonedDateTime startDate, ZonedDateTime endDate, String namespace, String flowId, List<State.Type> state, boolean isTaskRun) {
+        String prefix = isTaskRun ? "taskRunList." : "";
 
-        bool.must(QueryBuilders.rangeQuery("state.startDate")
-            .lte(endDate)
-        );
+        BoolQueryBuilder bool = isTaskRun ? QueryBuilders.boolQuery() : this.defaultFilter();
 
         if (query != null) {
-            bool.must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
+            if (isTaskRun) {
+                bool.must(queryString(query));
+            } else {
+                bool.must(queryString(query).field("*.fulltext"));
+            }
+        }
+
+        if (flowId != null && namespace != null) {
+            bool = bool.must(QueryBuilders.matchQuery(prefix + "flowId", flowId));
+            bool = bool.must(QueryBuilders.matchQuery(prefix + "namespace", namespace));
+        } else if (namespace != null) {
+            bool = bool.must(QueryBuilders.prefixQuery(prefix + "namespace", namespace));
+        }
+
+        if (startDate != null) {
+            bool.must(QueryBuilders.rangeQuery(prefix + "state.startDate").gte(startDate));
+        }
+
+        if (endDate != null) {
+            bool.must(QueryBuilders.rangeQuery(prefix + "state.startDate").lte(endDate));
+        }
+
+        if (state != null) {
+            bool = bool.must(QueryBuilders.termsQuery(prefix + "state.current", stateConvert(state)));
         }
 
         return bool;
@@ -360,26 +395,33 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     }
 
     @Override
-    public ArrayListTotal<Execution> find(String query, Pageable pageable, List<State.Type> state) {
-        BoolQueryBuilder bool = this.defaultFilter()
-            .must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
-        if (state != null) {
-            bool = bool.must(QueryBuilders.termsQuery("state.current", stateConvert(state)));
-        }
+    public ArrayListTotal<Execution> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<State.Type> state
+    ) {
+        BoolQueryBuilder bool = this.filters(query, startDate, endDate, namespace, flowId, state);
+
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
 
         return this.query(INDEX_NAME, sourceBuilder);
     }
 
     @Override
-    public ArrayListTotal<TaskRun> findTaskRun(String query, Pageable pageable, @Nullable List<State.Type> state) {
-        BoolQueryBuilder filterAggQuery = QueryBuilders
-            .boolQuery()
-            .filter(QueryBuilders.queryStringQuery(query));
-
-        if (state != null) {
-            filterAggQuery = filterAggQuery.must(QueryBuilders.termsQuery("taskRunList.state.current", stateConvert(state)));
-        }
+    public ArrayListTotal<TaskRun> findTaskRun(
+        Pageable pageable,
+        @javax.annotation.Nullable String query,
+        @javax.annotation.Nullable String namespace,
+        @javax.annotation.Nullable String flowId,
+        @javax.annotation.Nullable ZonedDateTime startDate,
+        @javax.annotation.Nullable ZonedDateTime endDate,
+        @Nullable List<State.Type> states
+    ) {
+        BoolQueryBuilder filterAggQuery = filters(query, startDate, endDate, namespace, flowId, states, true);
 
         NestedAggregationBuilder nestedAgg = AggregationBuilders
             .nested("NESTED", "taskRunList")
@@ -394,12 +436,7 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
                     )
             );
 
-        BoolQueryBuilder mainQuery = this.defaultFilter()
-            .filter(QueryBuilders.nestedQuery(
-                "taskRunList",
-                QueryBuilders.queryStringQuery(query).field("*.fulltext"),
-                ScoreMode.Total
-            ));
+        BoolQueryBuilder mainQuery = this.defaultFilter();
 
         SearchSourceBuilder sourceBuilder = this.searchSource(mainQuery, Optional.of(List.of(nestedAgg)), null)
             .fetchSource(false);

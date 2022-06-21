@@ -13,7 +13,7 @@
         </div>
 
         <span slot="footer">
-            <span class="version">{{ version ? version.version : '' }}</span>
+            <span class="version">{{ configs ? configs.version : '' }}</span>
         </span>
 
         <span slot="toggle-icon">
@@ -118,6 +118,7 @@
                             element: "TaskRunMenuIcon",
                             class: "menu-icon"
                         },
+                        hidden: !(this.configs && this.configs.isTaskRunEnabled)
                     },
                     {
                         href: "/logs",
@@ -158,7 +159,7 @@
                                 },
                             },
                             {
-                                href: "https://join.slack.com/t/kestra-io/shared_invite/zt-193shv281-rK9QOEfZC2_vEbDO7Uxtbw",
+                                href: "https://api.kestra.io/v1/communities/slack/redirect",
                                 title: "Slack",
                                 icon: {
                                     element: "Slack",
@@ -195,7 +196,6 @@
         },
         created() {
             this.menu = this.disabledCurrentRoute(this.generateMenu());
-            this.$store.dispatch("misc/loadVersion")
         },
         watch: {
             $route() {
@@ -215,7 +215,7 @@
             })
         },
         computed: {
-            ...mapState("misc", ["version"])
+            ...mapState("misc", ["configs"])
         }
     };
 </script>

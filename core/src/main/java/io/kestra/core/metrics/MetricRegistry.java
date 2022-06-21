@@ -53,6 +53,9 @@ public class MetricRegistry {
 
     public final static String STREAMS_STATE_COUNT = "stream.state.count";
 
+
+    public final static String JDBC_QUERY_DURATION = "jdbc.query.duration";
+
     public final static String TAG_TASK_TYPE = "task_type";
     public final static String TAG_FLOW_ID = "flow_id";
     public final static String TAG_NAMESPACE_ID = "namespace_id";

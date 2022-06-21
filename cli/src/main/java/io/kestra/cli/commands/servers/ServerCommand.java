@@ -18,14 +18,11 @@ import picocli.CommandLine;
         StandAloneCommand.class,
         WebServerCommand.class,
         WorkerCommand.class,
+        LocalCommand.class,
     }
 )
 @Slf4j
 public class ServerCommand extends AbstractCommand {
-    public ServerCommand() {
-        super(false);
-    }
-
     @SneakyThrows
     @Override
     public Integer call() throws Exception {

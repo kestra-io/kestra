@@ -1,0 +1,56 @@
+datasources:
+  mysql:
+    url: jdbc:mysql://localhost:3306/kestra
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: kestra
+    password: k3str4
+    dialect: MYSQL
+
+flyway:
+  datasources:
+    mysql:
+      enabled: true
+      locations:
+        - classpath:migrations/mysql
+
+kestra:
+  queue:
+    type: mysql
+  repository:
+    type: mysql
+  storage:
+    type: local
+    local:
+      base-path: /tmp/unittest
+
+  jdbc:
+    tables:
+      queues:
+        table: "queues"
+      flows:
+        table: "flows"
+        cls: io.kestra.core.models.flows.Flow
+      executions:
+        table: "executions"
+        cls: io.kestra.core.models.executions.Execution
+      templates:
+        table: "templates"
+        cls: io.kestra.core.models.templates.Template
+      triggers:
+        table: "triggers"
+        cls: io.kestra.core.models.triggers.Trigger
+      logs:
+        table: "logs"
+        cls: io.kestra.core.models.executions.LogEntry
+      multipleconditions:
+        table: "multipleconditions"
+        cls: io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow
+      workertaskexecutions:
+        table: "workertaskexecutions"
+        cls: io.kestra.core.runners.WorkerTaskExecution
+      executorstate:
+        table: "executorstate"
+        cls: io.kestra.core.runners.ExecutorState
+      executordelayed:
+        table: "executordelayed"
+        cls: io.kestra.core.runners.ExecutionDelay

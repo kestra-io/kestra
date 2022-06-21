@@ -11,12 +11,16 @@ import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
 import io.kestra.core.contexts.KestraApplicationContextBuilder;
 import io.kestra.core.contexts.KestraClassLoader;
+import io.micronaut.core.annotation.Introspected;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import picocli.CommandLine;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
@@ -37,6 +41,7 @@ import java.util.concurrent.Callable;
         ConfigCommand.class,
     }
 )
+@Introspected
 public class App implements Callable<Integer> {
     public static void main(String[] args) {
         execute(App.class, args);
@@ -92,8 +97,26 @@ public class App implements Callable<Integer> {
             // if class have propertiesFromConfig, add configuration files
             builder.properties(getPropertiesFromMethod(cls, "propertiesFromConfig", commandLine.getCommandSpec().userObject()));
 
+            Map<String, Object> properties = new HashMap<>();
+
             // if class have propertiesOverrides, add force properties for this class
-            builder.properties(getPropertiesFromMethod(cls, "propertiesOverrides", null));
+            Map<String, Object> propertiesOverrides = getPropertiesFromMethod(cls, "propertiesOverrides", null);
+            if (propertiesOverrides != null) {
+                properties.putAll(propertiesOverrides);
+            }
+
+            // custom server configuration
+            commandLine
+                .getParseResult()
+                .matchedArgs()
+                .stream()
+                .filter(argSpec -> ((Field) argSpec.userObject()).getName().equals("serverPort"))
+                .findFirst()
+                .ifPresent(argSpec -> {
+                    properties.put("micronaut.server.port", argSpec.getValue());
+                });
+
+            builder.properties(properties);
 
             // add plugins registry if plugin path defined
             builder.pluginRegistry(getPropertiesFromMethod(cls, "initPluginRegistry", commandLine.getCommandSpec().userObject()));

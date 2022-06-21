@@ -1,0 +1,56 @@
+datasources:
+  postgres:
+    url: jdbc:postgresql://localhost:5432/kestra
+    driverClassName: org.postgresql.Driver
+    username: kestra
+    password: k3str4
+    dialect: POSTGRES
+
+flyway:
+  datasources:
+    postgres:
+      enabled: true
+      locations:
+        - classpath:migrations/postgres
+
+kestra:
+  queue:
+    type: postgres
+  repository:
+    type: postgres
+  storage:
+    type: local
+    local:
+      base-path: /tmp/unittest
+
+  jdbc:
+    tables:
+      queues:
+        table: "queues"
+      flows:
+        table: "flows"
+        cls: io.kestra.core.models.flows.Flow
+      executions:
+        table: "executions"
+        cls: io.kestra.core.models.executions.Execution
+      templates:
+        table: "templates"
+        cls: io.kestra.core.models.templates.Template
+      triggers:
+        table: "triggers"
+        cls: io.kestra.core.models.triggers.Trigger
+      logs:
+        table: "logs"
+        cls: io.kestra.core.models.executions.LogEntry
+      multipleconditions:
+        table: "multipleconditions"
+        cls: io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow
+      workertaskexecutions:
+        table: "workertaskexecutions"
+        cls: io.kestra.core.runners.WorkerTaskExecution
+      executorstate:
+        table: "executorstate"
+        cls: io.kestra.core.runners.ExecutorState
+      executordelayed:
+        table: "executordelayed"
+        cls: io.kestra.core.runners.ExecutionDelay

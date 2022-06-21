@@ -77,6 +77,10 @@
                             />
                         </template>
 
+                        <template #cell(labels)="row">
+                            <labels :labels="row.item.labels" />
+                        </template>
+
                         <template #cell(triggers)="row">
                             <trigger-avatar :flow="row.item" />
                         </template>
@@ -116,6 +120,7 @@
 
 <script>
     import {mapState} from "vuex";
+    import _merge from "lodash/merge";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect";
@@ -133,7 +138,7 @@
     import TriggerAvatar from "./TriggerAvatar";
     import MarkdownTooltip from "../layout/MarkdownTooltip"
     import Kicon from "../Kicon"
-    import qb from "../../utils/queryBuilder";
+    import Labels from "../layout/Labels"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -149,7 +154,8 @@
             StateGlobalChart,
             TriggerAvatar,
             MarkdownTooltip,
-            Kicon
+            Kicon,
+            Labels
         },
         data() {
             return {
@@ -179,6 +185,11 @@
                         key: "id",
                         label: title("flow"),
                         sortable: true
+                    },
+                    {
+                        key: "labels",
+                        label: title("labels"),
+                        sortable: false
                     },
                     {
                         key: "namespace",
@@ -230,42 +241,31 @@
                     return [];
                 }
             },
-            loadQuery() {
-                let filter = []
-                let query = this.queryWithFilter();
+            loadQuery(base) {
+                let queryFilter = this.queryWithFilter();
 
-                if (query.namespace) {
-                    filter.push(`namespace:${query.namespace}*`)
-                }
-
-                if (query.q) {
-                    filter.push(qb.toLucene(query.q));
-                }
-
-                return filter.join(" AND ") || "*"
+                return _merge(base, queryFilter)
             },
             loadData(callback) {
                 this.dailyReady = false;
 
                 if (this.user.hasAny(permission.EXECUTION)) {
                     this.$store
-                        .dispatch("stat/daily", {
-                            q: this.loadQuery(),
+                        .dispatch("stat/daily", this.loadQuery({
                             startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
                             endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
-                        })
+                        }))
                         .then(() => {
                             this.dailyReady = true;
                         });
                 }
 
                 this.$store
-                    .dispatch("flow/findFlows", {
-                        q: this.loadQuery(),
+                    .dispatch("flow/findFlows", this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         sort: this.$route.query.sort || "id:asc"
-                    })
+                    }))
                     .then(flows => {
                         this.dailyGroupByFlowReady = false;
                         callback();

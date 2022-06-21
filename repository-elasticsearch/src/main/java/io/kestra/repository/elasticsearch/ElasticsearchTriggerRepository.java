@@ -1,6 +1,7 @@
 package io.kestra.repository.elasticsearch;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.models.executions.Execution;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.builder.SearchSourceBuilder;
@@ -35,6 +36,17 @@ public class ElasticsearchTriggerRepository extends AbstractElasticSearchReposit
     }
 
     @Override
+    public Optional<Trigger> findByExecution(Execution execution) {
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(QueryBuilders.termQuery("executionId", execution.getId()))
+            .size(1);
+
+        List<Trigger> query = this.query(INDEX_NAME, sourceBuilder);
+
+        return query.size() > 0 ? Optional.of(query.get(0)) : Optional.empty();
+    }
+
+    @Override
     public List<Trigger> findAll() {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(QueryBuilders.matchAllQuery());
@@ -42,8 +54,9 @@ public class ElasticsearchTriggerRepository extends AbstractElasticSearchReposit
         return this.scroll(INDEX_NAME, sourceBuilder);
     }
 
+    @Override
     @VisibleForTesting
-    Trigger save(Trigger trigger) {
+    public Trigger save(Trigger trigger) {
         this.putRequest(INDEX_NAME, trigger.uid(), trigger);
 
         return trigger;

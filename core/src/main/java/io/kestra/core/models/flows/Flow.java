@@ -61,6 +61,8 @@ public class Flow implements DeletedInterface {
 
     String description;
 
+    Map<String, String> labels;
+
     @Valid
     List<Input> inputs;
 
@@ -309,6 +311,7 @@ public class Flow implements DeletedInterface {
             this.namespace,
             this.revision + 1,
             this.description,
+            this.labels,
             this.inputs,
             this.variables,
             this.tasks,

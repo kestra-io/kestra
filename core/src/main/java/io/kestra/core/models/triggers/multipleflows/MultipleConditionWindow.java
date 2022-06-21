@@ -1,9 +1,9 @@
 package io.kestra.core.models.triggers.multipleflows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.kestra.core.models.flows.Flow;
 import lombok.Builder;
 import lombok.Value;
-import io.kestra.core.models.flows.Flow;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -14,10 +14,15 @@ import java.util.Map;
 @Builder
 public class MultipleConditionWindow {
     String namespace;
+
     String flowId;
+
     String conditionId;
+
     ZonedDateTime start;
+
     ZonedDateTime end;
+
     Map<String, Boolean> results;
 
     @JsonIgnore

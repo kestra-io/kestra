@@ -205,10 +205,10 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
         if (labels != null) {
             labels.forEach((key, value) -> {
+                bool.must(QueryBuilders.termQuery("labelsMap.key", key));
+
                 if (value != null) {
-                    bool.must(QueryBuilders.termQuery("labels." + key, value));
-                } else {
-                    bool.must(QueryBuilders.existsQuery("labels." + key));
+                    bool.must(QueryBuilders.termQuery("labelsMap.value", value));
                 }
             });
         }
@@ -318,6 +318,14 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         try {
             Map<String, Object> flowMap = JacksonMapper.toMap(flow);
             flowMap.put("sourceCode", YAML_MAPPER.writeValueAsString(flow));
+            if (flow.getLabels() != null) {
+                flowMap.put("labelsMap", flow.getLabels()
+                    .entrySet()
+                    .stream()
+                    .map(e -> Map.of("key", e.getKey(), "value", e.getValue()))
+                    .collect(Collectors.toList())
+                );
+            }
             json = JSON_MAPPER.writeValueAsString(flowMap);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

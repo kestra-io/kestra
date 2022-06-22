@@ -9,8 +9,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
-import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.core.runners.ExecutorState;
+import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Singleton;
@@ -60,6 +60,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     abstract protected Condition findCondition(String query);
 
+    protected Condition statesFilter(List<State.Type> state) {
+        return field("state_current")
+            .in(state.stream().map(Enum::name).collect(Collectors.toList()));
+    }
+
     public ArrayListTotal<Execution> find(
         Pageable pageable,
         @Nullable String query,
@@ -98,8 +103,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 }
 
                 if (state != null) {
-                    select = select.and(field("state_current")
-                        .in(state.stream().map(Enum::name).collect(Collectors.toList())));
+                    select = select.and(this.statesFilter(state));
                 }
 
                 if (query != null) {

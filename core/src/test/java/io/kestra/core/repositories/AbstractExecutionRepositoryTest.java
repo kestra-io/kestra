@@ -108,6 +108,9 @@ public abstract class AbstractExecutionRepositoryTest {
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED));
+        assertThat(executions.getTotal(), is(8L));
     }
 
     @Test

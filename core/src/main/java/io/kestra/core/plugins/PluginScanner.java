@@ -1,15 +1,14 @@
 package io.kestra.core.plugins;
 
-import io.micronaut.core.beans.BeanIntrospectionReference;
-import io.micronaut.core.io.service.ServiceDefinition;
-import io.micronaut.core.io.service.SoftServiceLoader;
-import io.micronaut.http.annotation.Controller;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.storages.StorageInterface;
+import io.micronaut.core.beans.BeanIntrospectionReference;
+import io.micronaut.core.io.service.SoftServiceLoader;
+import io.micronaut.http.annotation.Controller;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -87,7 +86,7 @@ public class PluginScanner {
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<?>> controllers = new ArrayList<>();
 
-        final SoftServiceLoader<BeanIntrospectionReference> definitions = SoftServiceLoader.load(
+        final SoftServiceLoader<BeanIntrospectionReference> loader = SoftServiceLoader.load(
             BeanIntrospectionReference.class,
             classLoader
         );
@@ -96,34 +95,34 @@ public class PluginScanner {
             manifest = getManifest(classLoader);
         }
 
-        for (ServiceDefinition<BeanIntrospectionReference> definition : definitions) {
-            if (definition.isPresent()) {
-                final BeanIntrospectionReference ref = definition.load();
-                Class beanType = ref.getBeanType();
+        List<BeanIntrospectionReference> definitions = new ArrayList<>(100);
+        loader.collectAll(definitions);
 
-                if (Modifier.isAbstract(beanType.getModifiers())) {
-                    continue;
-                }
+        for (BeanIntrospectionReference definition : definitions) {
+            Class beanType = definition.getBeanType();
 
-                if (Task.class.isAssignableFrom(beanType)) {
-                    tasks.add(beanType);
-                }
+            if (Modifier.isAbstract(beanType.getModifiers())) {
+                continue;
+            }
 
-                if (AbstractTrigger.class.isAssignableFrom(beanType)) {
-                    triggers.add(beanType);
-                }
+            if (Task.class.isAssignableFrom(beanType)) {
+                tasks.add(beanType);
+            }
 
-                if (Condition.class.isAssignableFrom(beanType)) {
-                    conditions.add(beanType);
-                }
+            if (AbstractTrigger.class.isAssignableFrom(beanType)) {
+                triggers.add(beanType);
+            }
 
-                if (StorageInterface.class.isAssignableFrom(beanType)) {
-                    storages.add(beanType);
-                }
+            if (Condition.class.isAssignableFrom(beanType)) {
+                conditions.add(beanType);
+            }
 
-                if (beanType.isAnnotationPresent(Controller.class)) {
-                    controllers.add(beanType);
-                }
+            if (StorageInterface.class.isAssignableFrom(beanType)) {
+                storages.add(beanType);
+            }
+
+            if (beanType.isAnnotationPresent(Controller.class)) {
+                controllers.add(beanType);
             }
         }
 

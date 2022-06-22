@@ -67,7 +67,7 @@ public class PluginController {
                     )
                 ))
             )
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a1, a2) -> a1));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

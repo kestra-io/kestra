@@ -149,7 +149,7 @@ public class ExecutorMain implements KafkaExecutorInterface {
         this.handleWorkerTaskExecution(workerTaskExecutionKTable, stream);
 
         // purge at end
-        this.purgeExecutor(stream);
+        this.purgeExecutor(executorKStream);
 
         this.purgeWorkerRunning(workerTaskResultKStream);
 
@@ -330,6 +330,17 @@ public class ExecutorMain implements KafkaExecutorInterface {
                 ),
                 Named.as("PurgeExecutor.purgeNextsDeduplication"),
                 NEXTS_DEDUPLICATION_STATE_STORE_NAME
+            );
+
+        // clean up Flow Trigger deduplication state
+        terminated
+            .transformValues(
+                () -> new DeduplicationPurgeTransformer<>(
+                    TRIGGER_DEDUPLICATION_STATE_STORE_NAME,
+                    (key, value) -> value.getExecution().getId()
+                ),
+                Named.as("PurgeExecutor.purgeTriggerDeduplication"),
+                TRIGGER_DEDUPLICATION_STATE_STORE_NAME
             );
 
         // clean up killed

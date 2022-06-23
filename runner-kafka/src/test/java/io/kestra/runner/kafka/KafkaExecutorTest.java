@@ -144,10 +144,8 @@ class KafkaExecutorTest {
         assertThat(workerTaskRunningOutput().readRecord().value(), is(nullValue()));
         assertThat(workerTaskRunningOutput().isEmpty(), is(true));
 
-        // executor topic must be deleted @TODO: 2 null values
+        // executor topic must be deleted
         TestRecord<String, Executor> executor = executorOutput().readRecord();
-        assertThat(executor.value(), is(nullValue()));
-        executor = executorOutput().readRecord();
         assertThat(executor.value(), is(nullValue()));
         assertThat(executorOutput().isEmpty(), is(true));
     }

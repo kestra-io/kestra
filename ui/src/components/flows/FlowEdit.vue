@@ -1,7 +1,7 @@
 <template>
     <div>
         <flow-editor @onSave="save" v-model="content" lang="yaml" />
-        <bottom-line v-if="canSave || canDelete">
+        <bottom-line v-if="canSave || canDelete || canExecute">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
                     <b-button class="btn-danger" v-if="canDelete" @click="deleteFile">

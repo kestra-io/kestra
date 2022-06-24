@@ -5,9 +5,7 @@ import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
-import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -26,13 +24,13 @@ public abstract class AbstractJdbcTemplateRepositoryTest extends io.kestra.core.
         templateRepository.create(builder("io.kestra.unitest").build());
         templateRepository.create(builder("com.kestra.test").build());
 
-        List<Template> save = templateRepository.find(null, Pageable.from(1, 10, Sort.UNSORTED));
+        List<Template> save = templateRepository.find(Pageable.from(1, 10, Sort.UNSORTED), null, null);
         assertThat(save.size(), is(2));
 
-        save = templateRepository.find("kestra", Pageable.from(1, 10, Sort.UNSORTED));
-        assertThat(save.size(), is(2));
+        save = templateRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "kestra", "com");
+        assertThat(save.size(), is(1));
 
-        save = templateRepository.find("kestra unit", Pageable.from(1, 10, Sort.of(Sort.Order.asc("id"))));
+        save = templateRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.asc("id"))), "kestra unit", null);
         assertThat(save.size(), is(1));
     }
 

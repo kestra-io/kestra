@@ -17,6 +17,7 @@ import org.jooq.impl.DSL;
 
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
@@ -66,7 +67,11 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
 
     abstract protected Condition findCondition(String query);
 
-    public ArrayListTotal<Template> find(String query, Pageable pageable) {
+    public ArrayListTotal<Template> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable String namespace
+    ) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -82,6 +87,10 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
 
                 if (query != null) {
                     select.and(this.findCondition(query));
+                }
+
+                if (namespace != null) {
+                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
                 }
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);

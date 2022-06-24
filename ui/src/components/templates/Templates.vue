@@ -84,8 +84,8 @@
     import DataTable from "../layout/DataTable";
     import SearchField from "../layout/SearchField";
     import Kicon from "../Kicon"
-    import qb from "../../utils/queryBuilder";
     import RestoreUrl from "../../mixins/restoreUrl";
+    import _merge from "lodash/merge";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -138,28 +138,18 @@
             },
         },
         methods: {
-            loadQuery() {
-                let filter = []
-                let query = this.queryWithFilter();
+            loadQuery(base) {
+                let queryFilter = this.queryWithFilter();
 
-                if (query.namespace) {
-                    filter.push(`namespace:${query.namespace}*`)
-                }
-
-                if (query.q) {
-                    filter.push(qb.toLucene(query.q));
-                }
-
-                return filter.join(" AND ") || "*"
+                return _merge(base, queryFilter)
             },
             loadData(callback) {
                 this.$store
-                    .dispatch("template/findTemplates", {
-                        q: this.loadQuery(),
+                    .dispatch("template/findTemplates", this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
                         sort: this.$route.query.sort || "id:asc",
-                    })
+                    }))
                     .then(() => {
                         callback();
                     });

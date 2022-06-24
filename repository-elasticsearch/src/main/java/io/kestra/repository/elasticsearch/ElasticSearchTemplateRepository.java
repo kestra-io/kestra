@@ -16,6 +16,9 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import org.opensearch.client.RestHighLevelClient;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
@@ -23,9 +26,7 @@ import org.opensearch.search.builder.SearchSourceBuilder;
 
 import java.util.List;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
+import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
@@ -94,8 +95,25 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     }
 
     @Override
-    public ArrayListTotal<Template> find(String query, Pageable pageable) {
-        return super.findQueryString(INDEX_NAME, query, pageable);
+    public ArrayListTotal<Template> find(
+        Pageable pageable,
+        @Nullable String query,
+        @Nullable String namespace
+    ) {
+        BoolQueryBuilder bool = this.defaultFilter();
+
+        if (query != null) {
+            bool.must(queryString(query).field("*.fulltext"));
+        }
+
+        if (namespace != null) {
+            bool.must(QueryBuilders.prefixQuery("namespace", namespace));
+        }
+
+
+        SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
+
+        return this.query(INDEX_NAME, sourceBuilder);
     }
 
     @Override

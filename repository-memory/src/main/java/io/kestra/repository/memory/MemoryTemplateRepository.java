@@ -43,7 +43,7 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<Template> find(String query, Pageable pageable) {
+    public ArrayListTotal<Template> find(Pageable pageable, String query, String namespace) {
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }

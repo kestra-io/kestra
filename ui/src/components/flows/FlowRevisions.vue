@@ -197,8 +197,8 @@
                 revisionYaml: undefined,
                 sideBySide: true,
                 displayTypes: [
-                    {value: true, text: "side-by-side"},
-                    {value: false, text: "line-by-line"},
+                    {value: true, text: this.$t("side-by-side")},
+                    {value: false, text:  this.$t("line-by-line")},
                 ],
             };
         },

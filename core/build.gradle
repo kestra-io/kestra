@@ -20,7 +20,7 @@ dependencies {
 
     // utils
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.4'
-    implementation 'com.github.oshi:oshi-core:6.1.6'
+    implementation 'com.github.oshi:oshi-core:6.2.0'
     implementation 'io.pebbletemplates:pebble:3.1.5'
 
     // scheduler
@@ -33,10 +33,10 @@ dependencies {
     implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.2.13'
 
     // schema
-    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.24.3'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.24.3'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.24.3'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.24.3'
+    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.25.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.25.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.25.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.25.0'
 
     // test
     testImplementation project(':repository-memory')

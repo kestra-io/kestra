@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.scripts;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.tasks.Task;
@@ -139,7 +140,7 @@ abstract public class AbstractBash extends Task {
     @Getter(AccessLevel.NONE)
     protected transient Map<String, Object> additionalVars = new HashMap<>();
 
-    protected Map<String, String> finalInputFiles() throws IOException {
+    protected Map<String, String> finalInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException {
         return this.inputFiles != null ? new HashMap<>(this.inputFiles) : new HashMap<>();
     }
 
@@ -190,7 +191,7 @@ abstract public class AbstractBash extends Task {
         BashService.createInputFiles(
             runContext,
             workingDirectory,
-            this.finalInputFiles(),
+            this.finalInputFiles(runContext),
             additionalVars
         );
 

@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.scripts;
 
 import com.google.common.base.Charsets;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -106,8 +107,8 @@ public class Node extends AbstractBash implements RunnableTask<ScriptOutput> {
     private List<String> args;
 
     @Override
-    protected Map<String, String> finalInputFiles() throws IOException {
-        Map<String, String> map = super.finalInputFiles();
+    protected Map<String, String> finalInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException {
+        Map<String, String> map = super.finalInputFiles(runContext);
 
         map.put("kestra.js", IOUtils.toString(
             Objects.requireNonNull(Node.class.getClassLoader().getResourceAsStream("scripts/kestra.js")),

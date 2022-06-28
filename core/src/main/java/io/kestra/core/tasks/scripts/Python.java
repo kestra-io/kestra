@@ -95,8 +95,8 @@ public class Python extends AbstractPython implements RunnableTask<ScriptOutput>
     private List<String> args;
 
     @Override
-    protected Map<String, String> finalInputFiles() throws IOException {
-        Map<String, String> map = super.finalInputFiles();
+    protected Map<String, String> finalInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException {
+        Map<String, String> map = super.finalInputFiles(runContext);
 
         map.put("kestra.py", IOUtils.toString(
             Objects.requireNonNull(AbstractPython.class.getClassLoader().getResourceAsStream("scripts/kestra.py")),

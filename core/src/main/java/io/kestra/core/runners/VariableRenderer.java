@@ -151,21 +151,13 @@ public class VariableRenderer {
         return this.recursiveRender(inline, variables);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+
     public Map<String, Object> render(Map<String, Object> in, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         Map<String, Object> map = new HashMap<>();
 
         for (Map.Entry<String, Object> r : in.entrySet()) {
             String key = this.render(r.getKey(), variables);
-            Object value = r.getValue();
-
-            if (r.getValue() instanceof Map) {
-                value = this.render((Map) r.getValue(), variables);
-            } else if (r.getValue() instanceof Collection) {
-                value = this.render((List) r.getValue(), variables);
-            } else if (r.getValue() instanceof String) {
-                value = this.render((String) r.getValue(), variables);
-            }
+            Object value = renderObject(r.getValue(), variables).orElse(r.getValue());
 
             map.putIfAbsent(
                 key,
@@ -176,9 +168,32 @@ public class VariableRenderer {
         return map;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private Optional<Object> renderObject(Object object, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        if (object instanceof Map) {
+            return Optional.of(this.render((Map) object, variables));
+        } else if (object instanceof Collection) {
+            return Optional.of(this.renderList((List) object, variables));
+        } else if (object instanceof String) {
+            return Optional.of(this.render((String) object, variables));
+        }
+
+        return Optional.empty();
+    }
+
+    public List<Object> renderList(List<Object> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+        List<Object> result = new ArrayList<>();
+
+        for (Object inline : list) {
+            this.renderObject(inline, variables)
+                .ifPresent(result::add);
+        }
+
+        return result;
+    }
+
     public List<String> render(List<String> list, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         List<String> result = new ArrayList<>();
-
         for (String inline : list) {
             result.add(this.recursiveRender(inline, variables));
         }

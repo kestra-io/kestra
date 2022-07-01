@@ -36,7 +36,7 @@
     "qs": "^6.10.3",
     "throttle-debounce": "^4.0.0",
     "v-hotkey": "^0.9.0",
-    "vue": "^2.6.14",
+    "vue": "^2.7.0",
     "vue-analytics": "^5.22.1",
     "vue-axios": "^3.4.1",
     "vue-chart-3": "^2.1.3",
@@ -70,7 +70,7 @@
     "sass": "^1.50.0",
     "sass-loader": "^10.1.1",
     "vue-jest": "^3.0.7",
-    "vue-template-compiler": "^2.6.14"
+    "vue-template-compiler": "^2.7.0"
   },
   "babel": {
     "presets": [

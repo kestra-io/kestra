@@ -48,12 +48,14 @@ public class LogController {
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
+        @Parameter(description = "A flow id filter") @Nullable String flowId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue(value = "minLevel") Level minLevel,
         @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
     ) {
         return PagedResults.of(
-            logRepository.find(PageableUtils.from(page, size, sort), query, minLevel, startDate, endDate)
+            logRepository.find(PageableUtils.from(page, size, sort), query, namespace, flowId, minLevel, startDate, endDate)
         );
     }
 

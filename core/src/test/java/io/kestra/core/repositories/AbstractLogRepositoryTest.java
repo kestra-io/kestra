@@ -37,19 +37,19 @@ public abstract class AbstractLogRepositoryTest {
     void all() {
         LogEntry.LogEntryBuilder builder = logEntry(Level.INFO);
 
-        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, null, null, null, null);
+        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, null, null, null, null, null, null);
         assertThat(find.size(), is(0));
 
         LogEntry save = logRepository.save(builder.build());
 
-        find = logRepository.find(Pageable.UNPAGED, "doe", null, null, null);
+        find = logRepository.find(Pageable.UNPAGED, "doe", null, null, null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.get(0).getExecutionId(), is(save.getExecutionId()));
 
-        find = logRepository.find(Pageable.UNPAGED,  "doe", Level.WARN,null, null);
+        find = logRepository.find(Pageable.UNPAGED,  "doe", null, null, Level.WARN,null,  null);
         assertThat(find.size(), is(0));
 
-        find = logRepository.find(Pageable.UNPAGED, null, null, null, null);
+        find = logRepository.find(Pageable.UNPAGED, null, null, null, null, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.get(0).getExecutionId(), is(save.getExecutionId()));
 

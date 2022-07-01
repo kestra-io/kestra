@@ -37,6 +37,8 @@ public class MemoryLogRepository implements LogRepositoryInterface {
     public ArrayListTotal<LogEntry> find(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
         @Nullable Level minLevel,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate

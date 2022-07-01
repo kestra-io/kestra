@@ -42,6 +42,8 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     public ArrayListTotal<LogEntry> find(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
         @Nullable Level minLevel,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate
@@ -50,6 +52,14 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
 
         if (query != null) {
             bool.must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
+        }
+
+        if (namespace != null) {
+            bool.must(QueryBuilders.prefixQuery("namespace", namespace));
+        }
+
+        if (flowId != null) {
+            bool.must(QueryBuilders.termQuery("flowId", flowId));
         }
 
         if (minLevel != null) {

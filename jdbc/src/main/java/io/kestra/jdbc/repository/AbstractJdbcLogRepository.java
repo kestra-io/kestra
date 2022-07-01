@@ -28,6 +28,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     public ArrayListTotal<LogEntry> find(
         Pageable pageable,
         @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
         @Nullable Level minLevel,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate
@@ -42,6 +44,14 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter());
+
+                if (namespace != null) {
+                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+                }
+
+                if (flowId != null) {
+                    select.and(field("flow_id").eq(flowId));
+                }
 
                 if (minLevel != null) {
                     select = select.and(minLevel(minLevel));

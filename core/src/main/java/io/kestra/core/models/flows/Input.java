@@ -40,7 +40,12 @@ public class Input {
         STRING,
         INT,
         FLOAT,
+        BOOLEAN,
         DATETIME,
-        FILE
+        DATE,
+        TIME,
+        DURATION,
+        FILE,
+        JSON,
     }
 }

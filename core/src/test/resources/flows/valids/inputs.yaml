@@ -9,10 +9,22 @@ inputs:
   required: false
 - name: int
   type: INT
+- name: bool
+  type: BOOLEAN
+  required: false
 - name: float
   type: FLOAT
 - name: instant
   type: DATETIME
+- name: date
+  type: DATE
+  required: false
+- name: time
+  type: TIME
+  required: false
+- name: duration
+  type: DURATION
+  required: false
 - name: file
   type: FILE
 - name: optionalFile
@@ -21,6 +33,9 @@ inputs:
 - name: instantDefaults
   type: DATETIME
   defaults: "2013-08-09T14:19:00Z"
+- name: json
+  type: JSON
+  required: false
 
 tasks:
 - id: string

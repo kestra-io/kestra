@@ -15,7 +15,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -31,8 +34,13 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         "string", "myString",
         "int", "42",
         "float", "42.42",
+        "bool", "false",
         "instant", "2019-10-06T18:27:49Z",
-        "file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath()
+        "date", "2019-10-06",
+        "time", "18:27:49",
+        "duration", "PT5M6S",
+        "file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath(),
+        "json", "{\"a\": \"b\"}"
     );
 
     @Inject
@@ -79,6 +87,12 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void inputBool() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("bool"), is(false));
+    }
+
+    @Test
     void inputInstant() {
         Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("instant"), is(Instant.parse("2019-10-06T18:27:49Z")));
@@ -88,6 +102,24 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     void inputInstantDefaults() {
         Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("instantDefaults"), is(Instant.parse("2013-08-09T14:19:00Z")));
+    }
+
+    @Test
+    void inputDate() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("date"), is(LocalDate.parse("2019-10-06")));
+    }
+
+    @Test
+    void inputTime() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("time"), is(LocalTime.parse("18:27:49")));
+    }
+
+    @Test
+    void inputDuration() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("duration"), is(Duration.parse("PT5M6S")));
     }
 
     @Test
@@ -119,5 +151,11 @@ public class InputsTest extends AbstractMemoryRunnerTest {
             (String) execution.findTaskRunsByTaskId("file").get(0).getOutputs().get("value"),
             matchesRegex("kestra:///io/kestra/tests/inputs/executions/.*/inputs/file/application.yml")
         );
+    }
+
+    @Test
+    void inputJson() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("json"), is(Map.of("a", "b")));
     }
 }

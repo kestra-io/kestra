@@ -1,10 +1,7 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.http.multipart.StreamingFileUpload;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
 import io.kestra.core.exceptions.MissingRequiredInput;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -13,16 +10,26 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.http.multipart.StreamingFileUpload;
+import io.reactivex.Flowable;
+import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 
 import java.io.File;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -34,9 +41,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 
 @Singleton
 public class RunnerUtils {
@@ -132,6 +136,12 @@ public class RunnerUtils {
                             Float.valueOf(current)
                         ));
 
+                    case BOOLEAN:
+                        return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                            input.getName(),
+                            Boolean.valueOf(current)
+                        ));
+
                     case DATETIME:
                         try {
                             return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
@@ -140,6 +150,36 @@ public class RunnerUtils {
                             ));
                         } catch (DateTimeParseException e) {
                             throw new MissingRequiredInput("Invalid DATETIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                        }
+
+                    case DATE:
+                        try {
+                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                                input.getName(),
+                                LocalDate.parse(current)
+                            ));
+                        } catch (DateTimeParseException e) {
+                            throw new MissingRequiredInput("Invalid DATE format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                        }
+
+                    case TIME:
+                        try {
+                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                                input.getName(),
+                                LocalTime.parse(current)
+                            ));
+                        } catch (DateTimeParseException e) {
+                            throw new MissingRequiredInput("Invalid TIME format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
+                        }
+
+                    case DURATION:
+                        try {
+                            return Optional.of(new AbstractMap.SimpleEntry<String, Object>(
+                                input.getName(),
+                                Duration.parse(current)
+                            ));
+                        } catch (DateTimeParseException e) {
+                            throw new MissingRequiredInput("Invalid DURATION format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
                         }
 
                     case FILE:
@@ -159,6 +199,16 @@ public class RunnerUtils {
                             }
                         } catch (Exception e) {
                             throw new MissingRequiredInput("Invalid input arguments for file on input '" + input.getName() + "'", e);
+                        }
+
+                    case JSON:
+                        try {
+                            return Optional.of(new AbstractMap.SimpleEntry<>(
+                                input.getName(),
+                                JacksonMapper.toObject(current)
+                            ));
+                        } catch (JsonProcessingException e) {
+                            throw new MissingRequiredInput("Invalid JSON format for '" + input.getName() + "' for '" + current + "' with error " + e.getMessage(), e);
                         }
 
                     default:

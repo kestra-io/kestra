@@ -69,6 +69,12 @@ abstract public class JacksonMapper {
         return MAPPER.readValue(json, TYPE_REFERENCE);
     }
 
+    private static final TypeReference<Object> TYPE_REFERENCE_OBJECT = new TypeReference<>() {};
+
+    public static Object toObject(String json) throws JsonProcessingException {
+        return MAPPER.readValue(json, TYPE_REFERENCE_OBJECT);
+    }
+
     public static <T> String log(T Object) {
         try {
             return YAML_MAPPER.writeValueAsString(Object);

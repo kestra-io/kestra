@@ -23,7 +23,8 @@ import java.util.List;
         "- inputs\n" +
         "- outputs\n" +
         "- triggers\n\n + " +
-        "If you pass a internal storage from another execution, it **will not** be deleted, only current execution is deleted"
+        "If the current execution don't have any generated files, the task will not failed.\n" +
+        "If you pass a internal storage uri from another execution, it **will not** be deleted, only current execution is deleted."
 )
 @Plugin(
     examples = {

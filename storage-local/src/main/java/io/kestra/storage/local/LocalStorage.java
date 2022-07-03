@@ -95,7 +95,13 @@ public class LocalStorage implements StorageInterface {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public List<URI> deleteByPrefix(URI storagePrefix) throws IOException {
-        try (Stream<Path> walk = Files.walk(this.getPath(storagePrefix))) {
+        Path path = this.getPath(storagePrefix);
+
+        if (!path.toFile().exists()) {
+            return List.of();
+        }
+
+        try (Stream<Path> walk = Files.walk(path)) {
             return walk.sorted(Comparator.reverseOrder())
                 .map(r -> Pair.of(r.toFile(), r.toFile().isFile()))
                 .peek(r -> r.getLeft().delete())

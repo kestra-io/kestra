@@ -40,7 +40,6 @@
 
                 delete qs.page;
 
-                console.log(qs)
                 return {name: this.$route.name, query: qs}
             }
         }

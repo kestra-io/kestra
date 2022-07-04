@@ -6,7 +6,7 @@
 <script>
     export default {}
 </script>
-<style lang="scss" >
+<style lang="scss">
     @use "sass:math";
     @import "../../styles/variable";
 

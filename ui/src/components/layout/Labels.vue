@@ -35,12 +35,11 @@
 
                 const qs = {
                     ...this.$route.query,
-                    ...{"labels": Object.entries(labels).map((label) => label[0] + ":" + label[1])
-                }};
+                    ...{"labels": Object.entries(labels).map((label) => label[0] + ":" + label[1])}
+                };
 
                 delete qs.page;
 
-                console.log(qs)
                 return {name: this.$route.name, query: qs}
             }
         }

@@ -1,4 +1,5 @@
 const path = require("path");
+const webpack = require("webpack");
 const MonacoEditorPlugin = require("monaco-editor-webpack-plugin")
 // const WebpackBundleAnalyzer = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 
@@ -66,6 +67,10 @@ module.exports = {
                     "!toggleTabFocusMode",
                     "!viewportSemanticTokens",
                 ]
+            }),
+            new webpack.ProvidePlugin({
+                process: "process/browser",
+                Buffer: ["buffer", "Buffer"],
             }),
             // new WebpackBundleAnalyzer()
         ],

@@ -6,7 +6,7 @@ module.exports = {
         "vue"
     ],
     transform: {
-        ".*\\.(vue)$": "vue-jest",
+        ".*\\.(vue)$": "@vue/vue2-jest",
         ".*\\.(js)$": "babel-jest"
     },
     transformIgnorePatterns: [

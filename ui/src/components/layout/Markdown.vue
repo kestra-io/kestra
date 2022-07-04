@@ -45,7 +45,7 @@
     };
 </script>
 
-<style lang="scss" >
+<style lang="scss">
 @import "../../styles/_variable.scss";
 .markdown {
     a.header-anchor {

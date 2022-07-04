@@ -2,7 +2,7 @@
     <div>
         <nprogress-container />
         <top-nav-bar :menu-collapsed="menuCollapsed" />
-        <Menu @onMenuCollapse="onMenuCollapse" />
+        <left-menu @onMenuCollapse="onMenuCollapse" />
         <custom-toast v-if="message" :no-auto-hide="true" :message="message" />
         <div id="app" class="container-fluid">
             <div class="content-wrapper" :class="menuCollapsed">
@@ -17,7 +17,7 @@
 </template>
 
 <script>
-    import Menu from "override/components/Menu.vue";
+    import LeftMenu from "override/components/LeftMenu.vue";
     import TopNavBar from "./components/layout/TopNavBar";
     import CustomToast from "./components/customToast";
     import NprogressContainer from "vue-nprogress/src/NprogressContainer";
@@ -27,7 +27,7 @@
     export default {
         name: "App",
         components: {
-            Menu,
+            LeftMenu,
             TopNavBar,
             CustomToast,
             NprogressContainer,

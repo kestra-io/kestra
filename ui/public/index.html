@@ -20,7 +20,7 @@
             split.pop();
             return split.join('/') + "/";
         }();
-        const KESTRA_ASSETS = '<% print(JSON.stringify(webpack.assetsByChunkName)); %>'
+        const KESTRA_ASSETS = '<% print(JSON.stringify(compilation.getStats().toJson().assetsByChunkName)); %>'
         if (localStorage.getItem("theme")) {
             document.getElementsByTagName("html")[0].classList.add(localStorage.getItem("theme"));
         }

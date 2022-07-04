@@ -14,7 +14,7 @@
 </template>
 
 <script>
-    import {computed, defineComponent, ref} from "@vue/composition-api";
+    import {computed, defineComponent, ref} from "vue";
     import {LineChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
     import {defaultConfig, tooltip} from "../../utils/charts.js";

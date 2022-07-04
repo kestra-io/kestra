@@ -19,6 +19,8 @@ import org.opensearch.action.DocWriteResponse;
 import org.opensearch.action.ShardOperationFailedException;
 import org.opensearch.action.admin.indices.settings.get.GetSettingsRequest;
 import org.opensearch.action.admin.indices.settings.get.GetSettingsResponse;
+import org.opensearch.action.delete.DeleteRequest;
+import org.opensearch.action.delete.DeleteResponse;
 import org.opensearch.action.get.GetRequest;
 import org.opensearch.action.get.GetResponse;
 import org.opensearch.action.index.IndexRequest;
@@ -235,6 +237,20 @@ abstract public class AbstractElasticSearchRepository<T> {
             .endObject();
 
         return this.updateRequest(index, id, delete);
+    }
+
+    protected DeleteResponse rawDeleteRequest(String index, String id) {
+        DeleteRequest request = new DeleteRequest(this.indicesConfigs.get(index).getIndex(), id);
+        request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+
+        try {
+            DeleteResponse response = client.delete(request, RequestOptions.DEFAULT);
+            handleWriteErrors(response);
+
+            return response;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected SearchRequest searchRequest(String index, SearchSourceBuilder sourceBuilder, boolean scroll) {

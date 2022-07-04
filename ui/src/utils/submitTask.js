@@ -1,9 +1,17 @@
+import Vue from "vue";
+
 export const executeTask = (submitor, flow, options) => {
     const formData = new FormData();
     for (let input of flow.inputs || []) {
         if (input.value !== undefined) {
             if (input.type === "DATETIME") {
                 formData.append(input.name, input.value.toISOString());
+            } else if (input.type === "DATE") {
+                formData.append(input.name, Vue.moment(input.value).format("YYYY-MM-DD"));
+            } else if (input.type === "TIME") {
+                formData.append(input.name, Vue.moment(input.value).format("hh:mm:ss"));
+            } else if (input.type === "DURATION") {
+                formData.append(input.name, Vue.moment.duration(Vue.moment(input.value).format("hh:mm:ss")));
             } else if (input.type === "FILE") {
                 formData.append("files", input.value, input.name);
             } else {

@@ -18,6 +18,7 @@
                     type="text"
                     :required="input.required"
                     :placeholder="`${placeholder} ${input.name}`"
+                    :state="state(input)"
                 />
                 <b-form-input
                     v-if="input.type === 'INT'"
@@ -26,6 +27,7 @@
                     step="1"
                     :required="input.required"
                     :placeholder="`${placeholder} ${input.name}`"
+                    :state="state(input)"
                 />
                 <b-form-input
                     v-if="input.type === 'FLOAT'"
@@ -34,28 +36,69 @@
                     step="0.001"
                     :required="input.required"
                     :placeholder="`${placeholder} ${input.name}`"
+                    :state="state(input)"
+                />
+                <b-form-checkbox
+                    v-if="input.type === 'BOOLEAN'"
+                    v-model="input.value"
+                    type="checkbox"
+                    value="true"
+                    unchecked-value="false"
+                    :required="input.required"
+                    :state="state(input)"
                 />
                 <date-picker
                     v-if="input.type === 'DATETIME'"
                     v-model="input.value"
                     :required="input.required"
+                    :state="state(input)"
                     type="datetime"
-                    class="w-100"
-                    :placeholder="$t('select datetime')"
+                    :placeholder="`${placeholder} ${input.name}`"
+                />
+                <date-picker
+                    v-if="input.type === 'DATE'"
+                    v-model="input.value"
+                    :required="input.required"
+                    :state="state(input)"
+                    type="date"
+                    :placeholder="`${placeholder} ${input.name}`"
+                />
+                <date-picker
+                    v-if="input.type === 'TIME'"
+                    v-model="input.value"
+                    :required="input.required"
+                    :state="state(input)"
+                    type="time"
+                    :placeholder="`${placeholder} ${input.name}`"
+                />
+                <date-picker
+                    v-if="input.type === 'DURATION'"
+                    v-model="input.value"
+                    :required="input.required"
+                    :state="state(input)"
+                    type="time"
+                    :placeholder="`${placeholder} ${input.name}`"
                 />
                 <b-form-file
                     v-if="input.type === 'FILE'"
                     v-model="input.value"
                     :required="input.required"
-                    :state="Boolean(input.value)"
+                    :state="state(input)"
                     :placeholder="$t('choose file')"
+                />
+                <b-form-textarea
+                    v-if="input.type === 'JSON'"
+                    v-model="input.value"
+                    :required="input.required"
+                    :state="state(input)"
+                    :placeholder="`${placeholder} ${input.name}`"
                 />
                 <small v-if="input.description" class="form-text text-muted">{{ input.description }}</small>
             </b-form-group>
             <b-form-group class="text-right mb-0">
                 <b-button type="submit" variant="primary" :disabled="flow.disabled" v-b-tooltip.hover.top="'(Ctrl + Enter)'">
                     {{ $t('launch execution') }}
-                    <trigger title />
+                    <trigger title="" />
                 </b-button>
             </b-form-group>
         </b-form>
@@ -97,7 +140,22 @@
             onSubmit() {
                 executeTask(this, this.flow, {redirect: this.redirect, id: this.flow.id, namespace: this.flow.namespace})
                 this.$emit("onExecutionTrigger")
+            },
+
+            state(input) {
+                const required = input.required === undefined ? true : input.required;
+
+                if (!required && input.value === undefined) {
+                    return null;
+                }
+
+                if (required && input.value === undefined) {
+                    return false;
+                }
+
+                return true;
             }
+
         }
     };
 </script>

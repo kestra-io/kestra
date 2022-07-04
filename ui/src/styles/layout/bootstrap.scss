@@ -448,6 +448,14 @@ select {
     }
 }
 
+form {
+    .form-group {
+        .custom-checkbox {
+            top: 8px;
+        }
+    }
+}
+
 .custom-file-label {
     font-size: $input-font-size;
     color: $input-placeholder-color;

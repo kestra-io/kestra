@@ -110,7 +110,7 @@ allprojects {
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
         implementation 'com.github.jknack:handlebars:4.3.0'
-        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20210928'
+        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20220705'
 
         // exposed utils
         api group: 'com.google.guava', name: 'guava', version: '31.1-jre'

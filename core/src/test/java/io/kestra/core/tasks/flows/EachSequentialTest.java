@@ -32,8 +32,8 @@ public class EachSequentialTest extends AbstractMemoryRunnerTest {
     void sequential() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential");
 
-        assertThat(execution.getTaskRunList(), hasSize(8));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList(), hasSize(11));
+        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
     }
 
     @Test

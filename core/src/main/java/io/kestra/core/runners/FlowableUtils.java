@@ -95,7 +95,7 @@ public class FlowableUtils {
         TaskRun parentTaskRun,
         RunContext runContext
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors);
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, parentTaskRun);
 
         if (currentTasks == null) {
             runContext.logger().warn(

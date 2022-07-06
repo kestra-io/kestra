@@ -191,7 +191,7 @@ public class Execution implements DeletedInterface {
 
         List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
 
-        if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks)) {
+        if (errorsFlow.size() > 0 || this.hasFailed(resolvedTasks, parentTaskRun)) {
             return resolvedErrors == null ? new ArrayList<>() : resolvedErrors;
         }
 

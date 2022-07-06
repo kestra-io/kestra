@@ -183,16 +183,16 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         Flow flow = this.parse("flows/valids/each-sequential.yaml");
         FlowGraph flowGraph = FlowGraph.of(flow, execution);
 
-        assertThat(flowGraph.getNodes().size(), is(11));
-        assertThat(flowGraph.getEdges().size(), is(12));
-        assertThat(flowGraph.getClusters().size(), is(1));
+        assertThat(flowGraph.getNodes().size(), is(17));
+        assertThat(flowGraph.getEdges().size(), is(18));
+        assertThat(flowGraph.getClusters().size(), is(4));
 
         assertThat(edge(flowGraph, "1-1_value 1", "1-1_value 2").getRelation().getValue(), is("value 2"));
         assertThat(edge(flowGraph, "1-1_value 2", "1-1_value 3").getRelation().getValue(), is("value 3"));
-        assertThat(edge(flowGraph, "1-2_value 3", "1_each_.*_end"), is(notNullValue()));
+        assertThat(edge(flowGraph, "1-2_value 3", "failed_value 3_.*_end"), is(notNullValue()));
 
-        assertThat(edge(flowGraph, "1-2_value 1","1-2_value 2").getRelation().getValue(), is("value 2"));
-        assertThat(edge(flowGraph, "1-2_value 2","1-2_value 3").getRelation().getValue(), is("value 3"));
+        assertThat(edge(flowGraph, "failed_value 1_.*","failed_value 2_.*_root").getRelation().getValue(), is("value 2"));
+        assertThat(edge(flowGraph, "1-1_value 2","1-1_value 3").getRelation().getValue(), is("value 3"));
     }
 
     private Flow parse(String path) {

@@ -9,9 +9,13 @@ tasks:
       - id: 1-1
         type: io.kestra.core.tasks.debugs.Return
         format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
-      - id: 1-2
-        type: io.kestra.core.tasks.debugs.Return
-        format: "{{task.id}} > {{taskrun.value}} > {{taskrun.startDate}}"
+      - id: failed
+        type: io.kestra.core.tasks.flows.AllowFailure
+        tasks:
+          - id: 1-2
+            type: io.kestra.core.tasks.scripts.Bash
+            commands:
+              - "exit {{ parent.taskrun.value == 'value 1' ? 1 : 0 }}"
   - id: 2_end
     type: io.kestra.core.tasks.debugs.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

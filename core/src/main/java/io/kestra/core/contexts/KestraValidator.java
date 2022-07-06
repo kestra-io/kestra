@@ -16,9 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Singleton
 @Replaces(DefaultValidator.class)
@@ -31,8 +29,7 @@ public class KestraValidator extends DefaultValidator {
         super(configuration);
     }
 
-    protected @Nullable
-    BeanIntrospection<Object> getBeanIntrospection(@NonNull Object object) {
+    protected @Nullable BeanIntrospection<Object> getBeanIntrospection(@NonNull Object object) {
         //noinspection ConstantConditions
         if (object == null) {
             return null;
@@ -102,18 +99,13 @@ public class KestraValidator extends DefaultValidator {
                     if (pluginRegistry != null) {
                         for (RegisteredPlugin registeredPlugin : pluginRegistry.getPlugins()) {
 
-                            SoftServiceLoader<BeanIntrospectionReference> services = SoftServiceLoader.load(BeanIntrospectionReference.class, registeredPlugin.getClassLoader());
+                            SoftServiceLoader<BeanIntrospectionReference> loader = SoftServiceLoader.load(BeanIntrospectionReference.class, registeredPlugin.getClassLoader());
 
-                            for (ServiceDefinition<BeanIntrospectionReference> service : services) {
-                                if (service.isPresent()) {
-                                    BeanIntrospectionReference ref = service.load();
-                                    ((Map) introspectionMap).put(ref.getName(), ref);
-                                } else if (log.isDebugEnabled()) {
-                                    log.debug(
-                                        "BeanIntrospection {} not loaded since associated bean is not present on the classpath",
-                                        service.getName()
-                                    );
-                                }
+                            List<BeanIntrospectionReference> definitions = new ArrayList<>(100);
+                            loader.collectAll(definitions);
+
+                            for (BeanIntrospectionReference definition : definitions) {
+                                ((Map) introspectionMap).put(definition.getName(), definition);
                             }
                         }
                     }

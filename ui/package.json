@@ -30,7 +30,7 @@
     "markdown-it-mark": "^3.0.1",
     "markdown-it-meta": "0.0.1",
     "md5": "^2.3.0",
-    "moment": "^2.29.3",
+    "moment": "^2.29.4",
     "moment-range": "4.0.2",
     "prismjs": "^1.27.0",
     "qs": "^6.11.0",

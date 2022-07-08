@@ -24,6 +24,11 @@ module.exports = {
     },
     configureWebpack: {
         devtool: process.env.NODE_ENV !== "production" ? "eval-source-map" : false,
+        optimization: {
+            runtimeChunk: {
+                name: "runtime",
+            },
+        },
         resolve: {
             alias: {
                 override: path.resolve(__dirname, "src/override/"),

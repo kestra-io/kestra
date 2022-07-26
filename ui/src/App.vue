@@ -98,11 +98,11 @@
                                 if (r.endsWith(".js")) {
                                     elem = document.createElement("script");
                                     elem.setAttribute("type", "text/javascript");
-                                    elem.setAttribute("src", basePath + "/" + r);
+                                    elem.setAttribute("src", basePath + r);
                                 } else {
                                     elem = document.createElement("link");
                                     elem.setAttribute("rel", "stylesheet");
-                                    elem.setAttribute("href", basePath + "/" + r);
+                                    elem.setAttribute("href", basePath + r);
                                 }
 
                                 elem.setAttribute("data-theme", theme);

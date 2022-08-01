@@ -35,4 +35,15 @@ class CronExpressionTest {
         assertThat(modelValidator.isValid(build).isPresent(), is(true));
         assertThat(modelValidator.isValid(build).get().getMessage(), containsString("invalid cron expression"));
     }
+
+    @Test
+    void nicknameValidation() throws Exception {
+        Schedule build = Schedule.builder()
+            .id(IdUtils.create())
+            .type(Schedule.class.getName())
+            .cron("@hourly")
+            .build();
+
+        assertThat(modelValidator.isValid(build).isEmpty(), is(true));
+    }
 }

@@ -15,7 +15,6 @@ import jakarta.inject.Singleton;
 
 @Factory
 public class ValidationFactory {
-    private static final CronParser CRON_PARSER = new CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX));
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Singleton
@@ -46,7 +45,7 @@ public class ValidationFactory {
             }
 
             try {
-                Cron parse = CRON_PARSER.parse(value.toString());
+                Cron parse = io.kestra.core.models.triggers.types.Schedule.CRON_PARSER.parse(value.toString());
                 parse.validate();
             } catch (IllegalArgumentException e) {
                 context.messageTemplate("invalid cron expression '({validatedValue})': " + e.getMessage());
@@ -57,7 +56,6 @@ public class ValidationFactory {
             return true;
         };
     }
-
 
     @Singleton
     ConstraintValidator<Schedule, io.kestra.core.models.triggers.types.Schedule> scheduleValidator() {
@@ -75,7 +73,6 @@ public class ValidationFactory {
             return true;
         };
     }
-
 
     @Singleton
     ConstraintValidator<JsonString, String> jsonStringValidator() {

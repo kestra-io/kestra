@@ -98,7 +98,7 @@ allprojects {
         // logs
         implementation "org.slf4j:slf4j-api:1.7.36"
         implementation "ch.qos.logback:logback-classic:1.2.11"
-        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.17.2'
+        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.18.0'
         implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.36'
 
         // jackson
@@ -110,7 +110,7 @@ allprojects {
         // kestra
         implementation group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
         implementation 'com.github.jknack:handlebars:4.3.0'
-        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20210928'
+        implementation group: 'net.thisptr', name: 'jackson-jq', version: '1.0.0-preview.20220705'
 
         // exposed utils
         api group: 'com.google.guava', name: 'guava', version: '31.1-jre'

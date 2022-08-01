@@ -20,11 +20,11 @@ dependencies {
 
     // utils
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.4'
-    implementation 'com.github.oshi:oshi-core:6.2.0'
+    implementation 'com.github.oshi:oshi-core:6.2.2'
     implementation 'io.pebbletemplates:pebble:3.1.5'
 
     // scheduler
-    implementation group: 'com.cronutils', name: 'cron-utils', version: '9.1.6'
+    implementation group: 'com.cronutils', name: 'cron-utils', version: '9.2.0'
 
     // process
     implementation ('com.github.docker-java:docker-java:3.2.13') {

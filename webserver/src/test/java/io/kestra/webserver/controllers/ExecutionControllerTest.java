@@ -175,6 +175,39 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(results.get(results.size() - 1).getData().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
+    private ExecutionController.EvalResult eval(Execution execution, String expression, int index) {
+        ExecutionController.EvalResult eval = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().get(index).getId(),
+                    expression
+                )
+                .contentType(MediaType.TEXT_PLAIN_TYPE),
+            Argument.of(ExecutionController.EvalResult.class)
+        );
+
+        return eval;
+    }
+
+    @Test
+    void eval() throws TimeoutException {
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "each-sequential-nested");
+
+        ExecutionController.EvalResult result = this.eval(execution, "my simple string", 0);
+        assertThat(result.getResult(), is("my simple string"));
+
+        result = this.eval(execution, "{{ taskrun.id }}", 0);
+        assertThat(result.getResult(), is(execution.getTaskRunList().get(0).getId()));
+
+        result = this.eval(execution, "{{ outputs['1-1_return'][taskrun.value].value }}", 21);
+        assertThat(result.getResult(), containsString("1-1_return"));
+
+        result = this.eval(execution, "{{ missing }}", 21);
+        assertThat(result.getResult(), is(nullValue()));
+        assertThat(result.getError(), containsString("Missing variable: 'missing' on '{{ missing }}' at line 1"));
+        assertThat(result.getStackTrace(), containsString("Missing variable: 'missing' on '{{ missing }}' at line 1"));
+    }
+
     @Test
     void restartFromUnknownTaskId() throws TimeoutException {
         final String flowId = "restart_with_inputs";

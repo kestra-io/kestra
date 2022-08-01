@@ -11,6 +11,21 @@
                         :options="selectOptions"
                         :placeholder="$t('display output for specific task') + '...'"
                     />
+                    <span id="debug-btn-wrapper">
+                        <b-btn
+                            :disabled="!filter"
+                            v-b-modal="`debug-expression-modal`"
+                        >
+                            {{ $t("eval.title") }}
+                        </b-btn>
+                    </span>
+                    <b-tooltip
+                        v-if="!filter"
+                        placement="right"
+                        target="debug-btn-wrapper"
+                    >
+                        {{ $t("eval.tooltip") }}
+                    </b-tooltip>
                 </b-nav-form>
             </b-collapse>
         </b-navbar>
@@ -40,21 +55,55 @@
                 <var-value :execution="execution" :value="row.item.output" />
             </template>
         </b-table>
+
+        <b-modal
+            hide-backdrop
+            id="debug-expression-modal"
+            modal-class="right"
+            size="lg"
+        >
+            <template #modal-header>
+                <h5>{{ $t("eval.title") }}</h5>
+            </template>
+
+            <template>
+                <editor class="mb-2" ref="editorContainer" :full-height="false" @onSave="onDebugExpression(filter, $event)" :input="true" :navbar="false" value="" />
+                <pre v-if="debugExpression">{{ debugExpression }}</pre>
+                <b-alert class="debug-error" variant="danger" show v-if="debugError">
+                    <p><strong>{{ debugError }}</strong></p>
+                    <pre class="mb-0">{{ debugStackTrace }}</pre>
+                </b-alert>
+            </template>
+
+            <template #modal-footer>
+                <b-button
+                    variant="secondary"
+                    @click="onDebugExpression(filter, $refs.editorContainer.editor.getValue())"
+                >
+                    {{ $t("eval.title") }}
+                </b-button>
+            </template>
+        </b-modal>
     </div>
 </template>
 <script>
     import {mapState} from "vuex";
-    import md5 from "md5";
     import VarValue from "./VarValue";
     import Utils from "../../utils/utils";
+    import Editor from "../../components/inputs/Editor";
+    import Vue from "vue"
 
     export default {
         components: {
             VarValue,
+            Editor,
         },
         data() {
             return {
-                filter: ""
+                filter: "",
+                debugExpression: "",
+                debugError: "",
+                debugStackTrace: "",
             };
         },
         created() {
@@ -75,10 +124,22 @@
                     const newRoute = {query: {...this.$route.query}};
                     newRoute.query.search = this.filter;
                     this.$router.push(newRoute);
+                } else {
+                    const newRoute = {query: {...this.$route.query}};
+                    delete newRoute.query.search;
+                    this.$router.push(newRoute);
                 }
             },
-            taskRunOutputToken(taskRun) {
-                return md5(taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ""));
+            onDebugExpression(taskRunId, expression) {
+                Vue.axios.post(`/api/v1/executions/${this.execution.id}/eval/${taskRunId}`, expression, {
+                    headers: {
+                        "Content-type": "text/plain",
+                    }
+                }).then(response => {
+                    this.debugExpression = response.data.result;
+                    this.debugError = response.data.error;
+                    this.debugStackTrace = response.data.stackTrace;
+                })
             }
         },
         computed: {
@@ -86,9 +147,9 @@
             selectOptions() {
                 const options = {};
                 for (const taskRun of this.execution.taskRunList || []) {
-                    options[this.taskRunOutputToken(taskRun)] = {
+                    options[taskRun.id] = {
                         label: taskRun.taskId + (taskRun.value ? ` - ${taskRun.value}`: ""),
-                        value: this.taskRunOutputToken(taskRun)
+                        value: taskRun.id
                     }
                 }
 
@@ -117,7 +178,7 @@
             outputs() {
                 const outputs = [];
                 for (const taskRun of this.execution.taskRunList || []) {
-                    const token = this.taskRunOutputToken(taskRun)
+                    const token = taskRun.id;
                     if (!this.filter || token === this.filter) {
                         Utils.executionVars(taskRun.outputs).forEach(output => {
                             const item = {

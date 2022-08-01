@@ -1,5 +1,9 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.convert.format.Format;
@@ -21,6 +25,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.apache.commons.io.FilenameUtils;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
@@ -45,12 +51,13 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
 
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import java.io.FileNotFoundException;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -97,6 +104,9 @@ public class ExecutionController {
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
+
+    @Inject
+    private RunContextFactory runContextFactory;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
@@ -175,6 +185,49 @@ public class ExecutionController {
                     .orElse(null);
             }))
             .orElse(null);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/{executionId}/eval/{taskRunId}", produces = MediaType.TEXT_JSON, consumes = MediaType.TEXT_PLAIN)
+    @Operation(tags = {"Executions"}, summary = "Evaluate a variable expression for this taskrun")
+    public EvalResult eval(
+        @Parameter(description = "The execution id") String executionId,
+        @Parameter(description = "The taskrun id") String taskRunId,
+        @Body String expression
+    ) throws InternalException {
+        Execution execution = executionRepository
+            .findById(executionId)
+            .orElseThrow(() -> new NoSuchElementException("Unable to find execution '" + executionId + "'"));
+
+        TaskRun taskRun = execution
+            .findTaskRunByTaskRunId(taskRunId);
+
+        Flow flow = flowRepository
+            .findByExecution(execution);
+
+        Task task = flow.findTaskByTaskId(taskRun.getTaskId());
+
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun);
+
+        try {
+            return EvalResult.builder()
+                .result(runContext.render(expression))
+                .build();
+        } catch (IllegalVariableEvaluationException e) {
+            return EvalResult.builder()
+                .error(e.getMessage())
+                .stackTrace(ExceptionUtils.getStackTrace(e))
+                .build();
+        }
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class EvalResult {
+        String result;
+        String error;
+        String stackTrace;
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -2,6 +2,7 @@ package io.kestra.core.runners.pebble;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mitchellbosecke.pebble.extension.writer.SpecializedWriter;
+import io.kestra.core.serializers.JacksonMapper;
 import lombok.SneakyThrows;
 
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public class JsonWriter extends Writer implements SpecializedWriter {
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     private final StringWriter stringWriter;
 

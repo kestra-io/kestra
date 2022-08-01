@@ -138,6 +138,10 @@
     "no data current task": "No data available for current task",
     "outputs": "Outputs",
     "output": "Output",
+    "eval": {
+      "title": "Eval expression",
+      "tooltip": "You need to choose a task to eval an expression."
+    },
     "attempt": "Attempt",
     "toggle output display": "Toggle output display",
     "name": "Name",
@@ -371,6 +375,10 @@
     "no data current task": "Aucune données pour cette tache",
     "outputs": "Sorties",
     "output": "Sortie",
+    "eval": {
+      "title": "Évaluer une expression",
+      "tooltip": "Vous devez choisir une tâche pour évaluer une expression."
+    },
     "attempt": "Essai",
     "toggle output display": "Permuter l'affichage de sortie",
     "name": "Nom",

@@ -253,7 +253,7 @@
                 }
             },
             updateSize(width, height) {
-                if (width === 0 || height === 0) {
+                if (width <= 0 || height <= 0) {
                     window.setTimeout(this.onResize, 100);
                 } else {
                     this.editor.layout({width: width,  height: height});
@@ -307,7 +307,7 @@
     &.single-line {
         padding: $input-padding-y $input-padding-x;
         background: white;
-        border: 1px solid $input-border-color;
+        border: 1px solid var(--input-border-color);
         min-height: 38px;
 
         &.theme-vs-dark {

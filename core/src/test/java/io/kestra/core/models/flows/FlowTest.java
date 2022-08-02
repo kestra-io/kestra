@@ -35,6 +35,17 @@ class FlowTest {
     }
 
     @Test
+    void duplicateParallel() {
+        Flow flow = this.parse("flows/invalids/duplicate-parallel.yaml");
+        Optional<ConstraintViolationException> validate = flow.validate();
+
+        assertThat(validate.isPresent(), is(true));
+        assertThat(validate.get().getConstraintViolations().size(), is(1));
+
+        assertThat(validate.get().getMessage(), containsString("Duplicate task id with name [t3]"));
+    }
+
+    @Test
     void duplicateUpdate() {
         Flow flow = this.parse("flows/valids/logs.yaml");
         Flow updated = this.parse("flows/invalids/duplicate.yaml");

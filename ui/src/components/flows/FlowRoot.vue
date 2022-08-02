@@ -1,6 +1,15 @@
 <template>
-    <div v-if="ready">
-        <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" />
+    <div>
+        <div v-if="ready">
+            <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" @hook:mounted="mounted = true" />
+            <bottom-line v-if="mounted && displayBottomLine()">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
+                    </li>
+                </ul>
+            </bottom-line>
+        </div>
     </div>
 </template>
 <script>
@@ -17,16 +26,21 @@
     import action from "../../models/action";
     import Tabs from "../Tabs";
     import UnsavedChange from "../../mixins/unsavedChange";
+    import BottomLine from "@/components/layout/BottomLine";
+    import TriggerFlow from "@/components/flows/TriggerFlow";
 
     export default {
         mixins: [RouteContext, UnsavedChange],
         components: {
+            BottomLine,
+            TriggerFlow,
             Tabs
         },
         data() {
             return {
                 tabIndex: undefined,
                 checkUnsaved: true,
+                mounted: false
             };
         },
         watch: {
@@ -115,6 +129,18 @@
                     this.$refs.currentTab.$refs.tabContent.$children[0].hasUnsavedChanged &&
                     this.$refs.currentTab.$refs.tabContent.$children[0].hasUnsavedChanged();
             },
+
+            activeTabName() {
+                if (this.$refs.currentTab) {
+                    return this.$refs.currentTab.activeTab.name || "home";
+                }
+
+                return null;
+            },
+            displayBottomLine() {
+                const name = this.activeTabName();
+                return name != null &&  this.canExecute && name !== "execute" && name !== "source" && name !== "schedule";
+            }
         },
         computed: {
             ...mapState("flow", ["flow"]),
@@ -146,7 +172,10 @@
             },
             ready() {
                 return this.flow !== undefined;
-            }
+            },
+            canExecute() {
+                return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)
+            },
         },
         destroyed () {
             this.$store.commit("flow/setFlow", undefined)

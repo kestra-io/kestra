@@ -326,8 +326,7 @@ abstract public class AbstractBash extends Task {
             title = "Docker api uri"
         )
         @PluginProperty(dynamic = true)
-        @Builder.Default
-        private final String dockerHost = "unix:///var/run/docker.sock";
+        private String dockerHost;
 
         @Schema(
             title = "Docker config file",

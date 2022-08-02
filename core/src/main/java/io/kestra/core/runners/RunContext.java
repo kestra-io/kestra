@@ -465,42 +465,59 @@ public class RunContext {
     }
 
     @SuppressWarnings("unchecked")
-    private String taskStateFilePathPrefix(String name) {
+    private String taskStateFilePathPrefix(String name, Boolean namespace) {
         Map<String, String> taskrun = (Map<String, String>) this.getVariables().get("taskrun");
 
         return "/" + this.storageInterface.statePrefix(
             ((Map<String, String>) this.getVariables().get("flow")).get("namespace"),
-            ((Map<String, String>) this.getVariables().get("flow")).get("id"),
+            namespace ? null : ((Map<String, String>) this.getVariables().get("flow")).get("id"),
             name,
             taskrun != null ? taskrun.getOrDefault("value", null) : null
         );
     }
 
     public InputStream getTaskStateFile(String state, String name) throws IOException {
-        URI uri = URI.create(this.taskStateFilePathPrefix(state));
+        return this.getTaskStateFile(state, name, false);
+    }
+
+
+    public InputStream getTaskStateFile(String state, String name, Boolean namespace) throws IOException {
+        URI uri = URI.create(this.taskStateFilePathPrefix(state, namespace));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
        return this.storageInterface.get(resolve);
     }
 
     public URI putTaskStateFile(byte[] content, String state, String name) throws IOException {
+        return this.putTaskStateFile(content, state, name, false);
+    }
+
+    public URI putTaskStateFile(byte[] content, String state, String name, Boolean namespace) throws IOException {
         return this.putTempFile(
             new ByteArrayInputStream(content),
-            this.taskStateFilePathPrefix(state),
+            this.taskStateFilePathPrefix(state, namespace),
             name
         );
     }
 
     public URI putTaskStateFile(File file, String state, String name) throws IOException {
+        return this.putTaskStateFile(file, state, name, false);
+    }
+
+    public URI putTaskStateFile(File file, String state, String name, Boolean namespace) throws IOException {
         return this.putTempFile(
             file,
-            this.taskStateFilePathPrefix(state),
+            this.taskStateFilePathPrefix(state, namespace),
             name
         );
     }
 
     public boolean deleteTaskStateFile(String state, String name) throws IOException {
-        URI uri = URI.create(this.taskStateFilePathPrefix(state));
+        return this.deleteTaskStateFile(state, name, false);
+    }
+
+    public boolean deleteTaskStateFile(String state, String name, Boolean namespace) throws IOException {
+        URI uri = URI.create(this.taskStateFilePathPrefix(state, namespace));
         URI resolve = uri.resolve(uri.getPath() + "/" + name);
 
         return this.storageInterface.delete(resolve);

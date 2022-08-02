@@ -63,12 +63,19 @@ public interface StorageInterface {
         );
     }
 
-    default String statePrefix(String namespace, String flowId, @Nullable String name, @Nullable String value) {
-        ArrayList<String> paths = new ArrayList<>(List.of(
-            namespace.replace(".", "/"),
-            Slugify.of(flowId),
-            "states"
-        ));
+    default String statePrefix(String namespace, @Nullable String flowId, @Nullable String name, @Nullable String value) {
+        String namespacePrefix = namespace.replace(".", "/");
+
+        ArrayList<String> paths = new ArrayList<>(
+            flowId == null ? List.of(
+                namespacePrefix,
+                "states"
+            ) : List.of(
+                namespacePrefix,
+                Slugify.of(flowId),
+                "states"
+            )
+        );
 
         if (name != null) {
             paths.add(name);

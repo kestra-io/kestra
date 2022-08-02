@@ -383,6 +383,11 @@ public class ExecutionController {
             return null;
         }
 
+        prefix = storageInterface.statePrefix(flow.get().getNamespace(), null, null, null);
+        if (path.getPath().substring(1).startsWith(prefix)) {
+            return null;
+        }
+
         // maybe redirect to correct execution
         Optional<String> redirectedExecution = storageInterface.extractExecutionId(path);
 

@@ -36,8 +36,16 @@ public abstract class AbstractState extends Task {
     @Builder.Default
     protected String name = "default";
 
+    @Schema(
+        title = "Share state for the current namespace",
+        description = "By default, the state is isolated by namespace **and** flow, setting to `true` will allow to share the state between the **same** namespace"
+    )
+    @PluginProperty(dynamic = true)
+    @Builder.Default
+    private final Boolean namespace = false;
+
     protected Map<String, Object> get(RunContext runContext) throws IllegalVariableEvaluationException, IOException {
-        InputStream taskStateFile = runContext.getTaskStateFile("tasks-states", runContext.render(this.name));
+        InputStream taskStateFile = runContext.getTaskStateFile("tasks-states", runContext.render(this.name), this.namespace);
 
         return JacksonMapper.ofJson(false).readValue(taskStateFile, TYPE_REFERENCE);
     }
@@ -56,13 +64,14 @@ public abstract class AbstractState extends Task {
         URI uri = runContext.putTaskStateFile(
             JacksonMapper.ofJson(false).writeValueAsBytes(merge),
             "tasks-states",
-            runContext.render(this.name)
+            runContext.render(this.name),
+            this.namespace
         );
 
         return Pair.of(uri, merge);
     }
 
     protected boolean delete(RunContext runContext) throws IllegalVariableEvaluationException, IOException {
-        return runContext.deleteTaskStateFile("tasks-states", runContext.render(this.name));
+        return runContext.deleteTaskStateFile("tasks-states", runContext.render(this.name), this.namespace);
     }
 }

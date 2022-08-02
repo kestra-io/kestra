@@ -411,6 +411,14 @@ public class Execution implements DeletedInterface {
             return true;
         }
 
+        // attempts & retry need to be saved
+        if (
+            (current.getAttempts() == null && taskRun.getAttempts() != null) ||
+                (current.getAttempts() != null && taskRun.getAttempts() != null && current.getAttempts().size() < taskRun.getAttempts().size())
+        ) {
+            return true;
+        }
+
         // same status
         if (current.getState().getCurrent() == taskRun.getState().getCurrent()) {
             return false;

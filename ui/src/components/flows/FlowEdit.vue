@@ -13,6 +13,16 @@
 
                     <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
 
+
+                    <router-link v-if="flow" :to="{name: 'flows/create', query: {copy: true}}">
+                        <b-button variant="primary">
+                            <kicon>
+                                <content-copy />
+                                {{ $t('copy') }}
+                            </kicon>
+                        </b-button>
+                    </router-link>
+
                     <b-button @click="save" v-if="canSave" variant="primary">
                         <kicon :tooltip="'(Ctrl + s)'">
                             <content-save />
@@ -31,11 +41,13 @@
     import {mapGetters} from "vuex";
     import TriggerFlow from "./TriggerFlow"
     import Kicon from "../Kicon"
+    import ContentCopy from "vue-material-design-icons/ContentCopy";
 
     export default {
         components: {
             TriggerFlow,
             Kicon,
+            ContentCopy,
         },
         mixins: [flowTemplateEdit],
         data() {

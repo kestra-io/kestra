@@ -92,6 +92,12 @@ export default {
     },
     methods: {
         loadFile() {
+            if (this.$route.query.copy) {
+                this.item.id = "";
+                this.item.namespace = "";
+                delete this.item.revision;
+            }
+
             this.content = YamlUtils.stringify(this.item);
             this.previousContent = this.content;
             if (this.isEdit) {

@@ -17,7 +17,12 @@ on:
   repository_dispatch:
     types: [rebuild]
   workflow_dispatch:
-
+    inputs:
+      skip-test:
+        description: 'Skip test'
+        required: false
+        type: string
+        default: "false"
 
 jobs:
   check:
@@ -38,6 +43,7 @@ jobs:
       # Services
       - name: Build the docker-compose stack
         run: docker-compose -f docker-compose-ci.yml up -d
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
 
       # Caches
       - name: Gradle cache
@@ -78,6 +84,7 @@ jobs:
 
       # Gradle check
       - name: Build with Gradle
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         env:
           GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
         run: |
@@ -89,6 +96,7 @@ jobs:
 
       # Codecov
       - uses: codecov/codecov-action@v3
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 

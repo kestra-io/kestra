@@ -628,7 +628,9 @@ public class ExecutorService {
     }
 
     public boolean canBePurged(final Executor executor) {
-        return conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())
+        return executor.getFlow() != null &&
+            // is terminated
+            conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())
             // we don't purge pause execution in order to be able to restart automatically in case of delay
             && executor.getExecution().getState().getCurrent() != State.Type.PAUSED
             // we don't purge killed execution in order to have feedback about child running tasks

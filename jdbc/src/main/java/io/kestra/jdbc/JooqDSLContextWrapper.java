@@ -27,9 +27,9 @@ public class JooqDSLContextWrapper {
     private <T> RetryUtils.Instance<T, RuntimeException> retryer() {
         return retryUtils.of(
             Exponential.builder()
-                .interval(Duration.ofMillis(10))
-                .maxAttempt(10)
-                .maxInterval(Duration.ofMillis(100))
+                .interval(Duration.ofMillis(50))
+                .maxDuration(Duration.ofMinutes(2))
+                .maxInterval(Duration.ofSeconds(5000))
                 .build()
         );
     }

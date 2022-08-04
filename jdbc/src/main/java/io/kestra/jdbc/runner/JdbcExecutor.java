@@ -208,8 +208,13 @@ public class JdbcExecutor implements ExecutorInterface {
             if (executor.getWorkerTaskExecutions().size() > 0) {
                 workerTaskExecutionStorage.save(executor.getWorkerTaskExecutions());
 
-                executor
+                List<WorkerTaskExecution> workerTasksExecutionDedup = executor
                     .getWorkerTaskExecutions()
+                    .stream()
+                    .filter(workerTaskExecution -> this.deduplicateWorkerTaskExecution(execution, executorState, workerTaskExecution.getTaskRun()))
+                    .collect(Collectors.toList());
+
+                workerTasksExecutionDedup
                     .forEach(workerTaskExecution -> {
                         String log = "Create new execution for flow '" +
                             workerTaskExecution.getExecution()
@@ -446,6 +451,19 @@ public class JdbcExecutor implements ExecutorInterface {
             return false;
         } else {
             executorState.getWorkerTaskDeduplication().put(deduplicationKey, taskRun.getState().getCurrent());
+            return true;
+        }
+    }
+
+    private boolean deduplicateWorkerTaskExecution(Execution execution, ExecutorState executorState, TaskRun taskRun) {
+        String deduplicationKey = taskRun.getId();
+        State.Type current = executorState.getWorkerTaskExecutionDeduplication().get(deduplicationKey);
+
+        if (current == taskRun.getState().getCurrent()) {
+            log.trace("Duplicate WorkerTaskExecution on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
+            return false;
+        } else {
+            executorState.getWorkerTaskExecutionDeduplication().put(deduplicationKey, taskRun.getState().getCurrent());
             return true;
         }
     }

@@ -153,21 +153,23 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         });
 
         return this.poll(() -> {
-            return dslContextWrapper.transactionResult(configuration -> {
+            Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
-                Result<Record> fetch = this.receiveFetch(ctx, maxOffset.get());
+                Result<Record> result = this.receiveFetch(ctx, maxOffset.get());
 
-                if (fetch.size() > 0) {
-                    this.send(fetch, consumer);
-
-                    List<Integer> offsets = fetch.map(record -> record.get("offset", Integer.class));
+                if (result.size() > 0) {
+                    List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
 
                     maxOffset.set(offsets.get(offsets.size() - 1));
                 }
 
-                return fetch.size();
+                return result;
             });
+
+            this.send(fetch, consumer);
+
+            return fetch.size();
         });
     }
 
@@ -176,23 +178,26 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         String consumerGroupName = consumerGroupName(consumerGroup);
 
         return this.poll(() -> {
-            return dslContextWrapper.transactionResult(configuration -> {
+            Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
                 DSLContext ctx = DSL.using(configuration);
 
-                Result<Record> fetch = this.receiveFetch(ctx, consumerGroupName);
+                Result<Record> result = this.receiveFetch(ctx, consumerGroupName);
 
-                if (fetch.size() > 0) {
-                    this.send(fetch, consumer);
+                if (result.size() > 0) {
 
                     this.updateGroupOffsets(
                         ctx,
                         consumerGroupName,
-                        fetch.map(record -> record.get("offset", Integer.class))
+                        result.map(record -> record.get("offset", Integer.class))
                     );
                 }
 
-                return fetch.size();
+                return result;
             });
+
+            this.send(fetch, consumer);
+
+            return fetch.size();
         });
     }
 

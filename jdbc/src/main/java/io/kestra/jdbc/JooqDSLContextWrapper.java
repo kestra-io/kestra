@@ -1,6 +1,6 @@
 package io.kestra.jdbc;
 
-import io.kestra.core.models.tasks.retrys.Exponential;
+import io.kestra.core.models.tasks.retrys.Random;
 import io.kestra.core.utils.RetryUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -26,10 +26,11 @@ public class JooqDSLContextWrapper {
 
     private <T> RetryUtils.Instance<T, RuntimeException> retryer() {
         return retryUtils.of(
-            Exponential.builder()
-                .interval(Duration.ofMillis(50))
-                .maxDuration(Duration.ofMinutes(2))
-                .maxInterval(Duration.ofSeconds(5000))
+            Random.builder()
+                .minInterval(Duration.ofMillis(50))
+                .maxAttempt(-1)
+                .maxDuration(Duration.ofSeconds(60))
+                .maxInterval(Duration.ofMillis(1000))
                 .build()
         );
     }
@@ -51,13 +52,6 @@ public class JooqDSLContextWrapper {
     }
 
     public void transaction(TransactionalRunnable transactional) {
-        RetryUtils.Instance<Object, Throwable> of = retryUtils.of(Exponential.builder()
-            .interval(Duration.ofMillis(10))
-            .maxAttempt(10)
-            .maxInterval(Duration.ofMillis(100))
-            .build()
-        );
-
         this.<Void>retryer().runRetryIf(
             predicate(),
             () -> {
@@ -68,13 +62,6 @@ public class JooqDSLContextWrapper {
     }
 
     public <T> T transactionResult(TransactionalCallable<T> transactional) {
-        RetryUtils.Instance<Object, Throwable> of = retryUtils.of(Exponential.builder()
-            .interval(Duration.ofMillis(10))
-            .maxAttempt(10)
-            .maxInterval(Duration.ofMillis(100))
-            .build()
-        );
-
         return this.<T>retryer().runRetryIf(
             predicate(),
             () -> dslContext.transactionResult(transactional)

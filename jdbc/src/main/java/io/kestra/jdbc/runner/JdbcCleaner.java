@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import io.kestra.core.queues.QueueException;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.JdbcConfiguration;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Requires;
@@ -44,7 +45,7 @@ public class JdbcCleaner {
                 .using(configuration)
                 .delete(this.queueTable)
                 .where(
-                    DSL.field("updated")
+                    AbstractJdbcRepository.field("updated")
                         .lessOrEqual(ZonedDateTime.now().minus(this.configuration.getRetention()).toOffsetDateTime())
                 )
                 .execute();

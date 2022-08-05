@@ -1,6 +1,7 @@
 {
   "en": {
     "id": "Id",
+    "type": "Type",
     "ok": "OK",
     "namespace": "Namespace",
     "description": "Description",
@@ -89,6 +90,7 @@
     "invalid field": "Invalid field: {name}",
     "required field": "Required field",
     "error": "Error",
+    "form": "Form",
     "form error": "Form error",
     "display topology for flow": "Display topology for flow",
     "start date": "Start date",
@@ -285,6 +287,7 @@
   },
   "fr": {
     "id": "Identifiant",
+    "type": "Type",
     "ok": "OK",
     "description": "Description",
     "namespace": "Espace de nom",
@@ -373,6 +376,7 @@
     "invalid field": "Champ invalide: {name}",
     "required field": "Champ requis",
     "error": "Erreur",
+    "form": "Formulaire",
     "form error": "Formulaire invalid",
     "display topology for flow": "Afficher la topologie du flow",
     "start date": "Date de début",
@@ -570,6 +574,7 @@
   },
   "de": {
     "id": "Id",
+    "type": "Type",
     "ok": "OK",
     "namespace": "Namespace",
     "description": "Beschreibung",

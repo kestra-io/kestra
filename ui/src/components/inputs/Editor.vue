@@ -142,6 +142,7 @@
                 if (this.minimap === false) {
                     options.minimap =  {
                         enabled: false
+
                     }
                 }
 

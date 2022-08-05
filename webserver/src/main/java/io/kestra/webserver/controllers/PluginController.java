@@ -15,6 +15,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
@@ -45,7 +46,9 @@ public class PluginController {
         summary = "Get all json schemas for a type",
         description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
     )
-    public HttpResponse<Map<String, Object>> schemas(@PathVariable SchemaType type) {
+    public HttpResponse<Map<String, Object>> schemas(
+        @Parameter(description = "The schema needed") @PathVariable SchemaType type
+    ) {
         return HttpResponse.ok()
             .body(this.schemasCache(type))
             .header("Cache-Control", "public, max-age=3600");
@@ -115,11 +118,13 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
     public Doc pluginDocumentation(
-        @Parameter(description = "The plugin full class name") @PathVariable String cls
+        @Parameter(description = "The plugin full class name") @PathVariable String cls,
+        @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") boolean allProperties
     ) throws IOException {
         ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(
             pluginService.allPlugins(),
-            cls
+            cls,
+            allProperties
         );
 
         return new Doc(
@@ -133,7 +138,7 @@ public class PluginController {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className)  {
+    private ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className, Boolean allProperties)  {
         RegisteredPlugin registeredPlugin = plugins
             .stream()
             .filter(r -> r.hasClass(className))
@@ -147,7 +152,7 @@ public class PluginController {
         Class baseCls = registeredPlugin
             .baseClass(className);
 
-        return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, baseCls);
+        return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls);
     }
 
     @NoArgsConstructor

@@ -280,7 +280,7 @@ form.ks-horizontal {
     .el-tabs__item {
         padding: 0;
         transition: all 0.3s ease;
-        a {
+        > * {
             padding: var(--spacer) calc(var(--spacer) * 1.5);
             color: var(--bs-tertiary);
         }

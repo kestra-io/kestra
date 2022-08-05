@@ -1,6 +1,6 @@
 <template>
     <div>
-        <el-tabs v-model="activeName">
+        <el-tabs class="router-link" v-model="activeName">
             <el-tab-pane
                 v-for="tab in tabs"
                 :key="tab.name"

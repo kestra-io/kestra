@@ -25,19 +25,36 @@
                 </div>
             </template>
 
-            <div v-loading="isLoading">
-                <editor
-                    v-if="taskYaml"
-                    :read-only="isReadOnly"
-                    ref="editor"
-                    @save="saveTask"
-                    v-model="taskYaml"
-                    :schema-type="mapSectionWithSchema()"
-                    :full-height="false"
-                    :navbar="false"
-                    lang="yaml"
-                />
-            </div>
+            <el-tabs v-if="taskYaml" v-model="activeTabs">
+                <el-tab-pane name="source">
+                    <template #label>
+                        <span>{{ $t('source') }}</span>
+                    </template>
+                    <editor
+                        v-if="taskYaml"
+                        :read-only="isReadOnly"
+                        ref="editor"
+                        @save="saveTask"
+                        v-model="taskYaml"
+                        :schema-type="mapSectionWithSchema()"
+                        :full-height="false"
+                        :navbar="false"
+                        lang="yaml"
+                    />
+                </el-tab-pane>
+                <el-tab-pane name="form">
+                    <template #label>
+                        <span>
+                            {{ $t('form') }}
+                            <el-badge type="primary" value="Alpha" />
+                        </span>
+                    </template>
+                    <task-editor
+                        ref="editor"
+                        v-model="taskYaml"
+                    />
+                </el-tab-pane>
+            </el-tabs>
         </el-drawer>
     </component>
 </template>
@@ -50,12 +67,13 @@
 <script>
     import YamlUtils from "../../utils/yamlUtils";
     import Editor from "../inputs/Editor.vue";
+    import TaskEditor from "./TaskEditor.vue";
     import {canSaveFlowTemplate, saveFlowTemplate} from "../../utils/flowTemplate";
     import {mapState} from "vuex";
     import Utils from "../../utils/utils";
 
     export default {
-        components: {Editor},
+        components: {Editor, TaskEditor},
         props: {
             component: {
                 type: String,
@@ -139,6 +157,7 @@
                 uuid: Utils.uid(),
                 taskYaml: undefined,
                 isModalOpen: false,
+                activeTabs: "form",
             };
         },
         created() {

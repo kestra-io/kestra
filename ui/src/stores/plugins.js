@@ -14,7 +14,11 @@ export default {
             })
         },
         load({commit}, options) {
-            return this.$http.get(`/api/v1/plugins/${options.cls}`, {}).then(response => {
+            if (options.cls === undefined) {
+                throw new Error("missing required cls");
+            }
+
+            return this.$http.get(`/api/v1/plugins/${options.cls}?all=true`, {}).then(response => {
                 commit("setPlugin", response.data)
 
                 return response.data;

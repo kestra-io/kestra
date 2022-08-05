@@ -87,7 +87,7 @@
             display: block;
             background-size: contain;
             background-repeat: no-repeat;
-            background-position: top center;
+            background-position: center center;
         }
 
         > .hover {

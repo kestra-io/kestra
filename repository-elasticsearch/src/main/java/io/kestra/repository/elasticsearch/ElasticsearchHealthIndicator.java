@@ -46,7 +46,7 @@ public class ElasticsearchHealthIndicator implements HealthIndicator {
     public ElasticsearchHealthIndicator(RestHighLevelClient esClient) {
         this.esClient = esClient;
 
-        request = new Request(HttpGet.METHOD_NAME, "_cluster/health");
+        request = new Request(HttpGet.METHOD_NAME, "/_cluster/health");
         request.addParameter("master_timeout", "30s");
         request.addParameter("level", "cluster");
         request.addParameter("timeout", "30s");

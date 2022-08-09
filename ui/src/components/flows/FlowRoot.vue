@@ -26,8 +26,8 @@
     import action from "../../models/action";
     import Tabs from "../Tabs";
     import UnsavedChange from "../../mixins/unsavedChange";
-    import BottomLine from "@/components/layout/BottomLine";
-    import TriggerFlow from "@/components/flows/TriggerFlow";
+    import BottomLine from "../../components/layout/BottomLine";
+    import TriggerFlow from "../../components/flows/TriggerFlow";
 
     export default {
         mixins: [RouteContext, UnsavedChange],

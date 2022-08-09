@@ -28,7 +28,7 @@ import io.micronaut.core.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 @Slf4j
 public class Execution implements DeletedInterface {
     @NotNull
@@ -691,6 +691,13 @@ public class Execution implements DeletedInterface {
             .filter(t -> t.getValue() != null)
             .map(TaskRun::getValue)
             .collect(Collectors.toList());
+    }
+
+
+    public Execution toDeleted() {
+        return this.toBuilder()
+            .deleted(true)
+            .build();
     }
 
     public String toString(boolean pretty) {

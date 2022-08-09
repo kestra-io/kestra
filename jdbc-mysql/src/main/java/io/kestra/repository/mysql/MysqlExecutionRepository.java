@@ -16,7 +16,7 @@ import java.util.Arrays;
 public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository implements ExecutionRepositoryInterface {
     @Inject
     public MysqlExecutionRepository(ApplicationContext applicationContext, AbstractJdbcExecutorStateStorage executorStateStorage) {
-        super(new MysqlRepository<>(Execution.class, applicationContext), executorStateStorage);
+        super(new MysqlRepository<>(Execution.class, applicationContext), applicationContext, executorStateStorage);
     }
 
     @Override

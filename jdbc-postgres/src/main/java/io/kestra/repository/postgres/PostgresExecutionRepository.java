@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository implements ExecutionRepositoryInterface {
     @Inject
     public PostgresExecutionRepository(ApplicationContext applicationContext, AbstractJdbcExecutorStateStorage executorStateStorage) {
-        super(new PostgresRepository<>(Execution.class, applicationContext), executorStateStorage);
+        super(new PostgresRepository<>(Execution.class, applicationContext), applicationContext, executorStateStorage);
     }
 
     @Override

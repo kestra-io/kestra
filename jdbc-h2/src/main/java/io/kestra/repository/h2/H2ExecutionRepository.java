@@ -16,7 +16,7 @@ import java.util.List;
 public class H2ExecutionRepository extends AbstractJdbcExecutionRepository implements ExecutionRepositoryInterface {
     @Inject
     public H2ExecutionRepository(ApplicationContext applicationContext, AbstractJdbcExecutorStateStorage executorStateStorage) {
-        super(new H2Repository<>(Execution.class, applicationContext), executorStateStorage);
+        super(new H2Repository<>(Execution.class, applicationContext), applicationContext, executorStateStorage);
     }
 
     @Override

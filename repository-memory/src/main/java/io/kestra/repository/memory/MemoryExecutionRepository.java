@@ -38,6 +38,11 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
+    public Execution delete(Execution execution) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Optional<Execution> findById(String executionId) {
         return executions.containsKey(executionId) ? Optional.of(executions.get(executionId)) : Optional.empty();
     }

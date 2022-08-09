@@ -352,7 +352,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         ListUtils.emptyOnNull(flow.getTriggers())
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
-        eventPublisher.publishEvent(new CrudEvent<>(flow, CrudEventType.DELETE));
+        eventPublisher.publishEvent(new CrudEvent<>(deleted, CrudEventType.DELETE));
 
         return deleted;
     }

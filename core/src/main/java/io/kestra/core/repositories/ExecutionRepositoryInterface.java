@@ -42,6 +42,8 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable List<State.Type> states
     );
 
+    Execution delete(Execution execution);
+
     Integer maxTaskRunSetting();
 
     List<DailyExecutionStatistics> dailyStatistics(

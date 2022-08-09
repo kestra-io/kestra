@@ -10,6 +10,7 @@ import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.multipart.StreamingFileUpload;
@@ -239,6 +240,24 @@ public class ExecutionController {
         return executionRepository
             .findById(executionId)
             .orElse(null);
+    }
+
+    @Delete(uri = "executions/{executionId}", produces = MediaType.TEXT_JSON)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Flows"}, summary = "Delete an execution")
+    @ApiResponses(
+        @ApiResponse(responseCode = "204", description = "On success")
+    )
+    public HttpResponse<Void> delete(
+        @Parameter(description = "The execution id") String executionId
+    ) {
+        Optional<Execution> execution = executionRepository.findById(executionId);
+        if (execution.isPresent()) {
+            executionRepository.delete(execution.get());
+            return HttpResponse.status(HttpStatus.NO_CONTENT);
+        } else {
+            return HttpResponse.status(HttpStatus.NOT_FOUND);
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -3,9 +3,16 @@
         <div v-if="ready">
             <tabs route-name="executions/update" @follow="follow" :tabs="tabs" />
         </div>
-        <bottom-line>
+        <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul class="navbar-nav ml-auto" v-hotkey="keymap">
                 <li class="nav-item">
+                    <b-button class="btn-danger" v-if="canDelete" @click="deleteExecution">
+                        <kicon>
+                            <delete />
+                            <span>{{ $t('delete') }}</span>
+                        </kicon>
+                    </b-button>
+
                     <template v-if="isAllowedTrigger">
                         <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
                     </template>
@@ -37,6 +44,7 @@
     import action from "../../models/action";
     import Kicon from "../Kicon"
     import Tabs from "../../components/Tabs";
+    import Delete from "vue-material-design-icons/Delete";
 
     export default {
         mixins: [RouteContext],
@@ -46,6 +54,7 @@
             Pencil,
             Kicon,
             Tabs,
+            Delete,
         },
         data() {
             return {
@@ -130,6 +139,25 @@
                     tab: "source"
                 }})
             },
+            deleteExecution() {
+                if (this.execution) {
+                    const item = this.execution;
+
+                    this.$toast()
+                        .confirm(this.$t("delete confirm", {name: item.id}), () => {
+                            return this.$store
+                                .dispatch("execution/deleteExecution", item)
+                                .then(() => {
+                                    return this.$router.push({
+                                        name: "executions/list"
+                                    });
+                                })
+                                .then(() => {
+                                    this.$toast().deleted(item.id);
+                                })
+                        });
+                }
+            },
         },
         computed: {
             ...mapState("execution", ["execution"]),
@@ -185,6 +213,9 @@
             },
             isAllowedEdit() {
                 return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
+            },
+            canDelete() {
+                return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.DELETE, this.execution.namespace);
             },
             ready() {
                 return this.execution !== undefined;

@@ -75,9 +75,9 @@ export default {
                 }
             })
         },
-        createFlow({commit}, options) {
-            return Vue.axios.post("/api/v1/executions", options.execution).then(response => {
-                commit("setFlow", response.data.flow)
+        deleteExecution({commit}, options) {
+            return Vue.axios.delete(`/api/v1/executions/${options.id}`).then(() => {
+                commit("setExecution", null)
             })
         },
         followExecution(_, options) {

@@ -69,14 +69,11 @@ import static org.opensearch.common.xcontent.XContentFactory.jsonBuilder;
 @Slf4j
 abstract public class AbstractElasticSearchRepository<T> {
     protected static final ObjectMapper MAPPER = JacksonMapper.ofJson(false);
-
     private static ExecutorService poolExecutor;
-
     protected Class<T> cls;
     protected RestHighLevelClient client;
     protected ModelValidator modelValidator;
     protected ElasticSearchIndicesService elasticSearchIndicesService;
-
     protected Map<String, IndicesConfig> indicesConfigs;
 
     @Inject
@@ -107,7 +104,6 @@ abstract public class AbstractElasticSearchRepository<T> {
         return QueryBuilders.boolQuery()
             .must(QueryBuilders.matchQuery("deleted", false));
     }
-
 
     protected static QueryStringQueryBuilder queryString(@Nullable String query) {
         if (query == null) {

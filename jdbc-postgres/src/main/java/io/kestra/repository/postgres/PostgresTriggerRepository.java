@@ -9,7 +9,7 @@ import jakarta.inject.Singleton;
 
 @Singleton
 @PostgresRepositoryEnabled
-public class PostgresTriggerRepository extends AbstractJdbcTriggerRepository implements TriggerRepositoryInterface {
+public class PostgresTriggerRepository extends AbstractJdbcTriggerRepository {
     @Inject
     public PostgresTriggerRepository(ApplicationContext applicationContext) {
         super(new PostgresRepository<>(Trigger.class, applicationContext));

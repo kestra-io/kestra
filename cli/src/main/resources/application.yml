@@ -246,6 +246,9 @@ kestra:
       executordelayed:
         table: "executordelayed"
         cls: io.kestra.core.runners.ExecutionDelay
+      settings:
+        table: "settings"
+        cls: io.kestra.core.models.Setting
 
     queues:
       min-poll-interval: 100ms
@@ -285,6 +288,10 @@ kestra:
         index: "${kestra.elasticsearch.defaults.indice-prefix}logs"
         cls: io.kestra.core.models.executions.LogEntry
         mapping-file: log
+      settings:
+        index: "${kestra.elasticsearch.defaults.indice-prefix}settings"
+        cls: io.kestra.core.models.Setting
+        mapping-file: setting
 
   indexer:
     models:

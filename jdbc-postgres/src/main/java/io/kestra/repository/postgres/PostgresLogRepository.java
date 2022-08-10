@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Singleton
 @PostgresRepositoryEnabled
-public class PostgresLogRepository extends AbstractJdbcLogRepository implements LogRepositoryInterface {
+public class PostgresLogRepository extends AbstractJdbcLogRepository {
     @Inject
     public PostgresLogRepository(ApplicationContext applicationContext) {
         super(new PostgresRepository<>(LogEntry.class, applicationContext));

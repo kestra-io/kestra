@@ -38,6 +38,6 @@ class SizeTest {
             .build();
 
         Size.Output run = bash.run(runContext);
-        assertThat(run.getSize(), is(757L));
+        assertThat(run.getSize(), is(775L));
     }
 }

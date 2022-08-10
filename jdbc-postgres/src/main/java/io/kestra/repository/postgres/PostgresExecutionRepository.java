@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Singleton
 @PostgresRepositoryEnabled
-public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository implements ExecutionRepositoryInterface {
+public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
     public PostgresExecutionRepository(ApplicationContext applicationContext, AbstractJdbcExecutorStateStorage executorStateStorage) {
         super(new PostgresRepository<>(Execution.class, applicationContext), applicationContext, executorStateStorage);

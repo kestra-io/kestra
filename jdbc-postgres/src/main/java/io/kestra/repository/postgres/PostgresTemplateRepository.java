@@ -12,7 +12,7 @@ import java.util.Collections;
 
 @Singleton
 @PostgresRepositoryEnabled
-public class PostgresTemplateRepository extends AbstractJdbcTemplateRepository implements TemplateRepositoryInterface {
+public class PostgresTemplateRepository extends AbstractJdbcTemplateRepository {
     @Inject
     public PostgresTemplateRepository(ApplicationContext applicationContext) {
         super(new PostgresRepository<>(Template.class, applicationContext), applicationContext);

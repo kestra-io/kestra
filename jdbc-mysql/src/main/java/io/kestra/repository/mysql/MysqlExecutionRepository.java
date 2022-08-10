@@ -1,7 +1,6 @@
 package io.kestra.repository.mysql;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.micronaut.context.ApplicationContext;
@@ -13,7 +12,7 @@ import java.util.Arrays;
 
 @Singleton
 @MysqlRepositoryEnabled
-public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository implements ExecutionRepositoryInterface {
+public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
     public MysqlExecutionRepository(ApplicationContext applicationContext, AbstractJdbcExecutorStateStorage executorStateStorage) {
         super(new MysqlRepository<>(Execution.class, applicationContext), applicationContext, executorStateStorage);

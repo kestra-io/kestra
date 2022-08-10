@@ -26,6 +26,9 @@ public class Usage {
     private final String startUuid;
 
     @NotNull
+    private final String instanceUuid;
+
+    @NotNull
     private final ServerType serverType;
 
     @NotNull

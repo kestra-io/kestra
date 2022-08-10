@@ -21,7 +21,7 @@ public class ConfigurationUsage {
         return ConfigurationUsage.builder()
             .repositoryType(applicationContext.getProperty("kestra.repository.type", String.class).orElse(null))
             .queueType(applicationContext.getProperty("kestra.queue.type", String.class).orElse(null))
-            .repositoryType(applicationContext.getProperty("kestra.storage.type", String.class).orElse(null))
+            .storageType(applicationContext.getProperty("kestra.storage.type", String.class).orElse(null))
             .secretType(applicationContext.getProperty("kestra.secret.type", String.class).orElse(null))
             .javaSecurityEnabled(applicationContext.getProperty("kestra.ee.java-security.enabled", Boolean.class).orElse(null))
             .build();

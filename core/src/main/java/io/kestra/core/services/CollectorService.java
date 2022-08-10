@@ -1,9 +1,11 @@
 package io.kestra.core.services;
 
 import io.kestra.core.models.ServerType;
+import io.kestra.core.models.Setting;
 import io.kestra.core.models.collectors.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.VersionProvider;
@@ -45,6 +47,9 @@ public class CollectorService {
     private ExecutionRepositoryInterface executionRepository;
 
     @Inject
+    private SettingRepositoryInterface settingRepository;
+
+    @Inject
     private VersionProvider versionProvider;
 
     @Nullable
@@ -64,8 +69,17 @@ public class CollectorService {
         boolean first = defaultUsage == null;
 
         if (first) {
+            Setting instanceIdSetting = settingRepository
+                .findByKey(Setting.INSTANCE_UUID)
+                .orElseGet(() -> settingRepository.save(Setting.builder()
+                    .key(Setting.INSTANCE_UUID)
+                    .value(IdUtils.create())
+                    .build()
+                ));
+
             defaultUsage = Usage.builder()
                 .startUuid(UUID)
+                .instanceUuid(instanceIdSetting.getValue().toString())
                 .serverType(serverType)
                 .version(versionProvider.getVersion())
                 .zoneId(ZoneId.systemDefault())

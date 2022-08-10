@@ -1,5 +1,6 @@
 package io.kestra.core.queues;
 
+import io.kestra.core.models.Setting;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
@@ -42,6 +43,8 @@ public class QueueService {
             return ((ExecutionDelay) object).getExecutionId();
         } else if (object.getClass() == ExecutorState.class) {
             return ((ExecutorState) object).getExecutionId();
+        } else if (object.getClass() == Setting.class) {
+            return ((Setting) object).getKey();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

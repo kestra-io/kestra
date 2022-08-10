@@ -12,7 +12,7 @@ import java.util.Arrays;
 
 @Singleton
 @MysqlRepositoryEnabled
-public class MysqlTemplateRepository extends AbstractJdbcTemplateRepository implements TemplateRepositoryInterface {
+public class MysqlTemplateRepository extends AbstractJdbcTemplateRepository {
     @Inject
     public MysqlTemplateRepository(ApplicationContext applicationContext) {
         super(new MysqlRepository<>(Template.class, applicationContext), applicationContext);

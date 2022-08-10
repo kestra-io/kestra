@@ -48,3 +48,9 @@ kestra:
         cls: io.kestra.core.models.executions.LogEntry
         mapping-file: log
         settings: *settings
+
+      settings:
+        index: "${kestra.elasticsearch.defaults.indice-prefix}settings"
+        cls: io.kestra.core.models.Setting
+        mapping-file: setting
+        settings: *settings

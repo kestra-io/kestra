@@ -39,3 +39,5 @@ kestra:
   anonymous-usage-report:
     enabled: false
     uri: http://localhost:8080/
+
+  unittest: true

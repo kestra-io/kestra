@@ -1,0 +1,11 @@
+dynamic: false
+properties:
+  key:
+    type: keyword
+    fields:
+      fulltext:
+        type: keyword
+        normalizer: keyword
+  outputs:
+    type: object
+    properties: {}

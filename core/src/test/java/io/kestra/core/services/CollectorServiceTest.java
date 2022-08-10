@@ -3,16 +3,29 @@ package io.kestra.core.services;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.Helpers;
 import io.kestra.core.models.ServerType;
+import io.kestra.core.models.Setting;
 import io.kestra.core.models.collectors.Usage;
+import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.annotation.Property;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+@MicronautTest
 class CollectorServiceTest {
     @Test
     public void metrics() throws URISyntaxException {
@@ -33,8 +46,39 @@ class CollectorServiceTest {
             assertThat(metrics.getHost().getHardware().getLogicalProcessorCount(), notNullValue());
             assertThat(metrics.getHost().getJvm().getName(), notNullValue());
             assertThat(metrics.getHost().getOs().getFamily(), notNullValue());
-            assertThat(metrics.getConfigurations().getRepositoryType(), is("local"));
+            assertThat(metrics.getConfigurations().getRepositoryType(), is("memory"));
             assertThat(metrics.getConfigurations().getQueueType(), is("memory"));
+            assertThat(metrics.getInstanceUuid(), is(TestSettingRepository.instanceUuid));
+        }
+    }
+
+    @Singleton
+    @Requires(property = "kestra.unittest")
+    public static class TestSettingRepository implements SettingRepositoryInterface {
+        public static Object instanceUuid = null;
+
+        @Override
+        public Optional<Setting> findByKey(String key) {
+            return Optional.empty();
+        }
+
+        @Override
+        public List<Setting> findAll() {
+            return new ArrayList<>();
+        }
+
+        @Override
+        public Setting save(Setting setting) throws ConstraintViolationException {
+            if (setting.getKey().equals(Setting.INSTANCE_UUID)) {
+                TestSettingRepository.instanceUuid = setting.getValue();
+            }
+
+            return setting;
+        }
+
+        @Override
+        public Setting delete(Setting setting) {
+            return setting;
         }
     }
 }

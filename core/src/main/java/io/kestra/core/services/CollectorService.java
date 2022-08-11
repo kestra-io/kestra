@@ -1,11 +1,9 @@
 package io.kestra.core.services;
 
 import io.kestra.core.models.ServerType;
-import io.kestra.core.models.Setting;
 import io.kestra.core.models.collectors.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.VersionProvider;
@@ -19,14 +17,14 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZoneId;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 @Singleton
 @Slf4j
@@ -47,7 +45,7 @@ public class CollectorService {
     private ExecutionRepositoryInterface executionRepository;
 
     @Inject
-    private SettingRepositoryInterface settingRepository;
+    private InstanceService instanceService;
 
     @Inject
     private VersionProvider versionProvider;
@@ -69,17 +67,9 @@ public class CollectorService {
         boolean first = defaultUsage == null;
 
         if (first) {
-            Setting instanceIdSetting = settingRepository
-                .findByKey(Setting.INSTANCE_UUID)
-                .orElseGet(() -> settingRepository.save(Setting.builder()
-                    .key(Setting.INSTANCE_UUID)
-                    .value(IdUtils.create())
-                    .build()
-                ));
-
             defaultUsage = Usage.builder()
                 .startUuid(UUID)
-                .instanceUuid(instanceIdSetting.getValue().toString())
+                .instanceUuid(instanceService.fetch())
                 .serverType(serverType)
                 .version(versionProvider.getVersion())
                 .zoneId(ZoneId.systemDefault())

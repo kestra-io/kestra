@@ -235,7 +235,10 @@
     "tags": "Tags",
     "disabled flow title": "This flow is disabled",
     "disabled flow desc": "This flow is disabled, please enable it in order to execute it.",
-    "labels": "Labels"
+    "labels": "Labels",
+    "feeds": {
+      "title": "What's new at Kestra"
+    }
   },
   "fr": {
     "id": "Identifiant",
@@ -474,6 +477,9 @@
     "tags": "Tags",
     "disabled flow title": "Ce flux est désactivé",
     "disabled flow desc": "Ce flux est désactivé, veuillez le réactiver pour l'exécuter.",
-    "labels": "Labels"
+    "labels": "Labels",
+    "feeds": {
+      "title": "Quoi de neuf sur Kestra"
+    }
   }
 }

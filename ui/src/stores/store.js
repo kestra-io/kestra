@@ -1,3 +1,4 @@
+import api from "./api"
 import auth from "./auth"
 import core from "./core"
 import execution from "./executions"
@@ -15,6 +16,7 @@ import taskrun from "./taskruns"
 
 export default {
     modules: {
+        api,
         core,
         settings,
         flow,

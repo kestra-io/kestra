@@ -13,6 +13,10 @@
             inverted: {
                 type: Boolean,
                 default: false
+            },
+            format: {
+                type: String,
+                default: "LLLL"
             }
         },
         computed: {
@@ -20,7 +24,7 @@
                 return Vue.moment(this.date).fromNow();
             },
             full() {
-                return Vue.moment(this.date).format("LLLL");
+                return Vue.moment(this.date).format(this.format);
             }
         }
     };

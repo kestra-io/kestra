@@ -678,6 +678,14 @@ ul.nav-tabs {
             font-weight: bold;
         }
     }
+
+    .modal-content {
+        border: 1px solid var(--gray-300);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid var(--gray-300);
+    }
 }
 
 .modal.left,
@@ -694,6 +702,8 @@ ul.nav-tabs {
         height: 100%;
         border-radius: 0;
         overflow-y: auto;
+        border-bottom: 0;
+        border-top: 0;
 
         header {
             border-radius: 0;

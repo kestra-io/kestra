@@ -15,18 +15,23 @@
                 </b-breadcrumb>
             </b-nav-text>
         </b-navbar-nav>
-        <Auth />
+        <b-navbar-nav class="ml-auto pt-3">
+            <Auth />
+            <news />
+        </b-navbar-nav>
     </b-navbar>
 </template>
 <script>
     import {mapState} from "vuex";
     import HomeOutline from "vue-material-design-icons/HomeOutline";
     import Auth from "override/components/auth/Auth";
+    import News from "../layout/News";
 
     export default {
         components: {
             HomeOutline,
             Auth,
+            News,
         },
         props: {
             menuCollapsed : {

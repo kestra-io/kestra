@@ -23,6 +23,7 @@
     import NprogressContainer from "vue-nprogress/src/NprogressContainer";
     import Errors from "./components/errors/Errors";
     import {mapState} from "vuex";
+    import Utils from "./utils/utils";
 
     export default {
         name: "App",
@@ -71,8 +72,21 @@
                 });
             },
             loadGeneralRessources() {
+                let uid = localStorage.getItem("uid");
+                if (uid === null) {
+                    uid = Utils.uid();
+                    localStorage.setItem("uid", uid);
+                }
+
                 this.$store.dispatch("plugin/icons")
                 this.$store.dispatch("misc/loadConfigs")
+                    .then(value => {
+                        this.$store.dispatch("api/loadFeeds", {
+                            version: value.version,
+                            iid: value.uuid,
+                            uid: uid,
+                        });
+                    })
             },
             grabThemeResources() {
                 // eslint-disable-next-line no-undef

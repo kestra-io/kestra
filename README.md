@@ -219,32 +219,37 @@ Kestra is built on [plugin systems](https://kestra.io/plugins/). You can find yo
         <td><a href="https://kestra.io/plugins/plugin-jdbc-oracle">Oracle</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-serdes#parquet">Parquet</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-postgres">Postgres</a></td>
         <td><a href="https://kestra.io/plugins/plugin-power">Power BI</a></td>
+    </tr>
+    <tr>
         <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Python">Python</a></td>
-    </tr>
-    <tr>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-redshift">Redshift</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-servicenow">ServiceNow</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-fs#sftp">SFTP</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-jdbc-rockset">Rockset</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-fs#sftp">SFTP</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-servicenow">ServiceNow</a></td>
         <td><a href="https://kestra.io/plugins/plugin-singer">Singer</a></td>
+    </tr>
+    <tr>
         <td><a href="https://kestra.io/plugins/plugin-notifications#slack">Slack</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-snowflake">Snowflake</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-soda">Soda</a></td>
     </tr>
     <tr>
-        <td><a href="https://kestra.io/plugins/plugin-soda">Soda</a></td>
         <td><a href="https://kestra.io/plugins/plugin-spark">Spark</a></td>
         <td><a href="https://kestra.io/plugins/plugin-tika">Tika</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-jdbc-trino">Trino</a></td>
     </tr>
     <tr>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-vectorwise">Vectorwise</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-serdes#xml">XML</a></td>
         <td><a href="https://kestra.io/plugins/plugin-gcp#vertexai/">Vertex AI</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-jdbc-vertica">Vertica</a></td>
     </tr>
     <tr>
-        <td><a href="https://kestra.io/plugins/plugin-serdes#xml">XML</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-jdbc-vertica">Vertica</a></td>
         <td></td>
         <td></td>
     </tr>

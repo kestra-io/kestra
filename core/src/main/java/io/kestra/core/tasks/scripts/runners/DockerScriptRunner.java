@@ -205,25 +205,27 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
                 .withAttachStdout(true);
 
             // pull image
-            retryUtils.<Boolean, InternalServerErrorException>of(
-                Exponential.builder()
-                    .delayFactor(2.0)
-                    .interval(Duration.ofSeconds(5))
-                    .maxInterval(Duration.ofSeconds(120))
-                    .maxAttempt(5)
-                    .build()
-            ).run(
-                (bool, throwable) -> throwable instanceof InternalServerErrorException ||
-                    throwable.getCause() instanceof ConnectionClosedException,
-                () -> {
-                    pull
-                        .withTag(!imageParse.tag.equals("") ? imageParse.tag : "latest")
-                        .exec(new PullImageResultCallback())
-                        .awaitCompletion();
-                    logger.debug("Image pulled [{}:{}]", pull.getRepository(), pull.getTag());
-                    return true;
-                }
-            );
+            if (abstractBash.getDockerOptions().getPullImage()) {
+                retryUtils.<Boolean, InternalServerErrorException>of(
+                    Exponential.builder()
+                        .delayFactor(2.0)
+                        .interval(Duration.ofSeconds(5))
+                        .maxInterval(Duration.ofSeconds(120))
+                        .maxAttempt(5)
+                        .build()
+                ).run(
+                    (bool, throwable) -> throwable instanceof InternalServerErrorException ||
+                        throwable.getCause() instanceof ConnectionClosedException,
+                    () -> {
+                        pull
+                            .withTag(!imageParse.tag.equals("") ? imageParse.tag : "latest")
+                            .exec(new PullImageResultCallback())
+                            .awaitCompletion();
+                        logger.debug("Image pulled [{}:{}]", pull.getRepository(), pull.getTag());
+                        return true;
+                    }
+                );
+            }
 
             // start container
             CreateContainerResponse exec = container.exec();

@@ -374,5 +374,13 @@ abstract public class AbstractBash extends Task {
         )
         @PluginProperty(dynamic = true)
         protected List<String> volumes;
+
+        @Schema(
+            title = "Is a pull of image must be done before starting the container",
+            description = "Mostly used for local image with registry"
+        )
+        @PluginProperty(dynamic = false)
+        @Builder.Default
+        protected Boolean pullImage = true;
     }
 }

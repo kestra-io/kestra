@@ -13,6 +13,8 @@ $vs-state-active-bg: $primary;
 $vs-selected-bg: $light;
 $vs-selected-bg: $primary;
 $vs-controls-color: $gray-400;
+$vs-state-disabled-bg: $input-disabled-bg;
+$vs-state-disabled-color: $input-color;
 
 @import '~vue-select/src/scss/vue-select.scss';
 
@@ -86,6 +88,12 @@ $vs-controls-color: $gray-400;
 
         &.vs__dropdown-option--highlight {
             color: $white-always;
+        }
+    }
+
+    &.vs--disabled {
+        .vs__selected-options .vs__selected {
+            color: $input-color;
         }
     }
 

@@ -436,6 +436,7 @@ select {
     .input-group {
         > div.v-select {
             padding-left: 0;
+            padding-right: 0;
         }
 
         > .input-group-append {
@@ -677,6 +678,11 @@ ul.nav-tabs {
         h5 {
             font-weight: bold;
         }
+    }
+
+
+    .modal-title {
+        word-break: break-all;
     }
 
     .modal-content {

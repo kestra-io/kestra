@@ -5,11 +5,11 @@ dependencies {
     implementation project(":jdbc")
 
     implementation("io.micronaut.sql:micronaut-jooq")
-    runtimeOnly("org.postgresql:postgresql:42.4.0")
+    runtimeOnly("org.postgresql:postgresql:42.4.2")
 
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':jdbc').sourceSets.test.output
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.6.1'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.7.0'
 }

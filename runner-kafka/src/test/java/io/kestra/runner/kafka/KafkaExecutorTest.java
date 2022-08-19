@@ -85,7 +85,7 @@ class KafkaExecutorTest {
     TopologyTestDriver testTopology;
 
     @BeforeEach
-    void init() throws IOException, URISyntaxException {
+    protected void init() throws IOException, URISyntaxException {
         kafkaTemplateExecutor.setTemplates(List.of());
         TestsUtils.loads(repositoryLoader);
     }
@@ -114,7 +114,7 @@ class KafkaExecutorTest {
     }
 
     @AfterEach
-    void tear() {
+    protected void tear() {
         if (this.testTopology != null) {
             testTopology.close();
         }

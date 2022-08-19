@@ -69,13 +69,15 @@ public abstract class JdbcRunnerTest {
     private PauseTest.Suite pauseTest;
 
     @BeforeEach
-    void init() throws IOException, URISyntaxException {
+    protected void init() throws IOException, URISyntaxException {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
 
-        TestsUtils.loads(repositoryLoader);
-        runner.setSchedulerEnabled(false);
-        runner.run();
+        if (!runner.isRunning()) {
+            TestsUtils.loads(repositoryLoader);
+            runner.setSchedulerEnabled(false);
+            runner.run();
+        }
     }
 
     @Test

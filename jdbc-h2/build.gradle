@@ -11,5 +11,5 @@ dependencies {
     testImplementation project(':jdbc').sourceSets.test.output
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.6.1'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.7.0'
 }

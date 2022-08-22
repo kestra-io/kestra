@@ -72,7 +72,7 @@ allprojects {
             force("org.apache.kafka:kafka-streams:" + kafkaVersion)
 
             // jooq failed to init h2 database with 5.15 version
-            force("org.jooq:jooq:3.16.9")
+            force("org.jooq:jooq:3.17.3")
         }
     }
 

@@ -51,7 +51,7 @@
     "vuex": "^3.6.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.18.10",
+    "@babel/core": "^7.18.13",
     "@babel/eslint-parser": "^7.18.9",
     "@babel/preset-env": "^7.18.10",
     "@vue/cli-plugin-babel": "^5.0.8",

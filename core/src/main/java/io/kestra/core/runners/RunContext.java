@@ -430,6 +430,18 @@ public class RunContext {
         return this.putTempFile(file, this.storageOutputPrefix.toString(), (String) null);
     }
 
+    /**
+     * Put the temporary file on storage and delete it after.
+     *
+     * @param file the temporary file to upload to storage
+     * @param name overwrite file name
+     * @return the {@code StorageObject} created
+     * @throws IOException If the temporary file can't be read
+     */
+    public URI putTempFile(File file, String name) throws IOException {
+        return this.putTempFile(file, this.storageOutputPrefix.toString(), name);
+    }
+
     public URI putTempFile(File file, String executionId, AbstractTrigger trigger) throws IOException {
         return this.putTempFile(
             file,

@@ -92,6 +92,36 @@ abstract class AbstractBashTest {
     }
 
     @Test
+    void outputDirs() throws Exception {
+        Bash bash = configure(Bash.builder()
+            .outputDirs(Arrays.asList("xml", "csv"))
+            .inputFiles(ImmutableMap.of("files/in/in.txt", "I'm here"))
+            .commands(new String[]{
+                "echo 1 >> {{ outputDirs.xml }}/file1.txt",
+                "mkdir -p {{ outputDirs.xml }}/sub/sub2",
+                "echo 2 >> {{ outputDirs.xml }}/sub/sub2/file2.txt",
+                "echo 3 >> {{ outputDirs.csv }}/file1.txt",
+            })
+        ).build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of());
+        ScriptOutput run = bash.run(runContext);
+
+        assertThat(run.getExitCode(), is(0));
+        assertThat(run.getStdErrLineCount(), is(0));
+        assertThat(run.getStdOutLineCount(), is(0));
+
+        InputStream get = storageInterface.get(run.getOutputFiles().get("xml/file1.txt"));
+        assertThat(CharStreams.toString(new InputStreamReader(get)), is("1\n"));
+
+        get = storageInterface.get(run.getOutputFiles().get("xml/sub/sub2/file2.txt"));
+        assertThat(CharStreams.toString(new InputStreamReader(get)), is("2\n"));
+
+        get = storageInterface.get(run.getOutputFiles().get("csv/file1.txt"));
+        assertThat(CharStreams.toString(new InputStreamReader(get)), is("3\n"));
+    }
+
+    @Test
     @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void failed() {
         Bash bash = configure(Bash.builder()

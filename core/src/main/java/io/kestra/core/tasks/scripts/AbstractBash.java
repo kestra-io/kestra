@@ -18,16 +18,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import static io.kestra.core.utils.Rethrow.throwBiConsumer;
+import static io.kestra.core.utils.Rethrow.*;
 
 @SuperBuilder
 @ToString
@@ -103,6 +102,17 @@ abstract public class AbstractBash extends Task {
     )
     @PluginProperty(dynamic = false)
     protected List<String> outputFiles;
+
+    @Schema(
+        title = "Output dirs list that will be uploaded to internal storage",
+        description = "List of key that will generate temporary directories.\n" +
+            "On the command, just can use with special variable named `outputDirs.key`.\n" +
+            "If you add a files with `[\"myDir\"]`, you can use the special vars `echo 1 >> {[ outputDirs.myDir }}/file1.txt` " +
+            "and `echo 2 >> {[ outputDirs.myDir }}/file2.txt` and both files will be uploaded to internal storage." +
+            " Then you can used them on others tasks using `{{ outputs.taskId.files['myDir/file1.txt'] }}`"
+    )
+    @PluginProperty(dynamic = false)
+    protected List<String> outputDirs;
 
     @Schema(
         title = "Input files are extra files supplied by user that make it simpler organize code.",
@@ -195,6 +205,19 @@ abstract public class AbstractBash extends Task {
             additionalVars
         );
 
+        List<String> allOutputDirs = new ArrayList<>();
+
+        if (this.outputDirs != null && this.outputDirs.size() > 0) {
+            allOutputDirs.addAll(this.outputDirs);
+        }
+
+        Map<String, String> outputDirs = BashService.createOutputFiles(
+            workingDirectory,
+            allOutputDirs,
+            additionalVars,
+            true
+        );
+
         String commandAsString = supplier.get();
 
         // run
@@ -210,8 +233,29 @@ abstract public class AbstractBash extends Task {
         // upload output files
         Map<String, URI> uploaded = new HashMap<>();
 
-        outputFiles.
-            forEach(throwBiConsumer((k, v) -> uploaded.put(k, runContext.putTempFile(new File(runContext.render(v, additionalVars))))));
+        // outputFiles
+        outputFiles
+            .forEach(throwBiConsumer((k, v) -> uploaded.put(k, runContext.putTempFile(new File(runContext.render(v, additionalVars))))));
+
+        // outputDirs
+        outputDirs
+            .forEach(throwBiConsumer((k, v) -> {
+                try (Stream<Path> walk = Files.walk(new File(runContext.render(v, additionalVars)).toPath())) {
+                    walk
+                        .filter(Files::isRegularFile)
+                        .forEach(throwConsumer(path -> {
+                            String filename = Path.of(
+                                k,
+                                Path.of(runContext.render(v, additionalVars)).relativize(path).toString()
+                            ).toString();
+
+                            uploaded.put(
+                                filename,
+                                runContext.putTempFile(path.toFile(), filename)
+                            );
+                        }));
+                }
+            }));
 
         Map<String, Object> outputsVars = new HashMap<>();
         outputsVars.putAll(runResult.getStdOut().getOutputs());

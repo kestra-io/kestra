@@ -52,6 +52,15 @@ abstract public class BashService {
         List<String> outputFiles,
         Map<String, Object> additionalVars
     ) throws IOException {
+        return BashService.createOutputFiles(tempDirectory, outputFiles, additionalVars, false);
+    }
+
+    public static Map<String, String> createOutputFiles(
+        Path tempDirectory,
+        List<String> outputFiles,
+        Map<String, Object> additionalVars,
+        Boolean isDir
+    ) throws IOException {
         List<String> outputs = new ArrayList<>();
 
         if (outputFiles != null && outputFiles.size() > 0) {
@@ -63,14 +72,21 @@ abstract public class BashService {
             outputs
                 .forEach(throwConsumer(s -> {
                     BashService.validFilename(s);
+                    File tempFile;
 
-                    File tempFile = File.createTempFile(s + "_", null, tempDirectory.toFile());
+                    if (isDir) {
+                        tempFile = Files.createTempDirectory(tempDirectory, s + "_").toFile();
+                    } else {
+                        tempFile = File.createTempFile(s + "_", null, tempDirectory.toFile());
+                    }
 
                     result.put(s, "{{workingDir}}/" + tempFile.getName());
                 }));
 
-            additionalVars.put("temp", result);
-            additionalVars.put("outputFiles", result);
+            if (!isDir) {
+                additionalVars.put("temp", result);
+            }
+            additionalVars.put(isDir ? "outputDirs": "outputFiles", result);
         }
 
         return result;

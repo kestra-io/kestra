@@ -47,7 +47,7 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
     private TopicsConfig topicsConfig;
 
     @BeforeEach
-    private void init() {
+    void init() {
         this.executorQueue = new KafkaQueue<>(Executor.class, applicationContext);
         this.triggerQueue = new KafkaQueue<>(Trigger.class, applicationContext);
         this.executorProducer = applicationContext.getBean(KafkaProducerService.class).of(KafkaSchedulerTest.class, JsonSerde.of(Execution.class));

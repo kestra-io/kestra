@@ -39,7 +39,7 @@ class KafkaFlowListenersTest extends FlowListenersTest {
     private StandAloneRunner runner;
 
     @BeforeEach
-    private void init() {
+    void init() {
         runner.setSchedulerEnabled(false);
         runner.run();
     }

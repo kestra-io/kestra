@@ -27,7 +27,7 @@ public abstract class AbstractKafkaRunnerTest {
     protected KafkaTemplateExecutor kafkaTemplateExecutor;
 
     @BeforeEach
-    private void init() throws IOException, URISyntaxException {
+    void init() throws IOException, URISyntaxException {
         kafkaTemplateExecutor.setTemplates(List.of());
         TestsUtils.loads(repositoryLoader);
         runner.setSchedulerEnabled(false);

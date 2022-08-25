@@ -70,6 +70,7 @@ allprojects {
         resolutionStrategy {
             force("org.apache.kafka:kafka-clients:" + kafkaVersion)
             force("org.apache.kafka:kafka-streams:" + kafkaVersion)
+            force("org.jooq:jooq:3.16.9")
         }
     }
 

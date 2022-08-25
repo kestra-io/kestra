@@ -24,14 +24,19 @@ public class H2Repository<T>  extends io.kestra.jdbc.AbstractJdbcRepository<T> {
     public void persist(T entity, DSLContext context, @Nullable Map<Field<Object>, Object> fields) {
         Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
-        context
-            .insertInto(table)
-            .set(AbstractJdbcRepository.field("key"), key(entity))
+        int affectedRows = context
+            .update(table)
             .set(finalFields)
-            .onConflict(AbstractJdbcRepository.field("key"))
-            .doUpdate()
-            .set(finalFields)
+            .where(AbstractJdbcRepository.field("key").eq(key(entity)))
             .execute();
+
+        if (affectedRows == 0) {
+            context
+                .insertInto(table)
+                .set(AbstractJdbcRepository.field("key"), key(entity))
+                .set(finalFields)
+                .execute();
+        }
     }
 
     public Condition fullTextCondition(List<String> fields, String query) {

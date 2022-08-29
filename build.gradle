@@ -18,7 +18,7 @@ plugins {
 
     // release
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
-    id 'net.researchgate.release' version '3.0.0'
+    id 'net.researchgate.release' version '3.0.1'
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id 'signing'
     id 'ru.vyarus.pom' version '2.2.1' apply false
@@ -381,8 +381,9 @@ subprojects {
                     groupId project.group
                     artifactId project.name
 
-                    artifact sourcesJar
-                    artifact javadocJar
+                    artifact sourceJar
+                    artifact javaDocJar
+                    artifact testJar
                 }
             }
         }

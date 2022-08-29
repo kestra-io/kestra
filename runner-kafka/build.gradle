@@ -1,9 +1,5 @@
 publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
 
-repositories {
-    maven { url "https://packages.confluent.io/maven/" }
-}
-
 dependencies {
     implementation project(":core")
 

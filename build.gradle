@@ -346,6 +346,11 @@ subprojects {
         from javadoc
     }
 
+    task testsJar(type: Jar) {
+        archiveClassifier.set('tests')
+        from sourceSets.test.output
+    }
+
     github {
         user 'kestra-io'
         license 'Apache'
@@ -381,9 +386,9 @@ subprojects {
                     groupId project.group
                     artifactId project.name
 
-                    artifact sourceJar
-                    artifact javaDocJar
-                    artifact testJar
+                    artifact sourcesJar
+                    artifact javadocJar
+                    artifact testsJar
                 }
             }
         }

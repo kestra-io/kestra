@@ -122,6 +122,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
           files: |
             build/executable/*
 

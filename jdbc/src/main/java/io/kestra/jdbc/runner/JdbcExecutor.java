@@ -286,10 +286,6 @@ public class JdbcExecutor implements ExecutorInterface {
 
         if (result != null) {
             this.toExecution(result);
-
-            if (executorService.canBePurged(result)) {
-                executorStateStorage.delete(result.getExecution());
-            }
         }
     }
 
@@ -376,6 +372,7 @@ public class JdbcExecutor implements ExecutorInterface {
         // delete if ended
         if (executorService.canBePurged(executor)) {
             // TODO
+            // executorStateStorage.delete(executor.getExecution());
         }
     }
 

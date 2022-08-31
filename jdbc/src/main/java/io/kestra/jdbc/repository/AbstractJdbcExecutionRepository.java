@@ -118,12 +118,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter());
 
-                if (flowId != null && namespace != null) {
-                    select = select.and(field("namespace").eq(namespace));
-                    select = select.and(field("flow_id").eq(flowId));
-                } else if (namespace != null) {
-                    select = select.and(field("namespace").likeIgnoreCase(namespace + "%"));
-                }
+                select = filteringQuery(select, namespace, flowId, query);
 
                 if (startDate != null) {
                     select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
@@ -137,9 +132,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     select = select.and(this.statesFilter(state));
                 }
 
-                if (query != null) {
-                    select.and(this.findCondition(query));
-                }
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
@@ -200,6 +192,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 field("state_current", String.class)
             ),
             query,
+            namespace,
+            flowId,
             startDate,
             endDate
         );
@@ -226,7 +220,14 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .collect(Collectors.toList());
     }
 
-    private Results dailyStatisticsQuery(List<Field<?>> fields, String query, ZonedDateTime startDate, ZonedDateTime endDate) {
+    private Results dailyStatisticsQuery(
+        List<Field<?>> fields,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate
+    ) {
         ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
         ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
 
@@ -250,9 +251,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
                     .and(field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
-                if (query != null) {
-                    select.and(this.findCondition(query));
-                }
+                select = filteringQuery(select, namespace, flowId, query);
 
                 List<Field<?>> groupFields = new ArrayList<>();
                 if (context.configuration().dialect() != SQLDialect.H2) {
@@ -268,6 +267,26 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 return finalQuery.fetchMany();
             });
+    }
+
+    private <T extends Record> SelectConditionStep<T> filteringQuery(
+        SelectConditionStep<T> select,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable String query
+    ) {
+        if (flowId != null && namespace != null) {
+            select = select.and(field("namespace").eq(namespace));
+            select = select.and(field("flow_id").eq(flowId));
+        } else if (namespace != null) {
+            select = select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+        }
+
+        if (query != null) {
+            select = select.and(this.findCondition(query));
+        }
+
+        return select;
     }
 
 
@@ -293,6 +312,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         Results results = dailyStatisticsQuery(
             fields,
             query,
+            namespace,
+            flowId,
             startDate,
             endDate
         );

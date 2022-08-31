@@ -45,12 +45,18 @@ public class JdbcScheduler extends AbstractScheduler {
         executionQueue.receive(
             Scheduler.class,
             execution -> {
-            if (execution.getState().getCurrent().isTerninated() && execution.getTrigger() != null) {
-                triggerRepository
-                    .findByExecution(execution)
-                    .ifPresent(trigger -> triggerRepository.save(trigger.resetExecution()));
+                if (
+                    execution.getTrigger() != null && (
+                        execution.isDeleted() ||
+                            execution.getState().getCurrent().isTerninated()
+                    )
+                ) {
+                    triggerRepository
+                        .findByExecution(execution)
+                        .ifPresent(trigger -> triggerRepository.save(trigger.resetExecution()));
+                }
             }
-        });
+        );
 
         super.run();
     }

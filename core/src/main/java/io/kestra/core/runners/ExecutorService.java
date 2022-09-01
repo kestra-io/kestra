@@ -672,12 +672,13 @@ public class ExecutorService {
 
     public void log(Logger log, Boolean in, Executor value) {
         log.debug(
-            "{} {} [key='{}', from='{}', offset='{}']\n{}",
+            "{} {} [key='{}', from='{}', offset='{}', crc32='{}']\n{}",
             in ? "<< IN " : ">> OUT",
             value.getClass().getSimpleName(),
             value.getExecution().getId(),
             value.getFrom(),
             value.getOffset(),
+            value.getExecution().toCrc32State(),
             value.getExecution().toStringState()
         );
     }

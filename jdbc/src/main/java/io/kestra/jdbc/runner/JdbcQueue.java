@@ -90,7 +90,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         );
     }
 
-    private void produce(String key, T message) {
+    private void produce(String key, T message, Boolean skipIndexer) {
         if (log.isTraceEnabled()) {
             log.trace("New message: topic '{}', value {}", this.cls.getName(), message);
         }
@@ -98,7 +98,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         dslContextWrapper.transaction(configuration -> {
             DSLContext context = DSL.using(configuration);
 
-            jdbcQueueIndexer.accept(context, message);
+            if (!skipIndexer) {
+                jdbcQueueIndexer.accept(context, message);
+            }
 
             context
                 .insertInto(table)
@@ -107,9 +109,13 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         });
     }
 
+    public void emitOnly(T message) {
+        this.produce(queueService.key(message), message, true);
+    }
+
     @Override
     public void emit(T message) {
-        this.produce(queueService.key(message), message);
+        this.produce(queueService.key(message), message, false);
     }
 
     @Override

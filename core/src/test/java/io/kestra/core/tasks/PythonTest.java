@@ -12,10 +12,8 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.scripts.Bash;
 import io.kestra.core.tasks.scripts.Python;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -86,6 +84,25 @@ class PythonTest {
 
         assertThat(run.getExitCode(), is(0));
         assertThat(run.getVars().get("extract"), is("200"));
+    }
+
+    @Test
+    void noVirtualEnv() throws Exception {
+        RunContext runContext = runContextFactory.of();
+        Python python = Python.builder()
+            .id("test-python-task")
+            .inputFiles(Map.of(
+                "main.py", "from kestra import Kestra\n" +
+                    "Kestra.outputs({'ok': True})\n"
+            ))
+            .commands(List.of("python main.py"))
+            .virtualEnv(false)
+            .build();
+
+        ScriptOutput run = python.run(runContext);
+
+        assertThat(run.getExitCode(), is(0));
+        assertThat(run.getVars().get("ok"), is(true));
     }
 
     @Test

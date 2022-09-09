@@ -34,6 +34,8 @@ public class Template implements DeletedInterface {
     @Pattern(regexp="[a-z0-9._-]+")
     private String namespace;
 
+    String description;
+
     @Valid
     @NotEmpty
     private List<Task> tasks;
@@ -95,6 +97,7 @@ public class Template implements DeletedInterface {
         return new Template(
             this.id,
             this.namespace,
+            this.description,
             this.tasks,
             this.errors,
             true

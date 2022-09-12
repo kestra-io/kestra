@@ -4,6 +4,7 @@ import io.kestra.core.runners.FlowListeners;
 import io.kestra.runner.kafka.services.*;
 import io.micronaut.context.annotation.Replaces;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -22,6 +23,7 @@ import io.kestra.runner.kafka.serializers.JsonSerde;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import jakarta.inject.Inject;
@@ -133,5 +135,10 @@ public class KafkaFlowListeners implements FlowListenersInterface {
     public void listen(Consumer<List<Flow>> consumer) {
         consumers.add(consumer);
         consumer.accept(this.flows());
+    }
+
+    @Override
+    public void listen(BiConsumer<Flow, Flow> consumer) {
+        throw new NotImplementedException("Kafka runner don't need to listen on each flow changed since it's handle by stream");
     }
 }

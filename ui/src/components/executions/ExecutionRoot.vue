@@ -45,6 +45,7 @@
     import Kicon from "../Kicon"
     import Tabs from "../../components/Tabs";
     import Delete from "vue-material-design-icons/Delete";
+    import State from "../../utils/state";
 
     export default {
         mixins: [RouteContext],
@@ -143,8 +144,13 @@
                 if (this.execution) {
                     const item = this.execution;
 
+                    let message = this.$t("delete confirm", {name: item.id});
+                    if (State.isRunning(this.execution.state.current)) {
+                        message += this.$t("delete execution running");
+                    }
+
                     this.$toast()
-                        .confirm(this.$t("delete confirm", {name: item.id}), () => {
+                        .confirm(message, () => {
                             return this.$store
                                 .dispatch("execution/deleteExecution", item)
                                 .then(() => {

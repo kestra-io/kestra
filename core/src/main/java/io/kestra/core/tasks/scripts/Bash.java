@@ -33,7 +33,7 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
             title = "Single bash command",
             code = {
                 "commands:",
-                "- echo \"The current execution is : {{execution.id}}\""
+                "- 'echo \"The current execution is : {{execution.id}}\"'"
             }
         ),
         @Example(
@@ -55,6 +55,27 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
                 "    echo {{ workingDir }}",
                 "commands:",
                 "- /bin/bash script.sh",
+            }
+        ),
+        @Example(
+            title = "Run a command on a docker image",
+            code = {
+                "runner: DOCKER",
+                "dockerOptions:",
+                "  image: php",
+                "commands:",
+                "- 'php -r 'print(phpversion() . \"\\n\");'",
+            }
+        ),
+        @Example(
+            title = "Execute cmd on windows",
+            code = {
+                "commands:",
+                "  - 'echo \"The current execution is : {{execution.id}}\"'",
+                "exitOnFailed: false",
+                "interpreter: cmd",
+                "interpreterArgs:",
+                "  - /c",
             }
         )
     }

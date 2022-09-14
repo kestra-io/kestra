@@ -118,7 +118,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter());
 
-                select = filteringQuery(select, namespace, flowId, query);
+                select = filteringQuery(select, namespace, flowId, null, query);
 
                 if (startDate != null) {
                     select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
@@ -194,6 +194,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             query,
             namespace,
             flowId,
+            null,
             startDate,
             endDate
         );
@@ -225,6 +226,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String query,
         @Nullable String namespace,
         @Nullable String flowId,
+        List<FlowFilter> flows,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate
     ) {
@@ -251,7 +253,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .and(field("start_date").greaterOrEqual(finalStartDate.toOffsetDateTime()))
                     .and(field("start_date").lessOrEqual(finalEndDate.toOffsetDateTime()));
 
-                select = filteringQuery(select, namespace, flowId, query);
+                select = filteringQuery(select, namespace, flowId, flows, query);
 
                 List<Field<?>> groupFields = new ArrayList<>();
                 if (context.configuration().dialect() != SQLDialect.H2) {
@@ -273,6 +275,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         SelectConditionStep<T> select,
         @Nullable String namespace,
         @Nullable String flowId,
+        @Nullable List<FlowFilter> flows,
         @Nullable String query
     ) {
         if (flowId != null && namespace != null) {
@@ -286,6 +289,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             select = select.and(this.findCondition(query));
         }
 
+        if (flows != null) {
+            select = select.and(DSL.or(
+                flows
+                    .stream()
+                    .map(e -> field("namespace").eq(e.getNamespace())
+                        .and(field("flow_id").eq(e.getId()))
+                    )
+                    .collect(Collectors.toList())
+            ));
+        }
+
         return select;
     }
 
@@ -295,6 +309,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         @Nullable String query,
         @Nullable String namespace,
         @Nullable String flowId,
+        @Nullable List<FlowFilter> flows,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         boolean groupByNamespaceOnly
@@ -314,6 +329,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             query,
             namespace,
             flowId,
+            flows,
             startDate,
             endDate
         );

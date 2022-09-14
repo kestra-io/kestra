@@ -161,6 +161,7 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             null,
             null,
+            null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             false
@@ -188,6 +189,7 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             null,
             null,
+            null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             true
@@ -202,6 +204,20 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(full.getExecutionCounts().get(State.Type.RUNNING), is(5L));
         assertThat(full.getExecutionCounts().get(State.Type.SUCCESS), is(20L));
         assertThat(full.getExecutionCounts().get(State.Type.CREATED), is(0L));
+
+        result = executionRepository.dailyGroupByFlowStatistics(
+            null,
+            null,
+            null,
+            List.of(ExecutionRepositoryInterface.FlowFilter.builder().namespace("io.kestra.unittest").id(FLOW).build()),
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            false
+        );
+
+        assertThat(result.size(), is(1));
+        assertThat(result.get("io.kestra.unittest").size(), is(1));
+        assertThat(result.get("io.kestra.unittest").get(FLOW).size(), is(11));
     }
 
     @Test

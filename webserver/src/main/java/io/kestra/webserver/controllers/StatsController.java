@@ -26,7 +26,6 @@ public class StatsController {
     @Inject
     protected ExecutionRepositoryInterface executionRepository;
 
-
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/daily", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions")
@@ -75,15 +74,16 @@ public class StatsController {
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
+        @Parameter(description = "A list of flows filter") @Nullable List<ExecutionRepositoryInterface.FlowFilter> flows,
         @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
         @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
         @Parameter(description = "Return only namespace result and skip flows") @Nullable Boolean namespaceOnly
     ) {
-
         return executionRepository.dailyGroupByFlowStatistics(
             query,
             namespace,
             flowId,
+            flows != null && flows.get(0).getNamespace() != null ? flows : null,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             namespaceOnly != null && namespaceOnly

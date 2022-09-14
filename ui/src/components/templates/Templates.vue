@@ -92,7 +92,7 @@
     import Kicon from "../Kicon"
     import RestoreUrl from "../../mixins/restoreUrl";
     import _merge from "lodash/merge";
-    import MarkdownTooltip from "@/components/layout/MarkdownTooltip";
+    import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],

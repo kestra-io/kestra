@@ -14,13 +14,14 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorState;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.runner.JdbcIndexerInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
@@ -110,31 +111,87 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(
-                        field("value")
-                    )
-                    .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter());
-
-                select = filteringQuery(select, namespace, flowId, null, query);
-
-                if (startDate != null) {
-                    select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
-                }
-
-                if (endDate != null) {
-                    select = select.and(field("end_date").lessOrEqual(endDate.toOffsetDateTime()));
-                }
-
-                if (state != null) {
-                    select = select.and(this.statesFilter(state));
-                }
-
+                SelectConditionStep<Record1<Object>> select = this.findSelect(
+                    context,
+                    query,
+                    namespace,
+                    flowId,
+                    startDate,
+                    endDate,
+                    state
+                );
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
+    }
+
+    @Override
+    public Flowable<Execution> find(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<State.Type> state
+    ) {
+        return Flowable.create(
+            emitter -> this.jdbcRepository
+                .getDslContextWrapper()
+                .transaction(configuration -> {
+                    DSLContext context = DSL.using(configuration);
+
+                    SelectConditionStep<Record1<Object>> select = this.findSelect(
+                        context,
+                        query,
+                        namespace,
+                        flowId,
+                        startDate,
+                        endDate,
+                        state
+                    );
+
+                    select.fetch()
+                        .map(this.jdbcRepository::map)
+                        .forEach(emitter::onNext);
+
+                    emitter.onComplete();
+                }),
+            BackpressureStrategy.BUFFER
+        );
+    }
+
+    private SelectConditionStep<Record1<Object>> findSelect(
+        DSLContext context,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<State.Type> state
+    ) {
+        SelectConditionStep<Record1<Object>> select = context
+            .select(
+                field("value")
+            )
+            .hint(context.configuration().dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
+            .from(this.jdbcRepository.getTable())
+            .where(this.defaultFilter());
+
+        select = filteringQuery(select, namespace, flowId, null, query);
+
+        if (startDate != null) {
+            select = select.and(field("start_date").greaterOrEqual(startDate.toOffsetDateTime()));
+        }
+
+        if (endDate != null) {
+            select = select.and(field("end_date").lessOrEqual(endDate.toOffsetDateTime()));
+        }
+
+        if (state != null) {
+            select = select.and(this.statesFilter(state));
+        }
+
+        return select;
     }
 
     @Override
@@ -302,7 +359,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
         return select;
     }
-
 
     @Override
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
@@ -536,6 +592,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         eventPublisher.publishEvent(new CrudEvent<>(deleted, CrudEventType.DELETE));
 
         return deleted;
+    }
+
+    @Override
+    public Integer purge(Execution execution) {
+        return this.jdbcRepository.delete(execution);
     }
 
     public Executor lock(String executionId, Function<Pair<Execution, ExecutorState>, Pair<Executor, ExecutorState>> function) {

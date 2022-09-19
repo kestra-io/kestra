@@ -152,7 +152,7 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     protected Optional<T> rawGetRequest(String index, String id) {
         GetRequest getRequest = new GetRequest(
-            this.indicesConfigs.get(index).getIndex(),
+            indexName(index),
             id
         );
 
@@ -185,7 +185,7 @@ abstract public class AbstractElasticSearchRepository<T> {
     }
 
     protected IndexResponse putRequest(String index, String id, String json) {
-        IndexRequest request = new IndexRequest(this.indicesConfigs.get(index).getIndex());
+        IndexRequest request = new IndexRequest(indexName(index));
         request.id(id);
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
@@ -201,6 +201,10 @@ abstract public class AbstractElasticSearchRepository<T> {
         }
     }
 
+    protected String indexName(String index) {
+        return this.indicesConfigs.get(index).getIndex();
+    }
+
     protected IndexResponse putRequest(String index, String id, T source) {
         try {
             String json = MAPPER.writeValueAsString(source);
@@ -211,7 +215,7 @@ abstract public class AbstractElasticSearchRepository<T> {
     }
 
     protected UpdateResponse updateRequest(String index, String id, XContentBuilder doc) {
-        UpdateRequest request = new UpdateRequest(this.indicesConfigs.get(index).getIndex(), id);
+        UpdateRequest request = new UpdateRequest(indexName(index), id);
         request.doc(doc);
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
@@ -236,7 +240,7 @@ abstract public class AbstractElasticSearchRepository<T> {
     }
 
     protected DeleteResponse rawDeleteRequest(String index, String id) {
-        DeleteRequest request = new DeleteRequest(this.indicesConfigs.get(index).getIndex(), id);
+        DeleteRequest request = new DeleteRequest(indexName(index), id);
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
 
         try {
@@ -251,7 +255,7 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     protected SearchRequest searchRequest(String index, SearchSourceBuilder sourceBuilder, boolean scroll) {
         SearchRequest searchRequest = new SearchRequest()
-            .indices(this.indicesConfigs.get(index).getIndex())
+            .indices(indexName(index))
             .source(sourceBuilder);
 
         if (scroll) {
@@ -507,7 +511,7 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     protected GetSettingsResponse getSettings(String index, boolean includeDefaults) {
         GetSettingsRequest request = new GetSettingsRequest()
-            .indices(this.indicesConfigs.get(index).getIndex())
+            .indices(indexName(index))
             .includeDefaults(includeDefaults);
         try {
             return this.client.indices().getSettings(request, RequestOptions.DEFAULT);

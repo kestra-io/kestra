@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.data.model.Pageable;
@@ -61,9 +62,14 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(list.size(), is(1));
         assertThat(list.get(0).getExecutionId(), is(save.getExecutionId()));
 
-
         list = logRepository.findByExecutionIdAndTaskRunId(save.getExecutionId(), save.getTaskRunId(), null);
         assertThat(list.size(), is(1));
         assertThat(list.get(0).getExecutionId(), is(save.getExecutionId()));
+
+        Integer countDeleted = logRepository.purge(Execution.builder().id(save.getExecutionId()).build());
+        assertThat(countDeleted, is(1));
+
+        list = logRepository.findByExecutionIdAndTaskId(save.getExecutionId(), save.getTaskId(), null);
+        assertThat(list.size(), is(0));
     }
 }

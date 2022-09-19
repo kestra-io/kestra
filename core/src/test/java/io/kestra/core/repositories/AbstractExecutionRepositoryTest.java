@@ -136,6 +136,32 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void purge() {
+        executionRepository.save(ExecutionFixture.EXECUTION_1);
+
+        Optional<Execution> full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        assertThat(full.isPresent(), is(true));
+
+        executionRepository.purge(ExecutionFixture.EXECUTION_1);
+
+        full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        assertThat(full.isPresent(), is(false));
+    }
+
+    @Test
+    protected void delete() {
+        executionRepository.save(ExecutionFixture.EXECUTION_1);
+
+        Optional<Execution> full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        assertThat(full.isPresent(), is(true));
+
+        executionRepository.delete(ExecutionFixture.EXECUTION_1);
+
+        full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        assertThat(full.isPresent(), is(false));
+    }
+
+    @Test
     protected void mappingConflict() {
         executionRepository.save(ExecutionFixture.EXECUTION_2);
         executionRepository.save(ExecutionFixture.EXECUTION_1);

@@ -1,5 +1,6 @@
 package io.kestra.repository.memory;
 
+import io.kestra.core.models.executions.Execution;
 import io.micronaut.data.model.Pageable;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -51,5 +52,10 @@ public class MemoryLogRepository implements LogRepositoryInterface {
         logs.add(log);
 
         return log;
+    }
+
+    @Override
+    public Integer purge(Execution execution) {
+        throw new UnsupportedOperationException();
     }
 }

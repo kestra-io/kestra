@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
 import io.micronaut.data.model.Pageable;
+import io.reactivex.Flowable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -36,6 +37,15 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable List<State.Type> state
     );
 
+    Flowable<Execution> find(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<State.Type> state
+    );
+
     ArrayListTotal<TaskRun> findTaskRun(
         Pageable pageable,
         @Nullable String query,
@@ -47,6 +57,8 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     );
 
     Execution delete(Execution execution);
+
+    Integer purge(Execution execution);
 
     Integer maxTaskRunSetting();
 

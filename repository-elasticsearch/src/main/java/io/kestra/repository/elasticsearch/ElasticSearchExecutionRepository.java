@@ -16,6 +16,8 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -196,9 +198,9 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     @Override
     public List<ExecutionCount> executionCounts(
         List<Flow> flows,
-        @javax.annotation.Nullable List<State.Type> states,
-        @javax.annotation.Nullable ZonedDateTime startDate,
-        @javax.annotation.Nullable ZonedDateTime endDate
+        @Nullable List<State.Type> states,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate
     ) {
         if (startDate == null) {
             startDate = ZonedDateTime.now().minusDays(30);
@@ -457,13 +459,37 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     }
 
     @Override
+    public Flowable<Execution> find(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<State.Type> state
+    ) {
+        BoolQueryBuilder bool = this.filters(null, null, endDate, namespace, flowId, null, state);
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool);
+
+        return Flowable.create(
+            emitter -> {
+                this.scroll(INDEX_NAME, sourceBuilder, emitter::onNext);
+
+                emitter.onComplete();
+            },
+            BackpressureStrategy.BUFFER
+        );
+    }
+
+    @Override
     public ArrayListTotal<TaskRun> findTaskRun(
         Pageable pageable,
-        @javax.annotation.Nullable String query,
-        @javax.annotation.Nullable String namespace,
-        @javax.annotation.Nullable String flowId,
-        @javax.annotation.Nullable ZonedDateTime startDate,
-        @javax.annotation.Nullable ZonedDateTime endDate,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
         @Nullable List<State.Type> states
     ) {
         BoolQueryBuilder filterAggQuery = filters(query, startDate, endDate, namespace, flowId, null, states, true);
@@ -522,6 +548,13 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
         eventPublisher.publishEvent(new CrudEvent<>(deleted, CrudEventType.DELETE));
 
         return deleted;
+    }
+
+    @Override
+    public Integer purge(Execution execution) {
+        this.rawDeleteRequest(INDEX_NAME, execution.getId());
+
+        return 1;
     }
 
     @Override

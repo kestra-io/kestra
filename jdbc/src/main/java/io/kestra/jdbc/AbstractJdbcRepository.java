@@ -117,17 +117,18 @@ public abstract class AbstractJdbcRepository<T> {
             .execute();
     }
 
-    public void delete(T entity) {
-        dslContextWrapper.transaction(configuration -> {
-            this.delete(DSL.using(configuration), entity);
+    public int delete(T entity) {
+        return dslContextWrapper.transactionResult(configuration -> {
+            return this.delete(DSL.using(configuration), entity);
         });
     }
 
-    public void delete(DSLContext dslContext, T entity) {
-        dslContext
+    public int delete(DSLContext dslContext, T entity) {
+        DeleteConditionStep<Record> key = dslContext
             .delete(table)
-            .where(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key").eq(key(entity)))
-            .execute();
+            .where(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key").eq(key(entity)));
+
+        return key.execute();
     }
 
     public <R extends Record> T map(R record) {

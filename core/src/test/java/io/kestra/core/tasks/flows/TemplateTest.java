@@ -72,4 +72,23 @@ public class TemplateTest extends AbstractMemoryRunnerTest {
     void withTemplate() throws TimeoutException, IOException, URISyntaxException {
         TemplateTest.withTemplate(runnerUtils, templateRepository, repositoryLoader, logQueue);
     }
+
+
+    public static void withFailedTemplate(RunnerUtils runnerUtils, TemplateRepositoryInterface templateRepository, LocalFlowRepositoryLoader repositoryLoader, QueueInterface<LogEntry> logQueue) throws TimeoutException, IOException, URISyntaxException {
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/with-failed-template.yaml")));
+
+        List<LogEntry> logs = new ArrayList<>();
+        logQueue.receive(logs::add);
+
+        Execution execution = runnerUtils.runOne("io.kestra.tests", "with-failed-template", Duration.ofSeconds(60));
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("Can't find flow template 'io.kestra.tests.invalid'")).findFirst().orElseThrow().getLevel(), is(Level.ERROR));
+    }
+
+    @Test
+    void withFailedTemplate() throws TimeoutException, IOException, URISyntaxException {
+        TemplateTest.withFailedTemplate(runnerUtils, templateRepository, repositoryLoader, logQueue);
+    }
 }

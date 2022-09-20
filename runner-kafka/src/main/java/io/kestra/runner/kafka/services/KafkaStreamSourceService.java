@@ -99,7 +99,7 @@ public class KafkaStreamSourceService {
                 (namespace, id) -> this.templateExecutorInterface.findById(namespace, id).orElse(null)
             );
         } catch (InternalException e) {
-            log.warn("Failed to inject template",  e);
+            log.debug("Failed to inject template",  e);
         }
 
         Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, executor.getExecution());

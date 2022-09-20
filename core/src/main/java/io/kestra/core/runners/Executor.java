@@ -36,6 +36,10 @@ public class Executor {
         this.joined = workerTaskResult;
     }
 
+    public Boolean canBeProcessed() {
+        return !(this.getException() != null || this.getFlow() == null || this.getExecution().isDeleted());
+    }
+
     public Executor withFlow(Flow flow) {
         this.flow = flow;
 

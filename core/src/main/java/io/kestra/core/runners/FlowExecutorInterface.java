@@ -11,6 +11,8 @@ public interface FlowExecutorInterface {
 
     Optional<Flow> findById(String namespace, String id, Optional<Integer> revision);
 
+    Boolean isReady();
+
     default Optional<Flow> findByIdFromFlowTask(String namespace, String id, Optional<Integer> revision, String fromNamespace, String fromId) {
         return this.findById(
             namespace,

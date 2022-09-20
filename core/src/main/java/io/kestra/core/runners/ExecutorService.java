@@ -56,7 +56,7 @@ public class ExecutorService {
 
     public Executor process(Executor executor) {
         // previous failed (flow join can fail), just forward
-        if (executor.getException() != null || executor.getExecution().isDeleted()) {
+        if (!executor.canBeProcessed()) {
             return executor;
         }
 

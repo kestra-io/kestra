@@ -39,7 +39,7 @@ public class KafkaFlowExecutor implements FlowExecutorInterface {
     @SneakyThrows
     private void await() {
         if (flowsLast == null || store == null) {
-            Await.until(() -> this.flowsLast != null && store != null, Duration.ofMillis(100), Duration.ofMinutes(5));
+            Await.until(() -> this.isReady() == true, Duration.ofMillis(100), Duration.ofMinutes(5));
         }
     }
 
@@ -66,5 +66,10 @@ public class KafkaFlowExecutor implements FlowExecutorInterface {
         }
 
         return this.store.get(Flow.uid(namespace, id, revision));
+    }
+
+    @Override
+    public Boolean isReady() {
+        return this.flowsLast != null && store != null;
     }
 }

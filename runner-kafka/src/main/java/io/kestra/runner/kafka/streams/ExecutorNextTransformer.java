@@ -33,6 +33,11 @@ public class ExecutorNextTransformer implements ValueTransformerWithKey<String, 
 
     @Override
     public Executor transform(final String key, final Executor value) {
+        // previous failed (flow join can fail), just forward
+        if (!value.canBeProcessed()) {
+            return value;
+        }
+
         Executor executor = executorService.process(value);
 
         if (executor.getNexts().size() == 0) {

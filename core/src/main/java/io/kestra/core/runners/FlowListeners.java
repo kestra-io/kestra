@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.models.flows.FlowSource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.models.flows.Flow;
@@ -16,6 +17,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -39,7 +42,10 @@ public class FlowListeners implements FlowListenersInterface {
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue
     ) {
         this.flowQueue = flowQueue;
-        this.flows = flowRepository.findAll();
+        this.flows = flowRepository.findAll()
+            .stream()
+            .filter(flow -> !(flow instanceof FlowSource))
+            .collect(Collectors.toList());
     }
 
     @Override

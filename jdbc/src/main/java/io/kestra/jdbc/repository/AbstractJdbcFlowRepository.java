@@ -1,9 +1,13 @@
 package io.kestra.jdbc.repository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -12,6 +16,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
+import io.kestra.jdbc.JdbcMapper;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -40,6 +45,28 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.flowQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED));
+
+        this.jdbcRepository.setDeserializer(record -> {
+            String source = record.get("value", String.class);
+
+            try {
+                return this.jdbcRepository.deserialize(source);
+            } catch (DeserializationException e) {
+                try {
+                    JsonNode jsonNode = JdbcMapper.of().readTree(source);
+                    return FlowSource.builder()
+                        .id(jsonNode.get("id").asText())
+                        .namespace(jsonNode.get("namespace").asText())
+                        .revision(jsonNode.get("revision").asInt())
+                        .source(JacksonMapper.ofJson().writeValueAsString(JacksonMapper.toMap(source)))
+                        .exception(e.getMessage())
+                        .tasks(List.of())
+                        .build();
+                } catch (JsonProcessingException ex) {
+                    throw new DeserializationException(ex);
+                }
+            }
+        });
     }
 
     @Override

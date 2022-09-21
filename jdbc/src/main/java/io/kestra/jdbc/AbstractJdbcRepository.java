@@ -1,12 +1,8 @@
 package io.kestra.jdbc;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
@@ -15,47 +11,25 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public abstract class AbstractJdbcRepository<T> {
-    protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
-
-    static {
-        final SimpleModule module = new SimpleModule();
-        module.addSerializer(Instant.class, new JsonSerializer<>() {
-            @Override
-            public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
-                jsonGenerator.writeString(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-                    .withZone(ZoneOffset.UTC)
-                    .format(instant)
-                );
-            }
-        });
-
-        module.addSerializer(ZonedDateTime.class, new JsonSerializer<>() {
-            @Override
-            public void serialize(ZonedDateTime instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
-                jsonGenerator.writeString(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
-                    .format(instant)
-                );
-            }
-        });
-
-        MAPPER.registerModule(module);
-    }
-
     protected final QueueService queueService;
+
     protected final Class<T> cls;
+
+    @Setter
+    protected Function<Record, T> deserializer;
 
     @Getter
     protected final JooqDSLContextWrapper dslContextWrapper;
@@ -91,7 +65,7 @@ public abstract class AbstractJdbcRepository<T> {
     @SneakyThrows
     public Map<Field<Object>, Object> persistFields(T entity) {
         return new HashMap<>(ImmutableMap
-            .of(io.kestra.jdbc.repository.AbstractJdbcRepository.field("value"), MAPPER.writeValueAsString(entity))
+            .of(io.kestra.jdbc.repository.AbstractJdbcRepository.field("value"), JdbcMapper.of().writeValueAsString(entity))
         );
     }
 
@@ -132,10 +106,20 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     public <R extends Record> T map(R record) {
+        if (deserializer != null) {
+            return deserializer.apply(record);
+        } else {
+            return this.deserialize(record.get("value", String.class));
+        }
+    }
+
+    public T deserialize(String record) {
         try {
-            return JacksonMapper.ofJson().readValue(record.get("value", String.class), cls);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            return JacksonMapper.ofJson().readValue(record, cls);
+        } catch (InvalidTypeIdException e) {
+            throw new DeserializationException(e);
+        } catch (IOException e) {
+            throw new DeserializationException(e);
         }
     }
 

@@ -1,6 +1,7 @@
 package io.kestra.repository.postgres;
 
 import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
@@ -35,7 +36,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     public Map<Field<Object>, Object> persistFields(T entity) {
         Map<Field<Object>, Object> fields = super.persistFields(entity);
 
-        String json = MAPPER.writeValueAsString(entity);
+        String json = JdbcMapper.of().writeValueAsString(entity);
         fields.replace(AbstractJdbcRepository.field("value"), DSL.val(JSONB.valueOf(json)));
 
         return fields;

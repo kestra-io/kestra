@@ -3,9 +3,14 @@ package io.kestra.jdbc.repository;
 import io.kestra.core.Helpers;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowSource;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.jdbc.JdbcTestUtils;
+import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,12 +19,13 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import jakarta.inject.Inject;
 
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 
 public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repositories.AbstractFlowRepositoryTest {
     @Inject
@@ -27,6 +33,9 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
 
     @Inject
     JdbcTestUtils jdbcTestUtils;
+
+    @Inject
+    protected JooqDSLContextWrapper dslContextWrapper;
 
     @Test
     void find() {
@@ -59,6 +68,35 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
             .findFirst()
             .orElseThrow();
         assertThat(flow.getFragments().get(0), containsString("types.MultipleCondition[/mark]"));
+    }
+
+    @Test
+    public void invalidFlow() {
+        dslContextWrapper.transaction(configuration -> {
+            DSLContext context = DSL.using(configuration);
+
+            context.insertInto(flowRepository.jdbcRepository.getTable())
+                .set(field("key"), "io.kestra.unittest_invalid")
+                .set(field("source_code"), "")
+                .set(field("value"), JacksonMapper.ofJson().writeValueAsString(Map.of(
+                    "id", "invalid",
+                    "namespace", "io.kestra.unittest",
+                    "revision", 1,
+                    "tasks", List.of(Map.of(
+                        "id", "invalid",
+                        "type", "io.kestra.core.tasks.debugs.Echo",
+                        "level", "invalid"
+                    )),
+                    "deleted", false
+                )))
+                .execute();
+        });
+
+        Optional<Flow> flow = flowRepository.findById("io.kestra.unittest", "invalid");
+
+        assertThat(flow.isPresent(), is(true));
+        assertThat(flow.get(), instanceOf(FlowSource.class));
+        assertThat(((FlowSource) flow.get()).getException(), containsString("Cannot deserialize value of type `org.slf4j.event.Level`"));
     }
 
     @BeforeEach

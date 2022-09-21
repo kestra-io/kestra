@@ -19,6 +19,7 @@ import io.kestra.core.contexts.KestraClassLoader;
 import io.kestra.core.serializers.ion.IonFactory;
 import io.kestra.core.serializers.ion.IonModule;
 
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -56,6 +57,13 @@ abstract public class JacksonMapper {
     }
 
     private static final TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {};
+
+    public static Map<String, Object> toMap(Object object, ZoneId zoneId) {
+        return MAPPER
+            .copy()
+            .setTimeZone(TimeZone.getTimeZone(zoneId.getId()))
+            .convertValue(object, TYPE_REFERENCE);
+    }
 
     public static Map<String, Object> toMap(Object object) {
         return MAPPER.convertValue(object, TYPE_REFERENCE);

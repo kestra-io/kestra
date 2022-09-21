@@ -1,7 +1,6 @@
 package io.kestra.core.models.triggers.types;
 
 import com.cronutils.model.Cron;
-import com.cronutils.model.CronType;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
@@ -27,6 +26,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -127,6 +127,12 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     private String cron;
 
     @Schema(
+        title = "The time zone id to use for evaluate cron. Default value is the server default zone id."
+    )
+    @PluginProperty(dynamic = true)
+    private String timezone = ZoneId.systemDefault().toString();
+
+    @Schema(
         title = "Backfill options in order to fill missing previous past date",
         description = "Kestra will handle optionally a backfill. The concept of backfill is the replay the missing schedule because we create the flow later.\n" +
             "\n" +
@@ -162,24 +168,27 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
         ExecutionTime executionTime = this.executionTime();
 
-        // previous present & scheduleConditions
-        if (last.isPresent() && this.scheduleConditions != null) {
-            Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
-                executionTime,
-                conditionContext,
-                last.get().getDate(),
-                true
-            );
-
-            if (next.isPresent()) {
-                return next.get().truncatedTo(ChronoUnit.SECONDS);
-            }
-        }
-
-        // previous present but no scheduleConditions
         if (last.isPresent()) {
-            return computeNextEvaluationDate(executionTime, last.get().getDate()).orElse(null);
+            ZonedDateTime lastDate = convertDateTime(last.get().getDate());
+
+            // previous present & scheduleConditions
+            if (this.scheduleConditions != null) {
+                Optional<ZonedDateTime> next = this.truePreviousNextDateWithCondition(
+                    executionTime,
+                    conditionContext,
+                    lastDate,
+                    true
+                );
+
+                if (next.isPresent()) {
+                    return next.get().truncatedTo(ChronoUnit.SECONDS);
+                }
+            }
+
+            // previous present but no scheduleConditions
+            return computeNextEvaluationDate(executionTime, lastDate).orElse(null);
         }
+
 
         // no previous present but backfill
         if (backfill != null && backfill.getStart() != null) {
@@ -193,7 +202,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTime executionTime = this.executionTime();
-        ZonedDateTime previousDate = context.getDate();
+        ZonedDateTime previousDate = convertDateTime(context.getDate());
 
         Output output = this.output(executionTime, previousDate).orElse(null);
 
@@ -242,7 +251,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             }
         }
 
-        ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, output);
+        Map<String, Object> variables;
+        if (this.timezone != null) {
+            variables = output.toMap(ZoneId.of(this.timezone));
+        } else {
+            variables = output.toMap();
+        }
+
+        ExecutionTrigger executionTrigger = ExecutionTrigger.of(this, variables);
 
         Execution execution = Execution.builder()
             .id(IdUtils.create())
@@ -269,12 +285,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         }
 
         Output.OutputBuilder<?, ?> outputBuilder = Output.builder()
-            .date(next.get());
+            .date(convertDateTime(next.get()));
 
         computeNextEvaluationDate(executionTime, next.get())
+            .map(this::convertDateTime)
             .ifPresent(outputBuilder::next);
 
         executionTime.lastExecution(date)
+            .map(this::convertDateTime)
             .ifPresent(outputBuilder::previous);
 
         Output output = outputBuilder.build();
@@ -297,6 +315,14 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         }
 
         return this.executionTime;
+    }
+
+    private ZonedDateTime convertDateTime(ZonedDateTime date) {
+        if (this.timezone == null) {
+            return date;
+        }
+
+        return date.withZoneSameInstant(ZoneId.of(this.timezone));
     }
 
     private Optional<ZonedDateTime> computeNextEvaluationDate(ExecutionTime executionTime, ZonedDateTime date) {

@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.storages;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.runners.RunContext;
@@ -13,6 +14,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import jakarta.inject.Inject;
 
@@ -27,8 +29,7 @@ class ConcatTest {
     @Inject
     StorageInterface storageInterface;
 
-    @Test
-    void run() throws Exception {
+    void run(Boolean json) throws Exception {
         RunContext runContext = runContextFactory.of();
         URL resource = ConcatTest.class.getClassLoader().getResource("application.yml");
 
@@ -41,8 +42,10 @@ class ConcatTest {
             new FileInputStream(Objects.requireNonNull(resource).getFile())
         );
 
+        List<String> files = Arrays.asList(put.toString(), put.toString());
+
         Concat result = Concat.builder()
-            .files(Arrays.asList(put.toString(), put.toString()))
+            .files(json ? JacksonMapper.ofJson().writeValueAsString(files) : files)
             .separator("\n")
             .build();
 
@@ -54,5 +57,15 @@ class ConcatTest {
             CharStreams.toString(new InputStreamReader(storageInterface.get(run.getUri()))),
             is(s + "\n" + s + "\n")
         );
+    }
+
+    @Test
+    void list() throws Exception {
+        this.run(false);
+    }
+
+    @Test
+    void json() throws Exception {
+        this.run(true);
     }
 }

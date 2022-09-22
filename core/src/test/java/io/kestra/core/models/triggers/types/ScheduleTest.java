@@ -14,6 +14,7 @@ import io.kestra.core.utils.IdUtils;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -347,6 +348,35 @@ class ScheduleTest {
         assertThat(evaluate.isPresent(), is(true));
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
         assertThat(dateFromVars(vars.get("date"), date), is(date));
+    }
+
+    @Test
+    void timezone() throws Exception {
+        Schedule trigger = Schedule.builder().cron("12 9 1 * *").timezone("America/New_York").build();
+
+        ZonedDateTime date = ZonedDateTime.now()
+            .withZoneSameLocal(ZoneId.of("America/New_York"))
+            .withMonth(ZonedDateTime.now().getMonthValue() + 1)
+            .withDayOfMonth(1)
+            .withHour(9)
+            .withMinute(12)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minus(1, ChronoUnit.MONTHS);
+
+        Optional<Execution> evaluate = trigger.evaluate(
+            conditionContext(),
+            triggerContext(date, trigger)
+        );
+
+        assertThat(evaluate.isPresent(), is(true));
+
+        var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
+
+        assertThat(dateFromVars(vars.get("date"), date), is(date));
+        assertThat(ZonedDateTime.parse(vars.get("date")).getZone().getId(), is("-04:00"));
+        assertThat(dateFromVars(vars.get("next"), date), is(date.plusMonths(1)));
+        assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
     }
 
     private ConditionContext conditionContext() {

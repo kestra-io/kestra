@@ -28,4 +28,12 @@ public class ExecutionTrigger {
             .variables(output.toMap())
             .build();
     }
+
+    public static ExecutionTrigger of(AbstractTrigger abstractTrigger, Map<String, Object> variables) {
+        return ExecutionTrigger.builder()
+            .id(abstractTrigger.getId())
+            .type(abstractTrigger.getType())
+            .variables(variables)
+            .build();
+    }
 }

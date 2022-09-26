@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractApiCommand extends AbstractCommand {
-    @CommandLine.Option(names = {"--server"}, description = "Also write core tasks plugins")
+    @CommandLine.Option(names = {"--server"}, description = "Also write core tasks plugins", defaultValue = "http://localhost:8080")
     protected URL server;
 
     @CommandLine.Option(names = {"--headers"}, description = "Also write core tasks plugins")

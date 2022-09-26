@@ -1,26 +1,30 @@
 package io.kestra.repository.elasticsearch;
 
-import io.micronaut.data.model.Pageable;
-import org.opensearch.client.RestHighLevelClient;
-import org.opensearch.index.query.BoolQueryBuilder;
-import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.index.query.TermsQueryBuilder;
-import org.opensearch.search.builder.SearchSourceBuilder;
-import org.opensearch.search.sort.SortOrder;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.data.model.Pageable;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.opensearch.client.RequestOptions;
+import org.opensearch.client.RestHighLevelClient;
+import org.opensearch.index.query.BoolQueryBuilder;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.index.query.TermsQueryBuilder;
+import org.opensearch.index.reindex.BulkByScrollResponse;
+import org.opensearch.index.reindex.DeleteByQueryRequest;
+import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.search.sort.SortOrder;
 import org.slf4j.event.Level;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-
 import javax.annotation.Nullable;
 
 @Singleton
@@ -135,6 +139,22 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
         this.putRequest(INDEX_NAME, IdUtils.create(), log);
 
         return log;
+    }
+
+    @Override
+    public Integer purge(Execution execution) {
+        DeleteByQueryRequest request = new DeleteByQueryRequest(this.indexName(INDEX_NAME));
+        request.setConflicts("proceed");
+        request.setQuery(new TermsQueryBuilder("executionId", execution.getId()));
+        request.setRefresh(true);
+
+        try {
+            BulkByScrollResponse bulkByScrollResponse = this.client.deleteByQuery(request, RequestOptions.DEFAULT);
+
+            return Long.valueOf(bulkByScrollResponse.getDeleted()).intValue();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private TermsQueryBuilder minLevel(Level minLevel) {

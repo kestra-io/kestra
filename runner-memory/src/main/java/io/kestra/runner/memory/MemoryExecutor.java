@@ -114,7 +114,7 @@ public class MemoryExecutor implements ExecutorInterface {
                 (namespace, id) -> templateExecutorInterface.findById(namespace, id).orElse(null)
             );
         } catch (InternalException e) {
-            log.warn("Failed to inject template",  e);
+            log.debug("Failed to inject template",  e);
         }
 
         return taskDefaultService.injectDefaults(flow, execution);

@@ -286,10 +286,6 @@ public class JdbcExecutor implements ExecutorInterface {
 
         if (result != null) {
             this.toExecution(result);
-
-            if (executorService.canBePurged(result)) {
-                executorStateStorage.delete(result.getExecution());
-            }
         }
     }
 
@@ -354,10 +350,12 @@ public class JdbcExecutor implements ExecutorInterface {
 
     private void toExecution(Executor executor) {
         boolean shouldSend = false;
+        boolean hasFailure = false;
 
         if (executor.getException() != null) {
             executor = handleFailedExecutionFromExecutor(executor, executor.getException());
             shouldSend = true;
+            hasFailure = true;
         } else if (executor.isExecutionUpdated()) {
             shouldSend = true;
         }
@@ -370,12 +368,17 @@ public class JdbcExecutor implements ExecutorInterface {
             executorService.log(log, false, executor);
         }
 
-        // emit for other consumer than executor
-        this.executionQueue.emit(executor.getExecution());
+        // emit for other consumer than executor if no failure
+        if (hasFailure) {
+            this.executionQueue.emit(executor.getExecution());
+        } else {
+            ((JdbcQueue<Execution>) this.executionQueue).emitOnly(executor.getExecution());
+        }
 
         // delete if ended
         if (executorService.canBePurged(executor)) {
             // TODO
+            // executorStateStorage.delete(executor.getExecution());
         }
     }
 

@@ -1,7 +1,8 @@
 package io.kestra.core.repositories;
 
-import io.micronaut.data.model.Pageable;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.micronaut.data.model.Pageable;
 import org.slf4j.event.Level;
 
 import java.time.ZonedDateTime;
@@ -26,4 +27,6 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
     );
 
     LogEntry save(LogEntry log);
+
+    Integer purge(Execution execution);
 }

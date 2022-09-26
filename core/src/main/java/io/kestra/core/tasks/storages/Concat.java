@@ -1,5 +1,7 @@
 package io.kestra.core.tasks.storages;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import io.kestra.core.serializers.JacksonMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -16,6 +18,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -60,19 +63,37 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                 "      - \"{{ outputs.start_api_call.value3.files.generated }}\"",
             },
             full = true
+        ),
+        @Example(
+            title = "Concat dynamic number of files",
+            code = {
+                "tasks:",
+                "  - id: echo",
+                "    type: io.kestra.core.tasks.scripts.Bash",
+                "    commands:",
+                "      - echo \"Hello John\" > {{ outputDirs.output }}/1.txt",
+                "      - echo \"Hello Jane\" > {{ outputDirs.output }}/2.txt",
+                "      - echo \"Hello Doe\" > {{ outputDirs.output }}/3.txt",
+                "    outputDirs:",
+                "      - output",
+                "  - id: concat",
+                "    type: io.kestra.core.tasks.storages.Concat",
+                "    files: \"{{ outputs.echo.files | jq('.[]') }}\"",
+            },
+            full = true
         )
     }
 )
 public class Concat extends Task implements RunnableTask<Concat.Output> {
     @Schema(
         title = "List of files to be concatenated.",
-        description = "Must be a `kestra://` storage url"
+        description = "Must be a `kestra://` storage urls, can be a list of string or json string"
     )
     @PluginProperty(dynamic = true)
-    private List<String> files;
+    private Object files;
 
     @Schema(
-        title = "The separator to used between files, default is no seprator"
+        title = "The separator to used between files, default is no separator"
     )
     @PluginProperty(dynamic = true)
     private String separator;
@@ -81,16 +102,29 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
     public Concat.Output run(RunContext runContext) throws Exception {
         File tempFile = runContext.tempFile().toFile();
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile)) {
-            if (files != null) {
-                files.forEach(throwConsumer(s -> {
-                    URI from = new URI(runContext.render(s));
-                    IOUtils.copyLarge(runContext.uriToInputStream(from), fileOutputStream);
+            List<String> finalFiles;
+            if (this.files instanceof List) {
+                //noinspection unchecked
+                finalFiles = (List<String>) this.files;
+            } else if (this.files instanceof String) {
+                final TypeReference<List<String>> reference = new TypeReference<>() {};
 
-                    if (separator != null) {
-                        IOUtils.copy(new ByteArrayInputStream(this.separator.getBytes()), fileOutputStream);
-                    }
-                }));
+                finalFiles = JacksonMapper.ofJson(false).readValue(
+                    runContext.render((String) this.files),
+                    reference
+                );
+            } else {
+                throw new Exception("Invalid `files` properties with type '" + this.files.getClass() + "'");
             }
+
+            finalFiles.forEach(throwConsumer(s -> {
+                URI from = new URI(runContext.render(s));
+                IOUtils.copyLarge(runContext.uriToInputStream(from), fileOutputStream);
+
+                if (separator != null) {
+                    IOUtils.copy(new ByteArrayInputStream(this.separator.getBytes()), fileOutputStream);
+                }
+            }));
         }
 
         return Concat.Output.builder()

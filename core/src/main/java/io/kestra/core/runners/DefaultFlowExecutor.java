@@ -42,4 +42,9 @@ public class DefaultFlowExecutor implements FlowExecutorInterface {
             return flowRepositoryInterface.findById(namespace, id, revision);
         }
     }
+
+    @Override
+    public Boolean isReady() {
+        return true;
+    }
 }

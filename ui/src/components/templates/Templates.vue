@@ -49,6 +49,12 @@
                             >
                                 {{ row.item.id }}
                             </router-link>
+                            &nbsp;<markdown-tooltip
+                                :id="row.item.namespace + '-' + row.item.id"
+                                :description="row.item.description"
+                                :title="row.item.namespace + '.' + row.item.id"
+                                :modal="true"
+                            />
                         </template>
                     </b-table>
                 </template>
@@ -86,6 +92,7 @@
     import Kicon from "../Kicon"
     import RestoreUrl from "../../mixins/restoreUrl";
     import _merge from "lodash/merge";
+    import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -96,7 +103,8 @@
             DataTable,
             SearchField,
             NamespaceSelect,
-            Kicon
+            Kicon,
+            MarkdownTooltip,
         },
         data() {
             return {

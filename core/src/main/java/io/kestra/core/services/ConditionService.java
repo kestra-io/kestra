@@ -126,7 +126,7 @@ public class ConditionService {
     }
 
     public List<ResolvedTask> findValidListeners(Flow flow, Execution execution) {
-        if (flow.getListeners() == null) {
+        if (flow == null || flow.getListeners() == null) {
             return new ArrayList<>();
         }
 

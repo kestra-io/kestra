@@ -271,14 +271,13 @@
                         callback();
 
                         if (flows.results && flows.results.length > 0) {
-                            let query = "((" + flows.results
-                                .map(flow => "flowId:" + flow.id + " AND namespace:" + flow.namespace)
-                                .join(") OR (") + "))"
-
                             if (this.user && this.user.hasAny(permission.EXECUTION)) {
                                 this.$store
                                     .dispatch("stat/dailyGroupByFlow", {
-                                        q: query,
+                                        flows: flows.results
+                                            .map(flow => {
+                                                return {namespace: flow.namespace, id: flow.id}
+                                            }),
                                         startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
                                         endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
                                     })

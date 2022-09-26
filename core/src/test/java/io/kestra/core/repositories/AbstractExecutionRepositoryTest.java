@@ -136,6 +136,32 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void purge() {
+        executionRepository.save(ExecutionFixture.EXECUTION_1);
+
+        Optional<Execution> full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        assertThat(full.isPresent(), is(true));
+
+        executionRepository.purge(ExecutionFixture.EXECUTION_1);
+
+        full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        assertThat(full.isPresent(), is(false));
+    }
+
+    @Test
+    protected void delete() {
+        executionRepository.save(ExecutionFixture.EXECUTION_1);
+
+        Optional<Execution> full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        assertThat(full.isPresent(), is(true));
+
+        executionRepository.delete(ExecutionFixture.EXECUTION_1);
+
+        full = executionRepository.findById(ExecutionFixture.EXECUTION_1.getId());
+        assertThat(full.isPresent(), is(false));
+    }
+
+    @Test
     protected void mappingConflict() {
         executionRepository.save(ExecutionFixture.EXECUTION_2);
         executionRepository.save(ExecutionFixture.EXECUTION_1);
@@ -158,6 +184,7 @@ public abstract class AbstractExecutionRepositoryTest {
         Thread.sleep(500);
 
         Map<String, Map<String, List<DailyExecutionStatistics>>> result = executionRepository.dailyGroupByFlowStatistics(
+            null,
             null,
             null,
             null,
@@ -188,6 +215,7 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             null,
             null,
+            null,
             ZonedDateTime.now().minusDays(10),
             ZonedDateTime.now(),
             true
@@ -202,6 +230,20 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(full.getExecutionCounts().get(State.Type.RUNNING), is(5L));
         assertThat(full.getExecutionCounts().get(State.Type.SUCCESS), is(20L));
         assertThat(full.getExecutionCounts().get(State.Type.CREATED), is(0L));
+
+        result = executionRepository.dailyGroupByFlowStatistics(
+            null,
+            null,
+            null,
+            List.of(ExecutionRepositoryInterface.FlowFilter.builder().namespace("io.kestra.unittest").id(FLOW).build()),
+            ZonedDateTime.now().minusDays(10),
+            ZonedDateTime.now(),
+            false
+        );
+
+        assertThat(result.size(), is(1));
+        assertThat(result.get("io.kestra.unittest").size(), is(1));
+        assertThat(result.get("io.kestra.unittest").get(FLOW).size(), is(11));
     }
 
     @Test

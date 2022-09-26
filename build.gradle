@@ -156,7 +156,6 @@ subprojects {
 
         retry {
             maxRetries = 5
-            maxFailures = 15
         }
     }
 

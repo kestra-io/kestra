@@ -51,15 +51,6 @@ $vs-state-disabled-color: $input-color;
 
     .vs__selected-options {
         max-width: calc(100% - 41px);
-        flex-wrap: nowrap;
-
-        .vs__selected {
-            max-width: 100%;
-            white-space: nowrap;
-            font-weight: 400;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
     }
 
     &.vs--single {

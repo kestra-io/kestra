@@ -51,6 +51,18 @@ public interface StorageInterface {
         );
     }
 
+    default String executionPrefix(Execution execution) {
+        return String.join(
+            "/",
+            Arrays.asList(
+                execution.getNamespace().replace(".", "/"),
+                Slugify.of(execution.getFlowId()),
+                "executions",
+                execution.getId()
+            )
+        );
+    }
+
     default String executionPrefix(TaskRun taskRun) {
         return String.join(
             "/",

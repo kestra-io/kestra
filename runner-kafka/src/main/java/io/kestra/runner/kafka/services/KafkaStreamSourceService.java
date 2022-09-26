@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
 
 @Singleton
 @Slf4j
@@ -74,16 +73,29 @@ public class KafkaStreamSourceService {
 
         try {
             // pooling of new flow can be delayed on ExecutorStore, we maybe need to wait that the flow is updated
-            flow = Await.until(
-                () -> flowExecutorInterface.findByExecution(executor.getExecution()).orElse(null),
-                Duration.ofMillis(100),
-                Duration.ofMinutes(5)
-            );
+            if (!flowExecutorInterface.isReady()) {
+                flow = Await.until(
+                    () -> flowExecutorInterface.findByExecution(executor.getExecution()).orElse(null),
+                    Duration.ofMillis(100),
+                    Duration.ofMinutes(5)
+                );
+            } else {
+                flow = flowExecutorInterface.findByExecution(executor.getExecution())
+                    .orElseThrow(() -> new TimeoutException("Unable to find flow with flow executor ready"));
+            }
         } catch (TimeoutException e) {
+            // execution is failed, can't find flow, avoid recursive exception, skipped it.
+            if (executor.getExecution().getState().isFailed()) {
+                return executor;
+            }
+
             return executor.withException(
-                new Exception("Unable to find flow with namespace: '" + executor.getExecution().getNamespace() + "'" +
-                    ", id: '" + executor.getExecution().getFlowId() + "', " +
-                    "revision '" + executor.getExecution().getFlowRevision() + "'"),
+                new Exception(
+                    "Unable to find flow with namespace: '" + executor.getExecution().getNamespace() + "'" +
+                        ", id: '" + executor.getExecution().getFlowId() + "', " +
+                        "revision '" + executor.getExecution().getFlowRevision() + "'",
+                    e
+                ),
                 "joinFlow"
             );
         }
@@ -99,7 +111,7 @@ public class KafkaStreamSourceService {
                 (namespace, id) -> this.templateExecutorInterface.findById(namespace, id).orElse(null)
             );
         } catch (InternalException e) {
-            log.warn("Failed to inject template",  e);
+            log.debug("Failed to inject template",  e);
         }
 
         Flow flowWithDefaults = taskDefaultService.injectDefaults(flow, executor.getExecution());

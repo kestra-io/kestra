@@ -10,12 +10,12 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
+import io.reactivex.Flowable;
+import jakarta.inject.Singleton;
 
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import jakarta.inject.Singleton;
-
 import javax.annotation.Nullable;
 
 @Singleton
@@ -33,12 +33,22 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public ArrayListTotal<TaskRun> findTaskRun(Pageable pageable, @io.micronaut.core.annotation.Nullable String query, @io.micronaut.core.annotation.Nullable String namespace, @io.micronaut.core.annotation.Nullable String flowId, @io.micronaut.core.annotation.Nullable ZonedDateTime startDate, @io.micronaut.core.annotation.Nullable ZonedDateTime endDate, @io.micronaut.core.annotation.Nullable List<State.Type> states) {
+    public Flowable<Execution> find(@Nullable String query, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> state) {
+        return null;
+    }
+
+    @Override
+    public ArrayListTotal<TaskRun> findTaskRun(Pageable pageable, @Nullable String query, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable List<State.Type> states) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public Execution delete(Execution execution) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Integer purge(Execution execution) {
         throw new UnsupportedOperationException();
     }
 
@@ -71,7 +81,15 @@ public class MemoryExecutionRepository implements ExecutionRepositoryInterface {
     }
 
     @Override
-    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(@Nullable String query, @Nullable String namespace, @Nullable String flowId, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, boolean groupByNamespaceOnly) {
+    public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable List<FlowFilter> flows,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        boolean groupByNamespaceOnly
+    ) {
         throw new UnsupportedOperationException();
     }
 

@@ -3,6 +3,10 @@ kestra:
     type: memory
   repository:
     type: elasticsearch
+  storage:
+    type: local
+    local:
+      base-path: /tmp/unittest
 
   elasticsearch:
     client:

@@ -38,6 +38,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         return Template.builder()
             .id(IdUtils.create())
             .namespace("kestra.test")
+            .description("My template description")
             .tasks(Arrays.asList(t1, t2)).build();
     }
 
@@ -52,6 +53,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         Template result = client.toBlocking().retrieve(POST("/api/v1/templates", template), Template.class);
         Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
         assertThat(createdTemplate.getId(), is(template.getId()));
+        assertThat(createdTemplate.getDescription(), is("My template description"));
     }
 
     @Test
@@ -95,11 +97,12 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
         assertThat(template.getTasks().size(), is(2));
         Task t3 = Return.builder().id("task-3").type(Return.class.getName()).format("test").build();
-        Template updateTemplate = Template.builder().id(template.getId()).namespace(template.getNamespace()).tasks(Arrays.asList(t3)).build();
+        Template updateTemplate = Template.builder().id(template.getId()).namespace(template.getNamespace()).description("My new template description").tasks(Arrays.asList(t3)).build();
         client.toBlocking().retrieve(PUT("/api/v1/templates/" + template.getNamespace() + "/" + template.getId(), updateTemplate), Template.class);
         Template updatedTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
         assertThat(updatedTemplate.getTasks().size(), is(1));
         assertThat(updatedTemplate.getTasks().get(0).getId(), is("task-3"));
+        assertThat(updatedTemplate.getDescription(),is("My new template description"));
     }
 
     @Test

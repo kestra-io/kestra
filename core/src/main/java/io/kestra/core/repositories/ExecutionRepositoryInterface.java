@@ -7,6 +7,10 @@ import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
 import io.micronaut.data.model.Pageable;
+import io.reactivex.Flowable;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -14,6 +18,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution> {
     Boolean isTaskRunEnabled();
@@ -24,6 +29,15 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     ArrayListTotal<Execution> find(
         Pageable pageable,
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime startDate,
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<State.Type> state
+    );
+
+    Flowable<Execution> find(
         @Nullable String query,
         @Nullable String namespace,
         @Nullable String flowId,
@@ -44,6 +58,8 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     Execution delete(Execution execution);
 
+    Integer purge(Execution execution);
+
     Integer maxTaskRunSetting();
 
     List<DailyExecutionStatistics> dailyStatistics(
@@ -59,10 +75,21 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable String query,
         @Nullable String namespace,
         @Nullable String flowId,
+        @Nullable List<FlowFilter> flows,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         boolean groupByNamespaceOnly
     );
+
+    @Getter
+    @SuperBuilder
+    @NoArgsConstructor
+    class FlowFilter {
+        @NotNull
+        private String namespace;
+        @NotNull
+        private String id;
+    }
 
     List<ExecutionCount> executionCounts(
         List<Flow> flows,

@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
@@ -105,6 +106,19 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         this.jdbcRepository.persist(log, fields);
 
         return log;
+    }
+
+    @Override
+    public Integer purge(Execution execution) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                return context.delete(this.jdbcRepository.getTable())
+                    .where(field("execution_id", String.class).eq(execution.getId()))
+                    .execute();
+            });
     }
 
     @Override

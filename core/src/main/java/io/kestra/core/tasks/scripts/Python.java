@@ -94,6 +94,16 @@ public class Python extends AbstractPython implements RunnableTask<ScriptOutput>
     @PluginProperty(dynamic = true)
     private List<String> args;
 
+    @Schema(
+        title = "Create a virtual env",
+        description = "When a virtual env is created, we will install the `requirements` needed. " +
+            "Disabled it if all the requirements is already on the file system.\n" +
+            "If you disabled the virtual env creation, the `requirements` will be ignored."
+    )
+    @PluginProperty(dynamic = false)
+    @Builder.Default
+    protected Boolean virtualEnv = true;
+
     @Override
     protected Map<String, String> finalInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException {
         Map<String, String> map = super.finalInputFiles(runContext);
@@ -114,7 +124,11 @@ public class Python extends AbstractPython implements RunnableTask<ScriptOutput>
 
         return run(runContext, throwSupplier(() -> {
             List<String> renderer = new ArrayList<>();
-            renderer.add(this.virtualEnvCommand(runContext, requirements));
+            if (this.virtualEnv) {
+                renderer.add(this.virtualEnvCommand(runContext, requirements));
+            } else if (this.exitOnFailed) {
+                renderer.add("set -o errexit");
+            }
 
             for (String command : commands) {
                 String argsString = args == null ? "" : " " + runContext.render(String.join(" ", args), additionalVars);

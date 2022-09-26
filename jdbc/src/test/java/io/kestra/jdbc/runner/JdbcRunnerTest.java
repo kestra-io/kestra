@@ -172,6 +172,11 @@ public abstract class JdbcRunnerTest {
     }
 
     @Test
+    void withFailedTemplate() throws Exception {
+        TemplateTest.withFailedTemplate(runnerUtils, templateRepository, repositoryLoader, logsQueue);
+    }
+
+    @Test
     void taskDefaults() throws TimeoutException, IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/task-defaults.yaml")));
         taskDefaultsCaseTest.taskDefaults();

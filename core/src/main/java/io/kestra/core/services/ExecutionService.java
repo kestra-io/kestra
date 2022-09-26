@@ -8,18 +8,27 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.flows.Worker;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
+import java.io.IOException;
+import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.Rethrow.throwPredicate;
@@ -27,10 +36,19 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Singleton
 public class ExecutionService {
     @Inject
-    ApplicationContext applicationContext;
+    private ApplicationContext applicationContext;
 
     @Inject
     private FlowRepositoryInterface flowRepositoryInterface;
+
+    @Inject
+    private StorageInterface storageInterface;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private LogRepositoryInterface logRepository;
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
         if (!execution.getState().isTerninated()) {
@@ -193,6 +211,71 @@ public class ExecutionService {
 
         return newExecution
             .withState(State.Type.RESTARTED);
+    }
+
+    public PurgeResult purge(
+        Boolean purgeExecution,
+        Boolean purgeLog,
+        Boolean purgeStorage,
+        @Nullable String namespace,
+        @Nullable String flowId,
+        @Nullable ZonedDateTime endDate,
+        @Nullable List<State.Type> state
+    ) throws IOException {
+        PurgeResult purgeResult = this.executionRepository
+            .find(
+                null,
+                namespace,
+                flowId,
+                null,
+                endDate,
+                state
+            )
+            .map(execution -> {
+                PurgeResult.PurgeResultBuilder<?, ?> builder = PurgeResult.builder();
+
+                if (purgeExecution) {
+                    builder.executionsCount(this.executionRepository.purge(execution));
+                }
+
+                if (purgeLog) {
+                    builder.logsCount(this.logRepository.purge(execution));
+                }
+
+                if (purgeStorage) {
+                    builder.storagesCount(storageInterface.deleteByPrefix(URI.create("/" + storageInterface.executionPrefix(
+                        execution))).size());
+                }
+
+                return (PurgeResult) builder.build();
+            })
+            .reduce((a, b) -> a
+                .toBuilder()
+                .executionsCount(a.getExecutionsCount() + b.getExecutionsCount())
+                .logsCount(a.getLogsCount() + b.getLogsCount())
+                .storagesCount(a.getStoragesCount() + b.getStoragesCount())
+                .build()
+            )
+            .blockingGet();
+
+        if (purgeResult != null) {
+            return purgeResult;
+        }
+
+        return PurgeResult.builder().build();
+    }
+
+    @Getter
+    @SuperBuilder(toBuilder = true)
+    public static class PurgeResult {
+        @Builder.Default
+        private int executionsCount = 0;
+
+        @Builder.Default
+        private int logsCount = 0;
+
+        @Builder.Default
+        private int storagesCount = 0;
     }
 
     private Set<String> removeWorkerTask(Flow flow, Execution execution, Set<String> taskRunToRestart, Map<String, String> mappingTaskRunId) throws InternalException {

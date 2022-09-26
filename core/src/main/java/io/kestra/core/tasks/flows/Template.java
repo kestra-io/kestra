@@ -241,8 +241,9 @@ public class Template extends Task implements FlowableTask<Template.Output> {
                                 ExecutorTemplate.of(templateTask, template)
                             )
                         );
+                    } else {
+                        throw new InternalException("Unable to find template '" + templateTask.getNamespace() + "." + templateTask.getTemplateId() + "'");
                     }
-
                 }));
 
             haveTemplate = templates.size() > 0;

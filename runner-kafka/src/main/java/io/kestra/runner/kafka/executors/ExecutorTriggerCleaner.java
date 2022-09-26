@@ -50,7 +50,7 @@ public class ExecutorTriggerCleaner implements KafkaExecutorInterface {
                 Named.as("TriggerCleaner.hasTriggerFilter")
             )
             .filter(
-                (key, value) -> conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
+                (key, value) -> value.getExecution().isDeleted() || conditionService.isTerminatedWithListeners(value.getFlow(), value.getExecution()),
                 Named.as("TriggerCleaner.terminatedFilter")
             )
             .join(

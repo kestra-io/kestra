@@ -2,6 +2,7 @@ package io.kestra.core.tasks;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tasks.scripts.ScriptOutput;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -244,6 +245,45 @@ abstract class AbstractBashTest {
         String outputContent = CharStreams.toString(new InputStreamReader(get));
         String fileContent = String.join("\n", Files.readAllLines(new File(resource.getPath()).toPath(), StandardCharsets.UTF_8));
         assertThat(outputContent, is(fileContent));
+    }
+
+    @Test
+    void useInputFilesAsVariable() throws Exception {
+        URL resource = AbstractBashTest.class.getClassLoader().getResource("application.yml");
+
+        URI put1 = storageInterface.put(
+            new URI("/file/storage/get.yml"),
+            new FileInputStream(Objects.requireNonNull(resource).getFile())
+        );
+
+        URI put2 = storageInterface.put(
+            new URI("/file/storage/get.yml"),
+            new FileInputStream(Objects.requireNonNull(resource).getFile())
+        );
+
+
+        Map<String, String> files = new HashMap<>();
+        files.put("1.yml", put1.toString());
+        files.put("2.yml", put2.toString());
+
+        List<String> commands = new ArrayList<>();
+        commands.add("cat 1.yml 2.yml > {{ outputFiles.out }} ");
+
+        Bash bash = configure(Bash.builder()
+            .interpreter("/bin/bash")
+            .commands(commands.toArray(String[]::new))
+            .inputFiles(JacksonMapper.ofJson().writeValueAsString(files))
+            .outputFiles(Collections.singletonList("out"))
+        ).build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, bash, ImmutableMap.of());
+        ScriptOutput run = bash.run(runContext);
+
+        assertThat(run.getExitCode(), is(0));
+        InputStream get = storageInterface.get(run.getOutputFiles().get("out"));
+        String outputContent = CharStreams.toString(new InputStreamReader(get));
+        String fileContent = String.join("\n", Files.readAllLines(new File(resource.getPath()).toPath(), StandardCharsets.UTF_8));
+        assertThat(outputContent, is(fileContent + fileContent));
     }
 
     @Test

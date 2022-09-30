@@ -118,7 +118,9 @@ public class Python extends AbstractPython implements RunnableTask<ScriptOutput>
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
-        if (!inputFiles.containsKey("main.py") && this.commands.size() == 1 && this.commands.get(0).equals("./bin/python main.py")) {
+        Map<String, String> finalInputFiles = this.finalInputFiles(runContext);
+
+        if (!finalInputFiles.containsKey("main.py") && this.commands.size() == 1 && this.commands.get(0).equals("./bin/python main.py")) {
             throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.py key with python code value.");
         }
 

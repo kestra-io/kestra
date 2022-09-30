@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import io.kestra.core.exceptions.MissingRequiredInput;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -30,18 +31,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 public class InputsTest extends AbstractMemoryRunnerTest {
-    public static Map<String, String> inputs = ImmutableMap.of(
-        "string", "myString",
-        "int", "42",
-        "float", "42.42",
-        "bool", "false",
-        "instant", "2019-10-06T18:27:49Z",
-        "date", "2019-10-06",
-        "time", "18:27:49",
-        "duration", "PT5M6S",
-        "file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath(),
-        "json", "{\"a\": \"b\"}"
-    );
+    public static Map<String, String> inputs = ImmutableMap.<String, String>builder()
+        .put("string", "myString")
+        .put("int", "42")
+        .put("float", "42.42")
+        .put("bool", "false")
+        .put("instant", "2019-10-06T18:27:49Z")
+        .put("date", "2019-10-06")
+        .put("time", "18:27:49")
+        .put("duration", "PT5M6S")
+        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath())
+        .put("json", "{\"a\": \"b\"}")
+        .put("uri", "https://www.google.com")
+        .build();
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -157,5 +159,23 @@ public class InputsTest extends AbstractMemoryRunnerTest {
     void inputJson() {
         Map<String, Object> typeds = typedInputs(inputs);
         assertThat(typeds.get("json"), is(Map.of("a", "b")));
+    }
+
+    @Test
+    void inputUri() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(typeds.get("uri"), is("https://www.google.com"));
+    }
+
+    @Test
+    void inputFailed() {
+        HashMap<String, String> map = new HashMap<>(inputs);
+        map.put("uri", "http:/bla");
+
+        MissingRequiredInput e = assertThrows(MissingRequiredInput.class, () -> {
+            Map<String, Object> typeds = typedInputs(map);
+        });
+
+        assertThat(e.getMessage(), containsString("Invalid URI format"));
     }
 }

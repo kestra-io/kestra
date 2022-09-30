@@ -47,5 +47,6 @@ public class Input {
         DURATION,
         FILE,
         JSON,
+        URI,
     }
 }

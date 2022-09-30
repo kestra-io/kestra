@@ -36,6 +36,9 @@ inputs:
 - name: json
   type: JSON
   required: false
+- name: uri
+  type: URI
+  required: false
 
 tasks:
 - id: string

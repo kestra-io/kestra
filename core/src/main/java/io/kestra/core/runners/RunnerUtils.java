@@ -31,10 +31,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
@@ -103,7 +100,7 @@ public class RunnerUtils {
             return ImmutableMap.of();
         }
 
-        return flow
+        Map<String, Object> results = flow
             .getInputs()
             .stream()
             .map((Function<Input, Optional<AbstractMap.SimpleEntry<String, Object>>>) input -> {
@@ -233,6 +230,26 @@ public class RunnerUtils {
             .filter(Optional::isPresent)
             .map(Optional::get)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        return handleNestedInputs(results);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> handleNestedInputs(Map<String, Object> inputs) {
+        Map<String, Object> result = new TreeMap<>();
+
+        for (Map.Entry<String, Object> entry : inputs.entrySet()) {
+            String[] f = entry.getKey().split("\\.");
+            Map<String, Object> t = result;
+            int i = 0;
+            for (int m = f.length - 1; i < m; ++i) {
+                t = (Map<String, Object>) t.computeIfAbsent(f[i], k -> new TreeMap<>());
+            }
+
+            t.put(f[i], entry.getValue());
+        }
+
+        return result;
     }
 
     public Execution runOne(String namespace, String flowId) throws TimeoutException {

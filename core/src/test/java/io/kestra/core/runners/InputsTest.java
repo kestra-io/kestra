@@ -43,6 +43,9 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application.yml")).getPath())
         .put("json", "{\"a\": \"b\"}")
         .put("uri", "https://www.google.com")
+        .put("nested.string", "a string")
+        .put("nested.more.int", "123")
+        .put("nested.bool", "true")
         .build();
 
     @Inject
@@ -177,5 +180,14 @@ public class InputsTest extends AbstractMemoryRunnerTest {
         });
 
         assertThat(e.getMessage(), containsString("Invalid URI format"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void inputNested() {
+        Map<String, Object> typeds = typedInputs(inputs);
+        assertThat(((Map<String, Object>)typeds.get("nested")).get("string"), is("a string"));
+        assertThat(((Map<String, Object>)typeds.get("nested")).get("bool"), is(true));
+        assertThat(((Map<String, Object>)((Map<String, Object>)typeds.get("nested")).get("more")).get("int"), is(123));
     }
 }

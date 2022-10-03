@@ -8,7 +8,7 @@ plugins {
 
     // test
     id 'com.adarshr.test-logger' version '3.2.0'
-    id 'org.gradle.test-retry' version '1.4.0'
+    id 'org.gradle.test-retry' version '1.4.1'
 
     // helper
     id "com.github.ben-manes.versions" version "0.42.0"
@@ -18,7 +18,7 @@ plugins {
 
     // release
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
-    id 'net.researchgate.release' version '3.0.1'
+    id 'net.researchgate.release' version '3.0.2'
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id 'signing'
     id 'ru.vyarus.pom' version '2.2.1' apply false
@@ -70,7 +70,7 @@ allprojects {
         resolutionStrategy {
             force("org.apache.kafka:kafka-clients:" + kafkaVersion)
             force("org.apache.kafka:kafka-streams:" + kafkaVersion)
-            force("org.jooq:jooq:3.16.9")
+            force("org.jooq:jooq:3.16.10")
         }
     }
 
@@ -98,9 +98,9 @@ allprojects {
 
         // logs
         implementation "org.slf4j:slf4j-api:1.7.36"
-        implementation "ch.qos.logback:logback-classic:1.2.11"
-        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.18.0'
-        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.36'
+        implementation "ch.qos.logback:logback-classic:1.4.3"
+        implementation group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.19.0'
+        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '2.0.3'
 
         // jackson
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind'

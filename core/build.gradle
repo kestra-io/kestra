@@ -13,7 +13,7 @@ processResources.dependsOn copyGradleProperties
 
 dependencies {
     // log
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.11'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.3'
 
     // serializers
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion'
@@ -21,7 +21,7 @@ dependencies {
     // utils
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.4'
     implementation 'com.github.oshi:oshi-core:6.2.2'
-    implementation 'io.pebbletemplates:pebble:3.1.5'
+    implementation 'io.pebbletemplates:pebble:3.1.6'
 
     // scheduler
     implementation group: 'com.cronutils', name: 'cron-utils', version: '9.2.0'
@@ -33,17 +33,17 @@ dependencies {
     implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.2.13'
 
     // schema
-    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.26.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.26.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.26.0'
-    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.26.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-generator', version: '4.27.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-javax-validation', version: '4.27.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-jackson', version: '4.27.0'
+    implementation group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: '4.27.0'
 
     // test
     testImplementation project(':repository-memory')
     testImplementation project(':runner-memory')
     testImplementation project(':storage-local')
 
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.7.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.8.0'
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "io.micronaut.rxjava2:micronaut-rxjava2-http-client"
     testImplementation "io.micronaut:micronaut-http-server-netty"

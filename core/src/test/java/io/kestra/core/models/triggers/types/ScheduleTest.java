@@ -350,6 +350,7 @@ class ScheduleTest {
         assertThat(dateFromVars(vars.get("date"), date), is(date));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void timezone() throws Exception {
         Schedule trigger = Schedule.builder().cron("12 9 1 * *").timezone("America/New_York").build();

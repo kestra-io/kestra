@@ -24,7 +24,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 abstract public class BashService {
     protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
-    private static final Pattern PATTERN = Pattern.compile("^::(\\{.*\\})::$");
+    private static final Pattern PATTERN = Pattern.compile("^::(\\{.*})::$");
 
     public static List<String> finalCommandsWithInterpreter(
         String interpreter,
@@ -104,8 +104,6 @@ abstract public class BashService {
     }
 
     public static Map<String, String> transformInputFiles(RunContext runContext, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
-        Map<String, String> finalInputFiles;
-
         if (inputFiles instanceof Map) {
             //noinspection unchecked
             return (Map<String, String>) inputFiles;

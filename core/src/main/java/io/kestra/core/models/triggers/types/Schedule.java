@@ -130,6 +130,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         title = "The time zone id to use for evaluate cron. Default value is the server default zone id."
     )
     @PluginProperty(dynamic = true)
+    @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 
     @Schema(

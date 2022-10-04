@@ -13,7 +13,7 @@ processResources.dependsOn copyGradleProperties
 
 dependencies {
     // log
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.3'
+    implementation group: 'ch.qos.logback', name: 'logback-classic'
 
     // serializers
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-ion'

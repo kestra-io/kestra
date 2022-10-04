@@ -1,11 +1,14 @@
 <template>
-    <b-button
+    <component
+        :is="component"
         @click="$bvModal.show(uuid)"
         :disabled="!enabled"
     >
         <kicon :tooltip="$t('change status')">
             <state-machine />
         </kicon>
+
+        <span v-if="component !== 'b-button'">{{ $t('change status') }}</span>
 
         <b-modal v-if="enabled" :id="uuid">
             <template #modal-header>
@@ -59,7 +62,7 @@
                 </b-button>
             </template>
         </b-modal>
-    </b-button>
+    </component>
 </template>
 <script>
     import StateMachine from "vue-material-design-icons/StateMachine";
@@ -74,6 +77,10 @@
     export default {
         components: {StateMachine, Status, Kicon},
         props: {
+            component: {
+                type: String,
+                default: "b-button"
+            },
             execution: {
                 type: Object,
                 required: true

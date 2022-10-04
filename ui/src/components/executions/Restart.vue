@@ -1,5 +1,6 @@
 <template>
-    <b-button
+    <component
+        :is="component"
         @click="$bvModal.show(uuid)"
         v-if="isReplay || enabled"
         :disabled="!enabled"
@@ -10,6 +11,8 @@
             <play-box-multiple v-if="isReplay" />
             {{ (isReplay ? '' : $t(replayOrRestart)) }}
         </kicon>
+
+        <span v-if="component !== 'b-button'">{{ $t(replayOrRestart) }}</span>
 
         <b-modal v-if="enabled" :id="uuid" @show="loadRevision">
             <template #modal-header>
@@ -36,7 +39,7 @@
                 </b-button>
             </template>
         </b-modal>
-    </b-button>
+    </component>
 </template>
 <script>
     import RestartIcon from "vue-material-design-icons/Restart";
@@ -51,9 +54,17 @@
     export default {
         components: {RestartIcon, PlayBoxMultiple, Kicon},
         props: {
+            component: {
+                type: String,
+                default: "b-button"
+            },
             isReplay: {
                 type: Boolean,
                 default: false
+            },
+            isButton: {
+                type: Boolean,
+                default: true
             },
             execution: {
                 type: Object,

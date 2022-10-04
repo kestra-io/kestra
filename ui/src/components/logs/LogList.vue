@@ -53,34 +53,36 @@
                                     />
                                 </div>
 
-                                <b-button-group>
+                                <b-dropdown right no-caret>
+                                    <template #button-content>
+                                        <DotsVertical title="" />
+                                    </template>
+
                                     <sub-flow-link
                                         v-if="currentTaskRun.outputs && currentTaskRun.outputs.executionId"
+                                        component="b-dropdown-item"
                                         tab-execution="gantt"
                                         :execution-id="currentTaskRun.outputs.executionId"
                                     />
 
-                                    <b-button
+                                    <b-dropdown-item
                                         :disabled="!(attempt.metrics && attempt.metrics.length > 0) "
-                                        @click="
-                                            toggleShowMetric(currentTaskRun, index)
-                                        "
+                                        @click="toggleShowMetric(currentTaskRun, index)"
                                     >
-                                        <kicon :tooltip="$t('toggle metrics')">
-                                            <chart-areaspline />
-                                        </kicon>
-                                    </b-button>
+                                        <chart-areaspline title="" />
+                                        <span>{{ $t('metrics') }}</span>
+                                    </b-dropdown-item>
 
-                                    <b-button
+                                    <b-dropdown-item
                                         :disabled="!currentTaskRun.outputs || currentTaskRun.outputs.length ===0"
                                         @click="toggleShowOutput(currentTaskRun)"
                                     >
-                                        <kicon :tooltip="$t('toggle output')">
-                                            <location-exit />
-                                        </kicon>
-                                    </b-button>
+                                        <location-exit title="" />
+                                        <span>{{ $t('outputs') }}</span>
+                                    </b-dropdown-item>
 
                                     <restart
+                                        component="b-dropdown-item"
                                         :key="`restart-${index}-${attempt.state.startDate}`"
                                         :is-replay="true"
                                         :execution="execution"
@@ -90,13 +92,21 @@
                                     />
 
                                     <change-status
+                                        component="b-dropdown-item"
                                         :key="`change-status-${index}-${attempt.state.startDate}`"
                                         :execution="execution"
                                         :task-run="currentTaskRun"
                                         :attempt-index="index"
                                         @follow="forwardEvent('follow', $event)"
                                     />
-                                </b-button-group>
+
+                                    <task-edit
+                                        component="b-dropdown-item"
+                                        :task-id="currentTaskRun.taskId"
+                                        :flow-id="execution.flowId"
+                                        :namespace="execution.namespace"
+                                    />
+                                </b-dropdown>
                             </div>
                         </div>
 
@@ -148,10 +158,11 @@
     import Clock from "vue-material-design-icons/Clock";
     import LocationExit from "vue-material-design-icons/LocationExit";
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import State from "../../utils/state";
     import Status from "../Status";
     import SubFlowLink from "../flows/SubFlowLink"
-    import Kicon from "../Kicon"
+    import TaskEdit from "override/components/flows/TaskEdit.vue";
     import Duration from "../layout/Duration";
 
     export default {
@@ -164,9 +175,10 @@
             Vars,
             Metrics,
             ChartAreaspline,
+            DotsVertical,
             Status,
             SubFlowLink,
-            Kicon,
+            TaskEdit,
             Duration
         },
         props: {
@@ -365,8 +377,20 @@
             }
         }
 
-        button {
+        ::v-deep button.btn {
             border-radius: 0 !important;
+        }
+
+        ::v-deep {
+
+            .dropdown-menu {
+                .dropdown-item {
+                    span.material-design-icon {
+                        width: $font-size-base * 2;
+                    }
+                }
+            }
+
         }
     }
 

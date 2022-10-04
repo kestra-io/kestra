@@ -48,6 +48,23 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void task() {
+        Task result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full/tasks/t5-t1"), Task.class);
+
+        assertThat(result.getId(), is("t5-t1"));
+        assertThat(result.getType(), is("io.kestra.core.tasks.scripts.Bash"));
+    }
+
+    @Test
+    void taskNotFound() {
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full/tasks/notFound"));
+        });
+
+        assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
     void graph() {
         FlowGraph result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra" +
             ".tests/all-flowable/graph"), FlowGraph.class);

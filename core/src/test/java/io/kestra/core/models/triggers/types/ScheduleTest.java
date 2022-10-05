@@ -18,10 +18,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import jakarta.inject.Inject;
 
@@ -131,7 +128,7 @@ class ScheduleTest {
 
     @Test
     void noBackfillNextDateContext() {
-        Schedule trigger = Schedule.builder().cron("0 0 * * *").build();
+        Schedule trigger = Schedule.builder().cron("0 0 * * *").timezone("Europe/Paris").build();
         ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(), Optional.of(triggerContext(date, trigger)));
 
@@ -205,6 +202,7 @@ class ScheduleTest {
     void conditions() throws Exception {
         Schedule trigger = Schedule.builder()
             .cron("0 12 * * 1")
+            .timezone("Europe/Paris")
             .scheduleConditions(List.of(
                 DayWeekInMonthCondition.builder()
                     .dayOfWeek(DayOfWeek.MONDAY)
@@ -236,6 +234,7 @@ class ScheduleTest {
     void impossibleNextConditions() throws Exception {
         Schedule trigger = Schedule.builder()
             .cron("0 12 * * 1")
+            .timezone("Europe/Paris")
             .scheduleConditions(List.of(
                 DateTimeBetweenCondition.builder()
                     .before(ZonedDateTime.parse("2021-08-03T12:00:00+02:00"))
@@ -265,6 +264,7 @@ class ScheduleTest {
     void conditionsWithBackfill() throws Exception {
         Schedule trigger = Schedule.builder()
             .cron("0 12 * * 1")
+            .timezone("Europe/Paris")
             .backfill(Schedule.ScheduleBackfill.builder()
                 .start(ZonedDateTime.parse("2021-01-01T00:00:00+02:00"))
                 .build()
@@ -282,7 +282,7 @@ class ScheduleTest {
             ))
             .build();
 
-        ZonedDateTime date = ZonedDateTime.parse("2021-01-04T12:00:00+02:00");
+        ZonedDateTime date = ZonedDateTime.parse("2021-01-04T12:00:00+01:00");
 
         for (int i = 0; i < 4; i++) {
             Optional<Execution> evaluate = trigger.evaluate(

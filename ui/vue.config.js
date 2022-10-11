@@ -45,7 +45,7 @@ module.exports = {
         },
         plugins: [
             new MonacoEditorPlugin({
-                languages: [],
+                languages: ["json"],
                 customLanguages: [
                     {
                         label: "yaml",

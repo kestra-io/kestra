@@ -60,6 +60,8 @@
             placeholder: {type: [String, Number], default: ""},
             diffSideBySide: {type: Boolean, default: true},
             readOnly: {type: Boolean, default: false},
+            lineNumbers: {type: Boolean, default: undefined},
+            minimap: {type: Boolean, default: true},
         },
         components: {
             MonacoEditor,
@@ -132,9 +134,18 @@
                     options.renderSideBySide = this.diffSideBySide
                 }
 
+                if (this.minimap === false) {
+                    options.minimap =  {
+                        enabled: false
+                    }
+                }
+
                 if (this.readOnly) {
                     options.readOnly = true
                 }
+
+                options.wordWrap = true
+
 
                 return  {
                     ...{

@@ -21,6 +21,7 @@
 </template>
 <script>
     import Convert from "ansi-to-html"
+    import xss from "xss";
     let convert = new Convert();
 
     export default {
@@ -96,7 +97,7 @@
                 );
             },
             message() {
-                return !this.log.message ? "" : convert.toHtml(this.log.message);
+                return !this.log.message ? "" : convert.toHtml(xss(this.log.message));
             }
         },
     };

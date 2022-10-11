@@ -89,12 +89,14 @@
             },
             filtered() {
                 return (
-                    this.log.message &&
-                    this.log.message.toLowerCase().includes(this.filter)
+                    this.filter === "" || (
+                        this.log.message &&
+                        this.log.message.toLowerCase().includes(this.filter)
+                    )
                 );
             },
             message() {
-                return convert.toHtml(this.log.message);
+                return !this.log.message ? "" : convert.toHtml(this.log.message);
             }
         },
     };

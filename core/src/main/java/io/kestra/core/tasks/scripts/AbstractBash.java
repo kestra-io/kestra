@@ -425,5 +425,23 @@ abstract public class AbstractBash extends Task {
         @PluginProperty(dynamic = false)
         @Builder.Default
         protected Boolean pullImage = true;
+
+        @Schema(
+            title = "A list of request for devices to be sent to device drivers"
+        )
+        @PluginProperty(dynamic = false)
+        protected List<DeviceRequest> deviceRequests;
+
+        @SuperBuilder
+        @NoArgsConstructor
+        @Getter
+        @Introspected
+        public static class DeviceRequest {
+            private String driver;
+            private Integer count;
+            private List<String> deviceIds;
+            private List<List<String>> capabilities;
+            private Map<String, String> options;
+        }
     }
 }

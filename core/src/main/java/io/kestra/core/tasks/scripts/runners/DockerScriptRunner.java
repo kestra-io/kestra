@@ -194,6 +194,21 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
                 );
             }
 
+            if (abstractBash.getDockerOptions().getDeviceRequests() != null) {
+                hostConfig.withDeviceRequests(abstractBash.getDockerOptions()
+                    .getDeviceRequests()
+                    .stream()
+                    .map(throwFunction(deviceRequest -> new DeviceRequest()
+                        .withDriver(runContext.render(deviceRequest.getDriver()))
+                        .withCount(deviceRequest.getCount())
+                        .withDeviceIds(deviceRequest.getDeviceIds())
+                        .withCapabilities(deviceRequest.getCapabilities())
+                        .withOptions(deviceRequest.getOptions())
+                    ))
+                    .collect(Collectors.toList())
+                );
+            }
+
             if (abstractBash.getDockerOptions().getNetworkMode() != null) {
                 hostConfig.withNetworkMode(runContext.render(abstractBash.getDockerOptions().getNetworkMode(), additionalVars));
             }

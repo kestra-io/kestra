@@ -76,10 +76,10 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
     }
 
-    private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody) {
+    private Execution triggerExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId, requestBody)
+                .POST("/api/v1/executions/trigger/" + namespace + "/" + flowId + (wait ? "?wait=true" : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
@@ -106,15 +106,15 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
             .build();
     }
 
-    private Execution triggerInputsFlowExecution() {
+    private Execution triggerInputsFlowExecution(Boolean wait) {
         MultipartBody requestBody = createInputsFlowBody();
 
-        return triggerExecution(TESTS_FLOW_NS, "inputs", requestBody);
+        return triggerExecution(TESTS_FLOW_NS, "inputs", requestBody, wait);
     }
 
     @Test
     void trigger() {
-        Execution result = triggerInputsFlowExecution();
+        Execution result = triggerInputsFlowExecution(false);
 
         assertThat(result.getState().getCurrent(), is(State.Type.CREATED));
         assertThat(result.getFlowId(), is("inputs"));
@@ -124,8 +124,16 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    void triggerAndWait() {
+        Execution result = triggerInputsFlowExecution(true);
+
+        assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(result.getTaskRunList().size(), is(5));
+    }
+
+    @Test
     void get() {
-        Execution result = triggerInputsFlowExecution();
+        Execution result = triggerInputsFlowExecution(false);
 
         // Get the triggered execution by execution id
         Execution foundExecution = client.retrieve(
@@ -150,7 +158,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(executionsBefore.getTotal(), is(0L));
 
-        triggerExecution(namespace, flowId, MultipartBody.builder().addPart("string", "myString").build());
+        triggerExecution(namespace, flowId, MultipartBody.builder().addPart("string", "myString").build(), false);
 
         PagedResults<Execution> executionsAfter = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/executions?namespace=" + namespace + "&flowId=" + flowId),
@@ -162,7 +170,7 @@ class ExecutionControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void triggerAndFollow() {
-        Execution result = triggerInputsFlowExecution();
+        Execution result = triggerInputsFlowExecution(false);
 
         RxSseClient sseClient = embeddedServer.getApplicationContext().createBean(RxSseClient.class, embeddedServer.getURL());
 

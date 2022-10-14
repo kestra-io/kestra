@@ -189,74 +189,74 @@ Kestra is built on [plugin systems](https://kestra.io/plugins/). You can find yo
         <td><a href="https://kestra.io/plugins/plugin-elasticsearch">ElasticSearch</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-fivetran">Fivetran</a></td>
         <td><a href="https://kestra.io/plugins/plugin-notifications#mail">Email</a></td>
         <td><a href="https://kestra.io/plugins/plugin-fs#ftp">FTP</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-fs#ftps">FTPS</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-fs#ftps">FTPS</a></td>
         <td><a href="https://kestra.io/plugins/plugin-gcp#gcs">Google Cloud Storage</a></td>
         <td><a href="https://kestra.io/plugins/plugin-googleworkspace#drive">Google Drive</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-googleworkspace#sheets">Google Sheets</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-googleworkspace#sheets">Google Sheets</a></td>
         <td><a href="https://kestra.io/plugins/plugin-scripts-groovy">Groovy</a></td>
         <td><a href="https://kestra.io/plugins/plugin-fs#http">Http</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-serdes#json">JSON</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-serdes#json">JSON</a></td>
         <td><a href="https://kestra.io/plugins/plugin-scripts-jython">Jython</a></td>
         <td><a href="https://kestra.io/plugins/plugin-kafka">Kafka</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-kubernetes">Kubernetes</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-kubernetes">Kubernetes</a></td>
         <td><a href="https://kestra.io/plugins/plugin-mqtt">MQTT</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-sqlserver">Microsoft SQL Server</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-mongodb">MongoDb</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-mongodb">MongoDb</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-mysql">MySQL</a></td>
         <td><a href="https://kestra.io/plugins/plugin-scripts-nashorn">Nashorn</a></td>
-        <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Node">Node</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Node">Node</a></td>
         <td><a href="https://kestra.io/plugins/plugin-crypto#openpgp">Open PGP</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-oracle">Oracle</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-serdes#parquet">Parquet</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-serdes#parquet">Parquet</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-pinot">Apache Pinot</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-postgres">Postgres</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-powerbi">Power BI</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-powerbi">Power BI</a></td>
         <td><a href="https://kestra.io/plugins/plugin-pulsar">Apache Pulsar</a></td>
         <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Python">Python</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-jdbc-redshift">Redshift</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-jdbc-redshift">Redshift</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-rockset">Rockset</a></td>
         <td><a href="https://kestra.io/plugins/plugin-fs#sftp">SFTP</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-servicenow">ServiceNow</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-servicenow">ServiceNow</a></td>
         <td><a href="https://kestra.io/plugins/plugin-singer">Singer</a></td>
         <td><a href="https://kestra.io/plugins/plugin-notifications#slack">Slack</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-jdbc-snowflake">Snowflake</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-jdbc-snowflake">Snowflake</a></td>
         <td><a href="https://kestra.io/plugins/plugin-soda">Soda</a></td>
         <td><a href="https://kestra.io/plugins/plugin-spark">Spark</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-tika">Tika</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-tika">Tika</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-trino">Trino</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-vectorwise">Vectorwise</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-serdes#xml">XML</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-serdes#xml">XML</a></td>
         <td><a href="https://kestra.io/plugins/plugin-gcp#vertexai/">Vertex AI</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-vertica">Vertica</a></td>
-        <td></td>
     </tr>
 </table>
 

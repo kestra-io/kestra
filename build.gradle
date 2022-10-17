@@ -11,7 +11,7 @@ plugins {
     id 'org.gradle.test-retry' version '1.4.1'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.42.0"
+    id "com.github.ben-manes.versions" version "0.43.0"
 
     // front
     id 'org.siouan.frontend-jdk11' version '6.0.0' apply false

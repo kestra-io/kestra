@@ -173,7 +173,7 @@
             },
             taskRunsFlowExecutionId() {
                 const task = this.taskRuns
-                    .find(r => r.outputs.executionId)
+                    .find(r => r.outputs && r.outputs.executionId)
 
                 return task !== undefined ? task.outputs.executionId : undefined;
             },

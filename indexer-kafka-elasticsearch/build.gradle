@@ -11,5 +11,5 @@ dependencies {
     implementation group: "org.apache.kafka", name: "kafka-clients", version: kafkaVersion
     implementation group: 'net.jodah', name: 'failsafe', version: '2.4.4'
 
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.8.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:4.8.1'
 }

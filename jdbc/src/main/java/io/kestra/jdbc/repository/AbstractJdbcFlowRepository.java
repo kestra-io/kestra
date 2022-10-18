@@ -87,7 +87,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 } else {
                     from = context
                         .select(field("value", String.class))
-                        .from(this.lastRevision(true))
+                        .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
                         .where(this.defaultFilter())
                         .and(field("namespace", String.class).eq(namespace))
                         .and(field("id", String.class).eq(id));
@@ -114,39 +114,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             });
     }
 
-    protected Table<Record> lastRevision(boolean asterisk) {
-        List<SelectFieldOrAsterisk> fields = new ArrayList<>();
-        if (asterisk) {
-            fields.add(DSL.asterisk());
-        } else {
-            fields.add(field("key", String.class));
-            fields.add(field("revision", Integer.class));
-        }
-
-        fields.add(
-            DSL.rowNumber()
-                .over()
-                .partitionBy(field("namespace"), field("id"))
-                .orderBy(field("revision").desc())
-                .as("revision_rows")
-        );
-
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                return context.select(DSL.asterisk())
-                    .from(
-                        context.select(fields)
-                            .from(jdbcRepository.getTable())
-                            .asTable("rev_ord")
-                    )
-                    .where(field("revision_rows").eq(1))
-                    .asTable("rev");
-            });
-    }
-
     @Override
     public List<Flow> findAll() {
         return this.jdbcRepository
@@ -155,7 +122,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(field("value"))
-                    .from(lastRevision(true))
+                    .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
                     .where(this.defaultFilter());
 
                 return this.jdbcRepository.fetch(select);
@@ -184,7 +151,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
                     .select(field("value"))
-                    .from(lastRevision(true))
+                    .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
                     .where(field("namespace").eq(namespace))
                     .and(this.defaultFilter());
 
@@ -203,7 +170,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return (SelectConditionStep<R>) context
             .select(fields)
             .hint(context.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
-            .from(lastRevision(false))
+            .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, false))
             .join(jdbcRepository.getTable().as("ft"))
             .on(
                 DSL.field(DSL.quotedName("ft", "key")).eq(DSL.field(DSL.field(DSL.quotedName("rev", "key"))))
@@ -372,7 +339,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .transactionResult(configuration -> DSL
                 .using(configuration)
                 .select(field("namespace"))
-                .from(lastRevision(true))
+                .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
                 .where(this.defaultFilter())
                 .groupBy(field("namespace"))
                 .fetch()

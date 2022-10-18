@@ -1,7 +1,6 @@
 package io.kestra.repository.h2;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.micronaut.context.ApplicationContext;
@@ -13,7 +12,7 @@ import java.util.List;
 
 @Singleton
 @H2RepositoryEnabled
-public class H2ExecutionRepository extends AbstractJdbcExecutionRepository implements ExecutionRepositoryInterface {
+public class H2ExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
     public H2ExecutionRepository(ApplicationContext applicationContext, AbstractJdbcExecutorStateStorage executorStateStorage) {
         super(new H2Repository<>(Execution.class, applicationContext), applicationContext, executorStateStorage);

@@ -2,9 +2,10 @@ package io.kestra.runner.h2;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 class H2FunctionsTest {
     @Test
@@ -35,5 +36,11 @@ class H2FunctionsTest {
     public void jqLong() {
         Long jqString = H2Functions.jqLong("{\"a\": 9223372036854775807}", ".a");
         assertThat(jqString, is(9223372036854775807L));
+    }
+
+    @Test
+    public void jqStringArray() {
+        String[] jqString = H2Functions.jqStringArray("{\"a\": [\"1\", \"2\", \"3\"]}", ".a");
+        assertThat(List.of(jqString), containsInAnyOrder("1", "2", "3"));
     }
 }

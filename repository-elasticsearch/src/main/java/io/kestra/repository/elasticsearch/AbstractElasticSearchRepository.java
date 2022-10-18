@@ -364,7 +364,7 @@ abstract public class AbstractElasticSearchRepository<T> {
         BoolQueryBuilder bool = this.defaultFilter();
 
         if (query != null) {
-            bool.must(QueryBuilders.queryStringQuery(query).field("*.fulltext"));
+            bool.must(queryString(query).field("*.fulltext"));
         }
 
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);

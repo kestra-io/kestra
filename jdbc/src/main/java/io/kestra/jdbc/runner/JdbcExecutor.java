@@ -105,7 +105,7 @@ public class JdbcExecutor implements ExecutorInterface {
     @Inject
     private AbstractJdbcExecutorStateStorage executorStateStorage;
 
-    private List<Flow> allFlows;
+    protected List<Flow> allFlows;
 
     @SneakyThrows
     @Override

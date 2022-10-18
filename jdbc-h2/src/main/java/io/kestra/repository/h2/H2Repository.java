@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
-public class H2Repository<T>  extends io.kestra.jdbc.AbstractJdbcRepository<T> {
+public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
     public H2Repository(Class<T> cls, ApplicationContext applicationContext) {
         super(cls, applicationContext);
     }

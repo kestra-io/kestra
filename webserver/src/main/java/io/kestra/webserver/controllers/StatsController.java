@@ -83,7 +83,7 @@ public class StatsController {
             query,
             namespace,
             flowId,
-            flows != null && flows.get(0).getNamespace() != null ? flows : null,
+            flows != null && flows.get(0).getNamespace() != null && flows.get(0).getId() != null ? flows : null,
             startDate != null ? startDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             endDate != null ? endDate.withZoneSameInstant(ZoneId.systemDefault()) : null,
             namespaceOnly != null && namespaceOnly

@@ -27,7 +27,7 @@ import java.util.List;
     examples = {
         @Example(
             code = {
-                "endDate: \"{{ now() | dateAdd(-1, 'MONTH') }}\"",
+                "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\"",
                 "states: ",
                 " - KILLED",
                 " - FAILED",

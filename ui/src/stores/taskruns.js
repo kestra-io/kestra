@@ -8,13 +8,7 @@ export default {
     },
     actions: {
         findTaskRuns({commit}, options) {
-            const sort = options.sort
-            delete options.sort
-            let sortQueryString = ""
-            if (sort) {
-                sortQueryString = `?sort=${sort}`
-            }
-            return Vue.axios.get(`/api/v1/taskruns/search${sortQueryString}`, {params: options}).then(response => {
+            return Vue.axios.get("/api/v1/taskruns/search", {params: options}).then(response => {
                 commit("setTaskruns", response.data.results)
                 commit("setTotal", response.data.total)
             })

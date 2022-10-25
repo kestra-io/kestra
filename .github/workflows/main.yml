@@ -287,6 +287,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          channel: '#git'
-          name: GitHub Actions
+          username: GitHub Actions
           icon_emoji: ':github-actions:'
+          channel: 'C02DQ1A7JLR'

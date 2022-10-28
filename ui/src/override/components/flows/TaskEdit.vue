@@ -1,33 +1,48 @@
 <template>
-    <b-modal
-        :id="modalId"
-        :title="`Task ${task.id}`"
-        hide-backdrop
-        modal-class="right"
-        size="xl"
-        @shown="onShow"
+    <component
+        :is="component"
+        v-b-modal="`modal-source-${uuid}`"
     >
-        <template #modal-footer>
-            <b-button @click="saveTask" v-if="canSave" variant="primary">
-                <content-save />&nbsp;
-                <span>{{ $t('save') }}</span>
-            </b-button>
-        </template>
+        <kicon :tooltip="$t('show task source')">
+            <code-tags />
+        </kicon>
 
-        <editor
-            ref="editor"
-            @onSave="saveTask"
-            v-model="taskYaml"
-            :full-height="false"
-            :navbar="false"
-            lang="yaml"
-        />
-    </b-modal>
+        <span v-if="component !== 'b-button'">{{ $t('show task source') }}</span>
+
+        <b-modal
+            :id="`modal-source-${uuid}`"
+            :title="`Task ${taskId || task.id}`"
+            hide-backdrop
+            modal-class="right"
+            size="xl"
+            @show="onShow"
+            @shown="onShown"
+        >
+            <template #modal-footer>
+                <b-button @click="saveTask" v-if="canSave" variant="primary">
+                    <content-save />&nbsp;
+                    <span>{{ $t('save') }}</span>
+                </b-button>
+            </template>
+
+            <editor
+                ref="editor"
+                v-if="taskYaml"
+                @onSave="saveTask"
+                v-model="taskYaml"
+                :full-height="false"
+                :navbar="false"
+                lang="yaml"
+            />
+        </b-modal>
+    </component>
 </template>
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
     import Editor from "../../../components/inputs/Editor";
     import ContentSave from "vue-material-design-icons/ContentSave";
+    import Kicon from "../../../components/Kicon"
+    import CodeTags from "vue-material-design-icons/CodeTags";
     import {canSaveFlowTemplate} from "../../../utils/flowTemplate";
     import {mapState} from "vuex";
 
@@ -35,11 +50,21 @@
         components: {
             Editor,
             ContentSave,
+            Kicon,
+            CodeTags,
         },
         props: {
+            component: {
+                type: String,
+                default: "b-button"
+            },
             task: {
                 type: Object,
-                required: true
+                default: undefined
+            },
+            taskId: {
+                type: String,
+                default: undefined
             },
             flowId: {
                 type: String,
@@ -49,12 +74,11 @@
                 type: String,
                 required: true
             },
-            modalId: {
-                type: String,
-                required: true
-            },
         },
         methods: {
+            load() {
+                return this.$store.dispatch("flow/loadTask", {namespace: this.namespace, id: this.flowId, taskId: this.taskId});
+            },
             saveTask() {
                 let task;
                 try {
@@ -81,6 +105,16 @@
                     })
             },
             onShow() {
+                if (this.taskId) {
+                    this.load()
+                        .then(value => {
+                            this.taskYaml = YamlUtils.stringify(value);
+                        })
+                } else {
+                    this.taskYaml = YamlUtils.stringify(this.task);
+                }
+            },
+            onShown() {
                 if (this.$refs.editor) {
                     this.$refs.editor.onResize();
                 }
@@ -92,10 +126,13 @@
             };
         },
         created() {
-            this.taskYaml = YamlUtils.stringify(this.task);
+
         },
         computed: {
             ...mapState("auth", ["user"]),
+            uuid() {
+                return "source-" + this.namespace + "-" + this.flowId + "-" + (this.taskId || this.task.id);
+            },
             canSave() {
                 return canSaveFlowTemplate(true, this.user, {namespace:this.namespace}, "flow");
             }

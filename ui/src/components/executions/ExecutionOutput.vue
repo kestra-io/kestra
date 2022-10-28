@@ -60,7 +60,7 @@
             hide-backdrop
             id="debug-expression-modal"
             modal-class="right"
-            size="lg"
+            size="xl"
         >
             <template #modal-header>
                 <h5>{{ $t("eval.title") }}</h5>
@@ -68,7 +68,7 @@
 
             <template>
                 <editor class="mb-2" ref="editorContainer" :full-height="false" @onSave="onDebugExpression(filter, $event)" :input="true" :navbar="false" value="" />
-                <pre v-if="debugExpression">{{ debugExpression }}</pre>
+                <editor v-if="debugExpression" :read-only="true" :full-height="false" :navbar="false" :minimap="false" :value="debugExpression" :lang="isJson ? 'json' : ''" />
                 <b-alert class="debug-error" variant="danger" show v-if="debugError">
                     <p><strong>{{ debugError }}</strong></p>
                     <pre class="mb-0">{{ debugStackTrace }}</pre>
@@ -102,6 +102,7 @@
             return {
                 filter: "",
                 debugExpression: "",
+                isJson: false,
                 debugError: "",
                 debugStackTrace: "",
             };
@@ -136,7 +137,13 @@
                         "Content-type": "text/plain",
                     }
                 }).then(response => {
-                    this.debugExpression = response.data.result;
+                    try {
+                        this.debugExpression = JSON.stringify(JSON.parse(response.data.result), "  ", 2);
+                        this.isJson = true;
+                    } catch (e) {
+                        this.debugExpression = response.data.result;
+                        this.isJson = false;
+                    }
                     this.debugError = response.data.error;
                     this.debugStackTrace = response.data.stackTrace;
                 })

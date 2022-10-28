@@ -36,7 +36,18 @@ inputs:
 - name: json
   type: JSON
   required: false
-
+- name: uri
+  type: URI
+  required: false
+- name: nested.string
+  type: STRING
+  required: false
+- name: nested.more.int
+  type: INT
+  required: false
+- name: nested.bool
+  type: BOOLEAN
+  required: false
 tasks:
 - id: string
   type: io.kestra.core.tasks.debugs.Return

@@ -21,6 +21,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.reactivex.Single;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -244,7 +245,7 @@ public class ExecutionController {
 
     @Delete(uri = "executions/{executionId}", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Flows"}, summary = "Delete an execution")
+    @Operation(tags = {"Executions"}, summary = "Delete an execution")
     @ApiResponses(
         @ApiResponse(responseCode = "204", description = "On success")
     )
@@ -357,8 +358,9 @@ public class ExecutionController {
     public Execution trigger(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id,
-        @Nullable Map<String, String> inputs,
-        @Nullable Publisher<StreamingFileUpload> files
+        @Parameter(description = "The inputs") @Nullable Map<String, String> inputs,
+        @Parameter(description = "The inputs of type file") @Nullable Publisher<StreamingFileUpload> files,
+        @Parameter(description = "If the server will wait the end of the execution") @QueryValue(value = "wait", defaultValue = "false") Boolean wait
     ) {
         Optional<Flow> find = flowRepository.findById(namespace, id);
         if (find.isEmpty()) {
@@ -377,7 +379,33 @@ public class ExecutionController {
         executionQueue.emit(current);
         eventPublisher.publishEvent(new CrudEvent<>(current, CrudEventType.CREATE));
 
-        return current;
+        if (!wait) {
+            return current;
+        }
+
+        AtomicReference<Runnable> cancel = new AtomicReference<>();
+
+        return Single
+            .<Execution>create(emitter -> {
+                Runnable receive = this.executionQueue.receive(item -> {
+                    Flow flow = flowRepository.findByExecution(current);
+
+                    if (item.getId().equals(current.getId())) {
+
+                        if (this.isStopFollow(flow, item)) {
+                            emitter.onSuccess(item);
+                        }
+                    }
+                });
+
+                cancel.set(receive);
+            })
+            .doFinally(() -> {
+                if (cancel.get() != null) {
+                    cancel.get().run();
+                }
+            })
+            .blockingGet();
     }
 
     protected <T> HttpResponse<T> validateFile(String executionId, URI path, String redirect) {

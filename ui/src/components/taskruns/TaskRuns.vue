@@ -10,8 +10,8 @@
                     @input="onDataTableValue('namespace', $event)"
                 />
                 <status-filter-buttons
-                    :value="$route.query.status"
-                    @input="onDataTableValue('status', $event)"
+                    :value="$route.query.state"
+                    @input="onDataTableValue('state', $event)"
                 />
                 <date-range
                     :start-date="$route.query.startDate"
@@ -265,7 +265,7 @@
                     .dispatch("taskrun/findTaskRuns", this.loadQuery({
                         size: parseInt(this.$route.query.size || 25),
                         page: parseInt(this.$route.query.page || 1),
-                        state: this.$route.query.status ? [this.$route.query.status] : this.statuses
+                        state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                     }, false))
                     .finally(callback);
             },

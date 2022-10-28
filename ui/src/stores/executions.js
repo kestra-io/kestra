@@ -56,13 +56,7 @@ export default {
             })
         },
         findExecutions({commit}, options) {
-            const sort = options.sort
-            delete options.sort
-            let sortQueryString = ""
-            if (sort) {
-                sortQueryString = `?sort=${sort}`
-            }
-            return Vue.axios.get(`/api/v1/executions/search${sortQueryString}`, {params: options}).then(response => {
+            return Vue.axios.get("/api/v1/executions/search", {params: options}).then(response => {
                 commit("setExecutions", response.data.results)
                 commit("setTotal", response.data.total)
             })

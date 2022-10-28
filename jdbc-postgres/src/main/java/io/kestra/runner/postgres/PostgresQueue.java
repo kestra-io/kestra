@@ -65,10 +65,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
             )
             .from(this.table)
             .where(DSL.condition("type = CAST(? AS queue_type)", this.cls.getName()))
-            .and(DSL.or(List.of(
-                AbstractJdbcRepository.field("consumers").isNull(),
-                DSL.condition("NOT(CAST(? AS queue_consumers) = ANY(\"consumers\"))", consumerGroup)
-            )))
+            .and(AbstractJdbcRepository.field("consumer_" + consumerGroup, Boolean.class).isFalse())
             .orderBy(AbstractJdbcRepository.field("offset").asc())
             .limit(10)
             .forUpdate()
@@ -82,12 +79,8 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
         ctx
             .update(DSL.table(table.getName()))
             .set(
-                AbstractJdbcRepository.field("consumers"),
-                DSL.field(
-                    "\"consumers\" || CAST(? AS queue_consumers[])",
-                    SQLDataType.VARCHAR(50).getArrayType(),
-                    (Object) new String[]{consumerGroup}
-                )
+                AbstractJdbcRepository.field("consumer_" + consumerGroup),
+                true
             )
             .where(AbstractJdbcRepository.field("offset").in(offsets.toArray(Integer[]::new)))
             .execute();

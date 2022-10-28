@@ -73,16 +73,11 @@ public class KafkaStreamSourceService {
 
         try {
             // pooling of new flow can be delayed on ExecutorStore, we maybe need to wait that the flow is updated
-            if (!flowExecutorInterface.isReady()) {
-                flow = Await.until(
-                    () -> flowExecutorInterface.findByExecution(executor.getExecution()).orElse(null),
-                    Duration.ofMillis(100),
-                    Duration.ofMinutes(5)
-                );
-            } else {
-                flow = flowExecutorInterface.findByExecution(executor.getExecution())
-                    .orElseThrow(() -> new TimeoutException("Unable to find flow with flow executor ready"));
-            }
+            flow = Await.until(
+                () -> flowExecutorInterface.findByExecution(executor.getExecution()).orElse(null),
+                Duration.ofMillis(100),
+                Duration.ofMinutes(5)
+            );
         } catch (TimeoutException e) {
             // execution is failed, can't find flow, avoid recursive exception, skipped it.
             if (executor.getExecution().getState().isFailed()) {

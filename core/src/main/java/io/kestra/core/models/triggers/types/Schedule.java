@@ -129,7 +129,8 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @Schema(
         title = "The time zone id to use for evaluate cron. Default value is the server default zone id."
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = false)
+    @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 
     @Schema(
@@ -192,7 +193,9 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
 
         // no previous present but backfill
         if (backfill != null && backfill.getStart() != null) {
-            return backfill.getStart();
+            return this.timezone != null ?
+                backfill.getStart().withZoneSameLocal(ZoneId.of(this.timezone)) :
+                backfill.getStart();
         }
 
         // no previous present & no backfill, just provide now

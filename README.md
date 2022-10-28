@@ -164,27 +164,32 @@ Kestra is built on [plugin systems](https://kestra.io/plugins/). You can find yo
 
 <table>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-airbyte">Airbyte</a></td>
         <td><a href="https://kestra.io/plugins/plugin-aws#s3">Amazon S3</a></td>
         <td><a href="https://kestra.io/plugins/plugin-serdes#avro">Avro</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-azure/#storage-blob">Azure Blob Storage</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-azure/#storage-blob">Azure Blob Storage</a></td>
         <td><a href="https://kestra.io/plugins/core/tasks/scripts/io.kestra.core.tasks.scripts.Bash">Bash</a></td>
         <td><a href="https://kestra.io/plugins/plugin-gcp#bigquery">Big Query</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-serdes#csv">CSV</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-serdes#csv">CSV</a></td>
         <td><a href="https://kestra.io/plugins/plugin-cassandra">Cassandra</a></td>
         <td><a href="https://kestra.io/plugins/plugin-jdbc-clickhouse">ClickHouse</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-dbt">DBT</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-dbt">DBT</a></td>
         <td><a href="https://kestra.io/plugins/plugin-debezium-mysql">Debezium MYSQL</a></td>
         <td><a href="https://kestra.io/plugins/plugin-debezium-postgres">Debezium Postgres</a></td>
-        <td><a href="https://kestra.io/plugins/plugin-debezium-sqlserver">Debezium Microsoft SQL Server</a></td>
     </tr>
     <tr>
+        <td><a href="https://kestra.io/plugins/plugin-debezium-sqlserver">Debezium Microsoft SQL Server</a></td>
+        <td><a href="https://kestra.io/plugins/plugin-jdbc-duckdb">DuckDb</a></td>
         <td><a href="https://kestra.io/plugins/plugin-elasticsearch">ElasticSearch</a></td>
+    </tr>
+    <tr>
+        <td><a href="https://kestra.io/plugins/plugin-fivetran">Fivetran</a></td>
         <td><a href="https://kestra.io/plugins/plugin-notifications#mail">Email</a></td>
         <td><a href="https://kestra.io/plugins/plugin-fs#ftp">FTP</a></td>
     </tr>

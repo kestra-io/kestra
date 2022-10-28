@@ -13,7 +13,7 @@
                 label-align-sm="right"
             >
                 <b-form-input
-                    v-if="input.type === 'STRING'"
+                    v-if="input.type === 'STRING' || input.type === 'URI'"
                     v-model="input.value"
                     type="text"
                     :required="input.required"
@@ -93,6 +93,7 @@
                     :state="state(input)"
                     :placeholder="`${placeholder} ${input.name}`"
                 />
+
                 <small v-if="input.description" class="form-text text-muted">{{ input.description }}</small>
             </b-form-group>
             <b-form-group class="text-right mb-0">

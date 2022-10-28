@@ -54,25 +54,18 @@
                         </kicon>
                     </b-button>
 
-                    <b-button
+                    <task-edit
                         class="node-action"
-                        size="sm"
-                        v-b-modal="`modal-source-${hash}`"
-                    >
-                        <kicon :tooltip="$t('show task source')">
-                            <code-tags />
-                        </kicon>
-                    </b-button>
+                        :modal-id="`modal-source-${hash}`"
+                        :task="task"
+                        :flow-id="flowId"
+                        :namespace="namespace"
+                    />
                 </b-btn-group>
             </div>
         </div>
 
-        <task-edit
-            :modal-id="`modal-source-${hash}`"
-            :task="task"
-            :flow-id="flowId"
-            :namespace="namespace"
-        />
+
 
         <b-modal
             :id="`modal-logs-${task.id}`"
@@ -103,8 +96,6 @@
     </div>
 </template>
 <script>
-    import CodeTags from "vue-material-design-icons/CodeTags";
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
 
     import {mapState} from "vuex";
     import Status from "../Status";
@@ -117,12 +108,12 @@
     import Kicon from "../Kicon"
     import TaskEdit from "override/components/flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink"
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
 
     export default {
         components: {
             MarkdownTooltip,
             Status,
-            CodeTags,
             TextBoxSearch,
             LogList,
             LogLevelSelector,
@@ -182,7 +173,7 @@
             },
             taskRunsFlowExecutionId() {
                 const task = this.taskRuns
-                    .find(r => r.outputs.executionId)
+                    .find(r => r.outputs && r.outputs.executionId)
 
                 return task !== undefined ? task.outputs.executionId : undefined;
             },
@@ -321,7 +312,7 @@
                 white-space: nowrap;
             }
 
-            .node-action {
+            ::v-deep .node-action {
                 flex-shrink: 2;
                 padding-top: 18px;
                 padding-right: 18px;

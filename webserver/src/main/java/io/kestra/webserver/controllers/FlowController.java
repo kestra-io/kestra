@@ -76,6 +76,26 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "{namespace}/{id}/tasks/{taskId}", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Flows"}, summary = "Get a flow task")
+    public Task flowTask(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The task id") String taskId
+    ) {
+        return flowRepository
+            .findById(namespace, id)
+            .flatMap(flow -> {
+                try {
+                    return Optional.of(flow.findTaskByTaskId(taskId));
+                } catch (InternalException e) {
+                    return Optional.empty();
+                }
+            })
+            .orElse(null);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Search for flows")
     public PagedResults<Flow> find(

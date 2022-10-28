@@ -10,8 +10,8 @@
                     @input="onDataTableValue('namespace', $event)"
                 />
                 <status-filter-buttons
-                    :value="$route.query.status"
-                    @input="onDataTableValue('status', $event)"
+                    :value="$route.query.state"
+                    @input="onDataTableValue('state', $event)"
                 />
                 <date-range
                     :start-date="$route.query.startDate"
@@ -282,7 +282,7 @@
                     size: parseInt(this.$route.query.size || this.internalPageSize),
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",
-                    state: this.$route.query.status ? [this.$route.query.status] : this.statuses
+                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                 }, false)).finally(callback);
             },
             durationFrom(item) {

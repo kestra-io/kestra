@@ -1,10 +1,8 @@
 <template>
-    <b-button
-        @click="click"
-        class="node-action"
-    >
-        <axis-y-arrow :title="$t('link to sub flow')" />
-    </b-button>
+    <component :is="component" @click="click" class="node-action">
+        <axis-y-arrow :title="$t('sub flow')" />
+        <span v-if="component !== 'b-button'">{{ $t('sub flow') }}</span>
+    </component>
 </template>
 <script>
     import AxisYArrow from "vue-material-design-icons/AxisYArrow";
@@ -14,24 +12,28 @@
             AxisYArrow
         },
         props: {
+            component: {
+                type: String,
+                default: "b-button"
+            },
             executionId: {
-                type :String,
+                type: String,
                 default: undefined
             },
             namespace: {
-                type :String,
+                type: String,
                 default: undefined
             },
             flowId: {
-                type :String,
+                type: String,
                 default: undefined
             },
             tabFlow: {
-                type :String,
+                type: String,
                 default: "overview"
             },
             tabExecution: {
-                type :String,
+                type: String,
                 default: "topology"
             }
         },

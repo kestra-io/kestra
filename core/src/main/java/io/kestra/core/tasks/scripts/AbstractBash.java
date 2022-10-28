@@ -116,15 +116,14 @@ abstract public class AbstractBash extends Task {
 
     @Schema(
         title = "Input files are extra files supplied by user that make it simpler organize code.",
-        description = "Describe a files map that will be written and usable in execution context. In python execution " +
-            "context is in a temp folder, for bash scripts, you can reach files using a workingDir variable " +
-            "like 'source {{workingDir}}/myfile.sh' "
+        description = "Describe a files map (that can be a map or a json string) that will be written and usable in execution context. " +
+            "You can reach files using a workingDir variable like 'source {{workingDir}}/myfile.sh' "
     )
     @PluginProperty(
         additionalProperties = String.class,
         dynamic = true
     )
-    protected Map<String, String> inputFiles;
+    protected Object inputFiles;
 
     @Schema(
         title = "Additional environnements variable to add for current process."
@@ -151,7 +150,7 @@ abstract public class AbstractBash extends Task {
     protected transient Map<String, Object> additionalVars = new HashMap<>();
 
     protected Map<String, String> finalInputFiles(RunContext runContext) throws IOException, IllegalVariableEvaluationException {
-        return this.inputFiles != null ? new HashMap<>(this.inputFiles) : new HashMap<>();
+        return this.inputFiles != null ? new HashMap<>(BashService.transformInputFiles(runContext, this.inputFiles)) : new HashMap<>();
     }
 
     protected Map<String, String> finalEnv() throws IOException {
@@ -426,5 +425,23 @@ abstract public class AbstractBash extends Task {
         @PluginProperty(dynamic = false)
         @Builder.Default
         protected Boolean pullImage = true;
+
+        @Schema(
+            title = "A list of request for devices to be sent to device drivers"
+        )
+        @PluginProperty(dynamic = false)
+        protected List<DeviceRequest> deviceRequests;
+
+        @SuperBuilder
+        @NoArgsConstructor
+        @Getter
+        @Introspected
+        public static class DeviceRequest {
+            private String driver;
+            private Integer count;
+            private List<String> deviceIds;
+            private List<List<String>> capabilities;
+            private Map<String, String> options;
+        }
     }
 }

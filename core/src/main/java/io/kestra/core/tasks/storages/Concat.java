@@ -98,13 +98,13 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
     @PluginProperty(dynamic = true)
     private String separator;
 
+    @SuppressWarnings("unchecked")
     @Override
     public Concat.Output run(RunContext runContext) throws Exception {
         File tempFile = runContext.tempFile().toFile();
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile)) {
             List<String> finalFiles;
             if (this.files instanceof List) {
-                //noinspection unchecked
                 finalFiles = (List<String>) this.files;
             } else if (this.files instanceof String) {
                 final TypeReference<List<String>> reference = new TypeReference<>() {};

@@ -32,6 +32,7 @@ import java.io.PipedOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -165,13 +166,15 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
                 container.withWorkingDir(workingDirectory.toFile().getAbsolutePath());
             }
 
+            List<Bind> binds = new ArrayList<>();
+
+
             if (workingDirectory != null) {
-                hostConfig
-                    .withBinds(new Bind(
-                        workingDirectory.toAbsolutePath().toString(),
-                        new Volume(workingDirectory.toAbsolutePath().toString()),
-                        AccessMode.rw
-                    ));
+                binds.add(new Bind(
+                    workingDirectory.toAbsolutePath().toString(),
+                    new Volume(workingDirectory.toAbsolutePath().toString()),
+                    AccessMode.rw
+                ));
             }
 
             if (abstractBash.getDockerOptions().getUser() != null) {
@@ -187,9 +190,28 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
             }
 
             if (this.volumesEnabled && abstractBash.getDockerOptions().getVolumes() != null) {
-                hostConfig.withBinds(runContext.render(abstractBash.getDockerOptions().getVolumes())
+                binds.addAll(runContext.render(abstractBash.getDockerOptions().getVolumes())
                     .stream()
                     .map(Bind::parse)
+                    .collect(Collectors.toList())
+                );
+            }
+
+            if (binds.size() > 0) {
+                hostConfig.withBinds(binds);
+            }
+
+            if (abstractBash.getDockerOptions().getDeviceRequests() != null) {
+                hostConfig.withDeviceRequests(abstractBash.getDockerOptions()
+                    .getDeviceRequests()
+                    .stream()
+                    .map(throwFunction(deviceRequest -> new DeviceRequest()
+                        .withDriver(runContext.render(deviceRequest.getDriver()))
+                        .withCount(deviceRequest.getCount())
+                        .withDeviceIds(deviceRequest.getDeviceIds())
+                        .withCapabilities(deviceRequest.getCapabilities())
+                        .withOptions(deviceRequest.getOptions())
+                    ))
                     .collect(Collectors.toList())
                 );
             }

@@ -10,7 +10,7 @@ module.exports = {
         ".*\\.(js)$": "babel-jest"
     },
     transformIgnorePatterns: [
-        "/node_modules/(?!vue-material-design-icons|vue-axios)"
+        "/node_modules/(?!vue-material-design-icons|vue-axios|axios)"
     ],
     modulePaths: [
         "<rootDir>/src/"

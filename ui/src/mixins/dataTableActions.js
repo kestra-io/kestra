@@ -45,9 +45,7 @@ export default {
     methods: {
         onSort(sortItem) {
             if (!this.embed && sortItem && sortItem.sortBy) {
-                const sort = [
-                    `${sortItem.sortBy}:${sortItem.sortDesc ? "desc" : "asc"}`
-                ];
+                const sort = `${sortItem.sortBy}:${sortItem.sortDesc ? "desc" : "asc"}`;
                 this.$router.push({
                     query: {...this.$route.query, sort}
                 });

@@ -5,6 +5,7 @@ export default {
     state: {
         flows: undefined,
         flow: undefined,
+        task: undefined,
         search: undefined,
         total: 0,
         flowGraph: undefined,
@@ -45,6 +46,13 @@ export default {
                 } else {
                     commit("setFlow", response.data)
                 }
+
+                return response.data;
+            })
+        },
+        loadTask({commit}, options) {
+            return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}`).then(response => {
+                commit("setTask", response.data)
 
                 return response.data;
             })
@@ -119,6 +127,9 @@ export default {
         setFlow(state, flow) {
             state.flow = flow;
             state.flowGraph = undefined
+        },
+        setTask(state, task) {
+            state.task = task;
         },
         setTrigger(state, {index, trigger}) {
             let flow = state.flow;

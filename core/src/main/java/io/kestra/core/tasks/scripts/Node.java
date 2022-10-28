@@ -120,7 +120,9 @@ public class Node extends AbstractBash implements RunnableTask<ScriptOutput> {
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
-        if (!inputFiles.containsKey("main.js")) {
+        Map<String, String> finalInputFiles = this.finalInputFiles(runContext);
+
+        if (!finalInputFiles.containsKey("main.js")) {
             throw new Exception("Invalid input files structure, expecting inputFiles property to contain at least a main.js key with javascript code value.");
         }
 
@@ -134,7 +136,7 @@ public class Node extends AbstractBash implements RunnableTask<ScriptOutput> {
 
             String args = getArgs() == null ? "" : " " + runContext.render(String.join(" ", getArgs()));
 
-            String npmInstall = inputFiles.containsKey("package.json") ? npmPath + " i > /dev/null" : "";
+            String npmInstall = finalInputFiles.containsKey("package.json") ? npmPath + " i > /dev/null" : "";
 
             renderer.addAll(Arrays.asList(
                 "PATH=\"$PATH:" + new File(nodePath).getParent() + "\"",

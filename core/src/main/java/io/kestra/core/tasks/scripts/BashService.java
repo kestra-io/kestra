@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.scripts;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
@@ -17,11 +18,13 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.validation.constraints.NotNull;
+
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 abstract public class BashService {
     protected static final ObjectMapper MAPPER = JacksonMapper.ofJson();
-    private static final Pattern PATTERN = Pattern.compile("^::(\\{.*\\})::$");
+    private static final Pattern PATTERN = Pattern.compile("^::(\\{.*})::$");
 
     public static List<String> finalCommandsWithInterpreter(
         String interpreter,
@@ -99,6 +102,23 @@ abstract public class BashService {
             );
         }
     }
+
+    public static Map<String, String> transformInputFiles(RunContext runContext, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
+        if (inputFiles instanceof Map) {
+            //noinspection unchecked
+            return (Map<String, String>) inputFiles;
+        } else if (inputFiles instanceof String) {
+            final TypeReference<Map<String, String>> reference = new TypeReference<>() {};
+
+            return JacksonMapper.ofJson(false).readValue(
+                runContext.render((String) inputFiles),
+                reference
+            );
+        } else {
+            throw new IllegalVariableEvaluationException("Invalid `files` properties with type '" + (inputFiles != null ? inputFiles.getClass() : "null") + "'");
+        }
+    }
+
 
     public static void createInputFiles(
         RunContext runContext,

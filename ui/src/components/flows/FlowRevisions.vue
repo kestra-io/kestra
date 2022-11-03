@@ -8,11 +8,20 @@
             <b-col md="6">
                 <b-input-group>
                     <b-form-select @input="addQuery" v-model="revisionLeft" :options="options" />
-                    <b-btn @click="seeRevision(revisionLeft, revisionLeftText)">
-                        <kicon placement="bottomright" :tooltip="$t('see full revision')">
-                            <file-code />
-                        </kicon>
-                    </b-btn>
+                    <b-input-group-append>
+                        <b-btn @click="seeRevision(revisionLeft, revisionLeftText)">
+                            <kicon placement="bottomright" :tooltip="$t('see full revision')">
+                                <file-code />
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
+                            </kicon>
+                        </b-btn>
+                        <b-btn :disabled="revisionNumber(revisionLeft) === flow.revision" @click="restoreRevision(revisionLeft, revisionLeftText)">
+                            <kicon placement="bottomright" :tooltip="$t('see full revision')">
+                                <restore />
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
+                            </kicon>
+                        </b-btn>
+                    </b-input-group-append>
                 </b-input-group>
 
                 <b-alert v-if="revisionLeftError" variant="warning" class="mb-0 mt-3" show>
@@ -25,11 +34,20 @@
             <b-col md="6">
                 <b-input-group>
                     <b-form-select @input="addQuery" v-model="revisionRight" :options="options" />
-                    <b-btn @click="seeRevision(revisionRight, revisionRightText)">
-                        <kicon placement="bottomright" :tooltip="$t('see full revision')">
-                            <file-code />
-                        </kicon>
-                    </b-btn>
+                    <b-input-group-append>
+                        <b-btn @click="seeRevision(revisionRight, revisionRightText)">
+                            <kicon placement="bottomright" :tooltip="$t('see full revision')">
+                                <file-code />
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
+                            </kicon>
+                        </b-btn>
+                        <b-btn :disabled="revisionNumber(revisionRight) === flow.revision" @click="restoreRevision(revisionRight, revisionRightText)">
+                            <kicon placement="bottomright" :tooltip="$t('see full revision')">
+                                <restore />
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
+                            </kicon>
+                        </b-btn>
+                    </b-input-group-append>
                 </b-input-group>
 
                 <b-alert v-if="revisionRightError" variant="warning" class="mb-0 mt-3" show>
@@ -71,41 +89,46 @@
     import YamlUtils from "../../utils/yamlUtils";
     import Editor from "../../components/inputs/Editor";
     import FileCode from "vue-material-design-icons/FileCode";
+    import Restore from "vue-material-design-icons/Restore";
     import Kicon from "../Kicon"
     import Crud from "override/components/auth/Crud";
+    import {saveFlowTemplate} from "@/utils/flowTemplate";
 
     export default {
-        components: {Editor, FileCode, Kicon, Crud},
+        components: {Editor, FileCode, Restore, Kicon, Crud},
         created() {
-            this.$store
-                .dispatch("flow/loadRevisions", this.$route.params)
-                .then(() => {
-                    const revisionLength = this.revisions.length;
-                    if (revisionLength > 0) {
-                        this.revisionRight = revisionLength - 1;
-                    }
-                    if (revisionLength > 1) {
-                        this.revisionLeft = revisionLength - 2;
-                    }
-                    if (this.$route.query.revisionRight) {
-                        this.revisionRight = this.revisionIndex(
-                            this.$route.query.revisionRight
-                        );
-                        if (
-                            !this.$route.query.revisionLeft &&
-                            this.revisionRight > 0
-                        ) {
-                            this.revisionLeft = this.revisions.length - 1;
-                        }
-                    }
-                    if (this.$route.query.revisionLeft) {
-                        this.revisionLeft = this.revisionIndex(
-                            this.$route.query.revisionLeft
-                        );
-                    }
-                });
+            this.load();
         },
         methods: {
+            load() {
+                this.$store
+                    .dispatch("flow/loadRevisions", this.$route.params)
+                    .then(() => {
+                        const revisionLength = this.revisions.length;
+                        if (revisionLength > 0) {
+                            this.revisionRight = revisionLength - 1;
+                        }
+                        if (revisionLength > 1) {
+                            this.revisionLeft = revisionLength - 2;
+                        }
+                        if (this.$route.query.revisionRight) {
+                            this.revisionRight = this.revisionIndex(
+                                this.$route.query.revisionRight
+                            );
+                            if (
+                                !this.$route.query.revisionLeft &&
+                                this.revisionRight > 0
+                            ) {
+                                this.revisionLeft = this.revisions.length - 1;
+                            }
+                        }
+                        if (this.$route.query.revisionLeft) {
+                            this.revisionLeft = this.revisionIndex(
+                                this.$route.query.revisionLeft
+                            );
+                        }
+                    });
+            },
             revisionIndex(revision) {
                 const rev = parseInt(revision);
                 for (let i = 0; i < this.revisions.length; i++) {
@@ -125,13 +148,23 @@
                     this.$bvModal.show(`modal-source-${index}`)
                 })
             },
+            restoreRevision(index, revision) {
+                this.$toast()
+                    .confirm(this.$t("restore confirm", {revision: this.revisionNumber(index)}), () => {
+                        return saveFlowTemplate(this, YamlUtils.parse(revision), "flow")
+                            .then(this.load)
+                            .then(() => {
+                                this.$router.push({query: {}});
+                            });
+                    });
+            },
             addQuery() {
                 this.$router.push({query: {
                     ...this.$route.query,
                     ...{revisionLeft:this.revisionLeft + 1, revisionRight: this.revisionRight + 1}}
                 });
             },
-            tranformRevision(source) {
+            transformRevision(source) {
                 if (source.exception) {
                     return YamlUtils.stringify(YamlUtils.parse(source.source));
                 }
@@ -140,7 +173,7 @@
             }
         },
         computed: {
-            ...mapState("flow", ["revisions"]),
+            ...mapState("flow", ["flow", "revisions"]),
             options() {
                 return (this.revisions || []).map((revision, x) => {
                     return {
@@ -168,24 +201,14 @@
                     return "";
                 }
 
-                return this.tranformRevision(this.revisions[this.revisionLeft]);
+                return this.transformRevision(this.revisions[this.revisionLeft]);
             },
             revisionRightText() {
                 if (this.revisionRight === undefined) {
                     return "";
                 }
 
-                return this.tranformRevision(this.revisions[this.revisionRight]);
-            },
-            diff() {
-                const linesLeft = this.revisionLeftText.split("\n");
-                const linesRight = this.revisionRightText.split("\n");
-                const minLength = Math.min(linesLeft.length, linesRight.length);
-                const diff = [];
-                for (let i = 0; i < minLength; i++) {
-                    diff.push(linesLeft[i] === linesRight[i] ? "" : "≠");
-                }
-                return diff.join("\n");
+                return this.transformRevision(this.revisions[this.revisionRight]);
             },
         },
         data() {

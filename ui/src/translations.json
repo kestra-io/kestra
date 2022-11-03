@@ -16,7 +16,7 @@
     "delete ok": "is deleted",
     "Default page": "Default page",
     "confirmation": "Confirmation",
-    "delete confirm": "Are you sure to delete <code>{name}</code> ?",
+    "delete confirm": "Are you sure to delete <code>{name}</code>?",
     "success": "Success",
     "save": "Save",
     "saved": "Successfully saved",
@@ -99,15 +99,15 @@
     "end datetime": "End datetime",
     "restart": "Restart",
     "restarted": "Execution is restarted",
-    "restart confirm": "Are you sure to restart execution <code>{id}</code> ?",
+    "restart confirm": "Are you sure to restart execution <code>{id}</code>?",
     "restart change revision": "You can change the revision that will be used for the new execution.",
     "replay": "Replay",
     "replayed": "Execution is replayed",
-    "replay confirm": "Are you sure to replay this execution <code>{id}</code> and create a new one ?",
+    "replay confirm": "Are you sure to replay this execution <code>{id}</code> and create a new one?",
     "current": "current",
     "change status": "Change status",
     "change status done": "Task status has been updated",
-    "change status confirm": "Are you sure to change status on task <code>{task}</code> for execution <code>{id}</code> ?",
+    "change status confirm": "Are you sure to change status on task <code>{task}</code> for execution <code>{id}</code>?",
     "change status hint": {
       "WARNING": [
         "The flow will be marked as WARNING.",
@@ -131,7 +131,7 @@
     },
     "mark as": "Mark as <code>{status}</code>",
     "kill": "Kill",
-    "killed confirm": "Are you sure to kill execution <code>{id}</code> ?",
+    "killed confirm": "Are you sure to kill execution <code>{id}</code>?",
     "killed done": "Execution is queued for killing",
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
@@ -217,9 +217,9 @@
     "sub flow": "Sub-flow",
     "New execution": "New execution",
     "execute the flow": "Trigger the flow",
-    "execute flow now ?": "Do you want to execute this flow ?",
+    "execute flow now ?": "Do you want to execute this flow?",
     "Default namespace": "Default namespace",
-    "unsaved changed ?": "You have unsaved changed, do you want to leave this page ?",
+    "unsaved changed ?": "You have unsaved changed, do you want to leave this page?",
     "Editor theme": "Editor theme",
     "errors": {
       "404": {
@@ -238,7 +238,9 @@
     "feeds": {
       "title": "What's new at Kestra"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stopped this one.<br />You need to kill it if you want to stop it!</div>"
+    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stopped this one.<br />You need to kill it if you want to stop it!</div>",
+    "restore": "Restore",
+    "restore confirm": "Are you sure to restore the revision <code>{revision}</code>?"
   },
   "fr": {
     "id": "Identifiant",
@@ -344,7 +346,7 @@
     "restart change revision": "Vous pouvez changer la révision qui sera utilisé pour la nouvelle execution relancée.",
     "replay": "Rejouer",
     "replayed": "Execution est rejouée",
-    "replay confirm": "Êtes-vous sur de vouloir relancer l'exécution <code>{id}</code> et créer une nouvelle execution ?",
+    "replay confirm": "Êtes-vous sur de vouloir relancer l'exécution <code>{-id}</code> et créer une nouvelle execution ?",
     "current": "actuel",
     "change status": "Changer le statut",
     "change status done": "Le statut de la tâche a était mis à jour",
@@ -480,6 +482,8 @@
     "feeds": {
       "title": "Quoi de neuf sur Kestra"
     },
-    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>"
+    "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
+    "restore": "Restaurer",
+    "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?"
   }
 }

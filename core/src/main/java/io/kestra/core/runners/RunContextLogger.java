@@ -156,7 +156,7 @@ public class RunContextLogger {
         @Override
         protected void append(ILoggingEvent e) {
             logEntries(e, logEntry)
-                .forEach(logQueue::emit);
+                .forEach(logQueue::emitAsync);
         }
     }
 

@@ -62,7 +62,7 @@ public class TaskDefaultService {
                     Execution.loggingEventFromException(e),
                     LogEntry.of(execution)
                 )
-                .forEach(logQueue::emit);
+                .forEach(logQueue::emitAsync);
             return flow;
         }
     }

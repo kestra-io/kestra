@@ -85,6 +85,11 @@ public class MemoryQueue<T> implements QueueInterface<T> {
     }
 
     @Override
+    public void emitAsync(T message) throws QueueException {
+        this.emit(message);
+    }
+
+    @Override
     public void delete(T message) throws QueueException {
         this.produce(queueService.key(message), null);
     }

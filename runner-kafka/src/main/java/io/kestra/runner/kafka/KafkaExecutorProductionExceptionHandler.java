@@ -64,7 +64,7 @@ public class KafkaExecutorProductionExceptionHandler implements org.apache.kafka
                 Execution.FailedExecutionWithLog failedExecutionWithLog = execution.failedExecutionFromExecutor(exception);
                 Execution sendExecution = failedExecutionWithLog.getExecution();
 
-                failedExecutionWithLog.getLogs().forEach(logEntry -> logQueue.emit(logEntry));
+                failedExecutionWithLog.getLogs().forEach(logEntry -> logQueue.emitAsync(logEntry));
 
                 if (exception instanceof RecordTooLargeException) {
                     boolean exit = false;

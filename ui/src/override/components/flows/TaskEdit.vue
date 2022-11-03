@@ -45,6 +45,7 @@
     import CodeTags from "vue-material-design-icons/CodeTags";
     import {canSaveFlowTemplate} from "../../../utils/flowTemplate";
     import {mapState} from "vuex";
+    import Utils from "../../../utils/utils";
 
     export default {
         components: {
@@ -122,6 +123,7 @@
         },
         data() {
             return {
+                uuid: Utils.uid(),
                 taskYaml: undefined,
             };
         },
@@ -130,9 +132,6 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
-            uuid() {
-                return "source-" + this.namespace + "-" + this.flowId + "-" + (this.taskId || this.task.id);
-            },
             canSave() {
                 return canSaveFlowTemplate(true, this.user, {namespace:this.namespace}, "flow");
             }

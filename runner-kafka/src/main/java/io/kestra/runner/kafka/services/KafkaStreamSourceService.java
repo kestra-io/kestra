@@ -76,7 +76,7 @@ public class KafkaStreamSourceService {
             flow = Await.until(
                 () -> flowExecutorInterface.findByExecution(executor.getExecution()).orElse(null),
                 Duration.ofMillis(100),
-                Duration.ofMinutes(5)
+                Duration.ofMinutes(flowExecutorInterface.isReady() ? 2 : 5)
             );
         } catch (TimeoutException e) {
             // execution is failed, can't find flow, avoid recursive exception, skipped it.

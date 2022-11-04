@@ -92,7 +92,7 @@
     import Restore from "vue-material-design-icons/Restore";
     import Kicon from "../Kicon"
     import Crud from "override/components/auth/Crud";
-    import {saveFlowTemplate} from "@/utils/flowTemplate";
+    import {saveFlowTemplate} from "../../utils/flowTemplate";
 
     export default {
         components: {Editor, FileCode, Restore, Kicon, Crud},

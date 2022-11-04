@@ -170,7 +170,7 @@ jobs:
             echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
           else
             echo "tag=${TAG}" >> $GITHUB_OUTPUT
-            echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots" >> $GITHUB_OUTPUT
+            echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots ${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
           fi
 
       # Docker setup

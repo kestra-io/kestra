@@ -52,7 +52,7 @@
             UnsavedChange.methods.created.call(this);
             this.load();
         },
-        beforeDestroy() {
+        beforeUnmount() {
             UnsavedChange.methods.beforeDestroy.call(this);
         },
         methods: {
@@ -177,7 +177,7 @@
                 return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)
             },
         },
-        destroyed () {
+        unmounted () {
             this.$store.commit("flow/setFlow", undefined)
         }
     };

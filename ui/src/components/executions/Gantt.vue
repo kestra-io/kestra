@@ -269,7 +269,7 @@
                 this.realTime = false
             }
         },
-        destroyed() {
+        unmounted() {
             this.stopRealTime();
         }
     };

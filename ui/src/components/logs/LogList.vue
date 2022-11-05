@@ -5,10 +5,8 @@
                 v-if="displayTaskRun(currentTaskRun)"
             >
                 <div class="bg-light attempt-wrapper">
-                    <template v-for="(attempt, index) in attempts(currentTaskRun)">
-                        <div
-                            :key="`attempt-${index}-${currentTaskRun.id}`"
-                        >
+                    <template v-for="(attempt, index) in attempts(currentTaskRun)" :key="`attempt-${index}-${currentTaskRun.id}`">
+                        <div>
                             <b-tooltip
                                 placement="top"
                                 :target="`attempt-${index}-${currentTaskRun.id}`"
@@ -114,6 +112,7 @@
                         <template>
                             <template
                                 v-for="(log, i) in findLogs(currentTaskRun.id, index)"
+                                :key="`${currentTaskRun.id}-${index}-${i}`"
                             >
                                 <log-line
                                     :level="level"
@@ -121,7 +120,6 @@
                                     :log="log"
                                     :exclude-metas="excludeMetas"
                                     :name="`${currentTaskRun.id}-${index}-${i}`"
-                                    :key="`${currentTaskRun.id}-${index}-${i}`"
                                 />
                             </template>
                         </template>
@@ -314,7 +312,7 @@
                 });
             },
         },
-        beforeDestroy() {
+        beforeUnmount() {
             if (this.sse) {
                 this.sse.close();
                 this.sse = undefined;

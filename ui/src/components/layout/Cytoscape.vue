@@ -90,7 +90,7 @@
                 }
             },
         },
-        destroyed() {
+        unmounted() {
             this.ready = false;
         }
     };

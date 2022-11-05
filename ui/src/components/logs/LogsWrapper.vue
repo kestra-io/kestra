@@ -30,13 +30,12 @@
                             </b-alert>
                         </div>
                         <div v-else class="logs-wrapper mb-2 text-dark">
-                            <template v-for="(log, i) in logs">
+                            <template v-for="(log, i) in logs" :key="`${log.taskRunId}-${i}`">
                                 <log-line
                                     level="TRACE"
                                     filter=""
                                     :exclude-metas="isFlowEdit ? ['namespace', 'flowId'] : []"
                                     :log="log"
-                                    :key="`${log.taskRunId}-${i}`"
                                 />
                             </template>
                         </div>

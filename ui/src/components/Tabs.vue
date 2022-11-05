@@ -24,11 +24,10 @@
                 </div>
             </div>
             <div class="tab-content" :class="bodyClass">
-                <div
+                <component
                     ref="tabContent"
                     :is="activeTab.component"
                     v-bind="activeTab.props"
-                    v-on="$listeners"
                     :class="{'p-3': activeTab.background === undefined || activeTab.background !== false}"
                     :prevent-route-info="true"
                 />

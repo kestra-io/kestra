@@ -6,20 +6,22 @@
         width="268px"
         :collapsed="collapsed"
     >
-        <div class="logo" slot="header">
-            <router-link :to="{name: 'home'}">
-                <span class="img" />
-            </router-link>
-        </div>
+        <template v-slot:header>
+            <div class="logo">
+                <router-link :to="{name: 'home'}">
+                    <span class="img" />
+                </router-link>
+            </div>
+        </template>
 
-        <span slot="footer">
+        <template v-slot:footer>
             <span class="version">{{ configs ? configs.version : '' }}</span>
-        </span>
+        </template>
 
-        <span slot="toggle-icon">
+        <template v-slot:toggle-icon>
             <chevron-right v-if="collapsed" />
             <chevron-left v-else />
-        </span>
+        </template>
     </sidebar-menu>
 </template>
 

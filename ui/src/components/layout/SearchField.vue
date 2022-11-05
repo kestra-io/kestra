@@ -41,7 +41,7 @@
                 this.searchDebounce();
             },
         },
-        destroyed() {
+        unmounted() {
             this.searchDebounce.cancel();
         }
     };

@@ -48,7 +48,7 @@
                 }
             }
         },
-        beforeDestroy() {
+        beforeUnmount() {
             this.stopRefresh();
         }
     };

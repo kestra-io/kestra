@@ -4,7 +4,7 @@
     "node": true
   },
   "extends": [
-    "plugin:vue/strongly-recommended",
+    "plugin:vue/vue3-strongly-recommended",
     "eslint:recommended"
   ],
   "rules": {
@@ -41,6 +41,10 @@
       "never"
     ],
     "vue/multi-word-component-names": [
+      "off"
+    ],
+    // TODO
+    "vue/no-deprecated-filter" : [
       "off"
     ]
   },

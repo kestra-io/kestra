@@ -43,10 +43,10 @@
             unsavedChange.methods.created.call(this);
             this.reload()
         },
-        beforeDestroy() {
+        beforeUnmount() {
             unsavedChange.methods.beforeDestroy.call(this);
         },
-        destroyed() {
+        unmounted() {
             this.$store.commit("template/setTemplate", undefined);
         },
         methods: {

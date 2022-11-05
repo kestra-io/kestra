@@ -62,7 +62,7 @@
             unsavedChange.methods.created.call(this);
             this.loadFile();
         },
-        beforeDestroy() {
+        beforeUnmount() {
             unsavedChange.methods.beforeDestroy.call(this);
         },
     };

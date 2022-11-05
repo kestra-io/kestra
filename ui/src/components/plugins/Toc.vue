@@ -17,7 +17,7 @@
                                     <ul class="section-nav toc-h5">
                                         <li v-for="cls in classes" :key="cls">
                                             <router-link
-                                                @click.native="$emit('routerChange')"
+                                                @click="$emit('routerChange')"
                                                 :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
                                             >
                                                 <div class="icon">

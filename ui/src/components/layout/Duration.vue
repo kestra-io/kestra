@@ -82,7 +82,7 @@
                 ]
             }
         },
-        destroyed() {
+        unmounted() {
             this.enabled = false
         }
     }

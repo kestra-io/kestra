@@ -5,7 +5,6 @@ import "./utils/global"
 import App from "./App.vue"
 import BootstrapVue from "bootstrap-vue"
 import Vue from "vue"
-import VueCompositionAPI from "@vue/composition-api"
 import VueI18n from "vue-i18n"
 import VueMoment from "vue-moment"
 import NProgress from "vue-nprogress"
@@ -53,7 +52,6 @@ Chart.register(
 let app = document.querySelector("#app");
 
 if (app) {
-  Vue.use(VueCompositionAPI)
   Vue.use(Vuex)
   let store = new Vuex.Store(stores);
 

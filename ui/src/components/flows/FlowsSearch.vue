@@ -24,15 +24,15 @@
                         </b-alert>
                     </div>
 
-                    <template v-for="(item, i) in search">
-                        <b-card :key="`card-${i}`" class="mb-2">
+                    <template v-for="(item, i) in search" :key="`card-${i}`">
+                        <b-card class="mb-2">
                             <template #header>
                                 <router-link :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}">
                                     {{ item.model.namespace }}.{{ item.model.id }}
                                 </router-link>
                             </template>
-                            <template v-for="(fragment, j) in item.fragments">
-                                <small :key="`pre-${i}-${j}`">
+                            <template v-for="(fragment, j) in item.fragments" :key="`pre-${i}-${j}`">
+                                <small>
                                     <pre class="mb-1 text-sm-left" v-html="sanitize(fragment)" />
                                 </small>
                             </template>

@@ -14,7 +14,7 @@
 </template>
 
 <script>
-    import {computed, defineComponent, ref} from "@vue/composition-api"
+    import {computed, defineComponent, ref} from "vue"
     import {BarChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
     import {defaultConfig, tooltip, chartClick} from "../../utils/charts.js";
@@ -52,7 +52,7 @@
 
         },
         setup(props, {root}) {
-            let duration = root.$i18n.t("duration")
+            let duration = "TODO"; //root.$i18n.t("duration")
 
             const chartRef = ref();
             const tooltipContent = ref("");

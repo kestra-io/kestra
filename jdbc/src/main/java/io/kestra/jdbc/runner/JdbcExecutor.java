@@ -486,7 +486,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private Executor handleFailedExecutionFromExecutor(Executor executor, Exception e) {
         Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
         try {
-            failedExecutionWithLog.getLogs().forEach(logQueue::emit);
+            failedExecutionWithLog.getLogs().forEach(logQueue::emitAsync);
 
             return executor.withExecution(failedExecutionWithLog.getExecution(), "exception");
         } catch (Exception ex) {

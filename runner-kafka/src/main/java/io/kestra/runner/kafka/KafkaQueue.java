@@ -19,6 +19,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.apache.kafka.common.errors.WakeupException;
@@ -28,6 +29,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -84,29 +86,38 @@ public class KafkaQueue<T> implements QueueInterface<T>, AutoCloseable {
         kafkaAdminService.createIfNotExist(topicKey);
     }
 
+    private Future<RecordMetadata> produceAsync(String key, T message) {
+        return kafkaProducer
+            .send(
+                new ProducerRecord<>(
+                    topicsConfig.getName(),
+                    key, message
+                ),
+                (metadata, e) -> {
+                    if (e != null) {
+                        log.error("Failed to produce on '{}' with key '{}', metadata '{}' ", this.cls, key,  metadata, e);
+                    }
+                }
+            );
+    }
+
     private void produce(String key, T message) {
         try {
-            kafkaProducer
-                .send(
-                    new ProducerRecord<>(
-                        topicsConfig.getName(),
-                        key, message
-                    ),
-                    (metadata, e) -> {
-                        if (e != null) {
-                            log.error("Failed to produce on '{}' with key '{}', metadata '{}' ", this.cls, key,  metadata, e);
-                        }
-                    }
-                )
-                .get();
+            this.produceAsync(key, message).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new QueueException("Failed to produce on '" + this.cls + "' with key '" +  key + "': ", e);
         }
     }
 
+
     @Override
     public void emit(T message) throws QueueException {
         this.produce(this.queueService.key(message), message);
+    }
+
+    @Override
+    public void emitAsync(T message) throws QueueException {
+        this.produceAsync(this.queueService.key(message), message);
     }
 
     @Override

@@ -119,6 +119,11 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     }
 
     @Override
+    public void emitAsync(T message) throws QueueException {
+        this.emit(message);
+    }
+
+    @Override
     public void delete(T message) throws QueueException {
         dslContextWrapper.transaction(configuration -> DSL
             .using(configuration)

@@ -466,14 +466,14 @@ public class RunContext {
     }
 
     private URI putTempFile(File file, String prefix, String name) throws IOException {
-        URI put = this.putTempFile(new FileInputStream(file), prefix, (name != null ? name : file.getName()));
-
-        boolean delete = file.delete();
-        if (!delete) {
-            runContextLogger.logger().warn("Failed to delete temporary file");
+        try (InputStream fileInput = new FileInputStream(file)) {
+            return this.putTempFile(fileInput, prefix, (name != null ? name : file.getName()));
+        } finally {
+            boolean delete = file.delete();
+            if (!delete) {
+                runContextLogger.logger().warn("Failed to delete temporary file");
+            }
         }
-
-        return put;
     }
 
     @SuppressWarnings("unchecked")
@@ -505,11 +505,13 @@ public class RunContext {
     }
 
     public URI putTaskStateFile(byte[] content, String state, String name, Boolean namespace) throws IOException {
-        return this.putTempFile(
-            new ByteArrayInputStream(content),
-            this.taskStateFilePathPrefix(state, namespace),
-            name
-        );
+        try (InputStream inputStream = new ByteArrayInputStream(content)) {
+            return this.putTempFile(
+                inputStream,
+                this.taskStateFilePathPrefix(state, namespace),
+                name
+            );
+        }
     }
 
     public URI putTaskStateFile(File file, String state, String name) throws IOException {

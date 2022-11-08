@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.annotation.Property;
 import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -29,8 +31,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.number.OrderingComparison.greaterThan;
 
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
@@ -44,6 +45,9 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Inject
     RunContextFactory runContextFactory;
+
+    @Inject
+    StorageInterface storageInterface;
 
     @Inject
     MetricRegistry metricRegistry;
@@ -150,6 +154,21 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         Path path = runContext.tempFile();
 
         assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/"), is(true));
+    }
+
+    @Test
+    void largeInput() throws IOException, InterruptedException {
+        RunContext runContext = runContextFactory.of();
+        Path path = runContext.tempFile();
+
+        long size = 1024L * 1024 * 1024;
+
+        Process p = Runtime.getRuntime().exec(String.format("dd if=/dev/zero of=%s bs=1 count=1 seek=%s", path, size));
+        p.waitFor();
+        p.destroy();
+
+        URI uri = runContext.putTempFile(path.toFile());
+        assertThat(storageInterface.size(uri), is(size+1));
     }
 
     @Test

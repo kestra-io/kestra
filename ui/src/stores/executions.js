@@ -1,4 +1,3 @@
-import Vue from "vue"
 export default {
     namespaced: true,
     state: {
@@ -11,13 +10,13 @@ export default {
     },
     actions: {
         loadExecutions({commit}, options) {
-            return Vue.axios.get("/api/v1/executions", {params: options}).then(response => {
+            return this.$http.get("/api/v1/executions", {params: options}).then(response => {
                 commit("setExecutions", response.data.results)
                 commit("setTotal", response.data.total)
             })
         },
         restartExecution(_, options) {
-            return Vue.axios.post(
+            return this.$http.post(
                 `/api/v1/executions/${options.executionId}/restart`,
                 null,
                 {
@@ -27,7 +26,7 @@ export default {
                 })
         },
         replayExecution(_, options) {
-            return Vue.axios.post(
+            return this.$http.post(
                 `/api/v1/executions/${options.executionId}/replay`,
                 null,
                 {
@@ -38,7 +37,7 @@ export default {
                 })
         },
         changeStatus(_, options) {
-            return Vue.axios.post(
+            return this.$http.post(
                 `/api/v1/executions/${options.executionId}/state`,
                 {
                     taskRunId: options.taskRunId,
@@ -46,23 +45,23 @@ export default {
                 })
         },
         kill(_, options) {
-            return Vue.axios.delete(`/api/v1/executions/${options.id}/kill`);
+            return this.$http.delete(`/api/v1/executions/${options.id}/kill`);
         },
         loadExecution({commit}, options) {
-            return Vue.axios.get(`/api/v1/executions/${options.id}`).then(response => {
+            return this.$http.get(`/api/v1/executions/${options.id}`).then(response => {
                 commit("setExecution", response.data)
 
                 return response.data;
             })
         },
         findExecutions({commit}, options) {
-            return Vue.axios.get("/api/v1/executions/search", {params: options}).then(response => {
+            return this.$http.get("/api/v1/executions/search", {params: options}).then(response => {
                 commit("setExecutions", response.data.results)
                 commit("setTotal", response.data.total)
             })
         },
         triggerExecution(_, options) {
-            return Vue.axios.post(`/api/v1/executions/trigger/${options.namespace}/${options.id}`, options.formData, {
+            return this.$http.post(`/api/v1/executions/trigger/${options.namespace}/${options.id}`, options.formData, {
                 timeout: 60 * 60 * 1000,
                 headers: {
                     "content-type": "multipart/form-data"
@@ -70,18 +69,18 @@ export default {
             })
         },
         deleteExecution({commit}, options) {
-            return Vue.axios.delete(`/api/v1/executions/${options.id}`).then(() => {
+            return this.$http.delete(`/api/v1/executions/${options.id}`).then(() => {
                 commit("setExecution", null)
             })
         },
         followExecution(_, options) {
-            return new EventSource(`${Vue.axios.defaults.baseURL}api/v1/executions/${options.id}/follow`);
+            return new EventSource(`${this.$http.defaults.baseURL}api/v1/executions/${options.id}/follow`);
         },
         followLogs(_, options) {
-            return new EventSource(`${Vue.axios.defaults.baseURL}api/v1/logs/${options.id}/follow`);
+            return new EventSource(`${this.$http.defaults.baseURL}api/v1/logs/${options.id}/follow`);
         },
         loadLogs({commit}, options) {
-            return Vue.axios.get(`/api/v1/logs/${options.executionId}`, {
+            return this.$http.get(`/api/v1/logs/${options.executionId}`, {
                 params: options.params
             }).then(response => {
                 commit("setLogs", response.data)

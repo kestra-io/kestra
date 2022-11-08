@@ -1,6 +1,6 @@
 <template>
     <b-card>
-        <template-editor @onSave="save" v-model="content" lang="yaml" />
+        <template-editor @on-save="save" v-model="content" lang="yaml" />
         <bottom-line v-if="canSave || canDelete">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">

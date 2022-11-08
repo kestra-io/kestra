@@ -12,7 +12,7 @@
                 </b-overlay>
             </b-col>
             <b-col md="3">
-                <Toc @routerChange="routerChange" v-if="plugins" :plugins="plugins" />
+                <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins" />
             </b-col>
         </b-row>
     </div>
@@ -57,7 +57,7 @@
         },
         watch: {
             $route() {
-                this.routerChange();
+                this.onRouterChange();
             }
         },
         methods: {
@@ -77,7 +77,7 @@
                 }
             },
 
-            routerChange() {
+            onRouterChange() {
                 window.scroll({
                     top: 0,
                     behavior: "smooth"

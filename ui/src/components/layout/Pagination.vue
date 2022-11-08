@@ -38,6 +38,7 @@
             size: {type: Number, required: true},
             page: {type: Number, required: true}
         },
+        emits: ["page-changed"],
         data() {
             return {
                 internalSize: parseInt(this.$route.query.size || this.size),
@@ -52,14 +53,14 @@
         },
         methods: {
             pageSizeChange() {
-                this.$emit("onPageChanged", {
+                this.$emit("page-changed", {
                     page: 1,
                     size: this.internalSize,
                 });
             },
             pageChanged(page) {
                 this.internalPage = page;
-                this.$emit("onPageChanged", {
+                this.$emit("page-changed", {
                     page: page,
                     size: this.internalSize,
                 });
@@ -74,7 +75,7 @@ select {
     width: auto;
 }
 
-::v-deep .text-total {
+:deep(.text-total) {
     color: $pagination-color !important;
     font-weight: normal;
 }

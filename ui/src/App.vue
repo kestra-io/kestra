@@ -2,7 +2,7 @@
     <div>
         <nprogress-container />
         <top-nav-bar :menu-collapsed="menuCollapsed" />
-        <left-menu @onMenuCollapse="onMenuCollapse" />
+        <left-menu @menu-collapse="onMenuCollapse" />
         <custom-toast v-if="message" :no-auto-hide="true" :message="message" />
         <div id="app" class="container-fluid">
             <div class="content-wrapper" :class="menuCollapsed">
@@ -45,9 +45,10 @@
         },
         created() {
             if (this.created === false) {
-                if (this.$route.path === "/") {
-                    this.$router.push({name: "flows/list"});
-                }
+                // @TODO
+                // if (this.$route.path === "/") {
+                //     this.$router.push({name: "flows/list"});
+                // }
 
                 this.displayApp()
                 this.loadGeneralRessources()

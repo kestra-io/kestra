@@ -24,7 +24,7 @@
                         {{ taskRuns.length }}
                     </b-badge>
 
-                    <span v-if="duration">{{ duration | humanizeDuration }}</span>
+                    <span v-if="duration">{{ $filters.humanizeDuration(duration) }}</span>
                 </span>
 
                 <b-btn-group>
@@ -212,6 +212,7 @@
                 return result[0];
             },
             duration() {
+                console.log(this)
                 return this.taskRuns ? this.taskRuns.reduce((inc, taskRun) => inc + this.$moment.duration(taskRun.state.duration).asMilliseconds() / 1000, 0) : null;
             },
             nodeClass() {
@@ -312,7 +313,7 @@
                 white-space: nowrap;
             }
 
-            ::v-deep .node-action {
+            :deep(.node-action) {
                 flex-shrink: 2;
                 padding-top: 18px;
                 padding-right: 18px;

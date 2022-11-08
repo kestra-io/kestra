@@ -2,8 +2,6 @@
     <span v-if="date" v-b-tooltip.hover="inverted ? from : full">{{ inverted ? full : from }}</span>
 </template>
 <script>
-    import Vue from "vue";
-
     export default {
         props: {
             date: {
@@ -21,10 +19,10 @@
         },
         computed: {
             from() {
-                return Vue.moment(this.date).fromNow();
+                return this.$moment(this.date).fromNow();
             },
             full() {
-                return Vue.moment(this.date).format(this.format);
+                return this.$moment(this.date).format(this.format);
             }
         }
     };

@@ -10,6 +10,7 @@
                 default: undefined
             }
         },
+        emits: ["input"],
         data() {
             let states = State.allStates().map(s => {
                 return {value: s, text: s.toLowerCase().capitalize()}

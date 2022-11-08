@@ -28,7 +28,7 @@
             <editor
                 ref="editor"
                 v-if="taskYaml"
-                @onSave="saveTask"
+                @save="saveTask"
                 v-model="taskYaml"
                 :full-height="false"
                 :navbar="false"

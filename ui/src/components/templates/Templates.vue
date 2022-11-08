@@ -2,7 +2,7 @@
     <div v-if="ready">
         <div>
             <data-table
-                @onPageChanged="onPageChanged"
+                @page-changed="onPageChanged"
                 striped
                 hover
                 ref="dataTable"
@@ -36,7 +36,7 @@
                         </template>
 
                         <template #cell(actions)="row">
-                            <router-link :to="{name: 'templates/update', params : row.item}">
+                            <router-link :to="{name: 'templates/update', params : {namespace: row.item.namespace, id: row.item.id}}">
                                 <kicon :tooltip="$t('details')" placement="left">
                                     <eye />
                                 </kicon>

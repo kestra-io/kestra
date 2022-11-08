@@ -1,26 +1,26 @@
-import Vue from "vue"
 import Utils from "./utils/utils";
+import {getCurrentInstance} from "vue";
 
-Vue.filter("humanizeDuration", (value, options) => {
-    return Utils.humanDuration(value, options);
-});
-
-Vue.filter("humanizeNumber", (value) => {
-    return parseInt(value).toLocaleString(localStorage.getItem("lang") || "en")
-});
-
-Vue.filter("cap", value => value ? value.toString().capitalize() : "");
-
-Vue.filter("lower", value => value ? value.toString().toLowerCase() : "");
-
-Vue.filter("date", (dateString, format) => {
-    let f;
-    if (format === undefined) {
-        f = "LLLL"
-    } else if (format === "iso") {
-        f = "YYYY-MM-DD HH:mm:ss.SSS"
-    } else {
-        f = format
+export default {
+    humanizeDuration: (value, options) => {
+        return Utils.humanDuration(value, options);
+    },
+    humanizeNumber: (value) => {
+        return parseInt(value).toLocaleString(localStorage.getItem("lang") || "en")
+    },
+    cap: value => value ? value.toString().capitalize() : "",
+    lower: value => value ? value.toString().toLowerCase() : "",
+    date: (dateString, format) => {
+        let f;
+        if (format === undefined) {
+            f = "LLLL"
+        } else if (format === "iso") {
+            f = "YYYY-MM-DD HH:mm:ss.SSS"
+        } else {
+            f = format
+        }
+        return getCurrentInstance().appContext.config.globalProperties.$moment(dateString).format(f)
     }
-    return Vue.moment(dateString).format(f)
-})
+}
+
+

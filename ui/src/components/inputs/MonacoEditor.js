@@ -18,6 +18,7 @@ export default {
             "default": false
         }
     },
+    emits: ["editorWillMount", "editorDidMount", "change"],
     model: {
         event: "change"
     },

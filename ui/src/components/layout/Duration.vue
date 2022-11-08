@@ -8,7 +8,7 @@
         >
             <span v-for="(history, index) in histories" :key="'tt-' + uuid + '-' + index">
                 <span class="square" :class="squareClass(history.state)" />
-                <strong>{{ history.state }}:</strong> {{ history.date | date('iso') }} <br>
+                <strong>{{ history.state }}:</strong> {{ $filters.date(history.date, 'iso') }} <br>
             </span>
         </b-tooltip>
     </span>
@@ -90,7 +90,7 @@
 
 <style lang="scss" scoped>
 .duration-tt {
-    ::v-deep .tooltip-inner {
+    :deep(.tooltip-inner) {
         text-align: left;
         white-space: nowrap;
         max-width: none;

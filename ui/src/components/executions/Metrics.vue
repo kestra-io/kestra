@@ -36,10 +36,10 @@
 
         <template #cell(value)="row">
             <span v-if="row.item.type === 'timer'">
-                {{ row.item.value | humanizeDuration }}
+                {{ $filters.humanizeDuration(row.item.value) }}
             </span>
             <span v-else>
-                {{ row.item.value | humanizeNumber }}
+                {{ $filters.humanizeNumber(row.item.value) }}
             </span>
         </template>
 
@@ -97,7 +97,7 @@
 </script>
 
 <style scoped lang="scss">
-::v-deep thead tr:not(.top) {
+:deep(thead tr:not(.top)) {
     display: none;
 }
 

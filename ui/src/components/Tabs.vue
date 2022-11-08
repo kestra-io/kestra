@@ -25,9 +25,9 @@
             </div>
             <div class="tab-content" :class="bodyClass">
                 <component
+                    v-bind="activeTab.props"
                     ref="tabContent"
                     :is="activeTab.component"
-                    v-bind="activeTab.props"
                     :class="{'p-3': activeTab.background === undefined || activeTab.background !== false}"
                     :prevent-route-info="true"
                 />
@@ -52,6 +52,7 @@
             },
 
         },
+        emits: ["changed"],
         methods: {
             to(tab) {
                 if (this.activeTab === tab) {

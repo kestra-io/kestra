@@ -1,7 +1,7 @@
 <template>
     <div class="log-panel">
         <div class="log-content">
-            <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
+            <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
                 <template #navbar v-if="embed === false">
                     <search-field />
                     <namespace-select
@@ -19,7 +19,7 @@
                         :end-date="$route.query.endDate"
                         @input="onDataTableValue($event)"
                     />
-                    <refresh-button class="float-right" @onRefresh="load" />
+                    <refresh-button class="float-right" @refresh="load" />
                 </template>
 
                 <template #table>

@@ -1,5 +1,3 @@
-import Vue from "vue"
-
 export default {
     namespaced: true,
     state: {
@@ -16,7 +14,7 @@ export default {
         findFlows({commit}, options) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
-            return Vue.axios.get(`/api/v1/flows/search${sortString}`, {
+            return this.$http.get(`/api/v1/flows/search${sortString}`, {
                 params: options
             }).then(response => {
                 commit("setFlows", response.data.results)
@@ -28,7 +26,7 @@ export default {
         searchFlows({commit}, options) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
-            return Vue.axios.get(`/api/v1/flows/source${sortString}`, {
+            return this.$http.get(`/api/v1/flows/source${sortString}`, {
                 params: options
             }).then(response => {
                 commit("setSearch", response.data.results)
@@ -38,7 +36,7 @@ export default {
             })
         },
         loadFlow({commit}, options) {
-            return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}`).then(response => {
+            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}`).then(response => {
                 if (response.data.exception) {
                     commit("core/setMessage", {title: "Invalid source code", message: response.data.exception, variant: "danger"}, {root: true});
                     delete response.data.exception;
@@ -51,14 +49,14 @@ export default {
             })
         },
         loadTask({commit}, options) {
-            return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}`).then(response => {
+            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}`).then(response => {
                 commit("setTask", response.data)
 
                 return response.data;
             })
         },
         saveFlow({commit, dispatch}, options) {
-            return Vue.axios.put(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}`, options.flow)
+            return this.$http.put(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}`, options.flow)
                 .then(response => {
                     if (response.status >= 300) {
                         return Promise.reject(new Error("Server error on flow save"))
@@ -75,7 +73,7 @@ export default {
                 })
         },
         updateFlowTask({commit, dispatch}, options) {
-            return Vue.axios
+            return this.$http
                 .patch(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}/${options.task.id}`, options.task).then(response => {
                     commit("setFlow", response.data)
 
@@ -88,26 +86,26 @@ export default {
                 })
         },
         createFlow({commit}, options) {
-            return Vue.axios.post("/api/v1/flows", options.flow).then(response => {
+            return this.$http.post("/api/v1/flows", options.flow).then(response => {
                 commit("setFlow", response.data)
 
                 return response.data;
             })
         },
         deleteFlow({commit}, flow) {
-            return Vue.axios.delete(`/api/v1/flows/${flow.namespace}/${flow.id}`).then(() => {
+            return this.$http.delete(`/api/v1/flows/${flow.namespace}/${flow.id}`).then(() => {
                 commit("setFlow", null)
             })
         },
         loadGraph({commit}, flow) {
-            return Vue.axios.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph?revision=${flow.revision}`).then(response => {
+            return this.$http.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph?revision=${flow.revision}`).then(response => {
                 commit("setFlowGraph", response.data)
 
                 return response.data;
             })
         },
         loadRevisions({commit}, options) {
-            return Vue.axios.get(`/api/v1/flows/${options.namespace}/${options.id}/revisions`).then(response => {
+            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/revisions`).then(response => {
                 commit("setRevisions", response.data)
 
                 return response.data;

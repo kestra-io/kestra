@@ -15,7 +15,7 @@
                 <h5>{{ $t("confirmation") }}</h5>
             </template>
 
-            <template>
+            <template #default>
                 <p v-html="$t('change status confirm', {id: execution.id, task: taskRun.taskId})" />
 
                 <p>
@@ -96,7 +96,7 @@
                 default: undefined
             }
         },
-
+        emits: ["follow"],
         methods: {
             changeStatus(closeCallback) {
                 closeCallback()

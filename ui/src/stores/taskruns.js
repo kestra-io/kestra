@@ -1,4 +1,3 @@
-import Vue from "vue"
 export default {
     namespaced: true,
     state: {
@@ -8,13 +7,13 @@ export default {
     },
     actions: {
         findTaskRuns({commit}, options) {
-            return Vue.axios.get("/api/v1/taskruns/search", {params: options}).then(response => {
+            return this.$http.get("/api/v1/taskruns/search", {params: options}).then(response => {
                 commit("setTaskruns", response.data.results)
                 commit("setTotal", response.data.total)
             })
         },
         maxTaskRunSetting({commit}) {
-            return Vue.axios.get("/api/v1/taskruns/maxTaskRunSetting").then(response => {
+            return this.$http.get("/api/v1/taskruns/maxTaskRunSetting").then(response => {
                 commit("setMaxTaskRunSetting", response.data)
             })
         }

@@ -1,5 +1,3 @@
-import Vue from "vue"
-
 export default {
     namespaced: true,
     state: {
@@ -9,21 +7,21 @@ export default {
     },
     actions: {
         list({commit}) {
-            return Vue.axios.get("/api/v1/plugins").then(response => {
+            return this.$http.get("/api/v1/plugins", {}).then(response => {
                 commit("setPlugins", response.data)
 
                 return response.data;
             })
         },
         load({commit}, options) {
-            return Vue.axios.get(`/api/v1/plugins/${options.cls}`).then(response => {
+            return this.$http.get(`/api/v1/plugins/${options.cls}`, {}).then(response => {
                 commit("setPlugin", response.data)
 
                 return response.data;
             })
         },
         icons({commit}) {
-            return Vue.axios.get("/api/v1/plugins/icons").then(response => {
+            return this.$http.get("/api/v1/plugins/icons", {}).then(response => {
                 commit("setIcons", response.data)
 
                 return response.data;

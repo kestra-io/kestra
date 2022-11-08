@@ -1,4 +1,3 @@
-import Vue from "vue"
 
 export default {
     namespaced: true,
@@ -8,7 +7,7 @@ export default {
 
     actions: {
         loadFeeds({commit}, options) {
-            return Vue.axios.get("https://api.kestra.io/v1/feeds/latest", {
+            return this.$http.get("https://api.kestra.io/v1/feeds/latest", {
                 params: {
                     iid: options.iid,
                     uid: options.uid,

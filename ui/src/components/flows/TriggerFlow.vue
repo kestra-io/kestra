@@ -6,7 +6,7 @@
             </kicon>
         </b-button>
         <b-modal size="lg" hide-footer id="trigger-flow" :title="$t('execute the flow')">
-            <flow-run @onExecutionTrigger="closeModal" :redirect="true" />
+            <flow-run @execution-trigger="closeModal" :redirect="true" />
         </b-modal>
     </div>
 </template>

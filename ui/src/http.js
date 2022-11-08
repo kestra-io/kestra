@@ -1,16 +1,9 @@
-import Vue from "vue";
-import VueAxios from "vue-axios";
 import axios from "axios";
-import qs from "qs";
 
 // eslint-disable-next-line no-undef
 let root = (process.env.VUE_APP_API_URL || "") + KESTRA_BASE_PATH;
 if (!root.endsWith("/")) {
     root = root + "/";
-}
-
-axios.defaults.paramsSerializer = (params) => {
-    return qs.stringify(params, {indices: false});
 }
 
 export default (callback, store, nprogress) => {
@@ -58,13 +51,13 @@ export default (callback, store, nprogress) => {
             return Promise.reject(errorResponse);
         })
 
-    Vue.use(
-        VueAxios,
-        instance
-    );
+    instance.defaults.baseURL = root;
 
-    Vue.axios.defaults.baseURL = root;
-    callback();
+    instance.defaults.paramsSerializer = {
+        indexes: false
+    }
+
+    callback(instance);
 };
 
 

@@ -13,7 +13,7 @@
             <slot name="top" />
 
             <slot name="table" />
-            <pagination :size="size" :page="page" :total="total" :max="max" @onPageChanged="onPageChanged" />
+            <pagination :size="size" :page="page" :total="total" :max="max" @page-changed="onPageChanged" />
         </b-overlay>
     </div>
 </template>
@@ -22,6 +22,7 @@
     import Pagination from "./Pagination";
     export default {
         components: {Pagination},
+        emits: ["page-changed"],
         computed: {
             hasNavBar() {
                 return !!this.$slots["navbar"];
@@ -43,7 +44,7 @@
                 event.preventDefault();
             },
             onPageChanged(pagination) {
-                this.$emit("onPageChanged", pagination);
+                this.$emit("page-changed", pagination);
             },
         },
     };
@@ -59,11 +60,11 @@ small {
 }
 
 
-::v-deep th {
+:deep(th) {
     white-space: nowrap;
 }
 
-::v-deep .badge {
+:deep(.badge) {
     font-size: 100%;
     margin-right: math.div($spacer, 4);
     margin-bottom: math.div($spacer, 4);

@@ -23,7 +23,7 @@
                         </p>
 
                         <span v-if="occurences.length">
-                            <span v-for="(occurence, x) in occurences" :key="x">{{ occurence | date }}<br></span>
+                            <span v-for="(occurence, x) in occurences" :key="x">{{ $filters.date(occurence) }}<br></span>
                         </span>
                     </div>
                     <span v-else>
@@ -89,6 +89,7 @@
                 required: true
             }
         },
+        emits: ["remove", "set"],
         data() {
             return {
                 item: {

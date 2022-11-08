@@ -18,6 +18,7 @@
 
     export default {
         components: {DatePicker},
+        emits: ["input"],
         data() {
             return {
                 lang: {
@@ -165,12 +166,12 @@
     margin-left: 10px;
     margin-right: 10px;
 }
-::v-deep .mx-datepicker {
+:deep(.mx-datepicker) {
     margin-right: 5px;
 
 }
 
-::v-deep .mx-datepicker-popup {
+:deep(.mx-datepicker-popup) {
     height: 272px;
 
     .mx-datepicker-sidebar {

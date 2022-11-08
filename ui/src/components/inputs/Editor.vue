@@ -26,7 +26,7 @@
                     :diff-editor="original !== undefined"
                     :original="original"
                     :schemas="schemas"
-                    @editorDidMount="editorDidMount"
+                    @editor-did-mount="editorDidMount"
                     @change="onInput"
                     :language="lang"
                 />
@@ -68,6 +68,7 @@
             UnfoldLessHorizontal,
             UnfoldMoreHorizontal,
         },
+        emits: ["save", "focusout", "input"],
         data() {
             return {
                 focus: false,
@@ -192,7 +193,7 @@
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
                     run: (ed) => {
-                        this.$emit("onSave", ed.getValue())
+                        this.$emit("save", ed.getValue())
                     }
                 });
 
@@ -292,7 +293,7 @@
 @use "sass:math";
 @import "../../styles/variable";
 
-::v-deep .editor-container {
+:deep(.editor-container) {
     position: relative;
     max-width: 100%;
     display: flex;
@@ -310,7 +311,7 @@
     }
 
     .editor-with-placeholder {
-        ::v-deep .view-lines {
+        :deep(.view-lines) {
             opacity: 0;
         }
     }

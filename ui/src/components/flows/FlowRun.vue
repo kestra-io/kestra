@@ -118,6 +118,7 @@
                 default: true
             }
         },
+        emits: ["executionTrigger"],
         mounted() {
             setTimeout(() => {
                 const input = this.$el.querySelector("input")
@@ -140,7 +141,7 @@
         methods: {
             onSubmit() {
                 executeTask(this, this.flow, {redirect: this.redirect, id: this.flow.id, namespace: this.flow.namespace})
-                this.$emit("onExecutionTrigger")
+                this.$emit("executionTrigger")
             },
 
             state(input) {

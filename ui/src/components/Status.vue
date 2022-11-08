@@ -2,7 +2,7 @@
     <b-button @click="$emit('click', $event)" class="status" :class="cls">
         <component :is="icon" />
         <template v-if="label">
-            {{ status | lower | cap }}
+            {{ $filters.cap($filters.lower(status)) }}
         </template>
     </b-button>
 </template>
@@ -45,6 +45,7 @@
                 default: true
             },
         },
+        emits: ["click"],
         computed: {
             cls() {
                 return {

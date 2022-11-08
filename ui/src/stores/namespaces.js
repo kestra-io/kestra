@@ -1,4 +1,3 @@
-import Vue from "vue"
 export default {
     namespaced: true,
     state: {
@@ -7,7 +6,7 @@ export default {
 
     actions: {
         loadNamespaces({commit}, options) {
-            return Vue.axios.get(`/api/v1/${options.dataType}s/distinct-namespaces`).then(response => {
+            return this.$http.get(`/api/v1/${options.dataType}s/distinct-namespaces`).then(response => {
                 commit("setNamespaces", response.data)
             })
         },

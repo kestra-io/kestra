@@ -13,15 +13,15 @@
                                 triggers="hover"
                             >
                                 {{ $t("from") }} :
-                                {{ attempt.state.startDate | date }}
+                                {{ $filter.date(attempt.state.startDate) }}
                                 <br>
                                 {{ $t("to") }} :
-                                {{ attempt.state.endDate | date }}
+                                {{ $filters.date(attempt.state.endDate) }}
                                 <br>
                                 <br>
                                 <clock />
                                 {{ $t("duration") }} :
-                                {{ attempt.state.duration | humanizeDuration }}
+                                {{ $filters.humanizeDuration(attempt.state.duration) }}
                             </b-tooltip>
 
                             <div class="attempt-header">
@@ -109,19 +109,17 @@
                         </div>
 
                         <!-- Log lines -->
-                        <template>
-                            <template
-                                v-for="(log, i) in findLogs(currentTaskRun.id, index)"
-                                :key="`${currentTaskRun.id}-${index}-${i}`"
-                            >
-                                <log-line
-                                    :level="level"
-                                    :filter="filter"
-                                    :log="log"
-                                    :exclude-metas="excludeMetas"
-                                    :name="`${currentTaskRun.id}-${index}-${i}`"
-                                />
-                            </template>
+                        <template
+                            v-for="(log, i) in findLogs(currentTaskRun.id, index)"
+                            :key="`${currentTaskRun.id}-${index}-${i}`"
+                        >
+                            <log-line
+                                :level="level"
+                                :filter="filter"
+                                :log="log"
+                                :exclude-metas="excludeMetas"
+                                :name="`${currentTaskRun.id}-${index}-${i}`"
+                            />
                         </template>
 
                         <!-- Metrics -->
@@ -375,20 +373,16 @@
             }
         }
 
-        ::v-deep button.btn {
+        :deep(button.btn) {
             border-radius: 0 !important;
         }
 
-        ::v-deep {
-
-            .dropdown-menu {
-                .dropdown-item {
-                    span.material-design-icon {
-                        width: $font-size-base * 2;
-                    }
+        :deep(.dropdown-menu) {
+            .dropdown-item {
+                span.material-design-icon {
+                    width: $font-size-base * 2;
                 }
             }
-
         }
     }
 

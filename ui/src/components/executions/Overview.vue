@@ -74,6 +74,7 @@
             DateAgo,
             Crud
         },
+        emits: ["follow"],
         methods: {
             forwardEvent(type, event) {
                 this.$emit(type, event);
@@ -151,7 +152,7 @@
     };
 </script>
 <style scoped lang="scss">
-::v-deep thead {
+:deep(thead) {
     display: none;
 }
 

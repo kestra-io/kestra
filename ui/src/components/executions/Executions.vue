@@ -1,6 +1,6 @@
 <template>
     <div v-if="ready">
-        <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
+        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
             <template #navbar v-if="embed === false">
                 <search-field />
                 <namespace-select
@@ -18,7 +18,7 @@
                     :end-date="$route.query.endDate"
                     @input="onDataTableValue($event)"
                 />
-                <refresh-button class="float-right" @onRefresh="load" />
+                <refresh-button class="float-right" @refresh="load" />
             </template>
 
             <template #top v-if="embed === false">
@@ -50,7 +50,7 @@
                     </template>
 
                     <template #cell(details)="row">
-                        <router-link :to="{name: 'executions/update', params: row.item}">
+                        <router-link :to="{name: 'executions/update', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.id}}">
                             <kicon :tooltip="$t('details')" placement="left">
                                 <eye />
                             </kicon>
@@ -76,8 +76,8 @@
                     </template>
                     <!-- eslint-disable-next-line -->
                     <template #cell(state.duration)="row">
-                        <span v-if="isRunning(row.item)">{{ durationFrom(row.item) | humanizeDuration }}</span>
-                        <span v-else>{{ row.item.state.duration | humanizeDuration }}</span>
+                        <span v-if="isRunning(row.item)">{{ $filters.humanizeDuration(durationFrom(row.item)) }}</span>
+                        <span v-else>{{ $filters.humanizeDuration(row.item.state.duration) }}</span>
                     </template>
                     <template #cell(flowId)="row">
                         <router-link

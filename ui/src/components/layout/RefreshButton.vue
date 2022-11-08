@@ -18,6 +18,7 @@
     import Kicon from "../Kicon"
     export default {
         components: {Refresh, Clock, Kicon},
+        emits: ["refresh"],
         data() {
             return {
                 autoRefresh: false,
@@ -39,7 +40,7 @@
                 }
             },
             triggerRefresh() {
-                this.$emit("onRefresh");
+                this.$emit("refresh");
             },
             stopRefresh() {
                 if (this.refreshHandler) {

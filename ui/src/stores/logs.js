@@ -1,4 +1,3 @@
-import Vue from "vue"
 export default {
     namespaced: true,
     state: {
@@ -8,7 +7,7 @@ export default {
     },
     actions: {
         findLogs({commit}, options) {
-            return Vue.axios.get("/api/v1/logs/search", {params: options}).then(response => {
+            return this.$http.get("/api/v1/logs/search", {params: options}).then(response => {
                 commit("setLogs", response.data.results)
                 commit("setTotal", response.data.total)
             })

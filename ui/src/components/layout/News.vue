@@ -59,9 +59,12 @@
             this.hasUnread = this.isUnread();
         },
         watch: {
-            feeds() {
-                this.hasUnread = this.isUnread();
-            }
+            feeds: {
+                handler() {
+                    this.hasUnread = this.isUnread();
+                },
+                deep: true
+            },
         },
         methods: {
             show() {

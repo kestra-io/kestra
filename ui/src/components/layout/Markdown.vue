@@ -25,7 +25,7 @@
                 default: false,
             },
         },
-
+        emits: ["rendered"],
         computed: {
             markdownRenderer() {
                 const outHtml = Markdown.render(this.source, {

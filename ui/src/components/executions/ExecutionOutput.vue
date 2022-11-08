@@ -66,8 +66,8 @@
                 <h5>{{ $t("eval.title") }}</h5>
             </template>
 
-            <template>
-                <editor class="mb-2" ref="editorContainer" :full-height="false" @onSave="onDebugExpression(filter, $event)" :input="true" :navbar="false" value="" />
+            <template #default>
+                <editor class="mb-2" ref="editorContainer" :full-height="false" @save="onDebugExpression(filter, $event)" :input="true" :navbar="false" value="" />
                 <editor v-if="debugExpression" :read-only="true" :full-height="false" :navbar="false" :minimap="false" :value="debugExpression" :lang="isJson ? 'json' : ''" />
                 <b-alert class="debug-error" variant="danger" show v-if="debugError">
                     <p><strong>{{ debugError }}</strong></p>
@@ -91,7 +91,6 @@
     import VarValue from "./VarValue";
     import Utils from "../../utils/utils";
     import Editor from "../../components/inputs/Editor";
-    import Vue from "vue"
 
     export default {
         components: {
@@ -132,7 +131,7 @@
                 }
             },
             onDebugExpression(taskRunId, expression) {
-                Vue.axios.post(`/api/v1/executions/${this.execution.id}/eval/${taskRunId}`, expression, {
+                this.$http.post(`/api/v1/executions/${this.execution.id}/eval/${taskRunId}`, expression, {
                     headers: {
                         "Content-type": "text/plain",
                     }

@@ -51,6 +51,7 @@
                 default: undefined
             }
         },
+        emits: ["follow"],
         data() {
             return {
                 orientation: true,

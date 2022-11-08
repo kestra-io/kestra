@@ -48,7 +48,7 @@
 
 <style lang="scss" scoped>
 @import "../../styles/_variable.scss";
-::v-deep .badge {
+:deep(.badge) {
     font-size: $font-size-xs;
 }
 </style>

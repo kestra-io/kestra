@@ -1,6 +1,6 @@
 <template>
     <div v-if="ready">
-        <data-table @onPageChanged="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
+        <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
             <template #navbar>
                 <search-field />
                 <namespace-select
@@ -18,7 +18,7 @@
                     :end-date="$route.query.endDate"
                     @input="onDataTableValue($event)"
                 />
-                <refresh-button class="float-right" @onRefresh="load" />
+                <refresh-button class="float-right" @refresh="load" />
             </template>
 
             <template #top>
@@ -77,10 +77,10 @@
                     <!-- eslint-disable-next-line -->
                     <template #cell(taskRunList.state.duration)="row">
                         <span v-if="isRunning(row.item)">
-                            {{ durationFrom(row.item) | humanizeDuration }}
+                            {{ $filters.humanizeDuration(durationFrom(row.item)) }}
                         </span>
                         <span v-else>
-                            {{ row.item.state.duration | humanizeDuration }}
+                            {{ $filters.humanizeDuration(row.item.state.duration) }}
                         </span>
                     </template>
                     <!-- eslint-disable-next-line -->

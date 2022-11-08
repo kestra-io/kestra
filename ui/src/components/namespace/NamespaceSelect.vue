@@ -27,6 +27,7 @@
                 default: undefined
             }
         },
+        emits: ["input"],
         created() {
             this.$store
                 .dispatch("namespace/loadNamespaces", {dataType: this.dataType})

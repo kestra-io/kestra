@@ -2,7 +2,7 @@
     <div v-if="ready">
         <div>
             <data-table
-                @onPageChanged="onPageChanged"
+                @page-changed="onPageChanged"
                 striped
                 hover
                 ref="dataTable"

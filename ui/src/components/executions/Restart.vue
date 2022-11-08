@@ -19,7 +19,7 @@
                 <h5>{{ $t("confirmation") }}</h5>
             </template>
 
-            <template>
+            <template #default>
                 <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
 
                 <b-form class="text-muted">
@@ -81,6 +81,7 @@
                 default: undefined
             }
         },
+        emits: ["follow"],
         methods: {
             loadRevision() {
                 this.revisionsSelected = this.execution.flowRevision

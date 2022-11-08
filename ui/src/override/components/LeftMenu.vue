@@ -6,7 +6,7 @@
         width="268px"
         :collapsed="collapsed"
     >
-        <template v-slot:header>
+        <template #header>
             <div class="logo">
                 <router-link :to="{name: 'home'}">
                     <span class="img" />
@@ -14,11 +14,11 @@
             </div>
         </template>
 
-        <template v-slot:footer>
+        <template #footer>
             <span class="version">{{ configs ? configs.version : '' }}</span>
         </template>
 
-        <template v-slot:toggle-icon>
+        <template #toggle-icon>
             <chevron-right v-if="collapsed" />
             <chevron-left v-else />
         </template>
@@ -26,7 +26,8 @@
 </template>
 
 <script>
-    import Vue from "vue";
+    import {shallowRef} from "vue"
+
     import {SidebarMenu} from "vue-sidebar-menu";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft";
     import ChevronRight from "vue-material-design-icons/ChevronRight";
@@ -43,39 +44,28 @@
     import CogOutline from "vue-material-design-icons/CogOutline";
     import {mapState} from "vuex";
 
-    Vue.component("FlowMenuIcon", FileTreeOutline);
-    Vue.component("TemplateMenuIcon", ContentCopy);
-    Vue.component("ExecutionMenuIcon", TimelineClockOutline);
-    Vue.component("TaskRunMenuIcon", TimelineTextOutline);
-    Vue.component("LogMenuIcon", NotebookOutline);
-    Vue.component("DocumentationMenuIcon", BookMultipleOutline);
-    Vue.component("DocumentationDeveloperMenuIcon", FileCodeOutline);
-    Vue.component("DocumentationPluginsMenuIcon", GoogleCirclesExtended);
-    Vue.component("Slack", Slack);
-    Vue.component("Github", Github);
-    Vue.component("SettingMenuIcon", CogOutline);
-
     export default {
         components: {
             ChevronLeft,
             ChevronRight,
             SidebarMenu,
         },
+        emits: ["menu-collapse"],
         methods: {
             onToggleCollapse(folded) {
                 this.collapsed = folded;
                 localStorage.setItem("menuCollapsed", folded ? "true" : "false");
-                this.$emit("onMenuCollapse", folded);
+                this.$emit("menu-collapse", folded);
             },
             disabledCurrentRoute(items) {
                 return items
-                    .map(r => {
-                        if (r.href === this.$route.path) {
-                            delete r.href;
-                        }
-
-                        return r;
-                    })
+                // .map(r => {
+                //     if (r.href === this.$route.path) {
+                //         delete r.href;
+                //     }
+                //
+                //     return r;
+                // })
             },
             generateMenu() {
                 return [
@@ -86,7 +76,7 @@
                         ],
                         title: this.$t("flows"),
                         icon: {
-                            element: "FlowMenuIcon",
+                            element: shallowRef(FileTreeOutline),
                             class: "menu-icon",
                         },
                     },
@@ -97,7 +87,7 @@
                         ],
                         title: this.$t("templates"),
                         icon: {
-                            element: "TemplateMenuIcon",
+                            element: shallowRef(ContentCopy),
                             class: "menu-icon",
                         },
                     },
@@ -108,7 +98,7 @@
                         ],
                         title: this.$t("executions"),
                         icon: {
-                            element: "ExecutionMenuIcon",
+                            element: shallowRef(TimelineClockOutline),
                             class: "menu-icon"
                         },
                     },
@@ -117,7 +107,7 @@
                         alias: ["/taskruns*"],
                         title: this.$t("taskruns"),
                         icon: {
-                            element: "TaskRunMenuIcon",
+                            element: shallowRef(TimelineTextOutline),
                             class: "menu-icon"
                         },
                         hidden: !(this.configs && this.configs.isTaskRunEnabled)
@@ -129,7 +119,7 @@
                         ],
                         title: this.$t("logs"),
                         icon: {
-                            element: "LogMenuIcon",
+                            element: shallowRef(NotebookOutline),
                             class: "menu-icon"
                         },
                     },
@@ -139,7 +129,7 @@
                         ],
                         title: this.$t("documentation.documentation"),
                         icon: {
-                            element: "DocumentationMenuIcon",
+                            element: shallowRef(BookMultipleOutline),
                             class: "menu-icon"
                         },
                         child: [
@@ -147,7 +137,7 @@
                                 href: "https://kestra.io/docs/",
                                 title: this.$t("documentation.developer"),
                                 icon: {
-                                    element: "DocumentationDeveloperMenuIcon",
+                                    element: shallowRef(FileCodeOutline),
                                     class: "menu-icon"
                                 },
                                 external: true
@@ -156,7 +146,7 @@
                                 href: "/plugins",
                                 title: this.$t("plugins.names"),
                                 icon: {
-                                    element: "DocumentationPluginsMenuIcon",
+                                    element: shallowRef(GoogleCirclesExtended),
                                     class: "menu-icon"
                                 },
                             },
@@ -164,7 +154,7 @@
                                 href: "https://api.kestra.io/v1/communities/slack/redirect",
                                 title: "Slack",
                                 icon: {
-                                    element: "Slack",
+                                    element: shallowRef(Slack),
                                     class: "menu-icon"
                                 },
                                 external: true
@@ -173,7 +163,7 @@
                                 href: "https://github.com/kestra-io/kestra/issues",
                                 title: this.$t("documentation.github"),
                                 icon: {
-                                    element: "Github",
+                                    element: shallowRef(Github),
                                     class: "menu-icon"
                                 },
                                 external: true
@@ -188,7 +178,7 @@
                         ],
                         title: this.$t("settings"),
                         icon: {
-                            element: "SettingMenuIcon",
+                            element: shallowRef(CogOutline),
                             class: "menu-icon"
                         }
                     }
@@ -274,21 +264,21 @@
         }
     }
 
-    ::v-deep a.vsm--link_active[href="#"] {
+    :deep(a.vsm--link_active[href="#"]) {
         cursor: initial !important;
     }
 
-    ::v-deep .vsm--item {
+    :deep(.vsm--item) {
         transition: opacity 0.2s;
     }
 
-    ::v-deep .vsm--dropdown {
+    :deep(.vsm--dropdown) {
         .vsm--title {
             top: 3px;
         }
     }
 
-    ::v-deep .menu-icon {
+    :deep(.menu-icon) {
         font-size: 1.5em;
         background-color: transparent !important;
         padding-bottom: 15px;
@@ -300,7 +290,7 @@
     }
 
 
-    ::v-deep .vsm--dropdown_mobile-item {
+    :deep(.vsm--dropdown_mobile-item) {
         .vsm--item {
             .vsm--title {
                 left: 0;
@@ -308,4 +298,5 @@
             }
         }
     }
+
 </style>

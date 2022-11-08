@@ -9,6 +9,7 @@
 <script>
     import {debounce} from "throttle-debounce";
     export default {
+        emits: ["search"],
         created() {
             if (this.$route.query.q) {
                 this.search = this.$route.query.q;

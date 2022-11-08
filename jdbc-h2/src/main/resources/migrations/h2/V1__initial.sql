@@ -4,6 +4,7 @@ CREATE ALIAS JQ_BOOLEAN FOR "io.kestra.runner.h2.H2Functions.jqBoolean" ;
 CREATE ALIAS JQ_LONG FOR "io.kestra.runner.h2.H2Functions.jqLong" ;
 CREATE ALIAS JQ_INTEGER FOR "io.kestra.runner.h2.H2Functions.jqInteger" ;
 CREATE ALIAS JQ_DOUBLE FOR "io.kestra.runner.h2.H2Functions.jqDouble" ;
+CREATE ALIAS JQ_STRING_ARRAY FOR "io.kestra.runner.h2.H2Functions.jqStringArray" ;
 
 /* ----------------------- queues ----------------------- */
 CREATE TABLE queues (

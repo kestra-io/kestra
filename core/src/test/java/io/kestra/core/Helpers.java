@@ -24,25 +24,32 @@ public class Helpers {
 
     public static ApplicationContext applicationContext() throws URISyntaxException {
         return applicationContext(
-            Paths.get(Objects.requireNonNull(Helpers.class.getClassLoader().getResource("plugins")).toURI())
+            pluginsPath()
         );
     }
 
     public static ApplicationContext applicationContext(Map<String, Object> properties) throws URISyntaxException {
         return applicationContext(
-            Paths.get(Objects.requireNonNull(Helpers.class.getClassLoader().getResource("plugins")).toURI()),
-            properties
+            pluginsPath(),
+            properties,
+            new String[]{Environment.TEST}
         );
     }
 
     public static ApplicationContext applicationContext(Path pluginsPath) {
         return applicationContext(
             pluginsPath,
-            null
+            null,
+            new String[]{Environment.TEST}
         );
     }
 
-    public static ApplicationContext applicationContext(Path pluginsPath, Map<String, Object> properties) {
+
+    private static Path pluginsPath() throws URISyntaxException {
+        return Paths.get(Objects.requireNonNull(Helpers.class.getClassLoader().getResource("plugins")).toURI());
+    }
+
+    private static ApplicationContext applicationContext(Path pluginsPath, Map<String, Object> properties, String[] envs) {
         if (!KestraClassLoader.isInit()) {
             KestraClassLoader.create(Thread.currentThread().getContextClassLoader());
         }
@@ -54,7 +61,7 @@ public class Helpers {
 
         return new KestraApplicationContextBuilder()
             .mainClass(Helpers.class)
-            .environments(Environment.TEST)
+            .environments(envs)
             .properties(properties)
             .classLoader(KestraClassLoader.instance())
             .pluginRegistry(pluginRegistry)
@@ -69,6 +76,19 @@ public class Helpers {
 
     public static void runApplicationContext(BiConsumer<ApplicationContext, EmbeddedServer> consumer) throws URISyntaxException {
         try (ApplicationContext applicationContext = Helpers.applicationContext().start()) {
+            EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+            embeddedServer.start();
+
+            consumer.accept(applicationContext, embeddedServer);
+        }
+    }
+
+    public static void runApplicationContext(String[] env, BiConsumer<ApplicationContext, EmbeddedServer> consumer) throws URISyntaxException {
+        try (ApplicationContext applicationContext = applicationContext(
+            pluginsPath(),
+            null,
+            env
+        ).start()) {
             EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
             embeddedServer.start();
 

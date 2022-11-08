@@ -35,7 +35,7 @@ public abstract class AbstractJdbcRepository<T> {
     protected final JooqDSLContextWrapper dslContextWrapper;
 
     @Getter
-    protected final Table<Record> table;
+    protected Table<Record> table;
 
     public AbstractJdbcRepository(
         Class<T> cls,
@@ -52,7 +52,7 @@ public abstract class AbstractJdbcRepository<T> {
 
     abstract public Condition fullTextCondition(List<String> fields, String query);
 
-    protected String key(T entity) {
+    public String key(T entity) {
         String key = queueService.key(entity);
 
         if (key != null) {
@@ -170,7 +170,7 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     protected <R extends Record> SelectConditionStep<R> sort(SelectConditionStep<R> select, Pageable pageable) {
-        if (pageable.getSort().isSorted()) {
+        if (pageable != null && pageable.getSort().isSorted()) {
             pageable
                 .getSort()
                 .getOrderBy()
@@ -185,7 +185,7 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     protected <R extends Record> Select<R> limit(SelectConditionStep<R> select, Pageable pageable) {
-       if (pageable.getSize() == -1) {
+       if (pageable == null || pageable.getSize() == -1) {
            return select;
        }
 

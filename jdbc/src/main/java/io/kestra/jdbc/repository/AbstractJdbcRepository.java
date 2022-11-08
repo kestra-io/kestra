@@ -7,7 +7,7 @@ import org.jooq.impl.DSL;
 
 @Singleton
 public abstract class AbstractJdbcRepository {
-    public Condition defaultFilter() {
+    protected Condition defaultFilter() {
         return field("deleted", Boolean.class).eq(false);
     }
 

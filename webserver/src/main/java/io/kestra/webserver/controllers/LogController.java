@@ -44,7 +44,7 @@ public class LogController {
     @Get(uri = "logs/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Logs"}, summary = "Search for logs")
     public PagedResults<LogEntry> find(
-        @Parameter(description = "Lucene string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,

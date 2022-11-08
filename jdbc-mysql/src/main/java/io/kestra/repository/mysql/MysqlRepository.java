@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 public class MysqlRepository<T>  extends AbstractJdbcRepository<T> {
     public MysqlRepository(Class<T> cls, ApplicationContext applicationContext) {
         super(cls, applicationContext);
+
+        this.table = DSL.table(DSL.quotedName(this.getTable().getName()));
     }
 
     public Condition fullTextCondition(List<String> fields, String query) {

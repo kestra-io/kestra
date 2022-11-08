@@ -1,6 +1,7 @@
 package io.kestra.runner.h2;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import io.kestra.core.serializers.JacksonMapper;
 import lombok.SneakyThrows;
@@ -12,6 +13,8 @@ import net.thisptr.jackson.jq.Versions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class H2Functions {
     private static final Scope rootScope;
@@ -31,6 +34,11 @@ public class H2Functions {
         return H2Functions.jq(value, expression, JsonNode::asText);
     }
 
+    public static String[] jqStringArray(String value, String expression) {
+        return H2Functions.jqArray(value, expression, JsonNode::asText)
+            .toArray(String[]::new);
+    }
+
     public static Long jqLong(String value, String expression) {
         return H2Functions.jq(value, expression, JsonNode::asLong);
     }
@@ -44,7 +52,7 @@ public class H2Functions {
     }
 
     @SneakyThrows
-    private static  <T> T jq(String value, String expression, Function<JsonNode, T> function) {
+    private static List<JsonNode> jq(String value, String expression) {
         JsonQuery q = JsonQuery.compile(expression, Versions.JQ_1_6);
 
         final List<JsonNode> out = new ArrayList<>();
@@ -52,12 +60,31 @@ public class H2Functions {
 
         q.apply(scope, in, out::add);
 
-        JsonNode node = out.get(0);
+        return out;
+    }
+
+    @SneakyThrows
+    private static <T> T jq(String value, String expression, Function<JsonNode, T> function) {
+        JsonNode node = H2Functions.jq(value, expression).get(0);
 
         if (node instanceof NullNode) {
             return null;
         } else {
             return function.apply(node);
         }
+    }
+
+    @SneakyThrows
+    private static <T> List<T> jqArray(String value, String expression, Function<JsonNode, T> function) {
+        JsonNode node = H2Functions.jq(value, expression).get(0);
+
+        if (!(node instanceof ArrayNode)) {
+            return List.of();
+        }
+
+        return StreamSupport
+            .stream(node.spliterator(), false)
+            .map(function::apply)
+            .collect(Collectors.toList());
     }
 }

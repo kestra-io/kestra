@@ -1,10 +1,10 @@
-import Vue from "vue"
+import {getCurrentInstance} from "vue";
 
 export default class ExecutionUtils {
     static waitFor(execution, predicate) {
         return new Promise((resolve) => {
             let callback = () => {
-                Vue.axios.get(`/api/v1/executions/${execution.id}`).then(response => {
+                getCurrentInstance().appContext.config.globalProperties.$http.get(`/api/v1/executions/${execution.id}`).then(response => {
                     const result = predicate(response.data)
 
                     if (result === true) {

@@ -65,7 +65,6 @@
     </b-list-group-item>
 </template>
 <script>
-    import Vue from "vue";
     const cronstrue = require("cronstrue/i18n");
     const cronParser = require("cron-parser");
     const cronValidator = require("cron-validator");
@@ -124,7 +123,7 @@
                     let current = this.item;
 
                     if (current.backfill === undefined) {
-                        Vue.set(current, "backfill", {})
+                        current.backfill = {};
                     }
 
                     if (val) {

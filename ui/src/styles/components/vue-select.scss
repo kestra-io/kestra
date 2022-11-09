@@ -1,22 +1,26 @@
 
-$vs-colors: (
-    lightest: $gray-400,
-    light: $gray-600,
-    dark: $white-always,
-    darkest: $gray-900,
-);
-$vs-border-color: $input-border-color;
-$vs-dropdown-box-shadow: none;
-$vs-border-radius: $input-border-radius;
-$vs-dropdown-bg: $input-bg;
-$vs-state-active-bg: $primary;
-$vs-selected-bg: $light;
-$vs-selected-bg: $primary;
-$vs-controls-color: $gray-400;
-$vs-state-disabled-bg: $input-disabled-bg;
-$vs-state-disabled-color: $input-color;
 
-@import '~vue-select/src/scss/vue-select.scss';
+
+
+@import '~vue-select/dist/vue-select.css';
+
+:root {
+    --vs-colors--lightest: #{$gray-400};
+    --vs-colors--light: #{$gray-600};
+    --vs-colors--dark: #{$white-always};
+    --vs-colors--darkest: #{$gray-900};
+    --vs-border-color: #{$input-border-color};
+    --vs-dropdown-box-shadow: none;
+
+    --vs-border-radius: #{$input-border-radius};
+    --vs-dropdown-bg: #{$input-bg};
+    --vs-state-active-bg: #{$primary};
+    --vs-selected-bg: #{$primary};
+    --vs-controls-color: #{$gray-400};
+    --vs-state-disabled-bg: #{$input-disabled-bg};
+    --vs-state-disabled-color: #{$input-color};
+
+}
 
 .v-select {
     background: $input-bg;

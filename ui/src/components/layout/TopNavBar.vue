@@ -8,10 +8,14 @@
                 <b-breadcrumb>
                     <b-breadcrumb-item>
                         <router-link :to="{name: 'home'}">
-                            <home-outline /> {{ $t('home') }}
+                            <home-outline />
                         </router-link>
                     </b-breadcrumb-item>
-                    <b-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :text="item.label" :key="x" />
+                    <b-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :key="x">
+                        <router-link :to="item.link">
+                            {{ item.label }}
+                        </router-link>
+                    </b-breadcrumb-item>
                 </b-breadcrumb>
             </b-nav-text>
         </b-navbar-nav>

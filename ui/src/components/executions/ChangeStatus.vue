@@ -119,7 +119,7 @@
                         if (execution.id === this.execution.id) {
                             this.$emit("follow")
                         } else {
-                            this.$router.push({name: "executions/update", params: {...execution, ...{tab: "gantt"}}});
+                            this.$router.push({name: "executions/update", params: {...{namespace: execution.namespace, flowId: execution.flowId, id: execution.id}, ...{tab: "gantt"}}});
                         }
 
                         this.$toast().success(this.$t("change status done"));

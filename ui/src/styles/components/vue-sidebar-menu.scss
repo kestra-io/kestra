@@ -1,3 +1,13 @@
+// v-side-bar
+$primary-color: $secondary !default;
+$base-bg: $white !default;
+$item-color: $tertiary !default;
+$item-active-color: $primary-color !default;
+$item-font-size: $font-size-base !default;
+$item-hover-bg: darken($secondary, 5%) !default;
+$item-hover-color: $white !default;
+$item-hover-bg: darken($secondary, 5%) !default;
+
 @import "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
 
 .v-sidebar-menu {
@@ -15,6 +25,14 @@
     .vsm--icon {
         transition: left 0.3s ease;
         left: 25px;
+        font-size: 1.5em;
+        background-color: transparent !important;
+        padding-bottom: 15px;
+
+        svg {
+            top: 3px;
+            left: 3px;
+        }
     }
 
     .vsm--title {
@@ -22,7 +40,9 @@
         left: 25px;
     }
 
-    .vsm-item {
+    .vsm--item {
+        transition: opacity 0.2s;
+
         * {
             transition: 0.3s all;
         }
@@ -55,5 +75,26 @@
 
     &.vsm_collapsed .vsm--icon {
         left: 0;
+    }
+
+
+    a.vsm--link_active[href="#"] {
+        cursor: initial !important;
+    }
+
+
+    .vsm--dropdown {
+        .vsm--title {
+            top: 3px;
+        }
+    }
+
+    .vsm--dropdown_mobile-item {
+        .vsm--item {
+            .vsm--title {
+                left: 0;
+                position: relative;
+            }
+        }
     }
 }

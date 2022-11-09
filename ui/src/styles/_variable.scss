@@ -173,16 +173,6 @@ $modal-backdrop-bg: #000;
 // popover
 $popover-inner-border-radius: $border-radius;
 
-// v-side-bar
-$primary-color: $secondary !default;
-$base-bg: $white !default;
-$item-color: $tertiary !default;
-$item-active-color: $primary-color !default;
-$item-font-size: $font-size-base !default;
-$item-hover-bg: darken($secondary, 5%) !default;
-$item-hover-color: $white !default;
-$item-hover-bg: darken($secondary, 5%) !default;
-
 // Import
 @import "~bootstrap/scss/functions";
 @import "~bootstrap/scss/mixins";

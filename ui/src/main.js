@@ -4,7 +4,7 @@ import "./utils/global"
 
 import App from "./App.vue"
 import BootstrapVue from "bootstrap-vue"
-import Vue from "vue"
+import {createApp} from "vue"
 import {createI18n} from "vue-i18n"
 import NProgress from "vue-nprogress"
 
@@ -21,7 +21,7 @@ import moment from "moment"
 import routes from "./routes/routes"
 import stores from "./stores/store"
 import vSelect from "vue-select"
-import VueHotkey from "v-hotkey"
+// import VueHotkey from "v-hotkey"
 
 import {
     Chart,
@@ -49,7 +49,7 @@ Chart.register(
     Filler
 );
 
-const app = Vue.createApp(App)
+const app = createApp(App)
 
 // store
 let store = createStore(stores);
@@ -98,7 +98,7 @@ app.use()
 // })
 
 // others plugins
-app.use(VueHotkey)
+// app.use(VueHotkey)
 app.use(VueSidebarMenu);
 app.use(BootstrapVue);
 

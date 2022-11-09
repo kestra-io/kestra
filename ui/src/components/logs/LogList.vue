@@ -13,7 +13,7 @@
                                 triggers="hover"
                             >
                                 {{ $t("from") }} :
-                                {{ $filter.date(attempt.state.startDate) }}
+                                {{ $filters.date(attempt.state.startDate) }}
                                 <br>
                                 {{ $t("to") }} :
                                 {{ $filters.date(attempt.state.endDate) }}

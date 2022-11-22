@@ -239,11 +239,14 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
                     (bool, throwable) -> throwable instanceof InternalServerErrorException ||
                         throwable.getCause() instanceof ConnectionClosedException,
                     () -> {
+                        String tag = !imageParse.tag.isEmpty() ? imageParse.tag : "latest";
+                        String repository = pull.getRepository().contains(":")
+                            ? pull.getRepository().split(":")[0] : pull.getRepository();
                         pull
-                            .withTag(!imageParse.tag.equals("") ? imageParse.tag : "latest")
+                            .withTag(tag)
                             .exec(new PullImageResultCallback())
                             .awaitCompletion();
-                        logger.debug("Image pulled [{}:{}]", pull.getRepository(), pull.getTag());
+                        logger.debug("Image pulled [{}:{}]", repository, tag);
                         return true;
                     }
                 );

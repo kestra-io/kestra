@@ -1,31 +1,41 @@
 <template>
     <div class="d-flex">
-        <div class="flex-grow-1 d-sm-none d-md-inline-block">
-            <b-form-select
+        <div class="flex-grow-1 d-sm-none d-md-inline-block page-size">
+            <el-select
+                size="small"
                 v-model="internalSize"
                 @change="pageSizeChange"
-                size="sm"
-                :options="pageOptions"
-            />
+                :persistent="false"
+            >
+                <el-option
+                    v-for="item in pageOptions"
+                    :key="item.value"
+                    :label="item.text"
+                    :value="item.value"
+                />
+            </el-select>
         </div>
         <div class="mr-auto">
-            <b-pagination
-                @change="pageChanged"
-                v-model="internalPage"
-                :total-rows="Math.min((max || total ),total)"
-                hide-ellipsis
-                :per-page="internalSize"
-                size="sm"
+            <el-pagination
+                v-model:current-page="internalPage"
+                :page-size="internalSize"
+                v-model:page-size="internalSize"
+                small
+                background
+                layout="prev, pager, next"
+                :pager-count="5"
+                :total="Math.min((max || total ),total)"
+                @current-change="pageChanged"
                 class="my-0"
-                align="right"
             />
+
         </div>
 
-        <small v-if="max" class="d-md-none d-lg-block total btn-outline-light mr-1">
+        <small v-if="max" class="d-md-none d-lg-block total mr-1">
             {{ $t('Max displayable') }}: {{ max }}
         </small>
 
-        <small class="total btn-outline-light text-total">
+        <small class="total text-total">
             {{ $t('Total') }}: {{ total }}
         </small>
     </div>
@@ -69,27 +79,32 @@
     };
 </script>
 <style scoped lang="scss">
-@import "../../styles/_variable.scss";
+@use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
-select {
+.el-select {
     width: auto;
 }
 
-:deep(.text-total) {
-    color: $pagination-color !important;
-    font-weight: normal;
-}
+.page-size {
 
-@media (max-width: map-get($grid-breakpoints, "sm")) {
-    select {
+    @include res(xs) {
         display: none;
     }
 }
 
+.text-total {
+    color: getCssVar('text-color', 'primary');
+    font-weight: normal;
+}
+
 .total {
-    border-radius: $border-radius-sm;
-    padding: $btn-padding-y-sm $btn-padding-x-sm;
-    border: 1px solid var(--table-border-color);
+    margin-top: 2px;
+    margin-bottom: 2px;
+    padding: 0 4px;
+    line-height: 1.8;
+    font-size: getCssVar('font-size', 'extra-small');
+    border-radius: getCssVar('border-radius', 'small');
+    border: 1px solid getCssVar('border-color');
     white-space: nowrap;
 }
 </style>

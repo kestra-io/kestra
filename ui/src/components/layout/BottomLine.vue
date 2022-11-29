@@ -1,32 +1,45 @@
 <template>
-    <b-navbar class="bottom-line" fixed="bottom">
+    <nav class="bottom-line">
         <slot />
-    </b-navbar>
+    </nav>
 </template>
 <script>
     export default {}
 </script>
 <style lang="scss">
-    @use "sass:math";
-    @import "../../styles/variable";
+    @use 'element-plus/theme-chalk/src/mixins/function' as *;
 
     .bottom-line {
-        left: 50px;
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        left: 0px;
         border-radius: 0;
-        border-top: 1px solid var(--gray-300);
+        border-top: 1px solid getCssVar('border-color');
         z-index: 90;
-        background-color: var(--white);
+        background-color: getCssVar('color', 'white');
+        padding: 0.5rem 1rem;
+        text-align: right;
 
-        .theme-dark & {
-            background-color: var(--light);
+        html.dark & {
+            background-color: getCssVar('gray-200');
         }
 
         button {
-            margin-left: $spacer;
+            margin-left: getCssVar('spacer');
 
             span:first-child {
-                margin-right: math.div($spacer, 3);
+                margin-right: calc(getCssVar('spacer') / 3);
             }
+        }
+
+        ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            flex-wrap: nowrap;
+            padding: 0;
+            justify-content: flex-end;
         }
     }
 </style>

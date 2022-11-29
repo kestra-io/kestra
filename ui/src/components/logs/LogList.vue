@@ -7,22 +7,6 @@
                 <div class="bg-light attempt-wrapper">
                     <template v-for="(attempt, index) in attempts(currentTaskRun)" :key="`attempt-${index}-${currentTaskRun.id}`">
                         <div>
-                            <b-tooltip
-                                placement="top"
-                                :target="`attempt-${index}-${currentTaskRun.id}`"
-                                triggers="hover"
-                            >
-                                {{ $t("from") }} :
-                                {{ $filters.date(attempt.state.startDate) }}
-                                <br>
-                                {{ $t("to") }} :
-                                {{ $filters.date(attempt.state.endDate) }}
-                                <br>
-                                <br>
-                                <clock />
-                                {{ $t("duration") }} :
-                                {{ $filters.humanizeDuration(attempt.state.duration) }}
-                            </b-tooltip>
 
                             <div class="attempt-header">
                                 <div class="attempt-number mr-1">
@@ -30,10 +14,25 @@
                                 </div>
 
                                 <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
-                                    <code>{{ currentTaskRun.taskId }}</code>
-                                    <small v-if="currentTaskRun.value">
-                                        {{ currentTaskRun.value }}
-                                    </small>
+                                    <el-tooltip>
+                                        <template #content>
+                                            {{ $t("from") }} :
+                                            {{ $filters.date(attempt.state.startDate) }}
+                                            <br>
+                                            {{ $t("to") }} :
+                                            {{ $filters.date(attempt.state.endDate) }}
+                                            <br>
+                                            <br>
+                                            <clock />
+                                            {{ $t("duration") }} :
+                                            {{ $filters.humanizeDuration(attempt.state.duration) }}
+                                        </template>
+                                        <code>{{ currentTaskRun.taskId }}</code>
+                                        <small v-if="currentTaskRun.value">
+                                            {{ currentTaskRun.value }}
+                                        </small>
+                                    </el-tooltip>
+
                                 </div>
 
                                 <div class="task-duration">
@@ -44,67 +43,58 @@
                                 </div>
 
                                 <div class="task-status">
-                                    <status
-                                        class="status"
-                                        :status="attempt.state.current"
-                                        size="sm"
-                                    />
+                                    <status :status="attempt.state.current" size="small" />
                                 </div>
 
-                                <b-dropdown right no-caret>
-                                    <template #button-content>
+                                <el-dropdown trigger="click">
+                                    <el-button type="primary">
                                         <DotsVertical title="" />
+                                    </el-button>
+                                    <template #dropdown>
+                                        <el-dropdown-menu>
+                                            <sub-flow-link
+                                                v-if="currentTaskRun.outputs && currentTaskRun.outputs.executionId"
+                                                component="el-dropdown-item"
+                                                tab-execution="gantt"
+                                                :execution-id="currentTaskRun.outputs.executionId"
+                                            />
+
+                                            <metrics :metrics="attempt.metrics" />
+
+                                            <outputs
+                                                :outputs="currentTaskRun.outputs"
+                                                :execution="execution"
+                                            />
+
+                                            <restart
+                                                component="el-dropdown-item"
+                                                :key="`restart-${index}-${attempt.state.startDate}`"
+                                                :is-replay="true"
+                                                :execution="execution"
+                                                :task-run="currentTaskRun"
+                                                :attempt-index="index"
+                                                @follow="forwardEvent('follow', $event)"
+                                            />
+
+                                            <change-status
+                                                component="el-dropdown-item"
+                                                :key="`change-status-${index}-${attempt.state.startDate}`"
+                                                :execution="execution"
+                                                :task-run="currentTaskRun"
+                                                :attempt-index="index"
+                                                @follow="forwardEvent('follow', $event)"
+                                            />
+
+                                            <task-edit
+                                                component="el-dropdown-item"
+                                                :task-id="currentTaskRun.taskId"
+                                                :flow-id="execution.flowId"
+                                                :namespace="execution.namespace"
+                                            />
+
+                                        </el-dropdown-menu>
                                     </template>
-
-                                    <sub-flow-link
-                                        v-if="currentTaskRun.outputs && currentTaskRun.outputs.executionId"
-                                        component="b-dropdown-item"
-                                        tab-execution="gantt"
-                                        :execution-id="currentTaskRun.outputs.executionId"
-                                    />
-
-                                    <b-dropdown-item
-                                        :disabled="!(attempt.metrics && attempt.metrics.length > 0) "
-                                        @click="toggleShowMetric(currentTaskRun, index)"
-                                    >
-                                        <chart-areaspline title="" />
-                                        <span>{{ $t('metrics') }}</span>
-                                    </b-dropdown-item>
-
-                                    <b-dropdown-item
-                                        :disabled="!currentTaskRun.outputs || currentTaskRun.outputs.length ===0"
-                                        @click="toggleShowOutput(currentTaskRun)"
-                                    >
-                                        <location-exit title="" />
-                                        <span>{{ $t('outputs') }}</span>
-                                    </b-dropdown-item>
-
-                                    <restart
-                                        component="b-dropdown-item"
-                                        :key="`restart-${index}-${attempt.state.startDate}`"
-                                        :is-replay="true"
-                                        :execution="execution"
-                                        :task-run="currentTaskRun"
-                                        :attempt-index="index"
-                                        @follow="forwardEvent('follow', $event)"
-                                    />
-
-                                    <change-status
-                                        component="b-dropdown-item"
-                                        :key="`change-status-${index}-${attempt.state.startDate}`"
-                                        :execution="execution"
-                                        :task-run="currentTaskRun"
-                                        :attempt-index="index"
-                                        @follow="forwardEvent('follow', $event)"
-                                    />
-
-                                    <task-edit
-                                        component="b-dropdown-item"
-                                        :task-id="currentTaskRun.taskId"
-                                        :flow-id="execution.flowId"
-                                        :namespace="execution.namespace"
-                                    />
-                                </b-dropdown>
+                                </el-dropdown>
                             </div>
                         </div>
 
@@ -121,24 +111,9 @@
                                 :name="`${currentTaskRun.id}-${index}-${i}`"
                             />
                         </template>
-
-                        <!-- Metrics -->
-                        <metrics
-                            v-if="showMetrics[currentTaskRun.id + '-' + index]"
-                            :key="`metrics-${index}-${currentTaskRun.id}`"
-                            class="table-unrounded mt-1"
-                            :data="attempt.metrics"
-                        />
                     </template>
                     <!-- Outputs -->
-                    <vars
-                        v-if="showOutputs[currentTaskRun.id]"
-                        :title="$t('outputs')"
-                        :execution="execution"
-                        class="table-unrounded mt-1"
-                        :key="currentTaskRun.id"
-                        :data="currentTaskRun.outputs"
-                    />
+
                 </div>
             </template>
         </div>
@@ -149,8 +124,8 @@
     import LogLine from "./LogLine";
     import Restart from "../executions/Restart";
     import ChangeStatus from "../executions/ChangeStatus";
-    import Vars from "../executions/Vars";
     import Metrics from "../executions/Metrics";
+    import Outputs from "../executions/Outputs";
     import Clock from "vue-material-design-icons/Clock";
     import LocationExit from "vue-material-design-icons/LocationExit";
     import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";
@@ -160,6 +135,7 @@
     import SubFlowLink from "../flows/SubFlowLink"
     import TaskEdit from "override/components/flows/TaskEdit.vue";
     import Duration from "../layout/Duration";
+    import {shallowRef} from "vue";
 
     export default {
         components: {
@@ -168,8 +144,8 @@
             ChangeStatus,
             Clock,
             LocationExit,
-            Vars,
             Metrics,
+            Outputs,
             ChartAreaspline,
             DotsVertical,
             Status,
@@ -207,7 +183,11 @@
             return {
                 showOutputs: {},
                 showMetrics: {},
-                fullscreen: false
+                fullscreen: false,
+                icon: {
+                    ChartAreaspline: shallowRef(ChartAreaspline),
+                    LocationExit: shallowRef(LocationExit)
+                }
             };
         },
         watch: {

@@ -1,28 +1,21 @@
 <template>
     <span v-if="description">
-
-        <b-link class="text-inherited" v-b-modal="`tooltip-desc-modal-${id}`">
+        <a @click="isOpen = true">
             <help-circle
                 title=""
                 :id="'tooltip-desc-' + id"
             />
-        </b-link>
+        </a>
 
-        <b-modal
-            :id="'tooltip-desc-modal-' + id"
+        <el-drawer
+            v-if="isOpen"
+            v-model="isOpen"
             :title="title"
-            hide-backdrop
-            hide-footer
-            modal-class="right"
-            size="lg"
-            v-if="modal"
+            destroy-on-close
+            :append-to-body="true"
         >
             <markdown class="markdown-tooltip" :source="description" />
-        </b-modal>
-
-        <b-popover triggers="hover" :target="'tooltip-desc-' + id" placement="left" v-if="!modal" :title="title">
-            <markdown class="markdown-tooltip" :source="description" />
-        </b-popover>
+        </el-drawer>
     </span>
 </template>
 <script>
@@ -33,6 +26,11 @@
         components: {
             HelpCircle,
             Markdown
+        },
+        data() {
+            return {
+                isOpen: false,
+            };
         },
         props: {
             id: {
@@ -46,27 +44,19 @@
             description: {
                 type: String,
                 default: "",
-            },
-            modal: {
-                type: Boolean,
-                default: false,
             }
         },
-        computed: {
-            isModal() {
-                return this.modal || this.description.indexOf("\n") > 0;
-            }
-        }
     };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+a {
+    cursor: pointer;
+}
+
 .markdown-tooltip {
     *:last-child {
         margin-bottom: 0;
     }
-}
-.text-inherited {
-    color: unset;
 }
 </style>

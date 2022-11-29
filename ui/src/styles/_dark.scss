@@ -1,0 +1,81 @@
+// Color system
+$white: #FFF;
+$gray-900: #d6e2f3;
+$gray-800: #d0d7e0;
+$gray-700: #c1c1d8;
+$gray-600: #7c89ad;
+$gray-500: #7989b4;
+$gray-400: #5f72b1;
+$gray-300: #283456;
+$gray-200: #292e40;
+$gray-100: #202331;
+$black: #000;
+
+$grays: (
+    '100': $gray-100,
+    '200': $gray-200,
+    '300': $gray-300,
+    '400': $gray-400,
+    '500': $gray-500,
+    '600': $gray-600,
+    '700': $gray-700,
+    '800': $gray-800,
+    '900': $gray-900,
+) !default;
+
+// Body
+$body-color: $gray-900;
+$body-bg: #1b1e2a;
+$overlay-bg: $body-bg;
+
+// Text
+$text-color-primary: $gray-900;
+$text-color-regular: $gray-700;
+$text-color-secondary: $gray-800;
+$text-color-placeholder: $gray-600;
+$text-color-disabled: $gray-700;
+
+$text-color: (
+    'primary': $text-color-primary,
+    'regular': $text-color-regular,
+    'secondary': $text-color-secondary,
+    'placeholder': $text-color-placeholder,
+    'disabled': $text-color-disabled,
+) !default;
+
+// Border
+$border-color-base: $gray-200;
+$border-color-light: lighten($border-color-base, 5%);
+$border-color-lighter: lighten($border-color-base, 10%);
+$border-color-extra-light: $white;
+$border-color-dark: darken($border-color-base, 5%);
+$border-color-darker: darken($border-color-base, 5%);
+
+$border-color: (
+    '': $border-color-base,
+    'light': $border-color-light,
+    'lighter': $border-color-lighter,
+    'extra-light': $border-color-extra-light,
+    'dark': $border-color-dark,
+    'darker': $border-color-darker,
+) !default;
+
+// Fill color
+$fill-color-base: #222635;
+$fill-color-light: lighten($fill-color-base, 5%);
+$fill-color-lighter: lighten($fill-color-base, 10%);
+$fill-color-extra-light: lighten($fill-color-base, 15%);
+$fill-color-dark: darken($fill-color-base, 5%);
+$fill-color-darker: darken($fill-color-base, 10%);
+$fill-color-blank: darken($fill-color-base, 7%);
+
+$fill-color: (
+    '': $fill-color-base,
+    'light': $fill-color-light,
+    'lighter': $fill-color-lighter,
+    'extra-light': $fill-color-extra-light,
+    'dark': $fill-color-dark,
+    'darker': $fill-color-darker,
+    'blank': $fill-color-blank,
+) !default;
+

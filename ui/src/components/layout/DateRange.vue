@@ -1,24 +1,18 @@
 <template>
-    <date-picker
-        @input="onDate($event)"
-        :value="date"
-        :required="false"
+    <el-date-picker
+        v-model="date"
+        @update:model-value="onDate"
+        type="datetimerange"
         :shortcuts="shortcuts"
-        :lang="lang"
-        type="datetime"
-        class="date-range"
-        input-class="form-control"
-        range
-        :placeholder="$t('date')"
+        :start-placeholder="$t('start date')"
+        :end-placeholder="$t('end date')"
     />
 </template>
 <script>
-    import DatePicker from "vue2-datepicker";
     import moment from "moment";
 
     export default {
-        components: {DatePicker},
-        emits: ["input"],
+        emits: ["update:modelValue"],
         data() {
             return {
                 lang: {
@@ -30,35 +24,35 @@
                 shortcuts: [
                     {
                         text: this.$t("datepicker.last1hour"),
-                        onClick: () => [
+                        value: [
                             this.$moment().add(-1, "hour").toDate(),
                             this.$moment().toDate()
                         ],
                     },
                     {
                         text: this.$t("datepicker.last12hours"),
-                        onClick: () => [
+                        value: [
                             this.$moment().add(-12, "hour").toDate(),
                             this.$moment().toDate()
                         ],
                     },
                     {
                         text: this.$t("datepicker.last24hours"),
-                        onClick: () => [
+                        value: [
                             this.$moment().add(-1, "day").toDate(),
                             this.$moment().toDate()
                         ],
                     },
                     {
                         text: this.$t("datepicker.today"),
-                        onClick: () => [
+                        value: [
                             this.$moment().startOf("day").toDate(),
                             this.$moment().endOf("day").toDate()
                         ],
                     },
                     {
                         text: this.$t("datepicker.yesterday"),
-                        onClick: () => [
+                        value: [
                             this.$moment().add(-1, "day").startOf("day").toDate(),
                             this.$moment().add(-1, "day").endOf("day").toDate()
                         ],
@@ -72,63 +66,63 @@
                     },
                     {
                         text: this.$t("datepicker.thisWeek"),
-                        onClick: () => [
+                        value: [
                             this.$moment().startOf("isoWeek").toDate(),
                             this.$moment().endOf("isoWeek").toDate()
                         ],
                     },
                     {
                         text: this.$t("datepicker.thisWeekSoFar"),
-                        onClick: () => [
+                        value: [
                             this.$moment().add(-1, "isoWeek").toDate(),
                             this.$moment().toDate()
                         ],
                     },
                     {
                         text: this.$t("datepicker.previousWeek"),
-                        onClick: () => [
+                        value: [
                             this.$moment().add(-1, "week").startOf("isoWeek").toDate(),
                             this.$moment().add(-1, "week").endOf("isoWeek").toDate()
                         ],
                     },
                     {
                         text: this.$t("datepicker.thisMonth"),
-                        onClick: () => [
+                        value: [
                             this.$moment().startOf("month").toDate(),
                             this.$moment().endOf("month").toDate(),
                         ],
                     },
                     {
                         text: this.$t("datepicker.thisMonthSoFar"),
-                        onClick: () => [
+                        value: [
                             this.$moment().add(-1, "month").toDate(),
                             this.$moment().toDate()
                         ],
                     },
                     {
                         text: this.$t("datepicker.previousMonth"),
-                        onClick: () => [
+                        value: [
                             this.$moment().add(-1, "month").startOf("month").toDate(),
                             this.$moment().add(-1, "month").endOf("month").toDate()
                         ],
                     },
                     {
                         text: this.$t("datepicker.thisYear"),
-                        onClick: () => [
+                        value: [
                             this.$moment().startOf("year").toDate(),
                             this.$moment().endOf("year").toDate(),
                         ],
                     },
                     {
                         text: this.$t("datepicker.thisYearSoFar"),
-                        onClick: () => [
+                        value: [
                             this.$moment().add(-1, "year").toDate(),
                             this.$moment().toDate()
                         ],
                     },
                     {
                         text: this.$t("datepicker.previousYear"),
-                        onClick: () => [
+                        value: [
                             this.$moment().add(-1, "year").startOf("year").toDate(),
                             this.$moment().add(-1, "year").endOf("year").toDate()
                         ],
@@ -148,9 +142,9 @@
         },
         methods: {
             onDate(value) {
-                this.$emit("input", {
-                    "startDate": value[0] ? moment(value[0]).toISOString(true) : undefined,
-                    "endDate": value[1] ? moment(value[1]).toISOString(true) : undefined
+                this.$emit("update:modelValue", {
+                    "startDate": value != null && value[0] ? moment(value[0]).toISOString(true) : undefined,
+                    "endDate": value != null && value[1] ? moment(value[1]).toISOString(true) : undefined
                 });
             }
         },

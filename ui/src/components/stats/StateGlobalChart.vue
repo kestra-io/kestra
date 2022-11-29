@@ -1,5 +1,5 @@
 <template>
-    <b-card header-tag="header" :header="$t('last 30 days count', {count: formattedCount})">
+    <el-card :header="$t('last 30 days count', {count: formattedCount})" shadow="never">
         <div class="state-global-charts" :class="{big: big}">
             <template v-if="hasData">
                 <state-chart
@@ -10,12 +10,12 @@
                 />
             </template>
             <template v-else>
-                <b-alert variant="light" class="text-muted m-0" show>
+                <el-alert type="info" :closable="false" class="text-muted m-0" show-icon>
                     {{ $t('no result') }}
-                </b-alert>
+                </el-alert>
             </template>
         </div>
-    </b-card>
+    </el-card>
 </template>
 
 <script>

@@ -3,31 +3,41 @@
         <div class="log-content">
             <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
                 <template #navbar v-if="embed === false">
-                    <search-field />
-                    <namespace-select
-                        data-type="flow"
-                        v-if="$route.name !== 'flows/update'"
-                        :value="$route.query.namespace"
-                        @input="onDataTableValue('namespace', $event)"
-                    />
-                    <log-level-selector
-                        :value="$route.query.level"
-                        @input="onDataTableValue('level', $event)"
-                    />
-                    <date-range
-                        :start-date="$route.query.startDate"
-                        :end-date="$route.query.endDate"
-                        @input="onDataTableValue($event)"
-                    />
-                    <refresh-button class="float-right" @refresh="load" />
+                    <el-form-item>
+                        <search-field />
+                    </el-form-item>
+                    <el-form-item>
+                        <namespace-select
+                            data-type="flow"
+                            v-if="$route.name !== 'flows/update'"
+                            :value="$route.query.namespace"
+                            @input="onDataTableValue('namespace', $event)"
+                        />
+                    </el-form-item>
+                    <el-form-item>
+                        <log-level-selector
+                            :value="$route.query.level"
+                            @input="onDataTableValue('level', $event)"
+                        />
+                    </el-form-item>
+                    <el-form-item>
+                        <date-range
+                            :start-date="$route.query.startDate"
+                            :end-date="$route.query.endDate"
+                            @input="onDataTableValue($event)"
+                        />
+                    </el-form-item>
+                    <el-form-item>
+                        <refresh-button class="float-right" @refresh="load" />
+                    </el-form-item>
                 </template>
 
                 <template #table>
-                    <b-overlay :show="isLoading" variant="transparent">
+                    <div v-loading="isLoading">
                         <div v-if="logs === undefined || logs.length === 0">
-                            <b-alert variant="light" class="text-muted" show>
+                            <el-alert type="info" :closable="false" class="text-muted" show-icon>
                                 {{ $t('no result') }}
-                            </b-alert>
+                            </el-alert>
                         </div>
                         <div v-else class="logs-wrapper mb-2 text-dark">
                             <template v-for="(log, i) in logs" :key="`${log.taskRunId}-${i}`">
@@ -39,7 +49,7 @@
                                 />
                             </template>
                         </div>
-                    </b-overlay>
+                    </div>
                 </template>
             </data-table>
         </div>

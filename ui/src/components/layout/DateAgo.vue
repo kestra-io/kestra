@@ -1,5 +1,7 @@
 <template>
-    <span v-if="date" v-b-tooltip.hover="inverted ? from : full">{{ inverted ? full : from }}</span>
+    <el-tooltip v-if="date" :content="inverted ? from : full">
+        <span>{{ inverted ? full : from }}</span>
+    </el-tooltip>
 </template>
 <script>
     export default {

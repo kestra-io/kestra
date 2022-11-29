@@ -1,17 +1,14 @@
 <template>
     <component
         :is="component"
-        @click="$bvModal.show(uuid)"
+        :icon="icon.StateMachine"
+        @click="visible = !visible"
         :disabled="!enabled"
     >
-        <kicon :tooltip="$t('change status')">
-            <state-machine />
-        </kicon>
+        <span v-if="component !== 'el-button'">{{ $t('change status') }}</span>
 
-        <span v-if="component !== 'b-button'">{{ $t('change status') }}</span>
-
-        <b-modal v-if="enabled" :id="uuid">
-            <template #modal-header>
+        <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroy-on-close :append-to-body="true">
+            <template #header>
                 <h5>{{ $t("confirmation") }}</h5>
             </template>
 
@@ -19,26 +16,26 @@
                 <p v-html="$t('change status confirm', {id: execution.id, task: taskRun.taskId})" />
 
                 <p>
-                    Current status is : <status size="sm" class="mr-1" :status="this.taskRun.state.current" />
+                    Current status is : <status size="small" class="mr-1" :status="this.taskRun.state.current" />
                 </p>
 
-                <v-select
+                <el-select
                     :required="true"
                     v-model="selectedStatus"
-                    :options="states"
-                    :reduce="value => value.code"
-                    :selectable="(option) => !option.disabled"
+                    :persistent="false"
                 >
-                    <template #selected-option="{code, label}">
-                        <status size="sm" :label="false" class="mr-1" :status="code" />
-                        <span v-html="label" />
-                    </template>
-                    <template #option="{code, label}">
-                        <status size="sm" :label="false" class="mr-1" :status="code" />
-                        <span v-html="label" />
-                    </template>
-                </v-select>
-
+                    <el-option
+                        v-for="item in states"
+                        :key="item.code"
+                        :value="item.code"
+                        :disabled="item.disabled"
+                    >
+                        <template #default>
+                            <status size="small" :label="false" class="mr-1" :status="item.code" />
+                            <span v-html="item.label" />
+                        </template>
+                    </el-option>
+                </el-select>
 
                 <div v-if="selectedStatus" class="alert alert-info alert-status-change mt-2" role="alert">
                     <ul>
@@ -49,19 +46,19 @@
                 </div>
             </template>
 
-            <template #modal-footer="{ok, cancel}">
-                <b-button @click="cancel()">
+            <template #footer="{ok, cancel}">
+                <el-button @click="visible = false">
                     Cancel
-                </b-button>
-                <b-button
-                    variant="primary"
-                    @click="changeStatus(ok)"
+                </el-button>
+                <el-button
+                    type="primary"
+                    @click="changeStatus()"
                     :disabled="selectedStatus === taskRun.state.current || selectedStatus === null"
                 >
                     OK
-                </b-button>
+                </el-button>
             </template>
-        </b-modal>
+        </el-dialog>
     </component>
 </template>
 <script>
@@ -73,6 +70,9 @@
     import State from "../../utils/state";
     import Status from "../../components/Status";
     import ExecutionUtils from "../../utils/executionUtils";
+    import {shallowRef} from "vue";
+    import RestartIcon from "vue-material-design-icons/Restart.vue";
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
 
     export default {
         components: {StateMachine, Status, Kicon},
@@ -98,8 +98,8 @@
         },
         emits: ["follow"],
         methods: {
-            changeStatus(closeCallback) {
-                closeCallback()
+            changeStatus() {
+                this.visible = false;
 
                 this.$store
                     .dispatch("execution/changeStatus", {
@@ -109,7 +109,7 @@
                     })
                     .then(response => {
                         if (response.data.id === this.execution.id) {
-                            return ExecutionUtils.waitForState(response.data);
+                            return ExecutionUtils.waitForState(this.$http, response.data);
                         } else {
                             return response.data;
                         }
@@ -171,6 +171,8 @@
         data() {
             return {
                 selectedStatus: undefined,
+                visible: false,
+                icon: {StateMachine: shallowRef(StateMachine)}
             };
         },
     };

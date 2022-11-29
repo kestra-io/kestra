@@ -1,117 +1,106 @@
 <template>
     <div class="container" v-if="flow">
-        <b-alert v-if="flow.disabled" variant="warning" show>
+        <el-alert v-if="flow.disabled" type="warning" show-icon :closable="false">
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
-        </b-alert>
-        <b-form v-hotkey="keymap" @submit.prevent="onSubmit">
-            <b-form-group
+        </el-alert>
+        <el-form class="ks-horizontal">
+            <el-form-item
                 v-for="input in flow.inputs"
                 :key="input.id"
                 :label="input.name"
-                label-cols-sm="2"
-                label-align-sm="right"
             >
-                <b-form-input
+                <el-input
                     v-if="input.type === 'STRING' || input.type === 'URI'"
                     v-model="input.value"
-                    type="text"
                     :required="input.required"
                     :placeholder="`${placeholder} ${input.name}`"
                     :state="state(input)"
                 />
-                <b-form-input
+                <el-input-number
                     v-if="input.type === 'INT'"
                     v-model="input.value"
-                    type="number"
-                    step="1"
+                    :step="1"
                     :required="input.required"
                     :placeholder="`${placeholder} ${input.name}`"
                     :state="state(input)"
                 />
-                <b-form-input
+                <el-input-number
                     v-if="input.type === 'FLOAT'"
                     v-model="input.value"
-                    type="number"
-                    step="0.001"
+                    :step="0.001"
                     :required="input.required"
                     :placeholder="`${placeholder} ${input.name}`"
                     :state="state(input)"
                 />
-                <b-form-checkbox
+                <el-checkbox
                     v-if="input.type === 'BOOLEAN'"
                     v-model="input.value"
-                    type="checkbox"
                     value="true"
                     unchecked-value="false"
                     :required="input.required"
                     :state="state(input)"
                 />
-                <date-picker
+                <el-date-picker
                     v-if="input.type === 'DATETIME'"
                     v-model="input.value"
+                    type="datetime"
                     :required="input.required"
                     :state="state(input)"
-                    type="datetime"
                     :placeholder="`${placeholder} ${input.name}`"
                 />
-                <date-picker
+                <el-date-picker
                     v-if="input.type === 'DATE'"
                     v-model="input.value"
                     :required="input.required"
                     :state="state(input)"
                     type="date"
-                    :placeholder="`${placeholder} ${input.name}`"
+                    :placeholder="input.description"
                 />
-                <date-picker
-                    v-if="input.type === 'TIME'"
+                <el-time-picker
+                    v-if="input.type === 'TIME' || input.type === 'DURATION'"
                     v-model="input.value"
                     :required="input.required"
                     :state="state(input)"
                     type="time"
                     :placeholder="`${placeholder} ${input.name}`"
                 />
-                <date-picker
-                    v-if="input.type === 'DURATION'"
-                    v-model="input.value"
-                    :required="input.required"
-                    :state="state(input)"
-                    type="time"
-                    :placeholder="`${placeholder} ${input.name}`"
-                />
-                <b-form-file
+                <el-input
+                    class="el-input-file"
                     v-if="input.type === 'FILE'"
                     v-model="input.value"
+                    type="file"
                     :required="input.required"
-                    :state="state(input)"
                     :placeholder="$t('choose file')"
+                    :state="state(input)"
                 />
-                <b-form-textarea
+                <el-input
                     v-if="input.type === 'JSON'"
                     v-model="input.value"
+                    type="textarea"
                     :required="input.required"
                     :state="state(input)"
                     :placeholder="`${placeholder} ${input.name}`"
                 />
 
                 <small v-if="input.description" class="form-text text-muted">{{ input.description }}</small>
-            </b-form-group>
-            <b-form-group class="text-right mb-0">
-                <b-button type="submit" variant="primary" :disabled="flow.disabled" v-b-tooltip.hover.top="'(Ctrl + Enter)'">
+            </el-form-item>
+            <el-form-item class="mb-0">
+                <el-button :icon="icon.Trigger" @click="onSubmit" type="primary" :disabled="flow.disabled">
                     {{ $t('launch execution') }}
-                    <trigger title="" />
-                </b-button>
-            </b-form-group>
-        </b-form>
+                </el-button>
+            </el-form-item>
+        </el-form>
     </div>
 </template>
 <script>
+    import {shallowRef} from "vue";
     import {mapState} from "vuex";
-    import DatePicker from "vue2-datepicker";
     import Trigger from "vue-material-design-icons/Cogs";
     import {executeTask} from "../../utils/submitTask"
+
     export default {
-        components: {DatePicker, Trigger},
+        components: {Trigger},
         props: {
             redirect: {
                 type: Boolean,
@@ -119,9 +108,12 @@
             }
         },
         emits: ["executionTrigger"],
+        data() {
+            return {icon: {Trigger: shallowRef(Trigger)}};
+        },
         mounted() {
             setTimeout(() => {
-                const input = this.$el.querySelector("input")
+                const input = this.$el && this.$el.querySelector && this.$el.querySelector("input")
                 if (input && !input.className.includes("mx-input")) {
                     input.focus()
                 }
@@ -132,11 +124,6 @@
             placeholder() {
                 return this.$t("set a value for");
             },
-            keymap () {
-                return {
-                    "ctrl+enter": this.onSubmit,
-                }
-            }
         },
         methods: {
             onSubmit() {
@@ -161,5 +148,3 @@
         }
     };
 </script>
-<style scoped>
-</style>

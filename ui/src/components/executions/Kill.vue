@@ -1,9 +1,9 @@
 <template>
     <div class="wrapper" v-if="enabled">
-        <b-button @click="kill" class="btn-warning mr-1">
+        <el-button @click="kill" type="warning" class="mr-1">
             <stop-circle-outline />
             {{ $t("kill") }}
-        </b-button>
+        </el-button>
     </div>
 </template>
 <script>

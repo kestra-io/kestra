@@ -4,25 +4,25 @@
             <tabs route-name="executions/update" @follow="follow" :tabs="tabs" />
         </div>
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
-            <ul class="navbar-nav ml-auto" v-hotkey="keymap">
-                <li class="nav-item">
-                    <b-button class="btn-danger" v-if="canDelete" @click="deleteExecution">
+            <ul>
+                <li>
+                    <el-button type="danger" v-if="canDelete" @click="deleteExecution">
                         <kicon>
                             <delete />
                             <span>{{ $t('delete') }}</span>
                         </kicon>
-                    </b-button>
+                    </el-button>
 
                     <template v-if="isAllowedTrigger">
                         <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
                     </template>
 
                     <template v-if="isAllowedEdit">
-                        <b-button @click="editFlow">
-                            <kicon :tooltip="'(Ctrl + Shift + e)'">
+                        <el-button @click="editFlow">
+                            <kicon>
                                 <pencil /> {{ $t('edit flow') }}
                             </kicon>
-                        </b-button>
+                        </el-button>
                     </template>
                 </li>
             </ul>
@@ -71,10 +71,10 @@
             this.previousExecutionId = this.$route.params.id
         },
         watch: {
-            $route () {
+            $route(oldValue, newValue) {
                 this.$store.commit("execution/setTaskRun", undefined);
                 this.$store.commit("execution/setTask", undefined);
-                if (this.previousExecutionId !== this.$route.params.id) {
+                if (oldValue.name === newValue.name && this.previousExecutionId !== this.$route.params.id) {
                     this.follow()
                 }
             },
@@ -168,11 +168,6 @@
         computed: {
             ...mapState("execution", ["execution"]),
             ...mapState("auth", ["user"]),
-            keymap () {
-                return {
-                    "ctrl+shift+e": this.editFlow,
-                }
-            },
             tabs() {
                 return this.getTabs();
             },

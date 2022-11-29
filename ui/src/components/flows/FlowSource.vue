@@ -1,9 +1,5 @@
 <template>
-    <b-row>
-        <b-col>
-            <flow-edit v-if="flow" :prevent-route-info="true" />
-        </b-col>
-    </b-row>
+    <flow-edit v-if="flow" :prevent-route-info="true" />
 </template>
 <script>
     import {mapGetters} from "vuex";

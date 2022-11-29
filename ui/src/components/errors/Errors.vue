@@ -38,11 +38,11 @@
 
 
 <style lang="scss" scoped>
-    @import "../../styles/_variable.scss";
+    @use 'element-plus/theme-chalk/src/mixins/function' as *;
 
     .errors {
         h2 {
-            margin-bottom: $spacer * 2;
+            margin-bottom: calc(getCssVar('spacer') * 2);
         }
 
         width: 100%;

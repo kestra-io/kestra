@@ -1,65 +1,63 @@
+import {ElNotification, ElMessageBox, ElMessage} from "element-plus"
+import {h} from "vue"
+
 export default {
-    install(Vue) {
-        Vue.prototype.$toast = function() {
+    install(app) {
+        app.config.globalProperties.$toast = function() {
             const self = this;
 
             return {
                 _wrap: function(message) {
-                    return [self.$createElement("span", {domProps: {innerHTML: message}})];
+                    return h("span", {innerHTML: message});
                 },
                 confirm: function(message, callback, cancel) {
-                    return self.$bvModal
-                        .msgBoxConfirm(
-                            this._wrap(message || self.$t("toast confirm")),
-                            {title: [self.$t("confirmation")]}
-                        )
-                        .then(confirm => {
-                            if (confirm) {
-                                callback()
-                            } else if (cancel) {
-                                cancel()
-                            }
+                    ElMessageBox.confirm(
+                        this._wrap(message || self.$t("toast confirm")),
+                        self.$t("confirmation"),
+                        {
+                            type: "warning",
+                        }
+                    )
+                        .then(() => {
+                            callback();
+                        })
+                        .catch(() => {
+                            cancel();
                         })
                 },
                 saved: function(name, title) {
-                    self.$bvToast.toast(this._wrap(self.$t("saved done", {name: name})), {
+                    ElNotification({
                         title: title || self.$t("saved"),
-                        autoHideDelay: 5000,
-                        toaster: "b-toaster-top-right",
-                        variant: "success"
+                        message: this._wrap(self.$t("saved done", {name: name})),
+                        type: "success",
                     })
                 },
                 deleted: function(name, title) {
-                    self.$bvToast.toast(this._wrap(self.$t("deleted confirm", {name: name})), {
+                    ElNotification({
                         title: title || self.$t("deleted"),
-                        autoHideDelay: 5000,
-                        toaster: "b-toaster-top-right",
-                        variant: "success"
+                        message: this._wrap(self.$t("deleted confirm", {name: name})),
+                        type: "success",
                     })
                 },
-                success: function(message, title, options) {
-                    self.$bvToast.toast(this._wrap(message), {
+                success: function(message, title) {
+                    ElNotification({
                         title: title || self.$t("success"),
-                        autoHideDelay: 5000,
-                        toaster: "b-toaster-top-right",
-                        variant: "success",
-                        ...(options || {})
+                        message: this._wrap(message),
+                        type: "success",
                     })
                 },
                 warning: function(message, title) {
-                    self.$bvToast.toast(this._wrap(message), {
+                    ElNotification({
                         title: title || self.$t("warning"),
-                        autoHideDelay: 5000,
-                        toaster: "b-toaster-top-right",
-                        variant: "warning"
+                        message: this._wrap(message),
+                        type: "warning",
                     })
                 },
                 error: function(message, title) {
-                    self.$bvToast.toast(this._wrap(message), {
+                    ElNotification({
                         title: title || self.$t("error"),
-                        autoHideDelay: 5000,
-                        toaster: "b-toaster-top-right",
-                        variant: "danger"
+                        message: this._wrap(message),
+                        type: "danger",
                     })
                 },
                 unsavedConfirm(ok, ko) {

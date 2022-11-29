@@ -1,40 +1,30 @@
 <template>
-    <div>
-        <b-overlay :show="!ready" variant="transparent">
-            <div class="d-flex top rounded" v-if="ready && this.count !== 0">
-                <div>
-                    <b-btn-group>
-                        <slot name="btn" />
-                        <b-btn size="sm" @click="setAction('in')">
-                            <kicon placement="bottom" :tooltip="$t('topology-graph.zoom-in')">
-                                <magnify-plus />
-                            </kicon>
-                        </b-btn>
-                        <b-btn size="sm" @click="setAction('out')">
-                            <kicon placement="bottom" :tooltip="$t('topology-graph.zoom-out')">
-                                <magnify-minus />
-                            </kicon>
-                        </b-btn>
-                        <b-btn size="sm" @click="setAction('reset')" id="zoom-reset">
-                            <kicon placement="bottom" :tooltip="$t('topology-graph.zoom-reset')">
-                                <arrow-collapse-all />
-                            </kicon>
-                        </b-btn>
-                        <b-btn size="sm" @click="setAction('fit')" id="zoom-fit">
-                            <kicon placement="bottom" :tooltip="$t('topology-graph.zoom-fit')">
-                                <fit-to-page />
-                            </kicon>
-                        </b-btn>
-                    </b-btn-group>
-                </div>
+    <div v-loading="!ready">
+        <div class="d-flex top rounded" v-if="ready && this.count !== 0">
+            <div>
+                <el-button-group>
+                    <slot name="btn" />
+                    <el-tooltip :content="$t('topology-graph.zoom-in')">
+                        <el-button :icon="icon.MagnifyPlus" size="small" @click="setAction('in')" />
+                    </el-tooltip>
+                    <el-tooltip :content="$t('topology-graph.zoom-out')">
+                        <el-button :icon="icon.MagnifyMinus" size="small" @click="setAction('out')" />
+                    </el-tooltip>
+                    <el-tooltip :content="$t('topology-graph.zoom-reset')">
+                        <el-button :icon="icon.ArrowCollapseAll" size="small" @click="setAction('reset')" />
+                    </el-tooltip>
+                    <el-tooltip :content="$t('topology-graph.zoom-fit')">
+                        <el-button :icon="icon.FitToPage" size="small" @click="setAction('fit')" />
+                    </el-tooltip>
+                </el-button-group>
             </div>
+        </div>
 
-            <b-alert v-if="ready && this.count === 0" variant="light" class="m-0 text-muted" show>
-                {{ $t('no result') }}
-            </b-alert>
+        <el-alert v-if="ready && this.count === 0" variant="info" :closable="false" class="m-0 text-muted" show-icon>
+            {{ $t('no result') }}
+        </el-alert>
 
-            <div :class="{hide: !ready}" class="graph-wrapper" :id="uuid" ref="wrapper" />
-        </b-overlay>
+        <div :class="{hide: !ready}" class="graph-wrapper" :id="uuid" ref="wrapper" />
     </div>
 </template>
 <script>
@@ -44,6 +34,7 @@
     import FitToPage from "vue-material-design-icons/FitToPage";
     import Utils from "../../utils/utils";
     import Kicon from "../Kicon"
+    import {shallowRef} from "vue";
 
     export default {
         components: {
@@ -60,6 +51,12 @@
                 zoomFactor: 1,
                 ready: false,
                 count: undefined,
+                icon: {
+                    MagnifyPlus: shallowRef(MagnifyPlus),
+                    MagnifyMinus: shallowRef(MagnifyMinus),
+                    ArrowCollapseAll: shallowRef(ArrowCollapseAll),
+                    FitToPage: shallowRef(FitToPage),
+                },
             };
         },
         cy: undefined,

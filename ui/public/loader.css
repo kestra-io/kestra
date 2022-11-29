@@ -10,10 +10,10 @@
   height: 100%;
   z-index: 1000;
   opacity: 1.0;
-  background: #303e67;
+  background: #f8f8fc;
 }
 
-.theme-dark #loader-wrapper {
+html.dark #loader-wrapper {
   background-color: #1b1e2a;
 }
 

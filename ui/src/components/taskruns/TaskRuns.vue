@@ -2,113 +2,118 @@
     <div v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :max="maxTaskRunSetting">
             <template #navbar>
-                <search-field />
-                <namespace-select
-                    data-type="flow"
-                    v-if="$route.name !== 'flows/update'"
-                    :value="$route.query.namespace"
-                    @input="onDataTableValue('namespace', $event)"
-                />
-                <status-filter-buttons
-                    :value="$route.query.state"
-                    @input="onDataTableValue('state', $event)"
-                />
-                <date-range
-                    :start-date="$route.query.startDate"
-                    :end-date="$route.query.endDate"
-                    @input="onDataTableValue($event)"
-                />
-                <refresh-button class="float-right" @refresh="load" />
+                <el-form-item>
+                    <search-field />
+                </el-form-item>
+                <el-form-item>
+                    <namespace-select
+                        data-type="flow"
+                        v-if="$route.name !== 'flows/update'"
+                        :value="$route.query.namespace"
+                        @update:model-value="onDataTableValue('namespace', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <status-filter-buttons
+                        :value="$route.query.state"
+                        @update:model-value="onDataTableValue('state', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <date-range
+                        :start-date="$route.query.startDate"
+                        :end-date="$route.query.endDate"
+                        @update:model-value="onDataTableValue($event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <refresh-button class="float-right" @refresh="load" />
+                </el-form-item>
             </template>
 
             <template #top>
                 <state-global-chart
                     v-if="taskRunDaily"
+                    class="mb-4"
                     :ready="dailyReady"
                     :data="taskRunDaily"
-                    class="mb-4"
                 />
             </template>
 
             <template #table>
-                <b-table
-                    :no-local-sorting="true"
-                    @sort-changed="onSort"
-                    :responsive="true"
-                    striped
-                    hover
-                    sort-by="taskRunList.state.startDate"
-                    sort-desc
-                    :items="taskruns"
-                    :fields="fields"
-                    @row-dblclicked="onRowDoubleClick"
-                    show-empty
+                <el-table
+                    :data="taskruns"
+                    ref="table"
+                    :default-sort="{prop: 'state.startDate', order: 'descending'}"
+                    stripe
+                    table-layout="auto"
+                    fixed
+                    @row-dblclick="onRowDoubleClick"
+                    @sort-change="onSort"
                 >
-                    <template #empty>
-                        <span class="text-muted">{{ $t('no result') }}</span>
-                    </template>
-                    <template #cell(details)="row">
-                        <router-link
-                            :to="{name: 'executions/update', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.executionId, tab:'gantt'}}"
-                        >
-                            <kicon :tooltip="$t('details')" placement="left">
-                                <eye />
-                            </kicon>
-                        </router-link>
-                    </template>
-                    <!-- eslint-disable-next-line -->
-                    <template #cell(taskRunList.state.startDate)="row">
-                        <date-ago :inverted="true" :date="row.item.state.startDate" />
-                    </template>
-                    <!-- eslint-disable-next-line -->
-                    <template #cell(taskRunList.state.endDate)="row">
-                        <span v-if="!isRunning(row.item)">
-                            <date-ago :inverted="true" :date="row.item.state.endDate" />
-                        </span>
-                    </template>
-                    <!-- eslint-disable-next-line -->
-                    <template #cell(taskRunList.state.current)="row">
-                        <status
-                            class="status"
-                            :status="row.item.state.current"
-                            size="sm"
-                        />
-                    </template>
-                    <!-- eslint-disable-next-line -->
-                    <template #cell(taskRunList.state.duration)="row">
-                        <span v-if="isRunning(row.item)">
-                            {{ $filters.humanizeDuration(durationFrom(row.item)) }}
-                        </span>
-                        <span v-else>
-                            {{ $filters.humanizeDuration(row.item.state.duration) }}
-                        </span>
-                    </template>
-                    <!-- eslint-disable-next-line -->
-                    <template #cell(taskRunList.flowId.keyword)="row">
-                        <router-link
-                            :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.flowId}}"
-                        >
-                            {{ row.item.flowId }}
-                        </router-link>
-                    </template>
-                    <!-- eslint-disable-next-line -->
-                    <template #cell(taskRunList.namespace.keyword)="row">
-                        <router-link
-                            :to="{name: 'taskruns/list', query: {namespace: row.item.namespace}}"
-                        >
-                            {{ row.item.namespace }}
-                        </router-link>
-                    </template>
-                    <template #cell(id)="row">
-                        <id :value="row.item.id" :shrink="true" />
-                    </template>
-                    <template #cell(executionId)="row">
-                        <id :value="row.item.executionId" :shrink="true" />
-                    </template>
-                    <template #cell(taskId)="row">
-                        <id :value="row.item.taskId + row.item.taskId + row.item.taskId + row.item.taskId" :shrink="true" :size="25" />
-                    </template>
-                </b-table>
+                    <el-table-column prop="executionId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('execution')">
+                        <template #default="scope">
+                            <id :value="scope.row.executionId" :shrink="true" />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column prop="taskId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('task')">
+                        <template #default="scope">
+                            <id :value="scope.row.taskId" :shrink="true" />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
+                        <template #default="scope">
+                            <id :value="scope.row.id" :shrink="true" />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column prop="taskRunList.state.startDate" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('start date')">
+                        <template #default="scope">
+                            <date-ago :inverted="true" :date="scope.row.state.startDate" />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column prop="state.endDate" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('end date')">
+                        <template #default="scope">
+                            <date-ago :inverted="true" :date="scope.row.state.endDate" />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column prop="state.duration" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('duration')">
+                        <template #default="scope">
+                            <span v-if="isRunning(scope.row)">{{ $filters.humanizeDuration(durationFrom(scope.row)) }}</span>
+                            <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column v-if="$route.name !== 'flows/update'" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" />
+
+                    <el-table-column v-if="$route.name !== 'flows/update'" prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('flow')">
+                        <template #default="scope">
+                            <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
+                                {{ scope.row.flowId }}
+                            </router-link>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column prop="state.current" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('state')">
+                        <template #default="scope">
+                            <status :status="scope.row.state.current" size="small" />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column column-key="action" class-name="row-action">
+                        <template #default="scope">
+                            <router-link :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
+                                <kicon :tooltip="$t('details')" placement="left">
+                                    <eye />
+                                </kicon>
+                            </router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
             </template>
         </data-table>
     </div>
@@ -163,61 +168,6 @@
                 return {
                     title: this.$t("taskruns")
                 };
-            },
-            fields() {
-                const title = title => {
-                    return this.$t(title);
-                };
-                return [
-                    {
-                        key: "executionId",
-                        label: title("execution"),
-                    },
-                    {
-                        key: "taskId",
-                        label: title("task")
-                    },
-                    {
-                        key: "id",
-                        label: title("id")
-                    },
-                    {
-                        key: "taskRunList.state.startDate",
-                        label: title("start date"),
-                        sortable: true,
-                    },
-                    {
-                        key: "taskRunList.state.endDate",
-                        label: title("end date"),
-                        sortable: true,
-                    },
-                    {
-                        key: "taskRunList.state.duration",
-                        label: title("duration"),
-                        sortable: true,
-                    },
-                    {
-                        key: "taskRunList.namespace.keyword",
-                        label: title("namespace"),
-                        sortable: true,
-                    },
-                    {
-                        key: "taskRunList.flowId.keyword",
-                        label: title("flow"),
-                        sortable: true,
-                    },
-                    {
-                        key: "taskRunList.state.current",
-                        label: title("state"),
-                        class: "text-center",
-                        sortable: true,
-                    },
-                    {
-                        key: "details",
-                        label: "",
-                        class: "row-action"
-                    }
-                ];
             },
             endDate() {
                 return new Date();

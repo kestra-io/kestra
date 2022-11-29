@@ -1,45 +1,52 @@
 <template>
     <component
         :is="component"
-        @click="$bvModal.show(uuid)"
+        :icon="!isReplay ? icon.RestartIcon : icon.PlayBoxMultiple"
+        @click="isOpen = !isOpen"
         v-if="isReplay || enabled"
         :disabled="!enabled"
         :class="!isReplay ? 'btn-info restart mr-1' : ''"
     >
-        <kicon :tooltip="$t(replayOrRestart)">
-            <restart-icon v-if="!isReplay" />
-            <play-box-multiple v-if="isReplay" />
-            {{ (isReplay ? '' : $t(replayOrRestart)) }}
-        </kicon>
-
-        <span v-if="component !== 'b-button'">{{ $t(replayOrRestart) }}</span>
-
-        <b-modal v-if="enabled" :id="uuid" @show="loadRevision">
-            <template #modal-header>
-                <h5>{{ $t("confirmation") }}</h5>
-            </template>
-
-            <template #default>
-                <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
-
-                <b-form class="text-muted">
-                    <p>{{ $t("restart change revision") }}</p>
-                    <b-form-group label-cols-sm="3" label-cols-lg="3" :label="$t('revisions')" label-for="input-revision">
-                        <b-form-select v-model="revisionsSelected" :options="revisionsOptions" />
-                    </b-form-group>
-                </b-form>
-            </template>
-
-            <template #modal-footer="{ok, cancel}">
-                <b-button @click="cancel()">
-                    Cancel
-                </b-button>
-                <b-button variant="primary" @click="restart(ok)">
-                    OK
-                </b-button>
-            </template>
-        </b-modal>
+        {{ $t(replayOrRestart) }}
     </component>
+
+    <el-dialog v-if="enabled && isOpen" v-model="isOpen" @open="loadRevision" destroy-on-close :append-to-body="true">
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #footer>
+            <el-button @click="isOpen = false">
+                Cancel
+            </el-button>
+            <el-button type="primary" @click="restart()">
+                OK
+            </el-button>
+        </template>
+
+        <p v-html="$t(replayOrRestart + ' confirm', {id: execution.id})" />
+
+        <el-form class="text-muted">
+            <p>{{ $t("restart change revision") }}</p>
+            <el-form-item :label="$t('revisions')">
+                <el-select
+                    v-model="revisionsSelected"
+                    filterable
+                    :persistent="false"
+                    :placeholder="$t('revisions')"
+                >
+                    <el-option
+                        v-for="item in revisionsOptions"
+                        :key="item.value"
+                        :label="item.text"
+                        :value="item.value"
+                    >
+                        {{ item.value }}
+                    </el-option>
+                </el-select>
+            </el-form-item>
+        </el-form>
+    </el-dialog>
 </template>
 <script>
     import RestartIcon from "vue-material-design-icons/Restart";
@@ -48,15 +55,15 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import State from "../../utils/state";
-    import Kicon from "../Kicon"
     import ExecutionUtils from "../../utils/executionUtils";
+    import {shallowRef} from "vue";
 
     export default {
-        components: {RestartIcon, PlayBoxMultiple, Kicon},
+        components: {RestartIcon, PlayBoxMultiple},
         props: {
             component: {
                 type: String,
-                default: "b-button"
+                default: "el-button"
             },
             isReplay: {
                 type: Boolean,
@@ -91,8 +98,8 @@
                         id: this.execution.flowId
                     })
             },
-            restart(closeCallback) {
-                closeCallback()
+            restart() {
+                this.isOpen = false
 
                 this.$store
                     .dispatch(`execution/${this.replayOrRestart}Execution`, {
@@ -102,7 +109,7 @@
                     })
                     .then(response => {
                         if (response.data.id === this.execution.id) {
-                            return ExecutionUtils.waitForState(response.data);
+                            return ExecutionUtils.waitForState(this.$http, response.data);
                         } else {
                             return response.data;
                         }
@@ -136,9 +143,6 @@
                     };
                 });
             },
-            uuid() {
-                return "restart-" + this.execution.id + (this.taskRun ? "-" + this.taskRun.id : "");
-            },
             enabled() {
                 if (this.isReplay && !(this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace))) {
                     return false;
@@ -163,6 +167,8 @@
         data() {
             return {
                 revisionsSelected: undefined,
+                isOpen: false,
+                icon: {RestartIcon: shallowRef(RestartIcon), PlayBoxMultiple: shallowRef(PlayBoxMultiple)}
             };
         },
     };

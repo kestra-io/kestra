@@ -15,76 +15,79 @@
             </div>
             <div class="info-wrapper">
                 <span class="bottom">
-                    <b-badge
+                    <el-tag
                         v-if="this.execution"
-                        variant="primary"
+                        type="info"
                         class="mr-1"
-                        pill
+                        size="small"
+                        round
+                        disable-transitions
                     >
                         {{ taskRuns.length }}
-                    </b-badge>
+                    </el-tag>
 
                     <span v-if="duration">{{ $filters.humanizeDuration(duration) }}</span>
                 </span>
 
-                <b-btn-group>
-                    <b-button
+                <el-button-group>
+                    <el-button
                         v-if="task.description"
                         class="node-action"
+                        size="small"
                     >
-                        <markdown-tooltip :description="task.description" :id="hash" :modal="true" :title="task.id" />
-                    </b-button>
+                        <markdown-tooltip :description="task.description" :id="hash" :title="task.id" />
+                    </el-button>
 
                     <sub-flow-link
                         v-if="task.type === 'io.kestra.core.tasks.flows.Flow'"
                         :execution-id="taskRunsFlowExecutionId"
+                        size="small"
                         :namespace="task.namespace"
                         :flow-id="task.flowId"
                     />
 
-                    <b-button
-                        v-if="this.execution"
-                        class="node-action"
-                        :disabled="this.taskRuns.length === 0"
-                        @click="onTaskSelect()"
-                        v-b-modal="`modal-logs-${task.id}`"
-                    >
-                        <kicon :tooltip="$t('show task logs')">
+
+                    <el-tooltip v-if="this.execution" :content="$t('show task logs')">
+                        <el-button
+                            class="node-action"
+                            :disabled="this.taskRuns.length === 0"
+                            size="small"
+                            @click="onTaskSelect()"
+                        >
                             <text-box-search />
-                        </kicon>
-                    </b-button>
+                        </el-button>
+                    </el-tooltip>
+
 
                     <task-edit
                         class="node-action"
                         :modal-id="`modal-source-${hash}`"
                         :task="task"
                         :flow-id="flowId"
+                        size="small"
                         :namespace="namespace"
                     />
-                </b-btn-group>
+                </el-button-group>
             </div>
         </div>
 
-
-
-        <b-modal
-            :id="`modal-logs-${task.id}`"
+        <el-drawer
+            v-if="isOpen && execution"
+            v-model="isOpen"
             :title="`Task ${task.id}`"
-            hide-backdrop
-            hide-footer
-            modal-class="right"
-            size="xl"
-            v-if="execution"
+            destroy-on-close
+            :append-to-body="true"
         >
-            <b-navbar toggleable="lg" type="light" variant="light">
-                <b-navbar-toggle target="nav-collapse" />
-                <b-collapse id="nav-collapse" is-nav>
-                    <b-nav-form>
-                        <search-field :router="false" @search="onSearch" class="mr-2" />
-                        <log-level-selector :log-level="logLevel" @input="onLevelChange" />
-                    </b-nav-form>
-                </b-collapse>
-            </b-navbar>
+            <collapse>
+                <el-form-item>
+                    <search-field :router="false" @search="onSearch" class="mr-2" />
+                </el-form-item>
+                <el-form-item>
+                    <log-level-selector :log-level="logLevel" @input="onLevelChange" />
+                </el-form-item>
+            </collapse>
+
+
             <log-list
                 :task-id="task.id"
                 :filter="this.filter"
@@ -92,11 +95,11 @@
                 :level="logLevel"
                 @follow="forwardEvent('follow', $event)"
             />
-        </b-modal>
+        </el-drawer>
+
     </div>
 </template>
 <script>
-
     import {mapState} from "vuex";
     import Status from "../Status";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
@@ -105,10 +108,10 @@
     import LogLevelSelector from "../../components/logs/LogLevelSelector";
     import SearchField from "../layout/SearchField";
     import TaskIcon from "../plugins/TaskIcon";
-    import Kicon from "../Kicon"
     import TaskEdit from "override/components/flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
+    import Collapse from "../layout/Collapse.vue";
 
     export default {
         components: {
@@ -119,9 +122,9 @@
             LogLevelSelector,
             SearchField,
             TaskIcon,
-            Kicon,
             TaskEdit,
-            SubFlowLink
+            SubFlowLink,
+            Collapse
         },
         props: {
             n: {
@@ -147,6 +150,7 @@
             },
             onTaskSelect() {
                 this.$store.commit("execution/setTask", this.task);
+                this.isOpen = true;
             },
             onSearch(search) {
                 this.filter = search
@@ -158,7 +162,8 @@
         data() {
             return {
                 logLevel: "INFO",
-                filter: undefined
+                filter: undefined,
+                isOpen: false,
             };
         },
         computed: {
@@ -212,7 +217,6 @@
                 return result[0];
             },
             duration() {
-                console.log(this)
                 return this.taskRuns ? this.taskRuns.reduce((inc, taskRun) => inc + this.$moment.duration(taskRun.state.duration).asMilliseconds() / 1000, 0) : null;
             },
             nodeClass() {
@@ -228,7 +232,7 @@
             task() {
                 return this.n.task;
             },
-        }
+        },
     };
 </script>
 <style scoped lang="scss">
@@ -240,7 +244,7 @@
     width: 200px;
     background: var(--gray-100);
 
-    .btn, .card-header {
+    .el-button, .card-header {
         border-radius: 0 !important;
     }
 

@@ -1,40 +1,44 @@
 <template>
     <div v-if="execution">
-        <b-row class="mb-3">
-            <b-col class="crud-align">
+        <el-row class="mb-3">
+            <el-col :span="12" class="crud-align">
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
-            </b-col>
-            <b-col class="text-right">
+            </el-col>
+            <el-col :span="12" class="text-right">
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <kill :execution="execution" />
                 <status :status="execution.state.current" />
-            </b-col>
-        </b-row>
-        <b-table :responsive="true" striped hover :items="items" class="mb-0">
-            <template #cell(value)="row">
-                <router-link
-                    v-if="row.item.link"
-                    :to="{name: 'executions/update', params: row.item.link}"
-                >
-                    {{ row.item.value }}
-                </router-link>
-                <span v-else-if="row.item.date">
-                    <date-ago :date="row.item.value" />
-                </span>
-                <span v-else-if="row.item.duration">
-                    <duration :histories="row.item.value" />
-                </span>
-                <span v-else>
-                    <span v-if="row.item.key === $t('revision')">
-                        <router-link
-                            :to="{name: 'flows/update', params: {id: $route.params.flowId, namespace: $route.params.namespace, tab: 'revisions'}, query: {revisionRight: row.item.value}}"
-                        >{{ row.item.value }}</router-link>
-                    </span>
-                    <span v-else>{{ row.item.value }}</span>
-                </span>
-            </template>
-        </b-table>
+            </el-col>
+        </el-row>
 
+        <el-table stripe table-layout="auto" fixed :data="items" :show-header="false" class="mb-0">
+            <el-table-column prop="key" :label="$t('key')" />
+
+            <el-table-column prop="value" :label="$t('value')">
+                <template #default="scope">
+                    <router-link
+                        v-if="scope.row.link"
+                        :to="{name: 'executions/update', params: scope.row.link}"
+                    >
+                        {{ scope.row.value }}
+                    </router-link>
+                    <span v-else-if="scope.row.date">
+                    <date-ago :date="scope.row.value" />
+                </span>
+                    <span v-else-if="scope.row.duration">
+                    <duration :histories="scope.row.value" />
+                </span>
+                    <span v-else>
+                    <span v-if="scope.row.key === $t('revision')">
+                        <router-link
+                            :to="{name: 'flows/update', params: {id: $route.params.flowId, namespace: $route.params.namespace, tab: 'revisions'}, query: {revisionRight: scope.row.value}}"
+                        >{{ scope.row.value }}</router-link>
+                    </span>
+                    <span v-else>{{ scope.row.value }}</span>
+                </span>
+                </template>
+            </el-table-column>
+        </el-table>
 
         <div v-if="execution.trigger" class="mt-4">
             <h5>{{ $t('trigger') }}</h5>
@@ -62,7 +66,6 @@
     import DateAgo from "../layout/DateAgo";
     import Crud from "override/components/auth/Crud";
     import Duration from "../layout/Duration";
-
 
     export default {
         components: {
@@ -93,8 +96,8 @@
             }
         },
         watch: {
-            $route() {
-                if (this.execution.id !== this.$route.params.id) {
+            $route(oldValue, newValue) {
+                if (oldValue.name === newValue.name && this.execution.id !== this.$route.params.id) {
                     this.$store.dispatch(
                         "execution/loadExecution",
                         this.$route.params
@@ -125,7 +128,6 @@
                     {key: this.$t("steps"), value: stepCount}
                 ];
 
-
                 if (this.execution.parentId) {
                     ret.push({
                         key: this.$t("parent execution"),
@@ -152,11 +154,6 @@
     };
 </script>
 <style scoped lang="scss">
-:deep(thead) {
-    display: none;
-}
-
-
 .crud-align {
     display: flex;
     align-items: center;

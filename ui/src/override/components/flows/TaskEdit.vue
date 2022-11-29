@@ -1,28 +1,23 @@
 <template>
     <component
         :is="component"
-        v-b-modal="`modal-source-${uuid}`"
+        :icon="icon.CodeTags"
+        @click="onShow"
     >
-        <kicon :tooltip="$t('show task source')">
-            <code-tags />
-        </kicon>
-
-        <span v-if="component !== 'b-button'">{{ $t('show task source') }}</span>
-
-        <b-modal
-            :id="`modal-source-${uuid}`"
+        <span v-if="component !== 'el-button'">{{ $t('show task source') }}</span>
+        <el-drawer
             :title="`Task ${taskId || task.id}`"
-            hide-backdrop
-            modal-class="right"
-            size="xl"
-            @show="onShow"
-            @shown="onShown"
+            v-if="isModalOpen"
+            v-model="isModalOpen"
+            destroy-on-close
+            lock-scroll
+            :append-to-body="true"
         >
-            <template #modal-footer>
-                <b-button @click="saveTask" v-if="canSave" variant="primary">
+            <template #footer>
+                <el-button @click="saveTask" v-if="canSave" type="primary">
                     <content-save />&nbsp;
                     <span>{{ $t('save') }}</span>
-                </b-button>
+                </el-button>
             </template>
 
             <editor
@@ -34,30 +29,29 @@
                 :navbar="false"
                 lang="yaml"
             />
-        </b-modal>
+        </el-drawer>
     </component>
 </template>
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
     import Editor from "../../../components/inputs/Editor";
     import ContentSave from "vue-material-design-icons/ContentSave";
-    import Kicon from "../../../components/Kicon"
     import CodeTags from "vue-material-design-icons/CodeTags";
     import {canSaveFlowTemplate} from "../../../utils/flowTemplate";
     import {mapState} from "vuex";
     import Utils from "../../../utils/utils";
+    import {shallowRef} from "vue";
 
     export default {
         components: {
             Editor,
             ContentSave,
-            Kicon,
             CodeTags,
         },
         props: {
             component: {
                 type: String,
-                default: "b-button"
+                default: "el-button"
             },
             task: {
                 type: Object,
@@ -103,9 +97,11 @@
                     })
                     .then((response) => {
                         this.$toast().saved(response.id);
+                        this.isModalOpen = false;
                     })
             },
             onShow() {
+                this.isModalOpen = !this.isModalOpen;
                 if (this.taskId) {
                     this.load()
                         .then(value => {
@@ -115,16 +111,13 @@
                     this.taskYaml = YamlUtils.stringify(this.task);
                 }
             },
-            onShown() {
-                if (this.$refs.editor) {
-                    this.$refs.editor.onResize();
-                }
-            }
         },
         data() {
             return {
                 uuid: Utils.uid(),
                 taskYaml: undefined,
+                isModalOpen: false,
+                icon: {CodeTags: shallowRef(CodeTags)}
             };
         },
         created() {
@@ -138,6 +131,3 @@
         }
     };
 </script>
-<style scoped lang="scss">
-
-</style>

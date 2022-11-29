@@ -1,5 +1,67 @@
 <template>
-    <b-list-group-item>
+    <el-collapse-item :name="schedule.id">
+        <template #title>
+            {{ schedule.id }} <el-tag class="ml-2" disable-transitions type="info">{{ schedule.cron }}</el-tag>
+        </template>
+        <el-form class="ks-horizontal">
+            <el-form-item :label="$t('id')">
+                <el-input v-model="item.id" />
+            </el-form-item>
+
+            <el-form-item>
+                <template #label>
+                    {{ $t('schedules.cron.expression') }}
+
+                    <el-tooltip :target="'tooltip-' + index" placement="bottom">
+                        <template #content>
+                            <div v-if="isValid">
+                                <p class="font-weight-bold">
+                                    3 Next occurences
+                                </p>
+
+                                <span v-if="occurences.length">
+                                    <span v-for="(occurence, x) in occurences" :key="x">{{ $filters.date(occurence) }}<br></span>
+                                </span>
+                            </div>
+                            <span v-else>
+                                {{ $t("schedules.cron.invalid") }}
+                            </span>
+                        </template>
+
+                        <help />
+                    </el-tooltip>
+                </template>
+
+                <el-input required v-model="item.cron" />
+
+                <!--
+                <b-form-invalid-feedback>
+                    Enter at least 3 letters
+                </b-form-invalid-feedback>
+
+                <b-form-text>{{ cronHumanReadable }}</b-form-text>
+
+                -->
+            </el-form-item>
+
+            <el-form-item :label="$t('schedules.cron.backfilll')">
+                <el-date-picker
+                    v-model="backfillStart"
+                    type="datetime"
+                />
+            </el-form-item>
+
+            <el-form-item class="text-right" label="&nbsp;">
+                <el-button type="danger" @click="remove">
+                    <delete />
+                    Delete
+                </el-button>
+            </el-form-item>
+        </el-form>
+
+
+
+        <!--
         <b-form-group label-cols-sm="3" label-cols-lg="2" :label="$t('id')" :label-for="'input-id-' + index">
             <b-form-input required :id="'input-id-' + index" v-model="item.id" />
         </b-form-group>
@@ -12,9 +74,9 @@
         >
             <template #label>
                 {{ $t('schedules.cron.expression') }}
-                <b-link class="text-body" :id="'tooltip-' + index">
+                <el-link class="text-body" :id="'tooltip-' + index">
                     <help />
-                </b-link>
+                </el-link>
 
                 <b-tooltip :target="'tooltip-' + index" placement="bottom">
                     <div v-if="isValid">
@@ -57,12 +119,13 @@
         </b-form-group>
 
         <b-form-group class="mb-0 text-right">
-            <b-btn variant="danger" @click="remove">
+            <el-btn type="danger" @click="remove">
                 <delete />
                 Delete
-            </b-btn>
+            </el-btn>
         </b-form-group>
-    </b-list-group-item>
+        -->
+    </el-collapse-item>
 </template>
 <script>
     const cronstrue = require("cronstrue/i18n");
@@ -70,13 +133,11 @@
     const cronValidator = require("cron-validator");
     import Delete from "vue-material-design-icons/Delete";
     import Help from "vue-material-design-icons/HelpBox";
-    import DatePicker from "vue2-datepicker";
 
     export default {
         components: {
             Delete,
             Help,
-            DatePicker
         },
         props: {
             schedule: {

@@ -3,18 +3,20 @@
         <div>
             <data-table
                 @page-changed="onPageChanged"
-                striped
-                hover
                 ref="dataTable"
                 :total="total"
             >
                 <template #navbar>
-                    <search-field />
-                    <namespace-select
-                        data-type="flow"
-                        :value="$route.query.namespace"
-                        @input="onDataTableValue('namespace', $event)"
-                    />
+                    <el-form-item>
+                        <search-field />
+                    </el-form-item>
+                    <el-form-item>
+                        <namespace-select
+                            data-type="flow"
+                            :value="$route.query.namespace"
+                            @update:model-value="onDataTableValue('namespace', $event)"
+                        />
+                    </el-form-item>
                 </template>
 
                 <template #top>
@@ -27,91 +29,99 @@
                 </template>
 
                 <template #table>
-                    <b-table
-                        :no-local-sorting="true"
-                        @row-dblclicked="onRowDoubleClick"
-                        @sort-changed="onSort"
-                        :responsive="true"
-                        striped
-                        hover
-                        sort-by="id"
-                        :items="flows"
-                        :fields="fields"
-                        :tbody-tr-class="rowClasses"
+                    <el-table
+                        :data="flows"
                         ref="table"
-                        show-empty
+                        :default-sort="{prop: 'id', order: 'ascending'}"
+                        stripe
+                        table-layout="auto"
+                        fixed
+                        @row-dblclick="onRowDoubleClick"
+                        @sort-change="onSort"
+                        :row-class-name="rowClasses"
                     >
-                        <template #empty>
-                            <span class="text-muted">{{ $t('no result') }}</span>
-                        </template>
+                        <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
+                            <template #default="scope">
+                                <router-link
+                                    :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
+                                >
+                                    {{ scope.row.id }}
+                                </router-link>
+                                &nbsp;<markdown-tooltip
+                                    :id="scope.row.namespace + '-' + scope.row.id"
+                                    :description="scope.row.description"
+                                    :title="scope.row.namespace + '.' + scope.row.id"
+                                />
+                            </template>
+                        </el-table-column>
 
-                        <template #cell(actions)="row">
-                            <router-link :to="{name: 'flows/update', params : {namespace: row.item.namespace, id: row.item.id}}">
-                                <kicon :tooltip="$t('details')" placement="left">
-                                    <eye />
-                                </kicon>
-                            </router-link>
-                        </template>
+                        <el-table-column :label="$t('labels')">
+                            <template #default="scope">
+                                <labels :labels="scope.row.labels" />
+                            </template>
+                        </el-table-column>
 
-                        <template #cell(state)="row">
-                            <state-chart
-                                :duration="true"
-                                :namespace="row.item.namespace"
-                                :flow-id="row.item.id"
-                                v-if="dailyGroupByFlowReady"
-                                :data="chartData(row)"
-                            />
-                        </template>
+                        <el-table-column prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" />
 
-                        <template #cell(id)="row">
-                            <router-link
-                                :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.id}}"
-                            >
-                                {{ row.item.id }}
-                            </router-link>
-                            &nbsp;<markdown-tooltip
-                                :id="row.item.namespace + '-' + row.item.id"
-                                :description="row.item.description"
-                                :title="row.item.namespace + '.' + row.item.id"
-                                :modal="true"
-                            />
-                        </template>
+                        <el-table-column
+                            prop="state"
+                            :label="$t('execution statistics')"
+                            v-if="user.hasAny(permission.EXECUTION)"
+                            class-name="row-graph"
+                        >
+                            <template #default="scope">
+                                <state-chart
+                                    :duration="true"
+                                    :namespace="scope.row.namespace"
+                                    :flow-id="scope.row.id"
+                                    v-if="dailyGroupByFlowReady"
+                                    :data="chartData(scope.row)"
+                                />
+                            </template>
+                        </el-table-column>
 
-                        <template #cell(labels)="row">
-                            <labels :labels="row.item.labels" />
-                        </template>
+                        <el-table-column :label="$t('triggers')" class-name="row-action">
+                            <template #default="scope">
+                                <trigger-avatar :flow="scope.row" />
+                            </template>
+                        </el-table-column>
 
-                        <template #cell(triggers)="row">
-                            <trigger-avatar :flow="row.item" />
-                        </template>
-                    </b-table>
+                        <el-table-column column-key="action" class-name="row-action">
+                            <template #default="scope">
+                                <router-link :to="{name: 'flows/update', params : {namespace: scope.row.namespace, id: scope.row.id}}">
+                                    <kicon :tooltip="$t('details')" placement="left">
+                                        <eye />
+                                    </kicon>
+                                </router-link>
+                            </template>
+                        </el-table-column>
+                    </el-table>
                 </template>
             </data-table>
         </div>
 
-
         <bottom-line v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <router-link :to="{name: 'flows/search'}">
-                        <b-button variant="secondary">
-                            <kicon>
+            <ul>
+                <li>
+                    <kicon>
+                        <router-link :to="{name: 'flows/search'}">
+                            <el-button>
                                 <text-box-search />
                                 {{ $t('source search') }}
-                            </kicon>
-                        </b-button>
-                    </router-link>
+                            </el-button>
+                        </router-link>
+                    </kicon>
                 </li>
 
-                <li class="nav-item">
-                    <router-link :to="{name: 'flows/create'}">
-                        <b-button variant="primary">
-                            <kicon>
+                <li>
+                    <kicon>
+                        <router-link :to="{name: 'flows/create'}">
+                            <el-button type="primary">
                                 <plus />
                                 {{ $t('create') }}
-                            </kicon>
-                        </b-button>
-                    </router-link>
+                            </el-button>
+                        </router-link>
+                    </kicon>
                 </li>
             </ul>
         </bottom-line>
@@ -175,55 +185,6 @@
                     title: this.$t("flows")
                 };
             },
-            fields() {
-                const title = title => {
-                    return this.$t(title);
-                };
-
-                let fields = [
-                    {
-                        key: "id",
-                        label: title("flow"),
-                        sortable: true
-                    },
-                    {
-                        key: "labels",
-                        label: title("labels"),
-                        sortable: false
-                    },
-                    {
-                        key: "namespace",
-                        label: title("namespace"),
-                        sortable: true
-                    },
-                ]
-
-                if (this.user.hasAny(permission.EXECUTION)) {
-                    fields.push(
-                        {
-                            key: "state",
-                            label: title("execution statistics"),
-                            sortable: false,
-                            class: "row-graph"
-                        }
-                    );
-                }
-
-                fields.push(
-                    {
-                        key: "triggers",
-                        label: title("triggers"),
-                        class: "shrink"
-                    },
-                    {
-                        key: "actions",
-                        label: "",
-                        class: "row-action"
-                    }
-                )
-
-                return fields;
-            },
             endDate() {
                 return new Date();
             },
@@ -235,8 +196,8 @@
         },
         methods: {
             chartData(row) {
-                if (this.dailyGroupByFlow && this.dailyGroupByFlow[row.item.namespace] && this.dailyGroupByFlow[row.item.namespace][row.item.id]) {
-                    return this.dailyGroupByFlow[row.item.namespace][row.item.id];
+                if (this.dailyGroupByFlow && this.dailyGroupByFlow[row.namespace] && this.dailyGroupByFlow[row.namespace][row.id]) {
+                    return this.dailyGroupByFlow[row.namespace][row.id];
                 } else {
                     return [];
                 }
@@ -288,8 +249,8 @@
                         }
                     })
             },
-            rowClasses(flow) {
-                return flow && flow.disabled ? ["disabled"] : [];
+            rowClasses(row) {
+                return row && row.disabled ? "disabled" : "";
             }
         }
     };

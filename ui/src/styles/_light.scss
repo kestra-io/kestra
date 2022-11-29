@@ -1,0 +1,81 @@
+// Color system
+$white: #FFF !default;
+$gray-100: #f8f8fc !default;
+$gray-200: #f1f5fa !default;
+$gray-300: #eaf0f9 !default;
+$gray-400: #b6c2e4 !default;
+$gray-500: #8997bd !default;
+$gray-600: #7081b9 !default;
+$gray-700: #303e67 !default;
+$gray-800: #2c3652 !default;
+$gray-900: #1d2c48 !default;
+$black: #000 !default;
+
+$grays: (
+    '100': $gray-100,
+    '200': $gray-200,
+    '300': $gray-300,
+    '400': $gray-400,
+    '500': $gray-500,
+    '600': $gray-600,
+    '700': $gray-700,
+    '800': $gray-800,
+    '900': $gray-900,
+) !default;
+
+// Body
+$body-color: $gray-700 !default;
+$body-bg: $gray-100 !default;
+$overlay-bg: $body-bg !default;
+
+// Text
+$text-color-primary: $gray-900;
+$text-color-regular: $gray-700;
+$text-color-secondary: $gray-800;
+$text-color-placeholder: $gray-600;
+$text-color-disabled: $gray-700;
+
+$text-color: (
+    'primary': $text-color-primary,
+    'regular': $text-color-regular,
+    'secondary': $text-color-secondary,
+    'placeholder': $text-color-placeholder,
+    'disabled': $text-color-disabled,
+) !default;
+
+// Border
+$border-color-base: $gray-300;
+$border-color-light: $gray-200;
+$border-color-lighter: $gray-100;
+$border-color-extra-light: $white;
+$border-color-dark: $gray-400;
+$border-color-darker: $gray-500;
+
+$border-color: (
+    '': $border-color-base,
+    'light': $border-color-light,
+    'lighter': $border-color-lighter,
+    'extra-light': $border-color-extra-light,
+    'dark': $border-color-dark,
+    'darker': $border-color-darker,
+) !default;;
+
+// Fill color
+$fill-color-base: $gray-300;
+$fill-color-light: lighten($fill-color-base, 5%);
+$fill-color-lighter: lighten($fill-color-base, 10%);
+$fill-color-extra-light: lighten($fill-color-base, 15%);
+$fill-color-dark: darken($fill-color-base, 5%);
+$fill-color-darker: darken($fill-color-base, 10%);
+$fill-color-blank: #FFFFFF;
+
+$fill-color: (
+    '': $fill-color-base,
+    'light': $fill-color-light,
+    'lighter': $fill-color-lighter,
+    'extra-light': $fill-color-extra-light,
+    'dark': $fill-color-dark,
+    'darker': $fill-color-darker,
+    'blank': $fill-color-blank,
+) !default;
+

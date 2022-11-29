@@ -1,11 +1,20 @@
 <template>
-    <b-form-select
-        id="input-level"
-        :value="value"
-        class="form-control"
-        @input="onInput"
-        :options="levelOptions"
-    />
+    <el-select
+        v-model="value"
+        @update:model-value="onInput"
+        filterable
+        :persistent="false"
+        :placeholder="$t('revisions')"
+    >
+        <el-option
+            v-for="item in levelOptions"
+            :key="item"
+            :label="item"
+            :value="item"
+        >
+            {{ item }}
+        </el-option>
+    </el-select>
 </template>
 <script>
     export default {

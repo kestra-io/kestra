@@ -1,15 +1,14 @@
 <template>
     <div :id="uuid" :class="'executions-charts' + (this.global ? '' : ' mini')" v-if="dataReady">
-        <LineChart :ref="chartRef" :chart-data="chartData" :options="options" />
-        <b-tooltip
-            custom-class="tooltip-stats"
-            no-fade
-            :target="uuid"
-            :placement="(this.global ? 'bottom' : 'left')"
-            triggers="hover"
+        <el-tooltip
+            popper-class="tooltip-stats"
+            :placement="(global ? 'bottom' : 'left')"
         >
-            <span v-html="tooltipContent" />
-        </b-tooltip>
+            <template #content>
+                <span v-html="tooltipContent" />
+            </template>
+            <LineChart :ref="chartRef" :chart-data="chartData" :options="options" />
+        </el-tooltip>
     </div>
 </template>
 
@@ -36,7 +35,7 @@
 
             const chartRef = ref();
             const tooltipContent = ref("");
-            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
+            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
             const dataReady = computed(() => props.data.length > 0)
 
             const options = computed(() => defaultConfig({

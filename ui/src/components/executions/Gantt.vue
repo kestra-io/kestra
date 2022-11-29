@@ -1,6 +1,6 @@
 <template>
-    <div v-if="execution">
-        <table class="table table-sm mb-0">
+    <div v-if="execution" class="el-table">
+        <table>
             <thead>
                 <tr class="bg-light">
                     <th>
@@ -13,41 +13,39 @@
             </thead>
             <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
                 <tr>
-                    <th :id="`task-title-wrapper-${currentTaskRun.id}`">
-                        <code>{{ currentTaskRun.name }}</code>
-                        <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
-                        <b-tooltip
-                            placement="right"
-                            :target="`task-title-wrapper-${currentTaskRun.id}`"
-                        >
+                    <th>
+                        <el-tooltip placement="right">
+                            <template #content>
+                                <code>{{ currentTaskRun.name }}</code>
+                                <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
+                            </template>
                             <code>{{ currentTaskRun.name }}</code>
-                            <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
-                        </b-tooltip>
+                            <small v-if="currentTaskRun.task && currentTaskRun.task.value"> {{ currentTaskRun.task.value }}</small>
+                        </el-tooltip>
                     </th>
                     <td :colspan="dates.length">
-                        <b-tooltip
-                            :target="`task-progress-${currentTaskRun.id}`"
-                            placement="left"
-                        >
-                            <span style="white-space: pre-wrap;">
-                                {{ currentTaskRun.tooltip }}
-                            </span>
-                        </b-tooltip>
-                        <div
-                            :style="{left: Math.max(1, (currentTaskRun.start - 1)) + '%', width: currentTaskRun.width - 1 + '%'}"
-                            class="task-progress"
-                            @click="onTaskSelect(currentTaskRun.task)"
-                            :id="`task-progress-${currentTaskRun.id}`"
-                        >
-                            <div class="progress">
-                                <div
-                                    class="progress-bar"
-                                    :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
-                                    :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped progress-bar-animated' : '')"
-                                    role="progressbar"
-                                />
+                        <el-tooltip placement="left">
+                            <template #content>
+                                <span style="white-space: pre-wrap;">
+                                    {{ currentTaskRun.tooltip }}
+                                </span>
+                            </template>
+                            <div
+                                :style="{left: Math.max(1, (currentTaskRun.start - 1)) + '%', width: currentTaskRun.width - 1 + '%'}"
+                                class="task-progress"
+                                @click="onTaskSelect(currentTaskRun.task)"
+                            >
+                                <div class="progress">
+                                    <div
+                                        class="progress-bar"
+                                        :style="{left: currentTaskRun.left + '%', width: (100-currentTaskRun.left) + '%'}"
+                                        :class="'bg-' + currentTaskRun.color + (currentTaskRun.running ? ' progress-bar-striped progress-bar-animated' : '')"
+                                        role="progressbar"
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        </el-tooltip>
+
                     </td>
                 </tr>
                 <tr v-if="taskRun && taskRun.id === currentTaskRun.id">
@@ -94,8 +92,10 @@
                     this.compute()
                 }
             },
-            $route() {
-                this.compute()
+            $route(oldValue, newValue) {
+                if (oldValue.name === newValue.name) {
+                    this.compute()
+                }
             }
         },
         mounted() {

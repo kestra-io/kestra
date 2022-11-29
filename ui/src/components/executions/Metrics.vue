@@ -1,66 +1,76 @@
 <template>
-    <b-table
-        striped
-        hover
-        small
-        show-empty
-        :responsive="true"
-        :items="data"
-        :fields="fields"
-        class="mb-0"
+    <el-dropdown-item
+        :icon="icon.ChartAreaspline"
+        :disabled="!(metrics && metrics.length > 0)"
+        @click="isOpen = !isOpen"
     >
-        <template #thead-top>
-            <b-tr class="top">
-                <b-th colspan="3">
-                    {{ $t('metrics') }}
-                </b-th>
-            </b-tr>
-        </template>
+        {{ $t('metrics') }}
+    </el-dropdown-item>
 
-        <template #empty>
-            <div class="alert alert-info mb-0" role="alert">
-                {{ $t("no data current task") }}
-            </div>
-        </template>
+    <el-drawer
+        v-if="isOpen"
+        v-model="isOpen"
+        :title="$t('metrics')"
+        destroy-on-close
+        :append-to-body="true"
+        size="50%"
+        direction="ltr"
+    >
+        <el-table
+            :data="metrics"
+            ref="table"
+            :default-sort="{prop: 'name', order: 'ascending'}"
+            stripe
+            table-layout="auto"
+            fixed
+        >
+            <el-table-column prop="name" sortable :label="$t('name')">
+                <template #default="scope">
+                    <template v-if="scope.row.type === 'timer'">
+                        <kicon><timer /></kicon>
+                    </template>
+                    <template v-else>
+                        <kicon><counter /></kicon>
+                    </template>
+                    &nbsp;<code>{{ scope.row.name }}</code>
+                </template>
+            </el-table-column>
 
-        <template #cell(name)="row">
-            <template v-if="row.item.type === 'timer'">
-                <kicon><timer /></kicon>
-            </template>
-            <template v-else>
-                <kicon><counter /></kicon>
-            </template>
-            &nbsp;<code>{{ row.item.name }}</code>
-        </template>
+            <el-table-column prop="tags" sortable :label="$t('tags')">
+                <template #default="scope">
+                    <el-tag
+                        v-for="(value, key) in scope.row.tags"
+                        :key="key"
+                        class="mr-1"
+                        type="info"
+                        size="small"
+                        disable-transitions
+                    >
+                        {{ key }}: <strong>{{ value }}</strong>
+                    </el-tag>
+                </template>
+            </el-table-column>
 
-
-        <template #cell(value)="row">
-            <span v-if="row.item.type === 'timer'">
-                {{ $filters.humanizeDuration(row.item.value) }}
-            </span>
-            <span v-else>
-                {{ $filters.humanizeNumber(row.item.value) }}
-            </span>
-        </template>
-
-        <template #cell(tags)="row">
-            <b-badge
-                v-for="(value, key) in row.item.tags"
-                variant="primary"
-                :key="key"
-                class="mr-1"
-                pill
-            >
-                {{ key }}: <strong>{{ value }}</strong>
-            </b-badge>
-        </template>
-    </b-table>
+            <el-table-column prop="value" sortable :label="$t('value')">
+                <template #default="scope">
+                <span v-if="scope.row.type === 'timer'">
+                    {{ $filters.humanizeDuration(scope.row.value) }}
+                </span>
+                    <span v-else>
+                    {{ $filters.humanizeNumber(scope.row.value) }}
+                </span>
+                </template>
+            </el-table-column>
+        </el-table>
+    </el-drawer>
 </template>
 
 <script>
+    import {shallowRef} from "vue";
     import Kicon from "../Kicon";
     import Timer from "vue-material-design-icons/Timer";
     import Counter from "vue-material-design-icons/Numeric";
+    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue";
 
     export default {
         components: {
@@ -69,36 +79,16 @@
             Counter,
         },
         props: {
-            data: {
+            metrics: {
                 type: Array,
                 required: true
             }
         },
-        computed: {
-            fields() {
-                return [
-                    {
-                        key: "name",
-                        label: this.$t("name"),
-                        class: "key"
-                    },
-                    {
-                        key: "tags",
-                        label: this.$t("tags")
-                    },
-                    {
-                        key: "value",
-                        label: this.$t("value")
-                    }
-                ];
-            }
-        }
+        data() {
+            return {
+                isOpen: false,
+                icon: {ChartAreaspline: shallowRef(ChartAreaspline)}
+            };
+        },
     };
 </script>
-
-<style scoped lang="scss">
-:deep(thead tr:not(.top)) {
-    display: none;
-}
-
-</style>

@@ -9,23 +9,28 @@
                 :total="total"
             >
                 <template #navbar>
-                    <search-field />
-                    <namespace-select
-                        data-type="flow"
-                        :value="$route.query.namespace"
-                        @input="onDataTableValue('namespace', $event)"
-                    />
+                    <el-form-item>
+                        <search-field />
+                    </el-form-item>
+                    <el-form-item>
+                        <namespace-select
+                            data-type="flow"
+                            v-if="$route.name !== 'flows/update'"
+                            :value="$route.query.namespace"
+                            @update:model-value="onDataTableValue('namespace', $event)"
+                        />
+                    </el-form-item>
                 </template>
 
                 <template #table>
                     <div v-if="search === undefined || search.length === 0">
-                        <b-alert variant="light" class="text-muted" show>
+                        <el-alert type="info" class="text-muted" show-icon :closable="false">
                             {{ $t('no result') }}
-                        </b-alert>
+                        </el-alert>
                     </div>
 
                     <template v-for="(item, i) in search" :key="`card-${i}`">
-                        <b-card class="mb-2">
+                        <el-card class="mb-2" shadow="never">
                             <template #header>
                                 <router-link :to="{path: `/flows/edit/${item.model.namespace}/${item.model.id}/source`}">
                                     {{ item.model.namespace }}.{{ item.model.id }}
@@ -36,7 +41,7 @@
                                     <pre class="mb-1 text-sm-left" v-html="sanitize(fragment)" />
                                 </small>
                             </template>
-                        </b-card>
+                        </el-card>
                     </template>
                 </template>
             </data-table>

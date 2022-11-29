@@ -1,3 +1,4 @@
+@use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
 .executions-charts {
     position: relative;
@@ -14,14 +15,14 @@
 }
 
 .tooltip-stats {
-    font-size: $font-size-xs;
+    font-size: getCssVar('font-size', 'extra-small');
     .tooltip-inner {
         text-align: left;
     }
 
     h6 {
         font-weight: bold;
-        font-size: $font-size-xs;
+        font-size: getCssVar('font-size', 'extra-small');
     }
 
     span.square {

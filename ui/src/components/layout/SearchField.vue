@@ -1,15 +1,20 @@
 <template>
-    <b-form-input
-        :label="$t('search')"
-        @input="onInput"
+    <el-input
         v-model="search"
+        @input="onInput"
         :placeholder="$t('search')"
-    />
+    >
+        <template #suffix>
+            <magnify />
+        </template>
+    </el-input>
 </template>
 <script>
     import {debounce} from "throttle-debounce";
+    import Magnify from "vue-material-design-icons/Magnify.vue";
     export default {
         emits: ["search"],
+        components: {Magnify},
         created() {
             if (this.$route.query.q) {
                 this.search = this.$route.query.q;

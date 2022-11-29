@@ -27,27 +27,25 @@
         },
         watch: {
             execution: function () {
-                if (this.execution && (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id)) {
-                    this.previousExecutionId = this.execution.id;
-                    this.loadGraph();
-                }
+                this.loadGraph();
             },
         },
         mounted() {
-            if (this.execution) {
-                this.loadGraph();
-            }
+            this.loadGraph();
         },
         methods: {
             forwardEvent(type, event) {
                 this.$emit(type, event);
             },
             loadGraph() {
-                this.$store.dispatch("flow/loadGraph", {
-                    namespace: this.execution.namespace,
-                    id: this.execution.flowId,
-                    revision: this.execution.flowRevision
-                })
+                if (this.execution && (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id)) {
+                    this.previousExecutionId = this.execution.id;
+                    this.$store.dispatch("flow/loadGraph", {
+                        namespace: this.execution.namespace,
+                        id: this.execution.flowId,
+                        revision: this.execution.flowRevision
+                    })
+                }
             },
         }
     };

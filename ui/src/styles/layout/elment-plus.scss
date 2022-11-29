@@ -1,0 +1,115 @@
+@use 'sass:math';
+@use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+@use 'element-plus/theme-chalk/src/' as *;
+
+// Input
+.el-input, .el-input-number, .el-select, .el-date-editor.el-input {
+    width: 100%;
+}
+
+.el-input-file {
+    .el-input__wrapper {
+        padding-left: 0;
+        input {
+            line-height: 1.5;
+        }
+    }
+}
+
+
+.el-select__popper {
+    .el-select-dropdown__item {
+        &.selected {
+            background: getCssVar('fill-color', 'dark');
+
+
+            html.dark & {
+                color: getCssVar('text-color', 'primary');
+            }
+        }
+    }
+}
+
+// Form Horizontal
+form.ks-horizontal {
+    .el-form-item {
+        @include res(xs) {
+            display: block;
+        }
+
+        @include res(sm) {
+            .el-form-item__label {
+                max-width: (math.div(1, 24) * 4 * 100) * 1%;
+                flex: 0 0 (math.div(1, 24) * 4 * 100) * 1%;
+            }
+
+            .el-form-item__content {
+                align-items: flex-start;
+                max-width: (math.div(1, 24) * 20 * 100) * 1%;
+                flex: 0 0 (math.div(1, 24) * 20 * 100) * 1%;
+            }
+        }
+    }
+}
+
+// Table
+.el-table {
+    margin-bottom: getCssVar('spacer');
+    border-radius: getCssVar('border-radius', 'large');
+    border: 1px solid getCssVar('border-color');
+    //background: $table-bg;
+    //display: block;
+    //width: 100%;
+    //overflow-x: auto;
+
+    .el-table__cell {
+        padding: 12px;
+    }
+
+    th {
+        white-space: nowrap;
+        div.cell {
+            word-break: normal;
+            white-space: nowrap;
+        }
+    }
+
+    th.row-action, td.row-action {
+        width: 16px;
+        .cell {
+            white-space: nowrap;
+        }
+
+        a {
+            color: getCssVar('text-color');
+        }
+    }
+
+    th.shrink {
+        width: 16px;
+    }
+
+    td.shrink {
+        white-space: nowrap;
+    }
+
+    th.row-graph {
+        width: 250px;
+        min-width: 250px;
+    }
+
+    td.row-graph {
+        padding: 0;
+        vertical-align: bottom;
+    }
+
+    td.row-duration {
+        //padding: calc($table-cell-padding/2);
+    }
+
+    tr.disabled {
+        td {
+            opacity: 0.5;
+        }
+    }
+}

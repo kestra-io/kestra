@@ -36,16 +36,16 @@ export default {
         },
     },
     watch: {
-        $route(to, from) {
-            if (to.query !== from.query) {
+        $route(oldValue, newValue) {
+            if (oldValue.name === newValue.name && newValue.query !== oldValue.query) {
                 this.load(this.onDataLoaded);
             }
         }
     },
     methods: {
         onSort(sortItem) {
-            if (!this.embed && sortItem && sortItem.sortBy) {
-                const sort = `${sortItem.sortBy}:${sortItem.sortDesc ? "desc" : "asc"}`;
+            if (!this.embed && sortItem && sortItem.prop && sortItem.order) {
+                const sort = `${sortItem.prop}:${sortItem.order === "descending" ? "desc" : "asc"}`;
                 this.$router.push({
                     query: {...this.$route.query, sort}
                 });

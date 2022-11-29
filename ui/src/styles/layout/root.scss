@@ -1,43 +1,57 @@
+@use 'sass:map';
+@use 'sass:math';
+@use 'element-plus/theme-chalk/src/mixins/var' as *;
+
+$custom-colors: () !default;
+$light-grays: () !default;
+$dark-grays: () !default;
+$white: #FFFFFF !default;
+$black: #000000 !default;
+
+$types: map.keys($custom-colors);
+
 :root {
-    --tertiary: #{$tertiary};
-    --white-always: #{$white-always};
-    --black-always: #{$black-always};
-    --dark-always: #{$dark-always};
+    @include set-css-var-value(('menu-width'), 268px);
+    @include set-css-var-value(('spacer'), 16px);
 
-    --gray-100: #{$gray-100};
-    --gray-200: #{$gray-200};
-    --gray-300: #{$gray-300};
-    --gray-400: #{$gray-400};
-    --gray-500: #{$gray-500};
-    --gray-600: #{$gray-600};
-    --gray-700: #{$gray-700};
-    --gray-800: #{$gray-800};
-    --gray-900: #{$gray-900};
+    @each $key, $value in $light-grays {
+        @include set-css-var-value(('gray', $key), $value);
 
-    @each $color, $value in $grays {
         @for $i from 1 through 3 {
-            --gray-#{$color}-lighten-#{$i*5}: #{lighten($value, $i*5)} ;
-            --gray-#{$color}-darken-#{$i*5}: #{darken($value, $i*5)} ;
+            @include set-css-var-value(('gray', $key, 'lighten', $i*5), lighten($value, $i+5));
+            @include set-css-var-value(('gray', $key, 'darken', $i*5), darken($value, $i+5));
         }
     }
 
-    @each $color, $value in $colors {
-        @for $i from 1 through 3 {
-            --#{$color}-lighten-#{$i*5}: #{lighten($value, $i*5)} ;
-            --#{$color}-darken-#{$i*5}: #{darken($value, $i*5)} ;
-        }
-    }
+    @each $type in $types {
+        @include set-css-var-value(('color', $type), map.get($custom-colors, $type, 'base'));
 
-    @each $color, $value in $theme-colors {
         @for $i from 1 through 3 {
-            --#{$color}-lighten-#{$i*5}: #{lighten($value, $i*5)} ;
-            --#{$color}-darken-#{$i*5}: #{darken($value, $i*5)} ;
+            @include set-css-var-value(('color', $type, 'lighten', $i*5), lighten(map.get($custom-colors, $type, 'base'), $i+5));
+            @include set-css-var-value(('color', $type, 'darken', $i*5), darken(map.get($custom-colors, $type, 'base'), $i+5));
         }
-    }
 
-    --table-border-color: #{$table-border-color};
-    --body-bg: #{$body-bg};
-    --body-color: #{$body-color};
-    --input-border-color: #{$input-border-color};
+        @each $i in (3, 5, 7, 8, 9) {
+            @include set-css-var-value(
+                ('color', $type, 'light', $i),
+                mix($white, map.get($custom-colors, $type, 'base'), math.percentage(math.div($i, 10)))
+            );
+        }
+
+        @include set-css-var-value(
+            ('color', $type, 'dark', 2),
+            mix($black, map.get($custom-colors, $type, 'base'), math.percentage(math.div(2, 10)))
+        );
+    }
 }
 
+html.dark {
+    @each $key, $value in $dark-grays {
+        @include set-css-var-value(('gray', $key), $value);
+
+        @for $i from 1 through 3 {
+            @include set-css-var-value(('gray', $key, 'lighten', $i*5), lighten($value, $i+5));
+            @include set-css-var-value(('gray', $key, 'darken', $i*5), darken($value, $i+5));
+        }
+    }
+}

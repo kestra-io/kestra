@@ -104,12 +104,13 @@
 </script>
 <style scoped lang="scss">
 @use "sass:math";
+@use 'element-plus/theme-chalk/src/mixins/function' as *;
 @import "../../styles/_variable.scss";
 
 div.line {
     white-space: pre-wrap;
     word-break: break-all;
-    padding: 0 math.div($spacer, 2);
+    padding: 0 calc(getCssVar('spacer') / 2);
 
     .theme-dark & {
         color: var(--body-color)
@@ -118,7 +119,7 @@ div.line {
     .header-badge {
         display: inline-block;
         font-size: 95%;
-        margin-left: math.div(-$spacer, 2);
+        margin-left: calc((getCssVar('spacer') * -2));
         padding: $badge-padding-y $badge-padding-x;
         font-weight: $font-weight-base;
         line-height: 1;

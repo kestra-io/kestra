@@ -1,23 +1,24 @@
 <template>
-    <div class="wrapper" v-if="icon" :class="classes" :id="uuid">
-        <div class="icon" :style="styles" :alt="cls" />
-        <div v-if="!onlyIcon" class="hover">
-            {{ name }}
-        </div>
-        <b-tooltip :target="uuid" placement="bottom">
+    <el-tooltip placement="left">
+        <template #content>
             <span>
                 {{ tooltipStart }}
             </span>
             <code>
                 {{ tooltipEnd }}
             </code>
-        </b-tooltip>
-    </div>
+        </template>
+        <div class="wrapper" v-if="icon" :class="classes">
+            <div class="icon" :style="styles" :alt="cls" />
+            <div v-if="!onlyIcon" class="hover">
+                {{ name }}
+            </div>
+        </div>
+    </el-tooltip>
 </template>
 
 <script>
     import {mapState} from "vuex";
-    import Utils from "../../utils/utils";
 
     export default {
         props: {
@@ -30,11 +31,7 @@
                 default: false
             }
         },
-        data() {
-            return {
-                uuid: Utils.uid()
-            }
-        },
+
         components: {
         },
         computed: {

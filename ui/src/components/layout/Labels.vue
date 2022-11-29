@@ -1,14 +1,17 @@
 <template>
     <span v-if="labels">
-        <b-badge
+        <el-tag
             v-for="(value, key) in labels"
             :key="key"
             class="mr-1"
+            type="info"
+            size="small"
+            disable-transitions
         >
-            <router-link :to="link(key, value)" class="text-light">
+            <router-link :to="link(key, value)">
                 <span class="text-primary">{{ key }}:</span> {{ value }}
             </router-link>
-        </b-badge>
+        </el-tag>
     </span>
 </template>
 <script>

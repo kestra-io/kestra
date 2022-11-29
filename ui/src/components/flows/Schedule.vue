@@ -1,6 +1,6 @@
 <template>
     <div>
-        <b-list-group v-if="triggers.length > 0">
+        <el-collapse v-if="triggers.length > 0" v-model="collapseActive">
             <schedule-item
                 @remove="remove"
                 @set="set"
@@ -9,25 +9,25 @@
                 v-for="(schedule, x) in triggers"
                 :key="x"
             />
-        </b-list-group>
-        <b-alert show variant="light" v-else class="text-muted mb-0">
+        </el-collapse>
+        <el-alert show-icon type="info" v-else :closable="false" class="text-muted mb-0">
             {{ $t('no result') }}
-        </b-alert>
+        </el-alert>
         <bottom-line v-if="canSave">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item">
-                    <b-button
+                    <el-button
                         @click="addSchedule"
                         v-if="canSave"
                     >
                         <plus />
                         {{ $t("add schedule") }}
-                    </b-button>
+                    </el-button>
 
-                    <b-button @click="save" v-if="canSave" variant="primary">
+                    <el-button @click="save" v-if="canSave" type="primary">
                         <content-save />
                         <span>{{ $t("save") }}</span>
-                    </b-button>
+                    </el-button>
                 </li>
             </ul>
         </bottom-line>
@@ -50,6 +50,11 @@
             ContentSave,
             ScheduleItem,
             BottomLine,
+        },
+        data() {
+            return {
+                collapseActive: 0
+            }
         },
         computed: {
             ...mapState("flow", ["flow"]),

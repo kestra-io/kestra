@@ -1,29 +1,32 @@
 <template>
-    <b-navbar v-if="topNavbar" :class="menuCollapsed" class="top-line">
-        <b-navbar-nav class="top-title">
-            <b-nav-text>
+    <nav v-if="topNavbar" class="top-line">
+        <ul>
+            <li class="top-title">
                 <h1 class="text-truncate">
                     {{ title }}
                 </h1>
-                <b-breadcrumb>
-                    <b-breadcrumb-item>
+                <el-breadcrumb>
+                    <el-breadcrumb-item>
                         <router-link :to="{name: 'home'}">
-                            <home-outline />
+                            <home-outline /> {{ $t('home') }}
                         </router-link>
-                    </b-breadcrumb-item>
-                    <b-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :key="x">
+                    </el-breadcrumb-item>
+
+                    <el-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :key="x">
                         <router-link :to="item.link">
                             {{ item.label }}
                         </router-link>
-                    </b-breadcrumb-item>
-                </b-breadcrumb>
-            </b-nav-text>
-        </b-navbar-nav>
-        <b-navbar-nav class="ml-auto pt-3">
-            <Auth />
-            <news />
-        </b-navbar-nav>
-    </b-navbar>
+                    </el-breadcrumb-item>
+                </el-breadcrumb>
+            </li>
+        </ul>
+        <ul class="ml-auto">
+            <li class="pt-3">
+                <Auth />
+                <news />
+            </li>
+        </ul>
+    </nav>
 </template>
 <script>
     import {mapState} from "vuex";
@@ -37,87 +40,64 @@
             Auth,
             News,
         },
-        props: {
-            menuCollapsed : {
-                type: String,
-                required: true
-            }
-        },
         computed: {
             ...mapState("layout", ["topNavbar"]),
             title() {
                 return this.topNavbar.title;
             },
-            breadcrumb() {
-                return this.topNavbar.breadcrumb.join(" > ");
-            }
         }
     };
 </script>
-<style lang="scss" scoped>
-@use "sass:math";
-@import "../../styles/variable";
+<style lang="scss">
+    @use "sass:math";
+    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+    @import "../../styles/variable";
 
-.menu-collapsed {
-    transition: all 0.3s ease;
-    left: 50px;
-    width: calc(100% - 50px);
+    .top-line {
+        display: flex;
+        min-width: 0;
+        max-width: 100%;
+        margin-bottom: 10px;
 
-}
-.menu-not-collapsed {
-    transition: all 0.3s;
-    left: $menu-width;
-    width: calc(100% - #{$menu-width});
-
-    @media (min-width: map-get($grid-breakpoints, "lg")) {
-        &.navbar {
-            padding-left: 55px;
-            padding-right: 40px;
-        }
-    }
-
-}
-
-.top-line {
-    display: flex;
-    min-width: 0;
-    max-width: 100%;
-}
-
-.top-title {
-    padding-top: 35px;
-    overflow: hidden;
-    .navbar-text {
-        h1 {
-            color: var(--primary);
-            margin-bottom: math.div($headings-margin-bottom, 2);
-            font-weight: bold;
-
-            .theme-dark & {
-                color: var(--tertiary);
-            }
-        }
-
-        ol.breadcrumb {
-            border: 0;
+        ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            flex-wrap: nowrap;
             padding: 0;
-            margin-bottom: 0;
-            background: transparent;
-            font-size: $font-size-sm;
-            text-transform: none;
-            a {
-                color: var(--tertiary);
+            flex-direction: row;
+            padding-top: 35px;
+        }
 
-                .theme-dark & {
-                    color: var(--secondary);
+      .top-title {
+            overflow: hidden;
+            h1 {
+                color: var(--el-primary);
+                margin-bottom: math.div($headings-margin-bottom, 2);
+                font-weight: bold;
+
+                html.dark & {
+                    color: var(--tertiary);
+                }
+            }
+
+            .el-breadcrumb {
+                border: 0;
+                padding: 0;
+                margin-bottom: 0;
+                background: transparent;
+                font-size: $font-size-sm;
+                text-transform: none;
+                a {
+                    color: getCssVar('color', 'tertiary');
+
+                    html.dark & {
+                        color: getCssVar('color', 'secondary');
+                    }
                 }
             }
         }
     }
-}
 
-.navbar-expand .navbar-nav .navbar-text {
-    padding: 0
-}
 
 </style>

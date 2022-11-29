@@ -1,49 +1,30 @@
 <template>
-    <b-table
-        striped
-        hover
-        small
-        show-empty
-        :stacked="stacked"
-        :responsive="true"
-        :items="variables"
-        :fields="fields"
-        class="mb-0"
-    >
-        <template #thead-top v-if="title">
-            <b-tr class="top">
-                <b-th colspan="2">
-                    {{ title }}
-                </b-th>
-            </b-tr>
-        </template>
-
-        <template #empty>
-            <div class="alert alert-info mb-0" role="alert">
-                {{ $t("no data current task") }}
-            </div>
-        </template>
-
-        <template #cell(key)="row">
-            <code>{{ row.item.key }}</code>
-        </template>
-
-        <template #cell(value)="row">
-            <template v-if="row.item.date">
-                <date-ago :inverted="true" :date="row.item.value" />
+    <!-- TOOD :stacked="stacked" title -->
+    <el-table stripe table-layout="auto" fixed :data="variables" size="small">
+        <el-table-column prop="key" rowspan="3" :label="$t('name')">
+            <template #default="scope">
+                <code>{{ scope.row.key }}</code>
             </template>
-            <template v-else-if="row.item.subflow">
-                {{ row.item.value }}
-                <sub-flow-link
-                    class="btn-xs"
-                    :execution-id="row.item.value"
-                />
+        </el-table-column>
+
+        <el-table-column prop="value" :label="$t('value')">
+            <template #default="scope">
+                <template v-if="scope.row.date">
+                    <date-ago :inverted="true" :date="scope.row.value" />
+                </template>
+                <template v-else-if="scope.row.subflow">
+                    {{ scope.row.value }}
+                    <sub-flow-link
+                        class="btn-xs"
+                        :execution-id="scope.row.value"
+                    />
+                </template>
+                <template v-else>
+                    <var-value :execution="execution" :value="scope.row.value" />
+                </template>
             </template>
-            <template v-else>
-                <var-value :execution="execution" :value="row.item.value" />
-            </template>
-        </template>
-    </b-table>
+        </el-table-column>
+    </el-table>
 </template>
 
 <script>
@@ -79,43 +60,30 @@
             },
         },
         computed: {
-            fields() {
-                return [
-                    {
-                        key: "key",
-                        label: this.$t("name"),
-                        class: "key"
-                    },
-                    {
-                        key: "value",
-                        label: this.$t("value")
-                    }
-                ];
-            },
             variables() {
                 return Utils.executionVars(this.data);
             },
-        }
+        },
     };
 </script>
 
-<style scoped lang="scss">
-:deep(thead tr:not(.top)) {
-    display: none;
-}
+<!--<style scoped lang="scss">-->
+<!--:deep(thead tr:not(.top)) {-->
+<!--    display: none;-->
+<!--}-->
 
-:deep(td.key) {
-    width: 150px;
-}
+<!--:deep(td.key) {-->
+<!--    width: 150px;-->
+<!--}-->
 
-:deep(.b-table-stacked) {
-    td.key {
-        width: 100%;
-    }
+<!--:deep(.b-table-stacked) {-->
+<!--    td.key {-->
+<!--        width: 100%;-->
+<!--    }-->
 
-    td:before {
-        display: none;
-    }
-}
+<!--    td:before {-->
+<!--        display: none;-->
+<!--    }-->
+<!--}-->
 
-</style>
+<!--</style>-->

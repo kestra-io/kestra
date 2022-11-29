@@ -43,7 +43,7 @@ export default {
             this.$nprogress.done();
             next(false)
         },
-        beforeDestroy() {
+        beforeUnmount() {
             window.removeEventListener("beforeunload", this.confirmUnload)
         },
         hasUnsavedChanged() {

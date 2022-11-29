@@ -1,7 +1,8 @@
 <template>
     <sidebar-menu
+        id="side-menu"
         :menu="disabledCurrentRoute(menu)"
-        @toggle-collapse="onToggleCollapse"
+        @update:collapsed="onToggleCollapse"
         :show-one-child="true"
         width="268px"
         :collapsed="collapsed"
@@ -59,13 +60,17 @@
             },
             disabledCurrentRoute(items) {
                 return items
-                // .map(r => {
-                //     if (r.href === this.$route.path) {
-                //         delete r.href;
-                //     }
-                //
-                //     return r;
-                // })
+                .map(r => {
+                    if (r.href === this.$route.path) {
+                        r.disabled = true
+                    }
+
+                    if (this.$route.path.startsWith(r.href)) {
+                        r.class = "vsm--link_active"
+                    }
+
+                    return r;
+                })
             },
             generateMenu() {
                 return [
@@ -79,6 +84,7 @@
                             element: shallowRef(FileTreeOutline),
                             class: "menu-icon",
                         },
+                        exact: false,
                     },
                     {
                         href: "/templates",
@@ -213,7 +219,7 @@
 </script>
 
 <style lang="scss" scoped>
-    @import "../../styles/variable";
+    @use 'element-plus/theme-chalk/src/mixins/function' as *;
 
     .logo {
         overflow: hidden;
@@ -221,7 +227,7 @@
         height: 133px;
         position: relative;
         a {
-            transition: 0.3s all;
+            transition: 0.2s all;
             position: absolute;
             left: 37px;
             display: block;
@@ -244,59 +250,126 @@
     }
 
     span.version {
-        transition: 0.3s all;
+        transition: 0.2s all;
         white-space: nowrap;
-        font-size: $font-size-xs;
+        font-size: getCssVar('font-size', 'extra-small');
         text-align: center;
         display: block;
-        color: var(--tertiary);
+        color: getCssVar('color', 'tertiary');
     }
+</style>
 
-    .vsm_collapsed {
-        .logo {
-            a {
-                left: 0;
-            }
+<style lang="scss">
+    @use 'element-plus/theme-chalk/src/mixins/function' as *;
+
+    #side-menu {
+        z-index: 1039;
+        border-right: 1px solid getCssVar('border-color');
+
+        .vsm--list {
+            transition: 0.2s all;
         }
 
-        span.version {
-            opacity: 0;
-        }
-    }
-
-    :deep(a.vsm--link_active[href="#"]) {
-        cursor: initial !important;
-    }
-
-    :deep(.vsm--item) {
-        transition: opacity 0.2s;
-    }
-
-    :deep(.vsm--dropdown) {
-        .vsm--title {
-            top: 3px;
-        }
-    }
-
-    :deep(.menu-icon) {
-        font-size: 1.5em;
-        background-color: transparent !important;
-        padding-bottom: 15px;
-
-        svg {
-            top: 3px;
-            left: 3px;
-        }
-    }
-
-
-    :deep(.vsm--dropdown_mobile-item) {
-        .vsm--item {
-            .vsm--title {
-                left: 0;
+        .vsm--icon {
+            transition: left 0.2s ease;
+            font-size: 1.5em;
+            background-color: transparent !important;
+            padding-bottom: 15px;
+            height: 30px !important;
+            width: 30px !important;
+            svg {
                 position: relative;
+                margin-top: 13px;
+            }
+        }
+
+        .vsm--item {
+            transition: opacity 0.2s;
+
+            * {
+                transition: 0.2s all;
+            }
+        }
+
+        .vsm--link {
+            padding: 0.3rem 0.5rem;
+            margin-bottom: 0.3rem;
+            border-left: 4px solid transparent;
+            padding-left: 37px;
+
+            &_level-1 {
+                &.vsm--link_exact-active,
+                &.vsm--link_active {
+                    box-shadow: none;
+                    border-left: 4px solid getCssVar('color', 'secondary');
+                }
+            }
+
+            &_exact-active,
+            &_active {
+                font-weight: 700;
+            }
+        }
+
+        .vsm--toggle-btn {
+            padding-top: 4px;
+            background: transparent;
+            color: getCssVar('color', 'secondary');
+            height: 30px;
+            border-top: 1px solid getCssVar('border-color');
+        }
+
+        &.vsm_collapsed .vsm--icon {
+            left: 0;
+        }
+
+
+        a.vsm--link_active[href="#"] {
+            cursor: initial !important;
+        }
+
+
+        .vsm--dropdown {
+            .vsm--title {
+                top: 3px;
+            }
+        }
+
+        .vsm--dropdown_mobile-item {
+            .vsm--item {
+                .vsm--title {
+                    left: 0;
+                    position: relative;
+                }
+            }
+        }
+
+        a.vsm--link_active[href="#"] {
+            cursor: initial !important;
+        }
+
+        html.dark & {
+            background-color: getCssVar('gray-100-darken-5');
+
+            .vsm--dropdown {
+                background-color: getCssVar('gray-100-darken-5');
+            }
+        }
+
+        &.vsm_collapsed {
+            .logo {
+                a {
+                    left: 11px;
+                }
+            }
+
+            .vsm--link {
+                padding-left: 13px;
+            }
+
+            span.version {
+                opacity: 0;
             }
         }
     }
-
 </style>

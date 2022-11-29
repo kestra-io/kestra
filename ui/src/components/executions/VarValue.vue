@@ -1,5 +1,5 @@
 <template>
-    <b-link
+    <el-link
         v-if="isFile(value)"
         target="_blank"
         :href="itemUrl(value)"
@@ -8,14 +8,14 @@
             <download /> {{ $t('download') }}
             <span v-if="humanSize">({{ humanSize }})</span>
         </kicon>
-    </b-link>
+    </el-link>
     <span v-else>
         {{ value }}
     </span>
 </template>
 
 <script>
-    import {apiRoot} from "../../http";
+    import {apiRoot} from "../../utils/http";
     import Download from "vue-material-design-icons/Download";
     import Kicon from "../Kicon"
     import Utils from "../../utils/utils";

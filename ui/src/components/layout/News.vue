@@ -1,37 +1,29 @@
 <template>
-    <b-nav-item>
-        <a class="news-link" v-b-modal="`news-modal`">
-            <gift title="" />
-            <CheckboxBlankCircle v-if="hasUnread" class="new" title="" />
-        </a>
+    <a class="news-link" @click="show">
+        <gift title="" />
+        <CheckboxBlankCircle v-if="hasUnread" class="new" title="" />
+    </a>
 
-        <b-modal
-            id="news-modal"
-            :title="$t('feeds.title')"
-            hide-backdrop
-            hide-footer
-            modal-class="right"
-            size="xl"
-            @show="show"
-        >
-            <div class="post" v-for="(feed, index) in feeds" :key="feed.id">
-                <div v-if="feed.image" class="mt-2">
-                    <img class="float-right" :src="feed.image" alt="">
-                </div>
-                <h5>
-                    {{ feed.title }}
-                </h5>
-                <date-ago class="text-muted small" :inverted="true" :date="feed.publicationDate" format="LL" />
-
-
-                <markdown class="markdown-tooltip mt-3" :source="feed.description" />
-
-                <a class="mt-3 d-block text-right" :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
-
-                <hr v-if="index !== feeds.length - 1" class="text-white">
+    <el-drawer size="50%" v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true" :title="$t('feeds.title')">
+        <div class="post" v-for="(feed, index) in feeds" :key="feed.id">
+            <div v-if="feed.image" class="mt-2">
+                <img class="float-right" :src="feed.image" alt="">
             </div>
-        </b-modal>
-    </b-nav-item>
+            <h5>
+                {{ feed.title }}
+            </h5>
+            <date-ago class="text-muted small" :inverted="true" :date="feed.publicationDate" format="LL" />
+
+
+            <markdown class="markdown-tooltip mt-3" :source="feed.description" />
+
+            <div class="text-right">
+                <a class="el-button el-button--primary mt-3 d-inline-block text-right" :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
+            </div>
+
+            <el-divider v-if="index !== feeds.length - 1" />
+        </div>
+    </el-drawer>
 </template>
 
 <script>
@@ -53,6 +45,7 @@
         data() {
             return {
                 hasUnread: false,
+                isOpen: false,
             };
         },
         mounted() {
@@ -70,6 +63,7 @@
             show() {
                 localStorage.setItem("feeds", this.feeds[0].publicationDate)
                 this.hasUnread = this.isUnread();
+                this.isOpen = !this.isOpen;
             },
             isUnread() {
                 let storage = localStorage.getItem("feeds");
@@ -82,14 +76,14 @@
         computed: {
             ...mapState("misc", ["configs"]),
             ...mapState("api", ["feeds"]),
-
-
         }
     };
 </script>
 
 <style lang="scss" scoped>
+@use 'element-plus/theme-chalk/src/mixins/function' as *;
 @import "../../styles/variable";
+
 .news-link {
     font-size: $font-size-lg;
     color: var(--gray-600);
@@ -134,11 +128,12 @@
 
     hr {
         border-top-color: var(--gray-700);
-        margin-top: $spacer * 2;
-        margin-bottom: $spacer * 2;
+        margin-top: calc(getCssVar('spacer') * 2);
+        margin-bottom: calc(getCssVar('spacer') * 2);
     }
 
-    a.d-block {
+
+    a.el-button {
         font-weight: bold;
     }
 }

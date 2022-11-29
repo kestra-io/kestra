@@ -40,12 +40,15 @@
             return {
                 tabIndex: undefined,
                 checkUnsaved: true,
-                mounted: false
+                mounted: false,
+                previousFlow: undefined
             };
         },
         watch: {
-            $route() {
-                this.load()
+            $route(oldValue, newValue) {
+                if (oldValue.name === newValue.name) {
+                    this.load()
+                }
             }
         },
         created() {
@@ -53,15 +56,22 @@
             this.load();
         },
         beforeUnmount() {
-            UnsavedChange.methods.beforeDestroy.call(this);
+            UnsavedChange.methods.beforeUnmount.call(this);
         },
         methods: {
             load() {
-                return this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
-                    if (this.flow) {
-                        this.$store.dispatch("flow/loadGraph", this.flow);
-                    }
-                });
+                if ((this.flow === undefined || this.previousFlow !== this.flowKey(this.flow))) {
+                    return this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
+                        if (this.flow) {
+                            this.previousFlow = this.flowKey(this.flow);
+                            this.$store.dispatch("flow/loadGraph", this.flow);
+                        }
+                    });
+                }
+
+            },
+            flowKey(flow) {
+                return flow.namespace +  "/" + flow.id;
             },
             getTabs() {
                 const tabs = [

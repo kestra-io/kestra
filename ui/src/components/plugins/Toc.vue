@@ -1,39 +1,37 @@
 <template>
     <div class="plugins-list">
-        <b-card class="accordion" no-body :key="plugin.manifest['X-Kestra-Title']" v-for="(plugin, index) in plugins">
-            <b-card-header header-tag="header" class="p-0" role="tab">
-                <b-button block v-b-toggle="plugin.manifest['X-Kestra-Title']" variant="light">
-                    {{ plugin.manifest['X-Kestra-Title'] }}
-                </b-button>
-            </b-card-header>
-            <b-collapse :id="plugin.manifest['X-Kestra-Title']" :visible="index === 0" accordion="my-accordion" role="tabpanel">
-                <b-card-body>
-                    <ul class="section-nav toc-h3">
-                        <li v-for="(types, namespace) in group(plugin, plugin.tasks)" :key="namespace">
-                            <h6>{{ namespace }}</h6>
-                            <ul class="toc-h4">
-                                <li v-for="(classes, type) in types" :key="type+'-'+ namespace">
-                                    <h6>{{ $filters.cap(type) }}</h6>
-                                    <ul class="section-nav toc-h5">
-                                        <li v-for="cls in classes" :key="cls">
-                                            <router-link
-                                                @click="$emit('routerChange')"
-                                                :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
-                                            >
-                                                <div class="icon">
-                                                    <task-icon :only-icon="true" :cls="namespace + '.' + cls" />
-                                                </div>
-                                                {{ cls }}
-                                            </router-link>
-                                        </li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </b-card-body>
-            </b-collapse>
-        </b-card>
+        <el-collapse accordion >
+            <el-collapse-item
+                :title="plugin.manifest['X-Kestra-Title']"
+                :name="plugin.manifest['X-Kestra-Title']"
+                :key="plugin.manifest['X-Kestra-Title']"
+                v-for="(plugin, index) in plugins"
+            >
+                <ul class="toc-h3">
+                    <li v-for="(types, namespace) in group(plugin, plugin.tasks)" :key="namespace">
+                        <h6>{{ namespace }}</h6>
+                        <ul class="toc-h4">
+                            <li v-for="(classes, type) in types" :key="type+'-'+ namespace">
+                                <h6>{{ $filters.cap(type) }}</h6>
+                                <ul class="section-nav toc-h5">
+                                    <li v-for="cls in classes" :key="cls">
+                                        <router-link
+                                            @click="$emit('routerChange')"
+                                            :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
+                                        >
+                                            <div class="icon">
+                                                <task-icon :only-icon="true" :cls="namespace + '.' + cls" />
+                                            </div>
+                                            {{ cls }}
+                                        </router-link>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </el-collapse-item>
+        </el-collapse>
     </div>
 </template>
 
@@ -84,10 +82,17 @@
 
 <style lang="scss">
     @use "sass:math";
+    @use 'element-plus/theme-chalk/src/mixins/function' as *;
     @import "../../styles/_variable.scss";
 
     .plugins-list {
         font-size: $font-size-xs;
+
+        ul {
+            list-style: none;
+            padding-inline-start: 0;
+            margin-bottom: 0;
+        }
 
         .toc-h3 {
             .icon {
@@ -98,10 +103,10 @@
             }
 
             .toc-h4 {
-                margin-left: $spacer;
+                margin-left: getCssVar('spacer');
                 h6 {
                     font-size: $h6-font-size * 0.8;
-                    margin-bottom: math.div($spacer, 3);
+                    margin-bottom: calc(getCssVar('spacer') / 3);
                 }
             }
         }

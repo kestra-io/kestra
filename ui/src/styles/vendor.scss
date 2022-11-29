@@ -1,0 +1,20 @@
+@use "global" as global-var;
+
+@use "layout/reset";
+
+@forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
+    // global one only
+    $font-family: global-var.$font-family,
+
+    // font-size everywhere
+    $font-size: global-var.$font-size,
+);
+@use "element-plus/theme-chalk/src/index.scss";
+@use "element-plus/theme-chalk/src/dark/css-vars.scss";
+
+
+@use "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
+@import '~nprogress/nprogress.css';
+@import "~vue-material-design-icons/styles.css";
+
+

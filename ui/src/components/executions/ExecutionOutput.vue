@@ -1,89 +1,90 @@
 <template>
     <div v-if="execution && outputs">
-        <b-navbar toggleable="lg" type="light" variant="light">
-            <b-navbar-toggle target="nav-collapse" />
-            <b-collapse id="nav-collapse" is-nav>
-                <b-nav-form>
-                    <v-select
-                        v-model="filter"
-                        :reduce="option => option.value"
-                        @input="onSearch"
-                        :options="selectOptions"
-                        :placeholder="$t('display output for specific task') + '...'"
+        <collapse>
+            <el-form-item>
+                <el-select
+                    filterable
+                    clearable
+                    :persistent="false"
+                    v-model="filter"
+                    @input="onSearch"
+                    :placeholder="$t('display output for specific task') + '...'"
+                >
+                    <el-option
+                        v-for="item in selectOptions"
+                        :key="item.value"
+                        :label="item.label"
+                        :value="item.value"
                     />
-                    <span id="debug-btn-wrapper">
-                        <b-btn
-                            :disabled="!filter"
-                            v-b-modal="`debug-expression-modal`"
-                        >
-                            {{ $t("eval.title") }}
-                        </b-btn>
-                    </span>
-                    <b-tooltip
-                        v-if="!filter"
-                        placement="right"
-                        target="debug-btn-wrapper"
-                    >
-                        {{ $t("eval.tooltip") }}
-                    </b-tooltip>
-                </b-nav-form>
-            </b-collapse>
-        </b-navbar>
+                </el-select>
+            </el-form-item>
+            <el-form-item>
+                <el-tooltip :content="$t('eval.tooltip')">
+                    <el-button :disabled="!filter" @click="isModalOpen = !isModalOpen">
+                        {{ $t("eval.title") }}
+                    </el-button>
+                </el-tooltip>
+            </el-form-item>
+        </collapse>
 
-        <b-table
-            :responsive="true"
-            striped
-            hover
-            :fields="fields"
-            :items="outputs"
-            class="mb-0"
-            show-empty
+        <el-drawer
+            v-if="isModalOpen"
+            v-model="isModalOpen"
+            destroy-on-close
+            lock-scroll
+            :append-to-body="true"
+            :title="$t('eval.title')"
         >
-            <template #empty>
-                <span class="text-muted">{{ $t('no result') }}</span>
-            </template>
-
-            <template #cell(key)="row">
-                <code>{{ row.item.key }}</code>
-            </template>
-
-            <template #cell(value)="row">
-                <var>{{ row.item.value }}</var>
-            </template>
-
-            <template #cell(output)="row">
-                <var-value :execution="execution" :value="row.item.output" />
-            </template>
-        </b-table>
-
-        <b-modal
-            hide-backdrop
-            id="debug-expression-modal"
-            modal-class="right"
-            size="xl"
-        >
-            <template #modal-header>
-                <h5>{{ $t("eval.title") }}</h5>
-            </template>
-
-            <template #default>
-                <editor class="mb-2" ref="editorContainer" :full-height="false" @save="onDebugExpression(filter, $event)" :input="true" :navbar="false" value="" />
-                <editor v-if="debugExpression" :read-only="true" :full-height="false" :navbar="false" :minimap="false" :value="debugExpression" :lang="isJson ? 'json' : ''" />
-                <b-alert class="debug-error" variant="danger" show v-if="debugError">
-                    <p><strong>{{ debugError }}</strong></p>
-                    <pre class="mb-0">{{ debugStackTrace }}</pre>
-                </b-alert>
-            </template>
-
-            <template #modal-footer>
-                <b-button
-                    variant="secondary"
+            <template #footer>
+                <el-button
+                    type="primary"
                     @click="onDebugExpression(filter, $refs.editorContainer.editor.getValue())"
                 >
                     {{ $t("eval.title") }}
-                </b-button>
+                </el-button>
             </template>
-        </b-modal>
+
+            <editor class="mb-2" ref="editorContainer" :full-height="false" @save="onDebugExpression(filter, $event)" :input="true" :navbar="false" model-value="" />
+            <editor v-if="debugExpression" :read-only="true" :full-height="false" :navbar="false" :minimap="false" :model-value="debugExpression" :lang="isJson ? 'json' : ''" />
+            <el-alert class="debug-error" type="danger" show-icon v-if="debugError" :closable="false">
+                <p><strong>{{ debugError }}</strong></p>
+                <pre class="mb-0">{{ debugStackTrace }}</pre>
+            </el-alert>
+        </el-drawer>
+
+        <el-table
+            :data="outputs"
+            ref="table"
+            :default-sort="{prop: 'state.startDate', order: 'descending'}"
+            stripe
+            table-layout="auto"
+            fixed
+        >
+            <el-table-column prop="task" sortable :label="$t('task')">
+                <template #default="scope">
+                    <var>{{ scope.row.task }}</var>
+                </template>
+            </el-table-column>
+
+            <el-table-column prop="value" sortable :label="$t('value')">
+                <template #default="scope">
+                    <var>{{ scope.row.value }}</var>
+                </template>
+            </el-table-column>
+
+            <el-table-column prop="key" sortable :label="$t('name')">
+                <template #default="scope">
+                    <code>{{ scope.row.key }}</code>
+                </template>
+            </el-table-column>
+
+            <el-table-column prop="task" :sort-orders="['ascending', 'descending']" :label="$t('output')">
+                <template #default="scope">
+                    <var-value :execution="execution" :value="scope.row.output" />
+                </template>
+            </el-table-column>
+        </el-table>
+
     </div>
 </template>
 <script>
@@ -91,19 +92,22 @@
     import VarValue from "./VarValue";
     import Utils from "../../utils/utils";
     import Editor from "../../components/inputs/Editor";
+    import Collapse from "../layout/Collapse.vue";
 
     export default {
         components: {
             VarValue,
             Editor,
+            Collapse,
         },
         data() {
             return {
-                filter: "",
+                filter: undefined,
                 debugExpression: "",
                 isJson: false,
                 debugError: "",
                 debugStackTrace: "",
+                isModalOpen: false,
             };
         },
         created() {
@@ -161,31 +165,11 @@
 
                 return Object.values(options);
             },
-            fields() {
-                return [
-                    {
-                        key: "task",
-                        label: this.$t("task")
-                    },
-                    {
-                        key: "value",
-                        label: this.$t("value")
-                    },
-                    {
-                        key: "key",
-                        label: this.$t("name")
-                    },
-                    {
-                        key: "output",
-                        label: this.$t("output")
-                    }
-                ];
-            },
             outputs() {
                 const outputs = [];
                 for (const taskRun of this.execution.taskRunList || []) {
                     const token = taskRun.id;
-                    if (!this.filter || token === this.filter) {
+                    if (this.filter === undefined || token === this.filter) {
                         Utils.executionVars(taskRun.outputs).forEach(output => {
                             const item = {
                                 key: output.key,

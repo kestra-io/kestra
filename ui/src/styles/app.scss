@@ -1,0 +1,102 @@
+@use "global" as global-var;
+@use "light" as light-var;
+@use "dark" as dark-var;
+/*
+
+// reset
+@use "layout/reset";
+
+// element-plus
+// element-plus light
+@forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
+    // global one only
+    $font-family: global-var.$font-family,
+
+    // light theme
+    $colors: global-var.$colors,
+    $bg-color: (
+        'page': light-var.$body-bg,
+        '': light-var.$white,
+        'overlay': light-var.$overlay-bg,
+    ),
+
+    // font-size everywhere
+    $font-size: global-var.$font-size,
+    $border-radius: global-var.$border-radius,
+    $input-font-size: (
+        'large': getCssVar('font-size-large'),
+        'default': getCssVar('font-size-base'),
+        'small': getCssVar('font-size-small'),
+    ),
+    $checkbox: (
+        'font-size': getCssVar('font-size-base'),
+    ),
+    $select: (
+        'input-font-size': getCssVar('font-size-base'),
+    ),
+    $text-color: light-var.$text-color,
+    $border-color: light-var.$border-color,
+    $fill-color: light-var.$fill-color,
+);
+@use "element-plus/theme-chalk/src/index.scss" as light;
+
+// element-plus dark
+@forward 'element-plus/theme-chalk/src/dark/var.scss' as dark-* with (
+    $bg-color: (
+        'page': dark-var.$body-bg,
+        '':  darken(dark-var.$fill-color-base, 5%),
+        'overlay': dark-var.$overlay-bg,
+    ),
+    $text-color: dark-var.$text-color,
+    $border-color: dark-var.$border-color,
+    $fill-color: dark-var.$fill-color,
+);
+@use "element-plus/theme-chalk/src/dark/css-vars.scss" as dark;
+
+
+
+// Vue Sidebar Menu
+@use "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss" with (
+    $primary-color: global-var.$secondary,
+    $base-bg: light-var.$white,
+    $item-color: global-var.$tertiary,
+    $item-active-color: global-var.$secondary,
+    $item-font-size: global-var.$font-size-base,
+    $item-hover-color: global-var.$tertiary,
+    $item-hover-bg: darken(global-var.$secondary, 5%),
+);
+
+// third party
+@use "components/vue-material-design-icon";
+*/
+@use "layout/elment-plus" as *;
+
+// Layout
+@use "layout/root" with (
+    $custom-colors: global-var.$custom-colors,
+    $white: light-var.$white,
+    $black: light-var.$black,
+    $light-grays: light-var.$grays,
+    $dark-grays: dark-var.$grays,
+);
+@use "layout/app" as *;
+@use "./layout/charts";
+@use "./layout/navfilter";
+@use "components/vue-material-design-icon";
+
+//@import "variable";
+//@import "layout/root";
+//
+//@import '~bootstrap/scss/bootstrap';
+//@import '~bootstrap-vue/src/index.scss';
+//
+//
+//@import "components/vue-sidebar-menu";
+//
+//@import './layout/bootstrap';
+
+//
+//
+//
+//
+//

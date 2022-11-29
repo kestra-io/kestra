@@ -1,16 +1,15 @@
 <template>
     <span>
-        <span :id="uuid" v-if="histories">{{ duration }}</span>
-        <b-tooltip
-            custom-class="duration-tt"
-            :target="uuid"
-            triggers="hover"
-        >
-            <span v-for="(history, index) in histories" :key="'tt-' + uuid + '-' + index">
-                <span class="square" :class="squareClass(history.state)" />
-                <strong>{{ history.state }}:</strong> {{ $filters.date(history.date, 'iso') }} <br>
-            </span>
-        </b-tooltip>
+        <el-tooltip v-if="histories" popper-class="duration-tt">
+            <template #content>
+                <span v-for="(history, index) in histories" :key="'tt-' + index">
+                    <span class="square" :class="squareClass(history.state)" />
+                    <strong>{{ history.state }}:</strong> {{ $filters.date(history.date, 'iso') }} <br>
+                </span>
+            </template>
+
+            <span>{{ duration }}</span>
+        </el-tooltip>
     </span>
 </template>
 
@@ -36,7 +35,6 @@
         },
         data () {
             return {
-                uuid: Utils.uid(),
                 duration: "",
                 enabled: true
             }
@@ -56,7 +54,7 @@
         },
         methods: {
             paint() {
-                const repaint = ()=> {
+                const repaint = () => {
                     this.computeDuration()
                     if (this.enabled && this.histories && State.isRunning(this.lastStep.state)) {
                         setTimeout(repaint, 100);
@@ -88,9 +86,9 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .duration-tt {
-    :deep(.tooltip-inner) {
+    .tooltip-inner {
         text-align: left;
         white-space: nowrap;
         max-width: none;

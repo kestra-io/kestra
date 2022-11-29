@@ -1,20 +1,47 @@
 <template>
     <div>
-        <b-form-group :label="$t('theme')" label-cols-sm="3">
-            <b-form-select :value="currentTheme" :options="Object.keys(themes)" @input="onThemeSelect" />
-        </b-form-group>
-        <b-form-group :label="$t('Language')" label-cols-sm="3">
-            <b-form-select v-model="lang" :options="langOptions" />
-        </b-form-group>
-        <b-form-group :label="$t('Fold auto')" label-cols-sm="3">
-            <b-checkbox v-model="autofoldTextEditor" value="1" unchecked-value="0" />
-        </b-form-group>
-        <b-form-group :label="$t('Default namespace')" label-cols-sm="3">
-            <namespace-select data-type="flow" :value="defaultNamespace" @input="onNamespaceSelect" />
-        </b-form-group>
-        <b-form-group :label="$t('Editor theme')" label-cols-sm="3">
-            <b-form-select v-model="editorTheme" :options="editorThemes" />
-        </b-form-group>
+        <el-form class="ks-horizontal">
+            <el-form-item :label="$t('Language')">
+                <el-select :model-value="lang" @update:model-value="onLang">
+                    <el-option
+                        v-for="item in langOptions"
+                        :key="item.value"
+                        :label="item.text"
+                        :value="item.value"
+                    />
+                </el-select>
+            </el-form-item>
+
+            <el-form-item :label="$t('theme')">
+                <el-select :model-value="theme"  @update:model-value="onTheme">
+                    <el-option
+                        v-for="item in themesOptions"
+                        :key="item.value"
+                        :label="item.text"
+                        :value="item.value"
+                    />
+                </el-select>
+            </el-form-item>
+
+            <el-form-item :label="$t('Editor theme')">
+                <el-select :model-value="editorTheme"  @update:model-value="onEditorTheme">
+                    <el-option
+                        v-for="item in editorThemesOptions"
+                        :key="item.value"
+                        :label="item.text"
+                        :value="item.value"
+                    />
+                </el-select>
+            </el-form-item>
+
+            <el-form-item label="&nbsp;">
+                <el-checkbox :label="$t('Fold auto')"  :model-value="autofoldTextEditor"  @update:model-value="onAutofoldTextEditor" />
+            </el-form-item>
+
+            <el-form-item :label="$t('Default namespace')">
+                <namespace-select data-type="flow" :value="defaultNamespace" @update:model-value="onNamespaceSelect" />
+            </el-form-item>
+        </el-form>
     </div>
 </template>
 
@@ -30,21 +57,21 @@
         },
         data() {
             return {
-                langOptions: [
-                    {value: "en", text: "English"},
-                    {value: "fr", text: "Français"}
-                ],
-                editorThemes: [
-                    {value: "vs", text: "Light"},
-                    {value: "vs-dark", text: "Dark"}
-                ],
                 defaultNamespace: undefined,
-                currentTheme: undefined
+                lang: undefined,
+                theme: undefined,
+                editorTheme: undefined,
+                autofoldTextEditor: undefined,
             };
         },
         created() {
+            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
+
             this.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
-            this.currentTheme = localStorage.getItem("theme") || "";
+            this.lang = localStorage.getItem("lang") || "en";
+            this.theme = localStorage.getItem("theme") || "light";
+            this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "vs-dark" : "vs");
+            this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
         },
         methods: {
             onNamespaceSelect(value) {
@@ -57,9 +84,26 @@
                 }
                 this.$toast().saved();
             },
-            onThemeSelect(value) {
-                this.currentTheme = value;
-                this.$root.$emit("setTheme", value)
+            onLang(value) {
+                localStorage.setItem("lang", value);
+                this.$moment.locale(value);
+                this.$root.$i18n.locale = value;
+                this.lang = value;
+                this.$toast().saved();
+            },
+            onTheme(value) {
+                this.$root.switchTheme(value)
+                this.theme = value;
+                this.$toast().saved();
+            },
+            onEditorTheme(value) {
+                localStorage.setItem("editorTheme", value);
+                this.editorTheme = value;
+                this.$toast().saved();
+            },
+            onAutofoldTextEditor(value) {
+                localStorage.setItem("autofoldTextEditor", value);
+                this.autofoldTextEditor = value;
                 this.$toast().saved();
             },
         },
@@ -70,37 +114,23 @@
                     title: this.$t("settings")
                 };
             },
-            lang: {
-                set(lang) {
-                    localStorage.setItem("lang", lang);
-                    this.$moment.locale(lang);
-                    this.$root.$i18n.locale = lang;
-                    this.$toast().saved();
-                },
-                get() {
-                    return localStorage.getItem("lang") || "en";
-                }
+            langOptions() {
+                return [
+                    {value: "en", text: "English"},
+                    {value: "fr", text: "Français"}
+                ];
             },
-            editorTheme: {
-                set(theme) {
-                    localStorage.setItem("editorTheme", theme);
-                    this.$toast().saved();
-                },
-                get() {
-                    const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
-
-                    return localStorage.getItem("editorTheme") || (darkTheme ? "vs-dark" : "vs");
-                }
+            themesOptions() {
+                return [
+                    {value: "light", text: "Light"},
+                    {value: "dark", text: "Dark"}
+                ]
             },
-            autofoldTextEditor: {
-                set(value) {
-                    localStorage.setItem("autofoldTextEditor", value);
-
-                    this.$toast().saved();
-                },
-                get() {
-                    return localStorage.getItem("autofoldTextEditor")
-                }
+            editorThemesOptions() {
+                return  [
+                    {value: "vs", text: "Light"},
+                    {value: "vs-dark", text: "Dark"}
+                ]
             }
         }
     };

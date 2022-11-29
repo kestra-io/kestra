@@ -2,23 +2,33 @@
     <div v-if="ready">
         <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber">
             <template #navbar v-if="embed === false">
-                <search-field />
-                <namespace-select
-                    data-type="flow"
-                    v-if="$route.name !== 'flows/update'"
-                    :value="$route.query.namespace"
-                    @input="onDataTableValue('namespace', $event)"
-                />
-                <status-filter-buttons
-                    :value="$route.query.state"
-                    @input="onDataTableValue('state', $event)"
-                />
-                <date-range
-                    :start-date="$route.query.startDate"
-                    :end-date="$route.query.endDate"
-                    @input="onDataTableValue($event)"
-                />
-                <refresh-button class="float-right" @refresh="load" />
+                <el-form-item>
+                    <search-field />
+                </el-form-item>
+                <el-form-item>
+                    <namespace-select
+                        data-type="flow"
+                        v-if="$route.name !== 'flows/update'"
+                        :value="$route.query.namespace"
+                        @update:model-value="onDataTableValue('namespace', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <status-filter-buttons
+                        :value="$route.query.state"
+                        @update:model-value="onDataTableValue('state', $event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <date-range
+                        :start-date="$route.query.startDate"
+                        :end-date="$route.query.endDate"
+                        @update:model-value="onDataTableValue($event)"
+                    />
+                </el-form-item>
+                <el-form-item>
+                    <refresh-button class="float-right" @refresh="load" />
+                </el-form-item>
             </template>
 
             <template #top v-if="embed === false">
@@ -31,69 +41,73 @@
             </template>
 
             <template #table>
-                <b-table
-                    :no-local-sorting="true"
-                    @sort-changed="onSort"
-                    :responsive="true"
-                    striped
-                    hover
-                    sort-by="startDate"
-                    sort-desc
-                    :items="executions"
-                    :fields="fields"
-                    @row-dblclicked="onRowDoubleClick"
+                <el-table
+                    :data="executions"
                     ref="table"
-                    show-empty
+                    :default-sort="{prop: 'state.startDate', order: 'descending'}"
+                    stripe
+                    table-layout="auto"
+                    fixed
+                    @row-dblclick="onRowDoubleClick"
+                    @sort-change="onSort"
                 >
-                    <template #empty>
-                        <span class="text-muted">{{ $t('no result') }}</span>
-                    </template>
+                    <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
+                        <template #default="scope">
+                            <id :value="scope.row.id" :shrink="true" />
+                        </template>
+                    </el-table-column>
 
-                    <template #cell(details)="row">
-                        <router-link :to="{name: 'executions/update', params: {namespace: row.item.namespace, flowId: row.item.flowId, id: row.item.id}}">
-                            <kicon :tooltip="$t('details')" placement="left">
-                                <eye />
-                            </kicon>
-                        </router-link>
-                    </template>
-                    <!-- eslint-disable-next-line -->
-                    <template #cell(state.startDate)="row">
-                        <date-ago :inverted="true" :date="row.item.state.startDate" />
-                    </template>
-                    <!-- eslint-disable-next-line -->
-                    <template #cell(state.endDate)="row">
-                        <span v-if="!isRunning(row.item)">
-                            <date-ago :inverted="true" :date="row.item.state.endDate" />
-                        </span>
-                    </template>
-                    <!-- eslint-disable-next-line -->
-                    <template #cell(state.current)="row">
-                        <status
-                            class="status"
-                            :status="row.item.state.current"
-                            size="sm"
-                        />
-                    </template>
-                    <!-- eslint-disable-next-line -->
-                    <template #cell(state.duration)="row">
-                        <span v-if="isRunning(row.item)">{{ $filters.humanizeDuration(durationFrom(row.item)) }}</span>
-                        <span v-else>{{ $filters.humanizeDuration(row.item.state.duration) }}</span>
-                    </template>
-                    <template #cell(flowId)="row">
-                        <router-link
-                            :to="{name: 'flows/update', params: {namespace: row.item.namespace, id: row.item.flowId}}"
-                        >
-                            {{ row.item.flowId }}
-                        </router-link>
-                    </template>
-                    <template #cell(id)="row">
-                        <id :value="row.item.id" :shrink="true" />
-                    </template>
+                    <el-table-column prop="state.startDate" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('start date')">
+                        <template #default="scope">
+                            <date-ago :inverted="true" :date="scope.row.state.startDate" />
+                        </template>
+                    </el-table-column>
 
-                    <template #cell(trigger)="row">
-                        <trigger-avatar :execution="row.item" />
-                    </template>
-                </b-table>
+                    <el-table-column prop="state.endDate" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('end date')">
+                        <template #default="scope">
+                            <date-ago :inverted="true" :date="scope.row.state.endDate" />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column prop="state.duration" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('duration')">
+                        <template #default="scope">
+                            <span v-if="isRunning(scope.row)">{{ $filters.humanizeDuration(durationFrom(scope.row)) }}</span>
+                            <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column v-if="$route.name !== 'flows/update'" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" />
+
+                    <el-table-column v-if="$route.name !== 'flows/update'" prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('flow')">
+                        <template #default="scope">
+                            <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
+                                {{ scope.row.flowId }}
+                            </router-link>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column prop="state.current" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('state')">
+                        <template #default="scope">
+                            <status :status="scope.row.state.current" size="small" />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column :label="$t('triggers')" class-name="shrink">
+                        <template #default="scope">
+                            <trigger-avatar :flow="scope.row" />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column column-key="action" class-name="row-action">
+                        <template #default="scope">
+                            <router-link :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}}">
+                                <kicon :tooltip="$t('details')" placement="left">
+                                    <eye />
+                                </kicon>
+                            </router-link>
+                        </template>
+                    </el-table-column>
+                </el-table>
             </template>
         </data-table>
     </div>
@@ -166,72 +180,6 @@
                 return {
                     title: this.$t("executions")
                 };
-            },
-            fields() {
-                const title = title => {
-                    return this.$t(title);
-                };
-                let fields = [
-                    {
-                        key: "id",
-                        label: title("id")
-                    },
-                    {
-                        key: "state.startDate",
-                        label: title("start date"),
-                        sortable: true,
-                    },
-                    {
-                        key: "state.endDate",
-                        label: title("end date"),
-                        sortable: true,
-                    },
-                    {
-                        key: "state.duration",
-                        label: title("duration"),
-                        sortable: true,
-                    },
-                ]
-
-                if (this.$route.name !== "flows/update") {
-                    fields.push(
-                        {
-                            key: "namespace",
-                            label: title("namespace"),
-                            sortable: true
-                        },
-                        {
-                            key: "flowId",
-                            label: title("flow"),
-                            sortable: true
-                        },
-                    )
-                }
-
-                fields.push(
-                    {
-                        key: "state.current",
-                        label: title("state"),
-                        class: "text-center",
-                        sortable: true,
-                    },
-                    {
-                        key: "trigger",
-                        label: title("trigger"),
-                        class: "shrink"
-                    },
-                    {
-                        key: "details",
-                        label: "",
-                        class: "row-action"
-                    }
-                );
-
-                this.hidden.forEach(value => {
-                    fields = fields.filter(col => col.key !== value);
-                })
-
-                return fields;
             },
             endDate() {
                 return new Date();

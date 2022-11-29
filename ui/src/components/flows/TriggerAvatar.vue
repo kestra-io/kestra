@@ -2,15 +2,24 @@
     <div>
         <span v-for="trigger in triggers" :key="uid(trigger)" :id="uid(trigger)">
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
-                <b-avatar
-                    size="sm"
-                    variant="primary"
-                    :text="name(trigger)"
-                    button
-                />
-                <b-popover triggers="hover" :target="uid(trigger)" placement="left" :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`">
-                    <vars :stacked="true" :data="triggerData(trigger)" />
-                </b-popover>
+                <el-popover
+                    placement="left"
+                    :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`"
+                >
+                    <template #reference>
+                        <el-avatar
+                            class="mr-1"
+                            size="small"
+                            variant="primary"
+                            button
+                        >
+                            {{ name(trigger) }}
+                        </el-avatar>
+                    </template>
+                    <template #default>
+                        <vars :stacked="true" :data="triggerData(trigger)" />
+                    </template>
+                </el-popover>
             </template>
         </span>
     </div>

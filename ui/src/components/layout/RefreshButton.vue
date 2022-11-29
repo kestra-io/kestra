@@ -1,16 +1,16 @@
 <template>
-    <b-button-group>
-        <b-button @click="toggleAutoRefresh" :pressed="autoRefresh">
-            <kicon :tooltip="$t('toggle periodic refresh each 10 seconds')" placement="bottomleft">
+    <el-button-group>
+        <el-button @click="toggleAutoRefresh" :pressed="autoRefresh">
+            <kicon :tooltip="$t('toggle periodic refresh each 10 seconds')" placement="bottom">
                 <clock />
             </kicon>
-        </b-button>
-        <b-button @click="triggerRefresh">
-            <kicon :tooltip="$t('trigger refresh')" placement="bottomleft">
+        </el-button>
+        <el-button @click="triggerRefresh">
+            <kicon :tooltip="$t('trigger refresh')" placement="bottom">
                 <refresh />
             </kicon>
-        </b-button>
-    </b-button-group>
+        </el-button>
+    </el-button-group>
 </template>
 <script>
     import Refresh from "vue-material-design-icons/Refresh";

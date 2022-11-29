@@ -1,10 +1,9 @@
-import {getCurrentInstance} from "vue";
 
 export default class ExecutionUtils {
-    static waitFor(execution, predicate) {
+    static waitFor($http, execution, predicate) {
         return new Promise((resolve) => {
             let callback = () => {
-                getCurrentInstance().appContext.config.globalProperties.$http.get(`/api/v1/executions/${execution.id}`).then(response => {
+                $http.get(`/api/v1/executions/${execution.id}`).then(response => {
                     const result = predicate(response.data)
 
                     if (result === true) {
@@ -28,8 +27,8 @@ export default class ExecutionUtils {
         return current.state.histories.length >= execution.state.histories.length
     }
 
-    static waitForState(execution) {
-        return ExecutionUtils.waitFor(execution, (current) => {
+    static waitForState($http, execution) {
+        return ExecutionUtils.waitFor($http, execution, (current) => {
             return ExecutionUtils.statePredicate(execution, current);
         })
     }

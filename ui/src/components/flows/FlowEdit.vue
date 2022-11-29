@@ -2,33 +2,39 @@
     <div>
         <flow-editor @save="save" v-model="content" lang="yaml" />
         <bottom-line v-if="canSave || canDelete || canExecute">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <b-button class="btn-danger" v-if="canDelete" @click="deleteFile">
-                        <kicon>
+            <ul>
+                <li>
+                    <kicon>
+                        <el-button type="danger" v-if="canDelete" @click="deleteFile">
                             <delete />
                             <span>{{ $t('delete') }}</span>
-                        </kicon>
-                    </b-button>
+                        </el-button>
+                    </kicon>
+                </li>
 
-                    <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
-
-
+                <li>
                     <router-link v-if="flow" :to="{name: 'flows/create', query: {copy: true}}">
-                        <b-button variant="primary">
+                        <el-button>
                             <kicon>
                                 <content-copy />
                                 {{ $t('copy') }}
                             </kicon>
-                        </b-button>
+                        </el-button>
                     </router-link>
+                </li>
 
-                    <b-button @click="save" v-if="canSave" variant="primary">
-                        <kicon :tooltip="'(Ctrl + s)'">
+                <li>
+                    <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
+                </li>
+
+
+                <li>
+                    <el-button @click="save" v-if="canSave" type="primary">
+                        <kicon>
                             <content-save />
                             <span>{{ $t('save') }}</span>
                         </kicon>
-                    </b-button>
+                    </el-button>
                 </li>
             </ul>
         </bottom-line>
@@ -63,7 +69,7 @@
             this.loadFile();
         },
         beforeUnmount() {
-            unsavedChange.methods.beforeDestroy.call(this);
+            unsavedChange.methods.beforeUnmount.call(this);
         },
     };
 </script>

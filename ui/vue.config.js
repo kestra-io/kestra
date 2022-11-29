@@ -13,31 +13,6 @@ module.exports = {
             filename: "index.html",
         },
     },
-    chainWebpack: config => {
-        config.entry("theme-light")
-            .add("./src/styles/theme-light.scss")
-            .end();
-
-        config.entry("theme-dark")
-            .add("./src/styles/theme-dark.scss")
-            .end();
-
-        config.resolve.alias.set("vue", "@vue/compat")
-
-        config.module
-            .rule("vue")
-            .use("vue-loader")
-            .tap((options) => {
-                return {
-                    ...options,
-                    compilerOptions: {
-                        compatConfig: {
-                            MODE: 2
-                        }
-                    }
-                }
-            })
-    },
     configureWebpack: {
         devtool: process.env.NODE_ENV !== "production" ? "eval-source-map" : false,
         optimization: {

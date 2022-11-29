@@ -2,14 +2,23 @@
     <div>
         <cytoscape ref="cytoscape">
             <template #btn>
-                <b-btn size="sm" @click="toggleOrientation">
-                    <kicon placement="bottomright" :tooltip="$t('topology-graph.graph-orientation')">
-                        <arrow-collapse-down v-if="orientation" />
-                        <arrow-collapse-right v-else />
-                    </kicon>
-                </b-btn>
+                <el-tooltip :content="$t('topology-graph.graph-orientation')">
+                    <el-button :icon="orientation ? icon.ArrowCollapseDown : icon.ArrowCollapseRight" size="small" @click="toggleOrientation" />
+                </el-tooltip>
             </template>
         </cytoscape>
+
+        <div v-for="(node, id) in treeNodes" :key="id">
+            <teleport :to="'#' + id" v-if="isRenderer(id)">
+                <tree-node
+                    :n="node"
+                    :namespace="namespace"
+                    :flow-id="flowId"
+                    :execution="execution"
+                    @follow="forwardEvent('follow', $event)"
+                />
+            </teleport>
+        </div>
     </div>
 </template>
 
@@ -23,15 +32,15 @@
     import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown";
     import Kicon from "../Kicon"
     import Cytoscape from "../layout/Cytoscape"
-    import VueManual from "../../mixins/VueManual";
+    import {shallowRef} from "vue";
 
     export default {
-        mixins: [VueManual],
         components: {
             ArrowCollapseDown,
             ArrowCollapseRight,
             Kicon,
-            Cytoscape
+            Cytoscape,
+            TreeNode
         },
         props: {
             flowGraph: {
@@ -55,12 +64,16 @@
         data() {
             return {
                 orientation: true,
+                icon: {
+                    ArrowCollapseDown: shallowRef(ArrowCollapseDown),
+                    ArrowCollapseRight: shallowRef(ArrowCollapseRight),
+                },
+                treeNodes: {}
             };
         },
         cy: undefined,
         watch: {
             flowGraph() {
-                this.destroyedManualComponent()
                 this.generateGraph();
             }
         },
@@ -116,6 +129,7 @@
             },
             getNodes: function (clusters) {
                 const nodes = [];
+
                 // add nodes
                 for (const node of this.flowGraph.nodes) {
                     const isEdge = this.isEdgeNode(node);
@@ -133,26 +147,11 @@
                     };
 
                     if (this.isEdgeNode(node)) {
-                        const nodeCon = this.createManualComponent(
-                            this,
-                            TreeNode,
-                            {
-                                n: node,
-                                namespace: this.namespace,
-                                flowId: this.flowId,
-                                execution: this.execution,
-                            })
-
-                        nodeCon.$on("follow", e => {
-                            this.$emit("follow", e);
-                        })
-
                         let div = document.createElement("div");
                         div.className = "node-binder"
                         div.id = `node-${node.uid.hashCode()}`
 
-                        let mount = this.mountManualComponent(nodeCon);
-                        div.appendChild(mount.$el);
+                        this.treeNodes[div.id] = node;
 
                         nodeData.data.dom = div
                     }
@@ -161,6 +160,9 @@
                 }
 
                 return nodes;
+            },
+            isRenderer(id) {
+                return document.getElementById(id) !== null;
             },
             getEdges() {
                 const edges = []
@@ -180,7 +182,7 @@
                 return edges;
             },
             getStyles() {
-                const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
+                const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
                 return [
                     {
@@ -370,5 +372,8 @@
                 return node.task !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTask" || node.type === "io.kestra.core.models.hierarchies.GraphClusterRoot")
             },
         },
+        beforeUnmount() {
+            this.cy && this.cy.destroy()
+        }
     };
 </script>

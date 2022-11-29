@@ -1,6 +1,14 @@
 <template>
-    <span class="kicon" v-b-tooltip="{title:tooltip, placement, html: true}">
-        <slot />
+    <span class="kicon">
+        <el-tooltip
+            v-if="tooltip"
+            :content="tooltip"
+            :raw-content="true"
+            :placement="placement"
+        >
+            <slot />
+        </el-tooltip>
+        <slot v-else />
     </span>
 </template>
 <script>

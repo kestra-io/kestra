@@ -1,15 +1,14 @@
 <template>
-    <div :id="uuid" :class="'executions-charts' + (global ? (this.big ? ' big' : '') : ' mini')" v-if="dataReady">
-        <BarChart ref="chartRef" :chart-data="chartData" :options="options" />
-        <b-tooltip
-            custom-class="tooltip-stats"
-            no-fade
-            :target="uuid"
+    <div :class="'executions-charts' + (global ? (this.big ? ' big' : '') : ' mini')" v-if="dataReady">
+        <el-tooltip
+            popper-class="tooltip-stats"
             :placement="(global ? 'bottom' : 'left')"
-            triggers="hover"
         >
-            <span v-html="tooltipContent" />
-        </b-tooltip>
+            <template #content>
+                <span v-html="tooltipContent" />
+            </template>
+            <BarChart ref="chartRef" :chart-data="chartData" :options="options" />
+        </el-tooltip>
     </div>
 </template>
 
@@ -19,6 +18,7 @@
     import Utils from "../../utils/utils.js";
     import {defaultConfig, tooltip, chartClick} from "../../utils/charts.js";
     import State from "../../utils/state";
+    import {useI18n} from "vue-i18n";
 
     export default defineComponent({
         components: {BarChart},
@@ -52,7 +52,9 @@
 
         },
         setup(props, {root}) {
-            let duration = "TODO"; //root.$i18n.t("duration")
+            const {t} = useI18n({useScope: "global"});
+
+            let duration = t("duration")
 
             const chartRef = ref();
             const tooltipContent = ref("");
@@ -113,7 +115,7 @@
                 return State.color()[state]
             }
 
-            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
+            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
             const chartData = computed(() => {
                 let datasets = props.data

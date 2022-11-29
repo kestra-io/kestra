@@ -1,20 +1,18 @@
 <template>
     <div>
-        <b-row>
-            <b-col md="9" class="markdown">
-                <b-overlay :show="isLoading" variant="transparent">
-                    <markdown v-if="plugin && $route.params.cls" :source="plugin.markdown" :permalink="true" />
-                    <div v-else>
-                        <b-alert variant="info" show>
-                            {{ $t('plugins.please') }}
-                        </b-alert>
-                    </div>
-                </b-overlay>
-            </b-col>
-            <b-col md="3">
+        <el-row :gutter="15">
+            <el-col :span="18" class="markdown" v-loading="isLoading">
+                <markdown v-if="plugin && $route.params.cls" :source="plugin.markdown" :permalink="true" />
+                <div v-else>
+                    <el-alert type="info" :closable="false" show-icon>
+                        {{ $t('plugins.please') }}
+                    </el-alert>
+                </div>
+            </el-col>
+            <el-col :span="6">
                 <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins" />
-            </b-col>
-        </b-row>
+            </el-col>
+        </el-row>
     </div>
 </template>
 
@@ -56,8 +54,10 @@
             this.loadPlugin()
         },
         watch: {
-            $route() {
-                this.onRouterChange();
+            $route(oldValue, newValue) {
+                if (oldValue.name === newValue.name) {
+                    this.onRouterChange();
+                }
             }
         },
         methods: {
@@ -90,7 +90,9 @@
 </script>
 
 <style lang="scss">
+    @use 'element-plus/theme-chalk/src/mixins/function' as *;
     @import "../../styles/_variable.scss";
+
     .markdown {
         h1 {
             font-size: $h2-font-size;
@@ -112,7 +114,7 @@
         }
 
         h2 {
-            margin-top: $spacer * 2;
+            margin-top: calc(getCssVar('spacer') * 2);
             border-bottom: 1px solid var(--gray-500);
             font-weight: bold;
             color: var(--gray-700)

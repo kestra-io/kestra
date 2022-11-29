@@ -1,35 +1,31 @@
 <template>
     <div>
-        <b-navbar v-if="original === undefined && navbar" class="top-nav">
-            <b-btn-group>
-                <b-button @click="autoFold(true)" size="sm" variant="light" v-b-tooltip.hover.top="$t('Fold content lines')">
-                    <unfold-less-horizontal />
-                </b-button>
-                <b-button
-                    @click="unfoldAll"
-                    size="sm"
-                    variant="light"
-                    v-b-tooltip.hover.top="$t('Unfold content lines')"
-                >
-                    <unfold-more-horizontal />
-                </b-button>
-            </b-btn-group>
-        </b-navbar>
+        <nav v-if="original === undefined && navbar" class="top-nav">
+            <el-button-group>
+                <el-tooltip :content="$t('Fold content lines')">
+                    <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" type="info" />
+                </el-tooltip>
+                <el-tooltip :content="$t('Unfold content lines')">
+                    <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" type="info" />
+                </el-tooltip>
+            </el-button-group>
+        </nav>
 
         <div class="editor-container" :class="containerClass">
             <div ref="editorContainer" class="editor-wrapper">
-                <MonacoEditor
+                <monaco-editor
                     ref="monacoEditor"
                     :theme="themeComputed"
-                    :value="value"
+                    :value="modelValue"
                     :options="options"
                     :diff-editor="original !== undefined"
                     :original="original"
                     :schemas="schemas"
-                    @editor-did-mount="editorDidMount"
                     @change="onInput"
+                    @editor-did-mount="editorDidMount"
                     :language="lang"
                 />
+
                 <div
                     v-show="showPlaceholder"
                     class="placeholder"
@@ -43,13 +39,18 @@
 </template>
 
 <script>
+import {defineAsyncComponent, shallowRef} from "vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal";
-    const MonacoEditor = () => import("./MonacoEditor");
+    import * as monaco from 'monaco-editor'
+
+    const MonacoEditor = defineAsyncComponent(() =>
+        import('./MonacoEditor')
+    )
 
     export default {
         props: {
-            value: {type: String, required: true},
+            modelValue: {type: String, required: true},
             original: {type: String, default: undefined},
             lang: {type: String, default: undefined},
             schemas: {type: Array, default: undefined},
@@ -68,11 +69,15 @@
             UnfoldLessHorizontal,
             UnfoldMoreHorizontal,
         },
-        emits: ["save", "focusout", "input"],
+        emits: ["save", "focusout", "update:modelValue"],
+        editor: undefined,
         data() {
             return {
                 focus: false,
-                editor: undefined
+                icon: {
+                    UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
+                    UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal)
+                }
             };
         },
         created() {
@@ -184,6 +189,9 @@
                     })
                 }
 
+                // @TODO: resize can be replaced by automaticLayout
+                // options.automaticLayout = true;
+
                 this.editor.addAction({
                     id: "kestra-save",
                     label: "Save",
@@ -280,7 +288,7 @@
                 this.editor.trigger("unfold", "editor.unfoldAll");
             },
             onInput(value) {
-                this.$emit("input", value);
+                this.$emit("update:modelValue", value);
             },
             onPlaceholderClick() {
                 this.editor.layout()

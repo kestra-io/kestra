@@ -1,87 +1,93 @@
 <template>
     <div v-if="revisions && revisions.length > 1">
-        <b-row>
-            <b-col md="12" class="mb-3">
-                <b-form-select v-model="sideBySide" :options="displayTypes" />
-            </b-col>
+        <el-select v-model="sideBySide" class="mb-3">
+            <el-option
+                v-for="item in displayTypes"
+                :key="item.value"
+                :label="item.text"
+                :value="item.value"
+            />
+        </el-select>
+        <el-row :gutter="15">
+            <el-col :span="12">
+                <div class="revision-select mb-3">
+                    <el-select v-model="revisionLeft">
+                        <el-option
+                            v-for="item in options"
+                            :key="item.value"
+                            :label="item.text"
+                            :value="item.value"
+                        />
+                    </el-select>
+                    <el-button-group>
+                        <el-button  :icon="icon.FileCode" @click="seeRevision(revisionLeft, revisionLeftText)">
+                            <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
+                        </el-button>
+                        <el-button :icon="icon.Restore" :disabled="revisionNumber(revisionLeft) === flow.revision" @click="restoreRevision(revisionLeft, revisionLeftText)">
+                            <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
+                        </el-button>
+                    </el-button-group>
+                </div>
 
-            <b-col md="6">
-                <b-input-group>
-                    <b-form-select @input="addQuery" v-model="revisionLeft" :options="options" />
-                    <b-input-group-append>
-                        <b-btn @click="seeRevision(revisionLeft, revisionLeftText)">
-                            <kicon placement="bottomright" :tooltip="$t('see full revision')">
-                                <file-code />
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
-                            </kicon>
-                        </b-btn>
-                        <b-btn :disabled="revisionNumber(revisionLeft) === flow.revision" @click="restoreRevision(revisionLeft, revisionLeftText)">
-                            <kicon placement="bottomright" :tooltip="$t('see full revision')">
-                                <restore />
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
-                            </kicon>
-                        </b-btn>
-                    </b-input-group-append>
-                </b-input-group>
-
-                <b-alert v-if="revisionLeftError" variant="warning" class="mb-0 mt-3" show>
+                <el-alert v-if="revisionLeftError" type="warning" show-icon :closable="false" class="mb-0 mt-3">
                     <strong>{{ $t('invalid source') }}</strong><br>
                     {{ revisionLeftError }}
-                </b-alert>
+                </el-alert>
 
                 <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionLeft)}" />
-            </b-col>
-            <b-col md="6">
-                <b-input-group>
-                    <b-form-select @input="addQuery" v-model="revisionRight" :options="options" />
-                    <b-input-group-append>
-                        <b-btn @click="seeRevision(revisionRight, revisionRightText)">
-                            <kicon placement="bottomright" :tooltip="$t('see full revision')">
-                                <file-code />
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
-                            </kicon>
-                        </b-btn>
-                        <b-btn :disabled="revisionNumber(revisionRight) === flow.revision" @click="restoreRevision(revisionRight, revisionRightText)">
-                            <kicon placement="bottomright" :tooltip="$t('see full revision')">
-                                <restore />
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
-                            </kicon>
-                        </b-btn>
-                    </b-input-group-append>
-                </b-input-group>
+            </el-col>
+            <el-col :span="12">
+                <div class="revision-select mb-3">
+                    <el-select v-model="revisionRight">
+                        <el-option
+                            v-for="item in options"
+                            :key="item.value"
+                            :label="item.text"
+                            :value="item.value"
+                        />
+                    </el-select>
+                    <el-button-group>
+                        <el-button  :icon="icon.FileCode" @click="seeRevision(revisionRight, revisionRightText)">
+                            <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
+                        </el-button>
+                        <el-button :icon="icon.Restore" :disabled="revisionNumber(revisionRight) === flow.revision" @click="restoreRevision(revisionRight, revisionRightText)">
+                            <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
+                        </el-button>
+                    </el-button-group>
+                </div>
 
-                <b-alert v-if="revisionRightError" variant="warning" class="mb-0 mt-3" show>
+                <el-alert v-if="revisionRightError" type="warning" show-icon :closable="false" class="mb-0 mt-3">
                     <strong>{{ $t('invalid source') }}</strong><br>
                     {{ revisionRightError }}
-                </b-alert>
+                </el-alert>
 
                 <crud class="mt-3" permission="FLOW" :detail="{namespace: $route.params.namespace, flowId: $route.params.id, revision: revisionNumber(revisionRight)}" />
-            </b-col>
-            <b-col md="12" ref="editorContainer" class="mt-3 editor-wrap">
-                <Editor
-                    :diff-side-by-side="sideBySide"
-                    :value="revisionRightText"
-                    :original="revisionLeftText"
-                    lang="yaml"
-                />
-            </b-col>
-        </b-row>
+            </el-col>
+        </el-row>
 
-        <b-modal
-            :id="`modal-source-${revisionId}`"
-            :title="`Revision ${revision}`"
-            hide-backdrop
-            hide-footer
-            modal-class="right"
-            size="xl"
-        >
+        <div ref="editorContainer" class="mt-3">
+            <Editor
+                :diff-side-by-side="sideBySide"
+                :model-value="revisionRightText"
+                :original="revisionLeftText"
+                lang="yaml"
+            />
+        </div>
+
+
+        <el-drawer v-if="isModalOpen" v-model="isModalOpen" destroy-on-close :append-to-body="true">
+            <template #header>
+                <h5>{{ $t("revision") + `: ` + revision }}</h5>
+            </template>
+
             <editor v-model="revisionYaml" lang="yaml" />
-        </b-modal>
+        </el-drawer>
+
     </div>
     <div v-else>
-        <b-alert class="mb-0" show>
+        <el-alert class="mb-0" show-icon :closable="false">
             {{ $t('no revisions found') }}
-        </b-alert>
+        </el-alert>
     </div>
 </template>
 <script>
@@ -93,6 +99,8 @@
     import Kicon from "../Kicon"
     import Crud from "override/components/auth/Crud";
     import {saveFlowTemplate} from "../../utils/flowTemplate";
+    import {shallowRef} from "vue";
+    import Trigger from "vue-material-design-icons/Cogs.vue";
 
     export default {
         components: {Editor, FileCode, Restore, Kicon, Crud},
@@ -144,9 +152,7 @@
                 this.revisionId = index
                 this.revisionYaml = revision
                 this.revision = this.revisionNumber(index)
-                setTimeout(() => {
-                    this.$bvModal.show(`modal-source-${index}`)
-                })
+                this.isModalOpen = true;
             },
             restoreRevision(index, revision) {
                 this.$toast()
@@ -223,7 +229,21 @@
                     {value: true, text: this.$t("side-by-side")},
                     {value: false, text:  this.$t("line-by-line")},
                 ],
+                icon: {FileCode: shallowRef(FileCode), Restore: shallowRef(Restore)},
+                isModalOpen: false
             };
         },
     };
 </script>
+<style scoped lang="scss">
+.revision-select {
+    display: flex;
+
+    > div {
+        &:first-child {
+            flex: 2;
+        }
+    }
+}
+
+</style>

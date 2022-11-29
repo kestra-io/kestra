@@ -14,7 +14,7 @@ import Errors from "../components/errors/Errors";
 
 export default [
     //Flows
-    {name: "home", path: "/", component: Flows},
+    {name: "home", path: "/", redirect: '/flows'},
     {name: "flows/list", path: "/flows", component: Flows},
     {name: "flows/search", path: "/flows/search", component: FlowsSearch},
     {name: "flows/create", path: "/flows/new", component: FlowEdit},

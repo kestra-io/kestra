@@ -3,74 +3,75 @@
         <div>
             <data-table
                 @page-changed="onPageChanged"
-                striped
-                hover
                 ref="dataTable"
                 :total="total"
             >
                 <template #navbar>
-                    <search-field />
-                    <namespace-select
-                        data-type="template"
-                        :value="$route.query.namespace"
-                        @input="onDataTableValue('namespace', $event)"
-                    />
+                    <el-form-item>
+                        <search-field />
+                    </el-form-item>
+                    <el-form-item>
+                        <namespace-select
+                            data-type="flow"
+                            :value="$route.query.namespace"
+                            @update:model-value="onDataTableValue('namespace', $event)"
+                        />
+                    </el-form-item>
                 </template>
 
                 <template #table>
-                    <b-table
-                        :no-local-sorting="true"
-                        @row-dblclicked="onRowDoubleClick"
-                        @sort-changed="onSort"
-                        :responsive="true"
-                        striped
-                        hover
-                        sort-by="id"
-                        :items="templates"
-                        :fields="fields"
+                    <el-table
+                        :data="templates"
                         ref="table"
-                        show-empty
+                        :default-sort="{prop: 'id', order: 'ascending'}"
+                        stripe
+                        table-layout="auto"
+                        fixed
+                        @row-dblclick="onRowDoubleClick"
+                        @sort-change="onSort"
                     >
-                        <template #empty>
-                            <span class="text-muted">{{ $t('no result') }}</span>
-                        </template>
-
-                        <template #cell(actions)="row">
-                            <router-link :to="{name: 'templates/update', params : {namespace: row.item.namespace, id: row.item.id}}">
-                                <kicon :tooltip="$t('details')" placement="left">
-                                    <eye />
-                                </kicon>
-                            </router-link>
-                        </template>
-
-                        <template #cell(id)="row">
-                            <router-link
-                                :to="{name: `templates/update`, params: {namespace: row.item.namespace, id: row.item.id}}"
-                            >
-                                {{ row.item.id }}
-                            </router-link>
-                            &nbsp;<markdown-tooltip
-                                :id="row.item.namespace + '-' + row.item.id"
-                                :description="row.item.description"
-                                :title="row.item.namespace + '.' + row.item.id"
-                                :modal="true"
+                        <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
+                            <template #default="scope">
+                                <router-link
+                                    :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
+                                >
+                                    {{ scope.row.id }}
+                                </router-link>
+                                &nbsp;<markdown-tooltip
+                                :id="scope.row.namespace + '-' + scope.row.id"
+                                :description="scope.row.description"
+                                :title="scope.row.namespace + '.' + scope.row.id"
                             />
-                        </template>
-                    </b-table>
+                            </template>
+                        </el-table-column>
+
+                        <el-table-column column-key="action" class-name="row-action">
+                            <template #default="scope">
+                                <router-link :to="{name: 'templates/update', params : {namespace: scope.row.namespace, id: scope.row.id}}">
+                                    <kicon :tooltip="$t('details')" placement="left">
+                                        <eye />
+                                    </kicon>
+                                </router-link>
+                            </template>
+                        </el-table-column>
+                    </el-table>
                 </template>
             </data-table>
         </div>
+
+
         <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <router-link :to="{name: 'templates/create'}">
-                        <b-button variant="primary">
-                            <kicon>
+            <ul>
+
+                <li>
+                    <kicon>
+                        <router-link :to="{name: 'templates/create'}">
+                            <el-button type="primary">
                                 <plus />
                                 {{ $t('create') }}
-                            </kicon>
-                        </b-button>
-                    </router-link>
+                            </el-button>
+                        </router-link>
+                    </kicon>
                 </li>
             </ul>
         </bottom-line>
@@ -121,28 +122,6 @@
                 return {
                     title: this.$t("templates")
                 };
-            },
-            fields() {
-                const title = (title) => {
-                    return this.$t(title);
-                };
-                return [
-                    {
-                        key: "id",
-                        label: title("template"),
-                        sortable: true,
-                    },
-                    {
-                        key: "namespace",
-                        label: title("namespace"),
-                        sortable: true
-                    },
-                    {
-                        key: "actions",
-                        label: "",
-                        class: "row-action",
-                    },
-                ];
             },
         },
         methods: {

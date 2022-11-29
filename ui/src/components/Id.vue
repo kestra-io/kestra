@@ -1,15 +1,10 @@
 <template>
-    <code :id="uuid" class="text-nowrap">
-        {{ transformValue }}
-        <b-tooltip
-            custom-class="auto-width"
-            v-if="hasTooltip"
-            :target="uuid"
-            triggers="hover"
-        >
-            <code>{{ value }}</code>
-        </b-tooltip>
-    </code>
+    <el-tooltip transition="" :hide-after="0" placement="top">
+        <template #content><code>{{ value }}</code></template>
+        <code :id="uuid" class="text-nowrap">
+            {{ transformValue }}
+        </code>
+    </el-tooltip>
 </template>
 
 <script>

@@ -1,0 +1,103 @@
+// Color system
+$blue: #1761fd !default;
+$indigo: #6610f2 !default;
+$purple: #6d81f5 !default;
+$pink: #fd3c97 !default;
+$red: #f5325c !default;
+$orange: #ff8500 !default;
+$yellow: #ffb822 !default;
+$green: #22b783 !default;
+$teal: #03d87f !default;
+$cyan: #12a4ed !default;
+
+$primary: #192A4E !default;
+$secondary: #4F83A5 !default;
+$tertiary: #9EBFD5 !default;
+
+$colors: (
+    'white': #ffffff,
+    'black': #000000,
+    'primary': (
+        'base': $primary,
+    ),
+    'success': (
+        'base': $green,
+    ),
+    'warning': (
+        'base': $yellow,
+    ),
+    'error': (
+        'base': $red,
+    ),
+    'info': (
+        'base': $cyan,
+    ),
+);
+
+
+$custom-colors: (
+    'secondary': (
+        'base': $secondary,
+    ),
+    'tertiary': (
+        'base': $tertiary,
+    ),
+    'blue': (
+        'base': $blue,
+    ),
+    'indigo': (
+        'base': $indigo,
+    ),
+    'purple': (
+        'base': $purple,
+    ),
+    'pink': (
+        'base': $pink,
+    ),
+    'red': (
+        'base': $red,
+    ),
+    'orange': (
+        'base': $orange,
+    ),
+    'yellow': (
+        'base': $yellow,
+    ),
+    'green': (
+        'base': $green,
+    ),
+    'teal': (
+        'base': $teal,
+    ),
+    'cyan': (
+        'base': $cyan,
+    ),
+);
+
+
+// Fonts
+$font-family: (
+    '':  '"Ubuntu", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
+    'monospace': '"Source Code Pro", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+) !default;
+
+
+$font-size-base: 16px;
+
+$font-size: (
+    'extra-large': $font-size-base * 1.5,
+    'large': $font-size-base * 1.25,
+    'medium': $font-size-base * 1.15 ,
+    'base': $font-size-base,
+    'small': $font-size-base * 0.875,
+    'extra-small': $font-size-base * 0.75,
+) !default;
+
+$border-radius: (
+    'base': 4px,
+    'large': 8px,
+    'small': 2px,
+    'round': 20px,
+    'circle': 100%,
+) !default;
+

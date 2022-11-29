@@ -1,16 +1,20 @@
 <template>
-    <v-select
-        :value="value"
-        @input="onInput"
+    <el-select
+        :model-value="value"
+        @update:model-value="onInput"
+        clearable
         :placeholder="$t('Select namespace')"
-        :options="groupedNamespaces"
-        :reduce="namespace => namespace.code"
-        class="ns-selector"
+        :persistent="false"
+        filterable
     >
-        <template #option="{label,level}">
-            <span :class="'level-'+level">{{ label }}</span>
-        </template>
-    </v-select>
+        <el-option
+            v-for="item in groupedNamespaces"
+            :key="item.code"
+            :class="'level-'+item.level"
+            :label="item.label"
+            :value="item.code"
+        />
+    </el-select>
 </template>
 <script>
     import {mapState} from "vuex";
@@ -27,7 +31,7 @@
                 default: undefined
             }
         },
-        emits: ["input"],
+        emits: ["update:modelValue"],
         created() {
             this.$store
                 .dispatch("namespace/loadNamespaces", {dataType: this.dataType})
@@ -45,7 +49,7 @@
         },
         methods: {
             onInput(value) {
-                this.$emit("input", value);
+                this.$emit("update:modelValue", value);
             },
             groupNamespaces(namespaces){
                 let res = [];

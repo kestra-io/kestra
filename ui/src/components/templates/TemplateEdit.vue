@@ -1,30 +1,37 @@
 <template>
-    <b-card>
+    <div>
         <template-editor @on-save="save" v-model="content" lang="yaml" />
         <bottom-line v-if="canSave || canDelete">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <b-button class="btn-danger" v-if="canDelete" @click="deleteFile">
-                        <delete />
-                        <span>{{ $t('delete') }}</span>
-                    </b-button>
+            <ul>
+                <li>
+                    <el-button type="danger" v-if="canDelete" @click="deleteFile">
+                        <kicon>
+                            <delete />
+                            <span>{{ $t('delete') }}</span>
+                        </kicon>
+                    </el-button>
 
-                    <b-button @click="save" v-if="canSave" variant="primary">
-                        <content-save />
-                        <span>{{ $t('save') }}</span>
-                    </b-button>
+                    <template v-if="canSave">
+                        <el-button @click="save" type="primary">
+                            <kicon>
+                                <content-save /> {{ $t('save') }}
+                            </kicon>
+                        </el-button>
+                    </template>
                 </li>
             </ul>
         </bottom-line>
-    </b-card>
+    </div>
 </template>
 
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
     import {mapState} from "vuex";
     import unsavedChange from "../../mixins/unsavedChange";
+    import Kicon from "../Kicon"
 
     export default {
+        components: {Kicon},
         mixins: [flowTemplateEdit],
         data() {
             return {
@@ -44,7 +51,7 @@
             this.reload()
         },
         beforeUnmount() {
-            unsavedChange.methods.beforeDestroy.call(this);
+            unsavedChange.methods.beforeUnmount.call(this);
         },
         unmounted() {
             this.$store.commit("template/setTemplate", undefined);

@@ -1,36 +1,33 @@
+@use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+
 $web-font-path: "https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700;900&display=swap" !default;
 
 @import url($web-font-path);
 
 body {
+    margin: 0;
+    width: 100%;
     min-width: 320px;
+    min-height: 100vh;
+    line-height: 1.5;
+    font-size: getCssVar('font-size', 'base');
+    font-weight: 400;
+    color: var(--text-color);
+    background-color: getCssVar('bg-color', 'page');
+    font-family: getCssVar('font-family', '');
+    direction: ltr;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color var(--el-transition-duration-fast)
 }
 
-body,
-html,
-.container {
-    height: 100% !important;
+a {
+    color: getCssVar('color', 'info')
 }
 
-.content-wrapper {
-    padding-top: 15px;
-    padding-bottom: 60px !important;
-
-    &.menu-collapsed {
-        transition: all 0.3s ease;
-        padding-left: 50px;
-    }
-
-    &.menu-not-collapsed {
-        transition: all 0.3s;
-        padding-left: $menu-width;
-
-        @media (min-width: map-get($grid-breakpoints, "lg")) {
-            padding-left: $menu-width + 40px;
-            padding-right: 40px;
-        }
-    }
-}
+$theme-name: "theme-light" !default;
 
 #theme-loaded {
     content: $theme-name;

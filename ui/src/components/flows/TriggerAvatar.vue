@@ -79,7 +79,7 @@
 @import "../../styles/_variable.scss";
 
 .b-avatar {
-    margin-right: math.div($badge-pill-padding-x, 2);
+    margin-right: 5px;
 }
 
 </style>

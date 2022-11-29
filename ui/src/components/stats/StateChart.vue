@@ -85,7 +85,7 @@
                         },
                         callbacks: {
                             label: function(context) {
-                                if (context.dataset.yAxisID === "yAxesB" && context.raw !== 0) {
+                                if (context.dataset.yAxisID === "yB" && context.raw !== 0) {
                                     return context.dataset.label + ": " + Utils.humanDuration(context.raw);
                                 } else if (context.formattedValue !== "0") {
                                     return context.dataset.label + ": " + context.formattedValue
@@ -95,18 +95,17 @@
                     },
                 },
                 scales: {
-                    xAxes: {
+                    x: {
                         stacked: true,
                     },
-                    yAxes: {
+                    y: {
                         display: false,
                         position: "left",
                         stacked: true,
                     },
-                    yAxesB: {
+                    yB: {
                         display: false,
                         position: "right",
-
                     }
                 },
             }))
@@ -126,7 +125,7 @@
                                     label: state,
                                     backgroundColor: backgroundFromState(state),
                                     borderRadius: 4,
-                                    yAxisID: "yAxes",
+                                    yAxisID: "y",
                                     data: []
                                 };
                             }
@@ -148,7 +147,7 @@
                             borderWidth: 0.2,
                             backgroundColor: Utils.hexToRgba(!darkTheme ? "#eaf0f9" : "#292e40", 0.5),
                             borderColor: !darkTheme ? "#7081b9" : "#7989b4",
-                            yAxisID: "yAxesB",
+                            yAxisID: "yB",
                             data: props.data
                                 .map((value) => {
                                     return value.duration.avg === 0 ? 0 : Utils.duration(value.duration.avg);

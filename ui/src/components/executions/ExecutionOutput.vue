@@ -46,7 +46,7 @@
 
             <editor class="mb-2" ref="editorContainer" :full-height="false" @save="onDebugExpression(filter, $event)" :input="true" :navbar="false" model-value="" />
             <editor v-if="debugExpression" :read-only="true" :full-height="false" :navbar="false" :minimap="false" :model-value="debugExpression" :lang="isJson ? 'json' : ''" />
-            <el-alert class="debug-error" type="danger" show-icon v-if="debugError" :closable="false">
+            <el-alert type="error" v-if="debugError" :closable="false">
                 <p><strong>{{ debugError }}</strong></p>
                 <pre class="mb-0">{{ debugStackTrace }}</pre>
             </el-alert>

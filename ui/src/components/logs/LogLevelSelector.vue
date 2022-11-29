@@ -1,6 +1,6 @@
 <template>
     <el-select
-        v-model="value"
+        :model-value="value"
         @update:model-value="onInput"
         filterable
         :persistent="false"

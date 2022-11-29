@@ -38,10 +38,10 @@ export function defaultConfig(override) {
             }
         },
         scales: {
-            xAxes: {
+            x: {
                 display: false,
             },
-            yAxes: {
+            y: {
                 display: false,
             }
         },

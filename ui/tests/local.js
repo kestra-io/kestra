@@ -1,12 +1,49 @@
-import {createLocalVue} from "@vue/test-utils"
-import BootstrapVue from "bootstrap-vue"
-import Vuex from "vuex"
-import VueMoment from "vue-moment"
+import {mount} from "@vue/test-utils"
+import {createStore} from "vuex"
+import {createI18n} from "vue-i18n";
+import moment from "moment/moment";
+import {extendMoment} from "moment-range";
+import ElementPlus from "element-plus";
+import filters from "../src/utils/filters";
+import translations from "../src/translations.json";
 
-const localVue = createLocalVue()
+let i18n = createI18n({
+    locale: "en",
+    messages: translations,
+    allowComposition: true,
+    legacy: false,
+    warnHtmlMessage: false,
+});
 
-localVue.use(BootstrapVue)
-localVue.use(Vuex)
-localVue.use(VueMoment)
+const store = createStore({
+    modules: {
+        plugin: {
+            state: {
+                icons: []
+            },
+            namespaced: true
+        }
+    }
+});
 
-export default localVue
+moment.locale("en");
+
+export default (component, options) => {
+    return mount(
+        component,
+        {
+            ...{
+                global: {
+                    plugins: [store, i18n, ElementPlus],
+                    config: {
+                        globalProperties: {
+                            $filters: filters,
+                            $moment: extendMoment(moment)
+                        }
+                    }
+                }
+            },
+            ...options
+        }
+    )
+}

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <template-editor @on-save="save" v-model="content" lang="yaml" />
+        <template-editor @on-save="save" v-model="content" lang="yaml" @update:model-value="onChange($event)" />
         <bottom-line v-if="canSave || canDelete">
             <ul>
                 <li>
@@ -27,7 +27,6 @@
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
     import {mapState} from "vuex";
-    import unsavedChange from "../../mixins/unsavedChange";
 
     export default {
         mixins: [flowTemplateEdit],
@@ -45,11 +44,7 @@
             },
         },
         created() {
-            unsavedChange.methods.created.call(this);
             this.reload()
-        },
-        beforeUnmount() {
-            unsavedChange.methods.beforeUnmount.call(this);
         },
         unmounted() {
             this.$store.commit("template/setTemplate", undefined);
@@ -63,6 +58,5 @@
                 }
             }
         }
-
     };
 </script>

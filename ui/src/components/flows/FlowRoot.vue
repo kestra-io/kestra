@@ -25,12 +25,11 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs";
-    import UnsavedChange from "../../mixins/unsavedChange";
     import BottomLine from "../../components/layout/BottomLine";
     import TriggerFlow from "../../components/flows/TriggerFlow";
 
     export default {
-        mixins: [RouteContext, UnsavedChange],
+        mixins: [RouteContext],
         components: {
             BottomLine,
             TriggerFlow,
@@ -39,7 +38,6 @@
         data() {
             return {
                 tabIndex: undefined,
-                checkUnsaved: true,
                 mounted: false,
                 previousFlow: undefined
             };
@@ -52,11 +50,7 @@
             }
         },
         created() {
-            UnsavedChange.methods.created.call(this);
             this.load();
-        },
-        beforeUnmount() {
-            UnsavedChange.methods.beforeUnmount.call(this);
         },
         methods: {
             load() {
@@ -132,14 +126,6 @@
 
                 return tabs;
             },
-            hasUnsavedChanged() {
-                return this.$refs.currentTab &&
-                    this.$refs.currentTab.$refs.tabContent &&
-                    this.$refs.currentTab.$refs.tabContent.$children[0] &&
-                    this.$refs.currentTab.$refs.tabContent.$children[0].hasUnsavedChanged &&
-                    this.$refs.currentTab.$refs.tabContent.$children[0].hasUnsavedChanged();
-            },
-
             activeTabName() {
                 if (this.$refs.currentTab) {
                     return this.$refs.currentTab.activeTab.name || "home";

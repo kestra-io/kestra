@@ -7,13 +7,12 @@ import Delete from "vue-material-design-icons/Delete";
 import FlowEditor from "override/components/inputs/FlowEditor";
 import TemplateEditor from "override/components/inputs/TemplateEditor";
 import RouteContext from "./routeContext";
-import UnsavedChange from "./unsavedChange";
 import YamlUtils from "../utils/yamlUtils";
 import action from "../models/action";
 import permission from "../models/permission";
 
 export default {
-    mixins: [RouteContext, UnsavedChange],
+    mixins: [RouteContext],
     components: {
         FlowEditor,
         TemplateEditor,
@@ -33,6 +32,7 @@ export default {
     computed: {
         ...mapState("auth", ["user"]),
         ...mapGetters("flow", ["flow"]),
+        ...mapGetters("core", ["isUnsaved"]),
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&
@@ -133,8 +133,8 @@ export default {
                     });
             }
         },
-        hasUnsavedChanged() {
-            return this.previousContent !== this.content;
+        onChange() {
+            this.$store.dispatch("core/isUnsaved", this.previousContent !== this.content);
         },
         save() {
             if (this.item) {

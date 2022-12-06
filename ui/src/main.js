@@ -1,5 +1,4 @@
-import "moment/locale/fr"
-import App from "./App.vue"
+
 import {createApp} from "vue"
 import {createI18n} from "vue-i18n"
 import {createRouter, createWebHistory} from "vue-router"
@@ -8,8 +7,13 @@ import {createStore} from "vuex"
 import VueGtag from "vue-gtag";
 import {extendMoment} from "moment-range";
 import ElementPlus from "element-plus"
-import moment from "moment"
 import VueAxios from "vue-axios";
+import moment from "moment"
+import "moment/locale/fr"
+
+import App from "./App.vue"
+import createUnsavedChanged from "./utils/unsavedChange"
+
 // import VueHotkey from "v-hotkey"
 
 import "./utils/global"
@@ -83,6 +87,7 @@ let i18n = createI18n({
 
 app.use(i18n);
 
+
 // moment
 moment.locale(locale);
 app.config.globalProperties.$moment = extendMoment(moment);
@@ -96,6 +101,9 @@ app.config.globalProperties.$filters = filters;
 
 // element-plus
 app.use(ElementPlus)
+
+// navigation guard
+createUnsavedChanged(app, store, router);
 
 // axios
 configureAxios((instance) => {

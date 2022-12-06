@@ -1,6 +1,6 @@
 <template>
     <div>
-        <flow-editor @save="save" v-model="content" lang="yaml" />
+        <flow-editor @save="save" v-model="content" lang="yaml" @update:model-value="onChange($event)" />
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
@@ -39,7 +39,6 @@
 
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
-    import unsavedChange from "../../mixins/unsavedChange";
     import {mapGetters} from "vuex";
     import TriggerFlow from "./TriggerFlow"
 
@@ -57,11 +56,9 @@
             ...mapGetters("flow", ["flow"]),
         },
         created() {
-            unsavedChange.methods.created.call(this);
             this.loadFile();
         },
         beforeUnmount() {
-            unsavedChange.methods.beforeUnmount.call(this);
         },
     };
 </script>

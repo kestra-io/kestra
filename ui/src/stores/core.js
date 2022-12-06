@@ -2,7 +2,8 @@ export default {
     namespaced: true,
     state: {
         message: undefined,
-        error: undefined
+        error: undefined,
+        unsavedChange: false,
     },
     actions: {
         showMessage({commit}, message) {
@@ -10,6 +11,9 @@ export default {
         },
         showError({commit}, error) {
             commit("setError", error)
+        },
+        isUnsaved({commit}, unsavedChange) {
+            commit("setUnsavedChange", unsavedChange)
         }
     },
     mutations: {
@@ -18,7 +22,14 @@ export default {
         },
         setError(state, error) {
             state.error = error
+        },
+        setUnsavedChange(state, unsavedChange) {
+            state.unsavedChange = unsavedChange
         }
     },
-    getters: {}
+    getters: {
+        unsavedChange(state) {
+            return state.unsavedChange;
+        }
+    }
 }

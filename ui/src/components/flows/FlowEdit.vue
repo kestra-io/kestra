@@ -4,21 +4,15 @@
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
-                    <kicon>
-                        <el-button type="danger" v-if="canDelete" @click="deleteFile">
-                            <delete />
-                            <span>{{ $t('delete') }}</span>
-                        </el-button>
-                    </kicon>
+                    <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteFile">
+                        {{ $t('delete') }}
+                    </el-button>
                 </li>
 
                 <li>
                     <router-link v-if="flow" :to="{name: 'flows/create', query: {copy: true}}">
-                        <el-button>
-                            <kicon>
-                                <content-copy />
-                                {{ $t('copy') }}
-                            </kicon>
+                        <el-button :icon="ContentCopy">
+                            {{ $t('copy') }}
                         </el-button>
                     </router-link>
                 </li>
@@ -27,13 +21,9 @@
                     <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
                 </li>
 
-
                 <li>
-                    <el-button @click="save" v-if="canSave" type="primary">
-                        <kicon>
-                            <content-save />
-                            <span>{{ $t('save') }}</span>
-                        </kicon>
+                    <el-button :icon="ContentSave" @click="save" v-if="canSave" type="primary">
+                        {{ $t('save') }}
                     </el-button>
                 </li>
             </ul>
@@ -41,19 +31,21 @@
     </div>
 </template>
 
+<script setup>
+    import ContentCopy from "vue-material-design-icons/ContentCopy";
+    import ContentSave from "vue-material-design-icons/ContentSave";
+    import Delete from "vue-material-design-icons/Delete";
+</script>
+
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
     import unsavedChange from "../../mixins/unsavedChange";
     import {mapGetters} from "vuex";
     import TriggerFlow from "./TriggerFlow"
-    import Kicon from "../Kicon"
-    import ContentCopy from "vue-material-design-icons/ContentCopy";
 
     export default {
         components: {
             TriggerFlow,
-            Kicon,
-            ContentCopy,
         },
         mixins: [flowTemplateEdit],
         data() {

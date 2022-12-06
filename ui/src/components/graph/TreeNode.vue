@@ -18,7 +18,7 @@
                     <el-tag
                         v-if="this.execution"
                         type="info"
-                        class="mr-1"
+                        class="me-1"
                         size="small"
                         round
                         disable-transitions
@@ -47,7 +47,7 @@
                     />
 
 
-                    <el-tooltip v-if="this.execution" :content="$t('show task logs')">
+                    <el-tooltip v-if="this.execution" :content="$t('show task logs')" :persistent="false" transition="" :hide-after="0">
                         <el-button
                             class="node-action"
                             :disabled="this.taskRuns.length === 0"
@@ -76,14 +76,15 @@
             v-model="isOpen"
             :title="`Task ${task.id}`"
             destroy-on-close
+            size=""
             :append-to-body="true"
         >
             <collapse>
                 <el-form-item>
-                    <search-field :router="false" @search="onSearch" class="mr-2" />
+                    <search-field :router="false" @search="onSearch" class="me-2" />
                 </el-form-item>
                 <el-form-item>
-                    <log-level-selector :log-level="logLevel" @input="onLevelChange" />
+                    <log-level-selector :value="logLevel" @update:model-value="onLevelChange" />
                 </el-form-item>
             </collapse>
 
@@ -236,130 +237,123 @@
     };
 </script>
 <style scoped lang="scss">
-@import "../../styles/_variable.scss";
+    .node-wrapper {
+        cursor: pointer;
+        display: flex;
+        width: 200px;
+        background: var(--bs-gray-100);
 
-.node-wrapper {
-    cursor: pointer;
-    display: flex;
-    width: 200px;
-    background: var(--gray-100);
-
-    .el-button, .card-header {
-        border-radius: 0 !important;
-    }
-
-    &.task-disabled {
-        .card-header .task-title {
-            text-decoration: line-through;
+        .el-button, .card-header {
+            border-radius: 0 !important;
         }
-    }
 
-    > .icon {
-        width: 35px;
-        height: 51px;
-        background: var(--white);
-        border-right: 1px solid var(--table-border-color);
-        position: relative;
-    }
+        &.task-disabled {
+            .card-header .task-title {
+                text-decoration: line-through;
+            }
+        }
 
-    .status-color {
-        width: 10px;
-        height: 51px;
-        border-right: 1px solid var(--table-border-color);
-    }
+        > .icon {
+            width: 35px;
+            height: 53px;
+            background: var(--white);
+            border-right: 1px solid var(--bs-border-color);
+            position: relative;
+        }
 
-    .is-success {
-        background-color: var(--green);
-    }
+        .status-color {
+            width: 10px;
+            height: 53px;
+            border-right: 1px solid var(--bs-border-color);
+        }
 
-    .is-running {
-        background-color: var(--blue);
-    }
+        .is-success {
+            background-color: var(--green);
+        }
 
-    .is-failed {
-        background-color: var(--red);
-    }
+        .is-running {
+            background-color: var(--blue);
+        }
 
-    .bg-undefined {
-        background-color: var(--gray-400);
-    }
+        .is-failed {
+            background-color: var(--red);
+        }
 
-    .task-content {
-        flex-grow: 1;
-        width: 38px;
+        .bg-undefined {
+            background-color: var(--bs-gray-400);
+        }
 
-        .card-header {
-            height: 25px;
-            padding: 2px;
-            margin: 0;
-            border-bottom: 1px solid var(--table-border-color);
-            flex: 1;
-            flex-wrap: nowrap;
+        .task-content {
+            flex-grow: 1;
+            width: 38px;
 
-            background-color: var(--gray-200);
-            .theme-dark & {
-                background-color: var(--gray-300);
+            .card-header {
+                height: 25px;
+                padding: 2px;
+                margin: 0;
+                border-bottom: 1px solid var(--bs-border-color);
+                flex: 1;
+                flex-wrap: nowrap;
+                background-color: var(--bs-gray-200);
+                color: var(--bs-body-color);
+
+                html.dark & {
+                    background-color: var(--bs-gray-300);
+                }
+
+                .icon-wrapper {
+                    display: inline-block;
+                    flex-shrink: 2;
+                }
+
+                .task-title {
+                    margin-left: 2px;
+                    display: inline-block;
+                    font-size: var(--font-size-sm);
+                    flex-grow: 1;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 100%;
+                    white-space: nowrap;
+                }
+
+                :deep(.node-action) {
+                    flex-shrink: 2;
+                    padding-top: 18px;
+                    padding-right: 18px;
+                }
             }
 
-            .icon-wrapper {
-                display: inline-block;
-                flex-shrink: 2;
+            .status-wrapper {
+                margin: 10px;
             }
+        }
 
-            .task-title {
-                margin-left: 2px;
-                display: inline-block;
-                font-size: $font-size-sm;
-                flex-grow: 1;
+        .card-wrapper {
+            top: 50px;
+            position: absolute;
+        }
+
+        .info-wrapper {
+            display: flex;
+            .bottom {
+                padding: 4px 4px;
+                color: var(--bs-body-color);
+                opacity: 0.7;
+                font-size: var(--font-size-xs);
+                flex-grow: 2;
+                white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                max-width: 100%;
-                white-space: nowrap;
-            }
-
-            :deep(.node-action) {
-                flex-shrink: 2;
-                padding-top: 18px;
-                padding-right: 18px;
+                position: relative;
             }
         }
 
-        .status-wrapper {
-            margin: 10px;
+        .node-action {
+            height: 28px;
+            padding-top: 1px;
+            padding-right: 5px;
+            padding-left: 5px;
         }
     }
-
-    .card-wrapper {
-        top: 50px;
-        position: absolute;
-    }
-
-    .info-wrapper {
-        display: flex;
-        .bottom {
-            padding: 4px 4px;
-            color: $text-muted;
-            font-size: $font-size-xs;
-            flex-grow: 2;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            position: relative;
-
-            .badge {
-                padding-bottom: $badge-padding-y;
-                font-weight: bold;
-                font-size: 100%;
-                top: -4px;
-            }
-        }
-    }
-
-    .node-action {
-        height: 26px;
-        padding-top: 1px;
-        padding-right: 5px;
-        padding-left: 5px;
-    }
-}
 </style>

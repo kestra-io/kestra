@@ -1,0 +1,51 @@
+@use 'sass:map';
+@import "../theme-dark";
+
+// Bootstrap
+@import "~bootstrap/scss/functions";
+@import "~bootstrap/scss/mixins";
+@import "~bootstrap/scss/vendor/rfs";
+@import '~bootstrap/scss/variables';
+
+html.dark {
+    #{--bs-gray}: #{map.get($grays, "600")};
+    @each $key, $value in $grays {
+        --bs-gray-#{$key}: #{$value};
+
+        @each $i in (2, 3, 5, 7, 10, 15) {
+            #{--bs-gray-#{$key}-lighten-#{$i}}: #{lighten($value, $i)};
+            #{--bs-gray-#{$key}-darken-#{$i}}: #{darken($value, $i)};
+        }
+    }
+
+    #{--bs-body-color}: $body-color;
+    #{--bs-body-bg}: $body-bg;
+    #{--bs-border-color}: $border-color;
+    #{--card-bg}: $card-bg;
+
+
+    --el-bg-color: var(--bs-body-bg);
+    --el-bg-color-page: var(--bs-body-bg);
+    --el-bg-color-overlay: var(--bs-gray-100-darken-5);
+
+    --el-text-color-primary: var(--bs-primary);
+    --el-text-color-regular: var(--bs-body-color);
+    --el-text-color-secondary: var(--bs-secondary);
+    --el-text-color-placeholder: var(--bs-gray-600);
+    --el-text-color-disabled: var(--bs-gray-500);
+
+    --el-border-color: var(--bs-border-color);
+    --el-border-color-light: var(--bs-secondary);
+    --el-border-color-lighter: var(--bs-secondary);
+    --el-border-color-extra-light: var(--bs-secondary);
+    --el-border-color-dark: var(--bs-secondary);
+    --el-border-color-darker: var(--bs-secondary);
+
+    --el-fill-color: var(--bs-gray-700);
+    --el-fill-color-light: var(--bs-gray-600);
+    --el-fill-color-lighter: var(--bs-gray-500);
+    --el-fill-color-extra-light: var(--bs-gray-400);
+    --el-fill-color-dark: var(--bs-gray-800);
+    --el-fill-color-darker: var(--bs-gray-900);
+    --el-fill-color-blank: var(--bs-card-bg);
+}

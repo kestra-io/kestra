@@ -1,6 +1,6 @@
 <template>
     <div class="wrapper" v-if="enabled">
-        <el-button @click="kill" type="warning" class="mr-1">
+        <el-button @click="kill" type="warning" class="me-1">
             <stop-circle-outline />
             {{ $t("kill") }}
         </el-button>

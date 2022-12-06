@@ -4,7 +4,7 @@
             <el-col :span="12" class="crud-align">
                 <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
             </el-col>
-            <el-col :span="12" class="text-right">
+            <el-col :span="12" class="text-end">
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <kill :execution="execution" />
                 <status :status="execution.state.current" />

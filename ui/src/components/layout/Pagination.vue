@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex">
+    <div class="d-flex pagination">
         <div class="flex-grow-1 d-sm-none d-md-inline-block page-size">
             <el-select
                 size="small"
@@ -15,7 +15,7 @@
                 />
             </el-select>
         </div>
-        <div class="mr-auto">
+        <div>
             <el-pagination
                 v-model:current-page="internalPage"
                 :page-size="internalSize"
@@ -31,11 +31,11 @@
 
         </div>
 
-        <small v-if="max" class="d-md-none d-lg-block total mr-1">
+        <small v-if="max" class="d-md-none d-lg-block total ms-2">
             {{ $t('Max displayable') }}: {{ max }}
         </small>
 
-        <small class="total text-total">
+        <small class="total text-total ms-2">
             {{ $t('Total') }}: {{ total }}
         </small>
     </div>
@@ -79,32 +79,33 @@
     };
 </script>
 <style scoped lang="scss">
-@use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
-.el-select {
-    width: auto;
-}
+    .pagination {
+        margin-top: var(--spacer);
 
-.page-size {
+        .el-select {
+            width: auto;
+        }
 
-    @include res(xs) {
-        display: none;
+        .page-size {
+            @include res(xs) {
+                display: none;
+            }
+        }
+
+        .text-total {
+            color: var(--el-text-primary);
+            font-weight: normal;
+        }
+
+        .total {
+            padding: 0 4px;
+            line-height: 1.85;
+            font-size: var(--el-font-size-extra-small);
+            border-radius: var(--bs-border-radius-sm);
+            border: 1px solid var(--bs-border-color);
+            white-space: nowrap;
+        }
     }
-}
-
-.text-total {
-    color: getCssVar('text-color', 'primary');
-    font-weight: normal;
-}
-
-.total {
-    margin-top: 2px;
-    margin-bottom: 2px;
-    padding: 0 4px;
-    line-height: 1.8;
-    font-size: getCssVar('font-size', 'extra-small');
-    border-radius: getCssVar('border-radius', 'small');
-    border: 1px solid getCssVar('border-color');
-    white-space: nowrap;
-}
 </style>

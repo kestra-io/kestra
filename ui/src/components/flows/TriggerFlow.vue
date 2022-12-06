@@ -1,27 +1,26 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button :disabled="disabled" @click="onClick">
-            <kicon>
-                <flash /> {{ $t('New execution') }}
-            </kicon>
+        <el-button :icon="Flash" :disabled="disabled" @click="onClick">
+           {{ $t('New execution') }}
         </el-button>
         <el-dialog v-if="isOpen" v-model="isOpen" :title="$t('execute the flow')" destroy-on-close :append-to-body="true">
             <flow-run @execution-trigger="closeModal" :redirect="true" />
         </el-dialog>
     </div>
 </template>
-<script>
+
+<script setup>
     import Flash from "vue-material-design-icons/Flash";
+</script>
+
+<script>
     import FlowRun from "./FlowRun";
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
-    import Kicon from "../Kicon"
 
     export default {
         components: {
-            Flash,
             FlowRun,
-            Kicon
         },
         props: {
             flowId: {
@@ -77,6 +76,7 @@
         }
     };
 </script>
+
 <style scoped>
 .trigger-flow-wrapper {
     display: inline;

@@ -79,26 +79,3 @@
     };
 </script>
 
-<style lang="scss" scoped>
-@import "../../styles/_variable.scss";
-@include media-breakpoint-up(md) {
-    .ns-selector {
-        width:550px !important;
-    }
-}
-
-.v-select{
-    $levels: 10;
-    $level-size: 6px;
-
-    @mixin level-x {
-        @for $i from 0 through $levels {
-            .level-#{$i} {
-                margin-left: $level-size * $i;
-            }
-        }
-    }
-
-    @include level-x;
-}
-</style>

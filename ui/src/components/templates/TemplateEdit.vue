@@ -4,18 +4,13 @@
         <bottom-line v-if="canSave || canDelete">
             <ul>
                 <li>
-                    <el-button type="danger" v-if="canDelete" @click="deleteFile">
-                        <kicon>
-                            <delete />
-                            <span>{{ $t('delete') }}</span>
-                        </kicon>
+                    <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteFile">
+                         {{ $t('delete') }}
                     </el-button>
 
                     <template v-if="canSave">
-                        <el-button @click="save" type="primary">
-                            <kicon>
-                                <content-save /> {{ $t('save') }}
-                            </kicon>
+                        <el-button :icon="ContentSave" @click="save" type="primary">
+                            {{ $t('save') }}
                         </el-button>
                     </template>
                 </li>
@@ -24,14 +19,17 @@
     </div>
 </template>
 
+<script setup>
+    import ContentSave from "vue-material-design-icons/ContentSave";
+    import Delete from "vue-material-design-icons/Delete";
+</script>
+
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
     import {mapState} from "vuex";
     import unsavedChange from "../../mixins/unsavedChange";
-    import Kicon from "../Kicon"
 
     export default {
-        components: {Kicon},
         mixins: [flowTemplateEdit],
         data() {
             return {

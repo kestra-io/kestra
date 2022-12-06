@@ -6,11 +6,8 @@
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
-                    <el-button type="danger" v-if="canDelete" @click="deleteExecution">
-                        <kicon>
-                            <delete />
-                            <span>{{ $t('delete') }}</span>
-                        </kicon>
+                    <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteExecution">
+                        {{ $t('delete') }}
                     </el-button>
 
                     <template v-if="isAllowedTrigger">
@@ -18,10 +15,8 @@
                     </template>
 
                     <template v-if="isAllowedEdit">
-                        <el-button @click="editFlow">
-                            <kicon>
-                                <pencil /> {{ $t('edit flow') }}
-                            </kicon>
+                        <el-button :icon="Pencil" @click="editFlow">
+                            {{ $t('edit flow') }}
                         </el-button>
                     </template>
                 </li>
@@ -29,6 +24,12 @@
         </bottom-line>
     </div>
 </template>
+
+<script setup>
+    import Delete from "vue-material-design-icons/Delete";
+    import Pencil from "vue-material-design-icons/Pencil";
+</script>
+
 <script>
     import Gantt from "./Gantt";
     import Overview from "./Overview";
@@ -39,12 +40,10 @@
     import TriggerFlow from "../flows/TriggerFlow";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
-    import Pencil from "vue-material-design-icons/Pencil";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import Kicon from "../Kicon"
     import Tabs from "../../components/Tabs";
-    import Delete from "vue-material-design-icons/Delete";
+
     import State from "../../utils/state";
 
     export default {
@@ -52,10 +51,7 @@
         components: {
             BottomLine,
             TriggerFlow,
-            Pencil,
-            Kicon,
             Tabs,
-            Delete,
         },
         data() {
             return {
@@ -173,6 +169,12 @@
             },
             routeInfo() {
                 const ns = this.$route.params.namespace;
+                const flowId = this.$route.params.flowId;
+
+                if (!ns || !flowId) {
+                    return {};
+                }
+
                 return {
                     title: this.$route.params.id,
                     breadcrumb: [
@@ -186,12 +188,12 @@
                             }
                         },
                         {
-                            label: `${ns}.${this.$route.params.flowId}`,
+                            label: `${ns}.${flowId}`,
                             link: {
                                 name: "flows/update",
                                 params: {
                                     namespace: ns,
-                                    id: this.$route.params.flowId
+                                    id: flowId
                                 }
                             }
                         },
@@ -201,7 +203,7 @@
                                 name: "flows/update",
                                 params: {
                                     namespace: ns,
-                                    id: this.$route.params.flowId,
+                                    id: flowId,
                                     tab: "executions"
                                 }
                             }

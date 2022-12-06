@@ -1,36 +1,41 @@
 <template>
     <div class="plugins-list">
-        <el-collapse accordion >
-            <el-collapse-item
+        <el-collapse accordion>
+            <template
                 :title="plugin.manifest['X-Kestra-Title']"
-                :name="plugin.manifest['X-Kestra-Title']"
                 :key="plugin.manifest['X-Kestra-Title']"
-                v-for="(plugin, index) in plugins"
+                v-for="(plugin) in sortedPlugins(plugins)"
             >
-                <ul class="toc-h3">
-                    <li v-for="(types, namespace) in group(plugin, plugin.tasks)" :key="namespace">
-                        <h6>{{ namespace }}</h6>
-                        <ul class="toc-h4">
-                            <li v-for="(classes, type) in types" :key="type+'-'+ namespace">
-                                <h6>{{ $filters.cap(type) }}</h6>
-                                <ul class="section-nav toc-h5">
-                                    <li v-for="cls in classes" :key="cls">
-                                        <router-link
-                                            @click="$emit('routerChange')"
-                                            :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
-                                        >
-                                            <div class="icon">
-                                                <task-icon :only-icon="true" :cls="namespace + '.' + cls" />
-                                            </div>
-                                            {{ cls }}
-                                        </router-link>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </el-collapse-item>
+                <el-collapse-item
+                    v-if="isVisible(plugin)"
+                    :name="plugin.manifest['X-Kestra-Title']"
+                    :title="plugin.manifest['X-Kestra-Title']"
+                >
+                    <ul class="toc-h3">
+                        <li v-for="(types, namespace) in group(plugin, plugin.tasks)" :key="namespace">
+                            <h6>{{ namespace }}</h6>
+                            <ul class="toc-h4">
+                                <li v-for="(classes, type) in types" :key="type+'-'+ namespace">
+                                    <h6>{{ $filters.cap(type) }}</h6>
+                                    <ul class="section-nav toc-h5">
+                                        <li v-for="cls in classes" :key="cls">
+                                            <router-link
+                                                @click="$emit('routerChange')"
+                                                :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
+                                            >
+                                                <div class="icon">
+                                                    <task-icon :only-icon="true" :cls="namespace + '.' + cls" />
+                                                </div>
+                                                {{ cls }}
+                                            </router-link>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </el-collapse-item>
+            </template>
         </el-collapse>
     </div>
 </template>
@@ -55,58 +60,73 @@
             }
         },
         methods: {
+            sortedPlugins(plugins) {
+                return plugins
+                    .sort((a, b) => {
+                        const nameA = (a.manifest && a.manifest['X-Kestra-Title'] ? a.manifest['X-Kestra-Title'].toLowerCase() : ""),
+                            nameB = (b.manifest && b.manifest['X-Kestra-Title'] ? b.manifest['X-Kestra-Title'].toLowerCase() : "");
+
+                        return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
+                    })
+            },
             group(plugin) {
                 return Object.keys(plugin)
                     .filter(r => r === "tasks" || r === "triggers" || r === "conditions")
                     .flatMap(type => {
                         return (plugin[type] === undefined ? {} : plugin[type])
                             .map(task => {
+                                const namespace = task.substring(0, task.lastIndexOf("."));
+
                                 return {
                                     type: type,
-                                    namepace: task.substring(0, task.lastIndexOf(".")),
+                                    namespace: namespace,
                                     cls: task.substring(task.lastIndexOf(".") + 1)
                                 };
                             })
                     })
                     .reduce((accumulator, value)  => {
-                        accumulator[value.namepace] = accumulator[value.namepace] || {};
-                        accumulator[value.namepace][value.type] = accumulator[value.namepace][value.type] || [];
-                        accumulator[value.namepace][value.type].push(value.cls);
+                        accumulator[value.namespace] = accumulator[value.namespace] || {};
+                        accumulator[value.namespace][value.type] = accumulator[value.namespace][value.type] || [];
+                        accumulator[value.namespace][value.type].push(value.cls);
 
                         return accumulator;
-                    }, Object.create(null));
-            }
+                    }, Object.create(null))
+
+            },
+            isVisible(plugin) {
+                return [...plugin.tasks, ...plugin.triggers, ...plugin.conditions].length > 0
+            },
         }
     }
 </script>
 
 <style lang="scss">
-    @use "sass:math";
-    @use 'element-plus/theme-chalk/src/mixins/function' as *;
-    @import "../../styles/_variable.scss";
-
     .plugins-list {
-        font-size: $font-size-xs;
-
         ul {
             list-style: none;
             padding-inline-start: 0;
             margin-bottom: 0;
+            font-size: var(--font-size-xs);
+            margin-left: calc(var(--spacer) / 2);
+        }
+
+        h6, a {
+            word-break: break-all;
         }
 
         .toc-h3 {
             .icon {
-                width: $font-size-sm;
-                height: $font-size-sm;
+                width: var(--font-size-sm);
+                height: var(--font-size-sm);
                 display: inline-block;
                 position: relative;
             }
 
             .toc-h4 {
-                margin-left: getCssVar('spacer');
+                margin-left: var(--spacer);
                 h6 {
-                    font-size: $h6-font-size * 0.8;
-                    margin-bottom: calc(getCssVar('spacer') / 3);
+                    font-size: var(--font-size-sm);
+                    margin-bottom: calc(var(--spacer) / 3);
                 }
             }
         }

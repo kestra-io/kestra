@@ -1,6 +1,6 @@
 <template>
     <el-dropdown-item
-        :icon="icon.ChartAreaspline"
+        :icon="ChartAreaspline"
         :disabled="!(metrics && metrics.length > 0)"
         @click="isOpen = !isOpen"
     >
@@ -13,7 +13,7 @@
         :title="$t('metrics')"
         destroy-on-close
         :append-to-body="true"
-        size="50%"
+        size=""
         direction="ltr"
     >
         <el-table
@@ -41,7 +41,7 @@
                     <el-tag
                         v-for="(value, key) in scope.row.tags"
                         :key="key"
-                        class="mr-1"
+                        class="me-1"
                         type="info"
                         size="small"
                         disable-transitions
@@ -65,12 +65,14 @@
     </el-drawer>
 </template>
 
+<script setup>
+    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue";
+</script>
+
 <script>
-    import {shallowRef} from "vue";
     import Kicon from "../Kicon";
     import Timer from "vue-material-design-icons/Timer";
     import Counter from "vue-material-design-icons/Numeric";
-    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline.vue";
 
     export default {
         components: {
@@ -81,13 +83,12 @@
         props: {
             metrics: {
                 type: Array,
-                required: true
+                default: undefined
             }
         },
         data() {
             return {
                 isOpen: false,
-                icon: {ChartAreaspline: shallowRef(ChartAreaspline)}
             };
         },
     };

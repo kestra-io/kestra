@@ -3,8 +3,8 @@
         <div v-if="ready">
             <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" @hook:mounted="mounted = true" />
             <bottom-line v-if="mounted && displayBottomLine()">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item">
+                <ul>
+                    <li>
                         <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
                     </li>
                 </ul>

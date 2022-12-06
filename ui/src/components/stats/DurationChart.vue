@@ -3,6 +3,9 @@
         <el-tooltip
             popper-class="tooltip-stats"
             :placement="(global ? 'bottom' : 'left')"
+            :persistent="false"
+            :hide-after="0"
+            transition=""
         >
             <template #content>
                 <span v-html="tooltipContent" />

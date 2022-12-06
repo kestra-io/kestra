@@ -1,8 +1,8 @@
 <template>
-    <div>
+    <el-card shadow="never">
         <cytoscape ref="cytoscape">
             <template #btn>
-                <el-tooltip :content="$t('topology-graph.graph-orientation')">
+                <el-tooltip :content="$t('topology-graph.graph-orientation')" :persistent="false" transition="" :hide-after="0">
                     <el-button :icon="orientation ? icon.ArrowCollapseDown : icon.ArrowCollapseRight" size="small" @click="toggleOrientation" />
                 </el-tooltip>
             </template>
@@ -19,7 +19,7 @@
                 />
             </teleport>
         </div>
-    </div>
+    </el-card>
 </template>
 
 <script>

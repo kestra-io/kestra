@@ -3,8 +3,8 @@
         <collapse>
             <el-form-item>
                 <el-input
-                    v-model="filter"
-                    @input="onChange"
+                    :model-value="filter"
+                    @update:model-value="onChange"
                     :placeholder="$t('search')"
                 >
                     <template #suffix>
@@ -14,8 +14,8 @@
             </el-form-item>
             <el-form-item>
                 <log-level-selector
-                    v-model="level"
-                    @input="onChange"
+                    :value="level"
+                    @update:model-value="onChange"
                 />
             </el-form-item>
             <el-form-item>
@@ -37,6 +37,7 @@
         <log-list :level="level" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" :filter="filter" />
     </div>
 </template>
+
 <script>
     import LogList from "../logs/LogList";
     import {mapState} from "vuex";
@@ -60,9 +61,13 @@
         data() {
             return {
                 fullscreen: false,
-                level: (this.$route.query.level || "INFO"),
-                filter: (this.$route.query.q || undefined)
+                level: undefined,
+                filter: undefined
             };
+        },
+        created() {
+            this.level = (this.$route.query.level || "INFO");
+            this.filter = (this.$route.query.q || undefined);
         },
         computed: {
             ...mapState("execution", ["execution", "taskRun", "logs"]),

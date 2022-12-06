@@ -103,30 +103,29 @@
         <bottom-line v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
             <ul>
                 <li>
-                    <kicon>
-                        <router-link :to="{name: 'flows/search'}">
-                            <el-button>
-                                <text-box-search />
-                                {{ $t('source search') }}
-                            </el-button>
-                        </router-link>
-                    </kicon>
+                    <router-link :to="{name: 'flows/search'}">
+                        <el-button :icon="TextBoxSearch">
+                            {{ $t('source search') }}
+                        </el-button>
+                    </router-link>
                 </li>
 
                 <li>
-                    <kicon>
-                        <router-link :to="{name: 'flows/create'}">
-                            <el-button type="primary">
-                                <plus />
-                                {{ $t('create') }}
-                            </el-button>
-                        </router-link>
-                    </kicon>
+                    <router-link :to="{name: 'flows/create'}">
+                        <el-button :icon="Plus" type="primary">
+                            {{ $t('create') }}
+                        </el-button>
+                    </router-link>
                 </li>
             </ul>
         </bottom-line>
     </div>
 </template>
+
+<script setup>
+    import Plus from "vue-material-design-icons/Plus";
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
+</script>
 
 <script>
     import {mapState} from "vuex";
@@ -134,8 +133,6 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect";
-    import Plus from "vue-material-design-icons/Plus";
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
     import Eye from "vue-material-design-icons/Eye";
     import BottomLine from "../layout/BottomLine";
     import RouteContext from "../../mixins/routeContext";
@@ -155,8 +152,6 @@
         components: {
             NamespaceSelect,
             BottomLine,
-            Plus,
-            TextBoxSearch,
             Eye,
             DataTable,
             SearchField,
@@ -165,7 +160,7 @@
             TriggerAvatar,
             MarkdownTooltip,
             Kicon,
-            Labels
+            Labels,
         },
         data() {
             return {

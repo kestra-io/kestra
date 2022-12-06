@@ -62,28 +62,27 @@
 
         <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul>
-
                 <li>
-                    <kicon>
-                        <router-link :to="{name: 'templates/create'}">
-                            <el-button type="primary">
-                                <plus />
-                                {{ $t('create') }}
-                            </el-button>
-                        </router-link>
-                    </kicon>
+                    <router-link :to="{name: 'templates/create'}">
+                        <el-button :icon="Plus" type="primary">
+                            {{ $t('create') }}
+                        </el-button>
+                    </router-link>
                 </li>
             </ul>
         </bottom-line>
     </div>
 </template>
 
+<script setup>
+    import Plus from "vue-material-design-icons/Plus";
+</script>
+
 <script>
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect";
-    import Plus from "vue-material-design-icons/Plus";
     import Eye from "vue-material-design-icons/Eye";
     import BottomLine from "../layout/BottomLine";
     import RouteContext from "../../mixins/routeContext";
@@ -99,7 +98,6 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             BottomLine,
-            Plus,
             Eye,
             DataTable,
             SearchField,

@@ -15,14 +15,14 @@
 }
 
 .tooltip-stats {
-    font-size: getCssVar('font-size', 'extra-small');
+    font-size: var(--el-font-size-extra-small);
     .tooltip-inner {
         text-align: left;
     }
 
     h6 {
         font-weight: bold;
-        font-size: getCssVar('font-size', 'extra-small');
+        font-size: var(--el-font-size-extra-small);
     }
 
     span.square {

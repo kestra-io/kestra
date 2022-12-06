@@ -42,7 +42,7 @@
 
     .errors {
         h2 {
-            margin-bottom: calc(getCssVar('spacer') * 2);
+            margin-bottom: calc(var(--spacer) * 2);
         }
 
         width: 100%;

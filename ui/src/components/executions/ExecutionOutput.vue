@@ -19,7 +19,7 @@
                 </el-select>
             </el-form-item>
             <el-form-item>
-                <el-tooltip :content="$t('eval.tooltip')">
+                <el-tooltip :content="$t('eval.tooltip')" :persistent="false" transition="" :hide-after="0">
                     <el-button :disabled="!filter" @click="isModalOpen = !isModalOpen">
                         {{ $t("eval.title") }}
                     </el-button>
@@ -33,6 +33,7 @@
             destroy-on-close
             lock-scroll
             :append-to-body="true"
+            size=""
             :title="$t('eval.title')"
         >
             <template #footer>

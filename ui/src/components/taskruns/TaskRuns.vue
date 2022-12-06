@@ -51,13 +51,13 @@
                     @row-dblclick="onRowDoubleClick"
                     @sort-change="onSort"
                 >
-                    <el-table-column prop="executionId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('execution')">
+                    <el-table-column prop="executionId" :label="$t('execution')">
                         <template #default="scope">
                             <id :value="scope.row.executionId" :shrink="true" />
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="taskId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('task')">
+                    <el-table-column prop="taskId" :label="$t('task')">
                         <template #default="scope">
                             <id :value="scope.row.taskId" :shrink="true" />
                         </template>

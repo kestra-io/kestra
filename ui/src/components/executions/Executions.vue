@@ -94,7 +94,7 @@
 
                     <el-table-column :label="$t('triggers')" class-name="shrink">
                         <template #default="scope">
-                            <trigger-avatar :flow="scope.row" />
+                            <trigger-avatar :execution="scope.row" />
                         </template>
                     </el-table-column>
 

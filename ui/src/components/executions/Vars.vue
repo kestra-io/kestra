@@ -14,10 +14,7 @@
                 </template>
                 <template v-else-if="scope.row.subflow">
                     {{ scope.row.value }}
-                    <sub-flow-link
-                        class="btn-xs"
-                        :execution-id="scope.row.value"
-                    />
+                    <sub-flow-link :execution-id="scope.row.value" />
                 </template>
                 <template v-else>
                     <var-value :execution="execution" :value="scope.row.value" />

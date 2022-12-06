@@ -1,3 +1,8 @@
+.material-design-icon {
+    > .material-design-icon__svg {
+        bottom: 0;
+    }
+}
 
 .material-design-icon.icon-2x {
   height: 2em;

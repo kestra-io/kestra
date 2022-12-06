@@ -2,11 +2,11 @@
     <div>
         <nav v-if="original === undefined && navbar" class="top-nav">
             <el-button-group>
-                <el-tooltip :content="$t('Fold content lines')">
-                    <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" type="info" />
+                <el-tooltip :content="$t('Fold content lines')" :persistent="false" transition="" :hide-after="0">
+                    <el-button :icon="icon.UnfoldLessHorizontal" @click="autoFold(true)" size="small" />
                 </el-tooltip>
-                <el-tooltip :content="$t('Unfold content lines')">
-                    <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" type="info" />
+                <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
+                    <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
                 </el-tooltip>
             </el-button-group>
         </nav>
@@ -39,10 +39,9 @@
 </template>
 
 <script>
-import {defineAsyncComponent, shallowRef} from "vue"
+    import {defineAsyncComponent, shallowRef} from "vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal";
-    import * as monaco from 'monaco-editor'
 
     const MonacoEditor = defineAsyncComponent(() =>
         import('./MonacoEditor')
@@ -297,62 +296,73 @@ import {defineAsyncComponent, shallowRef} from "vue"
         },
     };
 </script>
-<style scoped lang="scss">
-@use "sass:math";
-@import "../../styles/variable";
 
-:deep(.editor-container) {
-    position: relative;
-    max-width: 100%;
-    display: flex;
+<style lang="scss">
+    .top-nav {
+        background-color: var(--bs-gray-300);
+        padding: calc(var(--spacer) / 2);
+        border-radius: var(--bs-border-radius-lg);
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
 
-    .placeholder {
-        position: absolute;
-        top:  $input-padding-y ;
-        left: $input-padding-x;
-        overflow: hidden;
-        padding-left: inherit;
-        padding-right: inherit;
-        cursor: text;
-        user-select: none;
-        color: $input-placeholder-color;
-    }
-
-    .editor-with-placeholder {
-        :deep(.view-lines) {
-            opacity: 0;
+        html.dark & {
+            background-color: var(--bs-gray-100);
         }
     }
 
-    &.single-line {
-        padding: $input-padding-y $input-padding-x;
-        background: white;
-        border: 1px solid var(--input-border-color);
-        min-height: 38px;
+    :deep(.editor-container) {
+        position: relative;
+        max-width: 100%;
+        display: flex;
 
-        &.theme-vs-dark {
-            background: #1e1e1e;
+        .placeholder {
+            position: absolute;
+            top:  .75rem ;
+            left: .375rem;
+            overflow: hidden;
+            padding-left: inherit;
+            padding-right: inherit;
+            cursor: text;
+            user-select: none;
+            color: var(--el-text-color-placeholder);
         }
-    }
 
-    .monaco-hover-content {
-        h4 {
-            font-size: $font-size-base;
-            font-weight: bold;
-            line-height: $line-height-base;
-        }
-
-        p {
-            margin-bottom: math.div($spacer, 2);
-            &:last-child {
-                display: none;
+        .editor-with-placeholder {
+            :deep(.view-lines) {
+                opacity: 0;
             }
         }
 
-        *:nth-last-child(2n) {
-            margin-bottom: 0;
+        &.single-line {
+            padding: 5px 11px ;
+            min-height: var(--el-component-size);
+            background: white;
+            border: 1px solid var(--bs-border-color);
+            border-radius: var(--el-border-radius-base);
+
+            &.theme-vs-dark {
+                background: #1e1e1e;
+            }
+        }
+
+        .monaco-hover-content {
+            h4 {
+                font-size: var(--font-size-base);
+                font-weight: bold;
+                line-height: var(--bs-body-line-height);
+            }
+
+            p {
+                margin-bottom: calc(var(--spacer) / 2);
+                &:last-child {
+                    display: none;
+                }
+            }
+
+            *:nth-last-child(2n) {
+                margin-bottom: 0;
+            }
         }
     }
-}
 
 </style>

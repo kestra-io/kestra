@@ -12,6 +12,8 @@
             v-model="isOpen"
             :title="title"
             destroy-on-close
+            class="sm"
+            size=""
             :append-to-body="true"
         >
             <markdown class="markdown-tooltip" :source="description" />

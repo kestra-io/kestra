@@ -103,7 +103,6 @@ configureAxios((instance) => {
 
     store.$http = app.$http;
     store.axios = app.axios;
-
 }, store, router);
 
 

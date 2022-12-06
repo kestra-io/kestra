@@ -1,7 +1,7 @@
 <template>
     <el-collapse-item :name="schedule.id">
         <template #title>
-            {{ schedule.id }} <el-tag class="ml-2" disable-transitions type="info">{{ schedule.cron }}</el-tag>
+            {{ schedule.id }} <el-tag class="ms-2" disable-transitions type="info">{{ schedule.cron }}</el-tag>
         </template>
         <el-form class="ks-horizontal">
             <el-form-item :label="$t('id')">
@@ -12,7 +12,7 @@
                 <template #label>
                     {{ $t('schedules.cron.expression') }}
 
-                    <el-tooltip :target="'tooltip-' + index" placement="bottom">
+                    <el-tooltip :target="'tooltip-' + index" placement="bottom" :persistent="false">
                         <template #content>
                             <div v-if="isValid">
                                 <p class="font-weight-bold">
@@ -51,7 +51,7 @@
                 />
             </el-form-item>
 
-            <el-form-item class="text-right" label="&nbsp;">
+            <el-form-item class="text-end" label="&nbsp;">
                 <el-button type="danger" @click="remove">
                     <delete />
                     Delete
@@ -118,7 +118,7 @@
             />
         </b-form-group>
 
-        <b-form-group class="mb-0 text-right">
+        <b-form-group class="mb-0 text-end">
             <el-btn type="danger" @click="remove">
                 <delete />
                 Delete

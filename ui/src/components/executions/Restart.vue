@@ -55,7 +55,6 @@
 </script>
 
 <script>
-
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -63,7 +62,6 @@
     import ExecutionUtils from "../../utils/executionUtils";
 
     export default {
-        components: {RestartIcon, PlayBoxMultiple},
         props: {
             component: {
                 type: String,

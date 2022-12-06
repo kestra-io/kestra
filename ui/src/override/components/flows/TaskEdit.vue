@@ -46,10 +46,6 @@
     import Utils from "../../../utils/utils";
 
     export default {
-        components: {
-            Editor,
-            ContentSave,
-        },
         props: {
             component: {
                 type: String,

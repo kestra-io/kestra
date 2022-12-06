@@ -50,6 +50,7 @@
     "@babel/eslint-parser": "^7.19.1",
     "@babel/preset-env": "^7.19.4",
     "@vue/cli-plugin-babel": "^5.0.8",
+    "@vue/cli-plugin-unit-jest": "^5.0.8",
     "@vue/cli-service": "^5.0.8",
     "@vue/test-utils": "^2.2.4",
     "@vue/vue3-jest": "^29.2.1",

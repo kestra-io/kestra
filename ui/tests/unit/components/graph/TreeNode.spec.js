@@ -1,41 +1,23 @@
-import {shallowMount} from "@vue/test-utils";
-import Vuex from "vuex"
 import _ from "lodash";
 import TreeNode from "../../../../src/components/graph/TreeNode.vue";
 import EACH_SEQUENTIAL_FLOWGRAPH from "../../../fixtures/flowgraphs/each-sequential.json";
 import EACH_SEQUENTIAL_EXECUTION from "../../../fixtures/executions/each-sequential.json";
-import localVue from "../../../local.js";
+import mount from "../../../local.js";
 
-const mount = (store, n, execution) => shallowMount(TreeNode, {
-    localVue,
-    store,
-    propsData: {
-        n: n,
-        execution: execution,
-        flowId: "flowId",
-        namespace: "namespace",
-    }
-})
+const localMount = (n, execution) => {
+    return mount(TreeNode, {
+        props: {
+            n: n,
+            execution: execution,
+            flowId: "flowId",
+            namespace: "namespace",
+        }
+    })
+}
 
 describe("TreeNode", () => {
-    let store
-
-    beforeEach(() => {
-        store = new Vuex.Store({
-            modules: {
-                plugin: {
-                    state: {
-                        icons: []
-                    },
-                    namespaced: true
-                }
-            }
-        })
-    })
-
     it("success execution", () => {
-        const wrapper = mount(
-            store,
+        const wrapper = localMount(
             EACH_SEQUENTIAL_FLOWGRAPH.nodes.filter(r => r.uid === "1-2")[0],
             EACH_SEQUENTIAL_EXECUTION,
         )
@@ -53,8 +35,7 @@ describe("TreeNode", () => {
 
         failed.taskRunList[taskRunIndex] = _.merge({taskId:"1-2", state: {current: "FAILED"}})
 
-        const wrapper = mount(
-            store,
+        const wrapper = localMount(
             EACH_SEQUENTIAL_FLOWGRAPH.nodes.filter(r => r.uid === "1-2")[0],
             failed,
         )

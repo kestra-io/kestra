@@ -20,10 +20,10 @@
                         />
                     </el-select>
                     <el-button-group>
-                        <el-button  :icon="icon.FileCode" @click="seeRevision(revisionLeft, revisionLeftText)">
+                        <el-button  :icon="FileCode" @click="seeRevision(revisionLeft, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
                         </el-button>
-                        <el-button :icon="icon.Restore" :disabled="revisionNumber(revisionLeft) === flow.revision" @click="restoreRevision(revisionLeft, revisionLeftText)">
+                        <el-button :icon="Restore" :disabled="revisionNumber(revisionLeft) === flow.revision" @click="restoreRevision(revisionLeft, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
                         </el-button>
                     </el-button-group>
@@ -47,10 +47,10 @@
                         />
                     </el-select>
                     <el-button-group>
-                        <el-button  :icon="icon.FileCode" @click="seeRevision(revisionRight, revisionRightText)">
+                        <el-button  :icon="FileCode" @click="seeRevision(revisionRight, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
                         </el-button>
-                        <el-button :icon="icon.Restore" :disabled="revisionNumber(revisionRight) === flow.revision" @click="restoreRevision(revisionRight, revisionRightText)">
+                        <el-button :icon="Restore" :disabled="revisionNumber(revisionRight) === flow.revision" @click="restoreRevision(revisionRight, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ $t('restore') }}</span>
                         </el-button>
                     </el-button-group>
@@ -75,7 +75,7 @@
         </div>
 
 
-        <el-drawer v-if="isModalOpen" v-model="isModalOpen" destroy-on-close :append-to-body="true">
+        <el-drawer v-if="isModalOpen" v-model="isModalOpen" destroy-on-close :append-to-body="true" size="">
             <template #header>
                 <h5>{{ $t("revision") + `: ` + revision }}</h5>
             </template>
@@ -90,20 +90,21 @@
         </el-alert>
     </div>
 </template>
+
+<script setup>
+    import FileCode from "vue-material-design-icons/FileCode";
+    import Restore from "vue-material-design-icons/Restore";
+</script>
+
 <script>
     import {mapState} from "vuex";
     import YamlUtils from "../../utils/yamlUtils";
     import Editor from "../../components/inputs/Editor";
-    import FileCode from "vue-material-design-icons/FileCode";
-    import Restore from "vue-material-design-icons/Restore";
-    import Kicon from "../Kicon"
     import Crud from "override/components/auth/Crud";
     import {saveFlowTemplate} from "../../utils/flowTemplate";
-    import {shallowRef} from "vue";
-    import Trigger from "vue-material-design-icons/Cogs.vue";
 
     export default {
-        components: {Editor, FileCode, Restore, Kicon, Crud},
+        components: {Editor, Crud},
         created() {
             this.load();
         },
@@ -229,7 +230,6 @@
                     {value: true, text: this.$t("side-by-side")},
                     {value: false, text:  this.$t("line-by-line")},
                 ],
-                icon: {FileCode: shallowRef(FileCode), Restore: shallowRef(Restore)},
                 isModalOpen: false
             };
         },

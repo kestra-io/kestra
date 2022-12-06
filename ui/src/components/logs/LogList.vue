@@ -1,5 +1,5 @@
 <template>
-    <div v-if="execution" class="log-wrapper text-dark">
+    <div v-if="execution" class="log-wrapper">
         <div v-for="currentTaskRun in execution.taskRunList" :key="currentTaskRun.id">
             <template
                 v-if="displayTaskRun(currentTaskRun)"
@@ -9,22 +9,22 @@
                         <div>
 
                             <div class="attempt-header">
-                                <div class="attempt-number mr-1">
+                                <div class="attempt-number me-1">
                                     {{ $t("attempt") }} {{ index + 1 }}
                                 </div>
 
                                 <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
-                                    <el-tooltip>
+                                    <el-tooltip :persistent="false" transition="" :hide-after="0">
                                         <template #content>
+
                                             {{ $t("from") }} :
                                             {{ $filters.date(attempt.state.startDate) }}
                                             <br>
                                             {{ $t("to") }} :
                                             {{ $filters.date(attempt.state.endDate) }}
                                             <br>
-                                            <br>
                                             <clock />
-                                            {{ $t("duration") }} :
+                                            <strong>{{ $t("duration") }}:</strong>
                                             {{ $filters.humanizeDuration(attempt.state.duration) }}
                                         </template>
                                         <code>{{ currentTaskRun.taskId }}</code>
@@ -36,14 +36,14 @@
                                 </div>
 
                                 <div class="task-duration">
-                                    <small class="mr-1">
+                                    <small class="me-1">
                                         <clock />
-                                        <duration class="ml-2" :histories="attempt.state.histories" />
+                                        <duration class="ms-2" :histories="attempt.state.histories" />
                                     </small>
                                 </div>
 
                                 <div class="task-status">
-                                    <status :status="attempt.state.current" size="small" />
+                                    <status :status="attempt.state.current" />
                                 </div>
 
                                 <el-dropdown trigger="click">
@@ -119,6 +119,7 @@
         </div>
     </div>
 </template>
+
 <script>
     import {mapState} from "vuex";
     import LogLine from "./LogLine";
@@ -127,15 +128,12 @@
     import Metrics from "../executions/Metrics";
     import Outputs from "../executions/Outputs";
     import Clock from "vue-material-design-icons/Clock";
-    import LocationExit from "vue-material-design-icons/LocationExit";
-    import ChartAreaspline from "vue-material-design-icons/ChartAreaspline";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import State from "../../utils/state";
     import Status from "../Status";
     import SubFlowLink from "../flows/SubFlowLink"
     import TaskEdit from "override/components/flows/TaskEdit.vue";
     import Duration from "../layout/Duration";
-    import {shallowRef} from "vue";
 
     export default {
         components: {
@@ -143,10 +141,8 @@
             Restart,
             ChangeStatus,
             Clock,
-            LocationExit,
             Metrics,
             Outputs,
-            ChartAreaspline,
             DotsVertical,
             Status,
             SubFlowLink,
@@ -184,10 +180,6 @@
                 showOutputs: {},
                 showMetrics: {},
                 fullscreen: false,
-                icon: {
-                    ChartAreaspline: shallowRef(ChartAreaspline),
-                    LocationExit: shallowRef(LocationExit)
-                }
             };
         },
         watch: {
@@ -299,91 +291,77 @@
     };
 </script>
 <style lang="scss" scoped>
-@import "../../styles/_variable.scss";
-
-.log-wrapper {
-
-    .line:nth-child(odd) {
-        background-color: var(--gray-100);
-    }
-
-    .line:nth-child(even) {
-        background-color: var(--gray-100-lighten-5);
-    }
-
-    .attempt-header {
-        display: flex;
-        font-family: $font-family-sans-serif;
-        font-size: $font-size-base;
-        margin-top: $paragraph-margin-bottom * 1.5;
-        line-height: $btn-line-height;
-
-        .theme-dark & {
-            background-color: var(--gray-100);
+    .log-wrapper {
+        .line:nth-child(odd) {
+            background-color: var(--bs-gray-100);
         }
 
-        .attempt-number {
-            background: var(--gray-400);
-            padding: $btn-padding-y $btn-padding-x;
-            white-space: nowrap;
+        .line:nth-child(even) {
+            background-color: var(--bs-gray-100-lighten-5);
         }
 
-        .task-id, .task-duration {
-            padding: $btn-padding-y $btn-padding-x;
-        }
+        .attempt-header {
+            display: flex;
 
-        .task-id {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+            html.dark & {
+                background-color: var(--bs-gray-100);
+            }
 
-        small {
-            color: var(--gray-500);
-        }
+            .attempt-number {
+                background: var(--bs-gray-400);
+                padding: .375rem .75rem;
+                white-space: nowrap;
+            }
 
-        .task-duration {
-            white-space: nowrap;
+            .task-id, .task-duration {
+                padding: .375rem .75rem;
+            }
 
-        }
+            .task-id {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
 
-        .task-status {
-            button {
+            small {
+                color: var(--bs-gray-500);
+            }
+
+            .task-duration {
+                white-space: nowrap;
+
+            }
+
+            .task-status {
+                button {
+
+                }
+            }
+
+            :deep(button.el-button) {
+                border-radius: 0 !important;
                 height: 100%;
             }
         }
 
-        :deep(button.btn) {
-            border-radius: 0 !important;
-        }
+        .attempt-wrapper {
+            margin-bottom: var(--spacer);
 
-        :deep(.dropdown-menu) {
-            .dropdown-item {
-                span.material-design-icon {
-                    width: $font-size-base * 2;
-                }
+            div:first-child > * {
+                margin-top: 0;
             }
         }
-    }
 
-    .attempt-wrapper {
-        margin-bottom: $spacer;
+        .output {
+            margin-right: 5px;
+        }
 
-        div:first-child > * {
-            margin-top: 0;
+        pre {
+            border: 1px solid var(--light);
+            background-color: var(--bs-gray-200);
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 20px;
         }
     }
-
-    .output {
-        margin-right: 5px;
-    }
-
-    pre {
-        border: 1px solid var(--light);
-        background-color: var(--gray-200);
-        padding: 10px;
-        margin-top: 5px;
-        margin-bottom: 20px;
-    }
-}
 </style>

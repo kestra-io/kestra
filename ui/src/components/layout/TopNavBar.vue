@@ -1,31 +1,27 @@
 <template>
-    <nav v-if="topNavbar" class="top-line">
-        <ul>
-            <li class="top-title">
-                <h1 class="text-truncate">
-                    {{ title }}
-                </h1>
-                <el-breadcrumb>
-                    <el-breadcrumb-item>
-                        <router-link :to="{name: 'home'}">
-                            <home-outline /> {{ $t('home') }}
-                        </router-link>
-                    </el-breadcrumb-item>
+    <nav v-if="topNavbar">
+        <div class="top-title">
+            <h1 class="text-truncate">
+                {{ title }}
+            </h1>
+            <el-breadcrumb>
+                <el-breadcrumb-item>
+                    <router-link :to="{name: 'home'}">
+                        <home-outline /> {{ $t('home') }}
+                    </router-link>
+                </el-breadcrumb-item>
 
-                    <el-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :key="x">
-                        <router-link :to="item.link">
-                            {{ item.label }}
-                        </router-link>
-                    </el-breadcrumb-item>
-                </el-breadcrumb>
-            </li>
-        </ul>
-        <ul class="ml-auto">
-            <li class="pt-3">
-                <Auth />
-                <news />
-            </li>
-        </ul>
+                <el-breadcrumb-item v-for="(item, x) in topNavbar.breadcrumb" :to="item.link" :key="x">
+                    <router-link :to="item.link">
+                        {{ item.label }}
+                    </router-link>
+                </el-breadcrumb-item>
+            </el-breadcrumb>
+        </div>
+        <div class="side ms-auto ps-2">
+            <Auth />
+            <news />
+        </div>
     </nav>
 </template>
 <script>
@@ -48,32 +44,19 @@
         }
     };
 </script>
-<style lang="scss">
-    @use "sass:math";
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
-    @import "../../styles/variable";
-
-    .top-line {
+<style lang="scss" scoped>
+    nav {
         display: flex;
         min-width: 0;
         max-width: 100%;
-        margin-bottom: 10px;
+        padding-top: calc(var(--spacer) * 2);
+        margin-bottom: calc(var(--spacer) * 2);
 
-        ul {
-            display: flex;
-            list-style: none;
-            margin: 0;
-            flex-wrap: nowrap;
-            padding: 0;
-            flex-direction: row;
-            padding-top: 35px;
-        }
-
-      .top-title {
+        .top-title {
             overflow: hidden;
             h1 {
                 color: var(--el-primary);
-                margin-bottom: math.div($headings-margin-bottom, 2);
+                margin-bottom: calc(var(--spacer) * 0.5);
                 font-weight: bold;
 
                 html.dark & {
@@ -82,22 +65,30 @@
             }
 
             .el-breadcrumb {
-                border: 0;
-                padding: 0;
-                margin-bottom: 0;
-                background: transparent;
-                font-size: $font-size-sm;
-                text-transform: none;
+                color: var(--bs-secondary);
+                display: flex;
                 a {
-                    color: getCssVar('color', 'tertiary');
+                    font-weight: normal;
+                    color: var(--bs-secondary);
+                    white-space: nowrap;
+                }
 
-                    html.dark & {
-                        color: getCssVar('color', 'secondary');
-                    }
+                .el-breadcrumb__separator {
+                    color: var(--bs-tertiary);
+                }
+
+                .el-breadcrumb__item {
+                    display: flex;
+                    flex-wrap: nowrap;
+                    float: none;
+                }
+
+                .material-design-icon {
+                    height: 0.75rem;
+                    width: 0.75rem;
+                    margin-right: calc(var(--spacer) / 2);
                 }
             }
         }
     }
-
-
 </style>

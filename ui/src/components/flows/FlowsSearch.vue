@@ -24,7 +24,7 @@
 
                 <template #table>
                     <div v-if="search === undefined || search.length === 0">
-                        <el-alert type="info" class="text-muted" show-icon :closable="false">
+                        <el-alert type="info" class="mb-3" show-icon :closable="false">
                             {{ $t('no result') }}
                         </el-alert>
                     </div>

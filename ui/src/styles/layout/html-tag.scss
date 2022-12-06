@@ -1,0 +1,34 @@
+@use 'element-plus/theme-chalk/src/mixins/mixins' as *;
+a {
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+button {
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: none;
+    }
+}
+
+[placeholder] {
+    text-overflow: ellipsis;
+}
+
+pre {
+    overflow: hidden;
+    background: var(--bs-gray-200);
+    color: var(--bs-body-color);
+    padding: var(--spacer);
+}
+
+blockquote {
+    border-left: 5px solid var(--bs-gray-400);
+    margin-top: calc(var(--spacer) * 2);
+    padding: calc(var(--spacer) / 4)  0 calc(var(--spacer) / 4) var(--spacer);
+    color: var(--bs-gray-500);
+    p {
+        margin-bottom: 0;
+    }
+}

@@ -2,56 +2,95 @@
 @use 'sass:math';
 @use 'element-plus/theme-chalk/src/mixins/var' as *;
 
-$custom-colors: () !default;
-$light-grays: () !default;
-$dark-grays: () !default;
-$white: #FFFFFF !default;
-$black: #000000 !default;
 
-$types: map.keys($custom-colors);
+@import "../variable";
 
+// use bootstrap for main style
 :root {
-    @include set-css-var-value(('menu-width'), 268px);
-    @include set-css-var-value(('spacer'), 16px);
+    --el-bg-color: var(--bs-body-bg);
+    --el-bg-color-page: var(--bs-body-bg);
+    --el-bg-color-overlay: var(--bs-white);
 
-    @each $key, $value in $light-grays {
-        @include set-css-var-value(('gray', $key), $value);
+    --el-text-color-primary: var(--bs-primary);
+    --el-text-color-regular: var(--bs-body-color);
+    --el-text-color-secondary: var(--bs-secondary);
+    --el-text-color-placeholder: var(--bs-gray-600);
+    --el-text-color-disabled: var(--bs-gray-500);
 
-        @for $i from 1 through 3 {
-            @include set-css-var-value(('gray', $key, 'lighten', $i*5), lighten($value, $i+5));
-            @include set-css-var-value(('gray', $key, 'darken', $i*5), darken($value, $i+5));
-        }
-    }
+    --el-border-color: var(--bs-border-color);
+    --el-border-color-light: var(--bs-border-color);
+    --el-border-color-lighter: var(--bs-border-color);
+    --el-border-color-extra-light: var(--bs-border-color);
+    --el-border-color-dark: var(--bs-border-color);
+    --el-border-color-darker: var(--bs-border-color);
 
-    @each $type in $types {
-        @include set-css-var-value(('color', $type), map.get($custom-colors, $type, 'base'));
-
-        @for $i from 1 through 3 {
-            @include set-css-var-value(('color', $type, 'lighten', $i*5), lighten(map.get($custom-colors, $type, 'base'), $i+5));
-            @include set-css-var-value(('color', $type, 'darken', $i*5), darken(map.get($custom-colors, $type, 'base'), $i+5));
-        }
-
-        @each $i in (3, 5, 7, 8, 9) {
-            @include set-css-var-value(
-                ('color', $type, 'light', $i),
-                mix($white, map.get($custom-colors, $type, 'base'), math.percentage(math.div($i, 10)))
-            );
-        }
-
-        @include set-css-var-value(
-            ('color', $type, 'dark', 2),
-            mix($black, map.get($custom-colors, $type, 'base'), math.percentage(math.div(2, 10)))
-        );
-    }
+    --el-fill-color: var(--bs-gray-300);
+    --el-fill-color-light: var(--bs-gray-200);
+    --el-fill-color-lighter: var(--bs-gray-100);
+    --el-fill-color-extra-light: var(--bs-white);
+    --el-fill-color-dark: var(--bs-gray-400);
+    --el-fill-color-darker: var(--bs-gray-500);
+    --el-fill-color-blank: var(--bs-white);
+    //--el-box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.04), 0px 8px 20px rgba(0, 0, 0, 0.08);
+    //--el-box-shadow-light: 0px 0px 12px rgba(0, 0, 0, 0.12);
+    //--el-box-shadow-lighter: 0px 0px 6px rgba(0, 0, 0, 0.12);
+    //--el-box-shadow-dark: 0px 16px 48px 16px rgba(0, 0, 0, 0.08), 0px 12px 32px rgba(0, 0, 0, 0.12), 0px 8px 16px -8px rgba(0, 0, 0, 0.16);
+    //--el-disabled-bg-color: var(--el-fill-color-light);
+    //--el-disabled-text-color: var(--el-text-color-placeholder);
+    //--el-disabled-border-color: var(--el-border-color-light);
+    //--el-overlay-color: rgba(0, 0, 0, 0.8);
+    //--el-overlay-color-light: rgba(0, 0, 0, 0.7);
+    //--el-overlay-color-lighter: rgba(0, 0, 0, 0.5);
+    //--el-mask-color: rgba(255, 255, 255, 0.9);
+    //--el-mask-color-extra-light: rgba(255, 255, 255, 0.3);
+    //--el-border-width: 1px;
+    //--el-border-style: solid;
+    //--el-border-color-hover: var(--el-text-color-disabled);
+    //--el-border: var(--el-border-width) var(--el-border-style) var(--el-border-color);
+    //--el-svg-monochrome-grey: var(--el-border-color);
 }
 
-html.dark {
-    @each $key, $value in $dark-grays {
-        @include set-css-var-value(('gray', $key), $value);
 
-        @for $i from 1 through 3 {
-            @include set-css-var-value(('gray', $key, 'lighten', $i*5), lighten($value, $i+5));
-            @include set-css-var-value(('gray', $key, 'darken', $i*5), darken($value, $i+5));
+:root {
+    #{--menu-width}: $menu-width;
+    #{--spacer}: $spacer;
+
+    #{--font-size-xs}: $font-size-xs;
+    #{--font-size-sm}: $font-size-sm;
+    #{--font-size-base}: $font-size-base;
+    #{--font-size-lg}: $font-size-lg;
+    #{--card-bg}: $card-bg;
+
+    #{--bs-tertiary}: $tertiary;
+
+    #{--bs-gray}: #{map.get($grays, "600")};
+    @each $key, $value in $grays {
+        --bs-gray-#{$key}: #{$value};
+
+        @each $i in (2, 3, 5, 7, 10, 15) {
+            #{--bs-gray-#{$key}-lighten-#{$i}}: #{lighten($value, $i)};
+            #{--bs-gray-#{$key}-darken-#{$i}}: #{darken($value, $i)};
         }
     }
+
+    //@each $type in $types {
+    //    @include set-css-var-value(('color', $type), map.get($custom-colors, $type, 'base'));
+    //
+    //    @for $i from 1 through 3 {
+    //        @include set-css-var-value(('color', $type, 'lighten', $i*5), lighten(map.get($custom-colors, $type, 'base'), $i+5));
+    //        @include set-css-var-value(('color', $type, 'darken', $i*5), darken(map.get($custom-colors, $type, 'base'), $i+5));
+    //    }
+    //
+    //    @each $i in (3, 5, 7, 8, 9) {
+    //        @include set-css-var-value(
+    //            ('color', $type, 'light', $i),
+    //            mix($white, map.get($custom-colors, $type, 'base'), math.percentage(math.div($i, 10)))
+    //        );
+    //    }
+    //
+    //    @include set-css-var-value(
+    //        ('color', $type, 'dark', 2),
+    //        mix($black, map.get($custom-colors, $type, 'base'), math.percentage(math.div(2, 10)))
+    //    );
+    //}
 }

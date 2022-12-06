@@ -1,4 +1,4 @@
-import {ElNotification, ElMessageBox, ElMessage} from "element-plus"
+import {ElNotification, ElMessageBox} from "element-plus"
 import {h} from "vue"
 
 export default {
@@ -25,39 +25,54 @@ export default {
                             cancel();
                         })
                 },
-                saved: function(name, title) {
+                saved: function(name, title, options) {
                     ElNotification({
-                        title: title || self.$t("saved"),
-                        message: this._wrap(self.$t("saved done", {name: name})),
-                        type: "success",
+                        ...{
+                            title: title || self.$t("saved"),
+                            message: this._wrap(self.$t("saved done", {name: name})),
+                            type: "success",
+                        },
+                        ...(options || {})
                     })
                 },
-                deleted: function(name, title) {
+                deleted: function(name, title, options) {
                     ElNotification({
-                        title: title || self.$t("deleted"),
-                        message: this._wrap(self.$t("deleted confirm", {name: name})),
-                        type: "success",
+                        ...{
+                            title: title || self.$t("deleted"),
+                            message: this._wrap(self.$t("deleted confirm", {name: name})),
+                            type: "success",
+                        },
+                        ...(options || {})
                     })
                 },
-                success: function(message, title) {
+                success: function(message, title, options) {
                     ElNotification({
-                        title: title || self.$t("success"),
-                        message: this._wrap(message),
-                        type: "success",
+                        ...{
+                            title: title || self.$t("success"),
+                            message: this._wrap(message),
+                            type: "success",
+                        },
+                        ...(options || {})
                     })
                 },
-                warning: function(message, title) {
+                warning: function(message, title, options) {
                     ElNotification({
-                        title: title || self.$t("warning"),
-                        message: this._wrap(message),
-                        type: "warning",
+                        ...{
+                            title: title || self.$t("warning"),
+                            message: this._wrap(message),
+                            type: "warning",
+                        },
+                        ...(options || {})
                     })
                 },
-                error: function(message, title) {
+                error: function(message, title, options) {
                     ElNotification({
-                        title: title || self.$t("error"),
-                        message: this._wrap(message),
-                        type: "danger",
+                        ...{
+                            title: title || self.$t("error"),
+                            message: this._wrap(message),
+                            type: "danger",
+                        },
+                        ...(options || {})
                     })
                 },
                 unsavedConfirm(ok, ko) {

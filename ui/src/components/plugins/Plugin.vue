@@ -55,7 +55,8 @@
         },
         watch: {
             $route(oldValue, newValue) {
-                if (oldValue.name === newValue.name) {
+                console.log(oldValue, newValue);
+                if (newValue.name.startsWith("plugins/")) {
                     this.onRouterChange();
                 }
             }
@@ -90,12 +91,9 @@
 </script>
 
 <style lang="scss">
-    @use 'element-plus/theme-chalk/src/mixins/function' as *;
-    @import "../../styles/_variable.scss";
-
     .markdown {
         h1 {
-            font-size: $h2-font-size;
+            font-size: calc(var(--font-size-base) * 2);
         }
 
         blockquote {
@@ -105,7 +103,7 @@
         mark {
             background: var(--success);
             color: var(--white);
-            font-size: $font-size-sm;
+            font-size: var(--font-size-sm);
             padding: 2px 8px 2px 8px;
 
             * {
@@ -114,16 +112,16 @@
         }
 
         h2 {
-            margin-top: calc(getCssVar('spacer') * 2);
-            border-bottom: 1px solid var(--gray-500);
+            margin-top: calc(var(--spacer) * 2);
+            border-bottom: 1px solid var(--bs-gray-500);
             font-weight: bold;
-            color: var(--gray-700)
+            color: var(--bs-gray-700)
         }
 
         h3 {
             code {
                 display: inline-block;
-                font-size: $font-size-base * 1.10;
+                font-size: calc(var(--font-size-base) * 1.10);
                 font-weight: 400;
             }
         }
@@ -131,7 +129,7 @@
         h4 {
             code {
                 display: inline-block;
-                font-size: $font-size-base * 1.00;
+                font-size: calc(var(--font-size-base) * 1.00);
                 font-weight: 400;
             }
         }

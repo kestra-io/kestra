@@ -15,21 +15,21 @@
         right: 0;
         left: 0px;
         border-radius: 0;
-        border-top: 1px solid getCssVar('border-color');
+        border-top: 1px solid var(--bs-border-color);
         z-index: 90;
-        background-color: getCssVar('color', 'white');
+        background-color: var(--bs-white);
         padding: 0.5rem 1rem;
         text-align: right;
 
         html.dark & {
-            background-color: getCssVar('gray-200');
+            background-color: var(--bs-gray-100-darken-3);
         }
 
         button {
-            margin-left: getCssVar('spacer');
+            margin-left: var(--spacer);
 
             span:first-child {
-                margin-right: calc(getCssVar('spacer') / 3);
+                margin-right: calc(var(--spacer) / 3);
             }
         }
 

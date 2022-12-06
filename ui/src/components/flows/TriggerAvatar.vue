@@ -4,15 +4,14 @@
             <template v-if="trigger.disabled === undefined || trigger.disabled === false">
                 <el-popover
                     placement="left"
+                    :persistent="false"
                     :title="`${$t('trigger details')}: ${trigger ? trigger.id : ''}`"
+                    width=""
+                    transition=""
+                    :hide-after="0"
                 >
                     <template #reference>
-                        <el-avatar
-                            class="mr-1"
-                            size="small"
-                            variant="primary"
-                            button
-                        >
+                        <el-avatar class="me-1" size="small" button>
                             {{ name(trigger) }}
                         </el-avatar>
                     </template>
@@ -73,13 +72,3 @@
         }
     };
 </script>
-
-<style lang="scss" scoped>
-@use "sass:math";
-@import "../../styles/_variable.scss";
-
-.b-avatar {
-    margin-right: 5px;
-}
-
-</style>

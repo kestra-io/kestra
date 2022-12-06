@@ -9,7 +9,6 @@ import log from "./logs"
 import namespace from "./namespaces"
 import misc from "./miscs"
 import plugin from "./plugins"
-import settings from "./settings"
 import stat from "./stat"
 import template from "./template"
 import taskrun from "./taskruns"
@@ -18,7 +17,6 @@ export default {
     modules: {
         api,
         core,
-        settings,
         flow,
         template,
         execution,

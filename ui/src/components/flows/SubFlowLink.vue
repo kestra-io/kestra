@@ -1,16 +1,15 @@
 <template>
-    <component :icon="icon.AxisYArrow" :is="component" @click="click" class="node-action">
+    <component :icon="AxisYArrow" :is="component" @click="click" class="node-action" size="small" type="primary">
         <span v-if="component !== 'el-button'">{{ $t('sub flow') }}</span>
     </component>
 </template>
-<script>
-    import AxisYArrow from "vue-material-design-icons/AxisYArrow";
-    import {shallowRef} from "vue";
 
+<script setup>
+    import AxisYArrow from "vue-material-design-icons/AxisYArrow";
+</script>
+
+<script>
     export default {
-        components: {
-            AxisYArrow
-        },
         props: {
             component: {
                 type: String,
@@ -36,9 +35,6 @@
                 type: String,
                 default: "topology"
             }
-        },
-        data() {
-            return {icon: {AxisYArrow: shallowRef(AxisYArrow)}};
         },
         methods: {
             click() {

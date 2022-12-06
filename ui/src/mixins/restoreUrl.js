@@ -60,6 +60,11 @@ export default {
 
             for (const key in local) {
                 if (!query[key] && local[key]) {
+                    // empty array break the application
+                    if (local[key] instanceof Array && local[key].length === 0) {
+                        continue;
+                    }
+
                     query[key] = local[key]
                     change = true
                 }

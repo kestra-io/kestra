@@ -11,20 +11,20 @@
                             data-type="flow"
                             v-if="$route.name !== 'flows/update'"
                             :value="$route.query.namespace"
-                            @input="onDataTableValue('namespace', $event)"
+                            @update:model-value="onDataTableValue('namespace', $event)"
                         />
                     </el-form-item>
                     <el-form-item>
                         <log-level-selector
                             :value="$route.query.level"
-                            @input="onDataTableValue('level', $event)"
+                            @update:model-value="onDataTableValue('level', $event)"
                         />
                     </el-form-item>
                     <el-form-item>
                         <date-range
                             :start-date="$route.query.startDate"
                             :end-date="$route.query.endDate"
-                            @input="onDataTableValue($event)"
+                            @update:model-value="onDataTableValue($event)"
                         />
                     </el-form-item>
                     <el-form-item>
@@ -39,7 +39,7 @@
                                 {{ $t('no result') }}
                             </el-alert>
                         </div>
-                        <div v-else class="logs-wrapper mb-2 text-dark">
+                        <div v-else class="logs-wrapper">
                             <template v-for="(log, i) in logs" :key="`${log.taskRunId}-${i}`">
                                 <log-line
                                     level="TRACE"
@@ -131,28 +131,26 @@
     };
 </script>
 <style lang="scss" scoped>
-@import "../../styles/_variable.scss";
-.log-panel {
-    > div.log-content {
-        margin-bottom: $spacer;
-        .navbar {
-            border: 1px solid var(--table-border-color);
+    .log-panel {
+        > div.log-content {
+            margin-bottom: var(--spacer);
+            .navbar {
+                border: 1px solid var(--bs-border-color);
+            }
+        }
+
+        .logs-wrapper {
+            border: 1px solid var(--bs-border-color);
+            margin-bottom: var(--spacer);
+        }
+
+        .line:nth-child(odd) {
+            background-color: var(--bs-gray-100-lighten-5);
+
+        }
+
+        .line:nth-child(even) {
+            background-color: var(--bs-gray-100);
         }
     }
-
-    .logs-wrapper {
-        border: 1px solid var(--table-border-color);
-    }
-
-    .line:nth-child(odd) {
-        background-color: var(--gray-100);
-
-    }
-
-    .line:nth-child(even) {
-        background-color: var(--gray-100-lighten-5);
-    }
-
-}
-
 </style>

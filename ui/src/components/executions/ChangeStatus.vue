@@ -16,7 +16,7 @@
                 <p v-html="$t('change status confirm', {id: execution.id, task: taskRun.taskId})" />
 
                 <p>
-                    Current status is : <status size="small" class="mr-1" :status="this.taskRun.state.current" />
+                    Current status is : <status size="small" class="me-1" :status="this.taskRun.state.current" />
                 </p>
 
                 <el-select
@@ -31,7 +31,7 @@
                         :disabled="item.disabled"
                     >
                         <template #default>
-                            <status size="small" :label="false" class="mr-1" :status="item.code" />
+                            <status size="small" :label="false" class="me-1" :status="item.code" />
                             <span v-html="item.label" />
                         </template>
                     </el-option>
@@ -61,21 +61,19 @@
         </el-dialog>
     </component>
 </template>
+
 <script>
     import StateMachine from "vue-material-design-icons/StateMachine";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import Kicon from "../Kicon"
     import State from "../../utils/state";
     import Status from "../../components/Status";
     import ExecutionUtils from "../../utils/executionUtils";
     import {shallowRef} from "vue";
-    import RestartIcon from "vue-material-design-icons/Restart.vue";
-    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
 
     export default {
-        components: {StateMachine, Status, Kicon},
+        components: {StateMachine, Status},
         props: {
             component: {
                 type: String,

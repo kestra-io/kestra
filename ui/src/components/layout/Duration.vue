@@ -1,6 +1,6 @@
 <template>
     <span>
-        <el-tooltip v-if="histories" popper-class="duration-tt">
+        <el-tooltip v-if="histories" popper-class="duration-tt" :persistent="false" transition="" :hide-after="0">
             <template #content>
                 <span v-for="(history, index) in histories" :key="'tt-' + index">
                     <span class="square" :class="squareClass(history.state)" />

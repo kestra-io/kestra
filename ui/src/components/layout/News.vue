@@ -1,10 +1,10 @@
 <template>
-    <a class="news-link" @click="show">
+    <a class="news-link" href="#" @click="show">
         <gift title="" />
         <CheckboxBlankCircle v-if="hasUnread" class="new" title="" />
     </a>
 
-    <el-drawer size="50%" v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true" :title="$t('feeds.title')">
+    <el-drawer size="50%" v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true" class="sm" :title="$t('feeds.title')">
         <div class="post" v-for="(feed, index) in feeds" :key="feed.id">
             <div v-if="feed.image" class="mt-2">
                 <img class="float-right" :src="feed.image" alt="">
@@ -12,13 +12,12 @@
             <h5>
                 {{ feed.title }}
             </h5>
-            <date-ago class="text-muted small" :inverted="true" :date="feed.publicationDate" format="LL" />
-
+            <date-ago className="text-muted small" :inverted="true" :date="feed.publicationDate" format="LL" />
 
             <markdown class="markdown-tooltip mt-3" :source="feed.description" />
 
-            <div class="text-right">
-                <a class="el-button el-button--primary mt-3 d-inline-block text-right" :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
+            <div class="text-end">
+                <a class="el-button el-button--primary mt-3 d-inline-block text-end" :href="feed.href" target="_blank">{{ feed.link }} <OpenInNew /></a>
             </div>
 
             <el-divider v-if="index !== feeds.length - 1" />
@@ -60,7 +59,9 @@
             },
         },
         methods: {
-            show() {
+            show(event) {
+                event.preventDefault();
+
                 localStorage.setItem("feeds", this.feeds[0].publicationDate)
                 this.hasUnread = this.isUnread();
                 this.isOpen = !this.isOpen;
@@ -81,61 +82,61 @@
 </script>
 
 <style lang="scss" scoped>
-@use 'element-plus/theme-chalk/src/mixins/function' as *;
-@import "../../styles/variable";
-
-.news-link {
-    font-size: $font-size-lg;
-    color: var(--gray-600);
-}
-
-.new {
-    font-size: $font-size-xs;
-    color: $red;
-    position: absolute;
-    margin-left: -8px;
-
-    animation-name: grow;
-    animation-duration: 1.5s;
-    animation-iteration-count: infinite;
-    animation-timing-function: ease-in;
-}
-
-@keyframes grow {
-    0% {
-        transform: scale(0.8);
-    }
-    50%  {
-        transform: scale(1.2);
-    }
-    100% {
-        transform: scale(0.8);
-    }
-}
-
-.post {
-    h5 {
-        font-weight: bold;
-        margin-bottom: 0;
+    .news-link {
+        font-size: var(--font-size-lg);
+        color: var(--bs-gray-600);
     }
 
-    img {
-        max-height: 120px;
-        max-width: 240px;
-        padding-left: 20px;
-        padding-bottom: 20px;
+    .new {
+        font-size: calc(var(--font-size-sm) * 0.7);
+        color: var(--el-color-error);
+        position: absolute;
+        margin-left: -8px;
+
+        animation-name: grow;
+        animation-duration: 1.5s;
+        animation-iteration-count: infinite;
+        animation-timing-function: ease-in;
     }
 
-    hr {
-        border-top-color: var(--gray-700);
-        margin-top: calc(getCssVar('spacer') * 2);
-        margin-bottom: calc(getCssVar('spacer') * 2);
+    @keyframes grow {
+        0% {
+            transform: scale(0.8);
+        }
+        50%  {
+            transform: scale(1.2);
+        }
+        100% {
+            transform: scale(0.8);
+        }
     }
 
+    .post {
+        h5 {
+            font-weight: bold;
+            margin-bottom: 0;
+        }
 
-    a.el-button {
-        font-weight: bold;
+        img {
+            max-height: 120px;
+            max-width: 240px;
+            padding-left: 20px;
+            padding-bottom: 20px;
+        }
+
+        hr {
+            border-top-color: var(--bs-gray-700);
+            margin-top: calc(var(--spacer) * 2);
+            margin-bottom: calc(var(--spacer) * 2);
+        }
+
+        .small {
+            font-size:  var(--font-size-sm);
+            opacity: 0.7;
+        }
+
+        a.el-button {
+            font-weight: bold;
+        }
     }
-}
-
 </style>

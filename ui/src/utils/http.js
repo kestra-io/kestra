@@ -1,5 +1,8 @@
 import axios from "axios";
 import NProgress from "nprogress"
+import {ElNotification} from "element-plus"
+import {createApp} from "vue";
+import ErrorToast from "../components/ErrorToast.vue";
 
 // eslint-disable-next-line no-undef
 let root = (process.env.VUE_APP_API_URL || "") + KESTRA_BASE_PATH;
@@ -80,7 +83,7 @@ export default (callback, store, router) => {
             if (errorResponse.code && errorResponse.code === "ECONNABORTED") {
                 store.dispatch("core/showMessage", {
                     content: errorResponse,
-                    variant: "danger"
+                    variant: "error"
                 })
 
                 return Promise.reject(errorResponse);
@@ -95,7 +98,7 @@ export default (callback, store, router) => {
             if (errorResponse.response && errorResponse.response.data) {
                 store.dispatch("core/showMessage", {
                     content: errorResponse.response.data,
-                    variant: "danger"
+                    variant: "error"
                 })
 
                 return Promise.reject(errorResponse);

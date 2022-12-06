@@ -1,6 +1,6 @@
 <template>
-    <el-tooltip v-if="date" :content="inverted ? from : full">
-        <span>{{ inverted ? full : from }}</span>
+    <el-tooltip v-if="date" :content="inverted ? from : full" :persistent="false" transition="" :hide-after="0">
+        <span :class="className">{{ inverted ? full : from }}</span>
     </el-tooltip>
 </template>
 <script>
@@ -17,6 +17,10 @@
             format: {
                 type: String,
                 default: "LLLL"
+            },
+            className: {
+                type: String,
+                default: null
             }
         },
         computed: {

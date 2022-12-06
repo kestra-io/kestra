@@ -85,22 +85,24 @@
 
                 <small v-if="input.description" class="form-text text-muted">{{ input.description }}</small>
             </el-form-item>
-            <el-form-item class="mb-0">
-                <el-button :icon="icon.Trigger" @click="onSubmit" type="primary" :disabled="flow.disabled">
+            <el-form-item class="mb-0 submit">
+                <el-button :icon="Flash" @click="onSubmit" type="primary" :disabled="flow.disabled">
                     {{ $t('launch execution') }}
                 </el-button>
             </el-form-item>
         </el-form>
     </div>
 </template>
+
+<script setup>
+    import Flash from "vue-material-design-icons/Flash";
+</script>
+
 <script>
-    import {shallowRef} from "vue";
     import {mapState} from "vuex";
-    import Trigger from "vue-material-design-icons/Cogs";
     import {executeTask} from "../../utils/submitTask"
 
     export default {
-        components: {Trigger},
         props: {
             redirect: {
                 type: Boolean,
@@ -108,9 +110,6 @@
             }
         },
         emits: ["executionTrigger"],
-        data() {
-            return {icon: {Trigger: shallowRef(Trigger)}};
-        },
         mounted() {
             setTimeout(() => {
                 const input = this.$el && this.$el.querySelector && this.$el.querySelector("input")

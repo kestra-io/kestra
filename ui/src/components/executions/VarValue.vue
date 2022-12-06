@@ -1,30 +1,27 @@
 <template>
     <el-link
         v-if="isFile(value)"
+        :icon="Download"
         target="_blank"
         :href="itemUrl(value)"
     >
-        <kicon placement="left">
-            <download /> {{ $t('download') }}
-            <span v-if="humanSize">({{ humanSize }})</span>
-        </kicon>
+        {{ $t('download') }}
+        <span v-if="humanSize">({{ humanSize }})</span>
     </el-link>
     <span v-else>
         {{ value }}
     </span>
 </template>
 
+<script setup>
+    import Download from "vue-material-design-icons/Download";
+</script>
+
 <script>
     import {apiRoot} from "../../utils/http";
-    import Download from "vue-material-design-icons/Download";
-    import Kicon from "../Kicon"
     import Utils from "../../utils/utils";
 
     export default {
-        components: {
-            Download,
-            Kicon
-        },
         data () {
             return {
                 humanSize: ""

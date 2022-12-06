@@ -1,20 +1,68 @@
-@use "global" as global-var;
+@use "variable" as global-var;
 
-@use "layout/reset";
+// bootstrap
+@use "layout/bootstrap";
 
+
+// element-plus
 @forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
-    // global one only
-    $font-family: global-var.$font-family,
+    $font-family: (
+        '':  global-var.$font-family-sans-serif,
+        'monospace': global-var.$font-family-monospace
+    ),
 
-    // font-size everywhere
-    $font-size: global-var.$font-size,
+    $font-size: (
+        'extra-large': global-var.$font-size-base * 1.5,
+        'large': global-var.$font-size-lg,
+        'medium': global-var.$font-size-base * 1.15 ,
+        'base': global-var.$font-size-base,
+        'small': global-var.$font-size-sm,
+        'extra-small': global-var.$font-size-xs,
+    ),
+
+    $colors: (
+        'white': #ffffff,
+        'black': #000000,
+        'primary': (
+            'base': global-var.$primary,
+        ),
+        'success': (
+            'base': global-var.$green,
+        ),
+        'warning': (
+            'base': global-var.$yellow,
+        ),
+        'error': (
+            'base': global-var.$red,
+        ),
+        'info': (
+            'base': global-var.$cyan,
+        ),
+    ),
+
+    $border-radius: (
+        'base': global-var.$border-radius,
+        'small': global-var.$border-radius-sm,
+        'round': global-var.$border-radius-lg,
+    ),
 );
 @use "element-plus/theme-chalk/src/index.scss";
 @use "element-plus/theme-chalk/src/dark/css-vars.scss";
 
+// vue-sidebar
+@use "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss" with (
+    $primary-color: global-var.$secondary,
+    $base-bg: global-var.$white,
+    $item-color: global-var.$tertiary,
+    $item-active-color: global-var.$secondary,
+    $item-font-size: global-var.$font-size-base,
+    $item-hover-color: global-var.$tertiary,
+    $item-hover-bg: darken(global-var.$secondary, 5%),
+);
 
-@use "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
+// third
 @import '~nprogress/nprogress.css';
 @import "~vue-material-design-icons/styles.css";
-
+//noinspection CssUnknownTarget
+@import url("https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700;900&display=swap");
 

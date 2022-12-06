@@ -1,181 +1,65 @@
-$theme-name: "theme-light" !default;
+// color system
+$blue: #1761fd;
+$indigo: #6610f2;
+$purple: #6d81f5;
+$pink: #fd3c97;
+$red: #f5325c;
+$orange: #ff8500;
+$yellow: #ffb822;
+$green: #22b783;
+$teal: #03d87f;
+$cyan: #12a4ed;
+
+// primary color
+$primary: #192A4E;
+$secondary: #4F83A5;
+$tertiary: #9EBFD5;
+
+// gray
+$white: #FFF;
+$gray-100: #f8f8fc;
+$gray-200: #f1f5fa;
+$gray-300: #eaf0f9;
+$gray-400: #b6c2e4;
+$gray-500: #8997bd;
+$gray-600: #7081b9;
+$gray-700: #303e67;
+$gray-800: #2c3652;
+$gray-900: #1d2c48;
+$black: #000;
+
+$light: $gray-200;
+$dark: $gray-900;
+
+// fonts
+$font-size-base: 1rem;
+$font-family-sans-serif: "Ubuntu", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+$font-family-monospace: 'Source Code Pro', SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+$font-size-xs: $font-size-base * 0.75;
+
+// border radius
+$border-radius: 0.25rem;
+$border-radius-lg: 0.5rem;
+$border-radius-sm: 0.15rem;
+
+// layout
 $menu-width: 268px;
+$spacer: 1rem;
 
-// Color system
-$white: #FFF !default;
-$white-always: #FFF !default;
-$gray-100: #f8f8fc !default;
-$gray-200: #f1f5fa !default;;
-$gray-300: #eaf0f9 !default;;
-$gray-400: #b6c2e4 !default;;
-$gray-500: #8997bd !default;;
-$gray-600: #7081b9 !default;;
-$gray-700: #303e67 !default;;
-$gray-800: #2c3652 !default;;
-$gray-900: #1d2c48 !default;;
-$black: #000 !default;
-$black-always: #000 !default;
+// body
+$body-color: $gray-700;
+$border-color: $gray-300;
+$body-bg: $gray-100;
+$card-bg: $white;
 
-$blue: #1761fd !default;
-$indigo: #6610f2 !default;
-$purple: #6d81f5 !default;
-$pink: #fd3c97 !default;
-$red: #f5325c !default;
-$orange: #ff8500 !default;
-$yellow: #ffb822 !default;
-$green: #22b783 !default;
-$teal: #03d87f !default;
-$cyan: #12a4ed !default;
+$link-color: $cyan;
 
-$primary: #192A4E !default;
-$secondary: #4F83A5 !default;
-$tertiary: #9EBFD5 !default;
+// border radius
+$border-radius: .25rem;
+$border-radius-sm: .15rem;
 
-$success: $green !default;
-$info: $cyan !default;
-$warning: $yellow !default;
-$danger: $red !default;
-$light: $gray-200 !default;
-$light-always: $gray-200 !default;
-$dark: $gray-900 !default;
-$dark-always: $gray-900 !default;
-
-$yiq-contrasted-threshold: 200 !default;
-
-// Themes
-$theme-colors: (
-    "purple": $purple
-) !default;
-
-// Fonts
-$font-weight-bolder: 900;
-$enable-shadows: true;
-
-// Body
-$body-color: $gray-700 !default;
-$body-bg: $gray-100 !default;
-$link-color: $cyan !default;
-$border-color: $gray-300 !default;
-
-// Components
-$border-radius: 0.25rem !default;
-$border-radius-lg: 0.5rem !default;
-$border-radius-sm: 0.15rem  !default;
-
-// Fonts
-$font-family-sans-serif: "Ubuntu", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !default;
-$font-family-monospace: 'Source Code Pro', SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !default;
-
-$font-size-base: 1rem !default;
-$font-size-sm: $font-size-base * .875 !default;
-$font-size-xs: $font-size-base * .75 !default;
-
-$headings-font-weight: 300 !default;
-$text-muted: $gray-500 !default;
-
-// Buttons
-$btn-font-weight: 300 !default;
-$input-btn-focus-box-shadow: none !default;
-$btn-box-shadow: none !default;
-$btn-focus-box-shadow:  none !default;
-$btn-active-box-shadow: none !default;
-
-// Dropdowns
-$dropdown-border-color: $border-color !default;
-$dropdown-divider-bg: $border-color !default;
-
-// Navs
-//$nav-link-disabled-color: $gray-400 !default;
-//$nav-tabs-border-color: $dropdown-border-color !default;
-//$nav-tabs-link-hover-border-color: $nav-tabs-border-color !default;
-//$nav-tabs-link-active-border-color: $nav-tabs-border-color !default;
-
-// Navbar
-$navbar-dark-color: rgba($white, .7) !default;
-$navbar-dark-hover-color: $white !default;
-$navbar-toggler-font-size: $font-size-sm !default;
-
-// Pagination
-$pagination-color: var(--gray-600) !default;
-$pagination-bg: transparent !default;
-$pagination-disabled-bg: transparent !default;
-
-// Jumbotron
-$jumbotron-padding: 4rem !default;
-
-// Cards
-$card-inner-border-radius: $border-radius-lg !default;
-$card-border-radius: $border-radius-lg !default;
-$card-cap-bg: transparent !default;
-$card-border-color: $border-color !default;
-$card-bg: $white !default;
-
-// Badges
-$badge-font-weight: 300 !default;
-$badge-padding-x: 1rem !default;
-
-// Progress bars
-$progress-bg: $gray-200 !default;
-$progress-bar-color: $white !default;
-
-// List group
-$list-group-bg: transparent !default;
-$list-group-disabled-bg: $gray-200 !default;
-
-// Close
-$close-color: $gray-600 !default;
-$close-text-shadow: none !default;
-
-// Breadcrumb
-$breadcrumb-item-padding: 0.25rem !default;
-
-// pre
-$pre-color: $white !default;
-
-// abbr
-$mark-bg: $yellow !default;
-$mark-padding: 0.1rem 0.25rem !default;
-
-// tooltip
-$tooltip-bg: $black-always !default;
-$tooltip-color: $white-always !default;
-$tooltip-arrow-color: $black-always !default;
-
-// Table
-$table-bg: $white !default;
-$table-accent-bg: lighten($body-bg, 0.3%) !default;
-$table-hover-bg: darken($table-accent-bg, 3%) !default;
-$table-head-bg: darken($table-accent-bg, 3%) !default;
-
-// Pagination
-$pagination-active-color: $white-always !default;
-
-// Progress
-$progress-box-shadow: none !default;
-
-// Vue Bootstrap
-$b-table-sort-icon-bg-dark-not-sorted: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='101' height='101' view-box='0 0 101 101' preserveAspectRatio='none'><path fill='" + $gray-500 + "' opacity='.3' d='M51 1l25 23 24 22H1l25-22zM51 101l25-23 24-22H1l25 22z'/></svg>") !default;
-$b-table-sort-icon-bg-dark-ascending: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='101' height='101' view-box='0 0 101 101' preserveAspectRatio='none'><path fill='" + $gray-500 + "' d='M51 1l25 23 24 22H1l25-22z'/><path fill='" + $gray-500 + "' opacity='.3' d='M51 101l25-23 24-22H1l25 22z'/></svg>") !default;
-$b-table-sort-icon-bg-dark-descending: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='101' height='101' view-box='0 0 101 101' preserveAspectRatio='none'><path fill='" + $gray-500 + "' opacity='.3' d='M51 1l25 23 24 22H1l25-22z'/><path fill='" + $gray-500 + "' d='M51 101l25-23 24-22H1l25 22z'/></svg>") !default;
-
-$b-table-sort-icon-bg-not-sorted: $b-table-sort-icon-bg-dark-not-sorted;
-$b-table-sort-icon-bg-ascending: $b-table-sort-icon-bg-dark-ascending;
-$b-table-sort-icon-bg-descending: $b-table-sort-icon-bg-dark-descending;
-
-// forms
-$input-border-color: $border-color !default;
-$input-box-shadow: none !default;
-$custom-select-box-shadow: none !default;
-
-// modals
-$modal-backdrop-bg: #000;
-
-// popover
-$popover-inner-border-radius: $border-radius;
-
-// Import
+// bootstrap
 @import "~bootstrap/scss/functions";
 @import "~bootstrap/scss/mixins";
 @import "~bootstrap/scss/vendor/rfs";
 @import '~bootstrap/scss/variables';
-

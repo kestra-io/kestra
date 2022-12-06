@@ -1,11 +1,11 @@
 <template>
     <component
         :is="component"
-        :icon="!isReplay ? icon.RestartIcon : icon.PlayBoxMultiple"
+        :icon="!isReplay ? RestartIcon : PlayBoxMultiple"
         @click="isOpen = !isOpen"
         v-if="isReplay || enabled"
         :disabled="!enabled"
-        :class="!isReplay ? 'btn-info restart mr-1' : ''"
+        :class="!isReplay ? 'restart me-1' : ''"
     >
         {{ $t(replayOrRestart) }}
     </component>
@@ -48,15 +48,19 @@
         </el-form>
     </el-dialog>
 </template>
-<script>
+
+<script setup>
     import RestartIcon from "vue-material-design-icons/Restart";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple";
+</script>
+
+<script>
+
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import State from "../../utils/state";
     import ExecutionUtils from "../../utils/executionUtils";
-    import {shallowRef} from "vue";
 
     export default {
         components: {RestartIcon, PlayBoxMultiple},
@@ -168,7 +172,6 @@
             return {
                 revisionsSelected: undefined,
                 isOpen: false,
-                icon: {RestartIcon: shallowRef(RestartIcon), PlayBoxMultiple: shallowRef(PlayBoxMultiple)}
             };
         },
     };

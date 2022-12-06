@@ -1,7 +1,7 @@
 <template>
     <component
         :is="component"
-        :icon="icon.CodeTags"
+        :icon="CodeTags"
         @click="onShow"
     >
         <span v-if="component !== 'el-button'">{{ $t('show task source') }}</span>
@@ -11,11 +11,11 @@
             v-model="isModalOpen"
             destroy-on-close
             lock-scroll
+            size=""
             :append-to-body="true"
         >
             <template #footer>
-                <el-button @click="saveTask" v-if="canSave" type="primary">
-                    <content-save />&nbsp;
+                <el-button :icon="ContentSave" @click="saveTask" v-if="canSave" type="primary">
                     <span>{{ $t('save') }}</span>
                 </el-button>
             </template>
@@ -32,21 +32,23 @@
         </el-drawer>
     </component>
 </template>
+
+<script setup>
+    import CodeTags from "vue-material-design-icons/CodeTags.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave";
+</script>
+
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
     import Editor from "../../../components/inputs/Editor";
-    import ContentSave from "vue-material-design-icons/ContentSave";
-    import CodeTags from "vue-material-design-icons/CodeTags";
     import {canSaveFlowTemplate} from "../../../utils/flowTemplate";
     import {mapState} from "vuex";
     import Utils from "../../../utils/utils";
-    import {shallowRef} from "vue";
 
     export default {
         components: {
             Editor,
             ContentSave,
-            CodeTags,
         },
         props: {
             component: {
@@ -117,7 +119,6 @@
                 uuid: Utils.uid(),
                 taskYaml: undefined,
                 isModalOpen: false,
-                icon: {CodeTags: shallowRef(CodeTags)}
             };
         },
         created() {

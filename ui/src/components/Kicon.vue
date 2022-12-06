@@ -5,6 +5,9 @@
             :content="tooltip"
             :raw-content="true"
             :placement="placement"
+            :persistent="false"
+            transition=""
+            :hide-after="0"
         >
             <slot />
         </el-tooltip>
@@ -27,8 +30,7 @@
 </script>
 
 <style lang="scss" scoped>
-
-.kicon {
-    white-space: nowrap;
-}
+    .kicon {
+        white-space: nowrap;
+    }
 </style>

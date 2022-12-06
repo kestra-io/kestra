@@ -1,11 +1,11 @@
 <template>
-    <div class="line text-monospace" v-if="filtered">
-        <span :class="levelClass" class="header-badge log-level">{{ log.level.padEnd(9) }}</span>
-        <span class="header-badge bg-light text-dark">
+    <div class="line font-monospace" v-if="filtered">
+        <span :class="levelClass" class="header-badge log-level el-tag">{{ log.level.padEnd(9) }}</span>
+        <span class="header-badge">
             {{ $filters.date(log.timestamp, "iso") }}
         </span>
         <span v-for="(meta, x) in metaWithValue" :key="x">
-            <span class="header-badge bg-light text-dark property">
+            <span class="header-badge property">
                 <span>{{ meta.key }}</span>
                 <template v-if="meta.router">
                     <router-link :to="meta.router">{{ meta.value }}</router-link>
@@ -13,7 +13,6 @@
                 <template v-else>
                     {{ meta.value }}
                 </template>
-
             </span>
         </span>
         <span class="message" v-html="message" />
@@ -81,11 +80,11 @@
             },
             levelClass() {
                 return {
-                    TRACE: "badge-info",
-                    DEBUG: "badge-secondary",
-                    INFO: "badge-primary",
-                    WARN: "badge-warning",
-                    ERROR: "badge-danger",
+                    TRACE: "",
+                    DEBUG: "el-tag--info",
+                    INFO: "el-tag--success",
+                    WARN: "el-tag--warning",
+                    ERROR: "el-tag--danger",
                 }[this.log.level];
             },
             filtered() {
@@ -103,62 +102,60 @@
     };
 </script>
 <style scoped lang="scss">
-@use "sass:math";
-@use 'element-plus/theme-chalk/src/mixins/function' as *;
-@import "../../styles/_variable.scss";
+    div.line {
+        white-space: pre-wrap;
+        word-break: break-all;
+        padding-right: calc(var(--spacer) / 2);
 
-div.line {
-    white-space: pre-wrap;
-    word-break: break-all;
-    padding: 0 calc(getCssVar('spacer') / 2);
-
-    .theme-dark & {
-        color: var(--body-color)
-    }
-
-    .header-badge {
-        display: inline-block;
-        font-size: 95%;
-        margin-left: calc((getCssVar('spacer') * -2));
-        padding: $badge-padding-y $badge-padding-x;
-        font-weight: $font-weight-base;
-        line-height: 1;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        margin-right: 10px;
-
-        & a {
-            margin-left: 6px;
-            color: var(--dark);
+        .el-tag {
+            border-radius: 0;
+            border: 0;
+            height: auto;
         }
 
-        &.log-level {
-            white-space: pre;
-        }
+        .header-badge {
+            display: inline-block;
+            font-size: 95%;
+            padding: calc(var(--spacer) / 3) calc(var(--spacer) / 3);
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            margin-right: calc(var(--spacer) / 3);
+            &:not(.el-tag) {
+                background-color: var(--bs-gray-300);
+            }
 
-        &.property {
-            padding: $badge-padding-y math.div($badge-padding-x, 2);
+            span:first-child {
+                margin-right: 6px;
+                font-family: var(--bs-font-sans-serif);
+                color: var(--bs-gray-400);
 
-            > span {
-                font-family: $font-family-sans-serif;
-                color: var(--gray-600);
+                html.dark & {
+                    color: var(--bs-gray-400-darken-15);
+                }
                 user-select: none;
+
+                &::after{
+                    content: ":";
+                }
+            }
+
+            &:not(.el-tag), & a {
+                color: var(--bs-gray-600);
+            }
+
+            & a:hover {
+                color: var(--bs-link-color);
+            }
+
+            &.log-level {
+                white-space: pre;
             }
         }
 
-        .theme-dark &.bg-light, .theme-dark &.bg-light a {
-            background-color: var(--gray-200-lighten-5) !important;
-            color: var(--gray-600) !important;
-
-            > span {
-                color: var(--gray-300-lighten-10) !important;
-            }
+        .message {
+            padding: 0 calc(var(--spacer) / 2);
         }
     }
-
-    .message {
-        padding: 0 $badge-padding-x;
-    }
-}
 </style>

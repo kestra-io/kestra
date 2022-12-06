@@ -48,7 +48,6 @@
 <script>
     import RouteContext from "../../mixins/routeContext";
     import NamespaceSelect from "../../components/namespace/NamespaceSelect";
-    import {mapState} from "vuex";
 
     export default {
         mixins: [RouteContext],
@@ -108,7 +107,6 @@
             },
         },
         computed: {
-            ...mapState("core", ["themes", "theme"]),
             routeInfo() {
                 return {
                     title: this.$t("settings")

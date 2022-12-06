@@ -18,7 +18,7 @@
 </template>
 <script>
     export default {
-        emits: ["input"],
+        emits: ["update:modelValue"],
         data() {
             return {
                 levelOptions: [
@@ -42,7 +42,7 @@
         },
         methods: {
             onInput(value) {
-                this.$emit("input", value);
+                this.$emit("update:modelValue", value);
             },
         },
     };

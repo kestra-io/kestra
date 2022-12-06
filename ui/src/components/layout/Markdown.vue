@@ -46,12 +46,11 @@
 </script>
 
 <style lang="scss">
-@import "../../styles/_variable.scss";
-.markdown {
-    a.header-anchor {
-        color: var(--gray-600);
-        font-size: $font-size-base;
-        font-weight: normal;
+    .markdown {
+        a.header-anchor {
+            color: var(--bs-gray-600);
+            font-size: var(--font-size-base);
+            font-weight: normal;
+        }
     }
-}
 </style>

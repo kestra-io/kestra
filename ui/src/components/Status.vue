@@ -31,7 +31,6 @@
         computed: {
             cls() {
                 return {
-                    ["btn-" + State.colorClass()[this.status] + (this.size ? " btn-" + this.size : "")]: true,
                     "no-label": !this.label
                 }
             },

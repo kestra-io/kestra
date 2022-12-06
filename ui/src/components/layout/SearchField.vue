@@ -15,26 +15,21 @@
     export default {
         emits: ["search"],
         components: {Magnify},
+        searchDebounce: undefined,
         created() {
-            if (this.$route.query.q) {
-                this.search = this.$route.query.q;
-            }
-            this.searchDebounce = debounce(300, () => {
-                this.$emit("search", this.search);
-
-                if (this.router) {
-                    const query = {...this.$route.query, q: this.search, page: 1};
-                    if (!this.search) {
-                        delete query.q;
-                    }
-                    this.$router.push({query});
-                }
-            });
+            this.init();
         },
         props: {
             router: {
                 type: Boolean,
                 default: true
+            }
+        },
+        watch: {
+            $route(oldValue, newValue) {
+                if (oldValue.name === newValue.name) {
+                    this.init()
+                }
             }
         },
         data() {
@@ -43,12 +38,28 @@
             };
         },
         methods: {
+            init() {
+                if (this.$route.query.q) {
+                    this.search = this.$route.query.q;
+                }
+                this.searchDebounce = debounce(300, () => {
+                    this.$emit("search", this.search);
+
+                    if (this.router) {
+                        const query = {...this.$route.query, q: this.search, page: 1};
+                        if (!this.search) {
+                            delete query.q;
+                        }
+                        this.$router.push({query});
+                    }
+                });
+            },
             onInput() {
                 this.searchDebounce();
             },
         },
         unmounted() {
-            this.searchDebounce.cancel();
+            this.searchDebounce && this.searchDebounce.cancel();
         }
     };
 </script>

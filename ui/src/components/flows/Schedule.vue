@@ -10,12 +10,12 @@
                 :key="x"
             />
         </el-collapse>
-        <el-alert show-icon type="info" v-else :closable="false" class="text-muted mb-0">
+        <el-alert show-icon type="info" v-else :closable="false" class="mb-0">
             {{ $t('no result') }}
         </el-alert>
         <bottom-line v-if="canSave">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
+            <ul>
+                <li>
                     <el-button
                         @click="addSchedule"
                         v-if="canSave"

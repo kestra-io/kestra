@@ -10,7 +10,7 @@
                 />
             </template>
             <template v-else>
-                <el-alert type="info" :closable="false" class="text-muted m-0" show-icon>
+                <el-alert type="info" :closable="false" class="m-0" show-icon>
                     {{ $t('no result') }}
                 </el-alert>
             </template>
@@ -57,29 +57,27 @@
 </script>
 
 <style lang="scss">
-@import "../../styles/_variable.scss";
-
-.state-global-charts {
-    position: relative;
-    height: 100px;
-    vertical-align: middle;
+    .state-global-charts {
+        position: relative;
+        height: 100px;
+        vertical-align: middle;
 
 
-    .executions-charts {
-        user-select: none;
-        top: 0;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-evenly;
-    }
+        .executions-charts {
+            user-select: none;
+            top: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+        }
 
-    &.big {
-        height: 200px;
-
-        .executions-charts > div {
+        &.big {
             height: 200px;
+
+            .executions-charts > div {
+                height: 200px;
+            }
         }
     }
-}
 </style>

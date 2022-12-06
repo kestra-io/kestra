@@ -3,17 +3,17 @@
         <el-tag
             v-for="(value, key) in labels"
             :key="key"
-            class="mr-1"
-            type="info"
+            class="me-1 labels"
             size="small"
             disable-transitions
         >
             <router-link :to="link(key, value)">
-                <span class="text-primary">{{ key }}:</span> {{ value }}
+                {{ key }}: {{ value }}
             </router-link>
         </el-tag>
     </span>
 </template>
+
 <script>
     export default {
         props: {
@@ -50,8 +50,9 @@
 </script>
 
 <style lang="scss" scoped>
-@import "../../styles/_variable.scss";
-:deep(.badge) {
-    font-size: $font-size-xs;
-}
+    :deep(.el-tag) {
+        & a {
+            color: var(--bs-white);;
+        }
+    }
 </style>

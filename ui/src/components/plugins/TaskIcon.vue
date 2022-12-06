@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip placement="left">
+    <el-tooltip placement="left" :persistent="false" transition="" :hide-after="0">
         <template #content>
             <span>
                 {{ tooltipStart }}
@@ -75,15 +75,13 @@
 </script>
 
 <style lang="scss" scoped>
-    @use "sass:math";
-    @import "../../styles/_variable.scss";
     div.wrapper {
         height: 100%;
         width: 100%;
-        font-size: $font-size-xs;
+        font-size: var(--font-size-xs);
 
         > .icon {
-            margin: math.div($btn-padding-x-sm, 2);
+            margin: calc(var(--spacer) / 5);
             height: calc(100% - 25px);
             display: block;
             background-size: contain;
@@ -93,9 +91,9 @@
 
         > .hover {
             position: absolute;
-            background: var(--indigo-lighten-15);
-            border-top: 1px solid $indigo;
-            color: $white;
+            background: var(--el-color-info-light-9);
+            border-top: 1px solid var(--bs-border-color);
+            color: var(--bs-body-color);
             font-size: 70%;
             text-overflow: ellipsis;
             overflow: hidden;
@@ -104,12 +102,12 @@
             width: 100%;
             bottom: 0;
             text-align: center;
-            padding: math.div($btn-padding-y-sm, 2) 1px ;
+            padding: calc(var(--spacer) / 5);
         }
 
         &.flowable {
             > .hover {
-                background: var(--pink-darken-15);
+                background: var(--el-color-warning-light-9);
             }
         }
 

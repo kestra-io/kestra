@@ -1,6 +1,6 @@
 <template>
     <div>
-        <nav class="mb-sm-4 mb-md-0" v-if="hasNavBar">
+        <nav v-if="hasNavBar">
             <collapse>
                 <slot name="navbar" />
             </collapse>

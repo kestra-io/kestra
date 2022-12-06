@@ -1,7 +1,7 @@
 <template>
     <el-config-provider>
         <left-menu @menu-collapse="onMenuCollapse" />
-        <custom-toast v-if="message" :no-auto-hide="true" :message="message" />
+        <error-toast v-if="message" :no-auto-hide="true" :message="message" />
         <main :class="menuCollapsed">
             <top-nav-bar :menu-collapsed="menuCollapsed" />
             <router-view v-if="!error" />
@@ -9,14 +9,13 @@
                 <errors :code="error" />
             </template>
         </main>
-        <div id="theme-loaded" />
     </el-config-provider>
 </template>
 
 <script>
     import LeftMenu from "override/components/LeftMenu.vue";
     import TopNavBar from "./components/layout/TopNavBar";
-    import CustomToast from "./components/customToast";
+    import ErrorToast from "./components/ErrorToast";
     import Errors from "./components/errors/Errors";
     import {mapState} from "vuex";
     import Utils from "./utils/utils";
@@ -26,7 +25,7 @@
         components: {
             LeftMenu,
             TopNavBar,
-            CustomToast,
+            ErrorToast,
             Errors
         },
         data() {
@@ -36,7 +35,7 @@
             };
         },
         computed: {
-            ...mapState("core", ["message", "error", "themes", "theme"])
+            ...mapState("core", ["message", "error"])
         },
         created() {
             if (this.created === false) {
@@ -109,12 +108,12 @@
     @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
 
     main {
-        padding-right: 15px;
-        padding-left: 15px;
+        padding-right: var(--spacer);
+        padding-left: var(--spacer);
         margin-right: auto;
         margin-left: auto;
 
-        padding-top: 15px;
+        padding-top: var(--spacer);
         padding-bottom: 60px !important;
         transition: all 0.3s ease;
 
@@ -123,11 +122,11 @@
         }
 
         &.menu-not-collapsed {
-            padding-left: calc(mixin.getCssVar('menu-width') + 15px);
+            padding-left: calc(var(--menu-width) + var(--spacer));
 
             @include mixin.res(lg) {
-                padding-left: calc(mixin.getCssVar('menu-width') + 40px + 15px);
-                padding-right: 40px;
+                padding-left: calc(var(--menu-width) + (var(--spacer) * 4));
+                padding-right: calc(var(--spacer) * 4);
             }
         }
     }

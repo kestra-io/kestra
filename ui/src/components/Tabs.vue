@@ -1,6 +1,6 @@
 <template>
-    <div class="card ktr-tabs">
-        <el-tabs v-model="activeName">
+    <div>
+        <el-tabs v-model="activeName" class="mb-3">
             <el-tab-pane
                 v-for="tab in tabs"
                 :key="tab.name"
@@ -76,92 +76,3 @@
     };
 </script>
 
-<style lang="scss">
-@import "../styles/_variable.scss";
-
-.ktr-tabs {
-    transition: all 0.3s ease;
-
-    &.card {
-        background-color: transparent;
-        border: 0;
-    }
-
-    .tabs > .card-header {
-        padding: 0;
-        position: relative;
-
-        > div {
-            padding: $card-spacer-y $card-spacer-x;
-            overflow-x: scroll;
-            overflow-y: hidden;
-            direction: rtl;
-            transform: rotate(180deg);
-
-            &::-webkit-scrollbar {
-                height: 5px;
-            }
-
-            &::-webkit-scrollbar-track, &::-webkit-scrollbar-thumb {
-                background: transparent;
-                transition: 320ms;
-            }
-
-            &::-webkit-scrollbar-thumb:hover {
-                background: $gray-500;
-            }
-
-            .card-header-tabs {
-                margin-top: -11px;
-                direction: ltr;
-                transform: rotate(-180deg);
-            }
-
-            @-moz-document url-prefix() {
-                & {
-                    overflow-x: auto;
-                    .card-header-tabs {
-                        padding-top: 5px;
-                    }
-                }
-            }
-        }
-
-        &:before, &:after {
-            content: "";
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 10px;
-            height: 100%;
-            z-index: 2;
-            background: linear-gradient(to right, rgba(248, 248, 252, 0) 0%, rgba(248, 248, 252, 1) 85%);
-
-            .theme-dark & {
-                background: linear-gradient(to right, rgba(27, 30, 42, 0) 0%, rgb(27, 30, 42) 95%);
-            }
-        }
-
-        &:after {
-            left: 0;
-            background: linear-gradient(to left, rgba(248, 248, 252, 0) 0%, rgba(248, 248, 252, 1) 85%);
-
-            .theme-dark & {
-                background: linear-gradient(to left, rgba(27, 30, 42, 0) 0%, rgb(27, 30, 42) 95%);
-            }
-        }
-
-        &:hover > div::-webkit-scrollbar-thumb {
-            background: var(--secondary);
-        }
-
-        .nav {
-            flex-wrap: nowrap;
-
-            .nav-item {
-                white-space: nowrap;
-            }
-        }
-    }
-}
-</style>

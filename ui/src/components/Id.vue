@@ -1,5 +1,5 @@
 <template>
-    <el-tooltip transition="" :hide-after="0" placement="top">
+    <el-tooltip transition="" :hide-after="0" :persistent="false" placement="top">
         <template #content><code>{{ value }}</code></template>
         <code :id="uuid" class="text-nowrap">
             {{ transformValue }}

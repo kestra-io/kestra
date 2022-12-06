@@ -55,36 +55,3 @@
     };
 </script>
 
-<style lang="scss">
-@import "../../styles/variable";
-
-.btn-group {
-    .btn {
-        span.label {
-            display: none;
-        }
-    }
-}
-.navbar-collapse {
-    &.collapse.show {
-        .btn-group {
-            width: 100%;
-            display: flex !important;
-            .btn {
-                width: auto;
-                flex: 1;
-
-                @include media-breakpoint-up(sm) {
-                    span.label {
-                        display: inline-block;
-                    }
-
-                }
-
-            }
-        }
-    }
-}
-
-
-</style>

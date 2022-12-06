@@ -1,8 +1,8 @@
 <template>
-    <div v-if="execution" class="el-table">
+    <el-card shadow="never" v-if="execution">
         <table>
             <thead>
-                <tr class="bg-light">
+                <tr>
                     <th>
                         <duration :histories="execution.state.histories" />
                     </th>
@@ -14,7 +14,7 @@
             <tbody v-for="currentTaskRun in partialSeries" :key="currentTaskRun.id">
                 <tr>
                     <th>
-                        <el-tooltip placement="right">
+                        <el-tooltip placement="right" :persistent="false" transition="" :hide-after="0">
                             <template #content>
                                 <code>{{ currentTaskRun.name }}</code>
                                 <span v-if="currentTaskRun.task && currentTaskRun.task.value"><br>{{ currentTaskRun.task.value }}</span>
@@ -24,7 +24,7 @@
                         </el-tooltip>
                     </th>
                     <td :colspan="dates.length">
-                        <el-tooltip placement="left">
+                        <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0">
                             <template #content>
                                 <span style="white-space: pre-wrap;">
                                     {{ currentTaskRun.tooltip }}
@@ -60,7 +60,7 @@
                 </tr>
             </tbody>
         </table>
-    </div>
+    </el-card>
 </template>
 <script>
     import LogList from "../logs/LogList";
@@ -275,71 +275,86 @@
     };
 </script>
 <style lang="scss" scoped>
-@import "../../styles/_variable.scss";
-
-table {
-    table-layout: fixed;
-
-    & th, td {
-        border-color: var(--table-border-color);
-    }
-
-    thead th, thead td {
-        text-align: right;
-    }
-
-    tbody {
-        border-top: 0;
-    }
-
-    thead {
-        font-size: $font-size-sm;
-
-        th {
-            width: 150px;
+    .el-card {
+        :deep(.el-card__body) {
+            padding: 0;
         }
-    }
-    th {
-        max-width: 150px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+
     }
 
-    tbody {
-        th {
-            code {
-                font-weight: normal;
+    table {
+        table-layout: fixed;
+        width: 100%;
+        color: var(--bs-body-color);
+
+        & th, td {
+            border-bottom: 1px solid var(--bs-border-color);
+            padding: 0.3rem;
+        }
+
+        tr:last-child th, tr:last-child td {
+            border-bottom: 0;
+        }
+
+        thead th, thead td {
+            text-align: right;
+        }
+
+        thead {
+            font-size: var(--font-size-sm);
+            background-color: var(--bs-gray-200);
+
+            th {
+                width: 150px;
+                background-color: var(--bs-gray-100-darken-5);
             }
         }
+        th {
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-        td {
-            position: relative;
+        code {
+            font-size: 0.7rem;
+        }
 
-            .task-progress {
-                position: absolute;
-                transition: all 0.3s;
-                min-width: 5px;
+        tbody {
+            th {
+                code {
+                    font-weight: normal;
+                }
+            }
 
-                .progress {
-                    height: 21px;
-                    border-radius: 2px;
+            td {
+                position: relative;
+
+                .task-progress {
                     position: relative;
-                    cursor: pointer;
+                    transition: all 0.3s;
+                    min-width: 5px;
 
-                    .progress-bar {
-                        position: absolute;
+                    .progress {
                         height: 21px;
-                        transition: none;
+                        border-radius: var(--bs-border-radius-sm);
+                        position: relative;
+                        cursor: pointer;
+                        background-color: var(--bs-gray-200);
+
+                        .progress-bar {
+                            position: absolute;
+                            height: 21px;
+                            transition: none;
+                        }
                     }
                 }
             }
         }
     }
-}
 
-:deep(.log-wrapper .attempt-wrapper) {
-    margin-bottom: 0;
-}
+    :deep(.log-wrapper .attempt-wrapper) {
+        margin-bottom: 0;
+    }
 
 </style>

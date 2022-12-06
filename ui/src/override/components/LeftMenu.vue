@@ -241,7 +241,7 @@
                 background-size: 179px 55px;
                 display: block;
 
-                .theme-dark & {
+                html.dark & {
                     background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
                     background-size: 179px 55px;
                 }
@@ -252,10 +252,10 @@
     span.version {
         transition: 0.2s all;
         white-space: nowrap;
-        font-size: getCssVar('font-size', 'extra-small');
+        font-size: var(--el-font-size-extra-small);
         text-align: center;
         display: block;
-        color: getCssVar('color', 'tertiary');
+        color: var(--bs-tertiary);
     }
 </style>
 
@@ -264,11 +264,7 @@
 
     #side-menu {
         z-index: 1039;
-        border-right: 1px solid getCssVar('border-color');
-
-        .vsm--list {
-            transition: 0.2s all;
-        }
+        border-right: 1px solid var(--bs-border-color);
 
         .vsm--icon {
             transition: left 0.2s ease;
@@ -301,7 +297,7 @@
                 &.vsm--link_exact-active,
                 &.vsm--link_active {
                     box-shadow: none;
-                    border-left: 4px solid getCssVar('color', 'secondary');
+                    border-left: 4px solid var(--bs-secondary);
                 }
             }
 
@@ -309,14 +305,18 @@
             &_active {
                 font-weight: 700;
             }
+
+            &_disabled {
+                opacity: 1;
+            }
         }
 
         .vsm--toggle-btn {
             padding-top: 4px;
             background: transparent;
-            color: getCssVar('color', 'secondary');
+            color: var(--bs-secondary);
             height: 30px;
-            border-top: 1px solid getCssVar('border-color');
+            border-top: 1px solid var(--bs-border-color);
         }
 
         &.vsm_collapsed .vsm--icon {
@@ -328,8 +328,8 @@
             cursor: initial !important;
         }
 
-
         .vsm--dropdown {
+            background-color: var(--bs-gray-100);
             .vsm--title {
                 top: 3px;
             }
@@ -349,10 +349,10 @@
         }
 
         html.dark & {
-            background-color: getCssVar('gray-100-darken-5');
+            background-color: var(--bs-gray-100-darken-5);
 
             .vsm--dropdown {
-                background-color: getCssVar('gray-100-darken-5');
+                background-color: var(--bs-gray-100);
             }
         }
 

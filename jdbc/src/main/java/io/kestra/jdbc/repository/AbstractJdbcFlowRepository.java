@@ -24,6 +24,7 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import java.util.*;

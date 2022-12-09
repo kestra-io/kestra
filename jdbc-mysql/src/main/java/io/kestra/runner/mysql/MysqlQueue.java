@@ -4,6 +4,7 @@ import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
 import io.micronaut.context.ApplicationContext;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package io.kestra.core.runners.pebble;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mitchellbosecke.pebble.extension.writer.SpecializedWriter;
+import io.pebbletemplates.pebble.extension.writer.SpecializedWriter;
 import io.kestra.core.serializers.JacksonMapper;
 import lombok.SneakyThrows;
 

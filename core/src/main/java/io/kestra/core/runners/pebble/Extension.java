@@ -1,12 +1,12 @@
 package io.kestra.core.runners.pebble;
 
-import com.mitchellbosecke.pebble.extension.*;
-import com.mitchellbosecke.pebble.node.expression.RangeExpression;
-import com.mitchellbosecke.pebble.operator.Associativity;
-import com.mitchellbosecke.pebble.operator.BinaryOperator;
-import com.mitchellbosecke.pebble.operator.BinaryOperatorImpl;
-import com.mitchellbosecke.pebble.operator.UnaryOperator;
-import com.mitchellbosecke.pebble.tokenParser.TokenParser;
+import io.pebbletemplates.pebble.extension.*;
+import io.pebbletemplates.pebble.node.expression.RangeExpression;
+import io.pebbletemplates.pebble.operator.Associativity;
+import io.pebbletemplates.pebble.operator.BinaryOperator;
+import io.pebbletemplates.pebble.operator.BinaryOperatorImpl;
+import io.pebbletemplates.pebble.operator.UnaryOperator;
+import io.pebbletemplates.pebble.tokenParser.TokenParser;
 import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
 import io.kestra.core.runners.pebble.filters.*;
 import io.kestra.core.runners.pebble.functions.JsonFunction;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import jakarta.inject.Singleton;
 
-import static com.mitchellbosecke.pebble.operator.BinaryOperatorType.NORMAL;
+import static io.pebbletemplates.pebble.operator.BinaryOperatorType.NORMAL;
 
 @Singleton
 public class Extension extends AbstractExtension {

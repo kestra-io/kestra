@@ -1,17 +1,17 @@
 package io.kestra.core.runners.pebble;
 
-import com.mitchellbosecke.pebble.attributes.AttributeResolver;
-import com.mitchellbosecke.pebble.extension.*;
-import com.mitchellbosecke.pebble.extension.Extension;
-import com.mitchellbosecke.pebble.extension.core.MacroAndBlockRegistrantNodeVisitorFactory;
-import com.mitchellbosecke.pebble.extension.core.NumberFormatFilter;
-import com.mitchellbosecke.pebble.operator.BinaryOperator;
-import com.mitchellbosecke.pebble.operator.UnaryOperator;
-import com.mitchellbosecke.pebble.tokenParser.*;
+import io.pebbletemplates.pebble.attributes.AttributeResolver;
+import io.pebbletemplates.pebble.extension.*;
+import io.pebbletemplates.pebble.extension.Extension;
+import io.pebbletemplates.pebble.extension.core.MacroAndBlockRegistrantNodeVisitorFactory;
+import io.pebbletemplates.pebble.extension.core.NumberFormatFilter;
+import io.pebbletemplates.pebble.operator.BinaryOperator;
+import io.pebbletemplates.pebble.operator.UnaryOperator;
+import io.pebbletemplates.pebble.tokenParser.*;
 
 import java.util.*;
 
-public class ExtensionCustomizer extends com.mitchellbosecke.pebble.extension.ExtensionCustomizer {
+public class ExtensionCustomizer extends io.pebbletemplates.pebble.extension.ExtensionCustomizer {
     public ExtensionCustomizer(Extension ext) {
         super(ext);
     }

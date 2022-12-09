@@ -2,8 +2,8 @@ package io.kestra.core.runners.pebble;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.mitchellbosecke.pebble.cache.PebbleCache;
-import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import io.pebbletemplates.pebble.cache.PebbleCache;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ExecutionException;

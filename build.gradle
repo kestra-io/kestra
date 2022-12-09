@@ -8,10 +8,10 @@ plugins {
 
     // test
     id 'com.adarshr.test-logger' version '3.2.0'
-    id 'org.gradle.test-retry' version '1.4.1'
+    id 'org.gradle.test-retry' version '1.5.0'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.43.0"
+    id "com.github.ben-manes.versions" version "0.44.0"
 
     // front
     id 'org.siouan.frontend-jdk11' version '6.0.0' apply false
@@ -21,7 +21,7 @@ plugins {
     id 'net.researchgate.release' version '3.0.2'
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id 'signing'
-    id 'ru.vyarus.pom' version '2.2.1' apply false
+    id 'ru.vyarus.pom' version '2.2.2' apply false
     id 'ru.vyarus.github-info' version '1.4.0' apply false
 }
 

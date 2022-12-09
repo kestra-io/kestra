@@ -2,7 +2,7 @@ package io.kestra.core.runners.pebble;
 
 import com.github.jknack.handlebars.internal.lang3.LocaleUtils;
 import com.google.common.collect.ImmutableMap;
-import com.mitchellbosecke.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.EvaluationContext;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;

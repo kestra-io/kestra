@@ -1,10 +1,10 @@
 package io.kestra.core.runners.pebble.expression;
 
-import com.mitchellbosecke.pebble.error.AttributeNotFoundException;
-import com.mitchellbosecke.pebble.node.expression.BinaryExpression;
-import com.mitchellbosecke.pebble.node.expression.Expression;
-import com.mitchellbosecke.pebble.template.EvaluationContextImpl;
-import com.mitchellbosecke.pebble.template.PebbleTemplateImpl;
+import io.pebbletemplates.pebble.error.AttributeNotFoundException;
+import io.pebbletemplates.pebble.node.expression.BinaryExpression;
+import io.pebbletemplates.pebble.node.expression.Expression;
+import io.pebbletemplates.pebble.template.EvaluationContextImpl;
+import io.pebbletemplates.pebble.template.PebbleTemplateImpl;
 
 public class NullCoalescingExpression extends BinaryExpression<Object> {
     public NullCoalescingExpression() {

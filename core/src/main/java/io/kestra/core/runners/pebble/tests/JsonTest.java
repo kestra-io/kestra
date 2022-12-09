@@ -1,10 +1,10 @@
 package io.kestra.core.runners.pebble.tests;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.mitchellbosecke.pebble.error.PebbleException;
-import com.mitchellbosecke.pebble.extension.Test;
-import com.mitchellbosecke.pebble.template.EvaluationContext;
-import com.mitchellbosecke.pebble.template.PebbleTemplate;
+import io.pebbletemplates.pebble.error.PebbleException;
+import io.pebbletemplates.pebble.extension.Test;
+import io.pebbletemplates.pebble.template.EvaluationContext;
+import io.pebbletemplates.pebble.template.PebbleTemplate;
 import io.kestra.core.serializers.JacksonMapper;
 
 import java.util.List;

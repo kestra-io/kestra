@@ -5,6 +5,7 @@ import io.kestra.jdbc.AbstractJdbcRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import java.util.Arrays;

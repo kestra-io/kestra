@@ -6,8 +6,8 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.NonNull;
 import lombok.SneakyThrows;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
-import org.jooq.impl.SQLDataType;
 
 import java.util.List;
 import java.util.Map;

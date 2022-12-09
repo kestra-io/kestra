@@ -7,6 +7,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
 import lombok.SneakyThrows;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import java.util.List;

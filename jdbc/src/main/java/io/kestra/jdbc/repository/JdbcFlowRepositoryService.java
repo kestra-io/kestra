@@ -3,6 +3,7 @@ package io.kestra.jdbc.repository;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import java.util.ArrayList;

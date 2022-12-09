@@ -76,8 +76,8 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
-          java-version: 11
+          distribution: 'temurin'
+          java-version: 17
 
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@v1
@@ -238,6 +238,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      # JDK
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
       # Publish
       - name: Publish package to Sonatype
         if: github.ref == 'refs/heads/develop'
@@ -288,6 +295,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          username: GitHub Actions
+          name: GitHub Actions
           icon_emoji: ':github-actions:'
           channel: 'C02DQ1A7JLR'

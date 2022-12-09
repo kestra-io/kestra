@@ -52,8 +52,8 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
-        distribution: 'adopt'
-        java-version: 11
+        distribution: 'temurin'
+        java-version: 17
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)

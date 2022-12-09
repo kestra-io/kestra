@@ -357,7 +357,7 @@ class ScheduleTest {
 
         ZonedDateTime date = ZonedDateTime.now()
             .withZoneSameLocal(ZoneId.of("America/New_York"))
-            .withMonth(ZonedDateTime.now().getMonthValue() + 1)
+            .withMonth(5)
             .withDayOfMonth(1)
             .withHour(9)
             .withMinute(12)

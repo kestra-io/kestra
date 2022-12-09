@@ -10,7 +10,7 @@
                 :key="x"
             />
         </el-collapse>
-        <el-alert show-icon type="info" v-else :closable="false" class="mb-0">
+        <el-alert type="info" v-else :closable="false" class="mb-0">
             {{ $t('no result') }}
         </el-alert>
         <bottom-line v-if="canSave">

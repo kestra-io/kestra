@@ -17,7 +17,6 @@
         direction="ltr"
     >
         <vars
-            :title="$t('outputs')"
             :execution="execution"
             class="table-unrounded mt-1"
             :data="outputs"

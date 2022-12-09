@@ -19,7 +19,7 @@
             </el-breadcrumb>
         </div>
         <div class="side ms-auto ps-2">
-            <Auth />
+            <auth />
             <news />
         </div>
     </nav>
@@ -88,6 +88,26 @@
                     width: 0.75rem;
                     margin-right: calc(var(--spacer) / 2);
                 }
+
+                a {
+                    cursor: pointer !important;
+                }
+            }
+        }
+
+        .side {
+            display: flex;
+            flex-wrap: nowrap;
+            > * {
+                white-space: nowrap;
+            }
+
+            :deep(.el-button) {
+                border: 0;
+                padding-left: 8px;
+                padding-right: 8px;
+                color: var(--bs-secondary);
+                background-color: transparent;
             }
         }
     }

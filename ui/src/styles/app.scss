@@ -1,4 +1,5 @@
 @use "variable" as global-var;
+@use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
 
 // element-plus
 @use "layout/element-plus-overload";
@@ -15,3 +16,28 @@
     $indigo: global-var.$indigo
 );
 
+
+// main layout
+main {
+    padding-right: var(--spacer);
+    padding-left: var(--spacer);
+    margin-right: auto;
+    margin-left: auto;
+
+    padding-top: var(--spacer);
+    padding-bottom: 60px !important;
+    transition: all 0.3s ease;
+
+    &.menu-collapsed {
+        padding-left: 80px;
+    }
+
+    &.menu-not-collapsed {
+        padding-left: calc(var(--menu-width) + var(--spacer));
+
+        @include mixin.res(lg) {
+            padding-left: calc(var(--menu-width) + (var(--spacer) * 4));
+            padding-right: calc(var(--spacer) * 4);
+        }
+    }
+}

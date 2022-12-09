@@ -58,6 +58,11 @@ $link-color: $cyan;
 $border-radius: .25rem;
 $border-radius-sm: .15rem;
 
+// shadow
+$box-shadow-sm: 0 .125rem .25rem rgba($black, .075);
+$box-shadow: 0 .5rem 1rem rgba($black, .15);
+$box-shadow-lg: 0 1rem 3rem rgba($black, .175);
+
 // bootstrap
 @import "~bootstrap/scss/functions";
 @import "~bootstrap/scss/mixins";

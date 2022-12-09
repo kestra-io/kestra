@@ -35,7 +35,7 @@
                 <template #table>
                     <div v-loading="isLoading">
                         <div v-if="logs === undefined || logs.length === 0">
-                            <el-alert type="info" :closable="false" class="text-muted" show-icon>
+                            <el-alert type="info" :closable="false" class="text-muted">
                                 {{ $t('no result') }}
                             </el-alert>
                         </div>

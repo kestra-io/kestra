@@ -98,7 +98,6 @@
                             </div>
                         </div>
 
-                        <!-- Log lines -->
                         <template
                             v-for="(log, i) in findLogs(currentTaskRun.id, index)"
                             :key="`${currentTaskRun.id}-${index}-${i}`"
@@ -112,8 +111,6 @@
                             />
                         </template>
                     </template>
-                    <!-- Outputs -->
-
                 </div>
             </template>
         </div>

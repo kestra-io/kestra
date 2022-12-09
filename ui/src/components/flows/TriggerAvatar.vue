@@ -16,7 +16,7 @@
                         </el-avatar>
                     </template>
                     <template #default>
-                        <vars :stacked="true" :data="triggerData(trigger)" />
+                        <vars :data="triggerData(trigger)" />
                     </template>
                 </el-popover>
             </template>

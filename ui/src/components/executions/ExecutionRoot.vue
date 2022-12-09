@@ -1,7 +1,7 @@
 <template>
     <div>
         <div v-if="ready">
-            <tabs route-name="executions/update" @follow="follow" :tabs="tabs" />
+            <tabs :route-name="$route.param && $route.param.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
         </div>
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
@@ -120,7 +120,6 @@
                         name: "topology",
                         component: Topology,
                         title: title("topology"),
-                        bodyClass: {"p-0" : true}
                     },
                     {
                         name: "outputs",

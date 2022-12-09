@@ -10,7 +10,7 @@
                 />
             </template>
             <template v-else>
-                <el-alert type="info" :closable="false" class="m-0" show-icon>
+                <el-alert type="info" :closable="false" class="m-0">
                     {{ $t('no result') }}
                 </el-alert>
             </template>

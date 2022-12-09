@@ -51,34 +51,34 @@
                     @row-dblclick="onRowDoubleClick"
                     @sort-change="onSort"
                 >
-                    <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
+                    <el-table-column prop="id" v-if="!hidden.includes('id')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
                         <template #default="scope">
                             <id :value="scope.row.id" :shrink="true" />
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="state.startDate" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('start date')">
+                    <el-table-column prop="state.startDate" v-if="!hidden.includes('state.startDate')"  sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('start date')">
                         <template #default="scope">
                             <date-ago :inverted="true" :date="scope.row.state.startDate" />
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="state.endDate" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('end date')">
+                    <el-table-column prop="state.endDate" v-if="!hidden.includes('state.endDate')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('end date')">
                         <template #default="scope">
                             <date-ago :inverted="true" :date="scope.row.state.endDate" />
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="state.duration" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('duration')">
+                    <el-table-column prop="state.duration" v-if="!hidden.includes('state.duration')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('duration')">
                         <template #default="scope">
                             <span v-if="isRunning(scope.row)">{{ $filters.humanizeDuration(durationFrom(scope.row)) }}</span>
                             <span v-else>{{ $filters.humanizeDuration(scope.row.state.duration) }}</span>
                         </template>
                     </el-table-column>
 
-                    <el-table-column v-if="$route.name !== 'flows/update'" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" />
+                    <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('namespace')" prop="namespace" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('namespace')" />
 
-                    <el-table-column v-if="$route.name !== 'flows/update'" prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('flow')">
+                    <el-table-column v-if="$route.name !== 'flows/update' && !hidden.includes('flowId')" prop="flowId" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('flow')">
                         <template #default="scope">
                             <router-link :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.flowId}}">
                                 {{ scope.row.flowId }}
@@ -86,13 +86,13 @@
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="state.current" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('state')">
+                    <el-table-column prop="state.current" v-if="!hidden.includes('state.current')"  sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('state')">
                         <template #default="scope">
                             <status :status="scope.row.state.current" size="small" />
                         </template>
                     </el-table-column>
 
-                    <el-table-column :label="$t('triggers')" class-name="shrink">
+                    <el-table-column prop="triggers" v-if="!hidden.includes('triggers')" :label="$t('triggers')" class-name="shrink">
                         <template #default="scope">
                             <trigger-avatar :execution="scope.row" />
                         </template>

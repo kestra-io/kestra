@@ -3,8 +3,8 @@
         <div class="flex-grow-1 d-sm-none d-md-inline-block page-size">
             <el-select
                 size="small"
-                v-model="internalSize"
-                @change="pageSizeChange"
+                :model-value="internalSize"
+                @update:model-value="pageSizeChange"
                 :persistent="false"
             >
                 <el-option
@@ -45,7 +45,7 @@
         props: {
             total: {type: Number, default: 0},
             max: {type: Number, default: undefined},
-            size: {type: Number, required: true},
+            size: {type: Number, required: true, default: 25},
             page: {type: Number, required: true}
         },
         emits: ["page-changed"],
@@ -62,7 +62,8 @@
             };
         },
         methods: {
-            pageSizeChange() {
+            pageSizeChange(value) {
+                this.internalSize = value;
                 this.$emit("page-changed", {
                     page: 1,
                     size: this.internalSize,
@@ -85,7 +86,7 @@
         margin-top: var(--spacer);
 
         .el-select {
-            width: auto;
+            width: 100px;
         }
 
         .page-size {

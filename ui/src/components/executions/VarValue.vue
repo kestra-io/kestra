@@ -3,6 +3,7 @@
         v-if="isFile(value)"
         :icon="Download"
         target="_blank"
+        type="info"
         :href="itemUrl(value)"
     >
         {{ $t('download') }}
@@ -18,7 +19,7 @@
 </script>
 
 <script>
-    import {apiRoot} from "../../utils/http";
+    import {apiRoot} from "../../utils/axios";
     import Utils from "../../utils/utils";
 
     export default {

@@ -1,5 +1,4 @@
 <template>
-    <!-- TOOD :stacked="stacked" title -->
     <el-table stripe table-layout="auto" fixed :data="variables" size="small">
         <el-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
@@ -41,19 +40,10 @@
                 type: Object,
                 required: true
             },
-            title: {
-                type: String,
-                required: false,
-                default: undefined
-            },
             execution: {
                 type: Object,
                 required: false,
                 default: undefined
-            },
-            stacked: {
-                type: Boolean,
-                default: false
             },
         },
         computed: {
@@ -63,24 +53,3 @@
         },
     };
 </script>
-
-<!--<style scoped lang="scss">-->
-<!--:deep(thead tr:not(.top)) {-->
-<!--    display: none;-->
-<!--}-->
-
-<!--:deep(td.key) {-->
-<!--    width: 150px;-->
-<!--}-->
-
-<!--:deep(.b-table-stacked) {-->
-<!--    td.key {-->
-<!--        width: 100%;-->
-<!--    }-->
-
-<!--    td:before {-->
-<!--        display: none;-->
-<!--    }-->
-<!--}-->
-
-<!--</style>-->

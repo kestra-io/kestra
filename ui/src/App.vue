@@ -2,7 +2,7 @@
     <el-config-provider>
         <left-menu @menu-collapse="onMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
-        <main :class="menuCollapsed">
+        <main :class="menuCollapsed" v-if="loaded">
             <top-nav-bar :menu-collapsed="menuCollapsed" />
             <router-view v-if="!error" />
             <template v-else>
@@ -32,6 +32,7 @@
             return {
                 menuCollapsed: "",
                 created: false,
+                loaded: false,
             };
         },
         computed: {
@@ -53,6 +54,7 @@
 
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
+                this.loaded = true;
             },
             loadGeneralRessources() {
                 let uid = localStorage.getItem("uid");
@@ -104,30 +106,3 @@
     @use "styles/app";
 </style>
 
-<style lang="scss" scoped>
-    @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
-
-    main {
-        padding-right: var(--spacer);
-        padding-left: var(--spacer);
-        margin-right: auto;
-        margin-left: auto;
-
-        padding-top: var(--spacer);
-        padding-bottom: 60px !important;
-        transition: all 0.3s ease;
-
-        &.menu-collapsed {
-            padding-left: 80px;
-        }
-
-        &.menu-not-collapsed {
-            padding-left: calc(var(--menu-width) + var(--spacer));
-
-            @include mixin.res(lg) {
-                padding-left: calc(var(--menu-width) + (var(--spacer) * 4));
-                padding-right: calc(var(--spacer) * 4);
-            }
-        }
-    }
-</style>

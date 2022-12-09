@@ -1,10 +1,13 @@
 <template>
-    <el-tooltip transition="" :hide-after="0" :persistent="false" placement="top">
+    <el-tooltip v-if="hasTooltip" transition="" :hide-after="0" :persistent="false" placement="top">
         <template #content><code>{{ value }}</code></template>
         <code :id="uuid" class="text-nowrap">
             {{ transformValue }}
         </code>
     </el-tooltip>
+    <code v-else :id="uuid" class="text-nowrap">
+        {{ transformValue }}
+    </code>
 </template>
 
 <script>

@@ -1,7 +1,7 @@
 <template>
     <div class="trigger-flow-wrapper">
         <el-button :icon="Flash" :disabled="disabled" @click="onClick">
-           {{ $t('New execution') }}
+            {{ $t('New execution') }}
         </el-button>
         <el-dialog v-if="isOpen" v-model="isOpen" :title="$t('execute the flow')" destroy-on-close :append-to-body="true">
             <flow-run @execution-trigger="closeModal" :redirect="true" />
@@ -55,7 +55,7 @@
                 if (!this.flow.inputs || this.flow.inputs.length === 0) {
                     this.$toast().confirm(
                         this.$t("execute flow now ?"),
-                        () => executeTask(this, this.flow, {
+                        () => executeTask(this, this.flow, {}, {
                             id: this.flowId,
                             namespace: this.namespace,
                             redirect: true

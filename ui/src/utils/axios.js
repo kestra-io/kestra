@@ -89,13 +89,33 @@ export default (callback, store, router) => {
                 return Promise.reject(errorResponse);
             }
 
+            if (errorResponse.response === undefined) {
+                return Promise.reject(errorResponse);
+            }
+
             if (errorResponse.response.status === 404) {
                 store.dispatch("core/showError", errorResponse.response.status)
 
                 return Promise.reject(errorResponse);
             }
 
-            if (errorResponse.response && errorResponse.response.data) {
+            if (errorResponse.response.status === 401 && !store.getters["auth/isLogged"]) {
+                window.location = "/ui/login?from=" + window.location.pathname +
+                    (window.location.search ? "?" + window.location.search : "")
+
+            }
+
+            if (errorResponse.response.status === 401 &&
+                store.getters["auth/isLogged"] &&
+                !store.getters["auth/user"].hasAnyPermission() &&
+                router.currentRoute.name !== "errors/401"
+            ) {
+                router.push({name: "errors/401"});
+
+                return Promise.reject(errorResponse);
+            }
+
+            if (errorResponse.response.data) {
                 store.dispatch("core/showMessage", {
                     content: errorResponse.response.data,
                     variant: "error"

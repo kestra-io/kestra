@@ -8,16 +8,13 @@ export default (app, store, router) => {
         }
     });
 
-    router.beforeEach(async (to, from, next) => {
+    router.beforeEach(async (to, from) => {
         if (store.getters['core/unsavedChange']) {
             if (confirm(confirmationMessage)) {
                 store.commit("core/setUnsavedChange", false);
-                next();
             } else {
                 return false;
             }
         }
-
-        next();
     });
 }

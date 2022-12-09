@@ -20,7 +20,7 @@
             </div>
         </div>
 
-        <el-alert v-if="ready && this.count === 0" type="info" :closable="false" class="m-0 text-muted" show-icon>
+        <el-alert v-if="ready && this.count === 0" type="info" :closable="false" class="m-0 text-muted">
             {{ $t('no result') }}
         </el-alert>
 

@@ -7,8 +7,6 @@
     export default {}
 </script>
 <style lang="scss">
-    @use 'element-plus/theme-chalk/src/mixins/function' as *;
-
     .bottom-line {
         position: fixed;
         bottom: 0;

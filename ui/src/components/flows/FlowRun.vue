@@ -4,89 +4,71 @@
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </el-alert>
-        <el-form class="ks-horizontal">
+        <el-form class="ks-horizontal" :model="inputs" ref="form">
             <el-form-item
                 v-for="input in flow.inputs"
                 :key="input.id"
                 :label="input.name"
+                :required="input.required !== false"
+                :prop="input.name"
             >
                 <el-input
                     v-if="input.type === 'STRING' || input.type === 'URI'"
-                    v-model="input.value"
-                    :required="input.required"
-                    :placeholder="`${placeholder} ${input.name}`"
-                    :state="state(input)"
+                    v-model="inputs[input.name]"
                 />
                 <el-input-number
                     v-if="input.type === 'INT'"
-                    v-model="input.value"
+                    v-model="inputs[input.name]"
                     :step="1"
-                    :required="input.required"
-                    :placeholder="`${placeholder} ${input.name}`"
-                    :state="state(input)"
                 />
                 <el-input-number
                     v-if="input.type === 'FLOAT'"
-                    v-model="input.value"
+                    v-model="inputs[input.name]"
                     :step="0.001"
-                    :required="input.required"
-                    :placeholder="`${placeholder} ${input.name}`"
-                    :state="state(input)"
                 />
                 <el-checkbox
                     v-if="input.type === 'BOOLEAN'"
-                    v-model="input.value"
+                    v-model="inputs[input.name]"
                     value="true"
                     unchecked-value="false"
-                    :required="input.required"
-                    :state="state(input)"
                 />
                 <el-date-picker
                     v-if="input.type === 'DATETIME'"
-                    v-model="input.value"
+                    v-model="inputs[input.name]"
                     type="datetime"
-                    :required="input.required"
-                    :state="state(input)"
-                    :placeholder="`${placeholder} ${input.name}`"
                 />
                 <el-date-picker
                     v-if="input.type === 'DATE'"
-                    v-model="input.value"
-                    :required="input.required"
-                    :state="state(input)"
+                    v-model="inputs[input.name]"
                     type="date"
-                    :placeholder="input.description"
                 />
                 <el-time-picker
                     v-if="input.type === 'TIME' || input.type === 'DURATION'"
-                    v-model="input.value"
-                    :required="input.required"
-                    :state="state(input)"
+                    v-model="inputs[input.name]"
                     type="time"
-                    :placeholder="`${placeholder} ${input.name}`"
                 />
-                <el-input
-                    class="el-input-file"
-                    v-if="input.type === 'FILE'"
-                    v-model="input.value"
-                    type="file"
-                    :required="input.required"
-                    :placeholder="$t('choose file')"
-                    :state="state(input)"
-                />
+                <div class="el-input el-input-file">
+                    <div class="el-input__wrapper" v-if="input.type === 'FILE'">
+                        <input
+                            class="el-input__inner"
+                            type="file"
+                            @change="onFileChange(input, $event)"
+                            autocomplete="off"
+                        />
+                    </div>
+                </div>
                 <el-input
                     v-if="input.type === 'JSON'"
-                    v-model="input.value"
+                    v-model="inputs[input.name]"
                     type="textarea"
-                    :required="input.required"
+                    autosize
                     :state="state(input)"
-                    :placeholder="`${placeholder} ${input.name}`"
                 />
 
-                <small v-if="input.description" class="form-text text-muted">{{ input.description }}</small>
+                <small v-if="input.description" class="text-muted">{{ input.description }}</small>
             </el-form-item>
-            <el-form-item class="mb-0 submit">
-                <el-button :icon="Flash" @click="onSubmit" type="primary" :disabled="flow.disabled">
+            <el-form-item class="submit">
+                <el-button :icon="Flash" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled">
                     {{ $t('launch execution') }}
                 </el-button>
             </el-form-item>
@@ -110,7 +92,20 @@
             }
         },
         emits: ["executionTrigger"],
+        data() {
+            return {
+                inputs: {},
+            };
+        },
         mounted() {
+            for (const input of this.flow.inputs) {
+                this.inputs[input.name] = input.defaults;
+
+                if (input.type === "DATETIME" && input.defaults) {
+                    this.inputs[input.name] = new Date(input.defaults);
+                }
+            }
+
             setTimeout(() => {
                 const input = this.$el && this.$el.querySelector && this.$el.querySelector("input")
                 if (input && !input.className.includes("mx-input")) {
@@ -120,16 +115,34 @@
         },
         computed: {
             ...mapState("flow", ["flow"]),
-            placeholder() {
-                return this.$t("set a value for");
-            },
         },
         methods: {
-            onSubmit() {
-                executeTask(this, this.flow, {redirect: this.redirect, id: this.flow.id, namespace: this.flow.namespace})
-                this.$emit("executionTrigger")
-            },
+            onSubmit(formRef) {
+                formRef.validate((valid) => {
+                    if (!valid) {
+                        return false;
+                    }
 
+                    executeTask(this, this.flow, this.inputs, {
+                        redirect: this.redirect,
+                        id: this.flow.id,
+                        namespace: this.flow.namespace
+                    })
+                    this.$emit("executionTrigger");
+                });
+            },
+            onFileChange(input, e) {
+                console.log(input, e);
+                if (!e.target) {
+                    return;
+                }
+
+                const files = e.target.files || e.dataTransfer.files;
+                if (!files.length) {
+                    return;
+                }
+                this.inputs[input.name] = e.target.files[0];
+            },
             state(input) {
                 const required = input.required === undefined ? true : input.required;
 

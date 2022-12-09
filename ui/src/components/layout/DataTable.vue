@@ -50,3 +50,13 @@
         },
     };
 </script>
+
+<style scoped lang="scss">
+    :deep(.el-table) {
+        td {
+            .el-tag {
+                margin-right: calc(var(--spacer) / 3);
+            }
+        }
+    }
+</style>

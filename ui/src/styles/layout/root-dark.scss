@@ -23,16 +23,18 @@ html.dark {
     #{--bs-border-color}: $border-color;
     #{--card-bg}: $card-bg;
 
-
     --el-bg-color: var(--bs-body-bg);
     --el-bg-color-page: var(--bs-body-bg);
     --el-bg-color-overlay: var(--bs-gray-100-darken-5);
+
+    --el-disabled-bg-color: var(--bs-gray-100-lighten-5);
+    --el-disabled-border-color: var(--bs-border-color);
 
     --el-text-color-primary: var(--bs-primary);
     --el-text-color-regular: var(--bs-body-color);
     --el-text-color-secondary: var(--bs-secondary);
     --el-text-color-placeholder: var(--bs-gray-600);
-    --el-text-color-disabled: var(--bs-gray-500);
+    --el-text-color-disabled: var(--bs-gray-300);
 
     --el-border-color: var(--bs-border-color);
     --el-border-color-light: var(--bs-secondary);
@@ -48,4 +50,11 @@ html.dark {
     --el-fill-color-dark: var(--bs-gray-800);
     --el-fill-color-darker: var(--bs-gray-900);
     --el-fill-color-blank: var(--bs-card-bg);
+
+    #{--el-box-shadow}: $box-shadow;
+    #{--el-box-shadow-light}: $box-shadow-sm;
+    #{--el-box-shadow-lighter}: $box-shadow-sm;
+    #{--el-box-shadow-dark}: $box-shadow-lg;
+
+    --el-button-active-text-color: var(--bs-body-color);
 }

@@ -1,16 +1,18 @@
 <template>
     <div>
-        <el-tabs v-model="activeName" class="mb-3">
+        <el-tabs v-model="activeName" >
             <el-tab-pane
                 v-for="tab in tabs"
                 :key="tab.name"
                 :label="tab.title"
-                :name="tab.name"
+                :name="tab.name || 'default'"
+                :disabled="tab.disabled"
+                @tab-change="tabChanged"
             >
                 <template #label>
                     <router-link :to="to(tab)">
                         {{ tab.title }}
-                        <el-badge :value="tab.count" v-if="tab.count !== undefined" />
+                        <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
                     </router-link>
                 </template>
             </el-tab-pane>
@@ -26,6 +28,8 @@
 </template>
 
 <script>
+    import Prism from "prismjs";
+
     export default {
         components: {
 
@@ -47,10 +51,23 @@
                 activeName: undefined,
             }
         },
+        watch: {
+            $route() {
+                this.setActiveName();
+            },
+            activeName() {
+                this.$nextTick(() => {
+                    this.setActiveName();
+                });
+            }
+        },
         created() {
-            this.activeName = this.activeTab.name;
+            this.setActiveName();
         },
         methods: {
+            setActiveName() {
+                this.activeName = this.activeTab.name || "default";
+            },
             click(tab) {
                 this.$router.push(this.to(this.tabs.filter(value => value.name === tab)[0]));
             },
@@ -61,18 +78,37 @@
                     return {name: this.routeName, params: {...this.$route.params, ...{tab: tab.name}}};
                 }
             },
+            tabChanged() {
+                console.log(arguments);
+            }
         },
         computed: {
             activeTab() {
                 return this.tabs
                     .filter(tab => this.$route.params.tab === tab.name)[0] || this.tabs[0];
             },
-            bodyClass() {
-                let background = this.activeTab.background !== false;
-
-                return {...{"card": background}};
-            }
         }
     };
 </script>
+
+<style lang="scss" scoped>
+    :deep(.el-tabs) {
+        .el-tabs__item.is-disabled {
+
+            &:after {
+                top: 0;
+                content: "";
+                position: absolute;
+                display: block;
+                width: 100%;
+                height: 100%;
+                z-index: 1000;
+            }
+
+            a {
+                color: var(--el-text-color-disabled);
+            }
+        }
+    }
+</style>
 

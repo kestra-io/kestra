@@ -14,12 +14,10 @@
                 default: false
             }
         },
-        notifications: [],
+        notifications: undefined,
         watch: {
             $route() {
-                this.notifications.forEach((item) => {
-                    item.close()
-                });
+                this.close();
             },
         },
         computed: {
@@ -34,8 +32,17 @@
                 return Array.isArray(messages) ? messages : [messages]
             },
         },
+        methods: {
+          close() {
+              if (this.notifications) {
+                  this.notifications.close();
+              }
+          }
+        },
         render() {
             this.$nextTick(() => {
+                this.close();
+
                 const children = [
                     h('span', {innerHTML: this.text})
                 ];
@@ -58,20 +65,14 @@
                     ))
                 }
 
-                const current = ElNotification({
+                this.notifications = ElNotification({
                     title: this.title || "Error",
                     message: h('div',  children),
                     type: "error",
                     duration: 0,
                     dangerouslyUseHTMLString: true,
-                    customClass: "large"
+                    customClass: children.length > 1 ? "large" : ""
                 });
-
-                if (this.notifications === undefined) {
-                    this.notifications = [];
-                }
-
-                this.notifications.push(current);
             });
         }
     };

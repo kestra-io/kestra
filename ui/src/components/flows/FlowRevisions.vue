@@ -66,7 +66,7 @@
         </el-row>
 
         <div ref="editorContainer" class="mt-3">
-            <Editor
+            <editor
                 :diff-side-by-side="sideBySide"
                 :model-value="revisionRightText"
                 :original="revisionLeftText"

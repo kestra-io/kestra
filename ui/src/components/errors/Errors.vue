@@ -38,8 +38,6 @@
 
 
 <style lang="scss" scoped>
-    @use 'element-plus/theme-chalk/src/mixins/function' as *;
-
     .errors {
         h2 {
             margin-bottom: calc(var(--spacer) * 2);
@@ -55,5 +53,4 @@
             width: 300px;
         }
     }
-
 </style>

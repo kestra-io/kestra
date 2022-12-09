@@ -16,7 +16,7 @@
         >
             <template #footer>
                 <el-button :icon="ContentSave" @click="saveTask" v-if="canSave" type="primary">
-                    <span>{{ $t('save') }}</span>
+                    {{ $t('save') }}
                 </el-button>
             </template>
 

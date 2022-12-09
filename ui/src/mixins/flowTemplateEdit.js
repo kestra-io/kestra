@@ -163,6 +163,7 @@ export default {
                     .then((flow) => {
                         this.previousContent = YamlUtils.stringify(flow);
                         this.content = YamlUtils.stringify(flow);
+                        this.onChange();
 
                         this.loadFile();
                     });
@@ -184,6 +185,7 @@ export default {
                     .then((flow) => {
                         this.previousContent = YamlUtils.stringify(flow);
                         this.content = YamlUtils.stringify(flow);
+                        this.onChange();
 
                         this.$router.push({
                             name: `${this.dataType}s/update`,

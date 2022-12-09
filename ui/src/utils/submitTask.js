@@ -1,19 +1,20 @@
-export const executeTask = (submitor, flow, options) => {
+export const executeTask = (submitor, flow, values, options) => {
     const formData = new FormData();
     for (let input of flow.inputs || []) {
-        if (input.value !== undefined) {
+        if (values[input.name] !== undefined) {
+            console.log(values[input.name])
             if (input.type === "DATETIME") {
-                formData.append(input.name, input.value.toISOString());
+                formData.append(input.name, values[input.name].toISOString());
             } else if (input.type === "DATE") {
-                formData.append(input.name, submitor.$moment(input.value).format("YYYY-MM-DD"));
+                formData.append(input.name, submitor.$moment(values[input.name]).format("YYYY-MM-DD"));
             } else if (input.type === "TIME") {
-                formData.append(input.name, submitor.$moment(input.value).format("hh:mm:ss"));
+                formData.append(input.name, submitor.$moment(values[input.name]).format("hh:mm:ss"));
             } else if (input.type === "DURATION") {
-                formData.append(input.name, submitor.$moment.duration(submitor.$moment(input.value).format("hh:mm:ss")));
+                formData.append(input.name, submitor.$moment.duration(submitor.$moment(values[input.name]).format("hh:mm:ss")));
             } else if (input.type === "FILE") {
-                formData.append("files", input.value, input.name);
+                formData.append("files", values[input.name], input.name);
             } else {
-                formData.append(input.name, input.value);
+                formData.append(input.name, values[input.name]);
             }
         } else if (input.required) {
             submitor.$toast().error(

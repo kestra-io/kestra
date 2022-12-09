@@ -44,11 +44,15 @@
     };
 </script>
 <style scoped lang="scss">
-.el-button {
-    white-space: nowrap;
-}
+    .el-button {
+        white-space: nowrap;
 
-.no-label {
-    line-height: 1;
-}
+        &.no-label {
+            padding: 8px;
+            line-height: 1;
+            :deep([class*=el-icon] + span) {
+                margin-left: 0;
+            }
+        }
+    }
 </style>

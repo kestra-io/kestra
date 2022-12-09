@@ -1,8 +1,8 @@
 <template>
-    <a class="news-link" href="#" @click="show">
+    <el-button class="news-link" @click="show">
         <gift title="" />
         <CheckboxBlankCircle v-if="hasUnread" class="new" title="" />
-    </a>
+    </el-button>
 
     <el-drawer size="50%" v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true" class="sm" :title="$t('feeds.title')">
         <div class="post" v-for="(feed, index) in feeds" :key="feed.id">

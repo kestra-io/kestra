@@ -8,7 +8,7 @@
             </template>
         </cytoscape>
 
-        <div v-for="(node, id) in treeNodes" :key="id">
+        <div v-for="(node, id) in treeNodes" :key="uuid + '-' + id">
             <teleport :to="'#' + id" v-if="isRenderer(id)">
                 <tree-node
                     :n="node"
@@ -33,6 +33,7 @@
     import Kicon from "../Kicon"
     import Cytoscape from "../layout/Cytoscape"
     import {shallowRef} from "vue";
+    import Utils from "../../utils/utils";
 
     export default {
         components: {
@@ -63,6 +64,7 @@
         emits: ["follow"],
         data() {
             return {
+                uuid: Utils.uid(),
                 orientation: true,
                 icon: {
                     ArrowCollapseDown: shallowRef(ArrowCollapseDown),
@@ -152,7 +154,6 @@
                         div.id = `node-${node.uid.hashCode()}`
 
                         this.treeNodes[div.id] = node;
-
                         nodeData.data.dom = div
                     }
 
@@ -310,6 +311,7 @@
             },
             generateGraph() {
                 this.$refs.cytoscape.setReady(false)
+                this.uuid = Utils.uid();
 
                 // plugins
                 cytoscape.use(dagre);

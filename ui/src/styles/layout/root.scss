@@ -15,7 +15,7 @@
     --el-text-color-regular: var(--bs-body-color);
     --el-text-color-secondary: var(--bs-secondary);
     --el-text-color-placeholder: var(--bs-gray-600);
-    --el-text-color-disabled: var(--bs-gray-500);
+    --el-text-color-disabled: var(--bs-gray-300-darken-5);
 
     --el-border-color: var(--bs-border-color);
     --el-border-color-light: var(--bs-border-color);
@@ -31,25 +31,14 @@
     --el-fill-color-dark: var(--bs-gray-400);
     --el-fill-color-darker: var(--bs-gray-500);
     --el-fill-color-blank: var(--bs-white);
-    //--el-box-shadow: 0px 12px 32px 4px rgba(0, 0, 0, 0.04), 0px 8px 20px rgba(0, 0, 0, 0.08);
-    //--el-box-shadow-light: 0px 0px 12px rgba(0, 0, 0, 0.12);
-    //--el-box-shadow-lighter: 0px 0px 6px rgba(0, 0, 0, 0.12);
-    //--el-box-shadow-dark: 0px 16px 48px 16px rgba(0, 0, 0, 0.08), 0px 12px 32px rgba(0, 0, 0, 0.12), 0px 8px 16px -8px rgba(0, 0, 0, 0.16);
-    //--el-disabled-bg-color: var(--el-fill-color-light);
-    //--el-disabled-text-color: var(--el-text-color-placeholder);
-    //--el-disabled-border-color: var(--el-border-color-light);
-    //--el-overlay-color: rgba(0, 0, 0, 0.8);
-    //--el-overlay-color-light: rgba(0, 0, 0, 0.7);
-    //--el-overlay-color-lighter: rgba(0, 0, 0, 0.5);
-    //--el-mask-color: rgba(255, 255, 255, 0.9);
-    //--el-mask-color-extra-light: rgba(255, 255, 255, 0.3);
-    //--el-border-width: 1px;
-    //--el-border-style: solid;
-    //--el-border-color-hover: var(--el-text-color-disabled);
-    //--el-border: var(--el-border-width) var(--el-border-style) var(--el-border-color);
-    //--el-svg-monochrome-grey: var(--el-border-color);
-}
 
+    --el-box-shadow: $box-shadow;
+    --el-box-shadow-light: $box-shadow-sm;
+    --el-box-shadow-lighter: $box-shadow-sm;
+    --el-box-shadow-dark: $box-shadow-lg;
+
+    --el-button-hover-bg-color: var(--bs-gray-200);
+}
 
 :root {
     #{--menu-width}: $menu-width;
@@ -72,25 +61,4 @@
             #{--bs-gray-#{$key}-darken-#{$i}}: #{darken($value, $i)};
         }
     }
-
-    //@each $type in $types {
-    //    @include set-css-var-value(('color', $type), map.get($custom-colors, $type, 'base'));
-    //
-    //    @for $i from 1 through 3 {
-    //        @include set-css-var-value(('color', $type, 'lighten', $i*5), lighten(map.get($custom-colors, $type, 'base'), $i+5));
-    //        @include set-css-var-value(('color', $type, 'darken', $i*5), darken(map.get($custom-colors, $type, 'base'), $i+5));
-    //    }
-    //
-    //    @each $i in (3, 5, 7, 8, 9) {
-    //        @include set-css-var-value(
-    //            ('color', $type, 'light', $i),
-    //            mix($white, map.get($custom-colors, $type, 'base'), math.percentage(math.div($i, 10)))
-    //        );
-    //    }
-    //
-    //    @include set-css-var-value(
-    //        ('color', $type, 'dark', 2),
-    //        mix($black, map.get($custom-colors, $type, 'base'), math.percentage(math.div(2, 10)))
-    //    );
-    //}
 }

@@ -65,7 +65,7 @@
                         r.disabled = true
                     }
 
-                    if (this.$route.path.startsWith(r.href)) {
+                    if (r.href !== "/" && this.$route.path.startsWith(r.href)) {
                         r.class = "vsm--link_active"
                     }
 
@@ -218,53 +218,47 @@
     };
 </script>
 
-<style lang="scss" scoped>
-    @use 'element-plus/theme-chalk/src/mixins/function' as *;
-
-    .logo {
-        overflow: hidden;
-        padding: 35px 0;
-        height: 133px;
-        position: relative;
-        a {
-            transition: 0.2s all;
-            position: absolute;
-            left: 37px;
-            display: block;
-            height: 55px;
-            width: 100%;
-            overflow: hidden;
-
-            span.img {
-                height: 100%;
-                background: url(../../../src/assets/logo.svg) 0 0 no-repeat;
-                background-size: 179px 55px;
-                display: block;
-
-                html.dark & {
-                    background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
-                    background-size: 179px 55px;
-                }
-            }
-        }
-    }
-
-    span.version {
-        transition: 0.2s all;
-        white-space: nowrap;
-        font-size: var(--el-font-size-extra-small);
-        text-align: center;
-        display: block;
-        color: var(--bs-tertiary);
-    }
-</style>
-
 <style lang="scss">
-    @use 'element-plus/theme-chalk/src/mixins/function' as *;
-
     #side-menu {
         z-index: 1039;
         border-right: 1px solid var(--bs-border-color);
+
+        .logo {
+            overflow: hidden;
+            padding: 35px 0;
+            height: 133px;
+            position: relative;
+            a {
+                transition: 0.2s all;
+                position: absolute;
+                left: 37px;
+                display: block;
+                height: 55px;
+                width: 100%;
+                overflow: hidden;
+
+                span.img {
+                    height: 100%;
+                    background: url(../../../src/assets/logo.svg) 0 0 no-repeat;
+                    background-size: 179px 55px;
+                    display: block;
+
+                    html.dark & {
+                        background: url(../../../src/assets/logo-white.svg) 0 0 no-repeat;
+                        background-size: 179px 55px;
+                    }
+                }
+            }
+        }
+
+        span.version {
+            transition: 0.2s all;
+            white-space: nowrap;
+            font-size: var(--el-font-size-extra-small);
+            text-align: center;
+            display: block;
+            color: var(--bs-tertiary);
+        }
 
         .vsm--icon {
             transition: left 0.2s ease;
@@ -276,14 +270,6 @@
             svg {
                 position: relative;
                 margin-top: 13px;
-            }
-        }
-
-        .vsm--item {
-            transition: opacity 0.2s;
-
-            * {
-                transition: 0.2s all;
             }
         }
 
@@ -322,7 +308,6 @@
         &.vsm_collapsed .vsm--icon {
             left: 0;
         }
-
 
         a.vsm--link_active[href="#"] {
             cursor: initial !important;

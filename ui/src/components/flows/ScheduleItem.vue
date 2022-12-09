@@ -3,12 +3,12 @@
         <template #title>
             {{ schedule.id }} <el-tag class="ms-2" disable-transitions type="info">{{ schedule.cron }}</el-tag>
         </template>
-        <el-form class="ks-horizontal">
+        <el-form class="ks-horizontal" :rules="rules" :model="item" >
             <el-form-item :label="$t('id')">
                 <el-input v-model="item.id" />
             </el-form-item>
 
-            <el-form-item>
+            <el-form-item prop="cron">
                 <template #label>
                     {{ $t('schedules.cron.expression') }}
 
@@ -16,7 +16,7 @@
                         <template #content>
                             <div v-if="isValid">
                                 <p class="font-weight-bold">
-                                    3 Next occurences
+                                    3 Next occurrences
                                 </p>
 
                                 <span v-if="occurences.length">
@@ -33,15 +33,9 @@
                 </template>
 
                 <el-input required v-model="item.cron" />
-
-                <!--
-                <b-form-invalid-feedback>
-                    Enter at least 3 letters
-                </b-form-invalid-feedback>
-
-                <b-form-text>{{ cronHumanReadable }}</b-form-text>
-
-                -->
+                <small class="text-muted">
+                    {{ cronHumanReadable }}
+                </small>
             </el-form-item>
 
             <el-form-item :label="$t('schedules.cron.backfilll')">
@@ -51,92 +45,27 @@
                 />
             </el-form-item>
 
-            <el-form-item class="text-end" label="&nbsp;">
-                <el-button type="danger" @click="remove">
-                    <delete />
+            <el-form-item class="submit">
+                <el-button :icon="Delete" type="danger" @click="remove">
                     Delete
                 </el-button>
             </el-form-item>
         </el-form>
-
-
-
-        <!--
-        <b-form-group label-cols-sm="3" label-cols-lg="2" :label="$t('id')" :label-for="'input-id-' + index">
-            <b-form-input required :id="'input-id-' + index" v-model="item.id" />
-        </b-form-group>
-
-        <b-form-group
-            label-cols-sm="3"
-            label-cols-lg="2"
-            :label-for="'input-cron-' + index"
-            :state="isValid"
-        >
-            <template #label>
-                {{ $t('schedules.cron.expression') }}
-                <el-link class="text-body" :id="'tooltip-' + index">
-                    <help />
-                </el-link>
-
-                <b-tooltip :target="'tooltip-' + index" placement="bottom">
-                    <div v-if="isValid">
-                        <p class="font-weight-bold">
-                            3 Next occurences
-                        </p>
-
-                        <span v-if="occurences.length">
-                            <span v-for="(occurence, x) in occurences" :key="x">{{ $filters.date(occurence) }}<br></span>
-                        </span>
-                    </div>
-                    <span v-else>
-                        {{ $t("schedules.cron.invalid") }}
-                    </span>
-                </b-tooltip>
-            </template>
-
-            <b-form-input required :id="'input-cron-' + index" v-model="item.cron" />
-
-            <b-form-invalid-feedback>
-                Enter at least 3 letters
-            </b-form-invalid-feedback>
-
-            <b-form-text>{{ cronHumanReadable }}</b-form-text>
-        </b-form-group>
-
-
-        <b-form-group
-            label-cols-sm="3"
-            label-cols-lg="2"
-            :label="$t('schedules.cron.backfilll')"
-            :label-for="'input-' + index"
-        >
-            <date-picker
-                v-model="backfillStart"
-                :required="false"
-                type="datetime"
-                :id="'input-' + index"
-            />
-        </b-form-group>
-
-        <b-form-group class="mb-0 text-end">
-            <el-btn type="danger" @click="remove">
-                <delete />
-                Delete
-            </el-btn>
-        </b-form-group>
-        -->
     </el-collapse-item>
 </template>
+
+<script setup>
+    import Delete from "vue-material-design-icons/Delete";
+</script>
+
 <script>
     const cronstrue = require("cronstrue/i18n");
     const cronParser = require("cron-parser");
     const cronValidator = require("cron-validator");
-    import Delete from "vue-material-design-icons/Delete";
     import Help from "vue-material-design-icons/HelpBox";
 
     export default {
         components: {
-            Delete,
             Help,
         },
         props: {
@@ -157,17 +86,12 @@
                     cron: undefined,
                     backfill: undefined
                 },
-            }
-        },
-        watch: {
-            schedule: function (item) {
-                this.item = item;
-            },
-            item: {
-                handler(val) {
-                    this.emit(val);
-                },
-                deep: true
+                rules: {
+                    cron: [
+                        {required: true, trigger: "change"},
+                        {validator: this.isValidCron, trigger: "change"},
+                    ],
+                }
             }
         },
         created() {
@@ -220,6 +144,14 @@
             }
         },
         methods: {
+            isValidCron(rule, value, callback) {
+                if (cronValidator.isValidCron(value)) {
+                    callback();
+                } else {
+                    return callback(new Error(this.$t("invalid field", {name: "cron"})));
+
+                }
+            },
             remove() {
                 this.$emit("remove", this.index);
             },

@@ -10,10 +10,20 @@
     a:hover & {
         color:  var(--el-button-text-color) !important;
     }
+
+    .el-input-group--append & [class*=el-icon] + span {
+        position: relative;
+        top: -3px;
+    }
+}
+
+.el-input-group__append, .el-input-group__prepend {
+    background-color: transparent;
+    color: var(--bs-body-color);
 }
 
 // input
-.el-input, .el-date-editor {
+.el-input, .el-date-editor, .el-textarea {
     --el-input-border-color: var(--bs-border-color);
 
     html.dark & {
@@ -50,6 +60,7 @@
 
             html.dark & {
                 color: var(--el-text-color-primary);
+                background-color: var(--el-fill-color-light);
             }
         }
     }
@@ -59,6 +70,10 @@
     --el-checkbox-text-color: var(--bs-body-color);
     --el-checkbox-checked-text-color: var(--bs-body-color);
     --el-checkbox-font-size: var(--font-size-base);
+
+    html.dark & {
+        --el-checkbox-bg-color: var(--bs-gray-100-darken-5);
+    }
 }
 
 .el-date-editor {
@@ -78,6 +93,7 @@ form.ks-horizontal {
             .el-form-item__label {
                 max-width: (math.div(1, 24) * 4 * 100) * 1%;
                 flex: 0 0 (math.div(1, 24) * 4 * 100) * 1%;
+                text-align: right;
             }
 
             .el-form-item__content {
@@ -115,7 +131,7 @@ form.ks-horizontal {
         --el-table-tr-bg-color: var(--card-bg);
     }
 
-    border: 1px solid var(--bs-border-color);
+    outline: 1px solid var(--bs-border-color);
     border-radius: var(--bs-border-radius-lg);
     background-color: var(--bs-gray-100-lighten-2);
     border-bottom-width: 0;
@@ -200,7 +216,6 @@ form.ks-horizontal {
 
         &.is-active {
             color: var(--bs-secondary);
-            font-weight: 700;
         }
     }
 

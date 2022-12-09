@@ -267,6 +267,12 @@
             border-right: 1px solid var(--bs-border-color);
         }
 
+        .icon {
+            html.dark & {
+                background-color: var(--bs-gray-700);
+            }
+        }
+
         .is-success {
             background-color: var(--green);
         }
@@ -299,11 +305,6 @@
 
                 html.dark & {
                     background-color: var(--bs-gray-300);
-                }
-
-                .icon-wrapper {
-                    display: inline-block;
-                    flex-shrink: 2;
                 }
 
                 .task-title {

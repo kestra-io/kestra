@@ -26,6 +26,7 @@ export default {
                         })
                 },
                 saved: function(name, title, options) {
+                    ElNotification.closeAll();
                     ElNotification({
                         ...{
                             title: title || self.$t("saved"),

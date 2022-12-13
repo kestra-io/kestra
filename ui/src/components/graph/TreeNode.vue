@@ -97,7 +97,6 @@
                 @follow="forwardEvent('follow', $event)"
             />
         </el-drawer>
-
     </div>
 </template>
 <script>
@@ -115,6 +114,8 @@
     import Collapse from "../layout/Collapse.vue";
 
     export default {
+        name: "TreeNode",
+        inject: ["getNode"],
         components: {
             MarkdownTooltip,
             Status,
@@ -126,24 +127,6 @@
             TaskEdit,
             SubFlowLink,
             Collapse
-        },
-        props: {
-            n: {
-                type: Object,
-                default: undefined
-            },
-            flowId: {
-                type: String,
-                required: true
-            },
-            namespace: {
-                type: String,
-                required: true
-            },
-            execution: {
-                type: Object,
-                default: undefined
-            }
         },
         methods: {
             forwardEvent(type, event) {
@@ -165,7 +148,22 @@
                 logLevel: "INFO",
                 filter: undefined,
                 isOpen: false,
+                n: {
+                    task: {},
+                    uid: ""
+                },
+                namespace: "",
+                flowId: "",
+                execution: undefined,
             };
+        },
+        mounted() {
+            const node = this.getNode();
+            const nodeData = node?.store?.data || {};
+            this.n = nodeData.n;
+            this.namespace = nodeData.namespace;
+            this.flowId = nodeData.flowId;
+            this.execution = nodeData.execution;
         },
         computed: {
             ...mapState("graph", ["node"]),
@@ -267,12 +265,6 @@
             border-right: 1px solid var(--bs-border-color);
         }
 
-        .icon {
-            html.dark & {
-                background-color: var(--bs-gray-700);
-            }
-        }
-
         .is-success {
             background-color: var(--green);
         }
@@ -305,6 +297,11 @@
 
                 html.dark & {
                     background-color: var(--bs-gray-300);
+                }
+
+                .icon-wrapper {
+                    display: inline-block;
+                    flex-shrink: 2;
                 }
 
                 .task-title {

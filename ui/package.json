@@ -9,6 +9,10 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@antv/layout": "^0.3.11",
+    "@antv/x6": "^2.0.8",
+    "@antv/x6-plugin-scroller": "^2.0.5",
+    "@antv/x6-vue-shape": "^2.0.7",
     "ansi-to-html": "^0.7.2",
     "axios": "1.2.0",
     "bootstrap": "^5.2.3",

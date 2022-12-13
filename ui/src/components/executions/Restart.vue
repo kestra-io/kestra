@@ -50,8 +50,8 @@
 </template>
 
 <script setup>
-    import RestartIcon from "vue-material-design-icons/Restart";
-    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple";
+    import RestartIcon from "vue-material-design-icons/Restart.vue";
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
 </script>
 
 <script>

@@ -13,9 +13,9 @@
     </el-button-group>
 </template>
 <script>
-    import Refresh from "vue-material-design-icons/Refresh";
-    import Clock from "vue-material-design-icons/Clock";
-    import Kicon from "../Kicon"
+    import Refresh from "vue-material-design-icons/Refresh.vue";
+    import Clock from "vue-material-design-icons/Clock.vue";
+    import Kicon from "../Kicon.vue"
     export default {
         components: {Refresh, Clock, Kicon},
         emits: ["refresh"],

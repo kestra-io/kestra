@@ -97,21 +97,20 @@
                 @follow="forwardEvent('follow', $event)"
             />
         </el-drawer>
-
     </div>
 </template>
 <script>
     import {mapState} from "vuex";
-    import Status from "../Status";
-    import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
+    import Status from "../Status.vue";
+    import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
     import State from "../../utils/state"
-    import LogList from "../logs/LogList";
-    import LogLevelSelector from "../../components/logs/LogLevelSelector";
-    import SearchField from "../layout/SearchField";
-    import TaskIcon from "../plugins/TaskIcon";
+    import LogList from "../logs/LogList.vue";
+    import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
+    import SearchField from "../layout/SearchField.vue";
+    import TaskIcon from "../plugins/TaskIcon.vue";
     import TaskEdit from "override/components/flows/TaskEdit.vue";
-    import SubFlowLink from "../flows/SubFlowLink"
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
+    import SubFlowLink from "../flows/SubFlowLink.vue"
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Collapse from "../layout/Collapse.vue";
 
     export default {

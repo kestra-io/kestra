@@ -53,12 +53,12 @@
 
             <el-table-column prop="value" sortable :label="$t('value')">
                 <template #default="scope">
-                <span v-if="scope.row.type === 'timer'">
-                    {{ $filters.humanizeDuration(scope.row.value) }}
-                </span>
+                    <span v-if="scope.row.type === 'timer'">
+                        {{ $filters.humanizeDuration(scope.row.value) }}
+                    </span>
                     <span v-else>
-                    {{ $filters.humanizeNumber(scope.row.value) }}
-                </span>
+                        {{ $filters.humanizeNumber(scope.row.value) }}
+                    </span>
                 </template>
             </el-table-column>
         </el-table>
@@ -70,9 +70,9 @@
 </script>
 
 <script>
-    import Kicon from "../Kicon";
-    import Timer from "vue-material-design-icons/Timer";
-    import Counter from "vue-material-design-icons/Numeric";
+    import Kicon from "../Kicon.vue";
+    import Timer from "vue-material-design-icons/Timer.vue";
+    import Counter from "vue-material-design-icons/Numeric.vue";
 
     export default {
         components: {

@@ -25,9 +25,9 @@
 
 <script>
     import Utils from "../../utils/utils";
-    import VarValue from "./VarValue";
-    import DateAgo from "../../components/layout/DateAgo";
-    import SubFlowLink from "../flows/SubFlowLink"
+    import VarValue from "./VarValue.vue";
+    import DateAgo from "../../components/layout/DateAgo.vue";
+    import SubFlowLink from "../flows/SubFlowLink.vue"
 
     export default {
         components: {

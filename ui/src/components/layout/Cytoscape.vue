@@ -29,10 +29,10 @@
 </template>
 
 <script>
-    import MagnifyPlus from "vue-material-design-icons/MagnifyPlus";
-    import MagnifyMinus from "vue-material-design-icons/MagnifyMinus";
-    import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll";
-    import FitToPage from "vue-material-design-icons/FitToPage";
+    import MagnifyPlus from "vue-material-design-icons/MagnifyPlus.vue";
+    import MagnifyMinus from "vue-material-design-icons/MagnifyMinus.vue";
+    import ArrowCollapseAll from "vue-material-design-icons/ArrowCollapseAll.vue";
+    import FitToPage from "vue-material-design-icons/FitToPage.vue";
     import Utils from "../../utils/utils";
     import {shallowRef} from "vue";
 

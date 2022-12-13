@@ -123,8 +123,8 @@
 </template>
 
 <script setup>
-    import Plus from "vue-material-design-icons/Plus";
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch";
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
 </script>
 
 <script>
@@ -132,20 +132,20 @@
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import NamespaceSelect from "../namespace/NamespaceSelect";
-    import Eye from "vue-material-design-icons/Eye";
-    import BottomLine from "../layout/BottomLine";
+    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import Eye from "vue-material-design-icons/Eye.vue";
+    import BottomLine from "../layout/BottomLine.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
-    import DataTable from "../layout/DataTable";
-    import SearchField from "../layout/SearchField";
-    import StateChart from "../stats/StateChart";
-    import StateGlobalChart from "../stats/StateGlobalChart";
-    import TriggerAvatar from "./TriggerAvatar";
-    import MarkdownTooltip from "../layout/MarkdownTooltip"
-    import Kicon from "../Kicon"
-    import Labels from "../layout/Labels"
+    import DataTable from "../layout/DataTable.vue";
+    import SearchField from "../layout/SearchField.vue";
+    import StateChart from "../stats/StateChart.vue";
+    import StateGlobalChart from "../stats/StateGlobalChart.vue";
+    import TriggerAvatar from "./TriggerAvatar.vue";
+    import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
+    import Kicon from "../Kicon.vue"
+    import Labels from "../layout/Labels.vue"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],

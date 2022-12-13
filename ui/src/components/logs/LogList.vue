@@ -7,7 +7,6 @@
                 <div class="bg-light attempt-wrapper">
                     <template v-for="(attempt, index) in attempts(currentTaskRun)" :key="`attempt-${index}-${currentTaskRun.id}`">
                         <div>
-
                             <div class="attempt-header">
                                 <div class="attempt-number me-1">
                                     {{ $t("attempt") }} {{ index + 1 }}
@@ -16,7 +15,6 @@
                                 <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
                                     <el-tooltip :persistent="false" transition="" :hide-after="0">
                                         <template #content>
-
                                             {{ $t("from") }} :
                                             {{ $filters.date(attempt.state.startDate) }}
                                             <br>
@@ -32,7 +30,6 @@
                                             {{ currentTaskRun.value }}
                                         </small>
                                     </el-tooltip>
-
                                 </div>
 
                                 <div class="task-duration">
@@ -91,7 +88,6 @@
                                                 :flow-id="execution.flowId"
                                                 :namespace="execution.namespace"
                                             />
-
                                         </el-dropdown-menu>
                                     </template>
                                 </el-dropdown>
@@ -119,18 +115,18 @@
 
 <script>
     import {mapState} from "vuex";
-    import LogLine from "./LogLine";
-    import Restart from "../executions/Restart";
-    import ChangeStatus from "../executions/ChangeStatus";
-    import Metrics from "../executions/Metrics";
-    import Outputs from "../executions/Outputs";
-    import Clock from "vue-material-design-icons/Clock";
+    import LogLine from "./LogLine.vue";
+    import Restart from "../executions/Restart.vue";
+    import ChangeStatus from "../executions/ChangeStatus.vue";
+    import Metrics from "../executions/Metrics.vue";
+    import Outputs from "../executions/Outputs.vue";
+    import Clock from "vue-material-design-icons/Clock.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import State from "../../utils/state";
-    import Status from "../Status";
-    import SubFlowLink from "../flows/SubFlowLink"
+    import Status from "../Status.vue";
+    import SubFlowLink from "../flows/SubFlowLink.vue"
     import TaskEdit from "override/components/flows/TaskEdit.vue";
-    import Duration from "../layout/Duration";
+    import Duration from "../layout/Duration.vue";
 
     export default {
         components: {

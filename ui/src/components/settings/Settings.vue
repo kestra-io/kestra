@@ -13,7 +13,7 @@
             </el-form-item>
 
             <el-form-item :label="$t('theme')">
-                <el-select :model-value="theme"  @update:model-value="onTheme">
+                <el-select :model-value="theme" @update:model-value="onTheme">
                     <el-option
                         v-for="item in themesOptions"
                         :key="item.value"
@@ -24,7 +24,7 @@
             </el-form-item>
 
             <el-form-item :label="$t('Editor theme')">
-                <el-select :model-value="editorTheme"  @update:model-value="onEditorTheme">
+                <el-select :model-value="editorTheme" @update:model-value="onEditorTheme">
                     <el-option
                         v-for="item in editorThemesOptions"
                         :key="item.value"
@@ -35,7 +35,7 @@
             </el-form-item>
 
             <el-form-item label="&nbsp;">
-                <el-checkbox :label="$t('Fold auto')"  :model-value="autofoldTextEditor"  @update:model-value="onAutofoldTextEditor" />
+                <el-checkbox :label="$t('Fold auto')" :model-value="autofoldTextEditor" @update:model-value="onAutofoldTextEditor" />
             </el-form-item>
 
             <el-form-item :label="$t('Default namespace')">
@@ -47,7 +47,7 @@
 
 <script>
     import RouteContext from "../../mixins/routeContext";
-    import NamespaceSelect from "../../components/namespace/NamespaceSelect";
+    import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
 
     export default {
         mixins: [RouteContext],

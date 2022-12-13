@@ -17,7 +17,7 @@
 </template>
 
 <script>
-    import Pagination from "./Pagination";
+    import Pagination from "./Pagination.vue";
     import Collapse from "./Collapse.vue";
 
     export default {

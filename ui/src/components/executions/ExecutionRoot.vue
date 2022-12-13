@@ -26,23 +26,23 @@
 </template>
 
 <script setup>
-    import Delete from "vue-material-design-icons/Delete";
-    import Pencil from "vue-material-design-icons/Pencil";
+    import Delete from "vue-material-design-icons/Delete.vue";
+    import Pencil from "vue-material-design-icons/Pencil.vue";
 </script>
 
 <script>
-    import Gantt from "./Gantt";
-    import Overview from "./Overview";
-    import Logs from "./Logs";
-    import Topology from "./Topology";
-    import ExecutionOutput from "./ExecutionOutput";
-    import BottomLine from "../layout/BottomLine";
-    import TriggerFlow from "../flows/TriggerFlow";
+    import Gantt from "./Gantt.vue";
+    import Overview from "./Overview.vue";
+    import Logs from "./Logs.vue";
+    import Topology from "./Topology.vue";
+    import ExecutionOutput from "./ExecutionOutput.vue";
+    import BottomLine from "../layout/BottomLine.vue";
+    import TriggerFlow from "../flows/TriggerFlow.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import Tabs from "../../components/Tabs";
+    import Tabs from "../../components/Tabs.vue";
 
     import State from "../../utils/state";
 

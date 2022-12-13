@@ -39,14 +39,15 @@
 </template>
 
 <script>
-    import LogList from "../logs/LogList";
+    import LogList from "../logs/LogList.vue";
     import {mapState} from "vuex";
     import Download from "vue-material-design-icons/Download.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
-    import Kicon from "../Kicon";
-    import LogLevelSelector from "../logs/LogLevelSelector";
+    import Kicon from "../Kicon.vue";
+    import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import Collapse from "../layout/Collapse.vue";
+    import {Buffer} from "buffer";
 
     export default {
         components: {

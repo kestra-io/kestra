@@ -57,17 +57,17 @@
 </template>
 
 <script>
-    import LogLine from "../logs/LogLine";
+    import LogLine from "../logs/LogLine.vue";
     import {mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
-    import NamespaceSelect from "../namespace/NamespaceSelect";
-    import SearchField from "../layout/SearchField";
-    import DateRange from "../layout/DateRange";
-    import LogLevelSelector from "./LogLevelSelector";
-    import DataTable from "../../components/layout/DataTable";
-    import RefreshButton from "../../components/layout/RefreshButton";
+    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import SearchField from "../layout/SearchField.vue";
+    import DateRange from "../layout/DateRange.vue";
+    import LogLevelSelector from "./LogLevelSelector.vue";
+    import DataTable from "../../components/layout/DataTable.vue";
+    import RefreshButton from "../../components/layout/RefreshButton.vue";
     import _merge from "lodash/merge";
 
     export default {

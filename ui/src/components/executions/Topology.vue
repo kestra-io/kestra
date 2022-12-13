@@ -10,7 +10,7 @@
     />
 </template>
 <script>
-    import TopologyTree from "../graph/TopologyTree";
+    import TopologyTree from "../graph/TopologyTree.vue";
     import {mapState} from "vuex";
     export default {
         components: {

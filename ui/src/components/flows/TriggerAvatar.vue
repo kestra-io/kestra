@@ -25,7 +25,7 @@
 </template>
 <script>
     import Markdown from "../../utils/markdown";
-    import Vars from "../executions/Vars";
+    import Vars from "../executions/Vars.vue";
 
     export default {
         props: {

@@ -15,7 +15,7 @@
 </template>
 
 <script setup>
-    import Download from "vue-material-design-icons/Download";
+    import Download from "vue-material-design-icons/Download.vue";
 </script>
 
 <script>

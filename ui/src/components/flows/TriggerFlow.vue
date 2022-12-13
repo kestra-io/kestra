@@ -10,11 +10,11 @@
 </template>
 
 <script setup>
-    import Flash from "vue-material-design-icons/Flash";
+    import Flash from "vue-material-design-icons/Flash.vue";
 </script>
 
 <script>
-    import FlowRun from "./FlowRun";
+    import FlowRun from "./FlowRun.vue";
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
 

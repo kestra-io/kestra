@@ -1,12 +1,12 @@
 import _mapValues from "lodash/mapValues";
-import PauseCircle from "vue-material-design-icons/PauseCircle";
-import CheckCircle from "vue-material-design-icons/CheckCircle";
-import PlayCircle from "vue-material-design-icons/PlayCircle";
-import CloseCircle from "vue-material-design-icons/CloseCircle";
-import StopCircle from "vue-material-design-icons/StopCircle";
-import Restart from "vue-material-design-icons/Restart";
-import AlertCircle from "vue-material-design-icons/AlertCircle";
-import ProgressWrench from "vue-material-design-icons/ProgressWrench";
+import PauseCircle from "vue-material-design-icons/PauseCircle.vue";
+import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
+import PlayCircle from "vue-material-design-icons/PlayCircle.vue";
+import CloseCircle from "vue-material-design-icons/CloseCircle.vue";
+import StopCircle from "vue-material-design-icons/StopCircle.vue";
+import Restart from "vue-material-design-icons/Restart.vue";
+import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
+import ProgressWrench from "vue-material-design-icons/ProgressWrench.vue";
 
 const STATE = Object.freeze({
     CREATED: {

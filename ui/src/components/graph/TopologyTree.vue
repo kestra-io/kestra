@@ -27,19 +27,15 @@
     import * as dagre from "cytoscape-dagre";
     import * as cytoscapeDomNode  from "cytoscape-dom-node";
 
-    import TreeNode from "./TreeNode";
-    import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight";
-    import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown";
-    import Kicon from "../Kicon"
-    import Cytoscape from "../layout/Cytoscape"
+    import TreeNode from "./TreeNode.vue";
+    import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight.vue";
+    import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown.vue";
+    import Cytoscape from "../layout/Cytoscape.vue"
     import {shallowRef} from "vue";
     import Utils from "../../utils/utils";
 
     export default {
         components: {
-            ArrowCollapseDown,
-            ArrowCollapseRight,
-            Kicon,
             Cytoscape,
             TreeNode
         },

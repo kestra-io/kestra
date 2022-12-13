@@ -2,7 +2,7 @@
     <div class="collapse mb-sm-4 mb-md-0">
         <div class="button mb-2">
             <el-button @click="isNavbarVisible = !isNavbarVisible">
-                <Menu />
+                <menu-icon />
             </el-button>
         </div>
         <el-form :inline="true" @submit="prevent" :class="{'d-block': isNavbarVisible}">
@@ -12,9 +12,9 @@
 </template>
 
 <script>
-    import Menu from "vue-material-design-icons/Menu";
+    import MenuIcon from "vue-material-design-icons/Menu.vue";
     export default {
-        components: {Menu},
+        components: {MenuIcon},
         data() {
             return {
                 isNavbarVisible: false,

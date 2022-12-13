@@ -3,7 +3,7 @@
 </template>
 
 <script>
-    import LogsWrapper from "../logs/LogsWrapper";
+    import LogsWrapper from "../logs/LogsWrapper.vue";
 
     export default {
         components: {

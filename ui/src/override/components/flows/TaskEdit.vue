@@ -35,17 +35,18 @@
 
 <script setup>
     import CodeTags from "vue-material-design-icons/CodeTags.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
 </script>
 
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
-    import Editor from "../../../components/inputs/Editor";
+    import Editor from "../../../components/inputs/Editor.vue";
     import {canSaveFlowTemplate} from "../../../utils/flowTemplate";
     import {mapState} from "vuex";
     import Utils from "../../../utils/utils";
 
     export default {
+        components: {Editor},
         props: {
             component: {
                 type: String,

@@ -19,7 +19,7 @@
 </template>
 
 <script>
-    import StateChart from "./StateChart";
+    import StateChart from "./StateChart.vue";
     import Utils from "../../utils/utils";
 
     export default {

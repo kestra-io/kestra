@@ -1,6 +1,6 @@
 <template>
     <div>
-        <el-tabs v-model="activeName" >
+        <el-tabs v-model="activeName">
             <el-tab-pane
                 v-for="tab in tabs"
                 :key="tab.name"
@@ -28,8 +28,6 @@
 </template>
 
 <script>
-    import Prism from "prismjs";
-
     export default {
         components: {
 

@@ -7,7 +7,7 @@
     </div>
 </template>
 <script>
-    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline";
+    import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";

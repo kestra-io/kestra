@@ -1,11 +1,11 @@
 import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
 import {mapGetters, mapState} from "vuex";
 
-import BottomLine from "../components/layout/BottomLine";
-import ContentSave from "vue-material-design-icons/ContentSave";
-import Delete from "vue-material-design-icons/Delete";
-import FlowEditor from "override/components/inputs/FlowEditor";
-import TemplateEditor from "override/components/inputs/TemplateEditor";
+import BottomLine from "../components/layout/BottomLine.vue";
+import ContentSave from "vue-material-design-icons/ContentSave.vue";
+import Delete from "vue-material-design-icons/Delete.vue";
+import FlowEditor from "override/components/inputs/FlowEditor.vue";
+import TemplateEditor from "override/components/inputs/TemplateEditor.vue";
 import RouteContext from "./routeContext";
 import YamlUtils from "../utils/yamlUtils";
 import action from "../models/action";

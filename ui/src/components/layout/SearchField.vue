@@ -12,6 +12,7 @@
 <script>
     import {debounce} from "throttle-debounce";
     import Magnify from "vue-material-design-icons/Magnify.vue";
+
     export default {
         emits: ["search"],
         components: {Magnify},

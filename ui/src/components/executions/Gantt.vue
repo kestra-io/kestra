@@ -45,7 +45,6 @@
                                 </div>
                             </div>
                         </el-tooltip>
-
                     </td>
                 </tr>
                 <tr v-if="taskRun && taskRun.id === currentTaskRun.id">
@@ -63,10 +62,10 @@
     </el-card>
 </template>
 <script>
-    import LogList from "../logs/LogList";
+    import LogList from "../logs/LogList.vue";
     import {mapState} from "vuex";
     import State from "../../utils/state";
-    import Duration from "../layout/Duration";
+    import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
 
     const ts = date => new Date(date).getTime();

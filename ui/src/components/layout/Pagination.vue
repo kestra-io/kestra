@@ -28,7 +28,6 @@
                 @current-change="pageChanged"
                 class="my-0"
             />
-
         </div>
 
         <small v-if="max" class="d-md-none d-lg-block total ms-2">

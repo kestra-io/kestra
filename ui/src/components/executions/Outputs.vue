@@ -29,20 +29,17 @@
 </script>
 
 <script>
-    import Vars from "../executions/Vars";
-    import Timer from "vue-material-design-icons/Timer";
-    import Counter from "vue-material-design-icons/Numeric";
+    import Vars from "../executions/Vars.vue";
 
     export default {
         components: {
-            Timer,
-            Counter,
             Vars,
         },
         props: {
             outputs: {
                 type: Object,
                 required: false,
+                default: () => {}
             },
             execution: {
                 type: Object,

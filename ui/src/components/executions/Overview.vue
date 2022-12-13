@@ -23,19 +23,19 @@
                         {{ scope.row.value }}
                     </router-link>
                     <span v-else-if="scope.row.date">
-                    <date-ago :date="scope.row.value" />
-                </span>
-                    <span v-else-if="scope.row.duration">
-                    <duration :histories="scope.row.value" />
-                </span>
-                    <span v-else>
-                    <span v-if="scope.row.key === $t('revision')">
-                        <router-link
-                            :to="{name: 'flows/update', params: {id: $route.params.flowId, namespace: $route.params.namespace, tab: 'revisions'}, query: {revisionRight: scope.row.value}}"
-                        >{{ scope.row.value }}</router-link>
+                        <date-ago :date="scope.row.value" />
                     </span>
-                    <span v-else>{{ scope.row.value }}</span>
-                </span>
+                    <span v-else-if="scope.row.duration">
+                        <duration :histories="scope.row.value" />
+                    </span>
+                    <span v-else>
+                        <span v-if="scope.row.key === $t('revision')">
+                            <router-link
+                                :to="{name: 'flows/update', params: {id: $route.params.flowId, namespace: $route.params.namespace, tab: 'revisions'}, query: {revisionRight: scope.row.value}}"
+                            >{{ scope.row.value }}</router-link>
+                        </span>
+                        <span v-else>{{ scope.row.value }}</span>
+                    </span>
                 </template>
             </el-table-column>
         </el-table>
@@ -58,14 +58,14 @@
 </template>
 <script>
     import {mapState} from "vuex";
-    import Status from "../Status";
-    import Vars from "./Vars";
-    import Restart from "./Restart";
-    import Kill from "./Kill";
+    import Status from "../Status.vue";
+    import Vars from "./Vars.vue";
+    import Restart from "./Restart.vue";
+    import Kill from "./Kill.vue";
     import State from "../../utils/state";
-    import DateAgo from "../layout/DateAgo";
-    import Crud from "override/components/auth/Crud";
-    import Duration from "../layout/Duration";
+    import DateAgo from "../layout/DateAgo.vue";
+    import Crud from "override/components/auth/Crud.vue";
+    import Duration from "../layout/Duration.vue";
 
     export default {
         components: {

@@ -38,10 +38,10 @@
                                     {{ scope.row.id }}
                                 </router-link>
                                 &nbsp;<markdown-tooltip
-                                :id="scope.row.namespace + '-' + scope.row.id"
-                                :description="scope.row.description"
-                                :title="scope.row.namespace + '.' + scope.row.id"
-                            />
+                                    :id="scope.row.namespace + '-' + scope.row.id"
+                                    :description="scope.row.description"
+                                    :title="scope.row.namespace + '.' + scope.row.id"
+                                />
                             </template>
                         </el-table-column>
 
@@ -75,24 +75,24 @@
 </template>
 
 <script setup>
-    import Plus from "vue-material-design-icons/Plus";
+    import Plus from "vue-material-design-icons/Plus.vue";
 </script>
 
 <script>
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import NamespaceSelect from "../namespace/NamespaceSelect";
-    import Eye from "vue-material-design-icons/Eye";
-    import BottomLine from "../layout/BottomLine";
+    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import Eye from "vue-material-design-icons/Eye.vue";
+    import BottomLine from "../layout/BottomLine.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
-    import DataTable from "../layout/DataTable";
-    import SearchField from "../layout/SearchField";
-    import Kicon from "../Kicon"
+    import DataTable from "../layout/DataTable.vue";
+    import SearchField from "../layout/SearchField.vue";
+    import Kicon from "../Kicon.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
     import _merge from "lodash/merge";
-    import MarkdownTooltip from "../../components/layout/MarkdownTooltip";
+    import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],

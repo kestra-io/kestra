@@ -9,12 +9,12 @@ import Plugin from "../components/plugins/Plugin.vue"
 import Settings from "../components/settings/Settings.vue"
 import TemplateEdit from "../components/templates/TemplateEdit.vue"
 import Templates from "../components/templates/Templates.vue"
-import FlowsSearch from "../components/flows/FlowsSearch";
-import Errors from "../components/errors/Errors";
+import FlowsSearch from "../components/flows/FlowsSearch.vue";
+import Errors from "../components/errors/Errors.vue";
 
 export default [
     //Flows
-    {name: "home", path: "/", redirect: '/flows'},
+    {name: "home", path: "/", redirect: "/flows"},
     {name: "flows/list", path: "/flows", component: Flows},
     {name: "flows/search", path: "/flows/search", component: FlowsSearch},
     {name: "flows/create", path: "/flows/new", component: FlowEdit},

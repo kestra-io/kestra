@@ -14,9 +14,9 @@
 
 <script>
     import LeftMenu from "override/components/LeftMenu.vue";
-    import TopNavBar from "./components/layout/TopNavBar";
-    import ErrorToast from "./components/ErrorToast";
-    import Errors from "./components/errors/Errors";
+    import TopNavBar from "./components/layout/TopNavBar.vue";
+    import ErrorToast from "./components/ErrorToast.vue";
+    import Errors from "./components/errors/Errors.vue";
     import {mapState} from "vuex";
     import Utils from "./utils/utils";
 

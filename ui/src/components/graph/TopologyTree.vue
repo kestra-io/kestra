@@ -15,6 +15,7 @@
     import {DagreLayout} from "@antv/layout";
     import {register, getTeleport} from "@antv/x6-vue-shape";
     import {Scroller} from "@antv/x6-plugin-scroller";
+    import Cytoscape from "../layout/Cytoscape"
 
     // Register a custom node
     register({
@@ -110,6 +111,8 @@
 
                     const nodeData = {
                         shape: isEdge ? "tree_node" : "circle",
+                        width: isEdge ? 200 : 15,
+                        height: isEdge ? 50 : 15,
                         // data: {
                         id: node.uid,
                         label: isEdge ? node.task.id : undefined,
@@ -123,6 +126,11 @@
                         flowId: this.flowId,
                         execution: this.execution,
 
+                        attrs: isEdge ? {} : {
+                            body: {
+                                fill: "#EAF5FC",
+                            },
+                        },
                     };
                     nodes.push(nodeData);
                 }
@@ -150,13 +158,23 @@
                 return edges;
             },
             generateGraph() {
-
+                // init X6 graph
                 const graphX6 = new Graph({
                     container: document.getElementById("container-topology"),
                     background: {
                         color: "#FFF",
                     },
                     interacting: false,
+                    connecting: {
+                        // router: "orth",
+                        sourceAnchor: {
+                            name: "right",
+                        },
+                        targetAnchor: {
+                            name: "left",
+                        },
+                        connectionPoint: "anchor",
+                    },
                 });
 
                 graphX6.use(
@@ -180,6 +198,7 @@
                     nodes,
                 };
 
+                // layout
                 const dagreLayout = new DagreLayout({
                     type: "dagre",
                     rankdir: "LR",
@@ -191,11 +210,12 @@
 
                 graphX6.zoomToFit({
                     minScale: 0.2,
-                    maxScale: 2,
+                    maxScale: 1.5,
                     padding: 44
                 });
 
                 console.log("this.flowGraph.clusters >>>>", this.flowGraph.clusters);
+                // Box
                 Array.isArray(this.flowGraph.clusters) && this.flowGraph.clusters.forEach(({nodes}, index) => {
                     const nodeInstances = [];
                     Array.isArray(nodes) && nodes.forEach((nodeId) => {

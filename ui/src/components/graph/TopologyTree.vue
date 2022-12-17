@@ -195,9 +195,10 @@
                     padding: 44
                 });
 
-                this.flowGraph.clusters.forEach(({nodes}, index) => {
+                console.log("this.flowGraph.clusters >>>>", this.flowGraph.clusters);
+                Array.isArray(this.flowGraph.clusters) && this.flowGraph.clusters.forEach(({nodes}, index) => {
                     const nodeInstances = [];
-                    nodes.forEach((nodeId) => {
+                    Array.isArray(nodes) && nodes.forEach((nodeId) => {
                         const nodeInstance = graphX6.getCellById(nodeId);
                         if (nodeInstance) {
                             nodeInstances.push(nodeInstance);

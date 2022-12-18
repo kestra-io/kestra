@@ -1,8 +1,5 @@
 import axios from "axios";
 import NProgress from "nprogress"
-import {ElNotification} from "element-plus"
-import {createApp} from "vue";
-import ErrorToast from "../components/ErrorToast.vue";
 
 // eslint-disable-next-line no-undef
 let root = (process.env.VUE_APP_API_URL || "") + KESTRA_BASE_PATH;
@@ -139,7 +136,7 @@ export default (callback, store, router) => {
         next()
     })
 
-    router.afterEach((to, from) => {
+    router.afterEach(() => {
         increaseProgress();
     })
 

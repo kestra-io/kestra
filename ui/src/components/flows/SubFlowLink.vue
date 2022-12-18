@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-    import AxisYArrow from "vue-material-design-icons/AxisYArrow";
+    import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue";
 </script>
 
 <script>

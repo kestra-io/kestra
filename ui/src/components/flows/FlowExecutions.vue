@@ -3,7 +3,7 @@
 </template>
 
 <script>
-    import Executions from "../executions/Executions";
+    import Executions from "../executions/Executions.vue";
 
     export default {
         components: {

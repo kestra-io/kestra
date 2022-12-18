@@ -32,15 +32,15 @@
 </template>
 
 <script setup>
-    import ContentCopy from "vue-material-design-icons/ContentCopy";
-    import ContentSave from "vue-material-design-icons/ContentSave";
-    import Delete from "vue-material-design-icons/Delete";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
 </script>
 
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
     import {mapGetters} from "vuex";
-    import TriggerFlow from "./TriggerFlow"
+    import TriggerFlow from "./TriggerFlow.vue"
 
     export default {
         components: {

@@ -9,15 +9,14 @@
 
 <script>
     import TreeNode from "./TreeNode.vue";
-    import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight";
-    import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown";
-    import Kicon from "../Kicon"
+    import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight.vue";
+    import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown.vue";
+    import Cytoscape from "../layout/Cytoscape.vue"
     import {shallowRef} from "vue";
     import {Graph} from "@antv/x6";
     import {DagreLayout} from "@antv/layout";
     import {register, getTeleport} from "@antv/x6-vue-shape";
     import {Scroller} from "@antv/x6-plugin-scroller";
-    import Cytoscape from "../layout/Cytoscape"
 
     // Register a custom node
     register({
@@ -30,11 +29,8 @@
 
     export default {
         components: {
-            ArrowCollapseDown,
-            ArrowCollapseRight,
-            Kicon,
             TeleportContainer,
-            Cytoscape
+            Cytoscape,
         },
         props: {
             flowGraph: {

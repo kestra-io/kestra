@@ -1,6 +1,6 @@
 <script>
     import {ElNotification, ElTable, ElTableColumn} from "element-plus";
-    import {h} from 'vue'
+    import {h} from "vue"
 
     export default {
         name: "ErrorToast",
@@ -33,18 +33,18 @@
             },
         },
         methods: {
-          close() {
-              if (this.notifications) {
-                  this.notifications.close();
-              }
-          }
+            close() {
+                if (this.notifications) {
+                    this.notifications.close();
+                }
+            }
         },
         render() {
             this.$nextTick(() => {
                 this.close();
 
                 const children = [
-                    h('span', {innerHTML: this.text})
+                    h("span", {innerHTML: this.text})
                 ];
 
                 if (this.items.length > 0) {
@@ -59,21 +59,23 @@
                             size: "small",
                         },
                         [
-                            h(ElTableColumn, {prop: 'message', label: "Message"}),
-                            h(ElTableColumn, {prop: 'path', label: "Path"}),
+                            h(ElTableColumn, {prop: "message", label: "Message"}),
+                            h(ElTableColumn, {prop: "path", label: "Path"}),
                         ]
                     ))
                 }
 
                 this.notifications = ElNotification({
                     title: this.title || "Error",
-                    message: h('div',  children),
+                    message: h("div",  children),
                     type: "error",
                     duration: 0,
                     dangerouslyUseHTMLString: true,
                     customClass: children.length > 1 ? "large" : ""
                 });
             });
+
+            return "";
         }
     };
 </script>

@@ -54,7 +54,7 @@
                             type="file"
                             @change="onFileChange(input, $event)"
                             autocomplete="off"
-                        />
+                        >
                     </div>
                 </div>
                 <el-input
@@ -77,7 +77,7 @@
 </template>
 
 <script setup>
-    import Flash from "vue-material-design-icons/Flash";
+    import Flash from "vue-material-design-icons/Flash.vue";
 </script>
 
 <script>

@@ -12,7 +12,7 @@
             <h5>
                 {{ feed.title }}
             </h5>
-            <date-ago className="text-muted small" :inverted="true" :date="feed.publicationDate" format="LL" />
+            <date-ago class-name="text-muted small" :inverted="true" :date="feed.publicationDate" format="LL" />
 
             <markdown class="markdown-tooltip mt-3" :source="feed.description" />
 
@@ -27,11 +27,11 @@
 
 <script>
     import {mapState} from "vuex";
-    import Gift from "vue-material-design-icons/Gift";
-    import OpenInNew from "vue-material-design-icons/OpenInNew";
-    import CheckboxBlankCircle from "vue-material-design-icons/CheckboxBlankCircle";
-    import Markdown from "./Markdown";
-    import DateAgo from "./DateAgo";
+    import Gift from "vue-material-design-icons/Gift.vue";
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+    import CheckboxBlankCircle from "vue-material-design-icons/CheckboxBlankCircle.vue";
+    import Markdown from "./Markdown.vue";
+    import DateAgo from "./DateAgo.vue";
 
     export default {
         components: {

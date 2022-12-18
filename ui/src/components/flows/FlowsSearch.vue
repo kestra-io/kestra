@@ -51,12 +51,12 @@
 
 <script>
     import {mapState} from "vuex";
-    import NamespaceSelect from "../namespace/NamespaceSelect";
+    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
-    import DataTable from "../layout/DataTable";
-    import SearchField from "../layout/SearchField";
+    import DataTable from "../layout/DataTable.vue";
+    import SearchField from "../layout/SearchField.vue";
     import _escape from "lodash/escape"
     import _merge from "lodash/merge";
 

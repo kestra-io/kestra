@@ -57,7 +57,7 @@
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="state.startDate" v-if="!hidden.includes('state.startDate')"  sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('start date')">
+                    <el-table-column prop="state.startDate" v-if="!hidden.includes('state.startDate')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('start date')">
                         <template #default="scope">
                             <date-ago :inverted="true" :date="scope.row.state.startDate" />
                         </template>
@@ -86,7 +86,7 @@
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="state.current" v-if="!hidden.includes('state.current')"  sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('state')">
+                    <el-table-column prop="state.current" v-if="!hidden.includes('state.current')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('state')">
                         <template #default="scope">
                             <status :status="scope.row.state.current" size="small" />
                         </template>
@@ -115,23 +115,23 @@
 
 <script>
     import {mapState} from "vuex";
-    import DataTable from "../layout/DataTable";
-    import Eye from "vue-material-design-icons/Eye";
-    import Status from "../Status";
+    import DataTable from "../layout/DataTable.vue";
+    import Eye from "vue-material-design-icons/Eye.vue";
+    import Status from "../Status.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
-    import SearchField from "../layout/SearchField";
-    import NamespaceSelect from "../namespace/NamespaceSelect";
-    import DateRange from "../layout/DateRange";
-    import RefreshButton from "../layout/RefreshButton"
-    import StatusFilterButtons from "../layout/StatusFilterButtons"
-    import StateGlobalChart from "../../components/stats/StateGlobalChart";
-    import TriggerAvatar from "../../components/flows/TriggerAvatar";
-    import DateAgo from "../layout/DateAgo";
-    import Kicon from "../Kicon"
+    import SearchField from "../layout/SearchField.vue";
+    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import DateRange from "../layout/DateRange.vue";
+    import RefreshButton from "../layout/RefreshButton.vue"
+    import StatusFilterButtons from "../layout/StatusFilterButtons.vue"
+    import StateGlobalChart from "../../components/stats/StateGlobalChart.vue";
+    import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
+    import DateAgo from "../layout/DateAgo.vue";
+    import Kicon from "../Kicon.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
     import State from "../../utils/state";
-    import Id from "../Id";
+    import Id from "../Id.vue";
     import _merge from "lodash/merge";
 
     export default {

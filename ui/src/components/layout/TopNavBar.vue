@@ -26,9 +26,9 @@
 </template>
 <script>
     import {mapState} from "vuex";
-    import HomeOutline from "vue-material-design-icons/HomeOutline";
-    import Auth from "override/components/auth/Auth";
-    import News from "../layout/News";
+    import HomeOutline from "vue-material-design-icons/HomeOutline.vue";
+    import Auth from "override/components/auth/Auth.vue";
+    import News from "../layout/News.vue";
 
     export default {
         components: {

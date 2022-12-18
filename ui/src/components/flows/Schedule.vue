@@ -33,12 +33,13 @@
         </bottom-line>
     </div>
 </template>
+
 <script>
     import {mapState} from "vuex";
-    import ContentSave from "vue-material-design-icons/ContentSave";
-    import Plus from "vue-material-design-icons/Plus";
-    import ScheduleItem from "./ScheduleItem";
-    import BottomLine from "../layout/BottomLine";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import ScheduleItem from "./ScheduleItem.vue";
+    import BottomLine from "../layout/BottomLine.vue";
     import {
         canSaveFlowTemplate,
         saveFlowTemplate,

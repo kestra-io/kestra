@@ -2,7 +2,6 @@
     <div class="plugins-list">
         <el-collapse accordion>
             <template
-                :title="plugin.manifest['X-Kestra-Title']"
                 :key="plugin.manifest['X-Kestra-Title']"
                 v-for="(plugin) in sortedPlugins(plugins)"
             >
@@ -41,7 +40,7 @@
 </template>
 
 <script>
-    import TaskIcon from "../plugins/TaskIcon";
+    import TaskIcon from "../plugins/TaskIcon.vue";
 
     export default {
         emits: ["routerChange"],
@@ -63,8 +62,8 @@
             sortedPlugins(plugins) {
                 return plugins
                     .sort((a, b) => {
-                        const nameA = (a.manifest && a.manifest['X-Kestra-Title'] ? a.manifest['X-Kestra-Title'].toLowerCase() : ""),
-                            nameB = (b.manifest && b.manifest['X-Kestra-Title'] ? b.manifest['X-Kestra-Title'].toLowerCase() : "");
+                        const nameA = (a.manifest && a.manifest["X-Kestra-Title"] ? a.manifest["X-Kestra-Title"].toLowerCase() : ""),
+                              nameB = (b.manifest && b.manifest["X-Kestra-Title"] ? b.manifest["X-Kestra-Title"].toLowerCase() : "");
 
                         return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
                     })

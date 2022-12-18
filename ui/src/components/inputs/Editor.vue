@@ -40,11 +40,11 @@
 
 <script>
     import {defineAsyncComponent, shallowRef} from "vue"
-    import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal";
-    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal";
+    import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
+    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
 
     const MonacoEditor = defineAsyncComponent(() =>
-        import('./MonacoEditor')
+        import("./MonacoEditor.vue")
     )
 
     export default {
@@ -65,8 +65,6 @@
         },
         components: {
             MonacoEditor,
-            UnfoldLessHorizontal,
-            UnfoldMoreHorizontal,
         },
         emits: ["save", "focusout", "update:modelValue"],
         editor: undefined,

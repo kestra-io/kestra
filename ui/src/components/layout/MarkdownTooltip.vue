@@ -21,8 +21,8 @@
     </span>
 </template>
 <script>
-    import HelpCircle from "vue-material-design-icons/HelpCircle";
-    import Markdown from "./Markdown";
+    import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
+    import Markdown from "./Markdown.vue";
 
     export default {
         components: {

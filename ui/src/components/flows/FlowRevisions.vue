@@ -20,7 +20,7 @@
                         />
                     </el-select>
                     <el-button-group>
-                        <el-button  :icon="FileCode" @click="seeRevision(revisionLeft, revisionLeftText)">
+                        <el-button :icon="FileCode" @click="seeRevision(revisionLeft, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
                         </el-button>
                         <el-button :icon="Restore" :disabled="revisionNumber(revisionLeft) === flow.revision" @click="restoreRevision(revisionLeft, revisionLeftText)">
@@ -47,7 +47,7 @@
                         />
                     </el-select>
                     <el-button-group>
-                        <el-button  :icon="FileCode" @click="seeRevision(revisionRight, revisionRightText)">
+                        <el-button :icon="FileCode" @click="seeRevision(revisionRight, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ $t('see full revision') }}</span>
                         </el-button>
                         <el-button :icon="Restore" :disabled="revisionNumber(revisionRight) === flow.revision" @click="restoreRevision(revisionRight, revisionRightText)">
@@ -82,7 +82,6 @@
 
             <editor v-model="revisionYaml" lang="yaml" />
         </el-drawer>
-
     </div>
     <div v-else>
         <el-alert class="mb-0" show-icon :closable="false">
@@ -92,15 +91,15 @@
 </template>
 
 <script setup>
-    import FileCode from "vue-material-design-icons/FileCode";
-    import Restore from "vue-material-design-icons/Restore";
+    import FileCode from "vue-material-design-icons/FileCode.vue";
+    import Restore from "vue-material-design-icons/Restore.vue";
 </script>
 
 <script>
     import {mapState} from "vuex";
     import YamlUtils from "../../utils/yamlUtils";
-    import Editor from "../../components/inputs/Editor";
-    import Crud from "override/components/auth/Crud";
+    import Editor from "../../components/inputs/Editor.vue";
+    import Crud from "override/components/auth/Crud.vue";
     import {saveFlowTemplate} from "../../utils/flowTemplate";
 
     export default {

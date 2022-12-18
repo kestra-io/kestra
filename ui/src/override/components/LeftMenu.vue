@@ -30,19 +30,19 @@
     import {shallowRef} from "vue"
 
     import {SidebarMenu} from "vue-sidebar-menu";
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft";
-    import ChevronRight from "vue-material-design-icons/ChevronRight";
-    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline";
-    import ContentCopy from "vue-material-design-icons/ContentCopy";
-    import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline";
-    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline";
-    import NotebookOutline from "vue-material-design-icons/NotebookOutline";
-    import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline";
-    import FileCodeOutline from "vue-material-design-icons/FileCodeOutline";
-    import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended";
-    import Slack from "vue-material-design-icons/Slack";
-    import Github from "vue-material-design-icons/Github";
-    import CogOutline from "vue-material-design-icons/CogOutline";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
+    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
+    import NotebookOutline from "vue-material-design-icons/NotebookOutline.vue";
+    import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
+    import FileCodeOutline from "vue-material-design-icons/FileCodeOutline.vue";
+    import GoogleCirclesExtended from "vue-material-design-icons/GoogleCirclesExtended.vue";
+    import Slack from "vue-material-design-icons/Slack.vue";
+    import Github from "vue-material-design-icons/Github.vue";
+    import CogOutline from "vue-material-design-icons/CogOutline.vue";
     import {mapState} from "vuex";
 
     export default {
@@ -60,17 +60,17 @@
             },
             disabledCurrentRoute(items) {
                 return items
-                .map(r => {
-                    if (r.href === this.$route.path) {
-                        r.disabled = true
-                    }
+                    .map(r => {
+                        if (r.href === this.$route.path) {
+                            r.disabled = true
+                        }
 
-                    if (r.href !== "/" && this.$route.path.startsWith(r.href)) {
-                        r.class = "vsm--link_active"
-                    }
+                        if (r.href !== "/" && this.$route.path.startsWith(r.href)) {
+                            r.class = "vsm--link_active"
+                        }
 
-                    return r;
-                })
+                        return r;
+                    })
             },
             generateMenu() {
                 return [

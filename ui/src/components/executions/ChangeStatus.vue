@@ -46,7 +46,7 @@
                 </div>
             </template>
 
-            <template #footer="{ok, cancel}">
+            <template #footer>
                 <el-button @click="visible = false">
                     Cancel
                 </el-button>
@@ -63,12 +63,12 @@
 </template>
 
 <script>
-    import StateMachine from "vue-material-design-icons/StateMachine";
+    import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import State from "../../utils/state";
-    import Status from "../../components/Status";
+    import Status from "../../components/Status.vue";
     import ExecutionUtils from "../../utils/executionUtils";
     import {shallowRef} from "vue";
 

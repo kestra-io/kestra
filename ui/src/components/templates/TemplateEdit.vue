@@ -5,7 +5,7 @@
             <ul>
                 <li>
                     <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteFile">
-                         {{ $t('delete') }}
+                        {{ $t('delete') }}
                     </el-button>
 
                     <template v-if="canSave">
@@ -20,8 +20,8 @@
 </template>
 
 <script setup>
-    import ContentSave from "vue-material-design-icons/ContentSave";
-    import Delete from "vue-material-design-icons/Delete";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
 </script>
 
 <script>

@@ -85,14 +85,13 @@
                 </template>
             </el-table-column>
         </el-table>
-
     </div>
 </template>
 <script>
     import {mapState} from "vuex";
-    import VarValue from "./VarValue";
+    import VarValue from "./VarValue.vue";
     import Utils from "../../utils/utils";
-    import Editor from "../../components/inputs/Editor";
+    import Editor from "../../components/inputs/Editor.vue";
     import Collapse from "../layout/Collapse.vue";
 
     export default {

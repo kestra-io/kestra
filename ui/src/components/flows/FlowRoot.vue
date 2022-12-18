@@ -13,20 +13,20 @@
     </div>
 </template>
 <script>
-    import Topology from "./Topology";
-    import Schedule from "./Schedule";
-    import FlowSource from "./FlowSource";
-    import FlowRevisions from "./FlowRevisions";
-    import FlowRun from "./FlowRun";
-    import FlowLogs from "./FlowLogs";
-    import FlowExecutions from "./FlowExecutions";
+    import Topology from "./Topology.vue";
+    import Schedule from "./Schedule.vue";
+    import FlowSource from "./FlowSource.vue";
+    import FlowRevisions from "./FlowRevisions.vue";
+    import FlowRun from "./FlowRun.vue";
+    import FlowLogs from "./FlowLogs.vue";
+    import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import Tabs from "../Tabs";
-    import BottomLine from "../../components/layout/BottomLine";
-    import TriggerFlow from "../../components/flows/TriggerFlow";
+    import Tabs from "../Tabs.vue";
+    import BottomLine from "../../components/layout/BottomLine.vue";
+    import TriggerFlow from "../../components/flows/TriggerFlow.vue";
 
     export default {
         mixins: [RouteContext],

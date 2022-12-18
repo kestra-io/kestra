@@ -1,9 +1,11 @@
 <template>
     <el-collapse-item :name="schedule.id">
         <template #title>
-            {{ schedule.id }} <el-tag class="ms-2" disable-transitions type="info">{{ schedule.cron }}</el-tag>
+            {{ schedule.id }} <el-tag class="ms-2" disable-transitions type="info">
+                {{ schedule.cron }}
+            </el-tag>
         </template>
-        <el-form class="ks-horizontal" :rules="rules" :model="item" >
+        <el-form class="ks-horizontal" :rules="rules" :model="item">
             <el-form-item :label="$t('id')">
                 <el-input v-model="item.id" />
             </el-form-item>
@@ -55,14 +57,14 @@
 </template>
 
 <script setup>
-    import Delete from "vue-material-design-icons/Delete";
+    import Delete from "vue-material-design-icons/Delete.vue";
 </script>
 
 <script>
-    const cronstrue = require("cronstrue/i18n");
-    const cronParser = require("cron-parser");
-    const cronValidator = require("cron-validator");
-    import Help from "vue-material-design-icons/HelpBox";
+    import cronstrue from "cronstrue/i18n";
+    import cronParser from "cron-parser";
+    import cronValidator from "cron-validator";
+    import Help from "vue-material-design-icons/HelpBox.vue";
 
     export default {
         components: {

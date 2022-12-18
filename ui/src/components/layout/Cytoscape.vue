@@ -52,31 +52,31 @@
                 },
             };
         },
-        cy: undefined,
+        x6: undefined,
 
         created() {
         },
         methods: {
-            instance(cy) {
-                this.cy = cy;
-                this.count = this.cy.nodes().length
+            instance(x6) {
+                this.x6 = x6;
+                this.count = Array.isArray(this.x6.getNodes()) ? this.x6.getNodes().length : 0;
             },
             setReady(ready) {
                 this.ready = ready;
             },
             setAction(action) {
                 if (action === "in") {
-                    if (this.cy.zoom() <= 1.7) {
-                        this.cy.zoom(this.cy.zoom() + 0.2);
+                    if (this.x6.zoom() <= 1.7) {
+                        this.x6.zoomTo(this.x6.zoom() + 0.2);
                     }
                 } else if (action === "out") {
-                    if (this.cy.zoom() >= 0.3) {
-                        this.cy.zoom(this.cy.zoom() - 0.2);
+                    if (this.x6.zoom() >= 0.3) {
+                        this.x6.zoomTo(this.x6.zoom() - 0.2);
                     }
                 } else if (action === "reset") {
-                    this.cy.zoom(1);
+                    this.x6.zoomTo(1);
                 } else if (action === "fit") {
-                    this.cy.fit(null, 50)
+                    this.x6.zoomToFit()
                 }
             },
         },
@@ -88,6 +88,7 @@
 <style lang="scss" scoped>
 .graph-wrapper {
     height: calc(100vh - 360px);
+    position: relative;
 }
 
 .top {

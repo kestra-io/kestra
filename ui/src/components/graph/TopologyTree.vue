@@ -1,6 +1,8 @@
 <template>
     <el-card shadow="never">
-        <div id="container-topology" class="container-topology" />
+        <cytoscape ref="cytoscape">
+            <!-- <div id="container-topology" class="container-topology" /> -->
+        </cytoscape>
         <TeleportContainer />
     </el-card>
 </template>
@@ -31,7 +33,8 @@
             ArrowCollapseDown,
             ArrowCollapseRight,
             Kicon,
-            TeleportContainer
+            TeleportContainer,
+            Cytoscape
         },
         props: {
             flowGraph: {
@@ -67,6 +70,7 @@
         },
         mounted() {
             this.generateGraph();
+            this.$refs.cytoscape.setReady(true);
         },
         methods: {
             getEdgeLabel(relation) {
@@ -158,9 +162,12 @@
                 return edges;
             },
             generateGraph() {
+
+                console.log("this.$refs.cytoscape.uuid >>>", this.$refs.cytoscape.uuid);
+
                 // init X6 graph
                 const graphX6 = new Graph({
-                    container: document.getElementById("container-topology"),
+                    container: document.getElementById(this.$refs.cytoscape.uuid),
                     background: {
                         color: "#FFF",
                     },
@@ -208,13 +215,14 @@
                 const model = dagreLayout.layout(modelData)
                 graphX6.fromJSON(model);
 
+                this.$refs.cytoscape.instance(graphX6);
+
                 graphX6.zoomToFit({
                     minScale: 0.2,
-                    maxScale: 1.5,
+                    maxScale: 2,
                     padding: 44
                 });
 
-                console.log("this.flowGraph.clusters >>>>", this.flowGraph.clusters);
                 // Box
                 Array.isArray(this.flowGraph.clusters) && this.flowGraph.clusters.forEach(({nodes}, index) => {
                     const nodeInstances = [];
@@ -254,7 +262,7 @@
     };
 </script>
 <style scoped lang="scss">
-.container-topology {
-    height: calc(100vh - 360px);
-}
+// .container-topology {
+//     height: calc(100vh - 360px);
+// }
 </style>

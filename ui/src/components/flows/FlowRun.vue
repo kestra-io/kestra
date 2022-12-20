@@ -132,7 +132,6 @@
                 });
             },
             onFileChange(input, e) {
-                console.log(input, e);
                 if (!e.target) {
                     return;
                 }

@@ -53,4 +53,10 @@
             font-weight: normal;
         }
     }
+
+    .markdown-tooltip {
+        *:last-child {
+            margin-bottom: 0;
+        }
+    }
 </style>

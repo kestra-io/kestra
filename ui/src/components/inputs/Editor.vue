@@ -96,7 +96,7 @@
                 ]
             },
             showPlaceholder() {
-                return this.input === true && !this.focus && !(this.value !== undefined && this.value !== "");
+                return this.input === true && !this.focus && !(this.modelValue !== undefined && this.modelValue !== "");
             },
             options() {
                 const options = {}

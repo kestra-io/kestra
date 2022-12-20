@@ -20,6 +20,7 @@
         </el-drawer>
     </span>
 </template>
+
 <script>
     import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
     import Markdown from "./Markdown.vue";
@@ -52,13 +53,7 @@
 </script>
 
 <style lang="scss" scoped>
-a {
-    cursor: pointer;
-}
-
-.markdown-tooltip {
-    *:last-child {
-        margin-bottom: 0;
+    a {
+        cursor: pointer;
     }
-}
 </style>

@@ -2,7 +2,6 @@ export const executeTask = (submitor, flow, values, options) => {
     const formData = new FormData();
     for (let input of flow.inputs || []) {
         if (values[input.name] !== undefined) {
-            console.log(values[input.name])
             if (input.type === "DATETIME") {
                 formData.append(input.name, values[input.name].toISOString());
             } else if (input.type === "DATE") {

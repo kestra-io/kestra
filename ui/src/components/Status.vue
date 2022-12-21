@@ -38,7 +38,7 @@
                 return State.icon()[this.status];
             },
             type () {
-                return State.type()[this.status];
+                return State.colorClass()[this.status];
             }
         }
     };
@@ -50,9 +50,6 @@
         &.no-label {
             padding: 8px;
             line-height: 1;
-            :deep([class*=el-icon] + span) {
-                margin-left: 0;
-            }
         }
     }
 </style>

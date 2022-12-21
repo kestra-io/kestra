@@ -83,7 +83,7 @@ const STATE = Object.freeze({
     },
     PAUSED: {
         name: "PAUSED",
-        colorClass: "purple",
+        colorClass: "",
         color: "#6d81f5",
         icon: PauseCircle,
         isRunning: false,
@@ -152,10 +152,6 @@ export default class State {
     }
 
     static colorClass() {
-        return _mapValues(STATE, state => state.colorClass);
-    }
-
-    static type() {
         return _mapValues(STATE, state => state.colorClass);
     }
 

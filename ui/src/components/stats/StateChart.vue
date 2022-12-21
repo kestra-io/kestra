@@ -16,7 +16,8 @@
 </template>
 
 <script>
-    import {computed, defineComponent, ref} from "vue"
+    import {computed, defineComponent, ref, getCurrentInstance} from "vue";
+    import {useRoute, useRouter} from "vue-router"
     import {BarChart} from "vue-chart-3";
     import Utils from "../../utils/utils.js";
     import {defaultConfig, tooltip, chartClick} from "../../utils/charts.js";
@@ -54,7 +55,10 @@
             },
 
         },
-        setup(props, {root}) {
+        setup(props) {
+            const moment = getCurrentInstance().appContext.config.globalProperties.$moment;
+            const route = useRoute();
+            const router = useRouter();
             const {t} = useI18n({useScope: "global"});
 
             let duration = t("duration")
@@ -68,7 +72,9 @@
                 onClick: (e, elements) => {
                     if (elements.length > 0 && elements[0].index !== undefined && elements[0].datasetIndex !== undefined ) {
                         chartClick(
-                            root,
+                            moment,
+                            router,
+                            route,
                             {
                                 date: e.chart.data.labels[elements[0].index],
                                 status: e.chart.data.datasets[elements[0].datasetIndex].label,

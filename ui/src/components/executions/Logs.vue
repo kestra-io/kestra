@@ -3,7 +3,7 @@
         <collapse>
             <el-form-item>
                 <el-input
-                    :model-value="filter"
+                    v-model="filter"
                     @update:model-value="onChange"
                     :placeholder="$t('search')"
                 >
@@ -14,7 +14,7 @@
             </el-form-item>
             <el-form-item>
                 <log-level-selector
-                    :value="level"
+                    v-model="level"
                     @update:model-value="onChange"
                 />
             </el-form-item>

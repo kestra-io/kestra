@@ -42,7 +42,7 @@
             };
         },
         mounted() {
-            if (!this.flow) {
+            if (!this.flow && this.flowId && this.namespace) {
                 this.$store
                     .dispatch("flow/loadFlow", {
                         id: this.flowId,

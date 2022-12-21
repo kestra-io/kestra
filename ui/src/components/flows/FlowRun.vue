@@ -6,7 +6,7 @@
         </el-alert>
         <el-form class="ks-horizontal" :model="inputs" ref="form">
             <el-form-item
-                v-for="input in flow.inputs"
+                v-for="input in flow.inputs || []"
                 :key="input.id"
                 :label="input.name"
                 :required="input.required !== false"
@@ -98,7 +98,7 @@
             };
         },
         mounted() {
-            for (const input of this.flow.inputs) {
+            for (const input of this.flow.inputs || []) {
                 this.inputs[input.name] = input.defaults;
 
                 if (input.type === "DATETIME" && input.defaults) {

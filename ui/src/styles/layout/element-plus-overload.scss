@@ -6,6 +6,7 @@
 // button
 .el-button {
     --el-button-disabled-border-color: var(--bs-border-color);
+    --el-button-hover-text-color: var(--bs-body-color);
 
     a:hover & {
         color:  var(--el-button-text-color) !important;
@@ -14,6 +15,10 @@
     .el-input-group--append & [class*=el-icon] + span {
         position: relative;
         top: -3px;
+    }
+
+    [class*=el-icon] + span:empty {
+        margin-left: 0;
     }
 }
 
@@ -423,6 +428,10 @@ form.ks-horizontal {
 .el-notification {
     --el-notification-border-color: var(--bs-border-color);
     --el-notification-title-color: var(--bs-body-color);
+
+    .el-notification__group {
+        flex-grow: 2;
+    }
 
     .el-notification__content {
         text-align: left;

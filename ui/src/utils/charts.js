@@ -69,36 +69,40 @@ export function defaultConfig(override) {
     }, override);
 }
 
-export function chartClick(self, event) {
+export function chartClick(moment, router, route, event) {
     const query = {};
 
     if (event.date) {
-        query.start = self.$moment(event.date).toISOString(true);
-        query.end = self.$moment(event.date).add(1, "d").toISOString(true);
+        query.start = moment(event.date).toISOString(true);
+        query.end = moment(event.date).add(1, "d").toISOString(true);
     }
 
     if (event.startDate) {
-        query.start = self.$moment(event.startDate).toISOString(true);
+        query.start = moment(event.startDate).toISOString(true);
     }
 
     if (event.endDate) {
-        query.end = self.$moment(event.endDate).toISOString(true);
+        query.end = moment(event.endDate).toISOString(true);
     }
 
     if (event.status) {
         query.status = event.status.toUpperCase();
     }
 
-    if (self.$route.query.namespace) {
-        query.namespace = self.$route.query.namespace;
+    if (event.state) {
+        query.state = event.state;
     }
 
-    if (self.$route.query.q) {
-        query.q = self.$route.query.q;
+    if (route.query.namespace) {
+        query.namespace = route.query.namespace;
+    }
+
+    if (route.query.q) {
+        query.q = route.query.q;
     }
 
     if (event.namespace && event.flowId) {
-        self.$router.push({
+        router.push({
             name: "flows/update",
             params: {
                 namespace: event.namespace,
@@ -113,7 +117,7 @@ export function chartClick(self, event) {
         query.namespace = event.namespace;
     }
 
-    self.$router.push({
+    router.push({
         name: "executions/list",
         params: {tab: "executions"},
         query: query

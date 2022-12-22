@@ -91,7 +91,8 @@
         font-size: calc(var(--font-size-sm) * 0.7);
         color: var(--el-color-error);
         position: absolute;
-        margin-left: -8px;
+        margin-left: 14px;
+        margin-top: -12px;
 
         animation-name: grow;
         animation-duration: 1.5s;

@@ -100,7 +100,7 @@
             </data-table>
         </div>
 
-        <bottom-line v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
+        <bottom-line>
             <ul>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
@@ -110,7 +110,7 @@
                     </router-link>
                 </li>
 
-                <li>
+                <li v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
                     <router-link :to="{name: 'flows/create'}">
                         <el-button :icon="Plus" type="primary">
                             {{ $t('create') }}

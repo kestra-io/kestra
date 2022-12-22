@@ -4,6 +4,9 @@ namespace: io.kestra.tests
 inputs:
   - name: string
     type: STRING
+  - name: def
+    type: STRING
+    defaults: amazing
 
 tasks:
   - id: parent-seq
@@ -36,4 +39,4 @@ tasks:
     defaults:
       - id: default
         type: io.kestra.core.tasks.debugs.Return
-        format: "{{task.id}} > {{taskrun.startDate}}"
+        format: "{{task.id}} > {{ inputs.def }} > {{taskrun.startDate}}"

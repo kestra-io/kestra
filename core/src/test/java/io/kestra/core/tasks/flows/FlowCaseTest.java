@@ -29,7 +29,7 @@ public class FlowCaseTest {
     protected RunnerUtils runnerUtils;
 
     public void waitSuccess() throws Exception {
-        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default >");
+        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing");
     }
 
     public void waitFailed() throws Exception {

@@ -85,6 +85,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             // wait for execution
             executionQueue.receive(execution -> {
                 assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
+                assertThat(execution.getInputs().get("def"), is("awesome"));
 
                 date.add((String) execution.getTrigger().getVariables().get("date"));
                 queueCount.countDown();

@@ -18,6 +18,7 @@ import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.CronExpression;
@@ -247,7 +248,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             output = this.trueOutputWithCondition(executionTime, conditionContext, output);
         }
 
-        Map<String, Object> inputs = new HashMap<>();
+        Map<String, String> inputs = new HashMap<>();
         if (this.inputs != null) {
             for (Map.Entry<String, String> entry: this.inputs.entrySet()) {
                 inputs.put(entry.getKey(), runContext.render(entry.getValue()));
@@ -270,12 +271,17 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             .flowRevision(context.getFlowRevision())
             .state(new State())
             .trigger(executionTrigger)
-            .inputs(inputs)
             // keep to avoid breaking compatibility
             .variables(ImmutableMap.of(
                 "schedule", executionTrigger.getVariables()
             ))
             .build();
+
+        // add inputs and inject defaults
+        if (inputs.size() > 0) {
+            RunnerUtils runnerUtils = runContext.getApplicationContext().getBean(RunnerUtils.class);
+            execution = execution.withInputs(runnerUtils.typedInputs(conditionContext.getFlow(), execution, inputs));
+        }
 
         return Optional.of(execution);
     }

@@ -100,10 +100,11 @@
         }
 
         mark {
-            background: var(--success);
+            background: var(--bs-success);
             color: var(--white);
             font-size: var(--font-size-sm);
             padding: 2px 8px 2px 8px;
+            border-radius: var(--bs-border-radius-sm);
 
             * {
                 color: var(--white) !important;
@@ -122,6 +123,21 @@
                 display: inline-block;
                 font-size: calc(var(--font-size-base) * 1.10);
                 font-weight: 400;
+            }
+        }
+
+        h2, h3 {
+            margin-left: -15px;
+
+            .header-anchor {
+                opacity: 0;
+                transition: all ease 0.2s;
+            }
+
+            &:hover {
+                .header-anchor {
+                    opacity: 1;
+                }
             }
         }
 

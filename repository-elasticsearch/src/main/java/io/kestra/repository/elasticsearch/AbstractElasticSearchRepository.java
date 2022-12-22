@@ -119,7 +119,7 @@ abstract public class AbstractElasticSearchRepository<T> {
 
 
         if (words.size() == 1) {
-            lucene = "(" + query + ")^5 OR " + lucene;
+            lucene = "(" + QueryParser.escape(query) + ")^5 OR " + lucene;
         }
 
         return QueryBuilders.queryStringQuery(lucene);

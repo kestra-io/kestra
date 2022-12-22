@@ -4,14 +4,14 @@
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
-                    <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteFile">
+                    <el-button :icon="icon.Delete" type="danger" v-if="canDelete" @click="deleteFile">
                         {{ $t('delete') }}
                     </el-button>
                 </li>
 
                 <li>
                     <router-link v-if="flow" :to="{name: 'flows/create', query: {copy: true}}">
-                        <el-button :icon="ContentCopy">
+                        <el-button :icon="icon.ContentCopy">
                             {{ $t('copy') }}
                         </el-button>
                     </router-link>
@@ -22,7 +22,7 @@
                 </li>
 
                 <li>
-                    <el-button :icon="ContentSave" @click="save" v-if="canSave" type="primary">
+                    <el-button :icon="icon.ContentSave" @click="save" v-if="canSave" type="primary">
                         {{ $t('save') }}
                     </el-button>
                 </li>
@@ -31,16 +31,14 @@
     </div>
 </template>
 
-<script setup>
-    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-</script>
-
 <script>
     import flowTemplateEdit from "../../mixins/flowTemplateEdit";
     import {mapGetters} from "vuex";
     import TriggerFlow from "./TriggerFlow.vue"
+    import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
+    import {shallowRef} from "vue";
 
     export default {
         components: {
@@ -50,6 +48,11 @@
         data() {
             return {
                 dataType: "flow",
+                icon: {
+                    ContentCopy: shallowRef(ContentCopy),
+                    ContentSave: shallowRef(ContentSave),
+                    Delete: shallowRef(Delete),
+                }
             };
         },
         computed: {

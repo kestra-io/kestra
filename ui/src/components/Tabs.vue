@@ -21,7 +21,6 @@
             v-bind="activeTab.props"
             ref="tabContent"
             :is="activeTab.component"
-            :class="{'p-3': activeTab.background === undefined || activeTab.background !== false}"
             :prevent-route-info="true"
         />
     </div>

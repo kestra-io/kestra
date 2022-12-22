@@ -81,7 +81,6 @@
                         name: "executions",
                         component: FlowExecutions,
                         title: this.$t("executions"),
-                        background: false,
                     });
                 }
 
@@ -120,7 +119,6 @@
                         name: "logs",
                         component: FlowLogs,
                         title: this.$t("logs"),
-                        background: false,
                     });
                 }
 

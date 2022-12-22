@@ -1,6 +1,6 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button :icon="Flash" :disabled="disabled" @click="onClick">
+        <el-button :icon="icon.Flash" :disabled="disabled" @click="onClick">
             {{ $t('New execution') }}
         </el-button>
         <el-dialog v-if="isOpen" v-model="isOpen" :title="$t('execute the flow')" destroy-on-close :append-to-body="true">
@@ -9,14 +9,13 @@
     </div>
 </template>
 
-<script setup>
-    import Flash from "vue-material-design-icons/Flash.vue";
-</script>
 
 <script>
     import FlowRun from "./FlowRun.vue";
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
+    import Flash from "vue-material-design-icons/Flash.vue";
+    import {shallowRef} from "vue";
 
     export default {
         components: {
@@ -38,7 +37,10 @@
         },
         data() {
             return {
-                isOpen: false
+                isOpen: false,
+                icon: {
+                    Flash: shallowRef(Flash)
+                }
             };
         },
         mounted() {

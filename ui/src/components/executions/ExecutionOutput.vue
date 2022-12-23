@@ -45,7 +45,7 @@
                 </el-button>
             </template>
 
-            <editor class="mb-2" ref="editorContainer" :full-height="false" @save="onDebugExpression(filter, $event)" :input="true" :navbar="false" model-value="" />
+            <editor class="mb-2" ref="editorContainer" :full-height="false" :input="true" :navbar="false" @save="onDebugExpression(filter, $event)" model-value="" />
             <editor v-if="debugExpression" :read-only="true" :full-height="false" :navbar="false" :minimap="false" :model-value="debugExpression" :lang="isJson ? 'json' : ''" />
             <el-alert type="error" v-if="debugError" :closable="false">
                 <p><strong>{{ debugError }}</strong></p>

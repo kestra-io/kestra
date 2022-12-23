@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="ks-editor">
         <nav v-if="original === undefined && navbar" class="top-nav">
             <el-button-group>
                 <el-tooltip :content="$t('Fold content lines')" :persistent="false" transition="" :hide-after="0">
@@ -11,7 +11,7 @@
             </el-button-group>
         </nav>
 
-        <div class="editor-container" :class="containerClass">
+        <div class="editor-container" ref="container" :class="containerClass">
             <div ref="editorContainer" class="editor-wrapper">
                 <monaco-editor
                     ref="monacoEditor"
@@ -77,26 +77,23 @@
                 }
             };
         },
-        created() {
-            window.addEventListener("resize", this.onResize);
-        },
-        beforeUnmount() {
-            window.removeEventListener("resize", this.onResize);
-        },
         computed: {
             themeComputed() {
-                const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("theme-dark") >= 0;
+                const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
-                return this.theme ? this.theme : (localStorage.getItem("editorTheme") || (darkTheme ? "vs-dark" : "vs"))
+                return this.theme ? this.theme : (localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs"))
             },
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",
+                    !this.fullHeight ? "" : "full-height",
+                    !this.original ? "" : "diff",
                     "theme-" + this.themeComputed
                 ]
             },
             showPlaceholder() {
-                return this.input === true && !this.focus && !(this.modelValue !== undefined && this.modelValue !== "");
+                return this.input === true && !this.focus &&
+                    (this.editor === undefined || !(this.editor.getValue() !== undefined && this.editor.getValue() !== ""));
             },
             options() {
                 const options = {}
@@ -116,10 +113,15 @@
                         enabled: false
                     }
                     options.scrollBeyondLastColumn = 0;
+                    options.overviewRulerLanes = 0;
                     options.scrollbar = {
                         vertical: "hidden",
+                        horizontal: "hidden",
                         alwaysConsumeMouseWheel: false,
-                        horizontalScrollbarSize: 5
+                        handleMouseWheel: false,
+                        horizontalScrollbarSize: 0,
+                        verticalScrollbarSize: 0,
+                        useShadows: false,
                     };
                     options.find = {
                         addExtraSpaceOnTop: false,
@@ -148,7 +150,7 @@
                 }
 
                 options.wordWrap = true
-
+                options.automaticLayout = true;
 
                 return  {
                     ...{
@@ -171,11 +173,7 @@
 
                 this.editor = editor;
 
-                if (this.original) {
-                    this.editor.onDidUpdateDiff(this.onResize);
-                } else {
-                    this.editor.onDidChangeModelDecorations(this.onResize);
-
+                if (!this.original) {
                     this.editor.onDidBlurEditorWidget(() => {
                         this.$emit("focusout", editor.getValue());
                         this.focus = false;
@@ -185,9 +183,6 @@
                         this.focus = true;
                     })
                 }
-
-                // @TODO: resize can be replaced by automaticLayout
-                // options.automaticLayout = true;
 
                 this.editor.addAction({
                     id: "kestra-save",
@@ -249,32 +244,13 @@
                     this.editor.updateOptions({readOnly: true})
                 }
 
-                this.onResize();
-            },
-            onResize() {
-                if (this.$refs.editorContainer && this.editor) {
-                    const container = this.$refs.editorContainer;
-                    const containerParent = container.parentElement.parentElement;
-                    const containerWidth = containerParent.offsetWidth;
+                if (!this.fullHeight) {
+                    editor.onDidContentSizeChange(e => {
+                        console.log()
+                        this.$refs.container.style.height = (e.contentHeight + 7) + "px";
+                    });
+                }
 
-                    if (this.original || this.fullHeight) {
-                        const fullHeight = window.innerHeight - this.$refs.editorContainer.getBoundingClientRect().y - 55 - 50;
-                        container.style.height = `${fullHeight}px`;
-                        this.updateSize(containerWidth, fullHeight);
-                    } else {
-                        const contentHeight = Math.max(21, this.editor.getContentHeight());
-                        container.style.height = `${contentHeight+3}px`;
-                        container.style.width = `${containerWidth-(this.input ? 20 : 0)}px`;
-                        this.updateSize(containerWidth-(this.input ? 20 : 0),  contentHeight);
-                    }
-                }
-            },
-            updateSize(width, height) {
-                if (width <= 0 || height <= 0) {
-                    window.setTimeout(this.onResize, 100);
-                } else {
-                    this.editor.layout({width: width,  height: height});
-                }
             },
             autoFold(autoFold) {
                 if (autoFold) {
@@ -296,71 +272,91 @@
 </script>
 
 <style lang="scss">
-    .top-nav {
-        background-color: var(--bs-gray-300);
-        padding: calc(var(--spacer) / 2);
-        border-radius: var(--bs-border-radius-lg);
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
+    .ks-editor {
+        .top-nav {
+            background-color: var(--bs-gray-300);
+            padding: calc(var(--spacer) / 2);
+            border-radius: var(--bs-border-radius-lg);
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
 
-        html.dark & {
-            background-color: var(--bs-gray-100);
-        }
-    }
-
-    :deep(.editor-container) {
-        position: relative;
-        max-width: 100%;
-        display: flex;
-
-        .placeholder {
-            position: absolute;
-            top:  .75rem ;
-            left: .375rem;
-            overflow: hidden;
-            padding-left: inherit;
-            padding-right: inherit;
-            cursor: text;
-            user-select: none;
-            color: var(--el-text-color-placeholder);
-        }
-
-        .editor-with-placeholder {
-            :deep(.view-lines) {
-                opacity: 0;
+            html.dark & {
+                background-color: var(--bs-gray-100);
             }
         }
 
-        &.single-line {
-            padding: 5px 11px ;
-            min-height: var(--el-component-size);
-            background: white;
-            border: 1px solid var(--bs-border-color);
-            border-radius: var(--el-border-radius-base);
-
-            &.theme-vs-dark {
-                background: #1e1e1e;
-            }
-        }
-
-        .monaco-hover-content {
-            h4 {
-                font-size: var(--font-size-base);
-                font-weight: bold;
-                line-height: var(--bs-body-line-height);
+        .editor-container {
+            display: flex;
+            &.full-height {
+                height: calc(100vh - 335px);
             }
 
-            p {
-                margin-bottom: calc(var(--spacer) / 2);
-                &:last-child {
-                    display: none;
+            &.diff {
+                height: calc(100vh - 380px);
+            }
+
+            &.single-line {
+                min-height: var(--el-component-size);
+                padding: 1px 11px;
+                background-color: var(--el-input-bg-color, var(--el-fill-color-blank));
+                border-radius: var(--el-input-border-radius, var(--el-border-radius-base));
+                transition: var(--el-transition-box-shadow);
+                box-shadow: 0 0 0 1px var(--bs-border-color) inset;
+                padding-top: 7px;
+
+                html.dark & {
+                    background-color: var(--bs-gray-100-darken-5);
                 }
             }
 
-            *:nth-last-child(2n) {
-                margin-bottom: 0;
+            .placeholder {
+                position: absolute;
+                top: -3px;
+                overflow: hidden;
+                padding-left: inherit;
+                padding-right: inherit;
+                cursor: text;
+                user-select: none;
+                color: var(--el-text-color-placeholder);
             }
+
+            .editor-wrapper {
+                width: 100%;
+                position: relative;
+
+                .monaco-hover-content {
+                    h4 {
+                        font-size: var(--font-size-base);
+                        font-weight: bold;
+                        line-height: var(--bs-body-line-height);
+                    }
+
+                    p {
+                        margin-bottom: calc(var(--spacer) / 2);
+                        &:last-child {
+                            display: none;
+                        }
+                    }
+
+                    *:nth-last-child(2n) {
+                        margin-bottom: 0;
+                    }
+                }
+            }
+
         }
     }
 
+    html.dark {
+        .monaco-editor, .monaco-editor-background {
+            background-color: var(--bs-gray-100-darken-5);
+            --vscode-editor-background: var(--bs-gray-100-darken-5);
+            --vscode-breadcrumb-background: var(--bs-gray-100-darken-5);
+            --vscode-editorGutter-background: var(--bs-gray-100-darken-5);
+        }
+
+        .monaco-editor .margin {
+            background-color: var(--bs-gray-100-darken-5);
+        }
+    }
 </style>

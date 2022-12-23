@@ -1,10 +1,20 @@
 <template>
-    <div class="monaco-editor"></div>
+    <div class="monaco-editor" />
 </template>
 
 <script>
-    import { defineComponent } from 'vue'
-    import * as monaco from 'monaco-editor'
+    import {defineComponent} from "vue"
+    import * as monaco from "monaco-editor"
+
+
+    monaco.editor.defineTheme("dark", {
+        base: "vs-dark",
+        inherit: true,
+        rules: [{background: "161822"}],
+        colors: {
+            "minimap.background": "#161822",
+        }
+    });
 
     export default defineComponent({
         props: {
@@ -163,10 +173,9 @@
     });
 </script>
 
-
 <style scoped lang="scss">
-.monaco-editor {
-    height: 100%;
-}
+    .monaco-editor {
+        height: 100%;
+    }
 
 </style>

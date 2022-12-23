@@ -69,7 +69,7 @@
             this.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
             this.lang = localStorage.getItem("lang") || "en";
             this.theme = localStorage.getItem("theme") || "light";
-            this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "vs-dark" : "vs");
+            this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
         },
         methods: {
@@ -127,7 +127,7 @@
             editorThemesOptions() {
                 return  [
                     {value: "vs", text: "Light"},
-                    {value: "vs-dark", text: "Dark"}
+                    {value: "dark", text: "Dark"}
                 ]
             }
         }

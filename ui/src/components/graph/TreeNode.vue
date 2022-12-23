@@ -34,8 +34,9 @@
                         v-if="task.description"
                         class="node-action"
                         size="small"
+                        @click="$refs.descriptionTask.open()"
                     >
-                        <markdown-tooltip :description="task.description" :id="hash" :title="task.id" />
+                        <markdown-tooltip ref="descriptionTask" :description="task.description" :id="hash" :title="task.id" />
                     </el-button>
 
                     <sub-flow-link

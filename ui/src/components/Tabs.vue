@@ -7,7 +7,6 @@
                 :label="tab.title"
                 :name="tab.name || 'default'"
                 :disabled="tab.disabled"
-                @tab-change="tabChanged"
             >
                 <template #label>
                     <router-link :to="to(tab)">
@@ -75,9 +74,6 @@
                     return {name: this.routeName, params: {...this.$route.params, ...{tab: tab.name}}};
                 }
             },
-            tabChanged() {
-                console.log(arguments);
-            }
         },
         computed: {
             activeTab() {

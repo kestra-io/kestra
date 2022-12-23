@@ -116,7 +116,7 @@ public class CollectorService {
                 );
             this.handleResponse(result);
         } catch (HttpClientResponseException t) {
-            log.warn("Unable to report anonymous usage with body '{}'", t.getResponse().getBody(String.class), t);
+            log.debug("Unable to report anonymous usage with body '{}'", t.getResponse().getBody(String.class), t);
         } catch (Exception t) {
             log.error("Unable to handle anonymous usage", t);
         }

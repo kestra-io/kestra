@@ -79,6 +79,7 @@ export default (callback, store, router) => {
         }, errorResponse => {
             if (errorResponse.code && errorResponse.code === "ECONNABORTED") {
                 store.dispatch("core/showMessage", {
+                    response: errorResponse,
                     content: errorResponse,
                     variant: "error"
                 })
@@ -114,6 +115,7 @@ export default (callback, store, router) => {
 
             if (errorResponse.response.data) {
                 store.dispatch("core/showMessage", {
+                    response: errorResponse.response,
                     content: errorResponse.response.data,
                     variant: "error"
                 })

@@ -13,6 +13,7 @@ import Toast from "./toast";
 import filters from "./filters";
 import ElementPlus from "element-plus";
 import createUnsavedChanged from "./unsavedChange";
+import createEventsRouter from "./eventsRouter";
 import "./global"
 
 export default (app, routes, stores, translations) => {
@@ -83,6 +84,7 @@ export default (app, routes, stores, translations) => {
 
     // navigation guard
     createUnsavedChanged(app, store, router);
+    createEventsRouter(app, store, router);
 
     return {store, router};
 }

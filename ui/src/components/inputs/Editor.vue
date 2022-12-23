@@ -246,7 +246,6 @@
 
                 if (!this.fullHeight) {
                     editor.onDidContentSizeChange(e => {
-                        console.log()
                         this.$refs.container.style.height = (e.contentHeight + 7) + "px";
                     });
                 }

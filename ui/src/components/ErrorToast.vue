@@ -1,5 +1,6 @@
 <script>
     import {ElNotification, ElTable, ElTableColumn} from "element-plus";
+    import {pageFromRoute} from "../utils/eventsRouter";
     import {h} from "vue"
 
     export default {
@@ -42,6 +43,29 @@
         render() {
             this.$nextTick(() => {
                 this.close();
+
+                const error =  {
+                    type: "ERROR",
+                    error: {
+                        message: this.text,
+                        errors: this.items,
+                    },
+                    page: pageFromRoute(this.$route)
+                };
+
+                if (this.message.response) {
+                    error.error.response = {};
+                    error.error.request = {};
+
+                    if (this.message.response.status) {
+                        error.error.response.status = this.message.response.status;
+                    }
+
+                    error.error.request.url = this.message.response.config.url;
+                    error.error.request.method = this.message.response.config.method;
+                }
+
+                this.$store.dispatch("api/events", error);
 
                 const children = [
                     h("span", {innerHTML: this.text})

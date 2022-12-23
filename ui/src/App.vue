@@ -19,6 +19,7 @@
     import Errors from "./components/errors/Errors.vue";
     import {mapState} from "vuex";
     import Utils from "./utils/utils";
+    import {pageFromRoute} from "./utils/eventsRouter";
 
     export default {
         name: "App",
@@ -66,6 +67,11 @@
                 this.$store.dispatch("plugin/icons")
                 this.$store.dispatch("misc/loadConfigs")
                     .then(value => {
+                        this.$store.dispatch("api/events", {
+                            type: "PAGE",
+                            page: pageFromRoute(this.$router.currentRoute.value)
+                        });
+
                         this.$store.dispatch("api/loadFeeds", {
                             version: value.version,
                             iid: value.uuid,

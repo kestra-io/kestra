@@ -18,5 +18,9 @@ export default {
             state.configs = configs
         }
     },
-    getters: {}
+    getters: {
+        configs(state) {
+            return state.configs;
+        }
+    }
 }

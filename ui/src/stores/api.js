@@ -1,3 +1,7 @@
+import axios from "axios";
+
+let counter = 0;
+const API_URL = "https://api.kestra.io";
 
 export default {
     namespaced: true,
@@ -7,7 +11,7 @@ export default {
 
     actions: {
         loadFeeds({commit}, options) {
-            return this.$http.get("https://api.kestra.io/v1/feeds/latest", {
+            return axios.get(API_URL + "/v1/feeds/latest", {
                 params: {
                     iid: options.iid,
                     uid: options.uid,
@@ -18,6 +22,24 @@ export default {
 
                 return response.data;
             })
+        },
+        events({rootGetters}, data) {
+            let configs = rootGetters["misc/configs"];
+            let uid = localStorage.getItem("uid");
+
+            if (configs === undefined || uid === null || configs["isAnonymousUsageEnabled"] === false) {
+                return;
+            }
+
+            return axios.post(API_URL + "/v1/reports/events", {
+                ...data,
+                ...{
+                    iid: configs.uuid,
+                    uid: uid,
+                    date: new Date().toISOString(),
+                    counter: counter++,
+                }
+            });
         }
     },
     mutations: {

@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.VersionProvider;
@@ -27,6 +28,9 @@ public class MiscController {
     @Inject
     InstanceService instanceService;
 
+    @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
+    protected Boolean isAnonymousUsageEnabled;
+
     @Get("/ping")
     @Hidden
     public HttpResponse<?> ping() {
@@ -42,6 +46,7 @@ public class MiscController {
             .uuid(instanceService.fetch())
             .version(versionProvider.getVersion())
             .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
+            .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
             .build();
     }
 
@@ -49,7 +54,13 @@ public class MiscController {
     @Builder
     public static class Configuration {
         String uuid;
+
         String version;
+
+        @JsonInclude
         Boolean isTaskRunEnabled;
+
+        @JsonInclude
+        Boolean isAnonymousUsageEnabled;
     }
 }

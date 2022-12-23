@@ -1,6 +1,6 @@
 <template>
     <span v-if="description">
-        <a @click="isOpen = true">
+        <a @click="open()">
             <help-circle
                 title=""
                 :id="'tooltip-desc-' + id"
@@ -49,6 +49,11 @@
                 default: "",
             }
         },
+        methods: {
+            open() {
+                this.isOpen = true
+            }
+        }
     };
 </script>
 

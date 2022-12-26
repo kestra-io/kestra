@@ -6,6 +6,8 @@ import {extendMoment} from "moment-range";
 import ElementPlus from "element-plus";
 import filters from "../src/utils/filters";
 import translations from "../src/translations.json";
+import "../src/utils/global"
+
 
 let i18n = createI18n({
     locale: "en",

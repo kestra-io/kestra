@@ -2,32 +2,32 @@
 
 $include-column-box-sizing: true !default;
 
-@import "~bootstrap/scss/functions";
-@import "~bootstrap/scss/variables";
-@import "~bootstrap/scss/maps";
-@import "~bootstrap/scss/mixins";
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
 
-@import "~bootstrap/scss/mixins/lists";
-@import "~bootstrap/scss/mixins/breakpoints";
-@import "~bootstrap/scss/mixins/container";
-@import "~bootstrap/scss/mixins/grid";
-@import "~bootstrap/scss/mixins/utilities";
+@import "bootstrap/scss/mixins/lists";
+@import "bootstrap/scss/mixins/breakpoints";
+@import "bootstrap/scss/mixins/container";
+@import "bootstrap/scss/mixins/grid";
+@import "bootstrap/scss/mixins/utilities";
 
-@import "~bootstrap/scss/vendor/rfs";
+@import "bootstrap/scss/vendor/rfs";
 
-@import "~bootstrap/scss/root";
-@import "~bootstrap/scss/reboot";
+@import "bootstrap/scss/root";
+@import "bootstrap/scss/reboot";
 
-@import "~bootstrap/scss/containers";
-@import "~bootstrap/scss/grid";
+@import "bootstrap/scss/containers";
+@import "bootstrap/scss/grid";
 
-@import "~bootstrap/scss/utilities";
-@import "~bootstrap/scss/utilities/api";
+@import "bootstrap/scss/utilities";
+@import "bootstrap/scss/utilities/api";
 
-@import "~bootstrap/scss/progress";
-@import "~bootstrap/scss/type";
+@import "bootstrap/scss/progress";
+@import "bootstrap/scss/type";
 
-@import "~bootstrap/scss/helpers/text-truncation";
+@import "bootstrap/scss/helpers/text-truncation";
 
 // overload
 .font-monospace {

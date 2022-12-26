@@ -23,9 +23,9 @@
 </template>
 
 <script>
-    import * as cytoscape from "cytoscape";
-    import * as dagre from "cytoscape-dagre";
-    import * as cytoscapeDomNode  from "cytoscape-dom-node";
+    import cytoscape from "cytoscape";
+    import dagre from "cytoscape-dagre";
+    import cytoscapeDomNode  from "cytoscape-dom-node";
 
     import TreeNode from "./TreeNode.vue";
     import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight.vue";
@@ -310,9 +310,9 @@
                 this.uuid = Utils.uid();
 
                 // plugins
-                cytoscape.use(dagre);
+                dagre(cytoscape);
                 if (typeof cytoscape("core", "domNode") == "undefined") {
-                    cytoscape.use(cytoscapeDomNode);
+                    cytoscapeDomNode(cytoscape);
                 }
 
                 // get nodes & edges

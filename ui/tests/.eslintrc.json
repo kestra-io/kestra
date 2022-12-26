@@ -1,8 +1,0 @@
-{
-  "plugins": [
-    "jest"
-  ],
-  "extends": [
-    "plugin:jest/recommended"
-  ]
-}

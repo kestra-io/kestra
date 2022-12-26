@@ -2,10 +2,10 @@
 @import "../theme-dark";
 
 // Bootstrap
-@import "~bootstrap/scss/functions";
-@import "~bootstrap/scss/mixins";
-@import "~bootstrap/scss/vendor/rfs";
-@import '~bootstrap/scss/variables';
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/vendor/rfs";
+@import "bootstrap/scss/variables";
 
 html.dark {
     #{--bs-gray}: #{map.get($grays, "600")};

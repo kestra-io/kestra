@@ -1,3 +1,4 @@
+import {describe, it, expect} from "vitest"
 import _ from "lodash";
 import TreeNode from "../../../../src/components/graph/TreeNode.vue";
 import EACH_SEQUENTIAL_FLOWGRAPH from "../../../fixtures/flowgraphs/each-sequential.json";
@@ -33,7 +34,7 @@ describe("TreeNode", () => {
         const taskRunIndex = EACH_SEQUENTIAL_EXECUTION.taskRunList.indexOf(taskRun);
         const failed = _.clone(EACH_SEQUENTIAL_EXECUTION)
 
-        failed.taskRunList[taskRunIndex] = _.merge({taskId:"1-2", state: {current: "FAILED"}})
+        failed.taskRunList[taskRunIndex] = _.merge({taskId: "1-2", state: {current: "FAILED"}})
 
         const wrapper = localMount(
             EACH_SEQUENTIAL_FLOWGRAPH.nodes.filter(r => r.uid === "1-2")[0],

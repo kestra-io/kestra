@@ -64,7 +64,7 @@ $box-shadow: 0 .5rem 1rem rgba($black, .15);
 $box-shadow-lg: 0 1rem 3rem rgba($black, .175);
 
 // bootstrap
-@import "~bootstrap/scss/functions";
-@import "~bootstrap/scss/mixins";
-@import "~bootstrap/scss/vendor/rfs";
-@import '~bootstrap/scss/variables';
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/vendor/rfs";
+@import 'bootstrap/scss/variables';

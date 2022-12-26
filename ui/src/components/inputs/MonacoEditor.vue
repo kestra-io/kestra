@@ -4,8 +4,28 @@
 
 <script>
     import {defineComponent} from "vue"
-    import * as monaco from "monaco-editor"
 
+    import "monaco-editor/esm/vs/editor/editor.all.js";
+    import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
+    import "monaco-editor/esm/vs/language/json/monaco.contribution";
+    import "monaco-editor/esm/vs/basic-languages/monaco.contribution";
+    import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+    import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
+    import YamlWorker from "./yaml.worker.js?worker";
+    import {setDiagnosticsOptions} from "monaco-yaml";
+
+    window.MonacoEnvironment = {
+        getWorker(moduleId, label) {
+            switch (label) {
+            case "editorWorkerService":
+                return new EditorWorker();
+            case "yaml":
+                return new YamlWorker();
+            default:
+                throw new Error(`Unknown label ${label}`);
+            }
+        },
+    };
 
     monaco.editor.defineTheme("dark", {
         base: "vs-dark",
@@ -18,7 +38,10 @@
 
     export default defineComponent({
         props: {
-            original: String,
+            original: {
+                type: String,
+                default: undefined
+            },
             value: {
                 type: String,
                 required: true
@@ -27,9 +50,18 @@
                 type: String,
                 "default": "vs"
             },
-            language: String,
-            options: Object,
-            schemas: Array,
+            language: {
+                type: String,
+                required: true,
+            },
+            options: {
+                type:Object,
+                default: undefined
+            },
+            schemas: {
+                type: Array,
+                default: undefined
+            },
             diffEditor: {
                 type: Boolean,
                 "default": false
@@ -116,7 +148,7 @@
                     });
                 } else {
                     if (this.schemas !== undefined) {
-                        monaco.languages.yaml.yamlDefaults.setDiagnosticsOptions({
+                        setDiagnosticsOptions({
                             enableSchemaRequest: true,
                             hover: true,
                             completion: true,

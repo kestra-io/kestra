@@ -50,7 +50,7 @@
 @use "element-plus/theme-chalk/src/dark/css-vars.scss";
 
 // vue-sidebar
-@use "~vue-sidebar-menu/src/scss/vue-sidebar-menu.scss" with (
+@use "vue-sidebar-menu/src/scss/vue-sidebar-menu.scss" with (
     $primary-color: global-var.$secondary,
     $base-bg: global-var.$white,
     $item-color: global-var.$tertiary,
@@ -61,8 +61,8 @@
 );
 
 // third
-@import '~nprogress/nprogress.css';
-@import "~vue-material-design-icons/styles.css";
+@use "nprogress/nprogress.css";
+@use "vue-material-design-icons/styles.css";
 //noinspection CssUnknownTarget
 @import url("https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700;900&display=swap");
 

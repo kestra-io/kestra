@@ -5,7 +5,9 @@ plugins {
 publishSonatypePublicationPublicationToSonatypeRepository.enabled = false
 
 frontend {
-    nodeVersion = '14.15.4'
+    nodeVersion = '18.12.1'
+    // due to vue-chart-3: https://github.com/victorgarciaesgi/vue-chart-3/pull/138
+    installScript = 'install --legacy-peer-deps'
     assembleScript = 'run build'
     checkScript = 'run test:unit'
 }
@@ -20,6 +22,6 @@ tasks.named('assembleFrontend') {
 
     inputs.dir('src')
     inputs.dir('public')
-    inputs.files('vue.config.js')
+    inputs.files('vite.config.js')
     outputs.dir('../webserver/src/main/resources/ui')
 }

@@ -2,7 +2,7 @@ import axios from "axios";
 import NProgress from "nprogress"
 
 // eslint-disable-next-line no-undef
-let root = (process.env.VUE_APP_API_URL || "") + KESTRA_BASE_PATH;
+let root = (import.meta.env.VITE_APP_API_URL || "") + KESTRA_BASE_PATH;
 if (!root.endsWith("/")) {
     root = root + "/";
 }

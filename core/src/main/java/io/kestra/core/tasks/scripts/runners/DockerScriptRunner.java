@@ -21,6 +21,7 @@ import io.kestra.core.tasks.scripts.RunResult;
 import io.kestra.core.utils.RetryUtils;
 import io.kestra.core.utils.Slugify;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.core5.http.ConnectionClosedException;
@@ -40,6 +41,8 @@ import java.util.stream.Collectors;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public class DockerScriptRunner implements ScriptRunnerInterface {
+    private static final ReadableBytesTypeConverter READABLE_BYTES_TYPE_CONVERTER = new ReadableBytesTypeConverter();
+
     private final RetryUtils retryUtils;
 
     private final Boolean volumesEnabled;
@@ -216,6 +219,38 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
                 );
             }
 
+            if (abstractBash.getDockerOptions().getCpu() != null) {
+                if (abstractBash.getDockerOptions().getCpu().getCpus() != null) {
+                    hostConfig.withCpuQuota(abstractBash.getDockerOptions().getCpu().getCpus() * 10000L);
+                }
+            }
+
+            if (abstractBash.getDockerOptions().getMemory() != null) {
+                if (abstractBash.getDockerOptions().getMemory().getMemory() != null) {
+                    hostConfig.withMemory(convertBytes(runContext.render(abstractBash.getDockerOptions().getMemory().getMemory())));
+                }
+
+                if (abstractBash.getDockerOptions().getMemory().getMemorySwap() != null) {
+                    hostConfig.withMemorySwap(convertBytes(runContext.render(abstractBash.getDockerOptions().getMemory().getMemorySwap())));
+                }
+
+                if (abstractBash.getDockerOptions().getMemory().getMemorySwappiness() != null) {
+                    hostConfig.withMemorySwappiness(convertBytes(runContext.render(abstractBash.getDockerOptions().getMemory().getMemorySwappiness())));
+                }
+
+                if (abstractBash.getDockerOptions().getMemory().getMemoryReservation() != null) {
+                    hostConfig.withMemoryReservation(convertBytes(runContext.render(abstractBash.getDockerOptions().getMemory().getMemoryReservation())));
+                }
+
+                if (abstractBash.getDockerOptions().getMemory().getKernelMemory() != null) {
+                    hostConfig.withKernelMemory(convertBytes(runContext.render(abstractBash.getDockerOptions().getMemory().getKernelMemory())));
+                }
+
+                if (abstractBash.getDockerOptions().getMemory().getOomKillDisable() != null) {
+                    hostConfig.withOomKillDisable(abstractBash.getDockerOptions().getMemory().getOomKillDisable());
+                }
+            }
+
             if (abstractBash.getDockerOptions().getNetworkMode() != null) {
                 hostConfig.withNetworkMode(runContext.render(abstractBash.getDockerOptions().getNetworkMode(), additionalVars));
             }
@@ -309,4 +344,9 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
         }
     }
 
+    private static Long convertBytes(String bytes) {
+        return READABLE_BYTES_TYPE_CONVERTER.convert(bytes, Number.class)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + bytes + "'"))
+            .longValue();
+    }
 }

@@ -4,13 +4,17 @@ kestra:
   repository:
     type: elasticsearch
 
+
   elasticsearch:
     client:
       httpHosts: http://localhost:9200
 
+    defaults:
+      indice-prefix: "unit_kestra_${random.shortuuid}_"
+
     indices:
       executions:
-        index: "unit_kestra_executions"
+        index: "${kestra.elasticsearch.defaults.indice-prefix}executions"
         cls: io.kestra.core.models.executions.Execution
         mapping-file: execution
         settings: &settings |
@@ -18,7 +22,7 @@ kestra:
             "index.number_of_replicas": 0
           }
       logs:
-        index: "unit_kestra_logs"
+        index: "${kestra.elasticsearch.defaults.indice-prefix}logs"
         cls: io.kestra.core.models.executions.LogEntry
         mapping-file: log
         settings: *settings
@@ -30,12 +34,12 @@ kestra:
 
     topics:
       execution:
-        name: "unit_kestra_execution"
+        name: "${kestra.elasticsearch.defaults.indice-prefix}execution"
         cls: io.kestra.core.models.executions.Execution
 
       logentry:
         cls: io.kestra.core.models.executions.LogEntry
-        name: "unit_kestra_logs"
+        name: "${kestra.elasticsearch.defaults.indice-prefix}logs"
 
   indexer:
     batchSize: 100

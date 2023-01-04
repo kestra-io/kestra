@@ -12,7 +12,7 @@ kestra:
     client:
       httpHosts: http://localhost:9200
     defaults:
-      indice-prefix: "unit_kestra_"
+      indice-prefix: "unit_kestra_${random.shortuuid}_"
     indices:
       flows:
         index: "${kestra.elasticsearch.defaults.indice-prefix}flows"

@@ -362,6 +362,7 @@ class ScheduleTest {
             .withHour(9)
             .withMinute(12)
             .withSecond(0)
+            .withYear(2022)
             .truncatedTo(ChronoUnit.SECONDS)
             .minus(1, ChronoUnit.MONTHS);
 

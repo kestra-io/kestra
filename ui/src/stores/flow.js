@@ -7,6 +7,7 @@ export default {
         search: undefined,
         total: 0,
         flowGraph: undefined,
+        flowGraphParam: undefined,
         revisions: undefined,
     },
 
@@ -100,6 +101,12 @@ export default {
         loadGraph({commit}, flow) {
             return this.$http.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph?revision=${flow.revision}`).then(response => {
                 commit("setFlowGraph", response.data)
+                commit("setflowGraphParam", {
+                    namespace: flow.namespace,
+                    id: flow.id,
+                    revision: flow.revision
+                })
+
 
                 return response.data;
             })
@@ -124,7 +131,15 @@ export default {
         },
         setFlow(state, flow) {
             state.flow = flow;
-            state.flowGraph = undefined
+            if (state.flowGraph !== undefined && state.flowGraphParam && flow) {
+                if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id || state.flowGraphParam.revision !== flow.revision) {
+                    state.flowGraph = undefined
+                }
+            }
+
+        },
+        setflowGraphParam(state, flow) {
+            state.flowGraphParam = flow
         },
         setTask(state, task) {
             state.task = task;

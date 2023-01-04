@@ -15,7 +15,10 @@
 @use "components/vue-nprogress" with (
     $indigo: global-var.$indigo
 );
-
+@use "components/vue-flow"  with (
+    $cyan: global-var.$cyan,
+    $indigo: global-var.$purple
+);
 
 // main layout
 main {

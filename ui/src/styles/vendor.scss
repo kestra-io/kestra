@@ -63,6 +63,10 @@
 // third
 @use "nprogress/nprogress.css";
 @use "vue-material-design-icons/styles.css";
+@use "@vue-flow/core/dist/style.css" as core;
+@use "@vue-flow/core/dist/theme-default.css" as theme;
+@use "@vue-flow/controls/dist/style.css" as controls;
+
 //noinspection CssUnknownTarget
 @import url("https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700;900&display=swap");
 

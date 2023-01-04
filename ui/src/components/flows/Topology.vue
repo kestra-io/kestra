@@ -1,5 +1,5 @@
 <template>
-    <topology-tree
+    <topology
         v-if="flow && flowGraph"
         :flow-id="flow.id"
         :namespace="flow.namespace"
@@ -8,11 +8,17 @@
 </template>
 <script>
     import {mapState} from "vuex";
-    import TopologyTree from "../graph/TopologyTree.vue";
+    import Topology from "../graph/Topology.vue";
 
     export default {
         components: {
-            TopologyTree,
+            Topology,
+        },
+        props: {
+            preventRouteInfo: {
+                type: Boolean,
+                default: false
+            }
         },
         computed: {
             ...mapState("flow", ["flow", "flowGraph"]),

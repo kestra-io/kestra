@@ -15,6 +15,7 @@ const {store, router} = initApp(app, routes, stores, translations);
 // axios
 configureAxios((instance) => {
     app.use(VueAxios, instance);
+    app.provide("axios", instance);
 
     store.$http = app.$http;
     store.axios = app.axios;

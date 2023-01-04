@@ -1,0 +1,53 @@
+$cyan: "" !default;
+$indigo: "" !default;
+
+:root {
+    #{--vf-connection-path}: $cyan;
+    #{--vf-handle}: var(--bs-blue);
+
+}
+
+.vue-flow__edge-path, .vue-flow__connection-path {
+    stroke: $indigo;
+
+    .vue-flow__edge.selected & {
+        stroke: var(--bs-yellow);
+    }
+}
+
+.vue-flow__handle {
+    border: 0;
+    z-index: 3;
+}
+
+
+.vue-flow__edge-textbg {
+    z-index: 4;
+}
+
+.vue-flow__edge-text {
+    z-index: 5;
+}
+
+.vue-flow__node {
+    border: 1px solid var(--bs-border-color);
+
+    &.selected {
+        border: 1px solid var(--bs-yellow);
+    }
+}
+
+.vue-flow__controls-button {
+    border: 1px solid var(--bs-border-color);
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+
+    &:hover {
+        background-color: var(--bs-body-bg);
+        color: var(--bs-cyan);
+    }
+
+    svg {
+        fill: currentColor;
+    }
+}

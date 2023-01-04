@@ -257,7 +257,6 @@
             width: 35px;
             height: 53px;
             background: var(--white);
-            border-right: 1px solid var(--bs-border-color);
             position: relative;
         }
 

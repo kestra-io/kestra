@@ -1,24 +1,29 @@
 <template>
-    <topology-tree
-        ref="topology"
+    <topology
         v-if="execution && flowGraph"
-        :flow-graph="flowGraph"
         :flow-id="execution.flowId"
         :namespace="execution.namespace"
+        :flow-graph="flowGraph"
         :execution="execution"
         @follow="forwardEvent('follow', $event)"
     />
 </template>
 <script>
-    import TopologyTree from "../graph/TopologyTree.vue";
+    import Topology from "../graph/Topology.vue";
     import {mapState} from "vuex";
     export default {
         components: {
-            TopologyTree
+            Topology
         },
         computed: {
             ...mapState("flow", ["flowGraph"]),
             ...mapState("execution", ["execution"])
+        },
+        props: {
+            preventRouteInfo: {
+                type: Boolean,
+                default: false
+            }
         },
         data() {
             return {

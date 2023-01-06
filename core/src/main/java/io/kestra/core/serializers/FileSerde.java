@@ -34,6 +34,18 @@ abstract public class FileSerde {
         };
     }
 
+    public static <T> FlowableOnSubscribe<T> reader(BufferedReader input, Class<T> cls) {
+        return s -> {
+            String row;
+
+            while ((row = input.readLine()) != null) {
+                s.onNext(convert(row, cls));
+            }
+
+            s.onComplete();
+        };
+    }
+
     public static void reader(BufferedReader input, Consumer<Object> consumer) throws IOException {
         String row;
         while ((row = input.readLine()) != null) {
@@ -43,5 +55,9 @@ abstract public class FileSerde {
 
     private static Object convert(String row) throws JsonProcessingException {
         return MAPPER.readValue(row, TYPE_REFERENCE);
+    }
+
+    private static <T> T convert(String row, Class<T> cls) throws JsonProcessingException {
+        return MAPPER.readValue(row, cls);
     }
 }

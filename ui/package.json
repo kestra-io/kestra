@@ -57,7 +57,7 @@
     "eslint-plugin-vue": "^9.8.0",
     "jsdom": "^21.0.0",
     "monaco-editor": "0.34.1",
-    "monaco-yaml": "4.0.0-alpha.0",
+    "monaco-yaml": "4.0.2",
     "prettier": "^2.8.2",
     "sass": "^1.57.1",
     "vite": "^4.0.4",

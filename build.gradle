@@ -74,6 +74,14 @@ allprojects {
         }
     }
 
+    // https://github.com/micronaut-projects/micronaut-openapi/issues/894
+    configurations.all {
+        resolutionStrategy {
+            force("io.micronaut.openapi:micronaut-openapi-bom:4.7.1")
+            force("io.micronaut.openapi:micronaut-openapi:4.7.1")
+        }
+    }
+
     // dependencies
     dependencies {
         // lombok

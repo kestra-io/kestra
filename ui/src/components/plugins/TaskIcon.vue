@@ -19,6 +19,7 @@
 
 <script>
     import {mapState} from "vuex";
+    import {Buffer} from "buffer";
 
     export default {
         props: {

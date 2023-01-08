@@ -22,7 +22,7 @@
     "cron-validator": "^1.3.1",
     "cronstrue": "^2.21.0",
     "dagre": "^0.8.5",
-    "element-plus": "^2.2.27",
+    "element-plus": "^2.2.28",
     "humanize-duration": "^3.27.3",
     "js-yaml": "^4.1.0",
     "lodash": "4.17.21",

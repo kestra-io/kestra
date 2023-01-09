@@ -56,6 +56,8 @@ public interface FlowRepositoryInterface {
 
     Flow create(Flow flow) throws ConstraintViolationException;
 
+    Flow create(Flow flow,String flowSource);
+
     Flow update(Flow flow, Flow previous) throws ConstraintViolationException;
 
     Flow delete(Flow flow);

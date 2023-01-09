@@ -7,6 +7,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
@@ -45,6 +47,9 @@ import javax.validation.ConstraintViolationException;
 @Singleton
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository<Flow> implements FlowRepositoryInterface {
+
+    @Inject
+    private TaskDefaultService taskDefaultService;
     private static final String INDEX_NAME = "flows";
     protected static final String REVISIONS_NAME = "flows-revisions";
     protected static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson();
@@ -271,7 +276,17 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        return this.save(flow, CrudEventType.CREATE);
+        return this.save(flow, CrudEventType.CREATE, null);
+    }
+
+    public Flow create(Flow flow, String flowSource) throws ConstraintViolationException {
+        // control if create is valid
+        taskDefaultService.injectDefaults(flow, logger).validate()
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        return this.save(flow, CrudEventType.CREATE, flowSource);
     }
 
     public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
@@ -285,7 +300,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        Flow saved = this.save(flow, CrudEventType.UPDATE);
+        Flow saved = this.save(flow, CrudEventType.UPDATE, null);
 
         FlowService
             .findRemovedTrigger(flow, previous)
@@ -294,7 +309,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         return saved;
     }
 
-    public Flow save(Flow flow, CrudEventType crudEventType) throws ConstraintViolationException {
+    public Flow save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         modelValidator
             .isValid(flow)
             .ifPresent(s -> {
@@ -317,7 +332,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         String json;
         try {
             Map<String, Object> flowMap = JacksonMapper.toMap(flow);
-            flowMap.put("sourceCode", YAML_MAPPER.writeValueAsString(flow));
+            flowMap.put("sourceCode", flowSource != null ? flowSource : YAML_MAPPER.writeValueAsString(flow));
             if (flow.getLabels() != null) {
                 flowMap.put("labelsMap", flow.getLabels()
                     .entrySet()

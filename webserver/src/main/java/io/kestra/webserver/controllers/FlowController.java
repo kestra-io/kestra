@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers;
 
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -129,7 +130,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(produces = MediaType.TEXT_JSON)
+    @Post(consumes = MediaType.ALL, produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Create a flow")
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body @Valid Flow flow
@@ -145,6 +146,26 @@ public class FlowController {
         }
 
         return HttpResponse.ok(flowRepository.create(flow));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(consumes = MediaType.TEXT_PLAIN, produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Flows"}, summary = "Create a flow")
+    public HttpResponse<Flow> create(
+        @Parameter(description = "The flow") @Body @Valid String flowString
+    ) throws ConstraintViolationException {
+        Flow flow = new YamlFlowParser().parse(flowString);
+        if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
+            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
+                "Flow id already exists",
+                flow,
+                Flow.class,
+                "flow.id",
+                flow.getId()
+            )));
+        }
+
+        return HttpResponse.ok(flowRepository.create(flow, flowString));
     }
 
     @ExecuteOn(TaskExecutors.IO)

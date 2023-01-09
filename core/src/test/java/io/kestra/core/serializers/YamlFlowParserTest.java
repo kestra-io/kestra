@@ -14,10 +14,15 @@ import io.kestra.core.utils.TestsUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+
 import jakarta.inject.Inject;
+
 import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,6 +39,22 @@ class YamlFlowParserTest {
     @Test
     void parse() {
         Flow flow = parse("flows/valids/full.yaml");
+
+        assertThat(flow.getId(), is("full"));
+        assertThat(flow.getTasks().size(), is(5));
+
+        // third with all optionals
+        Task optionals = flow.getTasks().get(2);
+        assertThat(optionals.getTimeout(), is(Duration.ofMinutes(60)));
+        assertThat(optionals.getRetry().getType(), is("constant"));
+        assertThat(optionals.getRetry().getMaxAttempt(), is(5));
+        assertThat(((Constant) optionals.getRetry()).getInterval().getSeconds(), is(900L));
+    }
+
+
+    @Test
+    void parseString() throws IOException {
+        Flow flow = parseString("flows/valids/full.yaml");
 
         assertThat(flow.getId(), is("full"));
         assertThat(flow.getTasks().size(), is(5));
@@ -112,14 +133,14 @@ class YamlFlowParserTest {
 
     @Test
     void listeners() {
-         ConstraintViolationException exception = assertThrows(
-             ConstraintViolationException.class,
-             () -> this.parse("flows/invalids/listener.yaml")
-         );
+        ConstraintViolationException exception = assertThrows(
+            ConstraintViolationException.class,
+            () -> this.parse("flows/invalids/listener.yaml")
+        );
 
-         assertThat(exception.getConstraintViolations().size(), is(2));
-         assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("must not be empty"));
-         assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage(), is("must not be empty"));
+        assertThat(exception.getConstraintViolations().size(), is(2));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(0).getMessage(), containsString("must not be empty"));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage(), is("must not be empty"));
     }
 
     @Test
@@ -182,5 +203,14 @@ class YamlFlowParserTest {
         File file = new File(resource.getFile());
 
         return yamlFlowParser.parse(file);
+    }
+
+    private Flow parseString(String path) throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource(path);
+        assert resource != null;
+
+        String input = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+
+        return yamlFlowParser.parse(input);
     }
 }

@@ -1,5 +1,7 @@
 package io.kestra.core.serializers;
 
+import com.amazon.ion.ContainedValueException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -37,22 +39,24 @@ public class YamlFlowParser {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
     }
 
+    public Flow parse(String input) {
+        Flow flow = readString(input);
+
+        modelValidator
+            .isValid(flow)
+            .ifPresent(e -> {
+                throw constraintViolationException(e, flow);
+            });
+        return flow;
+    }
+
     public Flow parse(File file) throws ConstraintViolationException {
         Flow flow = readFile(file);
 
         modelValidator
             .isValid(flow)
             .ifPresent(e -> {
-                throw new ConstraintViolationException(
-                    "Invalid flow '" + flow.getNamespace() + "." + flow.getId() + "', error: " +
-                        e.getConstraintViolations()
-                            .stream()
-                            .map(r -> {
-                                return r.getPropertyPath() + ":" + r.getMessage();
-                            })
-                            .collect(Collectors.joining("\n -")),
-                    e.getConstraintViolations()
-                );
+                throw constraintViolationException(e, flow);
             });
 
         return flow;
@@ -96,6 +100,42 @@ public class YamlFlowParser {
                 )
             );
         }
+    }
+
+    private Flow readString(String input) {
+        try {
+            return mapper.readValue(input, Flow.class);
+        } catch (JsonProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException) {
+                throw (ContainedValueException) e.getCause();
+            } else {
+                throw new ConstraintViolationException(
+                    "Illegal flow yaml:" + e.getMessage(),
+                    Collections.singleton(
+                        ManualConstraintViolation.of(
+                            e.getMessage(),
+                            input,
+                            String.class,
+                            "flow",
+                            null
+                        )
+                    )
+                );
+            }
+        }
+    }
+
+    private ConstraintViolationException constraintViolationException(ConstraintViolationException e, Flow flow){
+        return new ConstraintViolationException(
+            "Invalid flow '" + flow.getNamespace() + "." + flow.getId() + "', error: " +
+                e.getConstraintViolations()
+                    .stream()
+                    .map(r -> {
+                        return r.getPropertyPath() + ":" + r.getMessage();
+                    })
+                    .collect(Collectors.joining("\n -")),
+            e.getConstraintViolations()
+        );
     }
 }
 

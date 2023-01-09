@@ -71,6 +71,9 @@ allprojects {
             force("org.apache.kafka:kafka-streams:" + kafkaVersion)
             force("org.jooq:jooq:3.16.10")
             force("org.slf4j:slf4j-api:1.7.36")
+
+            // ugly bug on google cloud plugins
+            force("com.google.protobuf:protobuf-java-util:3.21.10")
         }
     }
 

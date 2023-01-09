@@ -36,7 +36,7 @@
         }
     })
 
-    const isHorizontal = ref(localStorage.getItem("topology-orientation") === "1");
+    const isHorizontal = ref(localStorage.getItem("topology-orientation") !== "0");
     const isLoading = ref(false);
 
     const generateDagreGraph = () => {
@@ -100,7 +100,7 @@
     const toggleOrientation = () => {
         localStorage.setItem(
             "topology-orientation",
-            localStorage.getItem("topology-orientation") === "1" ? 0 : 1
+            localStorage.getItem("topology-orientation") !== "0" ? "0" : "1"
         );
         isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
 

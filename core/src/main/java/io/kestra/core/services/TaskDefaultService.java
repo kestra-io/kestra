@@ -19,6 +19,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
+import javax.validation.ConstraintViolationException;
+
 @Singleton
 public class TaskDefaultService {
     @Nullable
@@ -70,14 +72,15 @@ public class TaskDefaultService {
     public Flow injectDefaults(Flow flow, Logger logger) {
         try {
             return this.injectDefaults(flow);
-        } catch (Exception e) {
+        } catch (ConstraintViolationException e) {
             logger.warn(e.getMessage(), e);
             return flow;
         }
     }
 
     @SuppressWarnings("unchecked")
-    Flow injectDefaults(Flow flow) {
+    public Flow injectDefaults(Flow flow) {
+        try {
         Map<String, Object> flowAsMap = JacksonMapper.toMap(flow);
 
         List<TaskDefault> allDefaults = mergeAllDefaults(flow);
@@ -110,6 +113,9 @@ public class TaskDefaultService {
         }
 
         return JacksonMapper.toMap(flowAsMap, Flow.class);
+        } catch (ConstraintViolationException e) {
+            throw e;
+        }
     }
 
     private static Object recursiveDefaults(Object object, Map<String, List<TaskDefault>> defaults) {

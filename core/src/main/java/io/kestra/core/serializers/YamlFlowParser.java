@@ -1,6 +1,5 @@
 package io.kestra.core.serializers;
 
-import com.amazon.ion.ContainedValueException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.InjectableValues;
@@ -18,8 +17,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.stream.Collectors;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+
 import javax.validation.ConstraintViolationException;
 
 @Singleton
@@ -42,11 +43,11 @@ public class YamlFlowParser {
     public Flow parse(String input) {
         Flow flow = readString(input);
 
-        modelValidator
-            .isValid(flow)
-            .ifPresent(e -> {
-                throw constraintViolationException(e, flow);
-            });
+//        modelValidator
+//            .isValid(flow)
+//            .ifPresent(e -> {
+//                throw constraintViolationException(e, flow);
+//            });
         return flow;
     }
 
@@ -107,13 +108,13 @@ public class YamlFlowParser {
             return mapper.readValue(input, Flow.class);
         } catch (JsonProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException) {
-                throw (ContainedValueException) e.getCause();
+                throw (ConstraintViolationException) e.getCause();
             } else {
                 throw new ConstraintViolationException(
                     "Illegal flow yaml:" + e.getMessage(),
                     Collections.singleton(
                         ManualConstraintViolation.of(
-                            e.getMessage(),
+                            "Caused by: " +e.getCause() + "\nMessage: " + e.getMessage(),
                             input,
                             String.class,
                             "flow",
@@ -125,14 +126,12 @@ public class YamlFlowParser {
         }
     }
 
-    private ConstraintViolationException constraintViolationException(ConstraintViolationException e, Flow flow){
+    private ConstraintViolationException constraintViolationException(ConstraintViolationException e, Flow flow) {
         return new ConstraintViolationException(
             "Invalid flow '" + flow.getNamespace() + "." + flow.getId() + "', error: " +
                 e.getConstraintViolations()
                     .stream()
-                    .map(r -> {
-                        return r.getPropertyPath() + ":" + r.getMessage();
-                    })
+                    .map(r -> r.getPropertyPath() + ":" + r.getMessage())
                     .collect(Collectors.joining("\n -")),
             e.getConstraintViolations()
         );

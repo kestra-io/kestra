@@ -36,10 +36,10 @@ import io.kestra.core.utils.ExecutorsUtils;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
@@ -281,7 +281,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
     public Flow create(Flow flow, String flowSource) throws ConstraintViolationException {
         // control if create is valid
-        taskDefaultService.injectDefaults(flow, logger).validate()
+        taskDefaultService.injectDefaults(flow).validate()
             .ifPresent(s -> {
                 throw s;
             });
@@ -301,6 +301,26 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             });
 
         Flow saved = this.save(flow, CrudEventType.UPDATE, null);
+
+        FlowService
+            .findRemovedTrigger(flow, previous)
+            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+
+        return saved;
+    }
+
+    public Flow update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
+        // control if update is valid
+        this
+            .findById(previous.getNamespace(), previous.getId())
+            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        Flow saved = this.save(flow, CrudEventType.UPDATE, flowSource);
 
         FlowService
             .findRemovedTrigger(flow, previous)

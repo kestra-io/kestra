@@ -3,10 +3,12 @@ package io.kestra.webserver.controllers;
 import com.google.common.collect.ImmutableList;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.tasks.flows.Sequential;
+import io.kestra.core.utils.TestsUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
@@ -22,6 +24,11 @@ import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 
+import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -319,6 +326,105 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
         assertThat(namespaces.size(), is(2));
+    }
+
+    @Test
+    void createFlowFromString() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleFlow.yaml");
+        assert resource != null;
+
+        String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), Flow.class);
+
+        assertThat(result.getId(), is("test-flow"));
+        assertThat(result.getInputs().get(0).getName(), is("a"));
+
+        Flow get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest/test-flow"), Flow.class);
+        assertThat(get.getId(), is("test-flow"));
+        assertThat(get.getInputs().get(0).getName(), is("a"));
+
+    }
+
+    @Test
+    void createInvalidFlowFromString() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleInvalidFlow.yaml");
+        assert resource != null;
+
+        String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(
+                POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN),
+                Flow.class
+            );
+        });
+        assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
+
+    }
+
+    @Test
+    void updateFlowFromString() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleFlow.yaml");
+        assert resource != null;
+
+        String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), Flow.class);
+
+        assertThat(result.getId(), is("test-flow"));
+        assertThat(result.getInputs().get(0).getName(), is("a"));
+
+        resource = TestsUtils.class.getClassLoader().getResource("flows/simpleflowUpdate.yaml");
+        assert resource != null;
+
+        flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+
+        Flow get = client.toBlocking().retrieve(
+            PUT("/api/v1/flows/io.kestra.unittest/test-flow", flow).contentType(MediaType.TEXT_PLAIN),
+            Flow.class
+        );
+
+        assertThat(get.getId(), is("test-flow"));
+        assertThat(get.getInputs().get(0).getName(), is("b"));
+
+        String finalFlow = flow;
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            HttpResponse<Void> response = client.toBlocking().exchange(
+                PUT("/api/v1/flows/io.kestra.unittest/" + IdUtils.create(), finalFlow).contentType(MediaType.TEXT_PLAIN)
+            );
+        });
+        assertThat(e.getStatus(), is(NOT_FOUND));
+    }
+
+    @Test
+    void updateInvalidFlowFromString() throws IOException {
+        URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleFlow.yaml");
+        assert resource != null;
+
+        String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), Flow.class);
+
+        assertThat(result.getId(), is("test-flow"));
+
+        resource = TestsUtils.class.getClassLoader().getResource("flows/simpleInvalidFlowUpdate.yaml");
+        assert resource != null;
+
+        String finalFlow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().exchange(
+                PUT("/api/v1/flows/io.kestra.unittest/test-flow", finalFlow).contentType(MediaType.TEXT_PLAIN),
+                Argument.of(Flow.class),
+                Argument.of(JsonError.class)
+            );
+        });
+
+        String jsonError = e.getResponse().getBody(String.class).get();
+
+        assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
+        assertThat(jsonError, containsString("flow.id"));
+        assertThat(jsonError, containsString("flow.namespace"));
     }
 
     private Flow generateFlow(String namespace, String inputName) {

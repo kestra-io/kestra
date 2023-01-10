@@ -237,6 +237,17 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
+    public Flow create(Flow flow, String flowSource) throws ConstraintViolationException {
+        // control if create is valid
+        flow.validate()
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        return this.save(flow, CrudEventType.CREATE, flowSource);
+    }
+
+    @Override
     public Flow create(Flow flow) throws ConstraintViolationException {
         // control if create is valid
         flow.validate()
@@ -244,7 +255,28 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 throw s;
             });
 
-        return this.save(flow, CrudEventType.CREATE);
+        return this.save(flow, CrudEventType.CREATE, null);
+    }
+
+    @Override
+    public Flow update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
+        // control if update is valid
+        this
+            .findById(previous.getNamespace(), previous.getId())
+            .map(current -> current.validateUpdate(flow))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        Flow saved = this.save(flow, CrudEventType.UPDATE, flowSource);
+
+        FlowService
+            .findRemovedTrigger(flow, previous)
+            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+
+        return saved;
     }
 
     @Override
@@ -259,7 +291,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 throw s;
             });
 
-        Flow saved = this.save(flow, CrudEventType.UPDATE);
+        Flow saved = this.save(flow, CrudEventType.UPDATE, null);
 
         FlowService
             .findRemovedTrigger(flow, previous)
@@ -269,7 +301,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @SneakyThrows
-    private Flow save(Flow flow, CrudEventType crudEventType) throws ConstraintViolationException {
+    private Flow save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         // validate the flow
         modelValidator
             .isValid(flow)
@@ -292,7 +324,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         }
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(flow);
-        fields.put(field("source_code"), JacksonMapper.ofYaml().writeValueAsString(flow));
+        fields.put(field("source_code"), flowSource != null ? flowSource : JacksonMapper.ofYaml().writeValueAsString(flow));
 
         this.jdbcRepository.persist(flow, fields);
 

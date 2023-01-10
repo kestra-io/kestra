@@ -23,12 +23,14 @@ import io.kestra.webserver.utils.PageableUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
+
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 
@@ -129,6 +131,27 @@ public class FlowController {
         return PagedResults.of(flowRepository.findSourceCode(PageableUtils.from(page, size, sort), query, namespace));
     }
 
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(produces = MediaType.TEXT_JSON, consumes = MediaType.TEXT_PLAIN)
+    @Operation(tags = {"Flows"}, summary = "Create a flow")
+    public HttpResponse<Flow> create(
+        @Parameter(description = "The flow") @Body String flow
+    ) throws ConstraintViolationException {
+        Flow flowParsed = new YamlFlowParser().parse(flow);
+        if (flowRepository.findById(flowParsed.getNamespace(), flowParsed.getId()).isPresent()) {
+            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
+                "Flow id already exists",
+                flowParsed,
+                Flow.class,
+                "flow.id",
+                flowParsed.getId()
+            )));
+        }
+
+        return HttpResponse.ok(flowRepository.create(flowParsed, flow));
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(consumes = MediaType.ALL, produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Create a flow")
@@ -148,25 +171,6 @@ public class FlowController {
         return HttpResponse.ok(flowRepository.create(flow));
     }
 
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(consumes = MediaType.TEXT_PLAIN, produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Flows"}, summary = "Create a flow")
-    public HttpResponse<Flow> create(
-        @Parameter(description = "The flow") @Body @Valid String flowString
-    ) throws ConstraintViolationException {
-        Flow flow = new YamlFlowParser().parse(flowString);
-        if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
-            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
-                "Flow id already exists",
-                flow,
-                Flow.class,
-                "flow.id",
-                flow.getId()
-            )));
-        }
-
-        return HttpResponse.ok(flowRepository.create(flow, flowString));
-    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON)
@@ -241,7 +245,24 @@ public class FlowController {
             .collect(Collectors.toList());
     }
 
-    @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
+    @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.TEXT_PLAIN)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Flows"}, summary = "Update a flow")
+    public HttpResponse<Flow> update(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The flow") @Body String flow
+    ) throws ConstraintViolationException {
+        Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
+
+        if (existingFlow.isEmpty()) {
+            return HttpResponse.status(HttpStatus.NOT_FOUND);
+        }
+        Flow flowParsed =  new YamlFlowParser().parse(flow);
+        return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow));
+    }
+
+    @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.ALL)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a flow")
     public HttpResponse<Flow> update(
@@ -257,6 +278,7 @@ public class FlowController {
 
         return HttpResponse.ok(flowRepository.update(flow, existingFlow.get()));
     }
+
 
     @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)

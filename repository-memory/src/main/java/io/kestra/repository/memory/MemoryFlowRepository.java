@@ -1,7 +1,6 @@
 package io.kestra.repository.memory;
 
 import io.kestra.core.models.SearchResult;
-import io.kestra.core.models.templates.Template;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.value.ValueException;
@@ -21,6 +20,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 import java.util.*;
@@ -129,6 +129,12 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return this.save(flow, CrudEventType.CREATE);
     }
 
+    @Override
+    public Flow create(Flow flow, String flowSource) {
+
+        return this.save(flow, CrudEventType.CREATE);
+    }
+
     public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
         // control if update is valid
         this
@@ -147,6 +153,11 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
         return saved;
+    }
+
+    @Override
+    public Flow update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
+        return this.update(flow, previous);
     }
 
     private Flow save(Flow flow, CrudEventType crudEventType) throws ConstraintViolationException {

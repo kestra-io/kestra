@@ -50,6 +50,9 @@ dependencies {
 allprojects {
     group "io.kestra"
 
+    sourceCompatibility = 11
+    targetCompatibility = 11
+
     repositories {
         mavenCentral()
     }
@@ -73,6 +76,7 @@ allprojects {
             force("org.slf4j:slf4j-api:1.7.36")
 
             // ugly bug on google cloud plugins
+            force("com.google.protobuf:protobuf-java:3.21.10")
             force("com.google.protobuf:protobuf-java-util:3.21.10")
         }
     }

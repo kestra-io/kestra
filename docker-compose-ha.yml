@@ -17,8 +17,9 @@ services:
       ALLOW_ANONYMOUS_LOGIN: "yes"
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOO_LOG_LEVEL: "WARN"
+      ZOO_4LW_COMMANDS_WHITELIST: "ruok"
     healthcheck:
-      test: nc -z localhost 2181 || exit 1
+      test: echo "ruok" | nc -w 2 localhost 2181 | grep -q "imok" || exit 1
       interval: 10s
       timeout: 5s
       retries: 10
@@ -39,7 +40,7 @@ services:
       zookeeper:
         condition: service_healthy
     healthcheck:
-      test: echo "exit" | curl -s -f telnet://localhost:9092 || exit 1
+      test: kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1
       interval: 30s
       timeout: 10s
       retries: 10

@@ -139,7 +139,7 @@ tasks:
 
 ## Getting Started
 
-To get a local copy up and running, please follow these simple steps.
+To get a local copy up and running, please follow these steps.
 
 ### Prerequisites
 
@@ -149,18 +149,17 @@ Make sure you have already installed:
 
 ### Launch Kestra
 - Download the compose file [here](https://github.com/kestra-io/kestra/blob/develop/docker-compose.yml) and save it with the name `docker-compose.yml`, for linux and macos, you can run `wget https://raw.githubusercontent.com/kestra-io/kestra/develop/docker-compose.yml`
-- Run `docker-compose pull`
 - Run `docker-compose up -d`
 - Open `http://localhost:8080` on your browser
 - Follow [this tutorial](https://kestra.io/docs/getting-started/) to create your first flow.
 - Read the [documentation](https://kestra.io/docs/) to understand how to
   - [Develop your flows](https://kestra.io/docs/developer-guide/)
   - [Deploy Kestra](https://kestra.io/docs/administrator-guide/)
-  - Use our [terraform provider](https://kestra.io/docs/terraform/)
+  - Use our [Terraform provider](https://kestra.io/docs/terraform/)
   - Develop your [own plugins](https://kestra.io/docs/plugin-developer-guide/)
 
 ## Plugins
-Kestra is built on [plugin systems](https://kestra.io/plugins/). You can find your plugin to interact with your provider; alternatively, you can follow [simple steps](https://kestra.io/docs/plugin-developer-guide/) to develop your own plugin. Here are the official plugins that are available:
+Kestra is built on a [plugin system](https://kestra.io/plugins/). You can find your plugin to interact with your provider; alternatively, you can follow [these steps](https://kestra.io/docs/plugin-developer-guide/) to develop your own plugin. Here are the official plugins that are available:
 
 <table>
     <tr>
@@ -266,11 +265,11 @@ This list is growing quickly as we are actively building more plugins, and we we
 
 ## Community Support
 
-Join our community if you need help, want to chat or have any other questions for us:
+Join our community if you need help, want to chat, or have any other questions for us:
 
 - [GitHub](https://github.com/kestra-io/kestra/discussions) - Discussion forums and updates from the Kestra team
 - [Twitter](https://twitter.com/kestra_io) - For all the latest Kestra news
-- [Slack](https://api.kestra.io/v1/communities/slack/redirect) - Join the conversation! Get all the latest updates and chat to the devs
+- [Slack](https://api.kestra.io/v1/communities/slack/redirect) - Join the conversation! Get all the latest updates and chat with the devs
 
 
 ## Roadmap

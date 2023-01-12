@@ -30,14 +30,15 @@ Watch out for duplicates! If you are creating a new issue, please check existing
 ### Your First Code Contribution
 
 #### Requirements
-The following dependencies are required to build Kestra locally.
-- Java 11+
-- Node 14+
+The following dependencies are required to build Kestra locally:
+- Java 17+, Kestra runs on Java 11 but we hit a Java compiler bug fixed in Java 17
+- Node 14+ and npm
+- Python 3, pip and python venv
 - Docker & Docker Compose
 - an IDE (Intellij IDEA, Eclipse or VS Code)
 
 To start contributing:
-- Start by [forking](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the repository
+- [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the repository
 - Clone the fork on your workstation:
 
 ```shell
@@ -46,7 +47,10 @@ cd kestra
 ```
 
 #### Develop backend
-Open the cloned repository in your favorite IDE. In most of decent IDE, gradle build will be detected and all dependencies will be downloaded.
+The backend is made with [Micronaut](https://micronaut.io).
+
+Open the cloned repository in your favorite IDE. In most of decent IDEs, Gradle build will be detected and all dependencies will be downloaded.
+You can also build it from a terminal using `./gradlew build`, the Gradle wrapper will download the right Gradle version to use.
 
 - You may need to enable java annotation processors since we are using it a lot.
 - The main class is `io.kestra.cli.App` from module `kestra.cli.main`
@@ -57,9 +61,16 @@ Open the cloned repository in your favorite IDE. In most of decent IDE, gradle b
 - You can also use the gradle task `./gradlew runStandalone` that will run a standalone server with `MICRONAUT_ENVIRONMENTS=override` and plugins path `local/plugins`
 - The server start by default on port 8080 and is reachable on `http://localhost:8080`
 
+If you want to launch all tests, you need Python and some packages installed on your machine, on Ubuntu you can install them with:
+
+```shell
+sudo apt install python3 pip python3-venv
+python3 -m pip install virtualenv
+```
+
 
 #### Develop frontend
-The frontend is located on `/ui` folder.
+The frontend is made with [Vue.js](https://vuejs.org/) and located on the `/ui` folder.
 
 - `npm install`
 - create a files `ui/.env.development.local` with content `VUE_APP_API_URL=http://localhost:8080` (or your actual server url)
@@ -81,4 +92,5 @@ backend (without running the `npm serve`) above.
 A complete documentation for developing plugin can be found [here](https://kestra.io/docs/plugin-developer-guide/).
 
 ### Improving The Documentation
-The main documentation is located in a separate [repository](https://github.com/kestra-io/kestra.io). For task documentation, there are located directly on Java source using [swagger annotation](https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---Annotations) (Example: [for Bash tasks](https://github.com/kestra-io/kestra/blob/develop/core/src/main/java/io/kestra/core/tasks/scripts/AbstractBash.java))
+The main documentation is located in a separate [repository](https://github.com/kestra-io/kestra.io).
+For tasks documentation, they are located directly on Java source using [Swagger annotations](https://github.com/swagger-api/swagger-core/wiki/Swagger-2.X---Annotations) (Example: [for Bash tasks](https://github.com/kestra-io/kestra/blob/develop/core/src/main/java/io/kestra/core/tasks/scripts/AbstractBash.java))

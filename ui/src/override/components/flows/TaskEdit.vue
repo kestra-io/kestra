@@ -34,98 +34,96 @@
 </template>
 
 <script setup>
-    import CodeTags from "vue-material-design-icons/CodeTags.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+import CodeTags from "vue-material-design-icons/CodeTags.vue";
+import ContentSave from "vue-material-design-icons/ContentSave.vue";
 </script>
 
 <script>
-    import YamlUtils from "../../../utils/yamlUtils";
-    import Editor from "../../../components/inputs/Editor.vue";
-    import {canSaveFlowTemplate} from "../../../utils/flowTemplate";
-    import {mapState} from "vuex";
-    import Utils from "../../../utils/utils";
+import YamlUtils from "../../../utils/yamlUtils";
+import Editor from "../../../components/inputs/Editor.vue";
+import {canSaveFlowTemplate, saveFlowTemplate} from "../../../utils/flowTemplate";
+import {mapGetters, mapState} from "vuex";
+import Utils from "../../../utils/utils";
 
-    export default {
-        components: {Editor},
-        props: {
-            component: {
-                type: String,
-                default: "el-button"
-            },
-            task: {
-                type: Object,
-                default: undefined
-            },
-            taskId: {
-                type: String,
-                default: undefined
-            },
-            flowId: {
-                type: String,
-                required: true
-            },
-            namespace: {
-                type: String,
-                required: true
-            },
+export default {
+    components: {Editor},
+    props: {
+        component: {
+            type: String,
+            default: "el-button"
         },
-        methods: {
-            load() {
-                return this.$store.dispatch("flow/loadTask", {namespace: this.namespace, id: this.flowId, taskId: this.taskId});
-            },
-            saveTask() {
-                let task;
-                try {
-                    task = YamlUtils.parse(this.taskYaml);
-                } catch (err) {
-                    this.$toast().warning(
-                        err.message,
-                        this.$t("invalid yaml"),
-                    );
+        task: {
+            type: Object,
+            default: undefined
+        },
+        taskId: {
+            type: String,
+            default: undefined
+        },
+        taskIndex: {
+            type: Number,
+            default: undefined
+        },
+        flowId: {
+            type: String,
+            required: true
+        },
+        namespace: {
+            type: String,
+            required: true
+        },
+    },
+    methods: {
+        load(taskId) {
+            return YamlUtils.extractTask(this.sourceCode, taskId);
+        },
+        saveTask() {
+            let task;
+            let updatedSource;
+            try {
+                task = YamlUtils.parse(this.taskYaml);
+                updatedSource = YamlUtils.replaceTaskInDocument(this.sourceCode, this.taskIndex, this.taskYaml)
+                console.log(updatedSource);
+            } catch (err) {
+                this.$toast().warning(
+                    err.message,
+                    this.$t("invalid yaml"),
+                );
 
-                    return;
-                }
-
-                return this.$store
-                    .dispatch("flow/updateFlowTask", {
-                        flow: {
-                            id: this.flowId,
-                            namespace: this.namespace
-                        },
-                        task: task
-                    })
-                    .then((response) => {
-                        this.$toast().saved(response.id);
-                        this.isModalOpen = false;
-                    })
-            },
-            onShow() {
-                this.isModalOpen = !this.isModalOpen;
-                if (this.taskId) {
-                    this.load()
-                        .then(value => {
-                            this.taskYaml = YamlUtils.stringify(value);
-                        })
-                } else {
-                    this.taskYaml = YamlUtils.stringify(this.task);
-                }
-            },
-        },
-        data() {
-            return {
-                uuid: Utils.uid(),
-                taskYaml: undefined,
-                isModalOpen: false,
-            };
-        },
-        created() {
-
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            canSave() {
-                return canSaveFlowTemplate(true, this.user, {namespace:this.namespace}, "flow");
+                return;
             }
+            saveFlowTemplate(this, updatedSource, "flow")
+                .then((response) => {
+                    this.isModalOpen = false;
+                })
+        },
+        onShow() {
+            this.isModalOpen = !this.isModalOpen;
+            if (this.taskId || this.task.id) {
+                const value = this.load(this.taskId ? this.taskId : this.task.id)
+                this.taskIndex = value.index
+                this.taskYaml = value.task;
+            } else {
+                this.taskYaml = YamlUtils.stringify(this.task);
+            }
+        },
+    },
+    data() {
+        return {
+            uuid: Utils.uid(),
+            taskYaml: undefined,
+            isModalOpen: false,
+        };
+    },
+    created() {
+
+    },
+    computed: {
+        ...mapGetters("flow", ["sourceCode"]),
+        ...mapState("auth", ["user"]),
+        canSave() {
+            return canSaveFlowTemplate(true, this.user, {namespace: this.namespace}, "flow");
         }
-    };
+    }
+};
 </script>

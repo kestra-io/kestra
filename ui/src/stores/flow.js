@@ -1,8 +1,16 @@
+import YamlUtils from "../utils/yamlUtils";
+
+const textPlainHeader = {
+    headers: {
+        'Content-Type': 'text/plain'
+    }
+}
 export default {
     namespaced: true,
     state: {
         flows: undefined,
         flow: undefined,
+        sourceCode: undefined,
         task: undefined,
         search: undefined,
         total: 0,
@@ -37,22 +45,26 @@ export default {
             })
         },
         loadFlow({commit}, options) {
-            return this.$http.get(
-                `/api/v1/flows/${options.namespace}/${options.id}`,
+            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/source`,
                 {
                     validateStatus: (status) => {
                         return options.deleted ? status === 200 || status === 404 : status == 200;
                     }
+                }).then(response => {
+                if (response.data.exception) {
+                    commit("core/setMessage", {
+                        title: "Invalid source code",
+                        message: response.data.exception,
+                        variant: "danger"
+                    }, {root: true});
+                    delete response.data.exception;
+                    commit("setFlow", JSON.parse(response.data.source));
+                    commit("setSourceCode", JSON.parse(response.data.source));
+                } else {
+                    commit("setFlow", response.data.flow);
+                    commit("setSourceCode", response.data.sourceCode);
+                    YamlUtils.extractTask(response.data.sourceCode, "new-task")
                 }
-            )
-                .then(response => {
-                    if (response.data.exception) {
-                        commit("core/setMessage", {title: "Invalid source code", message: response.data.exception, variant: "danger"}, {root: true});
-                        delete response.data.exception;
-                        commit("setFlow", JSON.parse(response.data.source));
-                    } else {
-                        commit("setFlow", response.data)
-                    }
 
                     return response.data;
                 })
@@ -65,20 +77,22 @@ export default {
             })
         },
         saveFlow({commit, dispatch}, options) {
-            return this.$http.put(`/api/v1/flows/${options.flow.namespace}/${options.flow.id}`, options.flow)
+            const flowData = YamlUtils.parse(options.flow)
+            return this.$http.put(`/api/v1/flows/${flowData.namespace}/${flowData.id}`, options.flow, textPlainHeader)
                 .then(response => {
                     if (response.status >= 300) {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
-                        commit("setFlow", response.data)
+                        commit("setFlow", response.data.flow);
+                        commit("setSourceCode", response.data.sourceCode);
 
                         return response.data;
                     }
                 })
-                .then(flow => {
-                    dispatch("loadGraph", flow);
+                .then(data => {
+                    dispatch("loadGraph", data.flow);
 
-                    return flow;
+                    return data.sourceCode;
                 })
         },
         updateFlowTask({commit, dispatch}, options) {
@@ -95,8 +109,9 @@ export default {
                 })
         },
         createFlow({commit}, options) {
-            return this.$http.post("/api/v1/flows", options.flow).then(response => {
-                commit("setFlow", response.data)
+            return this.$http.post("/api/v1/flows", options.flow, textPlainHeader).then(response => {
+                commit("setFlow", response.data.flow);
+                commit("setSourceCode", response.data.sourceCode);
 
                 return response.data;
             })
@@ -145,6 +160,9 @@ export default {
                 }
             }
 
+        },
+        setSourceCode(state, sourceCode) {
+            state.sourceCode = sourceCode
         },
         setflowGraphParam(state, flow) {
             state.flowGraphParam = flow
@@ -197,6 +215,11 @@ export default {
         flow (state) {
             if (state.flow) {
                 return state.flow;
+            }
+        },
+        sourceCode(state) {
+            if (state.sourceCode) {
+                return state.sourceCode;
             }
         }
     }

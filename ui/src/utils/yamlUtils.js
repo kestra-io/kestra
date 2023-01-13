@@ -1,4 +1,5 @@
 import JsYaml from "js-yaml";
+import yaml from "yaml";
 import _cloneDeep from "lodash/cloneDeep"
 
 export default class YamlUtils {
@@ -22,12 +23,46 @@ export default class YamlUtils {
         return JsYaml.load(item);
     }
 
+    static extractTask(source, taskId) {
+        const yamlDoc = yaml.parseDocument(source);
+        for (const [index, item] of yamlDoc.get("tasks").items.entries()) {
+            if (taskId == item.get("id")) {
+                // console.log(new yaml.Document(item).toString())
+                const task = new yaml.Document(item).toString();
+                return {task, index};
+            }
+        }
+        return null
+    }
+
+    static replaceTaskInDocument(source, index, newContent) {
+        const yamlDoc = yaml.parseDocument(source);
+        const newItem = new yaml.Document(yaml.parseDocument(newContent))
+        YamlUtils.replaceCommentInTask(yamlDoc.get("tasks").items[index], newItem);
+        yamlDoc.get("tasks").items[index] = newItem
+        return yamlDoc.toString();
+
+    }
+
+    // oldTask a YAMLMap, newTask a YAML document containing a YAMLMap
+    static replaceCommentInTask(oldTask, newTask) {
+        for (const oldProp of oldTask.items) {
+            for (const newProp of newTask.contents.items) {
+                if (oldProp.key.value == newProp.key.value && newProp.value.comment == undefined) {
+                    newProp.value.comment = oldProp.value.comment
+                    break;
+                }
+            }
+        }
+    }
+
+
     static _transform(value) {
         if (value instanceof Array) {
             return value.map(r => {
                 return YamlUtils._transform(r);
             })
-        } else if (typeof(value) === "string" || value instanceof String) {
+        } else if (typeof (value) === "string" || value instanceof String) {
             // value = value
             //     .replaceAll(/\u00A0/g, " ");
             //
@@ -38,13 +73,13 @@ export default class YamlUtils {
             return value;
         } else if (value instanceof Object) {
             return YamlUtils.sort(value)
-               .reduce((accumulator, r) => {
-                   if (value[r] !== undefined) {
-                       accumulator[r] = YamlUtils._transform(value[r])
-                   }
+                .reduce((accumulator, r) => {
+                    if (value[r] !== undefined) {
+                        accumulator[r] = YamlUtils._transform(value[r])
+                    }
 
-                   return accumulator;
-               }, Object.create({}))
+                    return accumulator;
+                }, Object.create({}))
         }
 
         return value;

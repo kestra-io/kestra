@@ -32,6 +32,7 @@ export default {
     computed: {
         ...mapState("auth", ["user"]),
         ...mapGetters("flow", ["flow"]),
+        ...mapGetters("flow", ["sourceCode"]),
         ...mapGetters("core", ["isUnsaved"]),
         isEdit() {
             return (
@@ -98,7 +99,7 @@ export default {
                 delete this.item.revision;
             }
 
-            this.content = YamlUtils.stringify(this.item);
+            this.content = this.sourceCode;
             this.previousContent = this.content;
             if (this.isEdit) {
                 this.readOnlyEditFields = {
@@ -122,6 +123,8 @@ export default {
                                 return this.$store
                                     .dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item)
                                     .then(() => {
+                                        this.content = ""
+                                        this.previousContent = ""
                                         return this.$router.push({
                                             name: this.dataType + "s/list"
                                         });
@@ -158,8 +161,8 @@ export default {
                         }
                     }
                 }
-                this.previousContent = YamlUtils.stringify(this.item);
-                saveFlowTemplate(this, item, this.dataType)
+                this.previousContent = this.content;
+                saveFlowTemplate(this, this.content, this.dataType)
                     .then((flow) => {
                         this.previousContent = YamlUtils.stringify(flow);
                         this.content = YamlUtils.stringify(flow);
@@ -181,10 +184,10 @@ export default {
                 }
                 this.previousContent = YamlUtils.stringify(this.item);
                 this.$store
-                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: item})
+                    .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content})
                     .then((flow) => {
-                        this.previousContent = YamlUtils.stringify(flow);
-                        this.content = YamlUtils.stringify(flow);
+                        this.previousContent = flow.sourceCode;
+                        this.content = flow.sourceCode;
                         this.onChange();
 
                         this.$router.push({

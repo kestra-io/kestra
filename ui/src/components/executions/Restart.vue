@@ -10,7 +10,7 @@
         {{ $t(replayOrRestart) }}
     </component>
 
-    <el-dialog v-if="enabled && isOpen" v-model="isOpen" @open="loadRevision" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="enabled && isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -91,6 +91,13 @@
             }
         },
         emits: ["follow"],
+        watch: {
+            isOpen(newValue, oldValue) {
+                if (newValue) {
+                    this.loadRevision()
+                }
+            }
+        },
         methods: {
             loadRevision() {
                 this.revisionsSelected = this.execution.flowRevision

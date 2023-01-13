@@ -54,18 +54,18 @@
         },
         methods: {
             load() {
-                if ((this.flow === undefined || this.previousFlow !== this.flowKey(this.flow))) {
+                if ((this.flow === undefined || this.previousFlow !== this.flowKey())) {
                     return this.$store.dispatch("flow/loadFlow", this.$route.params).then(() => {
                         if (this.flow) {
-                            this.previousFlow = this.flowKey(this.flow);
+                            this.previousFlow = this.flowKey();
                             this.$store.dispatch("flow/loadGraph", this.flow);
                         }
                     });
                 }
 
             },
-            flowKey(flow) {
-                return flow.namespace +  "/" + flow.id;
+            flowKey() {
+                return this.$route.params.namespace +  "/" + this.$route.params.id;
             },
             getTabs() {
                 const tabs = [

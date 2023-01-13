@@ -1,5 +1,5 @@
 <script setup>
-    import {ref, onMounted, nextTick} from "vue";
+    import {ref, onMounted, nextTick, watch} from "vue";
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
     import dagre from "dagre"
@@ -97,19 +97,22 @@
         return position;
     };
 
-    const toggleOrientation = () => {
-        localStorage.setItem(
-            "topology-orientation",
-            localStorage.getItem("topology-orientation") !== "0" ? "0" : "1"
-        );
-        isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
-
+    const regenerateGraph = () => {
         removeEdges(getEdges.value)
         removeNodes(getNodes.value)
 
         nextTick(() => {
             generateGraph();
         })
+    }
+
+    const toggleOrientation = () => {
+        localStorage.setItem(
+            "topology-orientation",
+            localStorage.getItem("topology-orientation") !== "0" ? "0" : "1"
+        );
+        isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
+        regenerateGraph();
     };
 
     const generateGraph = () => {
@@ -192,6 +195,10 @@
     onMounted(() => {
         generateGraph();
     })
+
+    watch(() => props.flowGraph, async () => {
+        regenerateGraph()
+    });
 
     const onMouseOver = (node) => {
         addSelectedElements(linkedElements(id, node.uid));

@@ -31,7 +31,7 @@
             };
         },
         watch: {
-            execution: function () {
+            execution() {
                 this.loadGraph();
             },
         },

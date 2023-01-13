@@ -79,6 +79,7 @@
             follow() {
                 const self = this;
                 this.closeSSE();
+                this.previousExecutionId = this.$route.params.id;
                 this.$store
                     .dispatch("execution/followExecution", this.$route.params)
                     .then(sse => {

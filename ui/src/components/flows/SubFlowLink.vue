@@ -1,5 +1,5 @@
 <template>
-    <component :icon="AxisYArrow" :is="component" @click="click" class="node-action" size="small" type="primary">
+    <component :icon="AxisYArrow" :is="component" @click="click" class="node-action" size="small">
         <span v-if="component !== 'el-button'">{{ $t('sub flow') }}</span>
     </component>
 </template>

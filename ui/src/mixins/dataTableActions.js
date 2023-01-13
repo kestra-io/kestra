@@ -36,7 +36,7 @@ export default {
         },
     },
     watch: {
-        $route(oldValue, newValue) {
+        $route(newValue, oldValue) {
             if (oldValue.name === newValue.name && newValue.query !== oldValue.query) {
                 this.load(this.onDataLoaded);
             }

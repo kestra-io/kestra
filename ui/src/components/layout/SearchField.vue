@@ -27,7 +27,7 @@
             }
         },
         watch: {
-            $route(oldValue, newValue) {
+            $route(newValue, oldValue) {
                 if (oldValue.name === newValue.name) {
                     this.init()
                 }

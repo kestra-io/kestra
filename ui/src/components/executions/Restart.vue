@@ -92,7 +92,7 @@
         },
         emits: ["follow"],
         watch: {
-            isOpen(newValue, oldValue) {
+            isOpen(newValue) {
                 if (newValue) {
                     this.loadRevision()
                 }

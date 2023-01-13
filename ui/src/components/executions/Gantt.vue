@@ -83,7 +83,7 @@
             };
         },
         watch: {
-            execution(oldValue, newValue) {
+            execution(newValue, oldValue) {
                 if (oldValue.id !== newValue.id) {
                     this.realTime = true;
                     this.paint();

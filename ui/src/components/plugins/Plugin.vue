@@ -54,7 +54,7 @@
             this.loadPlugin()
         },
         watch: {
-            $route(oldValue, newValue) {
+            $route(newValue, oldValue) {
                 if (newValue.name.startsWith("plugins/")) {
                     this.onRouterChange();
                 }

@@ -96,7 +96,7 @@
             }
         },
         watch: {
-            $route(oldValue, newValue) {
+            $route(newValue, oldValue) {
                 if (oldValue.name === newValue.name && this.execution.id !== this.$route.params.id) {
                     this.$store.dispatch(
                         "execution/loadExecution",

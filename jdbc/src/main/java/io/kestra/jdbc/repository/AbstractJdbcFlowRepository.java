@@ -16,11 +16,13 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.TaskDefaultService;
 import io.kestra.jdbc.JdbcMapper;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.jooq.*;
@@ -33,6 +35,8 @@ import javax.validation.ConstraintViolationException;
 
 @Singleton
 public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository implements FlowRepositoryInterface {
+    @Inject
+    private final TaskDefaultService taskDefaultService;
     private final QueueInterface<Flow> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
     private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
@@ -46,6 +50,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.flowQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED));
+        this.taskDefaultService = applicationContext.getBean(TaskDefaultService.class);
 
         this.jdbcRepository.setDeserializer(record -> {
             String source = record.get("value", String.class);
@@ -97,6 +102,44 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 return this.jdbcRepository.fetchOne(from);
             });
     }
+
+    @Override
+    public Optional<String> findSourceById(String namespace, String id, Optional<Integer> revision) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                Select<Record1<String>> from;
+
+                from = revision.map(integer -> context
+                        .select(field("source_code", String.class))
+                        .from(jdbcRepository.getTable())
+                        .where(field("namespace").eq(namespace))
+                        .and(field("id", String.class).eq(id))
+                        .and(field("revision", Integer.class).eq(integer)))
+                    .orElseGet(() -> context
+                        .select(field("source_code", String.class))
+                        .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
+                        .where(this.defaultFilter())
+                        .and(field("namespace", String.class).eq(namespace))
+                        .and(field("id", String.class).eq(id)));
+                Record1<String> fetched = from.fetchAny();
+                return fetched != null ? Optional.of(fetched.get("source_code", String.class)) : Optional.empty();
+            });
+    }
+
+    @Override
+    public Optional<Map<String, Object>> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+        Optional<Flow> flow = findById(namespace, id, revision);
+        Optional<String> sourceCode = findSourceById(namespace, id, revision);
+        if (flow.isPresent() && sourceCode.isPresent()) {
+
+            return Optional.of(Map.of("flow", flow.get(), "sourceCode", sourceCode.get()));
+        }
+
+        return Optional.empty();
+    }
+
 
     @Override
     public List<Flow> findRevisions(String namespace, String id) {
@@ -237,9 +280,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Flow create(Flow flow, String flowSource) throws ConstraintViolationException {
+    public Map<String, Object> create(Flow flow, String flowSource) throws ConstraintViolationException {
         // control if create is valid
-        flow.validate()
+        taskDefaultService.injectDefaults(flow).validate()
             .ifPresent(s -> {
                 throw s;
             });
@@ -250,27 +293,27 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @Override
     public Flow create(Flow flow) throws ConstraintViolationException {
         // control if create is valid
-        flow.validate()
+        taskDefaultService.injectDefaults(flow).validate()
             .ifPresent(s -> {
                 throw s;
             });
 
-        return this.save(flow, CrudEventType.CREATE, null);
+        return (Flow) this.save(flow, CrudEventType.CREATE, null).get("flow");
     }
 
     @Override
-    public Flow update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
+    public Map<String, Object> update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
         // control if update is valid
         this
             .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(flow))
+            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
             .filter(Optional::isPresent)
             .map(Optional::get)
             .ifPresent(s -> {
                 throw s;
             });
 
-        Flow saved = this.save(flow, CrudEventType.UPDATE, flowSource);
+        Map<String, Object> saved = this.save(flow, CrudEventType.UPDATE, flowSource);
 
         FlowService
             .findRemovedTrigger(flow, previous)
@@ -284,14 +327,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         // control if update is valid
         this
             .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(flow))
+            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
             .filter(Optional::isPresent)
             .map(Optional::get)
             .ifPresent(s -> {
                 throw s;
             });
 
-        Flow saved = this.save(flow, CrudEventType.UPDATE, null);
+        Flow saved = (Flow) this.save(flow, CrudEventType.UPDATE, null).get("flow");
 
         FlowService
             .findRemovedTrigger(flow, previous)
@@ -301,7 +344,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @SneakyThrows
-    private Flow save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
+    private Map<String, Object> save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         // validate the flow
         modelValidator
             .isValid(flow)
@@ -309,10 +352,16 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 throw s;
             });
 
+        try {
+            flowSource = flowSource != null ? flowSource : JacksonMapper.ofYaml().writeValueAsString(flow);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         // flow exists, return it
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow)) {
-            return exists.get();
+        Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
+        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && existsSource.get().equals(flowSource)) {
+            return Map.of("flow", exists.get(), "sourceCode", existsSource.get());
         }
 
         List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
@@ -324,14 +373,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         }
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(flow);
-        fields.put(field("source_code"), flowSource != null ? flowSource : JacksonMapper.ofYaml().writeValueAsString(flow));
+        fields.put(field("source_code"), flowSource);
 
         this.jdbcRepository.persist(flow, fields);
 
         flowQueue.emit(flow);
         eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
-        return flow;
+        return Map.of("flow", flow, "sourceCode", flowSource);
     }
 
     @SneakyThrows

@@ -53,7 +53,6 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     private static final String INDEX_NAME = "flows";
     protected static final String REVISIONS_NAME = "flows-revisions";
     protected static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson();
-    protected static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
 
     private final QueueInterface<Flow> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
@@ -125,6 +124,40 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         List<Flow> query = this.query(revision.isPresent() ? REVISIONS_NAME : INDEX_NAME, sourceBuilder);
 
         return query.size() > 0 ? Optional.of(query.get(0)) : Optional.empty();
+    }
+
+    @Override
+    public Optional<String> findSourceById(String namespace, String id, Optional<Integer> revision) {
+        BoolQueryBuilder bool = this.defaultFilter()
+            .must(QueryBuilders.termQuery("namespace", namespace))
+            .must(QueryBuilders.termQuery("id", id));
+
+        revision
+            .ifPresent(v -> {
+                this.removeDeleted(bool);
+                bool.must(QueryBuilders.termQuery("revision", v));
+            });
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+            .query(bool)
+            .fetchSource("sourceCode", "")
+            .sort(new FieldSortBuilder("revision").order(SortOrder.DESC))
+            .size(1);
+
+        List<Map> query = this.query(revision.isPresent() ? REVISIONS_NAME : INDEX_NAME, sourceBuilder, Map.class);
+        return query.size() > 0 ? Optional.of((String) query.get(0).get("sourceCode")) : Optional.empty();
+    }
+
+    @Override
+    public Optional<Map<String, Object>> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+        Optional<Flow> flow = findById(namespace, id, revision);
+        Optional<String> sourceCode = findSourceById(namespace, id, revision);
+        if (flow.isPresent() && sourceCode.isPresent()) {
+
+            return Optional.of(Map.of("flow", flow.get(), "sourceCode", sourceCode.get()));
+        }
+
+        return Optional.empty();
     }
 
     private void removeDeleted(BoolQueryBuilder bool) {
@@ -276,10 +309,10 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        return this.save(flow, CrudEventType.CREATE, null);
+        return (Flow) this.save(flow, CrudEventType.CREATE, null).get("flow");
     }
 
-    public Flow create(Flow flow, String flowSource) throws ConstraintViolationException {
+    public Map<String, Object> create(Flow flow, String flowSource) throws ConstraintViolationException {
         // control if create is valid
         taskDefaultService.injectDefaults(flow).validate()
             .ifPresent(s -> {
@@ -293,23 +326,23 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         // control if update is valid
         this
             .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(flow))
+            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
             .filter(Optional::isPresent)
             .map(Optional::get)
             .ifPresent(s -> {
                 throw s;
             });
 
-        Flow saved = this.save(flow, CrudEventType.UPDATE, null);
+        Map<String, Object> saved = this.save(flow, CrudEventType.UPDATE, null);
 
         FlowService
             .findRemovedTrigger(flow, previous)
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
-        return saved;
+        return (Flow) saved.get("flow");
     }
 
-    public Flow update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
+    public Map<String, Object> update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
         // control if update is valid
         this
             .findById(previous.getNamespace(), previous.getId())
@@ -320,7 +353,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        Flow saved = this.save(flow, CrudEventType.UPDATE, flowSource);
+        Map<String, Object> saved = this.save(flow, CrudEventType.UPDATE, flowSource);
 
         FlowService
             .findRemovedTrigger(flow, previous)
@@ -329,16 +362,23 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         return saved;
     }
 
-    public Flow save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
+    public Map<String, Object> save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         modelValidator
             .isValid(flow)
             .ifPresent(s -> {
                 throw s;
             });
 
+        try {
+            flowSource = flowSource != null ? flowSource : JacksonMapper.ofYaml().writeValueAsString(flow);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow)) {
-            return exists.get();
+        Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
+        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && existsSource.get().equals(flowSource)) {
+            return Map.of("flow", exists.get(), "sourceCode", existsSource.get());
         }
 
         List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
@@ -352,7 +392,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         String json;
         try {
             Map<String, Object> flowMap = JacksonMapper.toMap(flow);
-            flowMap.put("sourceCode", flowSource != null ? flowSource : YAML_MAPPER.writeValueAsString(flow));
+            flowMap.put("sourceCode", flowSource);
             if (flow.getLabels() != null) {
                 flowMap.put("labelsMap", flow.getLabels()
                     .entrySet()
@@ -373,7 +413,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
         eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
-        return flow;
+        return Map.of("flow", flow, "sourceCode", flowSource);
     }
 
     @Override

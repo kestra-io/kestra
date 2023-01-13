@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +65,7 @@ public class LocalFlowRepositoryLoader {
         for (Path file: list) {
             try {
                 Flow parse = yamlFlowParser.parse(file.toFile());
-                flowRepository.create(parse);
+                flowRepository.create(parse,Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset()));
                 log.trace("Created flow {}.{}", parse.getNamespace(), parse.getId());
             } catch (ConstraintViolationException e) {
                 log.warn("Unable to create flow {}", file, e);

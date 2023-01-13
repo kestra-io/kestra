@@ -35,6 +35,18 @@ public interface FlowRepositoryInterface {
         return this.findById(namespace, id, Optional.empty());
     }
 
+    Optional<String> findSourceById(String namespace, String id, Optional<Integer> revision);
+
+    default Optional<String> findSourceById(String namespace, String id) {
+        return this.findSourceById(namespace, id, Optional.empty());
+    }
+
+    Optional<Map<String, Object>> findByIdWithSource(String namespace, String id, Optional<Integer> revision);
+
+    default Optional<Map<String, Object>> findByIdWithSource(String namespace, String id) {
+        return this.findByIdWithSource(namespace, id, Optional.empty());
+    }
+
     List<Flow> findRevisions(String namespace, String id);
 
     List<Flow> findAll();
@@ -56,11 +68,11 @@ public interface FlowRepositoryInterface {
 
     Flow create(Flow flow) throws ConstraintViolationException;
 
-    Flow create(Flow flow,String flowSource);
+    Map<String, Object> create(Flow flow, String flowSource);
 
     Flow update(Flow flow, Flow previous) throws ConstraintViolationException;
 
-    Flow update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException;
+    Map<String, Object> update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException;
 
     Flow delete(Flow flow);
 }

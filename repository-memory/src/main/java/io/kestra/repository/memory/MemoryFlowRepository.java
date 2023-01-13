@@ -1,6 +1,10 @@
 package io.kestra.repository.memory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.value.ValueException;
@@ -31,7 +35,10 @@ import java.util.stream.Collectors;
 public class MemoryFlowRepository implements FlowRepositoryInterface {
     private final HashMap<String, Flow> flows = new HashMap<>();
     private final HashMap<String, Flow> revisions = new HashMap<>();
+    private final HashMap<String, String> flowSources = new HashMap<>();
 
+    @Inject
+    private TaskDefaultService taskDefaultService;
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
     private QueueInterface<Flow> flowQueue;
@@ -46,6 +53,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     @Inject
     private ModelValidator modelValidator;
 
+
     private static String flowId(Flow flow) {
         return flowId(flow.getNamespace(), flow.getId());
     }
@@ -59,6 +67,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     @Override
     public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
+
         return revision
             .map(integer -> this.findRevisions(namespace, id)
                 .stream()
@@ -69,7 +78,33 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 Optional.of(this.flows.get(flowId(namespace, id))) :
                 Optional.empty()
             );
+
     }
+
+    @Override
+    public Optional<String> findSourceById(String namespace, String id, Optional<Integer> revision) {
+        return findSourceById(namespace, id);
+    }
+
+    @Override
+    public Optional<String> findSourceById(String namespace, String id) {
+
+        return this.flowSources.containsKey(flowId(namespace, id)) ?
+            Optional.of(this.flowSources.get(flowId(namespace, id))) :
+            Optional.empty();
+    }
+
+    public Optional<Map<String, Object>> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+        Optional<Flow> flow = findById(namespace, id, revision);
+        Optional<String> sourceCode = findSourceById(namespace, id);
+        if (flow.isPresent() && sourceCode.isPresent()) {
+
+            return Optional.of(Map.of("flow", flow.get(), "sourceCode", sourceCode.get()));
+        }
+
+        return Optional.empty();
+    }
+
 
     @Override
     public List<Flow> findRevisions(String namespace, String id) {
@@ -121,57 +156,80 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     public Flow create(Flow flow) throws ConstraintViolationException {
         // control if create is valid
-        flow.validate()
+        taskDefaultService.injectDefaults(flow).validate()
             .ifPresent(s -> {
                 throw s;
             });
 
-        return this.save(flow, CrudEventType.CREATE);
+        return (Flow) this.save(flow, CrudEventType.CREATE, null).get("flow");
     }
 
     @Override
-    public Flow create(Flow flow, String flowSource) {
+    public Map<String, Object> create(Flow flow, String flowSource) {
+        // control if create is valid
+        taskDefaultService.injectDefaults(flow).validate()
+            .ifPresent(s -> {
+                throw s;
+            });
 
-        return this.save(flow, CrudEventType.CREATE);
+        return this.save(flow, CrudEventType.CREATE, flowSource);
     }
 
     public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
         // control if update is valid
         this
             .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(flow))
+            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
             .filter(Optional::isPresent)
             .map(Optional::get)
             .ifPresent(s -> {
                 throw s;
             });
 
-        Flow saved = this.save(flow, CrudEventType.UPDATE);
+        FlowService
+            .findRemovedTrigger(flow, previous)
+            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
+
+        return (Flow) this.save(flow, CrudEventType.UPDATE, null).get("flow");
+    }
+
+    @Override
+    public Map<String, Object> update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
+        // control if update is valid
+        this
+            .findById(previous.getNamespace(), previous.getId())
+            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .ifPresent(s -> {
+                throw s;
+            });
 
         FlowService
             .findRemovedTrigger(flow, previous)
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
-        return saved;
+        return this.save(flow, CrudEventType.UPDATE, flowSource);
     }
 
-    @Override
-    public Flow update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
-        return this.update(flow, previous);
-    }
-
-    private Flow save(Flow flow, CrudEventType crudEventType) throws ConstraintViolationException {
+    private Map<String, Object> save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         // validate the flow
         modelValidator
-            .isValid(flow)
+            .isValid(taskDefaultService.injectDefaults(flow))
             .ifPresent(s -> {
                 throw s;
             });
 
+        try {
+            flowSource = flowSource != null ? flowSource : JacksonMapper.ofYaml().writeValueAsString(flow);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         // flow exists, return it
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow)) {
-            return exists.get();
+        Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
+        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && existsSource.get().equals(flowSource)) {
+            return Map.of("flow", exists.get(), "sourceCode", existsSource.get());
         }
 
         List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
@@ -184,11 +242,12 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
         this.flows.put(flowId(flow), flow);
         this.revisions.put(flow.uid(), flow);
+        this.flowSources.put(flowId(flow), flowSource);
 
         flowQueue.emit(flow);
         eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
-        return flow;
+        return Map.of("flow", flow, "sourceCode", flowSource);
     }
 
     @Override

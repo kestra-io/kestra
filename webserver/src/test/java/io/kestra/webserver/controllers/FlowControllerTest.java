@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableList;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.tasks.flows.Sequential;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.core.type.Argument;
@@ -32,6 +33,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
 import jakarta.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.*;
@@ -48,10 +50,10 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void id() {
-        Flow result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), Flow.class);
-
-        assertThat(result.getId(), is("full"));
-        assertThat(result.getTasks().size(), is(5));
+        String result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), String.class);
+        Flow flow = new YamlFlowParser().parse(result);
+        assertThat(flow.getId(), is("full"));
+        assertThat(flow.getTasks().size(), is(5));
     }
 
     @Test
@@ -110,7 +112,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         List<Flow> updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
         assertThat(updated.size(), is(3));
 
-        Flow retrieve = client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f1"), Flow.class);
+        Flow retrieve = parseFlow(client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f1"), String.class));
         assertThat(retrieve.getId(), is("f1"));
 
         // update
@@ -159,9 +161,8 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         });
 
         // flow is not updated
-        retrieve = client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f4"), Flow.class);
+        retrieve = parseFlow(client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f4"), String.class));
         assertThat(retrieve.getInputs().get(0).getName(), is("4"));
-
 
         // send 2 same id
         e = assertThrows(
@@ -194,12 +195,12 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     void createFlow() {
         Flow flow = generateFlow("io.kestra.unittest", "a");
 
-        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
+        Flow result = parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
 
         assertThat(result.getId(), is(flow.getId()));
         assertThat(result.getInputs().get(0).getName(), is("a"));
 
-        Flow get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), Flow.class);
+        Flow get = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId()), String.class));
         assertThat(get.getId(), is(flow.getId()));
         assertThat(get.getInputs().get(0).getName(), is("a"));
 
@@ -303,7 +304,8 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(result.getId(), is(flow.getId()));
 
-        Flow finalFlow = generateFlow(IdUtils.create(), "io.kestra.unittest2", "b");;
+        Flow finalFlow = generateFlow(IdUtils.create(), "io.kestra.unittest2", "b");
+        ;
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().exchange(
@@ -325,22 +327,21 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size(), is(2));
+        assertThat(namespaces.size(), is(3));
     }
 
     @Test
     void createFlowFromString() throws IOException {
-        URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleFlow.yaml");
-        assert resource != null;
+        String flow = generateFlowAsString("io.kestra.unittest","a");
+        Flow assertFlow = parseFlow(flow);
 
-        String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
-        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), Flow.class);
+        FlowController.FlowResponse result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowController.FlowResponse.class);
 
-        assertThat(result.getId(), is("test-flow"));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        assertThat(result.getFlow().getId(), is(assertFlow.getId()));
+        assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
 
-        Flow get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest/test-flow"), Flow.class);
-        assertThat(get.getId(), is("test-flow"));
+        Flow get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest/"+assertFlow.getId()), Flow.class);
+        assertThat(get.getId(), is(assertFlow.getId()));
         assertThat(get.getInputs().get(0).getName(), is("a"));
 
     }
@@ -364,28 +365,23 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void updateFlowFromString() throws IOException {
-        URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleFlow.yaml");
-        assert resource != null;
+        String flow = generateFlowAsString("updatedFlow","io.kestra.unittest","a");
+        Flow assertFlow = parseFlow(flow);
 
-        String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
+        FlowController.FlowResponse result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowController.FlowResponse.class);
 
-        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), Flow.class);
+        assertThat(result.getFlow().getId(), is(assertFlow.getId()));
+        assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
 
-        assertThat(result.getId(), is("test-flow"));
-        assertThat(result.getInputs().get(0).getName(), is("a"));
+        flow = generateFlowAsString("updatedFlow","io.kestra.unittest","b");
 
-        resource = TestsUtils.class.getClassLoader().getResource("flows/simpleflowUpdate.yaml");
-        assert resource != null;
-
-        flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
-
-        Flow get = client.toBlocking().retrieve(
-            PUT("/api/v1/flows/io.kestra.unittest/test-flow", flow).contentType(MediaType.TEXT_PLAIN),
-            Flow.class
+        FlowController.FlowResponse get = client.toBlocking().retrieve(
+            PUT("/api/v1/flows/io.kestra.unittest/updatedFlow", flow).contentType(MediaType.TEXT_PLAIN),
+            FlowController.FlowResponse.class
         );
 
-        assertThat(get.getId(), is("test-flow"));
-        assertThat(get.getInputs().get(0).getName(), is("b"));
+        assertThat(get.getFlow().getId(), is(assertFlow.getId()));
+        assertThat(get.getFlow().getInputs().get(0).getName(), is("b"));
 
         String finalFlow = flow;
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
@@ -403,9 +399,9 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
 
-        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), Flow.class);
+        FlowController.FlowResponse result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowController.FlowResponse.class);
 
-        assertThat(result.getId(), is("test-flow"));
+        assertThat(result.getFlow().getId(), is("test-flow"));
 
         resource = TestsUtils.class.getClassLoader().getResource("flows/simpleInvalidFlowUpdate.yaml");
         assert resource != null;
@@ -463,5 +459,40 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             .type(Return.class.getName())
             .format(format)
             .build();
+    }
+
+    private Flow parseFlow(String flow) {
+        return new YamlFlowParser().parse(flow);
+    }
+
+    private String generateFlowAsString(String friendlyId, String namespace, String format) {
+        return String.format("id: %s\n" +
+            "# Comment i added\n" +
+            "namespace: %s\n" +
+            "inputs:\n" +
+            "  - name: %s\n" +
+            "    type: STRING\n" +
+            "tasks:\n" +
+            "  - id: test\n" +
+            "    type: io.kestra.core.tasks.debugs.Return\n" +
+            "    format: test\n" +
+            "disabled: false\n" +
+            "deleted: false", friendlyId,namespace, format);
+
+    }
+    private String generateFlowAsString(String namespace, String format) {
+        return String.format("id: %s\n" +
+            "# Comment i added\n" +
+            "namespace: %s\n" +
+            "inputs:\n" +
+            "  - name: %s\n" +
+            "    type: STRING\n" +
+            "tasks:\n" +
+            "  - id: test\n" +
+            "    type: io.kestra.core.tasks.debugs.Return\n" +
+            "    format: test\n" +
+            "disabled: false\n" +
+            "deleted: false", IdUtils.create(),namespace, format);
+
     }
 }

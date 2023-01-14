@@ -79,14 +79,18 @@ The frontend is made with [Vue.js](https://vuejs.org/) and located on the `/ui` 
 - You can run `npm run build` in order to build the front-end that will be delivered from the
 backend (without running the `npm run dev`) above.
 
-> If you have CORS restrictions when using the local development npm server, you need to configure
-> the backend to allow the http://localhost:5173 origin
-> ```cors:
->      enabled: true
->      configurations:
->        all:
->          allowedOrigins:
->            - http://localhost:5173
+If you have CORS restrictions when using the local development npm server, you need to configure the backend to allow the http://localhost:5173 origin on `cli/src/main/resources/application-override.yml`
+
+```yaml
+micronaut:
+  server:
+    cors:
+      enabled: true
+      configurations:
+        all:
+          allowedOrigins:
+            - http://localhost:5173
+```
 
 #### Develop plugins
 A complete documentation for developing plugin can be found [here](https://kestra.io/docs/plugin-developer-guide/).

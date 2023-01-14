@@ -79,7 +79,7 @@ The frontend is made with [Vue.js](https://vuejs.org/) and located on the `/ui` 
 - You can run `npm run build` in order to build the front-end that will be delivered from the
 backend (without running the `npm run dev`) above.
 
-If you have CORS restrictions when using the local development npm server, you need to configure the backend to allow the http://localhost:5173 origin on `cli/src/main/resources/application-override.yml`
+If you have CORS restrictions when using the local development npm server, you need to configure the backend to allow the http://localhost:5173 origin in `cli/src/main/resources/application-override.yml`
 
 ```yaml
 micronaut:

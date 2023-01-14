@@ -1,5 +1,7 @@
 package io.kestra.webserver.controllers;
 
+import io.micronaut.context.annotation.Value;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
@@ -11,9 +13,13 @@ import java.net.URI;
 @Slf4j
 @Controller
 public class RedirectController {
+    @Nullable
+    @Value("${micronaut.server.context-path}")
+    protected String basePath;
+
     @Get
     @Hidden
     public HttpResponse<?> slash() {
-        return HttpResponse.temporaryRedirect(URI.create("/ui/"));
+        return HttpResponse.temporaryRedirect(URI.create((basePath != null ? basePath : "") + "/ui/"));
     }
 }

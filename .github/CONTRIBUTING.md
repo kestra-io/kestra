@@ -73,11 +73,11 @@ python3 -m pip install virtualenv
 The frontend is made with [Vue.js](https://vuejs.org/) and located on the `/ui` folder.
 
 - `npm install`
-- create a files `ui/.env.development.local` with content `VUE_APP_API_URL=http://localhost:8080` (or your actual server url)
-- `npm run serve` will start the development server with hot reload.
+- create a files `ui/.env.development.local` with content `VITE_APP_API_URL=http://localhost:8080` (or your actual server url)
+- `npm run dev` will start the development server with hot reload.
 - The server start by default on port 8090 and is reachable on `http://localhost:5173`
 - You can run `npm run build` in order to build the front-end that will be delivered from the
-backend (without running the `npm serve`) above.
+backend (without running the `npm run dev`) above.
 
 > If you have CORS restrictions when using the local development npm server, you need to configure
 > the backend to allow the http://localhost:5173 origin
@@ -86,7 +86,7 @@ backend (without running the `npm serve`) above.
 >      configurations:
 >        all:
 >          allowedOrigins:
->            - http://localhost:5173```
+>            - http://localhost:5173
 
 #### Develop plugins
 A complete documentation for developing plugin can be found [here](https://kestra.io/docs/plugin-developer-guide/).

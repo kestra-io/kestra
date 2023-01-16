@@ -77,6 +77,20 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
                 "interpreterArgs:",
                 "  - /c",
             }
+        ),
+        @Example(
+            title = "Set outputs from bash standard output",
+            code = {
+                "commands:",
+                "  - echo '::{\"outputs\":{\"test\":\"value\",\"int\":2,\"bool\":true,\"float\":3.65}}::'",
+            }
+        ),
+        @Example(
+            title = "Send a counter metric from bash standard output",
+            code = {
+                "commands:",
+                "  - echo '::{\"metrics\":[{\"name\":\"count\",\"type\":\"counter\",\"value\":1,\"tags\":{\"tag1\":\"i\",\"tag2\":\"win\"}}]}::'",
+            }
         )
     }
 )

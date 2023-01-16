@@ -60,10 +60,6 @@ export default {
             type: String,
             default: undefined
         },
-        taskIndex: {
-            type: Number,
-            default: undefined
-        },
         flowId: {
             type: String,
             required: true
@@ -112,6 +108,7 @@ export default {
         return {
             uuid: Utils.uid(),
             taskYaml: undefined,
+            taskIndex: undefined,
             isModalOpen: false,
         };
     },

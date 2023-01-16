@@ -6,6 +6,7 @@ import io.kestra.core.models.templates.Template;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
+import javax.validation.ConstraintViolationException;
 
 public interface TemplateRepositoryInterface {
     Optional<Template> findById(String namespace, String id);
@@ -21,6 +22,8 @@ public interface TemplateRepositoryInterface {
     List<Template> findByNamespace(String namespace);
 
     Template create(Template template);
+
+    Template create(Template template, String templateSource) throws ConstraintViolationException;
 
     Template update(Template template, Template previous);
 

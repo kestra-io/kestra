@@ -48,7 +48,8 @@
     "vue-router": "^4.1.6",
     "vue-sidebar-menu": "^5.2.5",
     "vuex": "^4.1.0",
-    "xss": "^1.0.14"
+    "xss": "^1.0.14",
+    "yaml": "^2.2.1"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.4",

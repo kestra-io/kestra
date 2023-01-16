@@ -123,6 +123,16 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
         return template;
     }
 
+    @Override
+    public Template create(Template template, String templateSource) throws ConstraintViolationException {
+        this.jdbcRepository.persist(template);
+
+        templateQueue.emit(template);
+        eventPublisher.publishEvent(new CrudEvent<>(template, CrudEventType.CREATE));
+
+        return template;
+    }
+
     public Template update(Template template, Template previous) throws ConstraintViolationException {
         this
             .findById(previous.getNamespace(), previous.getId())

@@ -296,7 +296,7 @@ public class JdbcExecutor implements ExecutorInterface {
         }
 
         // send metrics on terminated
-        if (message.getTaskRun().getState().isTerninated()) {
+        if (message.getTaskRun().getState().isTerminated()) {
             metricRegistry
                 .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
                 .increment();

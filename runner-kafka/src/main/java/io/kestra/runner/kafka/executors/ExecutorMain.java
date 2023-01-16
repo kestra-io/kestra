@@ -628,7 +628,7 @@ public class ExecutorMain implements KafkaExecutorInterface {
 
     private void purgeWorkerRunning(KStream<String, WorkerTaskResult> workerTaskResultKStream) {
         workerTaskResultKStream
-            .filter((key, value) -> value.getTaskRun().getState().isTerninated(), Named.as("PurgeWorkerRunning.filterTerminated"))
+            .filter((key, value) -> value.getTaskRun().getState().isTerminated(), Named.as("PurgeWorkerRunning.filterTerminated"))
             .mapValues((readOnlyKey, value) -> (WorkerTaskRunning)null, Named.as("PurgeWorkerRunning.toNull"))
             .to(
                 kafkaAdminService.getTopicName(WorkerTaskRunning.class),

@@ -119,7 +119,7 @@ public class TaskRun {
         } else {
             ArrayList<TaskRunAttempt> taskRunAttempts = new ArrayList<>(taskRunBuilder.attempts);
             TaskRunAttempt lastAttempt = taskRunAttempts.get(taskRunBuilder.attempts.size() - 1);
-            if (!lastAttempt.getState().isTerninated()) {
+            if (!lastAttempt.getState().isTerminated()) {
                 taskRunAttempts.set(taskRunBuilder.attempts.size() - 1, lastAttempt.withState(State.Type.KILLED));
             } else {
                 taskRunAttempts.add(TaskRunAttempt.builder()

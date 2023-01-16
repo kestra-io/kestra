@@ -65,7 +65,7 @@ class WorkerTest {
         workerTaskQueue.emit(workerTask("1"));
 
         Await.until(
-            () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isTerninated(),
+            () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isTerminated(),
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );
@@ -99,7 +99,7 @@ class WorkerTest {
         executionKilledQueue.emit(ExecutionKilled.builder().executionId(workerTask.getTaskRun().getExecutionId()).build());
 
         Await.until(
-            () -> workerTaskResult.stream().filter(r -> r.getTaskRun().getState().isTerninated()).count() == 5,
+            () -> workerTaskResult.stream().filter(r -> r.getTaskRun().getState().isTerminated()).count() == 5,
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );

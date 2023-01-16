@@ -521,7 +521,9 @@ public class ExecutionController {
         if (execution.isEmpty()) {
             return null;
         }
-
+        if (!execution.get().getState().isFailed()) {
+            throw new IllegalStateException(String.format("Execution is not in state %s or %s", State.Type.FAILED, State.Type.KILLED));
+        }
         this.controlRevision(execution.get(), revision);
 
         Execution restart = executionService.restart(execution.get(), revision);
@@ -529,6 +531,41 @@ public class ExecutionController {
         eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
 
         return restart;
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/restart", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Restart a list of execution from an old one")
+    public MutableHttpResponse<Object> bulkRestart(
+        @Parameter(description = "The execution id") @Body List<String> executionsId
+    ) throws Exception {
+        List<Execution> executions = new ArrayList<>();
+        List<String> executionsNotFound = new ArrayList<>();
+        List<String> executionsNotFailed = new ArrayList<>();
+        for (String executionId : executionsId) {
+            Optional<Execution> execution = executionRepository.findById(executionId);
+            if (execution.isPresent() && !execution.get().getState().isFailed()) {
+                executionsNotFailed.add(executionId);
+            } else if (execution.isEmpty()) {
+                executionsNotFound.add(executionId);
+            } else {
+                executions.add(execution.get());
+
+            }
+        }
+        if (executionsNotFound.size() > 0) {
+
+            throw new IllegalStateException(String.format("One or more executions are not in state %s or %s or were not found, can't restart them" +
+                "\nNot found: %s" +
+                "\nBad state: %s", State.Type.FAILED, State.Type.KILLED, executionsNotFound, executionsNotFailed));
+        }
+        for (Execution execution : executions) {
+            Execution restart = executionService.restart(execution, null);
+            executionQueue.emit(restart);
+            eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
+        }
+
+        return HttpResponse.status(HttpStatus.NO_CONTENT);
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -135,6 +135,12 @@ public class State {
         return this.current.isFailed();
     }
 
+    @JsonIgnore
+    public boolean isRestartable() {
+        return this.current.isFailed();
+    }
+
+
     @Introspected
     public enum Type {
         CREATED,
@@ -160,7 +166,7 @@ public class State {
         }
 
         public boolean isFailed() {
-            return this == Type.FAILED || this == Type.PAUSED;
+            return this == Type.FAILED || this == Type.PAUSED || this == Type.KILLED;
         }
     }
 

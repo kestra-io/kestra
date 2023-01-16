@@ -170,7 +170,7 @@
                 }
 
                 return (this.isReplay && !State.isRunning(this.execution.state.current)) ||
-                    (!this.isReplay && this.execution.state.current === State.FAILED);
+                    (!this.isReplay && (this.execution.state.current === State.FAILED || this.execution.state.current === State.KILLED));
             }
         },
         data() {

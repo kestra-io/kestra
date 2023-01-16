@@ -25,6 +25,11 @@ export default {
                     }
                 })
         },
+        bulkRestartExecution(_, options) {
+            return this.$http.post(
+                `/api/v1/executions/restart`,
+                options.executionsId)
+        },
         replayExecution(_, options) {
             return this.$http.post(
                 `/api/v1/executions/${options.executionId}/replay`,
@@ -46,6 +51,9 @@ export default {
         },
         kill(_, options) {
             return this.$http.delete(`/api/v1/executions/${options.id}/kill`);
+        },
+        bulkKill(_, options) {
+            return this.$http.delete(`/api/v1/executions/kill`, {data: options.executionsId});
         },
         loadExecution({commit}, options) {
             return this.$http.get(`/api/v1/executions/${options.id}`).then(response => {
@@ -72,6 +80,9 @@ export default {
             return this.$http.delete(`/api/v1/executions/${options.id}`).then(() => {
                 commit("setExecution", null)
             })
+        },
+        bulkDeleteExecution({commit}, options) {
+            return this.$http.delete(`/api/v1/executions`, {data: options.executionsId})
         },
         followExecution(_, options) {
             return new EventSource(`${this.$http.defaults.baseURL}api/v1/executions/${options.id}/follow`);

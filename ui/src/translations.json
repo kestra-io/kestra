@@ -242,6 +242,11 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stopped this one.<br />You need to kill it if you want to stop it!</div>",
     "restore": "Restore",
     "restore confirm": "Are you sure to restore the revision <code>{revision}</code>?",
+    "bulk delete": "Are you sure you want to delete {executionCount} execution(s) ?",
+    "bulk restart": "Are you sure you want to restart {executionCount} execution(s) ?",
+    "bulk kill": "Are you sure you want to kill {executionCount} execution(s) ?",
+    "bulk restart alert": "Only FAILED and KILLED execution can be restarted.",
+    "cancel": "Cancel",
     "homeDashboard": {
       "today": "Today",
       "yesterday": "Yesterday",

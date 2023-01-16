@@ -8,10 +8,7 @@ import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
+import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.http.server.types.files.StreamedFile;
@@ -261,6 +258,34 @@ public class ExecutionController {
         }
     }
 
+    @Delete(uri = "executions", produces = MediaType.TEXT_JSON)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Executions"}, summary = "Delete an execution")
+    @ApiResponses(
+        @ApiResponse(responseCode = "204", description = "On success")
+    )
+    public MutableHttpResponse bulkDelete(
+        @Parameter(description = "The execution id") @Body List<String> executionsId
+    ) {
+        List<Execution> executions = new ArrayList<>();
+        List<String> executionsNotFound = new ArrayList<>();
+        for (String executionId : executionsId) {
+            Optional<Execution> execution = executionRepository.findById(executionId);
+            if (execution.isPresent()) {
+                executions.add(execution.get());
+            } else {
+                executionsNotFound.add(executionId);
+            }
+        }
+        if (executionsNotFound.size() > 0) {
+            return HttpResponse.status(HttpStatus.NOT_FOUND, String.format("One or more executions were not found : %s", executionsNotFound));
+        }
+        for (Execution execution : executions) {
+            executionRepository.delete(execution);
+        }
+        return HttpResponse.status(HttpStatus.NO_CONTENT);
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Search for executions for a flow")
@@ -360,7 +385,8 @@ public class ExecutionController {
         @Parameter(description = "The flow id") String id,
         @Parameter(description = "The inputs") @Nullable Map<String, String> inputs,
         @Parameter(description = "The inputs of type file") @Nullable Publisher<StreamingFileUpload> files,
-        @Parameter(description = "If the server will wait the end of the execution") @QueryValue(value = "wait", defaultValue = "false") Boolean wait
+        @Parameter(description = "If the server will wait the end of the execution") @QueryValue(value = "wait", defaultValue = "false") Boolean
+            wait
     ) {
         Optional<Flow> find = flowRepository.findById(namespace, id);
         if (find.isEmpty()) {
@@ -439,7 +465,7 @@ public class ExecutionController {
         Optional<String> redirectedExecution = storageInterface.extractExecutionId(path);
 
         if (redirectedExecution.isPresent()) {
-            return HttpResponse.redirect(URI.create((basePath != null? basePath : "") +
+            return HttpResponse.redirect(URI.create((basePath != null ? basePath : "") +
                 redirect.replace("{executionId}", redirectedExecution.get()))
             );
         }
@@ -472,7 +498,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") String executionId,
         @Parameter(description = "The internal storage uri") @QueryValue(value = "path") URI path
     ) throws IOException {
-        HttpResponse<FileMetas> httpResponse =this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file/metas?path=" + path);
+        HttpResponse<FileMetas> httpResponse = this.validateFile(executionId, path, "/api/v1/executions/{executionId}/file/metas?path=" + path);
         if (httpResponse != null) {
             return httpResponse;
         }
@@ -488,7 +514,8 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Restart a new execution from an old one")
     public Execution restart(
         @Parameter(description = "The execution id") String executionId,
-        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue(value = "revision") Integer revision
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue(value = "revision") Integer
+            revision
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
@@ -510,7 +537,8 @@ public class ExecutionController {
     public Execution replay(
         @Parameter(description = "the original execution id to clone") String executionId,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue(value = "taskRunId") String taskRunId,
-        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue(value = "revision") Integer revision
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue(value = "revision") Integer
+            revision
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
@@ -535,7 +563,7 @@ public class ExecutionController {
             );
 
             if (flowRevision.isEmpty()) {
-                throw new NoSuchElementException("Unable to find revision " + revision  +
+                throw new NoSuchElementException("Unable to find revision " + revision +
                     " on flow " + execution.getNamespace() + "." + execution.getFlowId()
                 );
             }
@@ -580,7 +608,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") String executionId
     ) {
         Optional<Execution> execution = executionRepository.findById(executionId);
-        if (execution.isPresent() && execution.get().getState().isTerninated()) {
+        if (execution.isPresent() && execution.get().getState().isTerminated()) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
         }
 
@@ -591,6 +619,47 @@ public class ExecutionController {
         );
 
         return HttpResponse.noContent();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "executions/kill", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Kill an execution")
+    @ApiResponses(
+        value = {
+            @ApiResponse(responseCode = "204", description = "On success"),
+            @ApiResponse(responseCode = "409", description = "if the executions is already finished")
+        }
+    )
+    public HttpResponse<?> bulkKill(
+        @Parameter(description = "The execution id") @Body List<String> executionsId
+    ) {
+        List<Execution> executions = new ArrayList<>();
+        List<String> executionsNotFound = new ArrayList<>();
+        List<String> executionsFinished = new ArrayList<>();
+        for (String executionId : executionsId) {
+            Optional<Execution> execution = executionRepository.findById(executionId);
+            if (execution.isPresent() && execution.get().getState().isTerminated()) {
+                executionsFinished.add(executionId);
+            } else if (execution.isEmpty()) {
+                executionsNotFound.add(executionId);
+            } else {
+                executions.add(execution.get());
+
+            }
+        }
+        if (executionsNotFound.size() > 0) {
+            throw new IllegalStateException(String.format("One or more executions are already finished or were not found, can't kill them" +
+                "\nNot found: %s" +
+                "\nAlready finished: %s", executionsNotFound, executionsFinished));
+        }
+        for (Execution execution : executions) {
+            killQueue.emit(ExecutionKilled
+                .builder()
+                .executionId(execution.getId())
+                .build()
+            );
+        }
+        return HttpResponse.status(HttpStatus.NO_CONTENT);
     }
 
     private boolean isStopFollow(Flow flow, Execution execution) {

@@ -166,7 +166,7 @@ public class State {
         }
 
         public boolean isFailed() {
-            return this == Type.FAILED || this == Type.PAUSED || this == Type.KILLED;
+            return this == Type.FAILED || this == Type.PAUSED;
         }
     }
 

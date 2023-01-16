@@ -555,9 +555,9 @@ public class ExecutionController {
         }
         if (executionsNotFound.size() > 0) {
 
-            throw new IllegalStateException(String.format("One or more executions are not in state %s or %s or were not found, can't restart them" +
+            throw new IllegalStateException(String.format("One or more executions are not in state %s or were not found, can't restart them" +
                 "\nNot found: %s" +
-                "\nBad state: %s", State.Type.FAILED, State.Type.KILLED, executionsNotFound, executionsNotFailed));
+                "\nBad state: %s", State.Type.FAILED, executionsNotFound, executionsNotFailed));
         }
         for (Execution execution : executions) {
             Execution restart = executionService.restart(execution, null);

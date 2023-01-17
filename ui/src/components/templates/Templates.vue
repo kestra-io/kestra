@@ -33,7 +33,7 @@
                         <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
                             <template #default="scope">
                                 <router-link
-                                    :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
+                                    :to="{name: 'templates/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
                                 >
                                     {{ scope.row.id }}
                                 </router-link>

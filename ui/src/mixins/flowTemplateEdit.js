@@ -32,6 +32,7 @@ export default {
     computed: {
         ...mapState("auth", ["user"]),
         ...mapGetters("flow", ["flow"]),
+        ...mapGetters("template", ["template"]),
         ...mapGetters("flow", ["sourceCode"]),
         ...mapGetters("core", ["isUnsaved"]),
         isEdit() {
@@ -98,10 +99,15 @@ export default {
                 this.item.namespace = "";
                 delete this.item.revision;
             }
-
-            this.content = this.sourceCode;
-            this.previousContent = this.content;
-            if (this.isEdit) {
+            if (this.dataType === "template") {
+                this.content = YamlUtils.stringify(this.template);
+                this.previousContent = this.content;
+            } else {
+                this.content = this.sourceCode;
+                this.previousContent = this.content;
+            }
+            if (this.isEdit
+            ) {
                 this.readOnlyEditFields = {
                     id: this.item.id,
                 };
@@ -111,7 +117,8 @@ export default {
             return new Promise((resolve) => {
                 resolve(this.$t("delete confirm", {name: this.item.id}));
             });
-        },
+        }
+        ,
         deleteFile() {
             if (this.item) {
                 const item = this.item;
@@ -135,10 +142,12 @@ export default {
                             });
                     });
             }
-        },
+        }
+        ,
         onChange() {
             this.$store.dispatch("core/isUnsaved", this.previousContent !== this.content);
-        },
+        }
+        ,
         save() {
             if (this.item) {
                 let item;
@@ -201,4 +210,5 @@ export default {
             }
         }
     }
-};
+}
+;

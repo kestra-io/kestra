@@ -79,7 +79,6 @@ export default {
             try {
                 task = YamlUtils.parse(this.taskYaml);
                 updatedSource = YamlUtils.replaceTaskInDocument(this.sourceCode, this.taskIndex, this.taskYaml)
-                console.log(updatedSource);
             } catch (err) {
                 this.$toast().warning(
                     err.message,

@@ -245,7 +245,7 @@
     "bulk delete": "Are you sure you want to delete {executionCount} execution(s) ?",
     "bulk restart": "Are you sure you want to restart {executionCount} execution(s) ?",
     "bulk kill": "Are you sure you want to kill {executionCount} execution(s) ?",
-    "bulk restart alert": "Only FAILED and KILLED execution can be restarted.",
+    "bulk restart alert": "Only FAILED execution can be restarted.",
     "cancel": "Cancel",
     "homeDashboard": {
       "today": "Today",
@@ -500,6 +500,11 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "restore": "Restaurer",
+    "bulk delete": "Voulez vous vraiment supprimer {executionCount} execution(s) ?",
+    "bulk restart": "Voulez vous vraiment redémarrer {executionCount} execution(s) ?",
+    "bulk kill": "Voulez vous vraimment kill {executionCount} execution(s) ?",
+    "bulk restart alert": "Seules les exécutions FAILED peuvent être relancés.",
+    "cancel": "Cancel",
     "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
     "homeDashboard": {
       "today": "Aujourd'hui",

@@ -29,16 +29,6 @@
                 <el-form-item>
                     <refresh-button class="float-right" @refresh="load"/>
                 </el-form-item>
-                <el-form-item v-if="executionsSelection.length !== 0">
-                    <bulk-action-button :execution-count=" queryBulkAction ? total : executionsSelection.length "
-                                        @restart="restartExecutions"
-                                        @delete="deleteExecutions" @kill="killExecutions"/>
-                    <span class="selected-count">
-                        {{ queryBulkAction ? total : executionsSelection.length }} selected
-                        <span class="select-all" v-if="executionsSelection.length<total && !queryBulkAction"
-                              @click="setQueryBulk(true)">(select all {{ total }})</span>
-                    </span>
-                </el-form-item>
             </template>
 
             <template #top v-if="embed === false">
@@ -62,10 +52,7 @@
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                 >
-                    <el-table-column
-                        type="selection"
-                        :render-header="checkboxHeader">
-                    </el-table-column>
+                    <el-table-column type="selection"/>
                     <el-table-column prop="id" v-if="!hidden.includes('id')" sortable="custom"
                                      :sort-orders="['ascending', 'descending']" :label="$t('id')">
                         <template #default="scope">
@@ -138,6 +125,24 @@
                 </el-table>
             </template>
         </data-table>
+        <bottom-line class="custom-bottom-line" v-if="executionsSelection.length !== 0">
+            <span class="selected-count">
+                {{ queryBulkAction ? total : executionsSelection.length }} selected
+                <span class="select-all" v-if="executionsSelection.length<total && !queryBulkAction"
+                      @click="setQueryBulk(true)">
+                    (select all {{ total }})
+                </span>
+            </span>
+            <el-button type="success" class="bulk-button" @click="this.restartExecutions()">
+                {{ $t('restart') }}
+            </el-button>
+            <el-button type="warning" class="bulk-button" @click="this.killExecutions()" :tooltip="$t('kill')">
+                {{ $t('kill') }}
+            </el-button>
+            <el-button type="danger" class="bulk-button" @click="this.deleteExecutions()" :tooltip="$t('delete')">
+                {{ $t('delete') }}
+            </el-button>
+        </bottom-line>
     </div>
 </template>
 
@@ -161,7 +166,10 @@ import RestoreUrl from "../../mixins/restoreUrl";
 import State from "../../utils/state";
 import Id from "../Id.vue";
 import _merge from "lodash/merge";
-import BulkActionButton from "../layout/BulkActionButton.vue";
+import BottomLine from "../layout/BottomLine.vue";
+import Restart from "vue-material-design-icons/Restart.vue";
+import Delete from "vue-material-design-icons/Delete.vue";
+import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
 
 export default {
     mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -173,13 +181,16 @@ export default {
         NamespaceSelect,
         DateRange,
         RefreshButton,
-        BulkActionButton,
         StatusFilterButtons,
         StateGlobalChart,
         TriggerAvatar,
         DateAgo,
         Kicon,
-        Id
+        BottomLine,
+        Id,
+        Restart,
+        Delete,
+        StopCircleOutline,
     },
     props: {
         embed: {
@@ -275,34 +286,46 @@ export default {
             return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
         },
         restartExecutions() {
-            if (this.queryBulkAction) {
-                this.$store.dispatch("execution/queryRestartExecution", this.loadQuery({
-                    sort: this.$route.query.sort || "state.startDate:desc",
-                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                }, false)).then(_ => this.loadData())
-            } else {
-                this.$store.dispatch("execution/bulkRestartExecution", {executionsId: this.executionsSelection}).then(_ => this.loadData())
-            }
+            this.$toast().confirm(
+                this.$t("bulk restart", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}), () => {
+                    if (this.queryBulkAction) {
+                        return this.$store.dispatch("execution/queryRestartExecution", this.loadQuery({
+                            sort: this.$route.query.sort || "state.startDate:desc",
+                            state: this.$route.query.state ? [this.$route.query.state] : this.statuses
+                        }, false)).then(_ => this.loadData())
+                    } else {
+                        return this.$store.dispatch("execution/bulkRestartExecution", {executionsId: this.executionsSelection}).then(_ => this.loadData())
+                    }
+                }
+            )
         },
         deleteExecutions() {
-            if (this.queryBulkAction) {
-                this.$store.dispatch("execution/queryDeleteExecution", this.loadQuery({
-                    sort: this.$route.query.sort || "state.startDate:desc",
-                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                }, false)).then(_ => this.loadData())
-            } else {
-                this.$store.dispatch("execution/bulkDeleteExecution", {executionsId: this.executionsSelection}).then(_ => this.loadData())
-            }
+            this.$toast().confirm(
+                this.$t("bulk delete", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}), () => {
+                    if (this.queryBulkAction) {
+                        return this.$store.dispatch("execution/queryDeleteExecution", this.loadQuery({
+                            sort: this.$route.query.sort || "state.startDate:desc",
+                            state: this.$route.query.state ? [this.$route.query.state] : this.statuses
+                        }, false)).then(_ => this.loadData())
+                    } else {
+                        return this.$store.dispatch("execution/bulkDeleteExecution", {executionsId: this.executionsSelection}).then(_ => this.loadData())
+                    }
+                }
+            )
         },
         killExecutions() {
-            if (this.queryBulkAction) {
-                this.$store.dispatch("execution/queryKill", this.loadQuery({
-                    sort: this.$route.query.sort || "state.startDate:desc",
-                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                }, false)).then(_ => this.loadData())
-            } else {
-                this.$store.dispatch("execution/bulkKill", {executionsId: this.executionsSelection}).then(_ => this.loadData())
-            }
+            this.$toast().confirm(
+                this.$t("bulk kill", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}), () => {
+                    if (this.queryBulkAction) {
+                        return this.$store.dispatch("execution/queryKill", this.loadQuery({
+                            sort: this.$route.query.sort || "state.startDate:desc",
+                            state: this.$route.query.state ? [this.$route.query.state] : this.statuses
+                        }, false)).then(_ => this.loadData())
+                    } else {
+                        return this.$store.dispatch("execution/bulkKill", {executionsId: this.executionsSelection}).then(_ => this.loadData())
+                    }
+                }
+            )
         },
         setQueryBulk(bool) {
             this.queryBulkAction = bool;
@@ -320,4 +343,13 @@ export default {
     color: dodgerblue;
     cursor: pointer;
 }
+
+.custom-bottom-line {
+    height: 75px;
+}
+
+.bulk-button {
+    height: 50px;
+}
+
 </style>

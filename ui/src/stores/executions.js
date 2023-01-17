@@ -27,7 +27,7 @@ export default {
         },
         bulkRestartExecution(_, options) {
             return this.$http.post(
-                `/api/v1/executions/restart`,
+                `/api/v1/executions/restart/list`,
                 options.executionsId)
         },
         queryRestartExecution(_, options) {
@@ -59,7 +59,7 @@ export default {
             return this.$http.delete(`/api/v1/executions/${options.id}/kill`);
         },
         bulkKill(_, options) {
-            return this.$http.delete(`/api/v1/executions/kill`, {data: options.executionsId});
+            return this.$http.delete(`/api/v1/executions/kill/list`, {data: options.executionsId});
         },
         queryKill(_, options) {
             return this.$http.delete(`/api/v1/executions/kill/search`, {params: options});
@@ -91,7 +91,7 @@ export default {
             })
         },
         bulkDeleteExecution({commit}, options) {
-            return this.$http.delete(`/api/v1/executions`, {data: options.executionsId})
+            return this.$http.delete(`/api/v1/executions/list`, {data: options.executionsId})
         },
         queryDeleteExecution({commit}, options) {
             return this.$http.delete(`/api/v1/executions/search`, {params: options})

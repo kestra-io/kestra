@@ -258,9 +258,9 @@ public class ExecutionController {
         }
     }
 
-    @Delete(uri = "executions", produces = MediaType.TEXT_JSON)
+    @Delete(uri = "executions/list", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Executions"}, summary = "Delete an execution")
+    @Operation(tags = {"Executions"}, summary = "Delete a list of executions")
     @ApiResponses(
         @ApiResponse(responseCode = "204", description = "On success")
     )
@@ -286,9 +286,9 @@ public class ExecutionController {
         return HttpResponse.status(HttpStatus.NO_CONTENT);
     }
 
-    @Delete(uri = "executions/search", produces = MediaType.TEXT_JSON)
+    @Delete(uri = "executions/query", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Executions"}, summary = "Delete an execution")
+    @Operation(tags = {"Executions"}, summary = "Delete executions returned by the query")
     public MutableHttpResponse queryDelete(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
@@ -560,8 +560,8 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "executions/restart", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Executions"}, summary = "Restart a list of execution from an old one")
+    @Post(uri = "executions/restart/list", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Restart a list of executions")
     public MutableHttpResponse<Object> bulkRestart(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) throws Exception {
@@ -579,7 +579,7 @@ public class ExecutionController {
 
             }
         }
-        if (executionsNotFound.size() > 0) {
+        if (executionsNotFound.size() + executionsNotFailed.size() > 0) {
 
             throw new IllegalStateException(String.format("One or more executions are not in state %s or were not found, can't restart them" +
                 "\nNot found: %s" +
@@ -595,8 +595,8 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "executions/restart/search", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Executions"}, summary = "Restart a list of execution from an old one")
+    @Post(uri = "executions/restart/query", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Restart executions returned by the query")
     public MutableHttpResponse<Object> queryRestart(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
@@ -715,8 +715,8 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "executions/kill", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Executions"}, summary = "Kill an execution")
+    @Delete(uri = "executions/kill/list", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Kill a list of executions")
     @ApiResponses(
         value = {
             @ApiResponse(responseCode = "204", description = "On success"),
@@ -756,7 +756,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "executions/kill/search", produces = MediaType.TEXT_JSON)
+    @Delete(uri = "executions/kill/query", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill executions returned by the query")
     public HttpResponse<?> queryKill(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,

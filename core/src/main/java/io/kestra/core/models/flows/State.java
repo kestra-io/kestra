@@ -85,7 +85,7 @@ public class State {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Optional<Instant> getEndDate() {
-        if (!this.isTerminated()) {
+        if (!this.isTerninated()) {
             return Optional.empty();
         }
 
@@ -109,7 +109,7 @@ public class State {
     }
 
     @JsonIgnore
-    public boolean isTerminated() {
+    public boolean isTerninated() {
         return this.current.isTerminated();
     }
 

@@ -41,7 +41,7 @@ public class ExecutorKilledJoinerTransformer implements ValueTransformerWithKey<
         }
 
         if (executor.getExecution().getState().getCurrent() != State.Type.KILLING &&
-            !executor.getExecution().getState().isTerminated()
+            !executor.getExecution().getState().isTerninated()
         ) {
             Execution newExecution = executor.getExecution().withState(State.Type.KILLING);
 

@@ -83,7 +83,7 @@ public class ExecutorJoinerTransformer implements ValueTransformerWithKey<String
         }
 
         // send metrics on terminated
-        if (workerTaskResult.getTaskRun().getState().isTerminated()) {
+        if (workerTaskResult.getTaskRun().getState().isTerninated()) {
             metricRegistry
                 .counter(
                     MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT,

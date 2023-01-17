@@ -260,7 +260,7 @@ public class Execution implements DeletedInterface {
 
         return Streams.findLast(this.taskRunList
             .stream()
-            .filter(t -> !t.getState().isTerminated())
+            .filter(t -> !t.getState().isTerninated())
         );
     }
 
@@ -296,7 +296,7 @@ public class Execution implements DeletedInterface {
 
         return Streams.findLast(this.findTaskRunByTasks(resolvedTasks, taskRun)
             .stream()
-            .filter(t -> t.getState().isTerminated())
+            .filter(t -> t.getState().isTerninated())
         );
     }
 
@@ -308,7 +308,7 @@ public class Execution implements DeletedInterface {
         long terminatedCount = this
             .findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
-            .filter(taskRun -> taskRun.getState().isTerminated())
+            .filter(taskRun -> taskRun.getState().isTerninated())
             .count();
 
         return terminatedCount == resolvedTasks.size();
@@ -428,7 +428,7 @@ public class Execution implements DeletedInterface {
         // don't have changed to failed but taskRunList will contain a failed
         // same for restart, the CREATED status is directly on execution taskrun
         // so we don't changed if current execution is terminated
-        if (current.getState().isTerminated() && !taskRun.getState().isTerminated()) {
+        if (current.getState().isTerninated() && !taskRun.getState().isTerninated()) {
             return false;
         }
 

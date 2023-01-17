@@ -701,7 +701,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") String executionId
     ) {
         Optional<Execution> execution = executionRepository.findById(executionId);
-        if (execution.isPresent() && execution.get().getState().isTerminated()) {
+        if (execution.isPresent() && execution.get().getState().isTerninated()) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
         }
 
@@ -731,7 +731,7 @@ public class ExecutionController {
         List<String> executionsFinished = new ArrayList<>();
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(executionId);
-            if (execution.isPresent() && execution.get().getState().isTerminated()) {
+            if (execution.isPresent() && execution.get().getState().isTerninated()) {
                 executionsFinished.add(executionId);
             } else if (execution.isEmpty()) {
                 executionsNotFound.add(executionId);

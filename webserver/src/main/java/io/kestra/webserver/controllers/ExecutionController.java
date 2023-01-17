@@ -550,9 +550,6 @@ public class ExecutionController {
         if (execution.isEmpty()) {
             return null;
         }
-        if (!execution.get().getState().isFailed()) {
-            throw new IllegalStateException(String.format("Execution is not in state %s", State.Type.FAILED));
-        }
         this.controlRevision(execution.get(), revision);
 
         Execution restart = executionService.restart(execution.get(), revision);

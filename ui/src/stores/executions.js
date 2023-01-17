@@ -30,6 +30,12 @@ export default {
                 `/api/v1/executions/restart`,
                 options.executionsId)
         },
+        queryRestartExecution(_, options) {
+            return this.$http.post(
+                `/api/v1/executions/restart/search`,
+                {},
+                {params: options})
+        },
         replayExecution(_, options) {
             return this.$http.post(
                 `/api/v1/executions/${options.executionId}/replay`,
@@ -54,6 +60,9 @@ export default {
         },
         bulkKill(_, options) {
             return this.$http.delete(`/api/v1/executions/kill`, {data: options.executionsId});
+        },
+        queryKill(_, options) {
+            return this.$http.delete(`/api/v1/executions/kill/search`, {params: options});
         },
         loadExecution({commit}, options) {
             return this.$http.get(`/api/v1/executions/${options.id}`).then(response => {
@@ -83,6 +92,9 @@ export default {
         },
         bulkDeleteExecution({commit}, options) {
             return this.$http.delete(`/api/v1/executions`, {data: options.executionsId})
+        },
+        queryDeleteExecution({commit}, options) {
+            return this.$http.delete(`/api/v1/executions/search`, {params: options})
         },
         followExecution(_, options) {
             return new EventSource(`${this.$http.defaults.baseURL}api/v1/executions/${options.id}/follow`);

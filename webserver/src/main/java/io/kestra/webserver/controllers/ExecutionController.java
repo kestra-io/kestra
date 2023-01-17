@@ -286,6 +286,35 @@ public class ExecutionController {
         return HttpResponse.status(HttpStatus.NO_CONTENT);
     }
 
+    @Delete(uri = "executions/search", produces = MediaType.TEXT_JSON)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Executions"}, summary = "Delete an execution")
+    public MutableHttpResponse queryDelete(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
+        @Parameter(description = "A flow id filter") @Nullable String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
+        @Parameter(description = "A state filter") @Nullable @QueryValue(value = "state") List<State.Type> state
+    ) {
+        Flowable<Execution> executions = executionRepository.find(
+            query,
+            namespace,
+            flowId,
+            startDate,
+            endDate,
+            state
+        );
+        Integer result = executions.map(e -> {
+                executionRepository.delete(e);
+                return 1;
+            }
+        ).reduce(Integer::sum).blockingGet();
+
+        return HttpResponse.status(HttpStatus.NO_CONTENT, String.format("Deleted %s executions", result));
+    }
+
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Search for executions for a flow")
@@ -522,7 +551,7 @@ public class ExecutionController {
             return null;
         }
         if (!execution.get().getState().isFailed()) {
-            throw new IllegalStateException(String.format("Execution is not in state %s or %s", State.Type.FAILED, State.Type.KILLED));
+            throw new IllegalStateException(String.format("Execution is not in state %s", State.Type.FAILED));
         }
         this.controlRevision(execution.get(), revision);
 
@@ -566,6 +595,36 @@ public class ExecutionController {
         }
 
         return HttpResponse.status(HttpStatus.NO_CONTENT);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "executions/restart/search", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Restart a list of execution from an old one")
+    public MutableHttpResponse<Object> queryRestart(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
+        @Parameter(description = "A flow id filter") @Nullable String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
+        @Parameter(description = "A state filter") @Nullable @QueryValue(value = "state") List<State.Type> state
+    ) {
+        Flowable<Execution> executions = executionRepository.find(
+            query,
+            namespace,
+            flowId,
+            startDate,
+            endDate,
+            state
+        );
+        Integer result = executions.map(e -> {
+                Execution restart = executionService.restart(e, null);
+                executionQueue.emit(restart);
+                eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
+                return 1;
+            }
+        ).reduce(Integer::sum).blockingGet();
+
+        return HttpResponse.status(HttpStatus.NO_CONTENT, String.format("Restarted %s executions", result));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -697,6 +756,37 @@ public class ExecutionController {
             );
         }
         return HttpResponse.status(HttpStatus.NO_CONTENT);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "executions/kill/search", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Executions"}, summary = "Kill executions returned by the query")
+    public HttpResponse<?> queryKill(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
+        @Parameter(description = "A flow id filter") @Nullable String flowId,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
+        @Parameter(description = "A state filter") @Nullable @QueryValue(value = "state") List<State.Type> state
+    ) {
+        Flowable<Execution> executions = executionRepository.find(
+            query,
+            namespace,
+            flowId,
+            startDate,
+            endDate,
+            state
+        );
+        Integer result = executions.map(e -> {
+                killQueue.emit(ExecutionKilled
+                    .builder()
+                    .executionId(e.getId())
+                    .build());
+                return 1;
+            }
+        ).reduce(Integer::sum).blockingGet();
+
+        return HttpResponse.status(HttpStatus.NO_CONTENT, String.format("Killed %s executions", result));
     }
 
     private boolean isStopFollow(Flow flow, Execution execution) {

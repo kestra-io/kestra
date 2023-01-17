@@ -318,7 +318,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size(), is(2));
+        assertThat(namespaces.size(), is(3));
     }
 
     private Flow generateFlow(String namespace, String inputName) {

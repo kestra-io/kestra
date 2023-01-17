@@ -46,7 +46,7 @@ public class FlowCaseTest {
         AtomicReference<Execution> triggered = new AtomicReference<>();
 
         executionQueue.receive(execution -> {
-            if (execution.getFlowId().equals("switch") && execution.getState().getCurrent().isTerminated()) {
+            if (execution.getFlowId().equals("switch") && execution.getState().getCurrent().isTerninated()) {
                 countDownLatch.countDown();
                 triggered.set(execution);
             }

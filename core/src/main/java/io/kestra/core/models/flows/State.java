@@ -110,7 +110,7 @@ public class State {
 
     @JsonIgnore
     public boolean isTerninated() {
-        return this.current.isTerminated();
+        return this.current.isTerninated();
     }
 
     @JsonIgnore
@@ -153,7 +153,7 @@ public class State {
         FAILED,
         KILLED;
 
-        public boolean isTerminated() {
+        public boolean isTerninated() {
             return this == Type.FAILED || this == Type.WARNING || this == Type.SUCCESS || this == Type.KILLED || this == Type.PAUSED;
         }
 

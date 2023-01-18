@@ -38,7 +38,7 @@
 
                 .el-form-item__content {
                     > * {
-                        max-width: 200px;
+                        width: 200px;
                     }
                 }
             }

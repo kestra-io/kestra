@@ -242,10 +242,13 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stopped this one.<br />You need to kill it if you want to stop it!</div>",
     "restore": "Restore",
     "restore confirm": "Are you sure to restore the revision <code>{revision}</code>?",
-    "bulk delete": "Are you sure you want to delete {executionCount} execution(s) ?",
-    "bulk restart": "Are you sure you want to restart {executionCount} execution(s) ?",
-    "bulk kill": "Are you sure you want to kill {executionCount} execution(s) ?",
-    "bulk restart alert": "Only FAILED execution can be restarted.",
+    "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
+    "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
+    "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
+    "selection": {
+      "selected": "<strong>{count}</strong> selected",
+      "all": "select all ({count})"
+    },
     "cancel": "Cancel",
     "homeDashboard": {
       "today": "Today",
@@ -500,10 +503,13 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "restore": "Restaurer",
-    "bulk delete": "Voulez vous vraiment supprimer {executionCount} execution(s) ?",
-    "bulk restart": "Voulez vous vraiment redémarrer {executionCount} execution(s) ?",
-    "bulk kill": "Voulez vous vraimment kill {executionCount} execution(s) ?",
-    "bulk restart alert": "Seules les exécutions FAILED peuvent être relancés.",
+    "bulk delete": "Êtes-vous sur de vouloir supprimer <code>{executionCount}</code> execution(s) ?",
+    "bulk restart": "Êtes-vous sur de vouloir redémarrer <code>{executionCount}</code> execution(s) ?",
+    "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> execution(s) ?",
+    "selection": {
+      "selected": "<strong>{count}</strong> sélectionnés",
+      "all": "tous sélectionnés ({count})"
+    },
     "cancel": "Cancel",
     "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
     "homeDashboard": {

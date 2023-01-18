@@ -28,13 +28,15 @@ export default {
         bulkRestartExecution(_, options) {
             return this.$http.post(
                 `/api/v1/executions/restart/list`,
-                options.executionsId)
+                options.executionsId
+            )
         },
         queryRestartExecution(_, options) {
             return this.$http.post(
                 `/api/v1/executions/restart/search`,
                 {},
-                {params: options})
+                {params: options}
+            )
         },
         replayExecution(_, options) {
             return this.$http.post(
@@ -91,7 +93,7 @@ export default {
             })
         },
         bulkDeleteExecution({commit}, options) {
-            return this.$http.delete(`/api/v1/executions/list`, {data: options.executionsId})
+            return this.$http.delete(`/api/v1/executions/by-ids`, {data: options.executionsId})
         },
         queryDeleteExecution({commit}, options) {
             return this.$http.delete(`/api/v1/executions/search`, {params: options})

@@ -1,16 +1,15 @@
 <template>
     <el-button-group>
-        <kicon :tooltip="$t('toggle periodic refresh each 10 seconds')" placement="bottom">
-            <el-button @click="toggleAutoRefresh" :pressed="autoRefresh">
-                <clock/>
-            </el-button>
-        </kicon>
-        <kicon :tooltip="$t('trigger refresh')" placement="bottom">
-            <el-button @click="triggerRefresh">
-
-                <refresh/>
-            </el-button>
-        </kicon>
+        <el-button @click="toggleAutoRefresh" :pressed="autoRefresh">
+            <kicon :tooltip="$t('toggle periodic refresh each 10 seconds')" placement="bottom">
+                <clock />
+            </kicon>
+        </el-button>
+        <el-button @click="triggerRefresh">
+            <kicon :tooltip="$t('trigger refresh')" placement="bottom">
+                <refresh />
+            </kicon>
+        </el-button>
     </el-button-group>
 </template>
 <script>

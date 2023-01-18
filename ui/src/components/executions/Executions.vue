@@ -289,11 +289,17 @@
                                     sort: this.$route.query.sort || "state.startDate:desc",
                                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                                 }, false))
-                                .then(_ => this.loadData())
+                                .then(r => {
+                                    this.$toast().success(this.$t('executions restarted', {executionCount: r.data}));
+                                    this.loadData();
+                                })
                         } else {
                             return this.$store
                                 .dispatch("execution/bulkRestartExecution", {executionsId: this.executionsSelection})
-                                .then(_ => this.loadData())
+                                .then(r => {
+                                    this.$toast().success(this.$t('executions restarted', {executionCount: r.data}));
+                                    this.loadData();
+                                })
                         }
                     }
                 )
@@ -308,11 +314,17 @@
                                     sort: this.$route.query.sort || "state.startDate:desc",
                                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                                 }, false))
-                                .then(_ => this.loadData())
+                                .then(r => {
+                                    this.$toast().success(this.$t('executions deleted', {executionCount: r.data}));
+                                    this.loadData();
+                                })
                         } else {
                             return this.$store
                                 .dispatch("execution/bulkDeleteExecution", {executionsId: this.executionsSelection})
-                                .then(_ => this.loadData())
+                                .then(r => {
+                                    this.$toast().success(this.$t('executions deleted', {executionCount: r.data}));
+                                    this.loadData();
+                                })
                         }
                     }
                 )
@@ -327,11 +339,17 @@
                                     sort: this.$route.query.sort || "state.startDate:desc",
                                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                                 }, false))
-                                .then(_ => this.loadData())
+                                .then(r => {
+                                    this.$toast().success(this.$t('executions killed', {executionCount: r.data}));
+                                    this.loadData();
+                                })
                         } else {
                             return this.$store
                                 .dispatch("execution/bulkKill", {executionsId: this.executionsSelection})
-                                .then(_ => this.loadData())
+                                .then(r => {
+                                    this.$toast().success(this.$t('executions killed', {executionCount: r.data}));
+                                    this.loadData();
+                                })
                         }
                     }
                 )

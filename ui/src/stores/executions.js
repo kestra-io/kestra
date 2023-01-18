@@ -27,13 +27,13 @@ export default {
         },
         bulkRestartExecution(_, options) {
             return this.$http.post(
-                `/api/v1/executions/restart/list`,
+                `/api/v1/executions/restart/by-ids`,
                 options.executionsId
             )
         },
         queryRestartExecution(_, options) {
             return this.$http.post(
-                `/api/v1/executions/restart/search`,
+                `/api/v1/executions/restart/query`,
                 {},
                 {params: options}
             )
@@ -61,10 +61,10 @@ export default {
             return this.$http.delete(`/api/v1/executions/${options.id}/kill`);
         },
         bulkKill(_, options) {
-            return this.$http.delete(`/api/v1/executions/kill/list`, {data: options.executionsId});
+            return this.$http.delete(`/api/v1/executions/kill/by-ids`, {data: options.executionsId});
         },
         queryKill(_, options) {
-            return this.$http.delete(`/api/v1/executions/kill/search`, {params: options});
+            return this.$http.delete(`/api/v1/executions/kill/query`, {params: options});
         },
         loadExecution({commit}, options) {
             return this.$http.get(`/api/v1/executions/${options.id}`).then(response => {
@@ -96,7 +96,7 @@ export default {
             return this.$http.delete(`/api/v1/executions/by-ids`, {data: options.executionsId})
         },
         queryDeleteExecution({commit}, options) {
-            return this.$http.delete(`/api/v1/executions/search`, {params: options})
+            return this.$http.delete(`/api/v1/executions/query`, {params: options})
         },
         followExecution(_, options) {
             return new EventSource(`${this.$http.defaults.baseURL}api/v1/executions/${options.id}/follow`);

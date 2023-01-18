@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.micronaut.context.annotation.Value;
@@ -57,6 +58,7 @@ import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
+import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -258,38 +260,45 @@ public class ExecutionController {
         }
     }
 
-    @Delete(uri = "executions/list", produces = MediaType.TEXT_JSON)
+    @Delete(uri = "executions/by-ids", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Executions"}, summary = "Delete a list of executions")
     @ApiResponses(
         @ApiResponse(responseCode = "204", description = "On success")
     )
-    public MutableHttpResponse bulkDelete(
+    public HttpResponse<Integer> bulkDelete(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {
         List<Execution> executions = new ArrayList<>();
-        List<String> executionsNotFound = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(executionId);
             if (execution.isPresent()) {
                 executions.add(execution.get());
             } else {
-                executionsNotFound.add(executionId);
+                invalids.add(ManualConstraintViolation.of(
+                    String.format("Execution %s not found", executionId),
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
             }
         }
-        if (executionsNotFound.size() > 0) {
-            return HttpResponse.status(HttpStatus.NOT_FOUND, String.format("One or more executions were not found : %s", executionsNotFound));
+        if (invalids.size() > 0) {
+            throw new ConstraintViolationException("invalid execution",invalids);
         }
         for (Execution execution : executions) {
             executionRepository.delete(execution);
         }
-        return HttpResponse.status(HttpStatus.NO_CONTENT);
+        return HttpResponse.ok(executions.size());
     }
 
     @Delete(uri = "executions/query", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Executions"}, summary = "Delete executions returned by the query")
-    public MutableHttpResponse queryDelete(
+    public HttpResponse<Integer> queryDelete(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
@@ -305,13 +314,13 @@ public class ExecutionController {
             endDate,
             state
         );
-        Integer result = executions.map(e -> {
+        Integer count = executions.map(e -> {
                 executionRepository.delete(e);
                 return 1;
             }
         ).reduce(Integer::sum).blockingGet();
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT, String.format("Deleted %s executions", result));
+        return HttpResponse.ok(count);
     }
 
 
@@ -560,30 +569,39 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "executions/restart/list", produces = MediaType.TEXT_JSON)
+    @Post(uri = "executions/restart/by-ids", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Restart a list of executions")
-    public MutableHttpResponse<Object> bulkRestart(
+    public HttpResponse<Integer> bulkRestart(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) throws Exception {
         List<Execution> executions = new ArrayList<>();
-        List<String> executionsNotFound = new ArrayList<>();
-        List<String> executionsNotFailed = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(executionId);
             if (execution.isPresent() && !execution.get().getState().isFailed()) {
-                executionsNotFailed.add(executionId);
+                invalids.add(ManualConstraintViolation.of(
+                    String.format("Execution %s is not in state FAILED", executionId),
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
             } else if (execution.isEmpty()) {
-                executionsNotFound.add(executionId);
+                invalids.add(ManualConstraintViolation.of(
+                    String.format("Execution %s not found", executionId),
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
             } else {
                 executions.add(execution.get());
 
             }
         }
-        if (executionsNotFound.size() + executionsNotFailed.size() > 0) {
-
-            throw new IllegalStateException(String.format("One or more executions are not in state %s or were not found, can't restart them" +
-                "\nNot found: %s" +
-                "\nBad state: %s", State.Type.FAILED, executionsNotFound, executionsNotFailed));
+        if (invalids.size() > 0) {
+            throw new ConstraintViolationException("invalid execution",invalids);
         }
         for (Execution execution : executions) {
             Execution restart = executionService.restart(execution, null);
@@ -591,13 +609,13 @@ public class ExecutionController {
             eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
         }
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT);
+        return HttpResponse.ok(executions.size());
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/restart/query", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Restart executions returned by the query")
-    public MutableHttpResponse<Object> queryRestart(
+    public HttpResponse<Integer> queryRestart(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
@@ -613,7 +631,7 @@ public class ExecutionController {
             endDate,
             state
         );
-        Integer result = executions.map(e -> {
+        Integer count = executions.map(e -> {
                 Execution restart = executionService.restart(e, null);
                 executionQueue.emit(restart);
                 eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
@@ -621,7 +639,7 @@ public class ExecutionController {
             }
         ).reduce(Integer::sum).blockingGet();
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT, String.format("Restarted %s executions", result));
+        return HttpResponse.ok(count);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -715,7 +733,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "executions/kill/list", produces = MediaType.TEXT_JSON)
+    @Delete(uri = "executions/kill/by-ids", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill a list of executions")
     @ApiResponses(
         value = {
@@ -723,27 +741,36 @@ public class ExecutionController {
             @ApiResponse(responseCode = "409", description = "if the executions is already finished")
         }
     )
-    public HttpResponse<?> bulkKill(
+    public HttpResponse<Integer> bulkKill(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {
         List<Execution> executions = new ArrayList<>();
-        List<String> executionsNotFound = new ArrayList<>();
-        List<String> executionsFinished = new ArrayList<>();
+        Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
+
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(executionId);
             if (execution.isPresent() && execution.get().getState().isTerninated()) {
-                executionsFinished.add(executionId);
+                invalids.add(ManualConstraintViolation.of(
+                    String.format("Execution %s is already finished", executionId),
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
             } else if (execution.isEmpty()) {
-                executionsNotFound.add(executionId);
+                invalids.add(ManualConstraintViolation.of(
+                    String.format("Execution % not found", executionId),
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
             } else {
                 executions.add(execution.get());
-
             }
         }
-        if (executionsNotFound.size() > 0) {
-            throw new IllegalStateException(String.format("One or more executions are already finished or were not found, can't kill them" +
-                "\nNot found: %s" +
-                "\nAlready finished: %s", executionsNotFound, executionsFinished));
+        if (invalids.size() > 0) {
+            throw new ConstraintViolationException("invalid execution",invalids);
         }
         for (Execution execution : executions) {
             killQueue.emit(ExecutionKilled
@@ -752,13 +779,13 @@ public class ExecutionController {
                 .build()
             );
         }
-        return HttpResponse.status(HttpStatus.NO_CONTENT);
+        return HttpResponse.ok(executions.size());
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/kill/query", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill executions returned by the query")
-    public HttpResponse<?> queryKill(
+    public HttpResponse<Integer> queryKill(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
@@ -774,7 +801,7 @@ public class ExecutionController {
             endDate,
             state
         );
-        Integer result = executions.map(e -> {
+        Integer count = executions.map(e -> {
                 killQueue.emit(ExecutionKilled
                     .builder()
                     .executionId(e.getId())
@@ -783,7 +810,7 @@ public class ExecutionController {
             }
         ).reduce(Integer::sum).blockingGet();
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT, String.format("Killed %s executions", result));
+        return HttpResponse.ok(count);
     }
 
     private boolean isStopFollow(Flow flow, Execution execution) {

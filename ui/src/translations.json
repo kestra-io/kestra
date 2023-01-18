@@ -258,7 +258,10 @@
       "namespacesErrorExecutions": "Executions errors per namespace",
       "failedExecutions": "Failed executions",
       "errorLogs": "Errors logs"
-    }
+    },
+    "executions restarted": "<code>{executionCount}</code> executions(s) restarted.",
+    "executions killed": "<code>{executionCount}</code> executions(s) killed.",
+    "executions deleted": "<code>{executionCount}</code> executions(s) deleted."
   },
   "fr": {
     "id": "Identifiant",
@@ -510,7 +513,10 @@
       "selected": "<strong>{count}</strong> sélectionnés",
       "all": "tous sélectionnés ({count})"
     },
-    "cancel": "Cancel",
+    "cancel": "Annuler",
+    "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s).",
+    "executions killed": "<code>{executionCount}</code> exécution(s) killed.",
+    "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s).",
     "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
     "homeDashboard": {
       "today": "Aujourd'hui",

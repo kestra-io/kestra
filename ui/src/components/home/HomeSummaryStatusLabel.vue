@@ -1,0 +1,100 @@
+<template>
+    <div class="list">
+        <template v-for="[status, count] of sorted">
+            <div v-if="count > 0" :key="status" class="d-flex w-100 justify-content-between mb-2">
+                <div class="me-4 icon">
+                    <status :label="false" :status="status" />
+                </div>
+
+                <div class="me-4 center">
+                    <h6>
+                        {{ status.toLowerCase().capitalize() }}
+                    </h6>
+                    <div class="percent">
+                        {{ percent(count) }}%
+                    </div>
+                </div>
+
+                <div class="big-number">
+                    <el-tag type="info" disable-transitions>
+                        {{ count }}
+                    </el-tag>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
+<script>
+    import Status from "../Status.vue";
+
+    export default {
+        components: {
+            Status
+        },
+        props: {
+            data: {
+                type: Object,
+                required: true
+            },
+        },
+        methods: {
+            percent(count) {
+                const sum = Object.values(this.data.executionCounts).reduce((a, b) => a + b, 0);
+                return Math.round(count * 100 / sum);
+            },
+        },
+        computed: {
+            sorted() {
+                return new Map(Object.entries(this.data.executionCounts).sort((a, b) => b[1] - a[1]));
+            }
+        }
+    };
+</script>
+
+<style lang="scss" scoped>
+    .list {
+        border: 0;
+        padding: 0;
+        max-width: 100%;
+
+        > div {
+            justify-content: center;
+            align-items: center;
+
+
+            .icon {
+                vertical-align: middle;
+            }
+
+            .center {
+                flex-grow: 1;
+
+                h6 {
+                    font-weight: 400;
+                    line-height: 1;
+                    margin-bottom: 0;
+                }
+
+                .percent {
+                    color: var(--bs-gray-500);
+                    line-height: 1.5;
+                    font-size: var(--font-size-xs);
+                }
+            }
+
+            :deep(.el-tag) {
+                font-size: 150%;
+                background: none;
+                color: var(--bs-gray-600);
+                font-weight: 400;
+                padding: 0;
+            }
+
+            .big-number {
+                vertical-align: middle;
+            }
+        }
+    }
+
+</style>
+

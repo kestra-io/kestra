@@ -70,9 +70,7 @@ public class StaticFilter implements HttpServerFilter {
     }
 
     private String replace(String line) {
-        if (basePath != null) {
-            line = line.replace("/ui", basePath + "/ui");
-        }
+        line = line.replace("./", (basePath != null ? basePath : "") + "/ui/");
 
         if (googleAnalytics != null) {
             line = line.replace("KESTRA_GOOGLE_ANALYTICS = null;", "KESTRA_GOOGLE_ANALYTICS = '" + this.googleAnalytics + "';");

@@ -1,23 +1,12 @@
 <template>
     <div class="home">
         <div>
-            <collapse>
-                <el-form-item v-if="!namespace">
-                    <search-field @search="onSearch" />
-                </el-form-item>
-                <el-form-item v-if="!namespace">
+            <collapse v-if="!flowId">
+                <el-form-item>
                     <namespace-select
                         :data-type="'flow'"
-                        :value="$route.query.namespace"
+                        :model-value="selectedNamespace"
                         @update:model-value="onNamespaceSelect"
-                    />
-                </el-form-item>
-                <el-form-item>
-                    <date-range
-                        :start="$route.query.start || startDate"
-                        :end="$route.query.end || endDate"
-                        :required="true"
-                        @update:model-value="onRangeSelect($event)"
                     />
                 </el-form-item>
             </collapse>
@@ -31,6 +20,7 @@
             />
 
             <home-description v-if="namespace" class="mb-4" />
+
             <el-row :gutter="15" class="auto-height mb-4">
                 <el-col :lg="8" class="mb-3 mb-xl-0">
                     <home-summary-pie
@@ -94,7 +84,6 @@
     import Collapse from "../layout/Collapse.vue";
     import RouteContext from "../../mixins/routeContext";
     import StateGlobalChart from "../stats/StateGlobalChart.vue";
-    import SearchField from "../layout/SearchField.vue";
     import {mapState} from "vuex";
     import _cloneDeep from "lodash/cloneDeep"
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
@@ -103,7 +92,6 @@
     import HomeSummaryLog from "./HomeSummaryLog.vue";
     import RestoreUrl from "../../mixins/restoreUrl";
     import HomeSummaryNamespace from "./HomeSummaryNamespace.vue";
-    import DateRange from "../layout/DateRange.vue";
     import HomeDescription from "./HomeDescription.vue";
     import _merge from "lodash/merge";
 
@@ -111,14 +99,12 @@
         mixins: [RouteContext, RestoreUrl],
         components: {
             Collapse,
-            SearchField,
             StateGlobalChart,
             NamespaceSelect,
             HomeSummaryPie,
             HomeSummaryFailed,
             HomeSummaryLog,
             HomeSummaryNamespace,
-            DateRange,
             HomeDescription
         },
         props: {
@@ -133,6 +119,13 @@
         },
         created() {
             this.loadStats();
+        },
+        watch: {
+            $route(newValue, oldValue) {
+                if (oldValue.name === newValue.name && newValue.query !== oldValue.query) {
+                    this.loadStats();
+                }
+            }
         },
         data() {
             return {
@@ -149,8 +142,8 @@
             loadQuery(base) {
                 let queryFilter = this.$route.query;
 
-                if (this.namespace) {
-                    queryFilter["namespace"] = this.namespace;
+                if (this.selectedNamespace) {
+                    queryFilter["namespace"] = this.selectedNamespace;
                 }
 
                 if (this.flowId) {
@@ -163,8 +156,8 @@
                 this.dailyReady = false;
                 this.$store
                     .dispatch("stat/daily", this.loadQuery({
-                        startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
-                        endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
+                        startDate: this.startDate,
+                        endDate: this.endDate
                     }))
                     .then((daily) => {
                         let data = [...daily];
@@ -177,12 +170,12 @@
                         this.dailyReady = true;
                     });
 
-                if (!this.namespace && !this.flowId) {
+                if (!this.flowId) {
                     this.dailyGroupByFlowReady = false;
                     this.$store
                         .dispatch("stat/dailyGroupByFlow", this.loadQuery({
-                            startDate: this.$moment(this.$route.query.start || this.startDate).startOf("day").toISOString(true),
-                            endDate: this.$moment(this.$route.query.end || this.endDate).endOf("day").toISOString(true),
+                            startDate: this.startDate,
+                            endDate: this.endDate,
                             namespaceOnly: true
                         }))
                         .then((daily) => {
@@ -203,7 +196,6 @@
                         return accumulator;
                     }, null);
             },
-
             sumAll(object, accumulator) {
                 for (const key in object) {
                     accumulator[key] += object[key]
@@ -213,16 +205,6 @@
                 this.$router.push({
                     query: {...this.$route.query, namespace}
                 });
-                this.loadStats();
-            },
-            onRangeSelect(dates) {
-                this.$router.push({
-                    query: {...this.$route.query, ...dates}
-                });
-                this.loadStats();
-            },
-            onSearch() {
-                this.loadStats();
             },
         },
         computed: {
@@ -238,11 +220,14 @@
                     end: this.$moment(this.endDate).unix() * 1000 ,
                 }
             },
+            selectedNamespace() {
+                return this.namespace || this.$route.query.namespace;
+            },
             endDate() {
-                return this.$route.query.end || this.$moment(new Date()).endOf("day").toISOString(true)
+                return this.$moment(new Date()).endOf("day").toISOString(true)
             },
             startDate() {
-                return this.$route.query.start || this.$moment(this.endDate)
+                return this.$moment(this.endDate)
                     .add(-30, "days")
                     .startOf("day")
                     .toISOString(true)

@@ -1,7 +1,6 @@
 <template>
     <div>
         <home
-            ref="home"
             v-if="flow"
             :namespace="flow.namespace"
             :flow-id="flow.id"

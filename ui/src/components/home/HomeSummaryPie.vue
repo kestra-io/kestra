@@ -34,12 +34,13 @@
             },
             data: {
                 type: Object,
-                required: true
+                required: false,
+                default: () => {},
             },
         },
         computed: {
             count() {
-                return Object.values(this.data.executionCounts).reduce((a, b) => a + b, 0)
+                return this.data ? Object.values(this.data.executionCounts).reduce((a, b) => a + b, 0) : 0;
             }
         }
     };

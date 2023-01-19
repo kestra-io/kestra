@@ -6,6 +6,7 @@
             :page-size="10"
             :filters="filters"
             :prevent-route-info="true"
+            :restore-url="false"
             log-level="WARN"
             :embed="true"
         />

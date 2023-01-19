@@ -6,6 +6,7 @@
             :page-size="10"
             :filters="filters"
             :prevent-route-info="true"
+            :restore-url="false"
             :statuses="['FAILED', 'KILLED', 'WARNING']"
             :embed="true"
             :hidden="['id', 'state.endDate', 'triggers']"

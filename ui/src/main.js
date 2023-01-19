@@ -9,30 +9,6 @@ import routes from "./routes/routes";
 import translations from "./translations.json";
 import stores from "./stores/store";
 
-import {
-    ArcElement,
-    Chart,
-    DoughnutController,
-    Tooltip,
-    CategoryScale,
-    LinearScale
-} from "chart.js";
-
-import {TreemapController, TreemapElement} from "chartjs-chart-treemap"
-import {MatrixController, MatrixElement} from "chartjs-chart-matrix";
-
-Chart.register(
-    ArcElement,
-    DoughnutController,
-    Tooltip,
-    CategoryScale,
-    LinearScale,
-    TreemapController,
-    TreemapElement,
-    MatrixController,
-    MatrixElement
-);
-
 const app = createApp(App)
 const {store, router} = initApp(app, routes, stores, translations);
 

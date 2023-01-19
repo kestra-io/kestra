@@ -109,6 +109,13 @@ public class ExecutionController {
     @Inject
     private RunContextFactory runContextFactory;
 
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class BulkResponse {
+        Integer count;
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Search for executions")
@@ -266,7 +273,7 @@ public class ExecutionController {
     @ApiResponses(
         @ApiResponse(responseCode = "204", description = "On success")
     )
-    public HttpResponse<Integer> bulkDelete(
+    public HttpResponse<BulkResponse> bulkDelete(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {
         List<Execution> executions = new ArrayList<>();
@@ -287,18 +294,18 @@ public class ExecutionController {
             }
         }
         if (invalids.size() > 0) {
-            throw new ConstraintViolationException("invalid execution",invalids);
+            throw new ConstraintViolationException("invalid execution", invalids);
         }
         for (Execution execution : executions) {
             executionRepository.delete(execution);
         }
-        return HttpResponse.ok(executions.size());
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
     @Delete(uri = "executions/query", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Executions"}, summary = "Delete executions returned by the query")
-    public HttpResponse<Integer> queryDelete(
+    public HttpResponse<BulkResponse> queryDelete(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
@@ -320,7 +327,7 @@ public class ExecutionController {
             }
         ).reduce(Integer::sum).blockingGet();
 
-        return HttpResponse.ok(count);
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
 
@@ -571,7 +578,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/restart/by-ids", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Restart a list of executions")
-    public HttpResponse<Integer> bulkRestart(
+    public HttpResponse<BulkResponse> bulkRestart(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) throws Exception {
         List<Execution> executions = new ArrayList<>();
@@ -601,7 +608,7 @@ public class ExecutionController {
             }
         }
         if (invalids.size() > 0) {
-            throw new ConstraintViolationException("invalid execution",invalids);
+            throw new ConstraintViolationException("invalid execution", invalids);
         }
         for (Execution execution : executions) {
             Execution restart = executionService.restart(execution, null);
@@ -609,13 +616,13 @@ public class ExecutionController {
             eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
         }
 
-        return HttpResponse.ok(executions.size());
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/restart/query", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Restart executions returned by the query")
-    public HttpResponse<Integer> queryRestart(
+    public HttpResponse<BulkResponse> queryRestart(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
@@ -639,7 +646,7 @@ public class ExecutionController {
             }
         ).reduce(Integer::sum).blockingGet();
 
-        return HttpResponse.ok(count);
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -741,7 +748,7 @@ public class ExecutionController {
             @ApiResponse(responseCode = "409", description = "if the executions is already finished")
         }
     )
-    public HttpResponse<Integer> bulkKill(
+    public HttpResponse<BulkResponse> bulkKill(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {
         List<Execution> executions = new ArrayList<>();
@@ -779,13 +786,13 @@ public class ExecutionController {
                 .build()
             );
         }
-        return HttpResponse.ok(executions.size());
+        return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/kill/query", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill executions returned by the query")
-    public HttpResponse<Integer> queryKill(
+    public HttpResponse<BulkResponse> queryKill(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
@@ -810,7 +817,7 @@ public class ExecutionController {
             }
         ).reduce(Integer::sum).blockingGet();
 
-        return HttpResponse.ok(count);
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
     private boolean isStopFollow(Flow flow, Execution execution) {

@@ -114,7 +114,7 @@
             </template>
         </data-table>
 
-        <bottom-line  v-if="executionsSelection.length !== 0">
+        <bottom-line v-if="executionsSelection.length !== 0">
             <ul>
                 <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" />
                 <li>
@@ -132,7 +132,7 @@
                         {{ $t('delete') }}
                     </el-button>
                 </li>
-                <li class="spacer"></li>
+                <li class="spacer" />
             </ul>
         </bottom-line>
     </div>
@@ -290,14 +290,14 @@
                                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                                 }, false))
                                 .then(r => {
-                                    this.$toast().success(this.$t('executions restarted', {executionCount: r.data}));
+                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         } else {
                             return this.$store
                                 .dispatch("execution/bulkRestartExecution", {executionsId: this.executionsSelection})
                                 .then(r => {
-                                    this.$toast().success(this.$t('executions restarted', {executionCount: r.data}));
+                                    this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         }
@@ -315,14 +315,14 @@
                                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                                 }, false))
                                 .then(r => {
-                                    this.$toast().success(this.$t('executions deleted', {executionCount: r.data}));
+                                    this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         } else {
                             return this.$store
                                 .dispatch("execution/bulkDeleteExecution", {executionsId: this.executionsSelection})
                                 .then(r => {
-                                    this.$toast().success(this.$t('executions deleted', {executionCount: r.data}));
+                                    this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         }
@@ -340,20 +340,20 @@
                                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
                                 }, false))
                                 .then(r => {
-                                    this.$toast().success(this.$t('executions killed', {executionCount: r.data}));
+                                    this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         } else {
                             return this.$store
                                 .dispatch("execution/bulkKill", {executionsId: this.executionsSelection})
                                 .then(r => {
-                                    this.$toast().success(this.$t('executions killed', {executionCount: r.data}));
+                                    this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
                                     this.loadData();
                                 })
                         }
                     }
                 )
             },
-    }
-};
+        }
+    };
 </script>

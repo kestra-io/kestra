@@ -6,7 +6,22 @@ import moment from "moment/moment";
 import "moment/locale/fr"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
-import {Chart, CategoryScale, LinearScale, BarElement, BarController, LineElement, LineController, PointElement, Tooltip, Filler} from "chart.js";
+import {
+    Chart,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    BarController,
+    LineElement,
+    LineController,
+    PointElement,
+    Tooltip,
+    Filler,
+    ArcElement,
+    DoughnutController,
+} from "chart.js";
+import {TreemapController, TreemapElement} from "chartjs-chart-treemap"
+import {MatrixController, MatrixElement} from "chartjs-chart-matrix";
 
 
 import Toast from "./toast";
@@ -27,7 +42,16 @@ export default (app, routes, stores, translations) => {
         LineController,
         PointElement,
         Tooltip,
-        Filler
+        Filler,
+        ArcElement,
+        DoughnutController,
+        Tooltip,
+        CategoryScale,
+        LinearScale,
+        TreemapController,
+        TreemapElement,
+        MatrixController,
+        MatrixElement
     );
 
     // store

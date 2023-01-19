@@ -240,7 +240,16 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stopped this one.<br />You need to kill it if you want to stop it!</div>",
     "restore": "Restore",
-    "restore confirm": "Are you sure to restore the revision <code>{revision}</code>?"
+    "restore confirm": "Are you sure to restore the revision <code>{revision}</code>?",
+    "homeDashboard": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last28Days": "Last 28 days",
+      "namespacesExecutions": "Executions per namespace",
+      "namespacesErrorExecutions": "Executions errors per namespace",
+      "failedExecutions": "Failed executions",
+      "errorLogs": "Errors logs"
+    }
   },
   "fr": {
     "id": "Identifiant",
@@ -484,6 +493,15 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "restore": "Restaurer",
-    "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?"
+    "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
+    "homeDashboard": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "last28Days": "Dernier 28 jours",
+      "namespacesExecutions": "Exécutions par espace de nom",
+      "namespacesErrorExecutions": "Exécutions en erreur par espace de nom",
+      "failedExecutions": "Exécutions en échec",
+      "errorLogs": "Journaux d'erreurs"
+    }
   }
 }

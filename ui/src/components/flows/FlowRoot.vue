@@ -27,6 +27,7 @@
     import Tabs from "../Tabs.vue";
     import BottomLine from "../../components/layout/BottomLine.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import Overview from "./Overview.vue";
 
     export default {
         mixins: [RouteContext],
@@ -68,13 +69,25 @@
                 return this.$route.params.namespace +  "/" + this.$route.params.id;
             },
             getTabs() {
-                const tabs = [
+                let tabs = [
                     {
                         name: undefined,
                         component: Topology,
                         title: this.$t("topology"),
                     },
                 ];
+
+                if (this.user.hasAny(permission.EXECUTION)) {
+                    tabs[0].name = "topology";
+
+                    tabs = [
+                        {
+                            name: undefined,
+                            component: Overview,
+                            title: this.$t("overview"),
+                        },
+                    ].concat(tabs)
+                }
 
                 if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.READ, this.flow.namespace)) {
                     tabs.push({

@@ -43,6 +43,7 @@
     import Slack from "vue-material-design-icons/Slack.vue";
     import Github from "vue-material-design-icons/Github.vue";
     import CogOutline from "vue-material-design-icons/CogOutline.vue";
+    import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
     import {mapState} from "vuex";
 
     export default {
@@ -74,6 +75,14 @@
             },
             generateMenu() {
                 return [
+                    {
+                        href: "/",
+                        title: this.$t("home"),
+                        icon: {
+                            element: shallowRef(ViewDashboardVariantOutline),
+                            class: "menu-icon",
+                        },
+                    },
                     {
                         href: "/flows",
                         alias: [

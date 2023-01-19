@@ -4,6 +4,8 @@ import io.kestra.core.models.SearchResult;
 import io.micronaut.data.model.Pageable;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
@@ -13,6 +15,18 @@ import java.util.Optional;
 
 public interface FlowRepositoryInterface {
     Optional<Flow> findById(String namespace, String id, Optional<Integer> revision);
+
+    @Getter
+    @NoArgsConstructor
+    class FlowWithSource {
+        private Flow flow;
+        private String sourceCode;
+
+        public FlowWithSource(Flow flow, String sourceCode) {
+            this.flow = flow;
+            this.sourceCode = sourceCode;
+        }
+    }
 
     default Flow findByExecution(Execution execution) {
         Optional<Flow> find = this.findById(
@@ -41,9 +55,9 @@ public interface FlowRepositoryInterface {
         return this.findSourceById(namespace, id, Optional.empty());
     }
 
-    Optional<Map<String, Object>> findByIdWithSource(String namespace, String id, Optional<Integer> revision);
+    Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision);
 
-    default Optional<Map<String, Object>> findByIdWithSource(String namespace, String id) {
+    default Optional<FlowWithSource> findByIdWithSource(String namespace, String id) {
         return this.findByIdWithSource(namespace, id, Optional.empty());
     }
 
@@ -68,11 +82,11 @@ public interface FlowRepositoryInterface {
 
     Flow create(Flow flow) throws ConstraintViolationException;
 
-    Map<String, Object> create(Flow flow, String flowSource);
+    FlowWithSource create(Flow flow, String flowSource);
 
     Flow update(Flow flow, Flow previous) throws ConstraintViolationException;
 
-    Map<String, Object> update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException;
+    FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException;
 
     Flow delete(Flow flow);
 }

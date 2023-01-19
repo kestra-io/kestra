@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableList;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.tasks.flows.Sequential;
 import io.kestra.core.utils.TestsUtils;
@@ -335,7 +336,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         String flow = generateFlowAsString("io.kestra.unittest","a");
         Flow assertFlow = parseFlow(flow);
 
-        FlowController.FlowResponse result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowController.FlowResponse.class);
+        FlowRepositoryInterface.FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowRepositoryInterface.FlowWithSource.class);
 
         assertThat(result.getFlow().getId(), is(assertFlow.getId()));
         assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
@@ -368,16 +369,16 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         String flow = generateFlowAsString("updatedFlow","io.kestra.unittest","a");
         Flow assertFlow = parseFlow(flow);
 
-        FlowController.FlowResponse result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowController.FlowResponse.class);
+        FlowRepositoryInterface.FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowRepositoryInterface.FlowWithSource.class);
 
         assertThat(result.getFlow().getId(), is(assertFlow.getId()));
         assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
 
         flow = generateFlowAsString("updatedFlow","io.kestra.unittest","b");
 
-        FlowController.FlowResponse get = client.toBlocking().retrieve(
+        FlowRepositoryInterface.FlowWithSource get = client.toBlocking().retrieve(
             PUT("/api/v1/flows/io.kestra.unittest/updatedFlow", flow).contentType(MediaType.TEXT_PLAIN),
-            FlowController.FlowResponse.class
+            FlowRepositoryInterface.FlowWithSource.class
         );
 
         assertThat(get.getFlow().getId(), is(assertFlow.getId()));
@@ -399,7 +400,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
 
-        FlowController.FlowResponse result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowController.FlowResponse.class);
+        FlowRepositoryInterface.FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowRepositoryInterface.FlowWithSource.class);
 
         assertThat(result.getFlow().getId(), is("test-flow"));
 

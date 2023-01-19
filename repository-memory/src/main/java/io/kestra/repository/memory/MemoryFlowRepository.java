@@ -89,12 +89,12 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             Optional.empty();
     }
 
-    public Optional<Map<String, Object>> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
         Optional<Flow> flow = findById(namespace, id, revision);
         Optional<String> sourceCode = findSourceById(namespace, id);
         if (flow.isPresent() && sourceCode.isPresent()) {
 
-            return Optional.of(Map.of("flow", flow.get(), "sourceCode", sourceCode.get()));
+            return Optional.of(new FlowWithSource(flow.get(), sourceCode.get()));
         }
 
         return Optional.empty();
@@ -156,11 +156,11 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 throw s;
             });
 
-        return (Flow) this.save(flow, CrudEventType.CREATE, null).get("flow");
+        return this.save(flow, CrudEventType.CREATE, null).getFlow();
     }
 
     @Override
-    public Map<String, Object> create(Flow flow, String flowSource) {
+    public FlowWithSource create(Flow flow, String flowSource) {
         // control if create is valid
         taskDefaultService.injectDefaults(flow).validate()
             .ifPresent(s -> {
@@ -185,11 +185,11 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .findRemovedTrigger(flow, previous)
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
-        return (Flow) this.save(flow, CrudEventType.UPDATE, null).get("flow");
+        return this.save(flow, CrudEventType.UPDATE, null).getFlow();
     }
 
     @Override
-    public Map<String, Object> update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
+    public FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
         // control if update is valid
         this
             .findById(previous.getNamespace(), previous.getId())
@@ -207,7 +207,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         return this.save(flow, CrudEventType.UPDATE, flowSource);
     }
 
-    private Map<String, Object> save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
+    private FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         // validate the flow
         modelValidator
             .isValid(taskDefaultService.injectDefaults(flow))
@@ -224,7 +224,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
         Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
         if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && existsSource.get().equals(flowSource)) {
-            return Map.of("flow", exists.get(), "sourceCode", existsSource.get());
+            return new FlowWithSource(exists.get(), existsSource.get());
         }
 
         List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
@@ -242,7 +242,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         flowQueue.emit(flow);
         eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
-        return Map.of("flow", flow, "sourceCode", flowSource);
+        return new FlowWithSource(flow, flowSource);
     }
 
     @Override

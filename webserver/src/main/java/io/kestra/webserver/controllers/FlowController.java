@@ -29,8 +29,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
@@ -42,18 +40,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class FlowController {
     @Inject
     private FlowRepositoryInterface flowRepository;
-
-    @Getter
-    @NoArgsConstructor
-    public static class FlowResponse {
-        private Flow flow;
-        private String sourceCode;
-
-        public FlowResponse(Map<String, Object> flowData) {
-            this.flow = (Flow) flowData.get("flow");
-            this.sourceCode = (String) flowData.get("sourceCode");
-        }
-    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
@@ -72,13 +58,13 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/source", produces = MediaType.TEXT_JSON, consumes = MediaType.ALL)
     @Operation(tags = {"Flows"}, summary = "Get a flow")
-    public FlowResponse indexSource(
+    public FlowRepositoryInterface.FlowWithSource indexSource(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id
     ) {
-        return new FlowResponse(flowRepository
+        return flowRepository
             .findByIdWithSource(namespace, id)
-            .orElse(null));
+            .orElse(null);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -160,7 +146,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(produces = MediaType.TEXT_JSON, consumes = MediaType.TEXT_PLAIN)
     @Operation(tags = {"Flows"}, summary = "Create a flow")
-    public HttpResponse<FlowResponse> create(
+    public HttpResponse<FlowRepositoryInterface.FlowWithSource> create(
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
         Flow flowParsed = new YamlFlowParser().parse(flow);
@@ -173,7 +159,7 @@ public class FlowController {
                 flowParsed.getId()
             )));
         }
-        return HttpResponse.ok(new FlowResponse(flowRepository.create(flowParsed, flow)));
+        return HttpResponse.ok(flowRepository.create(flowParsed, flow));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -272,7 +258,7 @@ public class FlowController {
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.TEXT_PLAIN)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a flow")
-    public HttpResponse<FlowResponse> update(
+    public HttpResponse<FlowRepositoryInterface.FlowWithSource> update(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id,
         @Parameter(description = "The flow") @Body String flow
@@ -282,7 +268,7 @@ public class FlowController {
         if (existingFlow.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        return HttpResponse.ok(new FlowResponse(flowRepository.update(new YamlFlowParser().parse(flow), existingFlow.get(), flow)));
+        return HttpResponse.ok(flowRepository.update(new YamlFlowParser().parse(flow), existingFlow.get(), flow));
     }
 
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.ALL)

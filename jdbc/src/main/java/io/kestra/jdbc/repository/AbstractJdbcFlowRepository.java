@@ -129,12 +129,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Optional<Map<String, Object>> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
         Optional<Flow> flow = findById(namespace, id, revision);
         Optional<String> sourceCode = findSourceById(namespace, id, revision);
         if (flow.isPresent() && sourceCode.isPresent()) {
 
-            return Optional.of(Map.of("flow", flow.get(), "sourceCode", sourceCode.get()));
+            return Optional.of(new FlowWithSource(flow.get(), sourceCode.get()));
         }
 
         return Optional.empty();
@@ -280,7 +280,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Map<String, Object> create(Flow flow, String flowSource) throws ConstraintViolationException {
+    public FlowWithSource create(Flow flow, String flowSource) throws ConstraintViolationException {
         // control if create is valid
         taskDefaultService.injectDefaults(flow).validate()
             .ifPresent(s -> {
@@ -298,11 +298,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 throw s;
             });
 
-        return (Flow) this.save(flow, CrudEventType.CREATE, null).get("flow");
+        return this.save(flow, CrudEventType.CREATE, null).getFlow();
     }
 
     @Override
-    public Map<String, Object> update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
+    public FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
         // control if update is valid
         this
             .findById(previous.getNamespace(), previous.getId())
@@ -313,7 +313,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 throw s;
             });
 
-        Map<String, Object> saved = this.save(flow, CrudEventType.UPDATE, flowSource);
+        FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, flowSource);
 
         FlowService
             .findRemovedTrigger(flow, previous)
@@ -334,7 +334,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 throw s;
             });
 
-        Flow saved = (Flow) this.save(flow, CrudEventType.UPDATE, null).get("flow");
+        Flow saved = this.save(flow, CrudEventType.UPDATE, null).getFlow();
 
         FlowService
             .findRemovedTrigger(flow, previous)
@@ -344,7 +344,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @SneakyThrows
-    private Map<String, Object> save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
+    private FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         // validate the flow
         modelValidator
             .isValid(flow)
@@ -361,7 +361,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
         Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
         if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && existsSource.get().equals(flowSource)) {
-            return Map.of("flow", exists.get(), "sourceCode", existsSource.get());
+            return new FlowWithSource(exists.get(), existsSource.get());
         }
 
         List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
@@ -380,7 +380,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         flowQueue.emit(flow);
         eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
-        return Map.of("flow", flow, "sourceCode", flowSource);
+        return new FlowWithSource(flow, flowSource);
     }
 
     @SneakyThrows

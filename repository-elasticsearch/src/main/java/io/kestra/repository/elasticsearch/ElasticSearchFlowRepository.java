@@ -149,12 +149,12 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public Optional<Map<String, Object>> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
         Optional<Flow> flow = findById(namespace, id, revision);
         Optional<String> sourceCode = findSourceById(namespace, id, revision);
         if (flow.isPresent() && sourceCode.isPresent()) {
 
-            return Optional.of(Map.of("flow", flow.get(), "sourceCode", sourceCode.get()));
+            return Optional.of(new FlowWithSource(flow.get(), sourceCode.get()));
         }
 
         return Optional.empty();
@@ -309,10 +309,10 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        return (Flow) this.save(flow, CrudEventType.CREATE, null).get("flow");
+        return this.save(flow, CrudEventType.CREATE, null).getFlow();
     }
 
-    public Map<String, Object> create(Flow flow, String flowSource) throws ConstraintViolationException {
+    public FlowWithSource create(Flow flow, String flowSource) throws ConstraintViolationException {
         // control if create is valid
         taskDefaultService.injectDefaults(flow).validate()
             .ifPresent(s -> {
@@ -333,16 +333,16 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        Map<String, Object> saved = this.save(flow, CrudEventType.UPDATE, null);
+        FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, null);
 
         FlowService
             .findRemovedTrigger(flow, previous)
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
-        return (Flow) saved.get("flow");
+        return saved.getFlow();
     }
 
-    public Map<String, Object> update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
+    public FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
         // control if update is valid
         this
             .findById(previous.getNamespace(), previous.getId())
@@ -353,7 +353,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 throw s;
             });
 
-        Map<String, Object> saved = this.save(flow, CrudEventType.UPDATE, flowSource);
+        FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, flowSource);
 
         FlowService
             .findRemovedTrigger(flow, previous)
@@ -362,7 +362,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         return saved;
     }
 
-    public Map<String, Object> save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
+    public FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         modelValidator
             .isValid(flow)
             .ifPresent(s -> {
@@ -378,7 +378,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
         Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
         if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && existsSource.get().equals(flowSource)) {
-            return Map.of("flow", exists.get(), "sourceCode", existsSource.get());
+            return new FlowWithSource(exists.get(), existsSource.get());
         }
 
         List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
@@ -413,7 +413,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
         eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
-        return Map.of("flow", flow, "sourceCode", flowSource);
+        return new FlowWithSource(flow, flowSource);
     }
 
     @Override

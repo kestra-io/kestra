@@ -1,7 +1,6 @@
 package io.kestra.repository.memory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskDefaultService;
@@ -24,7 +23,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 import java.util.*;
@@ -53,7 +51,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     @Inject
     private ModelValidator modelValidator;
 
-
     private static String flowId(Flow flow) {
         return flowId(flow.getNamespace(), flow.getId());
     }
@@ -67,7 +64,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     @Override
     public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
-
         return revision
             .map(integer -> this.findRevisions(namespace, id)
                 .stream()
@@ -78,7 +74,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 Optional.of(this.flows.get(flowId(namespace, id))) :
                 Optional.empty()
             );
-
     }
 
     @Override

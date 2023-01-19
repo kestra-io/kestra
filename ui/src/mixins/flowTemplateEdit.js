@@ -142,12 +142,10 @@ export default {
                             });
                     });
             }
-        }
-        ,
+        },
         onChange() {
             this.$store.dispatch("core/isUnsaved", this.previousContent !== this.content);
-        }
-        ,
+        },
         save() {
             if (this.item) {
                 let item;
@@ -210,5 +208,4 @@ export default {
             }
         }
     }
-}
-;
+};

@@ -22,7 +22,6 @@ public interface TemplateRepositoryInterface {
 
     Template create(Template template);
 
-
     Template update(Template template, Template previous);
 
     void delete(Template template);

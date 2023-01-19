@@ -17,10 +17,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.stream.Collectors;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
 import javax.validation.ConstraintViolationException;
 
 @Singleton
@@ -42,12 +40,6 @@ public class YamlFlowParser {
 
     public Flow parse(String input) {
         Flow flow = readString(input);
-
-//        modelValidator
-//            .isValid(flow)
-//            .ifPresent(e -> {
-//                throw constraintViolationException(e, flow);
-//            });
         return flow;
     }
 

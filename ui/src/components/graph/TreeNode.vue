@@ -162,7 +162,7 @@
         },
         data() {
             return {
-                logLevel: "INFO",
+                logLevel: localStorage.getItem("defaultLogLevel") || "INFO",
                 filter: undefined,
                 isOpen: false,
             };

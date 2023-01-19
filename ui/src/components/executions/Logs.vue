@@ -67,7 +67,7 @@
             };
         },
         created() {
-            this.level = (this.$route.query.level || "INFO");
+            this.level = (this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO");
             this.filter = (this.$route.query.q || undefined);
         },
         computed: {

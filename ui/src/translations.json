@@ -219,6 +219,7 @@
     "execute the flow": "Trigger the flow",
     "execute flow now ?": "Do you want to execute this flow?",
     "Default namespace": "Default namespace",
+    "Default log level": "Default log level",
     "unsaved changed ?": "You have unsaved changed, do you want to leave this page?",
     "Editor theme": "Editor theme",
     "errors": {
@@ -472,6 +473,7 @@
     "execute the flow": "Créer une exécution",
     "execute flow now ?": "Voulez-vous exécuter ce flow ?",
     "Default namespace": "Espace de nom par défaut",
+    "Default log level": "Niveau de log par défaut",
     "unsaved changed ?": "Vous avez des changements non sauvegardés, voulez-vous quitter la page ?",
     "Editor theme": "Theme de l'éditeur",
     "errors": {

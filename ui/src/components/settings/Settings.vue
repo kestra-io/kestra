@@ -41,6 +41,10 @@
             <el-form-item :label="$t('Default namespace')">
                 <namespace-select data-type="flow" :value="defaultNamespace" @update:model-value="onNamespaceSelect" />
             </el-form-item>
+
+            <el-form-item :label="$t('Default log level')">
+                <log-level-selector clearable :value="defaultLogLevel" @update:model-value="onLevelChange" />
+            </el-form-item>
         </el-form>
     </div>
 </template>
@@ -48,15 +52,18 @@
 <script>
     import RouteContext from "../../mixins/routeContext";
     import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
+    import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
 
     export default {
         mixins: [RouteContext],
         components: {
             NamespaceSelect,
+            LogLevelSelector,
         },
         data() {
             return {
                 defaultNamespace: undefined,
+                defaultLogLevel: undefined,
                 lang: undefined,
                 theme: undefined,
                 editorTheme: undefined,
@@ -67,6 +74,7 @@
             const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 
             this.defaultNamespace = localStorage.getItem("defaultNamespace") || "";
+            this.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.lang = localStorage.getItem("lang") || "en";
             this.theme = localStorage.getItem("theme") || "light";
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
@@ -80,6 +88,16 @@
                     localStorage.setItem("defaultNamespace", value)
                 } else {
                     localStorage.removeItem("defaultNamespace")
+                }
+                this.$toast().saved();
+            },
+            onLevelChange(value) {
+                this.defaultLogLevel = value;
+
+                if (value) {
+                    localStorage.setItem("defaultLogLevel", value)
+                } else {
+                    localStorage.removeItem("defaultLogLevel")
                 }
                 this.$toast().saved();
             },

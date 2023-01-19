@@ -3,17 +3,22 @@ package io.kestra.webserver.controllers;
 import io.kestra.core.docs.ClassPluginDocumentation;
 import io.kestra.core.docs.DocumentationGenerator;
 import io.kestra.core.docs.JsonSchemaGenerator;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.templates.Template;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.services.PluginService;
+import io.micronaut.cache.annotation.Cacheable;
+import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
-import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,7 +27,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import jakarta.inject.Inject;
 
 @Validated
 @Controller("/api/v1/plugins/")
@@ -32,6 +36,37 @@ public class PluginController {
 
     @Inject
     private PluginService pluginService;
+
+    @Get(uri = "schemas/{type}")
+    @Operation(
+        tags = {"Plugins"},
+        summary = "Get all json schemas for a type",
+        description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
+    )
+    public HttpResponse<Map<String, Object>> schemas(SchemaType type) {
+        return HttpResponse.ok()
+            .body(this.schemasCache(type))
+            .header("Cache-Control", "public, max-age=3600");
+    }
+
+    @Cacheable("default")
+    protected Map<String, Object> schemasCache(SchemaType type) {
+        if (type == SchemaType.flow) {
+            return jsonSchemaGenerator.schemas(Flow.class);
+        } else if (type == SchemaType.template) {
+            return jsonSchemaGenerator.schemas(Template.class);
+        } else if (type == SchemaType.task) {
+            return jsonSchemaGenerator.schemas(Task.class);
+        } else {
+            throw new IllegalArgumentException("Invalid type " + type);
+        }
+    }
+
+    public enum SchemaType {
+        flow,
+        template,
+        task
+    }
 
     @Get
     @ExecuteOn(TaskExecutors.IO)
@@ -144,8 +179,8 @@ public class PluginController {
         }
 
         /**
-          * we filter from documentation all legacy org.kestra code ...
-          * we do it only on docs to avoid remove backward compatibility everywhere (worker, executor...)
+         * we filter from documentation all legacy org.kestra code ...
+         * we do it only on docs to avoid remove backward compatibility everywhere (worker, executor...)
          */
         private static <T extends Class<?>> Stream<T> filter(List<T> list) {
             return list

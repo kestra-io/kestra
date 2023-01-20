@@ -37,17 +37,25 @@ export default {
             })
         },
         loadFlow({commit}, options) {
-            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}`).then(response => {
-                if (response.data.exception) {
-                    commit("core/setMessage", {title: "Invalid source code", message: response.data.exception, variant: "danger"}, {root: true});
-                    delete response.data.exception;
-                    commit("setFlow", JSON.parse(response.data.source));
-                } else {
-                    commit("setFlow", response.data)
+            return this.$http.get(
+                `/api/v1/flows/${options.namespace}/${options.id}`,
+                {
+                    validateStatus: (status) => {
+                        return options.deleted ? status === 200 || status === 404 : status == 200;
+                    }
                 }
+            )
+                .then(response => {
+                    if (response.data.exception) {
+                        commit("core/setMessage", {title: "Invalid source code", message: response.data.exception, variant: "danger"}, {root: true});
+                        delete response.data.exception;
+                        commit("setFlow", JSON.parse(response.data.source));
+                    } else {
+                        commit("setFlow", response.data)
+                    }
 
-                return response.data;
-            })
+                    return response.data;
+                })
         },
         loadTask({commit}, options) {
             return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}`).then(response => {

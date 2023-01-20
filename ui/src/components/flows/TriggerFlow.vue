@@ -49,6 +49,7 @@
                     .dispatch("flow/loadFlow", {
                         id: this.flowId,
                         namespace: this.namespace,
+                        deleted: true
                     });
             }
         },

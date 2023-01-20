@@ -299,7 +299,9 @@
                                 .then(r => {
                                     this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
                                     this.loadData();
-                                })
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
                         }
                     }
                 )
@@ -324,7 +326,9 @@
                                 .then(r => {
                                     this.$toast().success(this.$t("executions deleted", {executionCount: r.data.count}));
                                     this.loadData();
-                                })
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
                         }
                     }
                 )
@@ -349,7 +353,9 @@
                                 .then(r => {
                                     this.$toast().success(this.$t("executions killed", {executionCount: r.data.count}));
                                     this.loadData();
-                                })
+                                }).catch(e => this.$toast().error(e.invalids.map(exec => {
+                                    return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
+                                }), this.$t(e.message)))
                         }
                     }
                 )

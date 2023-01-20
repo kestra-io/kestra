@@ -58,7 +58,6 @@ import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
-import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -114,6 +113,14 @@ public class ExecutionController {
     @NoArgsConstructor
     public static class BulkResponse {
         Integer count;
+    }
+
+    @SuperBuilder
+    @Getter
+    @NoArgsConstructor
+    public static class BulkErrorResponse {
+        String message;
+        Set<ManualConstraintViolation<String>> invalids;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -273,7 +280,7 @@ public class ExecutionController {
     @ApiResponses(
         @ApiResponse(responseCode = "204", description = "On success")
     )
-    public HttpResponse<BulkResponse> bulkDelete(
+    public MutableHttpResponse<?> bulkDelete(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {
         List<Execution> executions = new ArrayList<>();
@@ -285,7 +292,7 @@ public class ExecutionController {
                 executions.add(execution.get());
             } else {
                 invalids.add(ManualConstraintViolation.of(
-                    String.format("Execution %s not found", executionId),
+                    "execution not found",
                     executionId,
                     String.class,
                     "execution",
@@ -294,7 +301,13 @@ public class ExecutionController {
             }
         }
         if (invalids.size() > 0) {
-            throw new ConstraintViolationException("invalid execution", invalids);
+            return HttpResponse.unprocessableEntity()
+                .body(BulkErrorResponse
+                    .builder()
+                    .message("invalid bulk delete")
+                    .invalids(invalids)
+                    .build()
+                );
         }
         for (Execution execution : executions) {
             executionRepository.delete(execution);
@@ -578,7 +591,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/restart/by-ids", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Restart a list of executions")
-    public HttpResponse<BulkResponse> bulkRestart(
+    public MutableHttpResponse<?> bulkRestart(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) throws Exception {
         List<Execution> executions = new ArrayList<>();
@@ -588,7 +601,7 @@ public class ExecutionController {
             Optional<Execution> execution = executionRepository.findById(executionId);
             if (execution.isPresent() && !execution.get().getState().isFailed()) {
                 invalids.add(ManualConstraintViolation.of(
-                    String.format("Execution %s is not in state FAILED", executionId),
+                    "execution not in state FAILED",
                     executionId,
                     String.class,
                     "execution",
@@ -596,7 +609,7 @@ public class ExecutionController {
                 ));
             } else if (execution.isEmpty()) {
                 invalids.add(ManualConstraintViolation.of(
-                    String.format("Execution %s not found", executionId),
+                    "execution not found",
                     executionId,
                     String.class,
                     "execution",
@@ -604,11 +617,16 @@ public class ExecutionController {
                 ));
             } else {
                 executions.add(execution.get());
-
             }
         }
         if (invalids.size() > 0) {
-            throw new ConstraintViolationException("invalid execution", invalids);
+                return HttpResponse.unprocessableEntity()
+                    .body(BulkErrorResponse
+                        .builder()
+                        .message("invalid bulk restart")
+                        .invalids(invalids)
+                        .build()
+                    );
         }
         for (Execution execution : executions) {
             Execution restart = executionService.restart(execution, null);
@@ -748,7 +766,7 @@ public class ExecutionController {
             @ApiResponse(responseCode = "409", description = "if the executions is already finished")
         }
     )
-    public HttpResponse<BulkResponse> bulkKill(
+    public MutableHttpResponse<?> bulkKill(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {
         List<Execution> executions = new ArrayList<>();
@@ -758,7 +776,7 @@ public class ExecutionController {
             Optional<Execution> execution = executionRepository.findById(executionId);
             if (execution.isPresent() && execution.get().getState().isTerninated()) {
                 invalids.add(ManualConstraintViolation.of(
-                    String.format("Execution %s is already finished", executionId),
+                    "execution already finished",
                     executionId,
                     String.class,
                     "execution",
@@ -766,7 +784,7 @@ public class ExecutionController {
                 ));
             } else if (execution.isEmpty()) {
                 invalids.add(ManualConstraintViolation.of(
-                    String.format("Execution % not found", executionId),
+                    "execution not found",
                     executionId,
                     String.class,
                     "execution",
@@ -777,7 +795,13 @@ public class ExecutionController {
             }
         }
         if (invalids.size() > 0) {
-            throw new ConstraintViolationException("invalid execution",invalids);
+            return HttpResponse.unprocessableEntity()
+                .body(BulkErrorResponse
+                    .builder()
+                    .message("invalid bulk kill")
+                    .invalids(invalids)
+                    .build()
+                );
         }
         for (Execution execution : executions) {
             killQueue.emit(ExecutionKilled
@@ -809,7 +833,12 @@ public class ExecutionController {
             state
         );
         Integer count = executions.map(e -> {
-                killQueue.emit(ExecutionKilled
+            if (!e.getState().isRunning()) {
+                throw new IllegalStateException("Execution must be running to be killed, " +
+                    "current state is '" + e.getState().getCurrent() + "' !"
+                );
+            }
+            killQueue.emit(ExecutionKilled
                     .builder()
                     .executionId(e.getId())
                     .build());

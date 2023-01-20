@@ -259,9 +259,15 @@
       "failedExecutions": "Failed executions",
       "errorLogs": "Errors logs"
     },
-    "executions restarted": "<code>{executionCount}</code> executions(s) restarted.",
-    "executions killed": "<code>{executionCount}</code> executions(s) killed.",
-    "executions deleted": "<code>{executionCount}</code> executions(s) deleted."
+    "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
+    "executions killed": "<code>{executionCount}</code> executions(s) killed",
+    "executions deleted": "<code>{executionCount}</code> executions(s) deleted",
+    "invalid bulk restart": "Could not restart executions",
+    "invalid bulk kill": "Could not kill executions",
+    "invalid bulk delete": "Could not delete executions",
+    "execution not found": "Execution <code>{executionId}</code> not found",
+    "execution not in state FAILED": "Execution <code>{executionId}</code> not in state FAILED",
+    "execution already finished": "Execution <code>{executionId}</code> already finished"
   },
   "fr": {
     "id": "Identifiant",
@@ -514,9 +520,15 @@
       "all": "tous sélectionnés ({count})"
     },
     "cancel": "Annuler",
-    "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s).",
-    "executions killed": "<code>{executionCount}</code> exécution(s) killed.",
-    "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s).",
+    "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s)",
+    "executions killed": "<code>{executionCount}</code> exécution(s) arrétée(s)",
+    "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s)",
+    "invalid bulk restart": "Impossible de redémarrer",
+    "invalid bulk kill": "Impossible d'arrêter",
+    "invalid bulk delete": "Impossible de supprimer",
+    "execution not found": "Execution <code>{executionId}</code> non trouvée",
+    "execution not in state FAILED": "Execution <code>{executionId}</code> n'est pas dans l'état FAILED",
+    "execution already finished": "Execution <code>{executionId}</code> déjà terminée",
     "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
     "homeDashboard": {
       "today": "Aujourd'hui",

@@ -18,6 +18,7 @@
         background-color: var(--bs-white);
         padding: 0.5rem 1rem;
         text-align: right;
+        transition: margin-left ease 0.2s;
 
         html.dark & {
             background-color: var(--bs-gray-100-darken-3);
@@ -38,6 +39,30 @@
             flex-wrap: nowrap;
             padding: 0;
             justify-content: flex-end;
+
+            li.spacer {
+                flex-grow: 2;
+            }
+
+            li.left {
+                margin-left: 0;
+            }
+
+            li {
+                p {
+                    padding: 8px 15px;
+                    font-size: var(--font-size-sm);
+                    line-height: var(--font-size-sm);
+                    margin-bottom: 0;
+                }
+            }
+        }
+
+        .menu-collapsed & {
+            margin-left: var(--menu-collapsed-width);
+        }
+        .menu-not-collapsed & {
+            margin-left: var(--menu-width);
         }
     }
 </style>

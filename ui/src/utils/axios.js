@@ -112,6 +112,10 @@ export default (callback, store, router) => {
 
                 return Promise.reject(errorResponse);
             }
+            if (errorResponse.response.status === 422
+                && ["invalid bulk kill","invalid bulk delete","invalid bulk restart"].includes(errorResponse.response.data.message)){
+                return Promise.reject(errorResponse.response.data)
+            }
 
             if (errorResponse.response.data) {
                 store.dispatch("core/showMessage", {

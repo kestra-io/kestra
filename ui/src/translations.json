@@ -520,16 +520,6 @@
       "all": "tous sélectionnés ({count})"
     },
     "cancel": "Annuler",
-    "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s)",
-    "executions killed": "<code>{executionCount}</code> exécution(s) arrétée(s)",
-    "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s)",
-    "invalid bulk restart": "Impossible de redémarrer",
-    "invalid bulk kill": "Impossible d'arrêter",
-    "invalid bulk delete": "Impossible de supprimer",
-    "execution not found": "Execution <code>{executionId}</code> non trouvée",
-    "execution not in state FAILED": "Execution <code>{executionId}</code> n'est pas dans l'état FAILED",
-    "execution already finished": "Execution <code>{executionId}</code> déjà terminée",
-    "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
     "homeDashboard": {
       "today": "Aujourd'hui",
       "yesterday": "Hier",
@@ -538,6 +528,16 @@
       "namespacesErrorExecutions": "Exécutions en erreur par espace de nom",
       "failedExecutions": "Exécutions en échec",
       "errorLogs": "Journaux d'erreurs"
-    }
+    },
+    "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s)",
+    "executions killed": "<code>{executionCount}</code> exécution(s) arrêtée(s)",
+    "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s)",
+    "invalid bulk restart": "Impossible de redémarrer",
+    "invalid bulk kill": "Impossible d'arrêter",
+    "invalid bulk delete": "Impossible de supprimer",
+    "execution not found": "Execution <code>{executionId}</code> non trouvée",
+    "execution not in state FAILED": "Execution <code>{executionId}</code> n'est pas dans l'état FAILED",
+    "execution already finished": "Execution <code>{executionId}</code> déjà terminée",
+    "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?"
   }
 }

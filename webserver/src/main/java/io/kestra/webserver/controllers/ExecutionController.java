@@ -23,6 +23,8 @@ import io.reactivex.Single;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.*;
@@ -278,9 +280,12 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Executions"}, summary = "Delete a list of executions")
     @ApiResponses(
-        @ApiResponse(responseCode = "204", description = "On success")
+        value = {
+            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = BulkResponse.class))}),
+            @ApiResponse(responseCode = "422", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+        }
     )
-    public MutableHttpResponse<?> bulkDelete(
+    public MutableHttpResponse<?> deleteByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {
         List<Execution> executions = new ArrayList<>();
@@ -309,16 +314,17 @@ public class ExecutionController {
                     .build()
                 );
         }
-        for (Execution execution : executions) {
-            executionRepository.delete(execution);
-        }
+
+        executions
+            .forEach(execution -> executionRepository.delete(execution));
+
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
     @Delete(uri = "executions/query", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Executions"}, summary = "Delete executions returned by the query")
-    public HttpResponse<BulkResponse> queryDelete(
+    @Operation(tags = {"Executions"}, summary = "Delete executions filter by query parameters")
+    public HttpResponse<BulkResponse> deleteByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
@@ -326,19 +332,21 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue(value = "state") List<State.Type> state
     ) {
-        Flowable<Execution> executions = executionRepository.find(
-            query,
-            namespace,
-            flowId,
-            startDate,
-            endDate,
-            state
-        );
-        Integer count = executions.map(e -> {
+        Integer count = executionRepository
+            .find(
+                query,
+                namespace,
+                flowId,
+                startDate,
+                endDate,
+                state
+            )
+            .map(e -> {
                 executionRepository.delete(e);
                 return 1;
-            }
-        ).reduce(Integer::sum).blockingGet();
+            })
+            .reduce(Integer::sum)
+            .blockingGet();
 
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
@@ -591,7 +599,13 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/restart/by-ids", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Restart a list of executions")
-    public MutableHttpResponse<?> bulkRestart(
+    @ApiResponses(
+        value = {
+            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = BulkResponse.class))}),
+            @ApiResponse(responseCode = "422", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
+        }
+    )
+    public MutableHttpResponse<?> restartByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) throws Exception {
         List<Execution> executions = new ArrayList<>();
@@ -599,6 +613,7 @@ public class ExecutionController {
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(executionId);
+
             if (execution.isPresent() && !execution.get().getState().isFailed()) {
                 invalids.add(ManualConstraintViolation.of(
                     "execution not in state FAILED",
@@ -639,8 +654,8 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/restart/query", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Executions"}, summary = "Restart executions returned by the query")
-    public HttpResponse<BulkResponse> queryRestart(
+    @Operation(tags = {"Executions"}, summary = "Restart executions filter by query parameters")
+    public HttpResponse<BulkResponse> restartByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
@@ -648,21 +663,23 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue(value = "state") List<State.Type> state
     ) {
-        Flowable<Execution> executions = executionRepository.find(
-            query,
-            namespace,
-            flowId,
-            startDate,
-            endDate,
-            state
-        );
-        Integer count = executions.map(e -> {
+        Integer count = executionRepository
+            .find(
+                query,
+                namespace,
+                flowId,
+                startDate,
+                endDate,
+                state
+            )
+            .map(e -> {
                 Execution restart = executionService.restart(e, null);
                 executionQueue.emit(restart);
                 eventPublisher.publishEvent(new CrudEvent<>(restart, CrudEventType.UPDATE));
                 return 1;
-            }
-        ).reduce(Integer::sum).blockingGet();
+            })
+            .reduce(Integer::sum)
+            .blockingGet();
 
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
@@ -673,8 +690,7 @@ public class ExecutionController {
     public Execution replay(
         @Parameter(description = "the original execution id to clone") String executionId,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue(value = "taskRunId") String taskRunId,
-        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue(value = "revision") Integer
-            revision
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue(value = "revision") Integer revision
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(executionId);
         if (execution.isEmpty()) {
@@ -762,11 +778,11 @@ public class ExecutionController {
     @Operation(tags = {"Executions"}, summary = "Kill a list of executions")
     @ApiResponses(
         value = {
-            @ApiResponse(responseCode = "204", description = "On success"),
-            @ApiResponse(responseCode = "409", description = "if the executions is already finished")
+            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = BulkResponse.class))}),
+            @ApiResponse(responseCode = "422", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
         }
     )
-    public MutableHttpResponse<?> bulkKill(
+    public MutableHttpResponse<?> killByIds(
         @Parameter(description = "The execution id") @Body List<String> executionsId
     ) {
         List<Execution> executions = new ArrayList<>();
@@ -776,7 +792,7 @@ public class ExecutionController {
             Optional<Execution> execution = executionRepository.findById(executionId);
             if (execution.isPresent() && execution.get().getState().isTerninated()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution already finished",
+                    "Execution already finished",
                     executionId,
                     String.class,
                     "execution",
@@ -784,7 +800,7 @@ public class ExecutionController {
                 ));
             } else if (execution.isEmpty()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not found",
+                    "Execution not found",
                     executionId,
                     String.class,
                     "execution",
@@ -794,29 +810,32 @@ public class ExecutionController {
                 executions.add(execution.get());
             }
         }
+
         if (invalids.size() > 0) {
             return HttpResponse.unprocessableEntity()
                 .body(BulkErrorResponse
                     .builder()
-                    .message("invalid bulk kill")
+                    .message("Invalid bulk kill")
                     .invalids(invalids)
                     .build()
                 );
         }
-        for (Execution execution : executions) {
+
+        executions.forEach(execution -> {
             killQueue.emit(ExecutionKilled
                 .builder()
                 .executionId(execution.getId())
                 .build()
             );
-        }
+        });
+
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "executions/kill/query", produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Executions"}, summary = "Kill executions returned by the query")
-    public HttpResponse<BulkResponse> queryKill(
+    @Operation(tags = {"Executions"}, summary = "Kill executions filter by query parameters")
+    public HttpResponse<BulkResponse> killByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
         @Parameter(description = "A flow id filter") @Nullable String flowId,
@@ -824,27 +843,30 @@ public class ExecutionController {
         @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
         @Parameter(description = "A state filter") @Nullable @QueryValue(value = "state") List<State.Type> state
     ) {
-        Flowable<Execution> executions = executionRepository.find(
-            query,
-            namespace,
-            flowId,
-            startDate,
-            endDate,
-            state
-        );
-        Integer count = executions.map(e -> {
-            if (!e.getState().isRunning()) {
-                throw new IllegalStateException("Execution must be running to be killed, " +
-                    "current state is '" + e.getState().getCurrent() + "' !"
-                );
-            }
-            killQueue.emit(ExecutionKilled
+        Integer count = executionRepository
+            .find(
+                query,
+                namespace,
+                flowId,
+                startDate,
+                endDate,
+                state
+            )
+            .map(e -> {
+                if (!e.getState().isRunning()) {
+                    throw new IllegalStateException("Execution must be running to be killed, " +
+                        "current state is '" + e.getState().getCurrent() + "' !"
+                    );
+                }
+
+                killQueue.emit(ExecutionKilled
                     .builder()
                     .executionId(e.getId())
                     .build());
                 return 1;
-            }
-        ).reduce(Integer::sum).blockingGet();
+            })
+            .reduce(Integer::sum)
+            .blockingGet();
 
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }

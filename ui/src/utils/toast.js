@@ -89,6 +89,8 @@ export default {
                             title: title || self.$t("error"),
                             message: this._wrap(message),
                             type: "error",
+                            duration: 0,
+                            customClass: "large"
                         },
                         ...(options || {})
                     })

@@ -34,7 +34,7 @@
             </el-form-item>
         </collapse>
 
-        <log-list :level="level" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" :filter="filter" />
+        <log-list :level="level" :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']" :filter="filter" @follow="forwardEvent('follow', $event)" />
     </div>
 </template>
 
@@ -83,6 +83,9 @@
             }
         },
         methods: {
+            forwardEvent(type, event) {
+                this.$emit(type, event);
+            },
             prevent(event) {
                 event.preventDefault();
             },

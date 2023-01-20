@@ -17,7 +17,7 @@
             </el-tab-pane>
         </el-tabs>
         <component
-            v-bind="activeTab.props"
+            v-bind="{...activeTab.props, ...$attrs}"
             ref="tabContent"
             :is="activeTab.component"
             :prevent-route-info="true"

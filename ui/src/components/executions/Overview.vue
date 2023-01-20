@@ -80,10 +80,8 @@
         emits: ["follow"],
         methods: {
             forwardEvent(type, event) {
+                console.log("forwardEvent", type);
                 this.$emit(type, event);
-            },
-            restart() {
-                this.$emit("follow");
             },
             stop() {
                 if (!this.execution || State.isRunning(this.execution.state.current)) {

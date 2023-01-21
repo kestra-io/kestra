@@ -52,7 +52,7 @@
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                 >
-                    <el-table-column type="selection" />
+                    <el-table-column type="selection" v-if="!hidden.includes('selection') && (canUpdate || canDelete)" />
 
                     <el-table-column prop="id" v-if="!hidden.includes('id')" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
                         <template #default="scope">
@@ -114,20 +114,20 @@
             </template>
         </data-table>
 
-        <bottom-line v-if="executionsSelection.length !== 0">
+        <bottom-line v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
             <ul>
                 <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" />
-                <li>
+                <li v-if="canUpdate">
                     <el-button :icon="Restart" type="success" class="bulk-button" @click="this.restartExecutions()">
                         {{ $t('restart') }}
                     </el-button>
                 </li>
-                <li>
+                <li v-if="canUpdate">
                     <el-button :icon="StopCircleOutline" type="warning" class="bulk-button" @click="this.killExecutions()">
                         {{ $t('kill') }}
                     </el-button>
                 </li>
-                <li>
+                <li v-if="canDelete">
                     <el-button :icon="Delete" type="danger" class="bulk-button" @click="this.deleteExecutions()">
                         {{ $t('delete') }}
                     </el-button>
@@ -166,6 +166,8 @@
     import _merge from "lodash/merge";
     import BottomLine from "../layout/BottomLine.vue";
     import BottomLineCounter from "../layout/BottomLineCounter.vue";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -213,6 +215,7 @@
         computed: {
             ...mapState("execution", ["executions", "total"]),
             ...mapState("stat", ["daily"]),
+            ...mapState("auth", ["user"]),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -225,7 +228,13 @@
                 return this.$moment(this.endDate)
                     .add(-30, "days")
                     .toDate();
-            }
+            },
+            canUpdate() {
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE);
+            },
+            canDelete() {
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE);
+            },
         },
         methods: {
             handleSelectionChange(val) {

@@ -219,7 +219,7 @@
                 return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.UPDATE, this.execution.namespace);
             },
             canDelete() {
-                return this.user && this.execution && this.user.isAllowed(permission.FLOW, action.DELETE, this.execution.namespace);
+                return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);
             },
             ready() {
                 return this.execution !== undefined;

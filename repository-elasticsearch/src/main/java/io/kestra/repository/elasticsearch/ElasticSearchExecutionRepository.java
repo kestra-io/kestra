@@ -8,7 +8,6 @@ import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -77,12 +76,11 @@ public class ElasticSearchExecutionRepository extends AbstractElasticSearchRepos
     public ElasticSearchExecutionRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
         ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher
     ) {
-        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Execution.class);
+        super(client, elasticSearchIndicesService, executorsUtils, Execution.class);
 
         this.eventPublisher = eventPublisher;
         this.executionQueue = executionQueue;

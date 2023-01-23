@@ -24,7 +24,6 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -50,7 +49,6 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     private static final String INDEX_NAME = "flows";
     protected static final String REVISIONS_NAME = "flows-revisions";
     protected static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson();
-
     private final QueueInterface<Flow> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
     private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
@@ -59,13 +57,12 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     public ElasticSearchFlowRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue,
         @Named(QueueFactoryInterface.TRIGGER_NAMED) QueueInterface<Trigger> triggerQueue,
         ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher
     ) {
-        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Flow.class);
+        super(client, elasticSearchIndicesService,  executorsUtils, Flow.class);
 
         this.flowQueue = flowQueue;
         this.triggerQueue = triggerQueue;

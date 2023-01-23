@@ -7,7 +7,6 @@ import org.opensearch.index.query.QueryBuilders;
 import org.opensearch.search.builder.SearchSourceBuilder;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.utils.ExecutorsUtils;
 
@@ -25,10 +24,9 @@ public class ElasticsearchTriggerRepository extends AbstractElasticSearchReposit
     public ElasticsearchTriggerRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils
     ) {
-        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Trigger.class);
+        super(client, elasticSearchIndicesService,  executorsUtils, Trigger.class);
     }
 
     public Optional<Trigger> findLast(TriggerContext trigger) {

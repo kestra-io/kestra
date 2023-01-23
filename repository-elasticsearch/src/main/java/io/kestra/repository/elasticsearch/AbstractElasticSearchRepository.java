@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -72,7 +71,6 @@ abstract public class AbstractElasticSearchRepository<T> {
     private static ExecutorService poolExecutor;
     protected Class<T> cls;
     protected RestHighLevelClient client;
-    protected ModelValidator modelValidator;
     protected ElasticSearchIndicesService elasticSearchIndicesService;
     protected Map<String, IndicesConfig> indicesConfigs;
 
@@ -80,7 +78,6 @@ abstract public class AbstractElasticSearchRepository<T> {
     public AbstractElasticSearchRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         Class<T> cls
     ) {
@@ -88,7 +85,6 @@ abstract public class AbstractElasticSearchRepository<T> {
 
         this.client = client;
         this.cls = cls;
-        this.modelValidator = modelValidator;
         this.elasticSearchIndicesService = elasticSearchIndicesService;
 
         this.indicesConfigs = elasticSearchIndicesService.findConfig(cls);

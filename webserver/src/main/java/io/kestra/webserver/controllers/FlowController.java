@@ -1,7 +1,9 @@
 package io.kestra.webserver.controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.services.TaskDefaultService;
 import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -23,6 +25,7 @@ import io.kestra.webserver.utils.PageableUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,6 +43,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class FlowController {
     @Inject
     private FlowRepositoryInterface flowRepository;
+    @Inject
+    private TaskDefaultService taskDefaultService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
@@ -159,6 +164,13 @@ public class FlowController {
                 flowParsed.getId()
             )));
         }
+
+        // control if flow with injections is valid
+        taskDefaultService.injectDefaults(flowParsed).validate()
+            .ifPresent(s -> {
+                throw s;
+            });
+
         return HttpResponse.ok(flowRepository.create(flowParsed, flow));
     }
 
@@ -167,7 +179,7 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "Create a flow")
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body @Valid Flow flow
-    ) throws ConstraintViolationException {
+    ) throws ConstraintViolationException, JsonProcessingException {
         if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
                 "Flow id already exists",
@@ -177,6 +189,12 @@ public class FlowController {
                 flow.getId()
             )));
         }
+
+        // control if flow with injections is valid
+        taskDefaultService.injectDefaults(flow).validate()
+            .ifPresent(s -> {
+                throw s;
+            });
 
         return HttpResponse.ok(flowRepository.create(flow));
     }
@@ -193,7 +211,7 @@ public class FlowController {
     public List<Flow> updateNamespace(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows
-    ) throws ConstraintViolationException {
+    ) throws ConstraintViolationException, JsonProcessingException {
         // control namespace to update
         Set<ManualConstraintViolation<Flow>> invalids = flows
             .stream()
@@ -246,10 +264,14 @@ public class FlowController {
             .stream()
             .map(flow -> {
                 Optional<Flow> existingFlow = flowRepository.findById(namespace, flow.getId());
-                if (existingFlow.isPresent()) {
-                    return flowRepository.update(flow, existingFlow.get());
-                } else {
-                    return flowRepository.create(flow);
+                try {
+                    if (existingFlow.isPresent()) {
+                        return flowRepository.update(flow, existingFlow.get());
+                    } else {
+                        return flowRepository.create(flow);
+                    }
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
                 }
             })
             .collect(Collectors.toList());
@@ -264,11 +286,23 @@ public class FlowController {
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
+        Flow flowParsed = new YamlFlowParser().parse(flow);
 
         if (existingFlow.isEmpty()) {
+
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        return HttpResponse.ok(flowRepository.update(new YamlFlowParser().parse(flow), existingFlow.get(), flow));
+        // control if update is valid
+        flowRepository
+            .findById(existingFlow.get().getNamespace(), existingFlow.get().getId())
+            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flowParsed)))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow));
     }
 
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.ALL)
@@ -278,12 +312,22 @@ public class FlowController {
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id,
         @Parameter(description = "The flow") @Body @Valid Flow flow
-    ) throws ConstraintViolationException {
+    ) throws ConstraintViolationException, JsonProcessingException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
 
         if (existingFlow.isEmpty()) {
+
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
+        // control if update is valid
+        flowRepository
+            .findById(existingFlow.get().getNamespace(), existingFlow.get().getId())
+            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .ifPresent(s -> {
+                throw s;
+            });
 
         return HttpResponse.ok(flowRepository.update(flow, existingFlow.get()));
     }
@@ -312,7 +356,7 @@ public class FlowController {
         try {
             Flow newValue = flow.updateTask(taskId, task);
             return HttpResponse.ok(flowRepository.update(newValue, flow));
-        } catch (InternalException e) {
+        } catch (InternalException | JsonProcessingException e) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
     }

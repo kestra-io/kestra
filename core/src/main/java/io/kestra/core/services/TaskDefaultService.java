@@ -72,7 +72,7 @@ public class TaskDefaultService {
     public Flow injectDefaults(Flow flow, Logger logger) {
         try {
             return this.injectDefaults(flow);
-        } catch (ConstraintViolationException e) {
+        } catch (Exception e) {
             logger.warn(e.getMessage(), e);
             return flow;
         }

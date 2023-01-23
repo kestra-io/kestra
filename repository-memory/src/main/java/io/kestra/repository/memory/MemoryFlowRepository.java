@@ -149,28 +149,18 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         throw new NotImplementedException();
     }
 
-    public Flow create(Flow flow) throws ConstraintViolationException {
-        // control if create is valid
-        taskDefaultService.injectDefaults(flow).validate()
-            .ifPresent(s -> {
-                throw s;
-            });
+    public Flow create(Flow flow) throws ConstraintViolationException, JsonProcessingException {
 
-        return this.save(flow, CrudEventType.CREATE, null).getFlow();
+        return this.save(flow, CrudEventType.CREATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
     }
 
     @Override
     public FlowWithSource create(Flow flow, String flowSource) {
-        // control if create is valid
-        taskDefaultService.injectDefaults(flow).validate()
-            .ifPresent(s -> {
-                throw s;
-            });
 
         return this.save(flow, CrudEventType.CREATE, flowSource);
     }
 
-    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
+    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException {
         // control if update is valid
         this
             .findById(previous.getNamespace(), previous.getId())
@@ -185,7 +175,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .findRemovedTrigger(flow, previous)
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
-        return this.save(flow, CrudEventType.UPDATE, null).getFlow();
+        return this.save(flow, CrudEventType.UPDATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
     }
 
     @Override

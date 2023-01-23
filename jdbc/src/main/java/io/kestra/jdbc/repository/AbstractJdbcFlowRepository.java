@@ -281,24 +281,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     public FlowWithSource create(Flow flow, String flowSource) throws ConstraintViolationException {
-        // control if create is valid
-        taskDefaultService.injectDefaults(flow).validate()
-            .ifPresent(s -> {
-                throw s;
-            });
 
         return this.save(flow, CrudEventType.CREATE, flowSource);
     }
 
     @Override
-    public Flow create(Flow flow) throws ConstraintViolationException {
-        // control if create is valid
-        taskDefaultService.injectDefaults(flow).validate()
-            .ifPresent(s -> {
-                throw s;
-            });
+    public Flow create(Flow flow) throws ConstraintViolationException, JsonProcessingException {
 
-        return this.save(flow, CrudEventType.CREATE, null).getFlow();
+        return this.save(flow, CrudEventType.CREATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
     }
 
     @Override
@@ -323,7 +313,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
+    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException {
         // control if update is valid
         this
             .findById(previous.getNamespace(), previous.getId())
@@ -334,7 +324,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 throw s;
             });
 
-        Flow saved = this.save(flow, CrudEventType.UPDATE, null).getFlow();
+        Flow saved = this.save(flow, CrudEventType.UPDATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         FlowService
             .findRemovedTrigger(flow, previous)

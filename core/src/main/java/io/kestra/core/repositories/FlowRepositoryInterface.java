@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.SearchResult;
 import io.micronaut.data.model.Pageable;
 import io.kestra.core.models.executions.Execution;
@@ -80,11 +81,11 @@ public interface FlowRepositoryInterface {
 
     List<String> findDistinctNamespace();
 
-    Flow create(Flow flow) throws ConstraintViolationException;
+    Flow create(Flow flow) throws ConstraintViolationException, JsonProcessingException;
 
     FlowWithSource create(Flow flow, String flowSource);
 
-    Flow update(Flow flow, Flow previous) throws ConstraintViolationException;
+    Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException;
 
     FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException;
 

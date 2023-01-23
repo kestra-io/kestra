@@ -302,38 +302,19 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         }
     }
 
-    public Flow create(Flow flow) throws ConstraintViolationException {
-        // control if create is valid
-        flow.validate()
-            .ifPresent(s -> {
-                throw s;
-            });
+    public Flow create(Flow flow) throws ConstraintViolationException, JsonProcessingException {
 
-        return this.save(flow, CrudEventType.CREATE, null).getFlow();
+        return this.save(flow, CrudEventType.CREATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
     }
 
     public FlowWithSource create(Flow flow, String flowSource) throws ConstraintViolationException {
-        // control if create is valid
-        taskDefaultService.injectDefaults(flow).validate()
-            .ifPresent(s -> {
-                throw s;
-            });
 
         return this.save(flow, CrudEventType.CREATE, flowSource);
     }
 
-    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException {
-        // control if update is valid
-        this
-            .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .ifPresent(s -> {
-                throw s;
-            });
+    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException {
 
-        FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, null);
+        FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, JacksonMapper.ofYaml().writeValueAsString(flow));
 
         FlowService
             .findRemovedTrigger(flow, previous)

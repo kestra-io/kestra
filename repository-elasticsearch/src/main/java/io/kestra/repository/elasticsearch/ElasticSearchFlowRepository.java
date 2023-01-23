@@ -7,7 +7,6 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -48,8 +47,6 @@ import javax.validation.ConstraintViolationException;
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository<Flow> implements FlowRepositoryInterface {
 
-    @Inject
-    private TaskDefaultService taskDefaultService;
     private static final String INDEX_NAME = "flows";
     protected static final String REVISIONS_NAME = "flows-revisions";
     protected static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson();
@@ -313,7 +310,6 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     public Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException {
-
         FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, JacksonMapper.ofYaml().writeValueAsString(flow));
 
         FlowService
@@ -324,16 +320,6 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     public FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
-        // control if update is valid
-        this
-            .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .ifPresent(s -> {
-                throw s;
-            });
-
         FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, flowSource);
 
         FlowService
@@ -344,18 +330,6 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     public FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
-        modelValidator
-            .isValid(flow)
-            .ifPresent(s -> {
-                throw s;
-            });
-
-        try {
-            flowSource = flowSource != null ? flowSource : JacksonMapper.ofYaml().writeValueAsString(flow);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
         Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
         if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && existsSource.get().equals(flowSource)) {

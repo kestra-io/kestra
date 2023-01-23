@@ -3,7 +3,6 @@ package io.kestra.repository.memory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.value.ValueException;
@@ -12,7 +11,6 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -36,8 +34,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     private final HashMap<String, String> flowSources = new HashMap<>();
 
     @Inject
-    private TaskDefaultService taskDefaultService;
-    @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
     private QueueInterface<Flow> flowQueue;
 
@@ -47,9 +43,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
-
-    @Inject
-    private ModelValidator modelValidator;
 
     private static String flowId(Flow flow) {
         return flowId(flow.getNamespace(), flow.getId());
@@ -161,16 +154,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     public Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException {
-        // control if update is valid
-        this
-            .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .ifPresent(s -> {
-                throw s;
-            });
-
         FlowService
             .findRemovedTrigger(flow, previous)
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
@@ -180,16 +163,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     @Override
     public FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
-        // control if update is valid
-        this
-            .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .ifPresent(s -> {
-                throw s;
-            });
-
         FlowService
             .findRemovedTrigger(flow, previous)
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
@@ -198,18 +171,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     private FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
-        // validate the flow
-        modelValidator
-            .isValid(taskDefaultService.injectDefaults(flow))
-            .ifPresent(s -> {
-                throw s;
-            });
-
-        try {
-            flowSource = flowSource != null ? flowSource : JacksonMapper.ofYaml().writeValueAsString(flow);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
         // flow exists, return it
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
         Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());

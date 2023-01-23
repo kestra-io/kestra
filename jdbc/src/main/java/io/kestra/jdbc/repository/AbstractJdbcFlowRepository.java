@@ -9,20 +9,17 @@ import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.services.TaskDefaultService;
 import io.kestra.jdbc.JdbcMapper;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.SneakyThrows;
 import org.jooq.*;
@@ -35,22 +32,17 @@ import javax.validation.ConstraintViolationException;
 
 @Singleton
 public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository implements FlowRepositoryInterface {
-    @Inject
-    private final TaskDefaultService taskDefaultService;
     private final QueueInterface<Flow> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
     private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
-    private final ModelValidator modelValidator;
     protected io.kestra.jdbc.AbstractJdbcRepository<Flow> jdbcRepository;
 
     @SuppressWarnings("unchecked")
     public AbstractJdbcFlowRepository(io.kestra.jdbc.AbstractJdbcRepository<Flow> jdbcRepository, ApplicationContext applicationContext) {
         this.jdbcRepository = jdbcRepository;
-        this.modelValidator = applicationContext.getBean(ModelValidator.class);
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.flowQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED));
-        this.taskDefaultService = applicationContext.getBean(TaskDefaultService.class);
 
         this.jdbcRepository.setDeserializer(record -> {
             String source = record.get("value", String.class);
@@ -293,16 +285,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     public FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
-        // control if update is valid
-        this
-            .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .ifPresent(s -> {
-                throw s;
-            });
-
         FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, flowSource);
 
         FlowService
@@ -314,16 +296,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     public Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException {
-        // control if update is valid
-        this
-            .findById(previous.getNamespace(), previous.getId())
-            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .ifPresent(s -> {
-                throw s;
-            });
-
         Flow saved = this.save(flow, CrudEventType.UPDATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         FlowService
@@ -335,18 +307,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @SneakyThrows
     private FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
-        // validate the flow
-        modelValidator
-            .isValid(flow)
-            .ifPresent(s -> {
-                throw s;
-            });
-
-        try {
-            flowSource = flowSource != null ? flowSource : JacksonMapper.ofYaml().writeValueAsString(flow);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
         // flow exists, return it
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
         Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());

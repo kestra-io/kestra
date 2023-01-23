@@ -85,10 +85,12 @@ abstract public class AbstractElasticSearchRepository<T> {
         Class<T> cls
     ) {
         this.startExecutor(executorsUtils);
+
         this.client = client;
         this.cls = cls;
         this.modelValidator = modelValidator;
         this.elasticSearchIndicesService = elasticSearchIndicesService;
+
         this.indicesConfigs = elasticSearchIndicesService.findConfig(cls);
     }
 
@@ -107,30 +109,39 @@ abstract public class AbstractElasticSearchRepository<T> {
         if (query == null) {
             return QueryBuilders.queryStringQuery("*");
         }
+
         List<String> words = Arrays.stream(query.split("[^a-zA-Z0-9_.-]+"))
             .filter(r -> !r.equals(""))
             .map(QueryParser::escape)
             .collect(Collectors.toList());
+
         String lucene = "(*" + String.join("*", words) + "*)^3 OR (*" + String.join("* AND *", words) + "*)";
+
+
         if (words.size() == 1) {
             lucene = "(" + QueryParser.escape(query) + ")^5 OR " + lucene;
         }
+
         return QueryBuilders.queryStringQuery(lucene);
     }
 
     protected Optional<T> getRequest(String index, String id) {
         BoolQueryBuilder bool = this.defaultFilter()
             .must(QueryBuilders.termQuery("_id", id));
+
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(bool)
             .size(1);
+
         SearchRequest searchRequest = this.searchRequest(
             index,
             sourceBuilder,
             false
         );
+
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
             return this.map(searchResponse.getHits().getHits())
                 .stream()
                 .findFirst();
@@ -144,11 +155,14 @@ abstract public class AbstractElasticSearchRepository<T> {
             indexName(index),
             id
         );
+
         try {
             GetResponse getResponse = client.get(getRequest, RequestOptions.DEFAULT);
+
             if (!getResponse.isExists()) {
                 return Optional.empty();
             }
+
             return Optional.of(this.deserialize(getResponse.getSourceAsString()));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -160,6 +174,7 @@ abstract public class AbstractElasticSearchRepository<T> {
         if (shardInfo.getTotal() != shardInfo.getSuccessful()) {
             log.warn("Replication incomplete, expected " + shardInfo.getTotal() + ", got " + shardInfo.getSuccessful());
         }
+
         if (shardInfo.getFailed() > 0) {
             throw new Exception(
                 Stream.of(shardInfo.getFailures())
@@ -173,10 +188,13 @@ abstract public class AbstractElasticSearchRepository<T> {
         IndexRequest request = new IndexRequest(indexName(index));
         request.id(id);
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+
         request.source(json, XContentType.JSON);
+
         try {
             IndexResponse response = client.index(request, RequestOptions.DEFAULT);
             handleWriteErrors(response);
+
             return response;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -200,9 +218,11 @@ abstract public class AbstractElasticSearchRepository<T> {
         UpdateRequest request = new UpdateRequest(indexName(index), id);
         request.doc(doc);
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+
         try {
             UpdateResponse response = client.update(request, RequestOptions.DEFAULT);
             handleWriteErrors(response);
+
             return response;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -215,15 +235,18 @@ abstract public class AbstractElasticSearchRepository<T> {
             .startObject()
             .field("deleted", true)
             .endObject();
+
         return this.updateRequest(index, id, delete);
     }
 
     protected DeleteResponse rawDeleteRequest(String index, String id) {
         DeleteRequest request = new DeleteRequest(indexName(index), id);
         request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+
         try {
             DeleteResponse response = client.delete(request, RequestOptions.DEFAULT);
             handleWriteErrors(response);
+
             return response;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -234,9 +257,11 @@ abstract public class AbstractElasticSearchRepository<T> {
         SearchRequest searchRequest = new SearchRequest()
             .indices(indexName(index))
             .source(sourceBuilder);
+
         if (scroll) {
             searchRequest.scroll(new TimeValue(60000));
         }
+
         return searchRequest;
     }
 
@@ -282,6 +307,7 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     protected List<SortBuilder<?>> defaultSorts(Pageable pageable, boolean nested) {
         List<SortBuilder<?>> sorts = new ArrayList<>();
+
         // Use script sort for duration field
         pageable
             .getSort()
@@ -290,6 +316,7 @@ abstract public class AbstractElasticSearchRepository<T> {
             .filter(isDurationSort())
             .findFirst()
             .ifPresent(order -> sorts.add(createDurationSortScript(order, nested)));
+
         // Use field sort for all other fields
         sorts.addAll(pageable
             .getSort()
@@ -298,6 +325,7 @@ abstract public class AbstractElasticSearchRepository<T> {
             .filter(Predicate.not(isDurationSort()))
             .map(this::toFieldSortBuilder)
             .collect(Collectors.toList()));
+
         return sorts;
     }
 
@@ -308,12 +336,14 @@ abstract public class AbstractElasticSearchRepository<T> {
     ) {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(query);
+
         if (pageable != null && pageable.getSize() == -1) {
             sourceBuilder.size(1000);
         } else if (pageable != null) {
             sourceBuilder
                 .size(pageable.getSize())
                 .from(Math.toIntExact(pageable.getOffset() - pageable.getSize()));
+
             for (SortBuilder<?> s : defaultSorts(pageable, false)) {
                 sourceBuilder = sourceBuilder.sort(s);
             }
@@ -338,6 +368,7 @@ abstract public class AbstractElasticSearchRepository<T> {
         }
 
         SearchSourceBuilder sourceBuilder = this.searchSource(bool, Optional.empty(), pageable);
+
         return this.query(index, sourceBuilder);
     }
 
@@ -345,12 +376,15 @@ abstract public class AbstractElasticSearchRepository<T> {
         if (ids == null) {
             return new ArrayList<>();
         }
+
         BoolQueryBuilder bool = this.defaultFilter()
             .must(QueryBuilders.idsQuery()
                 .addIds(ids.toArray(String[]::new))
             );
+
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(bool);
+
         return this.scroll(index, sourceBuilder);
     }
 
@@ -384,6 +418,7 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     protected <R> ArrayListTotal<R> query(String index, SearchSourceBuilder sourceBuilder, Class<R> cls) {
         SearchRequest searchRequest = searchRequest(index, sourceBuilder, false);
+
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
             return new ArrayListTotal<R>(this.map(searchResponse.getHits().getHits(), cls), searchResponse.getHits().getTotalHits().value);
@@ -398,7 +433,9 @@ abstract public class AbstractElasticSearchRepository<T> {
 
     protected List<T> scroll(String index, SearchSourceBuilder sourceBuilder) {
         List<T> result = new ArrayList<>();
+
         this.scroll(index, sourceBuilder, result::add);
+
         return result;
     }
 
@@ -409,12 +446,15 @@ abstract public class AbstractElasticSearchRepository<T> {
             SearchResponse searchResponse;
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
             scrollId = searchResponse.getScrollId();
+
             do {
                 this.map(searchResponse.getHits().getHits())
                     .forEach(consumer);
+
                 SearchScrollRequest searchScrollRequest = new SearchScrollRequest()
                     .scrollId(scrollId)
                     .scroll(new TimeValue(60000));
+
                 searchResponse = client.scroll(searchScrollRequest, RequestOptions.DEFAULT);
             } while (searchResponse.getHits().getHits().length != 0);
         } catch (IOException e) {
@@ -428,9 +468,11 @@ abstract public class AbstractElasticSearchRepository<T> {
         if (scrollId == null) {
             return;
         }
+
         poolExecutor.execute(() -> {
             ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
             clearScrollRequest.addScrollId(scrollId);
+
             try {
                 client.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
             } catch (IOException e) {
@@ -445,8 +487,10 @@ abstract public class AbstractElasticSearchRepository<T> {
         this.elasticSearchIndicesService.updateMapping(this.indicesConfigs);
     }
 
+
     protected List<String> findDistinctNamespace(String index) {
         BoolQueryBuilder query = this.defaultFilter();
+
         // We want to keep only "distinct" values of field "namespace"
         // @TODO: use includeExclude(new IncludeExclude(0, 10)) to partition results
         TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders
@@ -454,13 +498,18 @@ abstract public class AbstractElasticSearchRepository<T> {
             .field("namespace")
             .size(10000)
             .order(BucketOrder.key(true));
+
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(query)
             .aggregation(termsAggregationBuilder);
+
         SearchRequest searchRequest = searchRequest(index, sourceBuilder, false);
+
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
+
             Terms namespaces = searchResponse.getAggregations().get("distinct_namespace");
+
             return new ArrayListTotal<>(
                 namespaces.getBuckets()
                     .stream()

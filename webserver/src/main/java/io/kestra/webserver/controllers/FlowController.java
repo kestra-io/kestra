@@ -66,7 +66,7 @@ public class FlowController {
     public FlowRepositoryInterface.FlowWithSource indexSource(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id
-    ) {
+    ) throws JsonProcessingException {
         return flowRepository
             .findByIdWithSource(namespace, id)
             .orElse(null);

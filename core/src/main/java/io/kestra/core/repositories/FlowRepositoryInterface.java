@@ -56,9 +56,9 @@ public interface FlowRepositoryInterface {
         return this.findSourceById(namespace, id, Optional.empty());
     }
 
-    Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision);
+    Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) throws JsonProcessingException;
 
-    default Optional<FlowWithSource> findByIdWithSource(String namespace, String id) {
+    default Optional<FlowWithSource> findByIdWithSource(String namespace, String id) throws JsonProcessingException {
         return this.findByIdWithSource(namespace, id, Optional.empty());
     }
 

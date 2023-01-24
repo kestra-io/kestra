@@ -1,5 +1,6 @@
 package io.kestra.repository.elasticsearch;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -143,12 +144,14 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) throws JsonProcessingException {
         Optional<Flow> flow = findById(namespace, id, revision);
         Optional<String> sourceCode = findSourceById(namespace, id, revision);
         if (flow.isPresent() && sourceCode.isPresent()) {
-
-            return Optional.of(new FlowWithSource(flow.get(), sourceCode.get()));
+            if(JacksonMapper.ofYaml().writeValueAsString(flow.get()).equals(sourceCode.get())){
+                sourceCode = Optional.of(JacksonMapper.toYamlWithoutDefault(flow.get()));
+            }
+            return Optional.of(new FlowWithSource(flow.get(), sourceCode.get().replaceFirst("(?m)^revision: \\d+\n?","")));
         }
 
         return Optional.empty();

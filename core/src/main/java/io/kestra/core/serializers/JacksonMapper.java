@@ -120,4 +120,17 @@ abstract public class JacksonMapper {
             .registerModules(new GuavaModule())
             .setTimeZone(TimeZone.getDefault());
     }
+
+    public static String toYamlWithoutDefault(Object Object) throws JsonProcessingException {
+        return JacksonMapper.ofYaml()
+            .writeValueAsString(
+                JacksonMapper
+                    .ofJson()
+                    .readTree(
+                        JacksonMapper
+                            .ofJson()
+                            .setSerializationInclusion(
+                                JsonInclude.Include.NON_DEFAULT)
+                            .writeValueAsString(Object)));
+    }
 }

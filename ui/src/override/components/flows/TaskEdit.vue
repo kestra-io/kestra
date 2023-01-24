@@ -74,7 +74,6 @@
                 return YamlUtils.extractTask(this.sourceCode, taskId);
             },
             saveTask() {
-                let task;
                 let updatedSource;
                 try {
                     updatedSource = YamlUtils.replaceTaskInDocument(this.sourceCode, this.taskIndex, this.taskYaml)

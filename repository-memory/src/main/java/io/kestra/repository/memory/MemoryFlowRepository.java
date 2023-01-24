@@ -1,8 +1,6 @@
 package io.kestra.repository.memory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.SearchResult;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.value.ValueException;
@@ -142,23 +140,10 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         throw new NotImplementedException();
     }
 
-    public Flow create(Flow flow) throws ConstraintViolationException, JsonProcessingException {
-
-        return this.save(flow, CrudEventType.CREATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
-    }
-
     @Override
     public FlowWithSource create(Flow flow, String flowSource) {
 
         return this.save(flow, CrudEventType.CREATE, flowSource);
-    }
-
-    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException {
-        FlowService
-            .findRemovedTrigger(flow, previous)
-            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
-
-        return this.save(flow, CrudEventType.UPDATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
     }
 
     @Override

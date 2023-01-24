@@ -278,25 +278,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Flow create(Flow flow) throws ConstraintViolationException, JsonProcessingException {
-
-        return this.save(flow, CrudEventType.CREATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
-    }
-
-    @Override
     public FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
         FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, flowSource);
-
-        FlowService
-            .findRemovedTrigger(flow, previous)
-            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
-
-        return saved;
-    }
-
-    @Override
-    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException {
-        Flow saved = this.save(flow, CrudEventType.UPDATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         FlowService
             .findRemovedTrigger(flow, previous)

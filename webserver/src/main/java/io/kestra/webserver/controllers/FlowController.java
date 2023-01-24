@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.webserver.utils.RequestUtils;
@@ -196,7 +197,7 @@ public class FlowController {
                 throw s;
             });
 
-        return HttpResponse.ok(flowRepository.create(flow));
+        return HttpResponse.ok(flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow());
     }
 
 
@@ -266,9 +267,9 @@ public class FlowController {
                 Optional<Flow> existingFlow = flowRepository.findById(namespace, flow.getId());
                 try {
                     if (existingFlow.isPresent()) {
-                        return flowRepository.update(flow, existingFlow.get());
+                        return flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
                     } else {
-                        return flowRepository.create(flow);
+                        return flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
                     }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
@@ -329,7 +330,7 @@ public class FlowController {
                 throw s;
             });
 
-        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get()));
+        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow());
     }
 
 
@@ -355,7 +356,7 @@ public class FlowController {
         Flow flow = existingFlow.get();
         try {
             Flow newValue = flow.updateTask(taskId, task);
-            return HttpResponse.ok(flowRepository.update(newValue, flow));
+            return HttpResponse.ok(flowRepository.update(newValue, flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow());
         } catch (InternalException | JsonProcessingException e) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }

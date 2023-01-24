@@ -294,24 +294,9 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         }
     }
 
-    public Flow create(Flow flow) throws ConstraintViolationException, JsonProcessingException {
-
-        return this.save(flow, CrudEventType.CREATE, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
-    }
-
     public FlowWithSource create(Flow flow, String flowSource) throws ConstraintViolationException {
 
         return this.save(flow, CrudEventType.CREATE, flowSource);
-    }
-
-    public Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException {
-        FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, JacksonMapper.ofYaml().writeValueAsString(flow));
-
-        FlowService
-            .findRemovedTrigger(flow, previous)
-            .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
-
-        return saved.getFlow();
     }
 
     public FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {

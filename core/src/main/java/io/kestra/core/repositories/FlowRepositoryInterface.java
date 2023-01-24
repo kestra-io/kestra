@@ -81,11 +81,7 @@ public interface FlowRepositoryInterface {
 
     List<String> findDistinctNamespace();
 
-    Flow create(Flow flow) throws ConstraintViolationException, JsonProcessingException;
-
     FlowWithSource create(Flow flow, String flowSource);
-
-    Flow update(Flow flow, Flow previous) throws ConstraintViolationException, JsonProcessingException;
 
     FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException;
 

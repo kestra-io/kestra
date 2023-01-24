@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.SneakyThrows;
 import io.kestra.core.models.flows.Flow;
@@ -35,7 +37,7 @@ abstract public class FlowListenersTest {
             .build();
     }
 
-    public void suite(FlowListenersInterface flowListenersService) {
+    public void suite(FlowListenersInterface flowListenersService) throws JsonProcessingException {
         flowListenersService.run();
 
         AtomicInteger count = new AtomicInteger();
@@ -63,22 +65,23 @@ abstract public class FlowListenersTest {
         // create first
         Flow first = create("first_" + IdUtils.create(), "test");
 
-        flowRepository.create(first);
+        flowRepository.create(first, JacksonMapper.ofYaml().writeValueAsString(first));
         wait(ref, () -> {
             assertThat(count.get(), is(1));
             assertThat(flowListenersService.flows().size(), is(1));
         });
 
         // create the same id than first, no additional flows
-        first = flowRepository.update(create(first.getId(), "test2"), first);
+        first = flowRepository.update(create(first.getId(), "test2"), first, JacksonMapper.ofYaml().writeValueAsString(first)).getFlow();
         wait(ref, () -> {
             assertThat(count.get(), is(1));
             assertThat(flowListenersService.flows().size(), is(1));
             assertThat(flowListenersService.flows().get(0).getTasks().get(0).getId(), is("test2"));
         });
 
+        Flow second = create("second_" + IdUtils.create(), "test");
         // create a new one
-        flowRepository.create(create("second_" + IdUtils.create(), "test"));
+        flowRepository.create(second, JacksonMapper.ofYaml().writeValueAsString(second));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
             assertThat(flowListenersService.flows().size(), is(2));
@@ -92,7 +95,7 @@ abstract public class FlowListenersTest {
         });
 
         // restore must works
-        flowRepository.create(first);
+        flowRepository.create(first, JacksonMapper.ofYaml().writeValueAsString(first));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
             assertThat(flowListenersService.flows().size(), is(2));

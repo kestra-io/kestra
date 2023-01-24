@@ -1,5 +1,8 @@
 package io.kestra.cli.commands.sys;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -38,9 +41,9 @@ class FlowListenersRestoreCommandTest {
                 assertThat(result, is(0));
             });
             thread.start();
-
+            Flow flow = RestoreQueueCommandTest.create();
             for (int i = 0; i < COUNT; i++) {
-                flowRepository.create(RestoreQueueCommandTest.create());
+                flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow));
                 Thread.sleep(100);
             }
 
@@ -48,6 +51,8 @@ class FlowListenersRestoreCommandTest {
 
             assertThat(out.toString(), containsString("Received 1 active flows"));
             assertThat(out.toString(), containsString("Received 5 active flows"));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 }

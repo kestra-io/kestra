@@ -1,5 +1,7 @@
 package io.kestra.cli.commands.sys;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -50,7 +52,8 @@ class RestoreQueueCommandTest {
             AtomicInteger atomicInteger = new AtomicInteger();
 
             for (int i = 0; i < COUNT; i++) {
-                flowRepository.create(create());
+                Flow flow = create();
+                flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow));
             }
             CountDownLatch countDownLatch = new CountDownLatch(COUNT);
 
@@ -63,6 +66,8 @@ class RestoreQueueCommandTest {
 
             countDownLatch.await();
             assertThat(atomicInteger.get(), is(COUNT));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 }

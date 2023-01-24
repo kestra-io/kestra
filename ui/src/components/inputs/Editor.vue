@@ -20,10 +20,10 @@
                     :options="options"
                     :diff-editor="original !== undefined"
                     :original="original"
-                    :schemas="schemas"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
                     :language="lang"
+                    :schema-type="schemaType"
                 />
 
                 <div
@@ -42,7 +42,6 @@
     import {defineAsyncComponent, shallowRef} from "vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
-    import {apiRoot} from "../../utils/axios";
 
     const MonacoEditor = defineAsyncComponent(() =>
         import("./MonacoEditor.vue")
@@ -53,7 +52,7 @@
             modelValue: {type: String, required: true},
             original: {type: String, default: undefined},
             lang: {type: String, default: undefined},
-            schemas: {type: Array, default: () => [`${apiRoot}plugins/schemas/flow`]},
+            schemaType: {type: String, default: "flow"},
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
             fullHeight: {type: Boolean, default: true},

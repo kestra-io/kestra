@@ -25,7 +25,7 @@
                 v-if="taskYaml"
                 @save="saveTask"
                 v-model="taskYaml"
-                :schemas="schemas"
+                schema-type="task"
                 :full-height="false"
                 :navbar="false"
                 lang="yaml"
@@ -45,7 +45,6 @@
     import {canSaveFlowTemplate, saveFlowTemplate} from "../../../utils/flowTemplate";
     import {mapGetters, mapState} from "vuex";
     import Utils from "../../../utils/utils";
-    import {apiRoot} from "../../../utils/axios";
 
     export default {
         components: {Editor},
@@ -120,9 +119,6 @@
             ...mapState("auth", ["user"]),
             canSave() {
                 return canSaveFlowTemplate(true, this.user, {namespace: this.namespace}, "flow");
-            },
-            schemas() {
-                return [`${apiRoot}plugins/schemas/task`]
             }
         }
     };

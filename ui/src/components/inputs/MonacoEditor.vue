@@ -13,6 +13,7 @@
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import YamlWorker from "./yaml.worker.js?worker";
     import {setDiagnosticsOptions} from "monaco-yaml";
+    import {apiRoot} from "../../utils/axios";
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
@@ -58,9 +59,9 @@
                 type:Object,
                 default: undefined
             },
-            schemas: {
-                type: Array,
-                default: undefined
+            schemaType: {
+                type: String,
+                default: "flow"
             },
             diffEditor: {
                 type: Boolean,
@@ -116,6 +117,7 @@
             let _this = this;
 
             this.monaco = monaco;
+
             this.$nextTick(function () {
                 _this.initMonaco(monaco);
             });
@@ -129,6 +131,7 @@
 
                 this.$emit("editorWillMount", this.monaco);
 
+
                 let options = {
                     ...{
                         value: this.value,
@@ -137,7 +140,6 @@
                     },
                     ...this.options
                 };
-
                 if (this.diffEditor) {
                     this.editor = monaco.editor.createDiffEditor(this.$el, options);
                     let originalModel = monaco.editor.createModel(this.original, this.language);
@@ -147,21 +149,29 @@
                         modified: modifiedModel
                     });
                 } else {
-                    if (this.schemas !== undefined) {
-                        setDiagnosticsOptions({
-                            enableSchemaRequest: true,
-                            hover: true,
-                            completion: true,
-                            validate: true,
-                            format: true,
-                            schemas: this.schemas.map(r => {
-                                return {
-                                    uri: r,
-                                    fileMatch: ["*"]
-                                }
-                            })
-                        });
-                    }
+                    setDiagnosticsOptions({
+                        enableSchemaRequest: true,
+                        hover: true,
+                        completion: true,
+                        validate: true,
+                        format: true,
+                        schemas: [
+                            {
+                                fileMatch: ["flow.yaml"],
+                                uri: [`${apiRoot}plugins/schemas/flow`]
+                            },
+                            {
+                                fileMatch: ["task.yaml"],
+                                uri: [`${apiRoot}plugins/schemas/task`]
+                            },
+                            {
+                                fileMatch: ["template.yaml"],
+                                uri: [`${apiRoot}plugins/schemas/template`]
+                            }
+                        ]
+                    });
+
+                    options["model"] = monaco.editor.createModel(this.value, this.language, monaco.Uri.parse(`file:///${this.schemaType}.yaml`))
 
                     this.editor = monaco.editor.create(this.$el, options);
                 }
@@ -191,6 +201,7 @@
             },
             destroy: function() {
                 if (this.editor) {
+                    this.editor.getModel().dispose()
                     this.editor.dispose();
                 }
             },

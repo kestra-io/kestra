@@ -1,5 +1,7 @@
 package io.kestra.core.tasks.flows;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.serializers.JacksonMapper;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -32,7 +34,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
     private QueueInterface<LogEntry> workerTaskLogQueue;
 
     @Test
-    void timeout() throws TimeoutException {
+    void timeout() throws TimeoutException, JsonProcessingException {
         List<LogEntry> logs = new ArrayList<>();
         workerTaskLogQueue.receive(logs::add);
 
@@ -48,7 +50,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
                 .build()))
             .build();
 
-        flowRepository.create(flow);
+        flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         Execution execution = runnerUtils.runOne(flow.getNamespace(), flow.getId());
 

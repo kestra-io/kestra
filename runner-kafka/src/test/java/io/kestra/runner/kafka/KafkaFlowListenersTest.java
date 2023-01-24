@@ -45,7 +45,7 @@ class KafkaFlowListenersTest extends FlowListenersTest {
     }
 
     @Test
-    public void all() {
+    public void all() throws JsonProcessingException {
         this.suite(flowListenersService);
     }
 
@@ -95,7 +95,7 @@ class KafkaFlowListenersTest extends FlowListenersTest {
         String flowId = IdUtils.create();
 
         Flow flow = create(flowId, IdUtils.create());
-        flowRepository.create(flow);
+        flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
         flowListenersService.listen(flows -> {

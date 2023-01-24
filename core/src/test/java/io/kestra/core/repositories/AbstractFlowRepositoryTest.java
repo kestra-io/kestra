@@ -69,11 +69,11 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void findById() {
+    void findById() throws JsonProcessingException {
         Flow flow = builder()
             .revision(3)
             .build();
-        flowRepository.create(flow);
+        flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow));
 
         Optional<Flow> full = flowRepository.findById(flow.getNamespace(), flow.getId());
         assertThat(full.isPresent(), is(true));
@@ -86,17 +86,18 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     protected void revision() throws JsonProcessingException {
         String flowId = IdUtils.create();
-
-        // create
-        Flow flow = flowRepository.create(Flow.builder()
+        // create with builder
+        Flow flow = Flow.builder()
             .id(flowId)
             .namespace("io.kestra.unittest")
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
-            .build());
+            .build();
+        // create with repository
+        flow = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         // submit new one, no change
-        Flow notSaved = flowRepository.update(flow, flow);
+        Flow notSaved = flowRepository.update(flow, flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
         assertThat(flow.getRevision(), is(notSaved.getRevision()));
 
         // submit new one with change
@@ -114,7 +115,7 @@ public abstract class AbstractFlowRepositoryTest {
             .build();
 
         // revision is incremented
-        Flow incremented = flowRepository.update(flowRev2, flow);
+        Flow incremented = flowRepository.update(flowRev2, flow, JacksonMapper.ofYaml().writeValueAsString(flowRepository)).getFlow();
         assertThat(incremented.getRevision(), is(2));
 
         // revision is well saved
@@ -124,15 +125,17 @@ public abstract class AbstractFlowRepositoryTest {
         // submit the same one serialized, no changed
         Flow incremented2 = flowRepository.update(
             JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class),
-            flowRev2
-        );
+            flowRev2,
+            JacksonMapper.ofYaml().writeValueAsString(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class))
+        ).getFlow();
         assertThat(incremented2.getRevision(), is(2));
 
         // resubmit first one, revision is incremented
         Flow incremented3 = flowRepository.update(
             JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow), Flow.class),
-            flowRev2
-        );
+            flowRev2,
+            JacksonMapper.ofYaml().writeValueAsString(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow), Flow.class))
+        ).getFlow();
         assertThat(incremented3.getRevision(), is(3));
 
         // delete
@@ -151,23 +154,23 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(findDeleted.get().getRevision(), is(flow.getRevision()));
 
         // recreate the first one, we have a new revision
-        Flow incremented4 = flowRepository.create(flow);
+        Flow incremented4 = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         assertThat(incremented4.getRevision(), is(5));
     }
 
     @Test
-    void save() {
+    void save() throws JsonProcessingException {
         Flow flow = builder().revision(12).build();
-        Flow save = flowRepository.create(flow);
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         assertThat(save.getRevision(), is(1));
     }
 
     @Test
-    void saveNoRevision() {
+    void saveNoRevision() throws JsonProcessingException {
         Flow flow = builder().build();
-        Flow save = flowRepository.create(flow);
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         assertThat(save.getRevision(), is(1));
 
@@ -182,12 +185,12 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void findAllWithRevisions() {
+    void findAllWithRevisions() throws JsonProcessingException {
         String flowId = "findall_" + IdUtils.create();
 
-        flowRepository.create(builder(flowId, "test").build());
-        flowRepository.create(builder(flowId, "test1").build());
-        Flow last = flowRepository.create(builder(flowId, "test2").build());
+        flowRepository.create(builder(flowId, "test").build(), JacksonMapper.ofYaml().writeValueAsString(builder(flowId, "test").build())).getFlow();
+        flowRepository.create(builder(flowId, "test1").build(), JacksonMapper.ofYaml().writeValueAsString(builder(flowId, "test1").build())).getFlow();
+        Flow last = flowRepository.create(builder(flowId, "test2").build(), JacksonMapper.ofYaml().writeValueAsString(builder(flowId, "test2").build())).getFlow();
         flowRepository.delete(last);
 
         List<Flow> allWithRevisions = flowRepository.findAllWithRevisions();
@@ -204,10 +207,10 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void delete() {
+    void delete() throws JsonProcessingException {
         Flow flow = builder().build();
 
-        Flow save = flowRepository.create(flow);
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
         assertThat(flowRepository.findById(save.getNamespace(), save.getId()).isPresent(), is(true));
 
         Flow delete = flowRepository.delete(save);
@@ -220,7 +223,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void updateConflict() {
+    void updateConflict() throws JsonProcessingException {
         String flowId = IdUtils.create();
 
         Flow flow = Flow.builder()
@@ -230,7 +233,7 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
-        Flow save = flowRepository.create(flow);
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
 
@@ -244,7 +247,7 @@ public abstract class AbstractFlowRepositoryTest {
 
         ConstraintViolationException e = assertThrows(
             ConstraintViolationException.class,
-            () -> flowRepository.update(update, flow)
+            () -> flowRepository.update(update, flow, JacksonMapper.ofYaml().writeValueAsString(update)).getFlow()
         );
 
         assertThat(e.getConstraintViolations().size(), is(2));
@@ -253,7 +256,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void removeTrigger() throws InterruptedException {
+    void removeTrigger() throws InterruptedException, JsonProcessingException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         triggerQueue.receive(trigger -> {
@@ -273,7 +276,7 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
-        Flow save = flowRepository.create(flow);
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
 
@@ -284,7 +287,7 @@ public abstract class AbstractFlowRepositoryTest {
             .build();
         ;
 
-        Flow updated = flowRepository.update(update, flow);
+        Flow updated = flowRepository.update(update, flow, JacksonMapper.ofYaml().writeValueAsString(update)).getFlow();
 
         countDownLatch.await(15, TimeUnit.SECONDS);
 
@@ -300,7 +303,7 @@ public abstract class AbstractFlowRepositoryTest {
 
 
     @Test
-    void removeTriggerDelete() throws InterruptedException {
+    void removeTriggerDelete() throws InterruptedException, JsonProcessingException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         triggerQueue.receive(trigger -> {
@@ -320,7 +323,7 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
-        Flow save = flowRepository.create(flow);
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
 

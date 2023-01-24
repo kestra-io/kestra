@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.tasks.debugs.Return;
 import jakarta.inject.Inject;
@@ -14,7 +15,6 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ExecutionServiceTest extends AbstractMemoryRunnerTest {
     @Inject
@@ -55,7 +55,8 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
                 .type(Return.class.getName())
                 .format("replace")
                 .build()
-        ));
+        ),
+            JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
 
 
         Execution restart = executionService.restart(execution, 2);

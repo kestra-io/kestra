@@ -41,8 +41,8 @@ class FlowListenersRestoreCommandTest {
                 assertThat(result, is(0));
             });
             thread.start();
-            Flow flow = RestoreQueueCommandTest.create();
             for (int i = 0; i < COUNT; i++) {
+                Flow flow = RestoreQueueCommandTest.create();
                 flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow));
                 Thread.sleep(100);
             }

@@ -1,6 +1,5 @@
 package io.kestra.repository.elasticsearch;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,22 +30,18 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ExecutorsUtils;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
 @ElasticSearchRepositoryEnabled
 public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository<Flow> implements FlowRepositoryInterface {
-
     private static final String INDEX_NAME = "flows";
     protected static final String REVISIONS_NAME = "flows-revisions";
     protected static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson();

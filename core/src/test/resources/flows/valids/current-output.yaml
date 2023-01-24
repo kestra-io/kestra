@@ -1,0 +1,24 @@
+id: test-current-output
+namespace: io.kestra.tests
+revision: 9
+tasks:
+  - id: 1_each
+    type: io.kestra.core.tasks.flows.EachSequential
+    value: '["v11", "v12"]'
+    tasks:
+      - id: 1-1_each
+        type: io.kestra.core.tasks.flows.EachSequential
+        value: '["v21", "v22"]'
+        tasks:
+          - id: 1-1-1_each
+            type: io.kestra.core.tasks.flows.EachSequential
+            value: '["v31", "v32"]'
+            tasks:
+            - id: 1-1-1_output
+              type: io.kestra.core.tasks.debugs.Return
+              format: "{{ parents[1].taskrun.value }}-{{ parents[0].taskrun.value }}-{{ taskrun.value }}"
+            - id: 1-1-1_return
+              type: io.kestra.core.tasks.debugs.Return
+              #format: "return-{{ outputs['1-1-1_output'][parents[1].taskrun.value][parents[0].taskrun.value][taskrun.value].value }}"
+              format: "return-{{ currentOutput(outputs['1-1-1_output']).value }}"
+

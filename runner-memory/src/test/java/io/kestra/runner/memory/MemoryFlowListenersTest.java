@@ -1,5 +1,6 @@
 package io.kestra.runner.memory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.FlowListenersTest;
 import jakarta.inject.Inject;
@@ -10,7 +11,7 @@ class MemoryFlowListenersTest extends FlowListenersTest {
     FlowListeners flowListenersService;
 
     @Test
-    public void all() {
+    public void all() throws JsonProcessingException {
         this.suite(flowListenersService);
     }
 }

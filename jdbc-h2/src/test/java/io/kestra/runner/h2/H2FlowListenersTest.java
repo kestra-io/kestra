@@ -1,5 +1,6 @@
 package io.kestra.runner.h2;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.FlowListenersTest;
 import io.kestra.jdbc.JdbcTestUtils;
@@ -15,7 +16,7 @@ class H2FlowListenersTest extends FlowListenersTest {
     JdbcTestUtils jdbcTestUtils;
 
     @Test
-    public void all() {
+    public void all() throws JsonProcessingException {
         this.suite(flowListenersService);
     }
 

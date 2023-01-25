@@ -115,7 +115,7 @@ public abstract class AbstractFlowRepositoryTest {
             .build();
 
         // revision is incremented
-        Flow incremented = flowRepository.update(flowRev2, flow, JacksonMapper.ofYaml().writeValueAsString(flowRepository)).getFlow();
+        Flow incremented = flowRepository.update(flowRev2, flow, JacksonMapper.ofYaml().writeValueAsString(flowRev2)).getFlow();
         assertThat(incremented.getRevision(), is(2));
 
         // revision is well saved

@@ -125,8 +125,9 @@
                     }
                     tasksById[task.id] = taskWrapper
                 }
-                while (childTasks.length) {
-                    const taskWrapper = childTasks.pop()
+
+                for (let i = 0; i < childTasks.length; i++) {
+                    const taskWrapper = childTasks[i];
                     const parentTask = tasksById[taskWrapper.task.parentTaskRunId]
                     if (parentTask) {
                         tasksById[taskWrapper.task.id] = taskWrapper
@@ -134,11 +135,9 @@
                             parentTask.children = []
                         }
                         parentTask.children.push(taskWrapper)
-                    } else {
-                        childTasks.unshift(taskWrapper)
                     }
-
                 }
+
                 const nodeStart = node => ts(node.task.state.histories[0].date)
                 const childrenSort = nodes => {
                     nodes.sort((n1,n2) => {

@@ -80,7 +80,6 @@
         emits: ["follow"],
         methods: {
             forwardEvent(type, event) {
-                console.log("forwardEvent", type);
                 this.$emit(type, event);
             },
             stop() {

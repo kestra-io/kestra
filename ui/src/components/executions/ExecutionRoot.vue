@@ -77,7 +77,6 @@
         },
         methods: {
             follow() {
-                console.log("follow")
                 const self = this;
                 this.closeSSE();
                 this.previousExecutionId = this.$route.params.id;

@@ -59,7 +59,6 @@
                         </el-button>
                     </el-tooltip>
 
-
                     <task-edit
                         class="node-action"
                         :modal-id="`modal-source-${hash}`"
@@ -167,6 +166,7 @@
             };
         },
         computed: {
+            console: () => console,
             ...mapState("graph", ["node"]),
             ...mapState("auth", ["user"]),
             ...mapState("execution", ["execution"]),

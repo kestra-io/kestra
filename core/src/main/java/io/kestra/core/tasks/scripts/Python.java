@@ -14,12 +14,10 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
 import static io.kestra.core.utils.Rethrow.throwSupplier;
 
 @SuperBuilder
@@ -109,7 +107,8 @@ public class Python extends AbstractPython implements RunnableTask<ScriptOutput>
         Map<String, String> map = super.finalInputFiles(runContext);
 
         map.put("kestra.py", IOUtils.toString(
-            Objects.requireNonNull(AbstractPython.class.getClassLoader().getResourceAsStream("scripts/kestra.py")),
+            Objects.requireNonNull(AbstractPython.class.getClassLoader().getResourceAsStream(
+                "scripts/python/src/kestra.py")),
             Charsets.UTF_8
         ));
 

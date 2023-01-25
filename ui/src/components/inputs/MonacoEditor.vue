@@ -117,7 +117,6 @@
             let _this = this;
 
             this.monaco = monaco;
-
             this.$nextTick(function () {
                 _this.initMonaco(monaco);
             });
@@ -130,7 +129,6 @@
                 let self = this;
 
                 this.$emit("editorWillMount", this.monaco);
-
 
                 let options = {
                     ...{

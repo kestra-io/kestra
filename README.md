@@ -20,7 +20,7 @@
   <a href="https://github.com/kestra-io/kestra/discussions"><img src="https://img.shields.io/github/discussions/kestra-io/kestra?style=flat-square" alt="Github discussions"></a>
   <a href="https://twitter.com/kestra_io"><img src="https://img.shields.io/twitter/follow/kestra_io?style=flat-square" alt="Twitter" /></a>
   <a href="https://app.codecov.io/gh/kestra-io/kestra"><img src="https://img.shields.io/codecov/c/github/kestra-io/kestra?style=flat-square&token=It6L7BTaWK" alt="Code Cov" /></a>
-  <a href="https://github.com/kestra-io/kestra/actions"><img src="https://img.shields.io/github/workflow/status/kestra-io/kestra/Main/develop?style=flat-square" alt="Github Actions" /></a>
+  <a href="https://github.com/kestra-io/kestra/actions"><img src="https://img.shields.io/github/actions/workflow/status/kestra-io/kestra/main.yml?branch=develop&style=flat-square" alt="Github Actions" /></a>
 </div>
 
 <br />

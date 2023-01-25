@@ -1,6 +1,5 @@
 id: test-current-output
 namespace: io.kestra.tests
-revision: 9
 tasks:
   - id: 1_each
     type: io.kestra.core.tasks.flows.EachSequential
@@ -21,4 +20,28 @@ tasks:
               type: io.kestra.core.tasks.debugs.Return
               #format: "return-{{ outputs['1-1-1_output'][parents[1].taskrun.value][parents[0].taskrun.value][taskrun.value].value }}"
               format: "return-{{ currentOutput(outputs['1-1-1_output']).value }}"
+  - id: 2_each
+    type: io.kestra.core.tasks.flows.EachSequential
+    value: '["v41", "v42"]'
+    tasks:
+      - id: 2-1_output
+        type: io.kestra.core.tasks.debugs.Return
+        format: "{{ taskrun.value }}"
+      - id: 2-1_return
+        type: io.kestra.core.tasks.debugs.Return
+        #format: "return-{{ outputs['1-1-1_output'][taskrun.value].value }}"
+        format: "return-{{ currentOutput(outputs['2-1_output']).value }}"
+  - id: 2_sequential
+    type: io.kestra.core.tasks.flows.Sequential
+    tasks:
+      - id: 2-1_sequential
+        type: io.kestra.core.tasks.flows.Sequential
+        tasks:
+          - id: 2-1-1_output
+            type: io.kestra.core.tasks.debugs.Return
+            format: "{{ taskrun.id }}"
+          - id: 2-1-1_return
+            type: io.kestra.core.tasks.debugs.Return
+            format: "return-{{ outputs['2-1-1_output'].value }}"
+
 

@@ -2,6 +2,7 @@ package io.kestra.repository.elasticsearch;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -35,9 +36,10 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     public ElasticSearchLogRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
+        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils
     ) {
-        super(client, elasticSearchIndicesService,  executorsUtils, LogEntry.class);
+        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, LogEntry.class);
     }
 
     @Override

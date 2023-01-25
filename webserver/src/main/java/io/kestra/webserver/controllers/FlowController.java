@@ -156,23 +156,8 @@ public class FlowController {
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
         Flow flowParsed = new YamlFlowParser().parse(flow);
-        if (flowRepository.findById(flowParsed.getNamespace(), flowParsed.getId()).isPresent()) {
-            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
-                "Flow id already exists",
-                flowParsed,
-                Flow.class,
-                "flow.id",
-                flowParsed.getId()
-            )));
-        }
 
-        // control if flow with injections is valid
-        taskDefaultService.injectDefaults(flowParsed).validate()
-            .ifPresent(s -> {
-                throw s;
-            });
-
-        return HttpResponse.ok(flowRepository.create(flowParsed, flow));
+        return HttpResponse.ok(flowRepository.create(flowParsed, flow, taskDefaultService.injectDefaults(flowParsed)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -181,23 +166,8 @@ public class FlowController {
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body @Valid Flow flow
     ) throws ConstraintViolationException, JsonProcessingException {
-        if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
-            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
-                "Flow id already exists",
-                flow,
-                Flow.class,
-                "flow.id",
-                flow.getId()
-            )));
-        }
 
-        // control if flow with injections is valid
-        taskDefaultService.injectDefaults(flow).validate()
-            .ifPresent(s -> {
-                throw s;
-            });
-
-        return HttpResponse.ok(flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow());
+        return HttpResponse.ok(flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow());
     }
 
 
@@ -267,9 +237,9 @@ public class FlowController {
                 Optional<Flow> existingFlow = flowRepository.findById(namespace, flow.getId());
                 try {
                     if (existingFlow.isPresent()) {
-                        return flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+                        return flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow),taskDefaultService.injectDefaults(flow)).getFlow();
                     } else {
-                        return flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+                        return flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow),taskDefaultService.injectDefaults(flow)).getFlow();
                     }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
@@ -287,23 +257,13 @@ public class FlowController {
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
-        Flow flowParsed = new YamlFlowParser().parse(flow);
-
         if (existingFlow.isEmpty()) {
 
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        // control if update is valid
-        flowRepository
-            .findById(existingFlow.get().getNamespace(), existingFlow.get().getId())
-            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flowParsed)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .ifPresent(s -> {
-                throw s;
-            });
+        Flow flowParsed = new YamlFlowParser().parse(flow);
 
-        return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow));
+        return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow, taskDefaultService.injectDefaults(flowParsed)));
     }
 
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.ALL)
@@ -315,22 +275,12 @@ public class FlowController {
         @Parameter(description = "The flow") @Body @Valid Flow flow
     ) throws ConstraintViolationException, JsonProcessingException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
-
         if (existingFlow.isEmpty()) {
 
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        // control if update is valid
-        flowRepository
-            .findById(existingFlow.get().getNamespace(), existingFlow.get().getId())
-            .map(current -> current.validateUpdate(taskDefaultService.injectDefaults(flow)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .ifPresent(s -> {
-                throw s;
-            });
 
-        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow());
+        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow());
     }
 
 
@@ -356,7 +306,7 @@ public class FlowController {
         Flow flow = existingFlow.get();
         try {
             Flow newValue = flow.updateTask(taskId, task);
-            return HttpResponse.ok(flowRepository.update(newValue, flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow());
+            return HttpResponse.ok(flowRepository.update(newValue, flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(newValue)).getFlow());
         } catch (InternalException | JsonProcessingException e) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }

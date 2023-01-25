@@ -7,6 +7,7 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateSource;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -39,11 +40,12 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     public ElasticSearchTemplateRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
+        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.TEMPLATE_NAMED) QueueInterface<Template> templateQueue,
         ApplicationEventPublisher<CrudEvent<Template>> eventPublisher
     ) {
-        super(client, elasticSearchIndicesService, executorsUtils, Template.class);
+        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Template.class);
 
         this.templateQueue = templateQueue;
         this.eventPublisher = eventPublisher;

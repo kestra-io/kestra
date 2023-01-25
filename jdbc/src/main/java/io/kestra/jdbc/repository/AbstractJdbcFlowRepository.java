@@ -9,6 +9,8 @@ import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -35,15 +37,18 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     private final QueueInterface<Flow> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
     private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
+    private final ModelValidator modelValidator;
     protected io.kestra.jdbc.AbstractJdbcRepository<Flow> jdbcRepository;
+    private final FlowRepositoryInterface flowRepository;
 
     @SuppressWarnings("unchecked")
     public AbstractJdbcFlowRepository(io.kestra.jdbc.AbstractJdbcRepository<Flow> jdbcRepository, ApplicationContext applicationContext) {
         this.jdbcRepository = jdbcRepository;
+        this.modelValidator = applicationContext.getBean(ModelValidator.class);
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.flowQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED));
-
+        this.flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         this.jdbcRepository.setDeserializer(record -> {
             String source = record.get("value", String.class);
 
@@ -272,20 +277,46 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public FlowWithSource create(Flow flow, String flowSource) throws ConstraintViolationException {
+    public FlowWithSource create(Flow flow, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
+        if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
+            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
+                "Flow id already exists",
+                flow,
+                Flow.class,
+                "flow.id",
+                flow.getId()
+            )));
+        }
+        // Check flow with defaults injected
+        modelValidator
+            .isValid(flowWithDefaults)
+            .ifPresent(s -> {
+                throw s;
+            });
 
         return this.save(flow, CrudEventType.CREATE, flowSource);
     }
 
     @Override
-    public FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
-        FlowWithSource saved = this.save(flow, CrudEventType.UPDATE, flowSource);
+    public FlowWithSource update(Flow flow, Flow previous, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
+        // Check flow with defaults injected
+        modelValidator
+            .isValid(flowWithDefaults)
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        // control if update is valid
+        Optional<ConstraintViolationException> checkUpdate = previous.validateUpdate(flowWithDefaults);
+        if(checkUpdate.isPresent()){
+            throw checkUpdate.get();
+        }
 
         FlowService
             .findRemovedTrigger(flow, previous)
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));
 
-        return saved;
+        return this.save(flow, CrudEventType.UPDATE, flowSource);
     }
 
     @SneakyThrows

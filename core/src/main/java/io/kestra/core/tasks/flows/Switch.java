@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.validations.SwitchTaskValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -24,7 +25,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.GraphService;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.validation.ConstraintViolation;
@@ -82,6 +82,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
     }
 )
 @Introspected
+@SwitchTaskValidation
 public class Switch extends Task implements FlowableTask<Switch.Output>, TaskValidationInterface<Switch> {
     @NotBlank
     @NotNull

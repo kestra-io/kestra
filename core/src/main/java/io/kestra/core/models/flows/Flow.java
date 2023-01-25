@@ -11,7 +11,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.TaskValidationInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
@@ -258,14 +257,6 @@ public class Flow implements DeletedInterface {
             ));
         }
 
-        // validate tasks
-        allTasks
-            .forEach(task -> {
-                if (task instanceof TaskValidationInterface) {
-                    violations.addAll(((TaskValidationInterface<?>) task).failedConstraints());
-                }
-            });
-
         if (violations.size() > 0) {
             return Optional.of(new ConstraintViolationException(violations));
         } else {
@@ -275,10 +266,6 @@ public class Flow implements DeletedInterface {
 
     public Optional<ConstraintViolationException> validateUpdate(Flow updated) {
         Set<ConstraintViolation<?>> violations = new HashSet<>();
-
-        // validate flow
-        updated.validate()
-            .ifPresent(e -> violations.addAll(e.getConstraintViolations()));
 
         // change flow id
         if (!updated.getId().equals(this.getId())) {

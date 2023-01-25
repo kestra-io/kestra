@@ -1,6 +1,7 @@
 package io.kestra.repository.memory;
 
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.value.ValueException;
@@ -9,6 +10,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -41,6 +43,12 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
+
+    @Inject
+    private ModelValidator modelValidator;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     private static String flowId(Flow flow) {
         return flowId(flow.getNamespace(), flow.getId());
@@ -141,13 +149,42 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public FlowWithSource create(Flow flow, String flowSource) {
+    public FlowWithSource create(Flow flow, String flowSource, Flow flowWithDefaults) {
+        if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
+            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
+                "Flow id already exists",
+                flow,
+                Flow.class,
+                "flow.id",
+                flow.getId()
+            )));
+        }
+        // Check flow with defaults injected
+        modelValidator
+            .isValid(flowWithDefaults)
+            .ifPresent(s -> {
+                throw s;
+            });
+
 
         return this.save(flow, CrudEventType.CREATE, flowSource);
     }
 
     @Override
-    public FlowWithSource update(Flow flow, Flow previous, String flowSource) throws ConstraintViolationException {
+    public FlowWithSource update(Flow flow, Flow previous, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
+        // Check flow with defaults injected
+        modelValidator
+            .isValid(flowWithDefaults)
+            .ifPresent(s -> {
+                throw s;
+            });
+
+        // control if update is valid
+        Optional<ConstraintViolationException> checkUpdate = previous.validateUpdate(flowWithDefaults);
+        if(checkUpdate.isPresent()){
+            throw checkUpdate.get();
+        }
+
         FlowService
             .findRemovedTrigger(flow, previous)
             .forEach(abstractTrigger -> triggerQueue.delete(Trigger.of(flow, abstractTrigger)));

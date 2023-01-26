@@ -815,7 +815,7 @@ public class ExecutionController {
             return HttpResponse.unprocessableEntity()
                 .body(BulkErrorResponse
                     .builder()
-                    .message("Invalid bulk kill")
+                    .message("invalid bulk kill")
                     .invalids(invalids)
                     .build()
                 );

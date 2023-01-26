@@ -137,45 +137,6 @@ public class JsonSchemaGenerator {
     }
 
     protected <T> void build(SchemaGeneratorConfigBuilder builder, Class<? extends T> cls) {
-        if(builder.build().getSchemaVersion() != SchemaVersion.DRAFT_2019_09) {
-            builder.forTypesInGeneral()
-                .withSubtypeResolver((declaredType, context) -> {
-                    TypeContext typeContext = context.getTypeContext();
-
-                    if (declaredType.getErasedType() == Task.class) {
-                        return pluginService
-                            .allPlugins()
-                            .stream()
-                            .flatMap(registeredPlugin -> registeredPlugin.getTasks().stream())
-                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
-                            .collect(Collectors.toList());
-                    } else if (declaredType.getErasedType() == AbstractTrigger.class) {
-                        return pluginService
-                            .allPlugins()
-                            .stream()
-                            .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
-                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
-                            .collect(Collectors.toList());
-                    } else if (declaredType.getErasedType() == Condition.class) {
-                        return pluginService
-                            .allPlugins()
-                            .stream()
-                            .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
-                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
-                            .collect(Collectors.toList());
-                    } else if (declaredType.getErasedType() == ScheduleCondition.class) {
-                        return pluginService
-                            .allPlugins()
-                            .stream()
-                            .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
-                            .filter(ScheduleCondition.class::isAssignableFrom)
-                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
-                            .collect(Collectors.toList());
-                    }
-
-                    return null;
-                });
-        }
 
         builder
             .with(new JacksonModule())
@@ -273,6 +234,43 @@ public class JsonSchemaGenerator {
             return Object.class;
         });
         if(builder.build().getSchemaVersion() != SchemaVersion.DRAFT_2019_09) {
+            builder.forTypesInGeneral()
+                .withSubtypeResolver((declaredType, context) -> {
+                    TypeContext typeContext = context.getTypeContext();
+
+                    if (declaredType.getErasedType() == Task.class) {
+                        return pluginService
+                            .allPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getTasks().stream())
+                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
+                            .collect(Collectors.toList());
+                    } else if (declaredType.getErasedType() == AbstractTrigger.class) {
+                        return pluginService
+                            .allPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
+                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
+                            .collect(Collectors.toList());
+                    } else if (declaredType.getErasedType() == Condition.class) {
+                        return pluginService
+                            .allPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
+                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
+                            .collect(Collectors.toList());
+                    } else if (declaredType.getErasedType() == ScheduleCondition.class) {
+                        return pluginService
+                            .allPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
+                            .filter(ScheduleCondition.class::isAssignableFrom)
+                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
+                            .collect(Collectors.toList());
+                    }
+
+                    return null;
+                });
             // description as Markdown
             builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
                 this.mutateDescription(collectedTypeAttributes);

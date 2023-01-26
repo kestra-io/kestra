@@ -2,10 +2,12 @@ package io.kestra.cli.commands.sys;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.contexts.KestraClassLoader;
@@ -24,6 +26,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 class RestoreQueueCommandTest {
+
+    @Inject
+    TaskDefaultService taskDefaultService;
     @BeforeAll
     static void init() {
         if (!KestraClassLoader.isInit()) {
@@ -53,7 +58,7 @@ class RestoreQueueCommandTest {
 
             for (int i = 0; i < COUNT; i++) {
                 Flow flow = create();
-                flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow));
+                flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow));
             }
             CountDownLatch countDownLatch = new CountDownLatch(COUNT);
 

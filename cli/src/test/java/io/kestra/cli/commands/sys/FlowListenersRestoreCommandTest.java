@@ -3,9 +3,11 @@ package io.kestra.cli.commands.sys;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.contexts.KestraClassLoader;
@@ -19,6 +21,10 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.StringContains.containsString;
 
 class FlowListenersRestoreCommandTest {
+
+    @Inject
+    TaskDefaultService taskDefaultService;
+
     @BeforeAll
     static void init() {
         if (!KestraClassLoader.isInit()) {
@@ -43,7 +49,7 @@ class FlowListenersRestoreCommandTest {
             thread.start();
             for (int i = 0; i < COUNT; i++) {
                 Flow flow = RestoreQueueCommandTest.create();
-                flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow));
+                flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow));
                 Thread.sleep(100);
             }
 

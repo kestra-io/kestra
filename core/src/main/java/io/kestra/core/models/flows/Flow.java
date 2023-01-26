@@ -231,39 +231,6 @@ public class Flow implements DeletedInterface {
         }
     }
 
-    public Optional<ConstraintViolationException> validate() {
-        Set<ConstraintViolation<?>> violations = new HashSet<>();
-
-        List<Task> allTasks = allTasksWithChilds();
-
-        // unique id
-        List<String> ids = allTasks
-            .stream()
-            .map(Task::getId)
-            .collect(Collectors.toList());
-
-        List<String> duplicates = ids
-            .stream()
-            .distinct()
-            .filter(entry -> Collections.frequency(ids, entry) > 1).collect(Collectors.toList());
-
-        if (duplicates.size() > 0) {
-            violations.add(ManualConstraintViolation.of(
-                "Duplicate task id with name [" +   String.join(", ", duplicates) + "]",
-                this,
-                Flow.class,
-                "flow.tasks",
-                String.join(", ", duplicates)
-            ));
-        }
-
-        if (violations.size() > 0) {
-            return Optional.of(new ConstraintViolationException(violations));
-        } else {
-            return Optional.empty();
-        }
-    }
-
     public Optional<ConstraintViolationException> validateUpdate(Flow updated) {
         Set<ConstraintViolation<?>> violations = new HashSet<>();
 

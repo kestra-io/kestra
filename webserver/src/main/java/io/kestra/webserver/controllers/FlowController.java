@@ -170,6 +170,85 @@ public class FlowController {
         return HttpResponse.ok(flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow());
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON, consumes = MediaType.TEXT_PLAIN)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Update a complete namespace",
+        description = "All flow will be created / updated for this namespace.\n" +
+            "Flow that already created but not in `flows` will be deleted"
+    )
+    public List<FlowRepositoryInterface.FlowWithSource> updateNamespace(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "A list of flows") @Body ArrayList<String> flows,
+        @Parameter(description = "If missing flow should be deleted") @Body Boolean delete
+    ) throws ConstraintViolationException {
+        // control namespace to update
+        Set<ManualConstraintViolation<Flow>> invalids = flows
+            .stream()
+            .map(flow -> new YamlFlowParser().parse(flow))
+            .filter(flow -> !flow.getNamespace().equals(namespace))
+            .map(flow -> ManualConstraintViolation.of(
+                "Flow namespace is invalid",
+                flow,
+                Flow.class,
+                "flow.namespace",
+                flow.getNamespace()
+            ))
+            .collect(Collectors.toSet());
+
+        if (invalids.size() > 0) {
+            throw new ConstraintViolationException(invalids);
+        }
+
+        // multiple same flows
+        List<String> duplicate = flows
+            .stream()
+            .map(flow -> taskDefaultService.injectDefaults(new YamlFlowParser().parse(flow)))
+            .map(Flow::getId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        if (duplicate.size() < flows.size()) {
+            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
+                "Duplicate flow id",
+                flows,
+                List.class,
+                "flow.id",
+                duplicate
+            )));
+        }
+
+        // list all ids of updated flows
+        List<String> ids = flows
+            .stream()
+            .map(flow -> taskDefaultService.injectDefaults(new YamlFlowParser().parse(flow)))
+            .map(Flow::getId)
+            .collect(Collectors.toList());
+
+        if(delete) {
+            // delete all not in updated ids
+            flowRepository
+                .findByNamespace(namespace)
+                .stream()
+                .filter(flow -> !ids.contains(flow.getId()))
+                .forEach(flow -> flowRepository.delete(flow));
+        }
+        // update or create flows
+        return flows
+            .stream()
+            .map(flow -> {
+                Flow flowParsed = new YamlFlowParser().parse(flow);
+                Optional<Flow> existingFlow = flowRepository.findById(namespace, flowParsed.getId());
+                if (existingFlow.isPresent()) {
+                    return flowRepository.update(flowParsed, existingFlow.get(), flow,taskDefaultService.injectDefaults(flowParsed));
+                } else {
+                    return flowRepository.create(flowParsed, flow,taskDefaultService.injectDefaults(flowParsed));
+                }
+            })
+            .collect(Collectors.toList());
+    }
+
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON)

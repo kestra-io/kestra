@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import lombok.SneakyThrows;
 import io.kestra.core.models.flows.Flow;
@@ -23,6 +24,9 @@ import static org.hamcrest.Matchers.is;
 abstract public class FlowListenersTest {
     @Inject
     protected FlowRepositoryInterface flowRepository;
+
+    @Inject
+    protected TaskDefaultService taskDefaultService;
 
     protected static Flow create(String flowId, String taskId) {
         return Flow.builder()
@@ -65,14 +69,14 @@ abstract public class FlowListenersTest {
         // create first
         Flow first = create("first_" + IdUtils.create(), "test");
 
-        flowRepository.create(first, JacksonMapper.ofYaml().writeValueAsString(first));
+        flowRepository.create(first, JacksonMapper.ofYaml().writeValueAsString(first), taskDefaultService.injectDefaults(first));
         wait(ref, () -> {
             assertThat(count.get(), is(1));
             assertThat(flowListenersService.flows().size(), is(1));
         });
 
         // create the same id than first, no additional flows
-        first = flowRepository.update(create(first.getId(), "test2"), first, JacksonMapper.ofYaml().writeValueAsString(first)).getFlow();
+        first = flowRepository.update(create(first.getId(), "test2"), first, JacksonMapper.ofYaml().writeValueAsString(first), taskDefaultService.injectDefaults(create(first.getId(), "test2"))).getFlow();
         wait(ref, () -> {
             assertThat(count.get(), is(1));
             assertThat(flowListenersService.flows().size(), is(1));
@@ -81,7 +85,7 @@ abstract public class FlowListenersTest {
 
         Flow second = create("second_" + IdUtils.create(), "test");
         // create a new one
-        flowRepository.create(second, JacksonMapper.ofYaml().writeValueAsString(second));
+        flowRepository.create(second, JacksonMapper.ofYaml().writeValueAsString(second), taskDefaultService.injectDefaults(second));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
             assertThat(flowListenersService.flows().size(), is(2));
@@ -95,7 +99,7 @@ abstract public class FlowListenersTest {
         });
 
         // restore must works
-        flowRepository.create(first, JacksonMapper.ofYaml().writeValueAsString(first));
+        flowRepository.create(first, JacksonMapper.ofYaml().writeValueAsString(first), taskDefaultService.injectDefaults(first));
         wait(ref, () -> {
             assertThat(count.get(), is(2));
             assertThat(flowListenersService.flows().size(), is(2));

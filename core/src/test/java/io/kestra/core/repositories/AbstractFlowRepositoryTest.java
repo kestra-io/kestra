@@ -12,6 +12,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.scripts.Bash;
 import io.kestra.core.utils.IdUtils;
@@ -22,6 +23,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -46,6 +48,9 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Inject
     private LocalFlowRepositoryLoader repositoryLoader;
+
+    @Inject
+    protected TaskDefaultService taskDefaultService;
 
     @Inject
     @Named(QueueFactoryInterface.TRIGGER_NAMED)
@@ -73,7 +78,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = builder()
             .revision(3)
             .build();
-        flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow));
+        flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow));
 
         Optional<Flow> full = flowRepository.findById(flow.getNamespace(), flow.getId());
         assertThat(full.isPresent(), is(true));
@@ -94,10 +99,10 @@ public abstract class AbstractFlowRepositoryTest {
             .inputs(ImmutableList.of(Input.builder().type(Input.Type.STRING).name("a").build()))
             .build();
         // create with repository
-        flow = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+        flow = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow();
 
         // submit new one, no change
-        Flow notSaved = flowRepository.update(flow, flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+        Flow notSaved = flowRepository.update(flow, flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow();
         assertThat(flow.getRevision(), is(notSaved.getRevision()));
 
         // submit new one with change
@@ -115,7 +120,7 @@ public abstract class AbstractFlowRepositoryTest {
             .build();
 
         // revision is incremented
-        Flow incremented = flowRepository.update(flowRev2, flow, JacksonMapper.ofYaml().writeValueAsString(flowRev2)).getFlow();
+        Flow incremented = flowRepository.update(flowRev2, flow, JacksonMapper.ofYaml().writeValueAsString(flowRev2), taskDefaultService.injectDefaults(flowRev2)).getFlow();
         assertThat(incremented.getRevision(), is(2));
 
         // revision is well saved
@@ -126,7 +131,8 @@ public abstract class AbstractFlowRepositoryTest {
         Flow incremented2 = flowRepository.update(
             JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class),
             flowRev2,
-            JacksonMapper.ofYaml().writeValueAsString(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class))
+            JacksonMapper.ofYaml().writeValueAsString(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class)),
+            taskDefaultService.injectDefaults(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow), Flow.class))
         ).getFlow();
         assertThat(incremented2.getRevision(), is(2));
 
@@ -134,7 +140,8 @@ public abstract class AbstractFlowRepositoryTest {
         Flow incremented3 = flowRepository.update(
             JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow), Flow.class),
             flowRev2,
-            JacksonMapper.ofYaml().writeValueAsString(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow), Flow.class))
+            JacksonMapper.ofYaml().writeValueAsString(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow), Flow.class)),
+            taskDefaultService.injectDefaults(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow), Flow.class))
         ).getFlow();
         assertThat(incremented3.getRevision(), is(3));
 
@@ -154,7 +161,7 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(findDeleted.get().getRevision(), is(flow.getRevision()));
 
         // recreate the first one, we have a new revision
-        Flow incremented4 = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+        Flow incremented4 = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow();
 
         assertThat(incremented4.getRevision(), is(5));
     }
@@ -162,7 +169,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void save() throws JsonProcessingException {
         Flow flow = builder().revision(12).build();
-        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow();
 
         assertThat(save.getRevision(), is(1));
     }
@@ -170,7 +177,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void saveNoRevision() throws JsonProcessingException {
         Flow flow = builder().build();
-        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow();
 
         assertThat(save.getRevision(), is(1));
 
@@ -210,7 +217,7 @@ public abstract class AbstractFlowRepositoryTest {
     void delete() throws JsonProcessingException {
         Flow flow = builder().build();
 
-        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow();
         assertThat(flowRepository.findById(save.getNamespace(), save.getId()).isPresent(), is(true));
 
         Flow delete = flowRepository.delete(save);
@@ -233,7 +240,7 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
-        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow();
 
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
 
@@ -247,7 +254,7 @@ public abstract class AbstractFlowRepositoryTest {
 
         ConstraintViolationException e = assertThrows(
             ConstraintViolationException.class,
-            () -> flowRepository.update(update, flow, JacksonMapper.ofYaml().writeValueAsString(update)).getFlow()
+            () -> flowRepository.update(update, flow, JacksonMapper.ofYaml().writeValueAsString(update), taskDefaultService.injectDefaults(update)).getFlow()
         );
 
         assertThat(e.getConstraintViolations().size(), is(2));
@@ -276,7 +283,7 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
-        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow();
 
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
 
@@ -287,7 +294,7 @@ public abstract class AbstractFlowRepositoryTest {
             .build();
         ;
 
-        Flow updated = flowRepository.update(update, flow, JacksonMapper.ofYaml().writeValueAsString(update)).getFlow();
+        Flow updated = flowRepository.update(update, flow, JacksonMapper.ofYaml().writeValueAsString(update), taskDefaultService.injectDefaults(update)).getFlow();
 
         countDownLatch.await(15, TimeUnit.SECONDS);
 
@@ -323,7 +330,7 @@ public abstract class AbstractFlowRepositoryTest {
             .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()))
             .build();
 
-        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow)).getFlow();
+        Flow save = flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow();
 
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(true));
 

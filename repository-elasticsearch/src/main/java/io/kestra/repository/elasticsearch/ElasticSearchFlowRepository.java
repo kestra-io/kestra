@@ -53,9 +53,6 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     @Inject
     private ModelValidator modelValidator;
     @Inject
-    private FlowRepositoryInterface flowRepository;
-
-    @Inject
     public ElasticSearchFlowRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
@@ -302,7 +299,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     public FlowWithSource create(Flow flow, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
-        if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
+        if (this.findById(flow.getNamespace(), flow.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
                 "Flow id already exists",
                 flow,
@@ -345,7 +342,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     public FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
         Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && existsSource.get().equals(flowSource)) {
+        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.get().replaceFirst("(?m)^revision: \\d+\n?","").equals(flowSource.replaceFirst("(?m)^revision: \\d+\n?",""))) {
             return new FlowWithSource(exists.get(), existsSource.get());
         }
 

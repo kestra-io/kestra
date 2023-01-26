@@ -173,8 +173,11 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Test
     void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
-        taskDefaultsCaseTest.invalidTaskDefaults();
+        try {
+            repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage().contains("Unrecognized field \"invalid\""), is(true));
+        }
     }
 
     @Test

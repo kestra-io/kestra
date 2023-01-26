@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.services.TaskDefaultService;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.serializers.YamlFlowParser;
@@ -27,6 +28,9 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 public class LocalFlowRepositoryLoader {
     @Inject
     private YamlFlowParser yamlFlowParser;
+
+    @Inject
+    private TaskDefaultService taskDefaultService;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -65,7 +69,7 @@ public class LocalFlowRepositoryLoader {
         for (Path file: list) {
             try {
                 Flow parse = yamlFlowParser.parse(file.toFile());
-                flowRepository.create(parse,Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset()));
+                flowRepository.create(parse,Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset()),taskDefaultService.injectDefaults(parse));
                 log.trace("Created flow {}.{}", parse.getNamespace(), parse.getId());
             } catch (ConstraintViolationException e) {
                 log.warn("Unable to create flow {}", file, e);

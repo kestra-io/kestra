@@ -2,6 +2,7 @@ package io.kestra.core.models.flows;
 
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.tasks.debugs.Return;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
@@ -23,26 +24,26 @@ class FlowTest {
     @Inject
     YamlFlowParser yamlFlowParser = new YamlFlowParser();
 
+    @Inject
+    ModelValidator modelValidator;
+
     @Test
     void duplicate() {
         Flow flow = this.parse("flows/invalids/duplicate.yaml");
-        Optional<ConstraintViolationException> validate = flow.validate();
+        assertThat(modelValidator.isValid(flow).isPresent(), is(true));
+        assertThat(modelValidator.isValid(flow).get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
-
-        assertThat(validate.get().getMessage(), containsString("Duplicate task id with name [date]"));
+        assertThat(modelValidator.isValid(flow).get().getMessage(), containsString("Duplicate task id with name [date]"));
     }
 
     @Test
     void duplicateParallel() {
         Flow flow = this.parse("flows/invalids/duplicate-parallel.yaml");
-        Optional<ConstraintViolationException> validate = flow.validate();
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
+        assertThat(modelValidator.isValid(flow).isPresent(), is(true));
+        assertThat(modelValidator.isValid(flow).get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("Duplicate task id with name [t3]"));
+        assertThat(modelValidator.isValid(flow).get().getMessage(), containsString("Duplicate task id with name [t3]"));
     }
 
     @Test
@@ -62,12 +63,11 @@ class FlowTest {
     @Test
     void taskInvalid() {
         Flow flow = this.parse("flows/invalids/switch-invalid.yaml");
-        Optional<ConstraintViolationException> validate = flow.validate();
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
+        assertThat(modelValidator.isValid(flow).isPresent(), is(true));
+        assertThat(modelValidator.isValid(flow).get().getConstraintViolations().size(), is(1));
 
-        assertThat(validate.get().getMessage(), containsString("switch.tasks: No task defined"));
+        assertThat(modelValidator.isValid(flow).get().getMessage(), containsString("switch.tasks: No task defined"));
     }
 
     @Test

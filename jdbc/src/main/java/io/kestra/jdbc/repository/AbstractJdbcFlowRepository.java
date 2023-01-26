@@ -39,7 +39,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
     private final ModelValidator modelValidator;
     protected io.kestra.jdbc.AbstractJdbcRepository<Flow> jdbcRepository;
-    private final FlowRepositoryInterface flowRepository;
 
     @SuppressWarnings("unchecked")
     public AbstractJdbcFlowRepository(io.kestra.jdbc.AbstractJdbcRepository<Flow> jdbcRepository, ApplicationContext applicationContext) {
@@ -48,7 +47,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.flowQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED));
-        this.flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         this.jdbcRepository.setDeserializer(record -> {
             String source = record.get("value", String.class);
 
@@ -131,7 +129,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         Optional<String> sourceCode = findSourceById(namespace, id, revision);
         if (flow.isPresent() && sourceCode.isPresent()) {
 
-            return Optional.of(new FlowWithSource(flow.get(), sourceCode.get()));
+            return Optional.of(new FlowWithSource(flow.get(), sourceCode.get().replaceFirst("(?m)^revision: \\d+\n?","")));
         }
 
         return Optional.empty();
@@ -278,7 +276,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     public FlowWithSource create(Flow flow, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
-        if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
+        if (this.findById(flow.getNamespace(), flow.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
                 "Flow id already exists",
                 flow,

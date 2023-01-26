@@ -18,10 +18,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -62,16 +60,6 @@ public class TaskDefaultsCaseTest {
         assertThat(execution.getTaskRunList().get(5).getOutputs().get("def"), is("2"));
         assertThat(execution.getTaskRunList().get(6).getTaskId(), is("err-third"));
         assertThat(execution.getTaskRunList().get(6).getOutputs().get("def"), is("3"));
-    }
-
-    public void invalidTaskDefaults() throws TimeoutException {
-        List<LogEntry> logs = new ArrayList<>();
-        logQueue.receive(logs::add);
-
-        Execution execution = runnerUtils.runOne("io.kestra.tests", "invalid-task-defaults", Duration.ofSeconds(60));
-
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().contains("Unrecognized field \"invalid\"")).count(), greaterThan(0L));
     }
 
     @SuperBuilder

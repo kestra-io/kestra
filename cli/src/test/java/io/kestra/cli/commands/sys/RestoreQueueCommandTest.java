@@ -7,7 +7,6 @@ import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.contexts.KestraClassLoader;
@@ -26,9 +25,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 class RestoreQueueCommandTest {
-
-    @Inject
-    TaskDefaultService taskDefaultService;
     @BeforeAll
     static void init() {
         if (!KestraClassLoader.isInit()) {
@@ -53,6 +49,7 @@ class RestoreQueueCommandTest {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             FlowRepositoryInterface flowRepository = ctx.getBean(FlowRepositoryInterface.class);
             QueueInterface<Flow> flowQueue = ctx.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED));
+            TaskDefaultService taskDefaultService = ctx.getBean(TaskDefaultService.class);
 
             AtomicInteger atomicInteger = new AtomicInteger();
 

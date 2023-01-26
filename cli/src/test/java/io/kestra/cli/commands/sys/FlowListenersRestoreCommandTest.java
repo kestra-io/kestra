@@ -7,7 +7,6 @@ import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.contexts.KestraClassLoader;
@@ -21,9 +20,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.core.StringContains.containsString;
 
 class FlowListenersRestoreCommandTest {
-
-    @Inject
-    TaskDefaultService taskDefaultService;
 
     @BeforeAll
     static void init() {
@@ -41,6 +37,7 @@ class FlowListenersRestoreCommandTest {
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             FlowRepositoryInterface flowRepository = ctx.getBean(FlowRepositoryInterface.class);
+            TaskDefaultService taskDefaultService = ctx.getBean(TaskDefaultService.class);
 
             Thread thread = new Thread(() -> {
                 Integer result = PicocliRunner.call(FlowListenersRestoreCommand.class, ctx, "--timeout=PT1S");

@@ -169,20 +169,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public List<Flow> findAllWithRevisions() {
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                SelectJoinStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(jdbcRepository.getTable());
-
-                return this.jdbcRepository.fetch(select);
-            });
-    }
-
-    @Override
     public List<Flow> findByNamespace(String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()

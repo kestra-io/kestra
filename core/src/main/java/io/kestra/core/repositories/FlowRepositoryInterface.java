@@ -66,8 +66,6 @@ public interface FlowRepositoryInterface {
 
     List<Flow> findAll();
 
-    List<Flow> findAllWithRevisions();
-
     List<Flow> findByNamespace(String namespace);
 
     ArrayListTotal<Flow> find(

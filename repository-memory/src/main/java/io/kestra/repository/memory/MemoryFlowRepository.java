@@ -113,11 +113,6 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public List<Flow> findAllWithRevisions() {
-        return new ArrayList<>(revisions.values());
-    }
-
-    @Override
     public List<Flow> findByNamespace(String namespace) {
         return flows.values()
             .stream()

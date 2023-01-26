@@ -23,7 +23,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -189,19 +188,6 @@ public abstract class AbstractFlowRepositoryTest {
         List<Flow> save = flowRepository.findAll();
 
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
-    }
-
-    @Test
-    void findAllWithRevisions() throws JsonProcessingException {
-        String flowId = "findall_" + IdUtils.create();
-
-        flowRepository.create(builder(flowId, "test").build(), JacksonMapper.ofYaml().writeValueAsString(builder(flowId, "test").build())).getFlow();
-        flowRepository.create(builder(flowId, "test1").build(), JacksonMapper.ofYaml().writeValueAsString(builder(flowId, "test1").build())).getFlow();
-        Flow last = flowRepository.create(builder(flowId, "test2").build(), JacksonMapper.ofYaml().writeValueAsString(builder(flowId, "test2").build())).getFlow();
-        flowRepository.delete(last);
-
-        List<Flow> allWithRevisions = flowRepository.findAllWithRevisions();
-        assertThat(allWithRevisions.stream().filter(flow -> flow.getId().equals(flowId)).count(), is(4L));
     }
 
     @Test

@@ -36,11 +36,10 @@
         data () {
             return {
                 duration: "",
-                enabled: true
+                refreshHandler: undefined
             }
         },
         mounted() {
-            this.enabled = true
             this.paint()
         },
         computed: {
@@ -54,13 +53,20 @@
         },
         methods: {
             paint() {
-                const repaint = () => {
-                    this.computeDuration()
-                    if (this.enabled && this.histories && State.isRunning(this.lastStep.state)) {
-                        setTimeout(repaint, 100);
-                    }
+                if (!this.refreshHandler) {
+                    this.refreshHandler = setInterval(() => {
+                        this.computeDuration()
+                        if (this.histories && !State.isRunning(this.lastStep.state)) {
+                            this.cancel();
+                        }
+                    }, 100);
                 }
-                setTimeout(repaint);
+            },
+            cancel() {
+                if (this.refreshHandler) {
+                    clearInterval(this.refreshHandler);
+                    this.refreshHandler = undefined
+                }
             },
             delta() {
                 return this.stop() - this.start;
@@ -80,8 +86,8 @@
                 ]
             }
         },
-        unmounted() {
-            this.enabled = false
+        beforeUnmount() {
+            this.cancel();
         }
     }
 </script>

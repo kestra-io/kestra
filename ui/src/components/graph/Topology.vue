@@ -13,7 +13,7 @@
     import Edge from "./nodes/Edge.vue";
     import {linkedElements} from "../../utils/vueFlow";
 
-    const {id, addNodes, addEdges, getNodes, removeNodes, getEdges, removeEdges, fitView, addSelectedElements, removeSelectedNodes, removeSelectedEdges} = useVueFlow()
+    const {id, getNodes, removeNodes, getEdges, removeEdges, fitView, addSelectedElements, removeSelectedNodes, removeSelectedEdges} = useVueFlow()
 
     const emit = defineEmits(["follow"])
 
@@ -38,6 +38,7 @@
 
     const isHorizontal = ref(localStorage.getItem("topology-orientation") !== "0");
     const isLoading = ref(false);
+    const elements = ref([])
 
     const generateDagreGraph = () => {
         const dagreGraph = new dagre.graphlib.Graph({compound:true})
@@ -129,7 +130,7 @@
             const dagreNode = dagreGraph.node(cluster.cluster.uid)
             const parentNode = cluster.parents ? cluster.parents[cluster.parents.length - 1] : undefined;
 
-            addNodes([{
+            elements.value.push({
                 id: cluster.cluster.uid,
                 label: cluster.cluster.task.id,
                 type: "cluster",
@@ -139,7 +140,7 @@
                     width: dagreNode.width + "px",
                     height: dagreNode.height + "px",
                 },
-            }])
+            })
         }
 
         for (const node of props.flowGraph.nodes) {
@@ -154,7 +155,7 @@
                 nodeType = "task";
             }
 
-            addNodes([{
+            elements.value.push({
                 id: node.uid,
                 label: isTaskNode(node) ? node.task.id : "",
                 type: nodeType,
@@ -170,13 +171,12 @@
                     node: node,
                     namespace: props.namespace,
                     flowId: props.flowId,
-                    execution: props.execution
                 },
-            }]);
+            })
         }
 
         for (const edge of props.flowGraph.edges) {
-            addEdges([{
+            elements.value.push({
                 id: edge.source + "|" + edge.target,
                 source: edge.source,
                 target: edge.target,
@@ -185,7 +185,7 @@
                 data: {
                     edge: edge
                 }
-            }])
+            })
         }
 
         fitView();
@@ -217,6 +217,7 @@
 <template>
     <el-card shadow="never" v-loading="isLoading">
         <VueFlow
+            v-model="elements"
             :default-marker-color="cssVariable('--bs-cyan')"
             :fit-view-on-init="true"
             :nodes-connectable="true"

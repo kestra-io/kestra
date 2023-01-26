@@ -7,7 +7,7 @@
         <div class="task-content">
             <div class="card-header">
                 <div class="task-title">
-                    <span>{{ task.id }}</span>
+                    <span>{{ task.id }} {{ state }}</span>
                 </div>
             </div>
             <div v-if="task.state" class="status-wrapper">
@@ -26,7 +26,7 @@
                         {{ taskRuns.length }}
                     </el-tag>
 
-                    <span v-if="duration">{{ $filters.humanizeDuration(duration) }}</span>
+                    <span v-if="histories"><duration :histories="histories" /></span>
                 </span>
 
                 <el-button-group>
@@ -113,6 +113,7 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Collapse from "../layout/Collapse.vue";
+    import Duration from "../layout/Duration.vue";
 
     export default {
         components: {
@@ -125,7 +126,8 @@
             TaskIcon,
             TaskEdit,
             SubFlowLink,
-            Collapse
+            Collapse,
+            Duration
         },
         props: {
             n: {
@@ -140,10 +142,7 @@
                 type: String,
                 required: true
             },
-            execution: {
-                type: Object,
-                default: undefined
-            }
+
         },
         methods: {
             forwardEvent(type, event) {
@@ -170,6 +169,7 @@
         computed: {
             ...mapState("graph", ["node"]),
             ...mapState("auth", ["user"]),
+            ...mapState("execution", ["execution"]),
             hash() {
                 return this.n.uid.hashCode();
             },
@@ -199,10 +199,10 @@
                     State.KILLED,
                     State.WARNING,
                     State.KILLING,
-                    State.RESTARTED,
                     State.RUNNING,
+                    State.SUCCESS,
+                    State.RESTARTED,
                     State.CREATED,
-                    State.SUCCESS
                 ];
 
                 // sorting based on SORT_STATUS array
@@ -217,8 +217,22 @@
 
                 return result[0];
             },
-            duration() {
-                return this.taskRuns ? this.taskRuns.reduce((inc, taskRun) => inc + this.$moment.duration(taskRun.state.duration).asMilliseconds() / 1000, 0) : null;
+            histories() {
+                if (!this.taskRuns) {
+                    return undefined;
+                }
+
+                const max = Math.max(...this.taskRuns
+                    .filter(value => value.state.histories && value.state.histories.length > 0)
+                    .map(value => new Date(value.state.histories[value.state.histories.length -1].date).getTime()));
+
+                const duration = this.taskRuns
+                    .reduce((inc, taskRun) => inc + this.$moment.duration(taskRun.state.duration).asMilliseconds() / 1000, 0);
+
+                return [
+                    {date: this.$moment(max).subtract(duration, "second"), state: "CREATED"},
+                    {date: this.$moment(max), state: this.state}
+                ]
             },
             nodeClass() {
                 return {

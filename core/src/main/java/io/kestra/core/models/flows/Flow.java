@@ -14,6 +14,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -35,6 +36,7 @@ import javax.validation.constraints.*;
 @Introspected
 @ToString
 @EqualsAndHashCode
+@FlowValidation
 public class Flow implements DeletedInterface {
     private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {

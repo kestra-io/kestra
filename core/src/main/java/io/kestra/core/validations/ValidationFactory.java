@@ -145,6 +145,13 @@ public class ValidationFactory {
                 ));
             }
 
+            allTasks
+                .forEach(task -> {
+                    if (task instanceof TaskValidationInterface) {
+                        violations.addAll(((TaskValidationInterface<?>) task).failedConstraints());
+                    }
+                });
+
             if (violations.size() > 0) {
                 context.messageTemplate("invalid Flow " + value.getId());
                 throw new ConstraintViolationException(violations);

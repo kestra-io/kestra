@@ -19,7 +19,7 @@ tasks:
             - id: 1-1-1_return
               type: io.kestra.core.tasks.debugs.Return
               #format: "return-{{ outputs['1-1-1_output'][parents[1].taskrun.value][parents[0].taskrun.value][taskrun.value].value }}"
-              format: "return-{{ currentOutput(outputs['1-1-1_output']).value }}"
+              format: "return-{{ currentEachOutput(outputs['1-1-1_output']).value }}"
   - id: 2_each
     type: io.kestra.core.tasks.flows.EachSequential
     value: '["v41", "v42"]'
@@ -30,7 +30,7 @@ tasks:
       - id: 2-1_return
         type: io.kestra.core.tasks.debugs.Return
         #format: "return-{{ outputs['1-1-1_output'][taskrun.value].value }}"
-        format: "return-{{ currentOutput(outputs['2-1_output']).value }}"
+        format: "return-{{ currentEachOutput(outputs['2-1_output']).value }}"
   - id: 2_sequential
     type: io.kestra.core.tasks.flows.Sequential
     tasks:

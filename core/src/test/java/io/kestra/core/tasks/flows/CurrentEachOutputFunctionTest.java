@@ -10,7 +10,7 @@ import java.util.concurrent.TimeoutException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-public class CurrentOutputFunctionTest  extends AbstractMemoryRunnerTest {
+public class CurrentEachOutputFunctionTest extends AbstractMemoryRunnerTest {
     @Test
     void parallel() throws TimeoutException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "test-current-output");

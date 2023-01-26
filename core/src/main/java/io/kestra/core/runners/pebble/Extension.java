@@ -8,7 +8,7 @@ import io.pebbletemplates.pebble.operator.UnaryOperator;
 import io.pebbletemplates.pebble.tokenParser.TokenParser;
 import io.kestra.core.runners.pebble.expression.NullCoalescingExpression;
 import io.kestra.core.runners.pebble.filters.*;
-import io.kestra.core.runners.pebble.functions.CurrentOutputFunction;
+import io.kestra.core.runners.pebble.functions.CurrentEachOutputFunction;
 import io.kestra.core.runners.pebble.functions.JsonFunction;
 import io.kestra.core.runners.pebble.functions.NowFunction;
 import io.kestra.core.runners.pebble.tests.JsonTest;
@@ -81,7 +81,7 @@ public class Extension extends AbstractExtension {
 
         tests.put("now", new NowFunction());
         tests.put("json", new JsonFunction());
-        tests.put("currentOutput", new CurrentOutputFunction());
+        tests.put("currentEachOutput", new CurrentEachOutputFunction());
 
         return tests;
     }

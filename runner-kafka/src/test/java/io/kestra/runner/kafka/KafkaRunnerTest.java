@@ -123,7 +123,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void listeners() throws TimeoutException, QueueException, IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners.yaml")));
 
         Execution execution = runnerUtils.runOne(
             "io.kestra.tests",

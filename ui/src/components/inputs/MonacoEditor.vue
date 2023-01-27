@@ -13,7 +13,7 @@
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import YamlWorker from "./yaml.worker.js?worker";
     import {setDiagnosticsOptions} from "monaco-yaml";
-    import {apiRoot} from "../../utils/axios";
+    import {yamlSchemas} from "override/utils/yamlSchemas"
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
@@ -35,6 +35,15 @@
         colors: {
             "minimap.background": "#161822",
         }
+    });
+
+    setDiagnosticsOptions({
+        enableSchemaRequest: true,
+        hover: true,
+        completion: true,
+        validate: true,
+        format: true,
+        schemas: yamlSchemas
     });
 
     export default defineComponent({
@@ -147,29 +156,11 @@
                         modified: modifiedModel
                     });
                 } else {
-                    setDiagnosticsOptions({
-                        enableSchemaRequest: true,
-                        hover: true,
-                        completion: true,
-                        validate: true,
-                        format: true,
-                        schemas: [
-                            {
-                                fileMatch: ["flow.yaml"],
-                                uri: [`${apiRoot}plugins/schemas/flow`]
-                            },
-                            {
-                                fileMatch: ["task.yaml"],
-                                uri: [`${apiRoot}plugins/schemas/task`]
-                            },
-                            {
-                                fileMatch: ["template.yaml"],
-                                uri: [`${apiRoot}plugins/schemas/template`]
-                            }
-                        ]
-                    });
-
-                    options["model"] = monaco.editor.createModel(this.value, this.language, monaco.Uri.parse(`file:///${this.schemaType}.yaml`))
+                    if(monaco.editor.getModel(monaco.Uri.parse(`file:///${this.schemaType}.yaml`))) {
+                        options["model"] = monaco.editor.getModel(monaco.Uri.parse(`file:///${this.schemaType}.yaml`));
+                    } else {
+                        options["model"] = monaco.editor.createModel(this.value, this.language, monaco.Uri.parse(`file:///${this.schemaType}.yaml`))
+                    }
 
                     this.editor = monaco.editor.create(this.$el, options);
                 }
@@ -199,7 +190,13 @@
             },
             destroy: function() {
                 if (this.editor) {
-                    this.editor.getModel().dispose()
+                    console.log(this.editor.getModel())
+                    if(this.diffEditor) {
+                        this.editor.getModel().original.dispose();
+                        this.editor.getModel().modified.dispose();
+                    } else {
+                        this.editor.getModel().dispose()
+                    }
                     this.editor.dispose();
                 }
             },

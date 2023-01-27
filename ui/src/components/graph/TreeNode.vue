@@ -166,7 +166,6 @@
             };
         },
         computed: {
-            console: () => console,
             ...mapState("graph", ["node"]),
             ...mapState("auth", ["user"]),
             ...mapState("execution", ["execution"]),

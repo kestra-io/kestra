@@ -6,6 +6,7 @@ import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -36,8 +37,7 @@ import java.util.concurrent.TimeUnit;
 import javax.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @MicronautTest(transactional = false)
@@ -84,6 +84,23 @@ public abstract class AbstractFlowRepositoryTest {
 
         full.ifPresent(current -> {
             assertThat(full.get().getRevision(), is(1));
+        });
+    }
+
+    @Test
+    void findByIdWithSource() throws JsonProcessingException {
+        Flow flow = builder()
+            .revision(3)
+            .build();
+        flowRepository.create(flow, "# comment\n" + JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow));
+
+        Optional<FlowWithSource> full = flowRepository.findByIdWithSource(flow.getNamespace(), flow.getId());
+        assertThat(full.isPresent(), is(true));
+
+        full.ifPresent(current -> {
+            assertThat(full.get().getFlow().getRevision(), is(1));
+            assertThat(full.get().getSourceCode(), containsString("# comment"));
+            assertThat(full.get().getSourceCode(), not(containsString("revision:")));
         });
     }
 

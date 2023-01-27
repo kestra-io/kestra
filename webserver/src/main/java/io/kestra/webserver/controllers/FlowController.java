@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.TaskDefaultService;
@@ -64,10 +65,10 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/source", produces = MediaType.TEXT_JSON, consumes = MediaType.ALL)
     @Operation(tags = {"Flows"}, summary = "Get a flow")
-    public FlowRepositoryInterface.FlowWithSource indexSource(
+    public FlowWithSource indexSource(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id
-    ) throws JsonProcessingException {
+    ) {
         return flowRepository
             .findByIdWithSource(namespace, id)
             .orElse(null);
@@ -152,7 +153,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(produces = MediaType.TEXT_JSON, consumes = MediaType.TEXT_PLAIN)
     @Operation(tags = {"Flows"}, summary = "Create a flow")
-    public HttpResponse<FlowRepositoryInterface.FlowWithSource> create(
+    public HttpResponse<FlowWithSource> create(
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
         Flow flowParsed = new YamlFlowParser().parse(flow);
@@ -178,7 +179,7 @@ public class FlowController {
         description = "All flow will be created / updated for this namespace.\n" +
             "Flow that already created but not in `flows` will be deleted"
     )
-    public List<FlowRepositoryInterface.FlowWithSource> updateNamespace(
+    public List<FlowWithSource> updateNamespace(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "A list of flows") @Body ArrayList<String> flows,
         @Parameter(description = "If missing flow should be deleted") @Body Boolean delete
@@ -330,7 +331,7 @@ public class FlowController {
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.TEXT_PLAIN)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a flow")
-    public HttpResponse<FlowRepositoryInterface.FlowWithSource> update(
+    public HttpResponse<FlowWithSource> update(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id,
         @Parameter(description = "The flow") @Body String flow

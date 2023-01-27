@@ -386,26 +386,15 @@ abstract public class AbstractElasticSearchRepository<T> {
     }
 
     protected List<T> map(SearchHit[] searchHits) {
-        return this.map(searchHits, this.cls);
-    }
-
-    protected <R> List<R> map(SearchHit[] searchHits, Class<R> cls) {
         return Arrays.stream(searchHits)
-            .map(searchHit -> this.deserialize(searchHit.getSourceAsString(), cls))
+            .map(searchHit -> this.deserialize(searchHit.getSourceAsString()))
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
     }
 
     protected T deserialize(String source) {
-        return this.deserialize(source, this.cls);
-    }
-
-    protected <R> R deserialize(String source, Class<R> cls) {
         try {
-//            if (cls == String.class) {
-//                return (R) MAPPER.readValue(source, Map.class);
-//            }
-            return MAPPER.readValue(source, cls);
+            return MAPPER.readValue(source, this.cls);
         } catch (InvalidTypeIdException e) {
             throw new DeserializationException(e);
         } catch (IOException e) {
@@ -413,19 +402,15 @@ abstract public class AbstractElasticSearchRepository<T> {
         }
     }
 
-    protected <R> ArrayListTotal<R> query(String index, SearchSourceBuilder sourceBuilder, Class<R> cls) {
+    protected ArrayListTotal<T> query(String index, SearchSourceBuilder sourceBuilder) {
         SearchRequest searchRequest = searchRequest(index, sourceBuilder, false);
 
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            return new ArrayListTotal<R>(this.map(searchResponse.getHits().getHits(), cls), searchResponse.getHits().getTotalHits().value);
+            return new ArrayListTotal<>(this.map(searchResponse.getHits().getHits()), searchResponse.getHits().getTotalHits().value);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    protected ArrayListTotal<T> query(String index, SearchSourceBuilder sourceBuilder) {
-        return this.query(index, sourceBuilder, this.cls);
     }
 
     protected List<T> scroll(String index, SearchSourceBuilder sourceBuilder) {

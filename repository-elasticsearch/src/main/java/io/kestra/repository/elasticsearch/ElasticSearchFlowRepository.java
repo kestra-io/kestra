@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.FlowSource;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
@@ -47,6 +48,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     private static final String INDEX_NAME = "flows";
     protected static final String REVISIONS_NAME = "flows-revisions";
     protected static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson();
+
     private final QueueInterface<Flow> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
     private final ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher;
@@ -97,8 +99,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         }
     }
 
-    @Override
-    public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
+    private SearchSourceBuilder searchById(String namespace, String id, Optional<Integer> revision) {
         BoolQueryBuilder bool = this.defaultFilter()
             .must(QueryBuilders.termQuery("namespace", namespace))
             .must(QueryBuilders.termQuery("id", id));
@@ -109,11 +110,15 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 bool.must(QueryBuilders.termQuery("revision", v));
             });
 
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
+        return new SearchSourceBuilder()
             .query(bool)
-            .fetchSource("*", "sourceCode")
             .sort(new FieldSortBuilder("revision").order(SortOrder.DESC))
             .size(1);
+    }
+
+    public Optional<Flow> findById(String namespace, String id, Optional<Integer> revision) {
+        SearchSourceBuilder sourceBuilder = this.searchById(namespace, id, revision)
+            .fetchSource("*", "sourceCode");
 
         List<Flow> query = this.query(revision.isPresent() ? REVISIONS_NAME : INDEX_NAME, sourceBuilder);
 
@@ -121,39 +126,24 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public Optional<String> findSourceById(String namespace, String id, Optional<Integer> revision) {
-        BoolQueryBuilder bool = this.defaultFilter()
-            .must(QueryBuilders.termQuery("namespace", namespace))
-            .must(QueryBuilders.termQuery("id", id));
+    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
+        SearchSourceBuilder sourceBuilder = this.searchById(namespace, id, revision);
+        SearchRequest searchRequest = searchRequest(revision.isPresent() ? REVISIONS_NAME : INDEX_NAME, sourceBuilder, false);
 
-        revision
-            .ifPresent(v -> {
-                this.removeDeleted(bool);
-                bool.must(QueryBuilders.termQuery("revision", v));
-            });
+        try {
+            SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
-        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
-            .query(bool)
-            .fetchSource("sourceCode", "")
-            .sort(new FieldSortBuilder("revision").order(SortOrder.DESC))
-            .size(1);
-
-        List<Map> query = this.query(revision.isPresent() ? REVISIONS_NAME : INDEX_NAME, sourceBuilder, Map.class);
-        return query.size() > 0 ? Optional.of((String) query.get(0).get("sourceCode")) : Optional.empty();
-    }
-
-    @Override
-    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) throws JsonProcessingException {
-        Optional<Flow> flow = findById(namespace, id, revision);
-        Optional<String> sourceCode = findSourceById(namespace, id, revision);
-        if (flow.isPresent() && sourceCode.isPresent()) {
-            if(JacksonMapper.ofYaml().writeValueAsString(flow.get()).equals(sourceCode.get())){
-                sourceCode = Optional.of(JacksonMapper.toYamlWithoutDefault(flow.get()));
+            if (searchResponse.getHits().getHits().length == 0) {
+                return Optional.empty();
             }
-            return Optional.of(new FlowWithSource(flow.get(), sourceCode.get().replaceFirst("(?m)^revision: \\d+\n?","")));
-        }
 
-        return Optional.empty();
+            return Optional.of(new FlowWithSource(
+                this.deserialize(searchResponse.getHits().getHits()[0].getSourceAsString()),
+                (String) searchResponse.getHits().getHits()[0].getSourceAsMap().get("sourceCode")
+            ));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void removeDeleted(BoolQueryBuilder bool) {
@@ -294,6 +284,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 flow.getId()
             )));
         }
+
         // Check flow with defaults injected
         modelValidator
             .isValid(flowWithDefaults)
@@ -326,10 +317,9 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     public FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
-        Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
-        Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.get().replaceFirst("(?m)^revision: \\d+\n?","").equals(flowSource.replaceFirst("(?m)^revision: \\d+\n?",""))) {
-            return new FlowWithSource(exists.get(), existsSource.get());
+        Optional<FlowWithSource> exists = this.findByIdWithSource(flow.getNamespace(), flow.getId());
+        if (exists.isPresent() && exists.get().getFlow().equalsWithoutRevision(flow) && exists.get().getSourceCode().equals(FlowService.cleanupSource(flowSource))) {
+            return exists.get();
         }
 
         List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());

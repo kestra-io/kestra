@@ -8,6 +8,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowSource;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
@@ -99,42 +100,43 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public Optional<String> findSourceById(String namespace, String id, Optional<Integer> revision) {
+    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                Select<Record1<String>> from;
+                Select<Record2<String, String>> from;
 
                 from = revision.map(integer -> context
-                        .select(field("source_code", String.class))
+                        .select(
+                            field("source_code", String.class),
+                            field("value", String.class)
+                        )
                         .from(jdbcRepository.getTable())
                         .where(field("namespace").eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(field("revision", Integer.class).eq(integer)))
                     .orElseGet(() -> context
-                        .select(field("source_code", String.class))
+                        .select(
+                            field("source_code", String.class),
+                            field("value", String.class)
+                        )
                         .from(JdbcFlowRepositoryService.lastRevision(jdbcRepository, true))
                         .where(this.defaultFilter())
                         .and(field("namespace", String.class).eq(namespace))
                         .and(field("id", String.class).eq(id)));
-                Record1<String> fetched = from.fetchAny();
-                return fetched != null ? Optional.of(fetched.get("source_code", String.class)) : Optional.empty();
+                Record2<String, String> fetched = from.fetchAny();
+
+                if (fetched == null) {
+                    return Optional.empty();
+                }
+
+                 return Optional.of(new FlowWithSource(
+                    jdbcRepository.map(fetched),
+                    fetched.get("source_code", String.class)
+                ));
             });
     }
-
-    @Override
-    public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
-        Optional<Flow> flow = findById(namespace, id, revision);
-        Optional<String> sourceCode = findSourceById(namespace, id, revision);
-        if (flow.isPresent() && sourceCode.isPresent()) {
-
-            return Optional.of(new FlowWithSource(flow.get(), sourceCode.get().replaceFirst("(?m)^revision: \\d+\n?","")));
-        }
-
-        return Optional.empty();
-    }
-
 
     @Override
     public List<Flow> findRevisions(String namespace, String id) {
@@ -306,10 +308,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @SneakyThrows
     private FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         // flow exists, return it
-        Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
-        Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && existsSource.get().replaceFirst("(?m)^revision: \\d+\n?","").equals(flowSource.replaceFirst("(?m)^revision: \\d+\n?",""))) {
-            return new FlowWithSource(exists.get(), existsSource.get());
+        Optional<FlowWithSource> exists = this.findByIdWithSource(flow.getNamespace(), flow.getId());
+        if (exists.isPresent() && exists.get().getFlow().equalsWithoutRevision(flow) && exists.get().getSourceCode().equals(FlowService.cleanupSource(flowSource))) {
+            return exists.get();
         }
 
         List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());

@@ -121,16 +121,4 @@ abstract public class JacksonMapper {
             .setTimeZone(TimeZone.getDefault());
     }
 
-    public static String toYamlWithoutDefault(Object Object) throws JsonProcessingException {
-        return JacksonMapper.ofYaml()
-            .writeValueAsString(
-                JacksonMapper
-                    .ofJson()
-                    .readTree(
-                        JacksonMapper
-                            .ofJson()
-                            .setSerializationInclusion(
-                                JsonInclude.Include.NON_DEFAULT)
-                            .writeValueAsString(Object)));
-    }
 }

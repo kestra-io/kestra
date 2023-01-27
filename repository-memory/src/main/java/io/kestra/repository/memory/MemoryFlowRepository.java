@@ -1,6 +1,7 @@
 package io.kestra.repository.memory;
 
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -72,14 +73,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             );
     }
 
-    @Override
-    public Optional<String> findSourceById(String namespace, String id, Optional<Integer> revision) {
-        return findSourceById(namespace, id);
-    }
-
-    @Override
-    public Optional<String> findSourceById(String namespace, String id) {
-
+    private Optional<String> findSourceById(String namespace, String id) {
         return this.flowSources.containsKey(flowId(namespace, id)) ?
             Optional.of(this.flowSources.get(flowId(namespace, id))) :
             Optional.empty();
@@ -89,13 +83,11 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         Optional<Flow> flow = findById(namespace, id, revision);
         Optional<String> sourceCode = findSourceById(namespace, id);
         if (flow.isPresent() && sourceCode.isPresent()) {
-
-            return Optional.of(new FlowWithSource(flow.get(), sourceCode.get().replaceFirst("(?m)^revision: \\d+\n?","")));
+            return Optional.of(new FlowWithSource(flow.get(), FlowService.cleanupSource(sourceCode.get())));
         }
 
         return Optional.empty();
     }
-
 
     @Override
     public List<Flow> findRevisions(String namespace, String id) {
@@ -188,7 +180,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         // flow exists, return it
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
         Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.get().replaceFirst("(?m)^revision: \\d+\n?","").equals(flowSource.replaceFirst("(?m)^revision: \\d+\n?",""))) {
+        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && FlowService.cleanupSource(existsSource.get()).equals(FlowService.cleanupSource(flowSource))) {
             return new FlowWithSource(exists.get(), existsSource.get());
         }
 

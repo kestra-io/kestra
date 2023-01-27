@@ -1,33 +1,19 @@
 package io.kestra.core.repositories;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.SearchResult;
-import io.micronaut.data.model.Pageable;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.micronaut.data.model.Pageable;
 
-import javax.annotation.Nullable;
-import javax.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
+import javax.validation.ConstraintViolationException;
 
 public interface FlowRepositoryInterface {
     Optional<Flow> findById(String namespace, String id, Optional<Integer> revision);
-
-    @Getter
-    @NoArgsConstructor
-    class FlowWithSource {
-        private Flow flow;
-        private String sourceCode;
-
-        public FlowWithSource(Flow flow, String sourceCode) {
-            this.flow = flow;
-            this.sourceCode = sourceCode;
-        }
-    }
 
     default Flow findByExecution(Execution execution) {
         Optional<Flow> find = this.findById(
@@ -50,15 +36,9 @@ public interface FlowRepositoryInterface {
         return this.findById(namespace, id, Optional.empty());
     }
 
-    Optional<String> findSourceById(String namespace, String id, Optional<Integer> revision);
+    Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision);
 
-    default Optional<String> findSourceById(String namespace, String id) {
-        return this.findSourceById(namespace, id, Optional.empty());
-    }
-
-    Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) throws JsonProcessingException;
-
-    default Optional<FlowWithSource> findByIdWithSource(String namespace, String id) throws JsonProcessingException {
+    default Optional<FlowWithSource> findByIdWithSource(String namespace, String id) {
         return this.findByIdWithSource(namespace, id, Optional.empty());
     }
 

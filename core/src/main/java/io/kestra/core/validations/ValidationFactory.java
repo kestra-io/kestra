@@ -4,7 +4,6 @@ import com.cronutils.model.Cron;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.TaskValidationInterface;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.tasks.flows.Switch;
 import io.micronaut.context.annotation.Factory;
@@ -103,24 +102,32 @@ public class ValidationFactory {
     ConstraintValidator<SwitchTaskValidation, Switch> switchTaskValidation() {
         return (value, annotationMetadata, context) -> {
             Set<ConstraintViolation<?>> violations = new HashSet<>();
-            value.getCases().values()
-                .forEach(task -> {
-                    if (task instanceof TaskValidationInterface) {
-                        violations.addAll(((TaskValidationInterface<?>) task).failedConstraints());
-                    }
-                });
-
-            if (violations.size() > 0) {
-                throw new ConstraintViolationException(violations);
-            } else {
+            if (value == null) {
                 return true;
             }
+
+            if ((value.getCases() == null || value.getCases().size() == 0) && (value.getDefaults() == null || value.getDefaults().size() == 0)) {
+                throw new ConstraintViolationException(Set.of(ManualConstraintViolation.of(
+                    "No task defined, neither cases or default have any tasks",
+                    value,
+                    Switch.class,
+                    "switch.tasks",
+                    value.getId()
+                )));
+            }
+
+
+            return true;
         };
     }
 
     @Singleton
     ConstraintValidator<FlowValidation, Flow> flowValidation() {
         return (value, annotationMetadata, context) -> {
+            if (value == null) {
+                return true;
+            }
+
             Set<ConstraintViolation<?>> violations = new HashSet<>();
             List<Task> allTasks = value.allTasksWithChilds();
 
@@ -144,13 +151,6 @@ public class ValidationFactory {
                     String.join(", ", duplicates)
                 ));
             }
-
-            allTasks
-                .forEach(task -> {
-                    if (task instanceof TaskValidationInterface) {
-                        violations.addAll(((TaskValidationInterface<?>) task).failedConstraints());
-                    }
-                });
 
             if (violations.size() > 0) {
                 context.messageTemplate("invalid Flow " + value.getId());

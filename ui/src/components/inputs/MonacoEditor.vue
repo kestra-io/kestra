@@ -14,6 +14,7 @@
     import YamlWorker from "./yaml.worker.js?worker";
     import {setDiagnosticsOptions} from "monaco-yaml";
     import {yamlSchemas} from "override/utils/yamlSchemas"
+    import Utils from "../../utils/utils";
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
@@ -156,12 +157,7 @@
                         modified: modifiedModel
                     });
                 } else {
-                    if(monaco.editor.getModel(monaco.Uri.parse(`file:///${this.schemaType}.yaml`))) {
-                        options["model"] = monaco.editor.getModel(monaco.Uri.parse(`file:///${this.schemaType}.yaml`));
-                    } else {
-                        options["model"] = monaco.editor.createModel(this.value, this.language, monaco.Uri.parse(`file:///${this.schemaType}.yaml`))
-                    }
-
+                    options["model"] = monaco.editor.createModel(this.value, this.language, monaco.Uri.parse(`file:///${this.schemaType}-${Utils.uid()}.yaml`))
                     this.editor = monaco.editor.create(this.$el, options);
                 }
 

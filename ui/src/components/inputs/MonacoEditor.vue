@@ -190,7 +190,6 @@
             },
             destroy: function() {
                 if (this.editor) {
-                    console.log(this.editor.getModel())
                     if(this.diffEditor) {
                         this.editor.getModel().original.dispose();
                         this.editor.getModel().modified.dispose();

@@ -120,5 +120,4 @@ abstract public class JacksonMapper {
             .registerModules(new GuavaModule())
             .setTimeZone(TimeZone.getDefault());
     }
-
 }

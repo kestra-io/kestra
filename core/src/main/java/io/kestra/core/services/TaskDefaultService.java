@@ -79,8 +79,7 @@ public class TaskDefaultService {
     }
 
     @SuppressWarnings("unchecked")
-    public Flow injectDefaults(Flow flow) {
-        try {
+    public Flow injectDefaults(Flow flow) throws ConstraintViolationException {
         Map<String, Object> flowAsMap = JacksonMapper.toMap(flow);
 
         List<TaskDefault> allDefaults = mergeAllDefaults(flow);
@@ -113,9 +112,6 @@ public class TaskDefaultService {
         }
 
         return JacksonMapper.toMap(flowAsMap, Flow.class);
-        } catch (ConstraintViolationException e) {
-            throw e;
-        }
     }
 
     private static Object recursiveDefaults(Object object, Map<String, List<TaskDefault>> defaults) {

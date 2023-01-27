@@ -25,10 +25,9 @@ public class ElasticsearchTriggerRepository extends AbstractElasticSearchReposit
     public ElasticsearchTriggerRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils
     ) {
-        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Trigger.class);
+        super(client, elasticSearchIndicesService, executorsUtils, Trigger.class);
     }
 
     public Optional<Trigger> findLast(TriggerContext trigger) {

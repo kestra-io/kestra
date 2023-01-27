@@ -3,42 +3,46 @@ package io.kestra.repository.elasticsearch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.models.SearchResult;
-import io.kestra.core.models.flows.FlowSource;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.ListUtils;
-import io.micronaut.context.event.ApplicationEventPublisher;
-import io.micronaut.data.model.Pageable;
-import org.opensearch.action.search.SearchRequest;
-import org.opensearch.action.search.SearchResponse;
-import org.opensearch.client.RequestOptions;
-import org.opensearch.client.RestHighLevelClient;
-import org.opensearch.common.text.Text;
-import org.opensearch.index.query.*;
-import org.opensearch.search.builder.SearchSourceBuilder;
-import org.opensearch.search.fetch.subphase.highlight.HighlightBuilder;
-import org.opensearch.search.sort.FieldSortBuilder;
-import org.opensearch.search.sort.SortOrder;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowSource;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ExecutorsUtils;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import io.kestra.core.utils.ListUtils;
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.opensearch.action.search.SearchRequest;
+import org.opensearch.action.search.SearchResponse;
+import org.opensearch.client.RequestOptions;
+import org.opensearch.client.RestHighLevelClient;
+import org.opensearch.common.text.Text;
+import org.opensearch.index.query.BoolQueryBuilder;
+import org.opensearch.index.query.MatchQueryBuilder;
+import org.opensearch.index.query.QueryBuilder;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.search.builder.SearchSourceBuilder;
+import org.opensearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.opensearch.search.sort.FieldSortBuilder;
+import org.opensearch.search.sort.SortOrder;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
 
@@ -58,13 +62,12 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     public ElasticSearchFlowRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<Flow> flowQueue,
         @Named(QueueFactoryInterface.TRIGGER_NAMED) QueueInterface<Trigger> triggerQueue,
         ApplicationEventPublisher<CrudEvent<Flow>> eventPublisher
     ) {
-        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Flow.class);
+        super(client, elasticSearchIndicesService, executorsUtils, Flow.class);
 
         this.flowQueue = flowQueue;
         this.triggerQueue = triggerQueue;
@@ -286,22 +289,14 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         }
 
         // Check flow with defaults injected
-        modelValidator
-            .isValid(flowWithDefaults)
-            .ifPresent(s -> {
-                throw s;
-            });
+        modelValidator.validate(flowWithDefaults);
 
         return this.save(flow, CrudEventType.CREATE, flowSource);
     }
 
     public FlowWithSource update(Flow flow, Flow previous, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
         // Check flow with defaults injected
-        modelValidator
-            .isValid(flowWithDefaults)
-            .ifPresent(s -> {
-                throw s;
-            });
+        modelValidator.validate(flowWithDefaults);
 
         // control if update is valid
         Optional<ConstraintViolationException> checkUpdate = previous.validateUpdate(flowWithDefaults);

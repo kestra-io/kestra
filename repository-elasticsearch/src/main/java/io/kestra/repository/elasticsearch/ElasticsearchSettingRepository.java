@@ -4,7 +4,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Setting;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -28,11 +27,10 @@ public class ElasticsearchSettingRepository extends AbstractElasticSearchReposit
     public ElasticsearchSettingRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         ApplicationEventPublisher<CrudEvent<Setting>> eventPublisher
     ) {
-        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Setting.class);
+        super(client, elasticSearchIndicesService, executorsUtils, Setting.class);
 
         this.eventPublisher = eventPublisher;
     }

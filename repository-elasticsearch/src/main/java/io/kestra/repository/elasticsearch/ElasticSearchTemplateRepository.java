@@ -40,12 +40,11 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     public ElasticSearchTemplateRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         @Named(QueueFactoryInterface.TEMPLATE_NAMED) QueueInterface<Template> templateQueue,
         ApplicationEventPublisher<CrudEvent<Template>> eventPublisher
     ) {
-        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, Template.class);
+        super(client, elasticSearchIndicesService, executorsUtils, Template.class);
 
         this.templateQueue = templateQueue;
         this.eventPublisher = eventPublisher;

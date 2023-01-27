@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import javax.validation.ConstraintViolationException;
 
 @CommandLine.Command(
     name = "test",
@@ -105,6 +106,8 @@ public class FlowTestCommand extends AbstractCommand {
             throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());
         } catch (IOException | TimeoutException e) {
             throw new IllegalStateException(e);
+        } catch (ConstraintViolationException e) {
+            throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow", e);
         } finally {
             applicationContext.getProperty("kestra.storage.local.base-path", Path.class)
                 .ifPresent(path -> {

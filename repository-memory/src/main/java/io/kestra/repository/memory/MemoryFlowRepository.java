@@ -143,13 +143,9 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
                 flow.getId()
             )));
         }
-        // Check flow with defaults injected
-        modelValidator
-            .isValid(flowWithDefaults)
-            .ifPresent(s -> {
-                throw s;
-            });
 
+        // Check flow with defaults injected
+        modelValidator.validate(flowWithDefaults);
 
         return this.save(flow, CrudEventType.CREATE, flowSource);
     }
@@ -157,11 +153,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     @Override
     public FlowWithSource update(Flow flow, Flow previous, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
         // Check flow with defaults injected
-        modelValidator
-            .isValid(flowWithDefaults)
-            .ifPresent(s -> {
-                throw s;
-            });
+        modelValidator.validate(flowWithDefaults);
 
         // control if update is valid
         Optional<ConstraintViolationException> checkUpdate = previous.validateUpdate(flowWithDefaults);

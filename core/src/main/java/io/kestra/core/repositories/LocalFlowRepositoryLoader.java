@@ -1,10 +1,12 @@
 package io.kestra.core.repositories;
 
-import com.cronutils.utils.VisibleForTesting;
-import io.kestra.core.services.TaskDefaultService;
-import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlFlowParser;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,10 +18,6 @@ import java.nio.file.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.apache.commons.io.FileUtils;
-
 import javax.validation.ConstraintViolationException;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -31,10 +29,10 @@ public class LocalFlowRepositoryLoader {
     private YamlFlowParser yamlFlowParser;
 
     @Inject
-    private TaskDefaultService taskDefaultService;
+    private FlowRepositoryInterface flowRepository;
 
     @Inject
-    private FlowRepositoryInterface flowRepository;
+    private ModelValidator modelValidator;
 
     public void load(URL basePath) throws IOException, URISyntaxException {
         URI uri = basePath.toURI();
@@ -63,15 +61,6 @@ public class LocalFlowRepositoryLoader {
     }
 
     public void load(File basePath) throws IOException {
-        this.load(basePath, true);
-    }
-
-    @VisibleForTesting
-    public void loadForTest(File basePath) throws IOException {
-        this.load(basePath, false);
-    }
-
-    protected void load(File basePath, Boolean injectDefault) throws IOException {
         List<Path> list = Files.walk(basePath.toPath())
             .filter(YamlFlowParser::isValidExtension)
             .collect(Collectors.toList());
@@ -79,10 +68,13 @@ public class LocalFlowRepositoryLoader {
         for (Path file : list) {
             try {
                 Flow parse = yamlFlowParser.parse(file.toFile());
+
+                modelValidator.validate(parse);
+
                 flowRepository.create(
                     parse,
                     Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset()),
-                    injectDefault ? taskDefaultService.injectDefaults(parse) : parse
+                    parse
                 );
                 log.trace("Created flow {}.{}", parse.getNamespace(), parse.getId());
             } catch (ConstraintViolationException e) {

@@ -3,22 +3,20 @@ package io.kestra.core.serializers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.InjectableValues;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.apache.commons.io.FilenameUtils;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.helpers.HandleBarDeserializer;
+import jakarta.inject.Singleton;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.stream.Collectors;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
@@ -31,54 +29,26 @@ public class YamlFlowParser {
             .addDeserializer(String.class, new HandleBarDeserializer())
         );
 
-    @Inject
-    private ModelValidator modelValidator;
-
     public static boolean isValidExtension(Path path) {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
     }
 
     public Flow parse(String input) {
-        Flow flow = readString(input);
-        return flow;
+        return readFlow(mapper, input);
     }
 
     public Flow parse(File file) throws ConstraintViolationException {
-        Flow flow = readFile(file);
 
-        modelValidator
-            .isValid(flow)
-            .ifPresent(e -> {
-                throw constraintViolationException(e, flow);
-            });
-
-        return flow;
-    }
-
-    private Flow readFile(File file) {
         try {
-            return mapper
+            String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
+            return readFlow(
+                mapper.copy()
                 .setInjectableValues(new InjectableValues.Std()
                     .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
-                )
-                .readValue(file, Flow.class);
-        } catch (JsonMappingException e) {
-            if (e.getCause() instanceof ConstraintViolationException) {
-                throw (ConstraintViolationException) e.getCause();
-            } else {
-                throw new ConstraintViolationException(
-                    "Illegal flow yaml:" + e.getMessage(),
-                    Collections.singleton(
-                        ManualConstraintViolation.of(
-                            e.getMessage(),
-                            file,
-                            File.class,
-                            "flow",
-                            file.getAbsolutePath()
-                        )
-                    )
-                );
-            }
+                ),
+                input
+            );
+
         } catch (IOException e) {
             throw new ConstraintViolationException(
                 "Illegal flow path:" + e.getMessage(),
@@ -95,7 +65,7 @@ public class YamlFlowParser {
         }
     }
 
-    private Flow readString(String input) {
+    private Flow readFlow(ObjectMapper mapper, String input) {
         try {
             return mapper.readValue(input, Flow.class);
         } catch (JsonProcessingException e) {
@@ -106,7 +76,7 @@ public class YamlFlowParser {
                     "Illegal flow yaml:" + e.getMessage(),
                     Collections.singleton(
                         ManualConstraintViolation.of(
-                            "Caused by: " +e.getCause() + "\nMessage: " + e.getMessage(),
+                            "Caused by: " + e.getCause() + "\nMessage: " + e.getMessage(),
                             input,
                             String.class,
                             "flow",
@@ -116,17 +86,6 @@ public class YamlFlowParser {
                 );
             }
         }
-    }
-
-    private ConstraintViolationException constraintViolationException(ConstraintViolationException e, Flow flow) {
-        return new ConstraintViolationException(
-            "Invalid flow '" + flow.getNamespace() + "." + flow.getId() + "', error: " +
-                e.getConstraintViolations()
-                    .stream()
-                    .map(r -> r.getPropertyPath() + ":" + r.getMessage())
-                    .collect(Collectors.joining("\n -")),
-            e.getConstraintViolations()
-        );
     }
 }
 

@@ -267,7 +267,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
-        repositoryLoader.loadForTest(new File(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")).toURI()));
+        repositoryLoader.load(new File(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")).toURI()));
         taskDefaultsCaseTest.invalidTaskDefaults();
     }
 

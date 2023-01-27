@@ -273,12 +273,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 flow.getId()
             )));
         }
+
         // Check flow with defaults injected
-        modelValidator
-            .isValid(flowWithDefaults)
-            .ifPresent(s -> {
-                throw s;
-            });
+        modelValidator.validate(flowWithDefaults);
 
         return this.save(flow, CrudEventType.CREATE, flowSource);
     }
@@ -286,11 +283,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @Override
     public FlowWithSource update(Flow flow, Flow previous, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
         // Check flow with defaults injected
-        modelValidator
-            .isValid(flowWithDefaults)
-            .ifPresent(s -> {
-                throw s;
-            });
+        modelValidator.validate(flowWithDefaults);
 
         // control if update is valid
         Optional<ConstraintViolationException> checkUpdate = previous.validateUpdate(flowWithDefaults);

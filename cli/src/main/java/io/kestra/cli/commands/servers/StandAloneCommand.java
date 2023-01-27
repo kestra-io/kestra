@@ -14,6 +14,7 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import javax.validation.ConstraintViolationException;
 
 @CommandLine.Command(
     name = "standalone",
@@ -50,6 +51,8 @@ public class StandAloneCommand extends AbstractServerCommand {
                 localFlowRepositoryLoader.load(this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
+            } catch (ConstraintViolationException e) {
+                throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow", e);
             }
         }
 

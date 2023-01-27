@@ -4,20 +4,16 @@ import com.cronutils.model.Cron;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.tasks.flows.Switch;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
+import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import jakarta.inject.Singleton;
-
 import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
 
 @Factory
 public class ValidationFactory {
@@ -107,15 +103,10 @@ public class ValidationFactory {
             }
 
             if ((value.getCases() == null || value.getCases().size() == 0) && (value.getDefaults() == null || value.getDefaults().size() == 0)) {
-                throw new ConstraintViolationException(Set.of(ManualConstraintViolation.of(
-                    "No task defined, neither cases or default have any tasks",
-                    value,
-                    Switch.class,
-                    "switch.tasks",
-                    value.getId()
-                )));
-            }
+                context.messageTemplate("No task defined, neither cases or default have any tasks");
 
+                return false;
+            }
 
             return true;
         };
@@ -128,7 +119,7 @@ public class ValidationFactory {
                 return true;
             }
 
-            Set<ConstraintViolation<?>> violations = new HashSet<>();
+            List<String> violations = new ArrayList<>();
             List<Task> allTasks = value.allTasksWithChilds();
 
             // unique id
@@ -143,18 +134,12 @@ public class ValidationFactory {
                 .filter(entry -> Collections.frequency(ids, entry) > 1).collect(Collectors.toList());
 
             if (duplicates.size() > 0) {
-                violations.add(ManualConstraintViolation.of(
-                    "Duplicate task id with name [" +   String.join(", ", duplicates) + "]",
-                    value,
-                    io.kestra.core.models.flows.Flow.class,
-                    "flow.tasks",
-                    String.join(", ", duplicates)
-                ));
+                violations.add("Duplicate task id with name [" +   String.join(", ", duplicates) + "]");
             }
 
             if (violations.size() > 0) {
-                context.messageTemplate("invalid Flow " + value.getId());
-                throw new ConstraintViolationException(violations);
+                context.messageTemplate("Invalid Flow: " + String.join(", ", violations));
+                return false;
             } else {
                 return true;
             }

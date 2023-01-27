@@ -6,6 +6,7 @@ import {extendMoment} from "moment-range";
 import ElementPlus from "element-plus";
 import filters from "../src/utils/filters";
 import translations from "../src/translations.json";
+import stores from "../src/stores/store"
 import "../src/utils/global"
 
 
@@ -17,21 +18,12 @@ let i18n = createI18n({
     warnHtmlMessage: false,
 });
 
-const store = createStore({
-    modules: {
-        plugin: {
-            state: {
-                icons: []
-            },
-            namespaced: true
-        }
-    }
-});
+const store = createStore(stores);
 
 moment.locale("en");
 
-export default (component, options) => {
-    return mount(
+export default (component, options, callback) => {
+    const app =  mount(
         component,
         {
             ...{
@@ -48,4 +40,8 @@ export default (component, options) => {
             ...options
         }
     )
+
+    callback(store);
+
+    return app;
 }

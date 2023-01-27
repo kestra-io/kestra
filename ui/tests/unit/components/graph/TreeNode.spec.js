@@ -6,14 +6,20 @@ import EACH_SEQUENTIAL_EXECUTION from "../../../fixtures/executions/each-sequent
 import mount from "../../../local.js";
 
 const localMount = (n, execution) => {
-    return mount(TreeNode, {
-        props: {
-            n: n,
-            execution: execution,
-            flowId: "flowId",
-            namespace: "namespace",
+    return mount(
+        TreeNode,
+        {
+            props: {
+                n: n,
+                execution: execution,
+                flowId: "flowId",
+                namespace: "namespace",
+            }
+        },
+        (store) => {
+            store.commit("execution/setExecution", execution)
         }
-    })
+    )
 }
 
 describe("TreeNode", () => {
@@ -26,7 +32,10 @@ describe("TreeNode", () => {
         expect(wrapper.vm.task.id).toBe("1-2");
         expect(wrapper.vm.state).toBe("SUCCESS");
         expect(wrapper.vm.taskRuns).toHaveLength(3);
-        expect(wrapper.vm.duration).toBe(0.000633852);
+        expect(wrapper.vm.histories[0].state).toBe("CREATED");
+        expect(wrapper.vm.histories[0].date.toISOString()).toBe("2020-12-26T20:38:16.001Z");
+        expect(wrapper.vm.histories[1].state).toBe("SUCCESS");
+        expect(wrapper.vm.histories[1].date.toISOString()).toBe("2020-12-26T20:38:16.002Z");
     })
 
     it("sorting state", () => {

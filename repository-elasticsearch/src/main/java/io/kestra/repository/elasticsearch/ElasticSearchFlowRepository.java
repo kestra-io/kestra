@@ -280,7 +280,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     public FlowWithSource create(Flow flow, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException {
         if (this.findById(flow.getNamespace(), flow.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
-                "Flow id already exists",
+                "Flow namespace:'" + flow.getNamespace() + "', id:'" + flow.getId() + "'  already exists",
                 flow,
                 Flow.class,
                 "flow.id",

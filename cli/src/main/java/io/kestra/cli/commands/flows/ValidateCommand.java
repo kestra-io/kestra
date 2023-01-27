@@ -3,6 +3,7 @@ package io.kestra.cli.commands.flows;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
 import picocli.CommandLine;
@@ -21,6 +22,9 @@ public class ValidateCommand extends AbstractCommand {
     @Inject
     private YamlFlowParser yamlFlowParser;
 
+    @Inject
+    private ModelValidator modelValidator;
+
     @CommandLine.Parameters(index = "0", description = "the flow file to test")
     private Path file;
 
@@ -30,6 +34,7 @@ public class ValidateCommand extends AbstractCommand {
 
         try {
             Flow parse = yamlFlowParser.parse(file.toFile());
+            modelValidator.validate(parse);
             stdOut(mapper.writeValueAsString(parse));
         } catch (ConstraintViolationException e) {
             ValidateCommand.handleException(e);

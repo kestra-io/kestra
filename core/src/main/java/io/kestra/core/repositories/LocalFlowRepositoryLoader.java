@@ -78,7 +78,7 @@ public class LocalFlowRepositoryLoader {
                 );
                 log.trace("Created flow {}.{}", parse.getNamespace(), parse.getId());
             } catch (ConstraintViolationException e) {
-                log.warn("Unable to create flow {}", file, e);
+                log.debug("Unable to create flow {}", file, e);
             }
         }
     }

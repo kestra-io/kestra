@@ -20,6 +20,7 @@ import jakarta.inject.Named;
 import org.apache.kafka.common.errors.RecordTooLargeException;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -266,7 +267,7 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
 
     @Test
     void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
+        repositoryLoader.loadForTest(new File(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")).toURI()));
         taskDefaultsCaseTest.invalidTaskDefaults();
     }
 

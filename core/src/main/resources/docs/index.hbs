@@ -4,6 +4,8 @@ editLink: false
 ---
 # {{ capitalizeFirst (replace title "-" " ") }}
 
+{{ description }}
+
 {{~#each docs.classPlugins as | classPlugin subgroup | }}
 ## {{ defaultIfEmpty (capitalizeFirst subgroup) "Common" }}
 

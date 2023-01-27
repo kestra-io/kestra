@@ -265,12 +265,9 @@ class KafkaRunnerTest extends AbstractKafkaRunnerTest {
     }
 
     @Test
-    void invalidTaskDefaults() throws IOException, URISyntaxException {
-        try {
-            repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
-        } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage().contains("Unrecognized field \"invalid\""), is(true));
-        }
+    void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
+        taskDefaultsCaseTest.invalidTaskDefaults();
     }
 
     @Test

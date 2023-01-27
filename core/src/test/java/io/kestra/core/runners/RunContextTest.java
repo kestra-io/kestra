@@ -16,6 +16,7 @@ import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -173,11 +174,8 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @Test
     void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
-        try {
-            repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
-        } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage().contains("Unrecognized field \"invalid\""), is(true));
-        }
+        repositoryLoader.loadForTest(new File(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")).toURI()));
+        taskDefaultsCaseTest.invalidTaskDefaults();
     }
 
     @Test

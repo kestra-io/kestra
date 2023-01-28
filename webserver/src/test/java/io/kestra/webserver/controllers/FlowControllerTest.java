@@ -189,7 +189,28 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         } catch (Exception ignored) {
 
         }
+    }
 
+    @Test
+    void updateNamespaceAsString() {
+        // initial création
+        String flows = String.join("---\n", Arrays.asList(
+            generateFlowAsString("flow1","io.kestra.updatenamespace","a"),
+            generateFlowAsString("flow2","io.kestra.updatenamespace","a"),
+            generateFlowAsString("flow3","io.kestra.updatenamespace","a")
+        ));
+
+        List<Flow> updated = client.toBlocking()
+            .retrieve(
+                HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows)
+                    .contentType(MediaType.APPLICATION_YAML),
+                Argument.listOf(Flow.class)
+            );
+        assertThat(updated.size(), is(3));
+
+        client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow1"));
+        client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow2"));
+        client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow3"));
     }
 
     @Test
@@ -332,19 +353,19 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void createFlowFromString() throws IOException {
+    void createFlowFromString() {
         String flow = generateFlowAsString("io.kestra.unittest","a");
         Flow assertFlow = parseFlow(flow);
 
-        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowWithSource.class);
+        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
 
         assertThat(result.getFlow().getId(), is(assertFlow.getId()));
         assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
 
-        Flow get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest/"+assertFlow.getId()), Flow.class);
-        assertThat(get.getId(), is(assertFlow.getId()));
-        assertThat(get.getInputs().get(0).getName(), is("a"));
-
+        FlowWithSource get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest/" + assertFlow.getId() + "/source").contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
+        assertThat(get.getFlow().getId(), is(assertFlow.getId()));
+        assertThat(get.getFlow().getInputs().get(0).getName(), is("a"));
+        assertThat(get.getSourceCode(), containsString(" Comment i added"));
     }
 
     @Test
@@ -356,12 +377,11 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().retrieve(
-                POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN),
+                POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML),
                 Flow.class
             );
         });
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
-
     }
 
     @Test
@@ -369,7 +389,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         String flow = generateFlowAsString("updatedFlow","io.kestra.unittest","a");
         Flow assertFlow = parseFlow(flow);
 
-        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowWithSource.class);
+        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
 
         assertThat(result.getFlow().getId(), is(assertFlow.getId()));
         assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
@@ -377,7 +397,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         flow = generateFlowAsString("updatedFlow","io.kestra.unittest","b");
 
         FlowWithSource get = client.toBlocking().retrieve(
-            PUT("/api/v1/flows/io.kestra.unittest/updatedFlow", flow).contentType(MediaType.TEXT_PLAIN),
+            PUT("/api/v1/flows/io.kestra.unittest/updatedFlow", flow).contentType(MediaType.APPLICATION_YAML),
             FlowWithSource.class
         );
 
@@ -387,7 +407,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         String finalFlow = flow;
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             HttpResponse<Void> response = client.toBlocking().exchange(
-                PUT("/api/v1/flows/io.kestra.unittest/" + IdUtils.create(), finalFlow).contentType(MediaType.TEXT_PLAIN)
+                PUT("/api/v1/flows/io.kestra.unittest/" + IdUtils.create(), finalFlow).contentType(MediaType.APPLICATION_YAML)
             );
         });
         assertThat(e.getStatus(), is(NOT_FOUND));
@@ -400,7 +420,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         String flow = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
 
-        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.TEXT_PLAIN), FlowWithSource.class);
+        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
 
         assertThat(result.getFlow().getId(), is("test-flow"));
 
@@ -411,7 +431,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().exchange(
-                PUT("/api/v1/flows/io.kestra.unittest/test-flow", finalFlow).contentType(MediaType.TEXT_PLAIN),
+                PUT("/api/v1/flows/io.kestra.unittest/test-flow", finalFlow).contentType(MediaType.APPLICATION_YAML),
                 Argument.of(Flow.class),
                 Argument.of(JsonError.class)
             );

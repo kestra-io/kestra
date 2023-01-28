@@ -2,7 +2,7 @@ import YamlUtils from "../utils/yamlUtils";
 
 const textPlainHeader = {
     headers: {
-        'Content-Type': 'text/plain'
+        "Content-Type": "application/x-yaml"
     }
 }
 export default {
@@ -48,7 +48,7 @@ export default {
             return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/source`,
                 {
                     validateStatus: (status) => {
-                        return options.deleted ? status === 200 || status === 404 : status == 200;
+                        return options.deleted ? status === 200 || status === 404 : status === 200;
                     }
                 }).then(response => {
                 if (response.data.exception) {

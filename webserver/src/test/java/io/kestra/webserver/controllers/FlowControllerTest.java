@@ -40,8 +40,7 @@ import jakarta.inject.Inject;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FlowControllerTest extends AbstractMemoryRunnerTest {
@@ -55,6 +54,15 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         Flow flow = new YamlFlowParser().parse(result);
         assertThat(flow.getId(), is("full"));
         assertThat(flow.getTasks().size(), is(5));
+    }
+
+    @Test
+    void idNoSource() {
+        FlowWithSource result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), FlowWithSource.class);
+        assertThat(result.getSource(), is(nullValue()));
+
+        result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full?source=true"), FlowWithSource.class);
+        assertThat(result.getSource(), containsString("#triggers:"));
     }
 
     @Test
@@ -359,13 +367,13 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
 
-        assertThat(result.getFlow().getId(), is(assertFlow.getId()));
-        assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
+        assertThat(result.getId(), is(assertFlow.getId()));
+        assertThat(result.getInputs().get(0).getName(), is("a"));
 
-        FlowWithSource get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest/" + assertFlow.getId() + "/source").contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
-        assertThat(get.getFlow().getId(), is(assertFlow.getId()));
-        assertThat(get.getFlow().getInputs().get(0).getName(), is("a"));
-        assertThat(get.getSourceCode(), containsString(" Comment i added"));
+        FlowWithSource get = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest/" + assertFlow.getId() + "?source=true"), FlowWithSource.class);
+        assertThat(get.getId(), is(assertFlow.getId()));
+        assertThat(get.getInputs().get(0).getName(), is("a"));
+        assertThat(get.getSource(), containsString(" Comment i added"));
     }
 
     @Test
@@ -391,8 +399,8 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
 
-        assertThat(result.getFlow().getId(), is(assertFlow.getId()));
-        assertThat(result.getFlow().getInputs().get(0).getName(), is("a"));
+        assertThat(result.getId(), is(assertFlow.getId()));
+        assertThat(result.getInputs().get(0).getName(), is("a"));
 
         flow = generateFlowAsString("updatedFlow","io.kestra.unittest","b");
 
@@ -401,8 +409,8 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             FlowWithSource.class
         );
 
-        assertThat(get.getFlow().getId(), is(assertFlow.getId()));
-        assertThat(get.getFlow().getInputs().get(0).getName(), is("b"));
+        assertThat(get.getId(), is(assertFlow.getId()));
+        assertThat(get.getInputs().get(0).getName(), is("b"));
 
         String finalFlow = flow;
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
@@ -422,7 +430,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
 
-        assertThat(result.getFlow().getId(), is("test-flow"));
+        assertThat(result.getId(), is("test-flow"));
 
         resource = TestsUtils.class.getClassLoader().getResource("flows/simpleInvalidFlowUpdate.yaml");
         assert resource != null;

@@ -71,12 +71,12 @@
         },
         methods: {
             load(taskId) {
-                return YamlUtils.extractTask(this.sourceCode, taskId);
+                return YamlUtils.extractTask(this.flow.source, taskId);
             },
             saveTask() {
                 let updatedSource;
                 try {
-                    updatedSource = YamlUtils.replaceTaskInDocument(this.sourceCode, this.taskIndex, this.taskYaml)
+                    updatedSource = YamlUtils.replaceTaskInDocument(this.flow.source, this.taskIndex, this.taskYaml)
                 } catch (err) {
                     this.$toast().warning(
                         err.message,
@@ -86,7 +86,7 @@
                     return;
                 }
                 saveFlowTemplate(this, updatedSource, "flow")
-                    .then((response) => {
+                    .then(() => {
                         this.isModalOpen = false;
                     })
             },
@@ -113,7 +113,7 @@
 
         },
         computed: {
-            ...mapGetters("flow", ["sourceCode"]),
+            ...mapState("flow", ["flow"]),
             ...mapState("auth", ["user"]),
             canSave() {
                 return canSaveFlowTemplate(true, this.user, {namespace: this.namespace}, "flow");

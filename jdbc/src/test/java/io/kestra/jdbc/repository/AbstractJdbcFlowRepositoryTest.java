@@ -3,7 +3,7 @@ package io.kestra.jdbc.repository;
 import io.kestra.core.Helpers;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowSource;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -95,8 +95,8 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
         Optional<Flow> flow = flowRepository.findById("io.kestra.unittest", "invalid");
 
         assertThat(flow.isPresent(), is(true));
-        assertThat(flow.get(), instanceOf(FlowSource.class));
-        assertThat(((FlowSource) flow.get()).getException(), containsString("Cannot deserialize value of type `org.slf4j.event.Level`"));
+        assertThat(flow.get(), instanceOf(FlowWithException.class));
+        assertThat(((FlowWithException) flow.get()).getException(), containsString("Cannot deserialize value of type `org.slf4j.event.Level`"));
     }
 
     @BeforeEach

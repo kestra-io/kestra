@@ -33,7 +33,6 @@ export default {
         ...mapState("auth", ["user"]),
         ...mapGetters("flow", ["flow"]),
         ...mapGetters("template", ["template"]),
-        ...mapGetters("flow", ["sourceCode"]),
         ...mapGetters("core", ["isUnsaved"]),
         isEdit() {
             return (
@@ -99,15 +98,16 @@ export default {
                 this.item.namespace = "";
                 delete this.item.revision;
             }
+
             if (this.dataType === "template") {
                 this.content = YamlUtils.stringify(this.template);
                 this.previousContent = this.content;
             } else {
-                this.content = this.sourceCode;
+                this.content = this.flow.source;
                 this.previousContent = this.content;
             }
-            if (this.isEdit
-            ) {
+
+            if (this.isEdit) {
                 this.readOnlyEditFields = {
                     id: this.item.id,
                 };
@@ -193,8 +193,8 @@ export default {
                 this.$store
                     .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content})
                     .then((flow) => {
-                        this.previousContent = flow.sourceCode;
-                        this.content = flow.sourceCode;
+                        this.previousContent = flow.source;
+                        this.content = flow.source;
                         this.onChange();
 
                         this.$router.push({

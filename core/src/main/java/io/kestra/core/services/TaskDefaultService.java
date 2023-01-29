@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.TaskDefault;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -80,6 +81,10 @@ public class TaskDefaultService {
 
     @SuppressWarnings("unchecked")
     public Flow injectDefaults(Flow flow) throws ConstraintViolationException {
+        if (flow instanceof FlowWithSource) {
+            flow = ((FlowWithSource) flow).toFlow();
+        }
+
         Map<String, Object> flowAsMap = JacksonMapper.toMap(flow);
 
         List<TaskDefault> allDefaults = mergeAllDefaults(flow);

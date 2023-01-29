@@ -4,33 +4,84 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
+import io.micronaut.core.annotation.Introspected;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
+@SuperBuilder(toBuilder = true)
 @Getter
+@AllArgsConstructor
 @NoArgsConstructor
+@Introspected
+@ToString
 @Slf4j
-public class FlowWithSource {
-    private Flow flow;
-    private String sourceCode;
+public class FlowWithSource extends Flow {
+    String source;
 
-    public FlowWithSource(Flow flow, String sourceCode) {
-        this.flow = flow;
-        this.sourceCode = sourceCode;
+    public Flow toFlow() {
+        return Flow.builder()
+            .id(this.id)
+            .namespace(this.namespace)
+            .revision(this.revision)
+            .description(this.description)
+            .labels(this.labels)
+            .inputs(this.inputs)
+            .variables(this.variables)
+            .tasks(this.tasks)
+            .errors(this.errors)
+            .listeners(this.listeners)
+            .triggers(this.triggers)
+            .taskDefaults(this.taskDefaults)
+            .disabled(this.disabled)
+            .deleted(this.deleted)
+            .build();
+    }
+
+    public String getSource() {
+        String source = this.source;
+
+        if (source == null) {
+            return null;
+        }
 
         // previously, we insert source on database keeping default value (like deleted, ...)
         // if the previous serialization is the same as actual one, we use a clean version removing them
         try {
-            if (JacksonMapper.ofYaml().writeValueAsString(flow).equals(sourceCode)) {
-                this.sourceCode = toYamlWithoutDefault(flow);
+            Flow flow = toFlow();
+
+            if (JacksonMapper.ofYaml().writeValueAsString(flow).equals(source)) {
+                source = toYamlWithoutDefault(flow);
             }
         } catch (JsonProcessingException e) {
-            log.warn("Unable to convert flow json '{}' '{}'({})", flow.getNamespace(), flow.getId(), flow.getRevision(), e);
+            log.warn("Unable to convert flow json '{}' '{}'({})", this.getNamespace(), this.getId(), this.getRevision(), e);
         }
 
         // same here but with version that don't make any sense on the source code, so removing it
-        this.sourceCode = FlowService.cleanupSource(this.sourceCode);
+        return FlowService.cleanupSource(source);
+    }
+
+    public static FlowWithSource of(Flow flow, String source) {
+        return FlowWithSource.builder()
+            .id(flow.id)
+            .namespace(flow.namespace)
+            .revision(flow.revision)
+            .description(flow.description)
+            .labels(flow.labels)
+            .inputs(flow.inputs)
+            .variables(flow.variables)
+            .tasks(flow.tasks)
+            .errors(flow.errors)
+            .listeners(flow.listeners)
+            .triggers(flow.triggers)
+            .taskDefaults(flow.taskDefaults)
+            .disabled(flow.disabled)
+            .deleted(flow.deleted)
+            .source(source)
+            .build();
     }
 
     private static String toYamlWithoutDefault(Object Object) throws JsonProcessingException {

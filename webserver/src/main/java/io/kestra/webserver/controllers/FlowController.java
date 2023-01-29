@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
@@ -64,27 +65,23 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{namespace}/{id}/source", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
-    @Operation(tags = {"Flows"}, summary = "Get a flow with source code")
-    public FlowWithSource indexSource(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id
-    ) {
-        return flowRepository
-            .findByIdWithSource(namespace, id)
-            .orElse(null);
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Get a flow")
+    @Schema(
+        anyOf = {FlowWithSource.class, Flow.class}
+    )
     public Flow index(
         @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "Include the source code") @QueryValue(value = "source", defaultValue = "false") boolean source
     ) {
-        return flowRepository
-            .findById(namespace, id)
-            .orElse(null);
+        return source ?
+            flowRepository
+                .findByIdWithSource(namespace, id)
+                .orElse(null):
+            flowRepository
+                .findById(namespace, id)
+                .orElse(null);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -168,7 +165,7 @@ public class FlowController {
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body @Valid Flow flow
     ) throws ConstraintViolationException, JsonProcessingException {
-        return HttpResponse.ok(flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow());
+        return HttpResponse.ok(flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -265,9 +262,9 @@ public class FlowController {
                 Optional<Flow> existingFlow = flowRepository.findById(namespace, flow.getId());
                 try {
                     if (existingFlow.isPresent()) {
-                        return flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow),taskDefaultService.injectDefaults(flow)).getFlow();
+                        return flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow),taskDefaultService.injectDefaults(flow));
                     } else {
-                        return flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow),taskDefaultService.injectDefaults(flow)).getFlow();
+                        return flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow),taskDefaultService.injectDefaults(flow));
                     }
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
@@ -307,7 +304,7 @@ public class FlowController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
 
-        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)).getFlow());
+        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)));
     }
 
     @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)
@@ -332,7 +329,7 @@ public class FlowController {
         Flow flow = existingFlow.get();
         try {
             Flow newValue = flow.updateTask(taskId, task);
-            return HttpResponse.ok(flowRepository.update(newValue, flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(newValue)).getFlow());
+            return HttpResponse.ok(flowRepository.update(newValue, flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(newValue)));
         } catch (InternalException | JsonProcessingException e) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }

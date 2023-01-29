@@ -1,6 +1,6 @@
 import YamlUtils from "../utils/yamlUtils";
 
-const textPlainHeader = {
+const textYamlHeader = {
     headers: {
         "Content-Type": "application/x-yaml"
     }
@@ -10,7 +10,6 @@ export default {
     state: {
         flows: undefined,
         flow: undefined,
-        sourceCode: undefined,
         task: undefined,
         search: undefined,
         total: 0,
@@ -45,26 +44,23 @@ export default {
             })
         },
         loadFlow({commit}, options) {
-            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/source`,
+            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}?source=true`,
                 {
                     validateStatus: (status) => {
                         return options.deleted ? status === 200 || status === 404 : status === 200;
                     }
                 }).then(response => {
-                if (response.data.exception) {
-                    commit("core/setMessage", {
-                        title: "Invalid source code",
-                        message: response.data.exception,
-                        variant: "danger"
-                    }, {root: true});
-                    delete response.data.exception;
-                    commit("setFlow", JSON.parse(response.data.source));
-                    commit("setSourceCode", JSON.parse(response.data.source));
-                } else {
-                    commit("setFlow", response.data.flow);
-                    commit("setSourceCode", response.data.sourceCode);
-                    YamlUtils.extractTask(response.data.sourceCode, "new-task")
-                }
+                    if (response.data.exception) {
+                        commit("core/setMessage", {
+                            title: "Invalid source code",
+                            message: response.data.exception,
+                            variant: "danger"
+                        }, {root: true});
+                        delete response.data.exception;
+                        commit("setFlow", JSON.parse(response.data.source));
+                    } else {
+                        commit("setFlow", response.data);
+                    }
 
                     return response.data;
                 })
@@ -78,21 +74,20 @@ export default {
         },
         saveFlow({commit, dispatch}, options) {
             const flowData = YamlUtils.parse(options.flow)
-            return this.$http.put(`/api/v1/flows/${flowData.namespace}/${flowData.id}`, options.flow, textPlainHeader)
+            return this.$http.put(`/api/v1/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
                     if (response.status >= 300) {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
-                        commit("setFlow", response.data.flow);
-                        commit("setSourceCode", response.data.sourceCode);
+                        commit("setFlow", response.data);
 
                         return response.data;
                     }
                 })
-                .then(data => {
-                    dispatch("loadGraph", data.flow);
+                .then(flow => {
+                    dispatch("loadGraph", flow);
 
-                    return data.sourceCode;
+                    return flow;
                 })
         },
         updateFlowTask({commit, dispatch}, options) {
@@ -109,9 +104,8 @@ export default {
                 })
         },
         createFlow({commit}, options) {
-            return this.$http.post("/api/v1/flows", options.flow, textPlainHeader).then(response => {
-                commit("setFlow", response.data.flow);
-                commit("setSourceCode", response.data.sourceCode);
+            return this.$http.post("/api/v1/flows", options.flow, textYamlHeader).then(response => {
+                commit("setFlow", response.data);
 
                 return response.data;
             })
@@ -160,9 +154,6 @@ export default {
                 }
             }
 
-        },
-        setSourceCode(state, sourceCode) {
-            state.sourceCode = sourceCode
         },
         setflowGraphParam(state, flow) {
             state.flowGraphParam = flow
@@ -217,10 +208,5 @@ export default {
                 return state.flow;
             }
         },
-        sourceCode(state) {
-            if (state.sourceCode) {
-                return state.sourceCode;
-            }
-        }
     }
 }

@@ -83,7 +83,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         Optional<Flow> flow = findById(namespace, id, revision);
         Optional<String> sourceCode = findSourceById(namespace, id);
         if (flow.isPresent() && sourceCode.isPresent()) {
-            return Optional.of(new FlowWithSource(flow.get(), FlowService.cleanupSource(sourceCode.get())));
+            return Optional.of(FlowWithSource.of(flow.get(), FlowService.cleanupSource(sourceCode.get())));
         }
 
         return Optional.empty();
@@ -173,7 +173,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         Optional<Flow> exists = this.findById(flow.getNamespace(), flow.getId());
         Optional<String> existsSource = this.findSourceById(flow.getNamespace(), flow.getId());
         if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && existsSource.isPresent() && FlowService.cleanupSource(existsSource.get()).equals(FlowService.cleanupSource(flowSource))) {
-            return new FlowWithSource(exists.get(), existsSource.get());
+            return FlowWithSource.of(exists.get(), existsSource.get());
         }
 
         List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
@@ -191,7 +191,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
         flowQueue.emit(flow);
         eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
-        return new FlowWithSource(flow, flowSource);
+        return FlowWithSource.of(flow, flowSource);
     }
 
     @Override

@@ -76,7 +76,7 @@ abstract public class FlowListenersTest {
         });
 
         // create the same id than first, no additional flows
-        first = flowRepository.update(create(first.getId(), "test2"), first, JacksonMapper.ofYaml().writeValueAsString(first), taskDefaultService.injectDefaults(create(first.getId(), "test2"))).getFlow();
+        first = flowRepository.update(create(first.getId(), "test2"), first, JacksonMapper.ofYaml().writeValueAsString(first), taskDefaultService.injectDefaults(create(first.getId(), "test2")));
         wait(ref, () -> {
             assertThat(count.get(), is(1));
             assertThat(flowListenersService.flows().size(), is(1));

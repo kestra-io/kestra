@@ -7,7 +7,7 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowSource;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -56,7 +56,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             } catch (DeserializationException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
-                    return FlowSource.builder()
+                    return FlowWithException.builder()
                         .id(jsonNode.get("id").asText())
                         .namespace(jsonNode.get("namespace").asText())
                         .revision(jsonNode.get("revision").asInt())
@@ -131,7 +131,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     return Optional.empty();
                 }
 
-                 return Optional.of(new FlowWithSource(
+                 return Optional.of(FlowWithSource.of(
                     jdbcRepository.map(fetched),
                     fetched.get("source_code", String.class)
                 ));
@@ -302,7 +302,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     private FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         // flow exists, return it
         Optional<FlowWithSource> exists = this.findByIdWithSource(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().getFlow().equalsWithoutRevision(flow) && exists.get().getSourceCode().equals(FlowService.cleanupSource(flowSource))) {
+        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && exists.get().getSource().equals(FlowService.cleanupSource(flowSource))) {
             return exists.get();
         }
 
@@ -322,7 +322,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         flowQueue.emit(flow);
         eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
-        return new FlowWithSource(flow, flowSource);
+        return FlowWithSource.of(flow, flowSource);
     }
 
     @SneakyThrows

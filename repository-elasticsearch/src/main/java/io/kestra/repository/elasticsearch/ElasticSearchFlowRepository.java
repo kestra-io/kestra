@@ -8,7 +8,7 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowSource;
+import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -88,7 +88,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
         } catch (DeserializationException e) {
             try {
                 JsonNode jsonNode = MAPPER.readTree(source);
-                return FlowSource.builder()
+                return FlowWithException.builder()
                     .id(jsonNode.get("id").asText())
                     .namespace(jsonNode.get("namespace").asText())
                     .revision(jsonNode.get("revision").asInt())
@@ -140,7 +140,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
                 return Optional.empty();
             }
 
-            return Optional.of(new FlowWithSource(
+            return Optional.of(FlowWithSource.of(
                 this.deserialize(searchResponse.getHits().getHits()[0].getSourceAsString()),
                 (String) searchResponse.getHits().getHits()[0].getSourceAsMap().get("sourceCode")
             ));
@@ -313,7 +313,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
     public FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         Optional<FlowWithSource> exists = this.findByIdWithSource(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().getFlow().equalsWithoutRevision(flow) && exists.get().getSourceCode().equals(FlowService.cleanupSource(flowSource))) {
+        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && exists.get().getSource().equals(FlowService.cleanupSource(flowSource))) {
             return exists.get();
         }
 
@@ -349,7 +349,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
         eventPublisher.publishEvent(new CrudEvent<>(flow, crudEventType));
 
-        return new FlowWithSource(flow, flowSource);
+        return FlowWithSource.of(flow, flowSource);
     }
 
     @Override

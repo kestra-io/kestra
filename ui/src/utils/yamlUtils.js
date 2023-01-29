@@ -26,8 +26,7 @@ export default class YamlUtils {
     static extractTask(source, taskId) {
         const yamlDoc = yaml.parseDocument(source);
         for (const [index, item] of yamlDoc.get("tasks").items.entries()) {
-            if (taskId == item.get("id")) {
-                // console.log(new yaml.Document(item).toString())
+            if (taskId === item.get("id")) {
                 const task = new yaml.Document(item).toString();
                 return {task, index};
             }
@@ -48,14 +47,13 @@ export default class YamlUtils {
     static replaceCommentInTask(oldTask, newTask) {
         for (const oldProp of oldTask.items) {
             for (const newProp of newTask.contents.items) {
-                if (oldProp.key.value == newProp.key.value && newProp.value.comment == undefined) {
+                if (oldProp.key.value === newProp.key.value && newProp.value.comment === undefined) {
                     newProp.value.comment = oldProp.value.comment
                     break;
                 }
             }
         }
     }
-
 
     static _transform(value) {
         if (value instanceof Array) {

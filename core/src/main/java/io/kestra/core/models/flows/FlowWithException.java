@@ -11,7 +11,7 @@ import lombok.experimental.SuperBuilder;
 @Introspected
 @ToString
 @EqualsAndHashCode
-public class FlowSource extends Flow {
+public class FlowWithException extends Flow {
     String source;
     String exception;
 }

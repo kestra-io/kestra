@@ -61,7 +61,7 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
                 .build()
         ),
             JacksonMapper.ofYaml().writeValueAsString(flow),
-            taskDefaultService.injectDefaults(flow)).getFlow();
+            taskDefaultService.injectDefaults(flow));
 
 
         Execution restart = executionService.restart(execution, 2);

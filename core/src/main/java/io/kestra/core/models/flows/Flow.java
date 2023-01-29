@@ -29,7 +29,7 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
@@ -42,7 +42,7 @@ public class Flow implements DeletedInterface {
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
             public boolean hasIgnoreMarker(final AnnotatedMember m) {
-                List<String> exclusions = Arrays.asList("revision", "deleted");
+                List<String> exclusions = Arrays.asList("revision", "deleted", "source");
                 return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
             }
         });

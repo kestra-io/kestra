@@ -55,7 +55,7 @@ class RestoreQueueCommandTest {
 
             for (int i = 0; i < COUNT; i++) {
                 Flow flow = create();
-                flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow));
+                flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
             }
             CountDownLatch countDownLatch = new CountDownLatch(COUNT);
 

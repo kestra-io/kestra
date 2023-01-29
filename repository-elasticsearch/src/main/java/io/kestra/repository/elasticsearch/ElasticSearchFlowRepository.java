@@ -313,7 +313,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
     public FlowWithSource save(Flow flow, CrudEventType crudEventType, String flowSource) throws ConstraintViolationException {
         Optional<FlowWithSource> exists = this.findByIdWithSource(flow.getNamespace(), flow.getId());
-        if (exists.isPresent() && exists.get().equalsWithoutRevision(flow) && exists.get().getSource().equals(FlowService.cleanupSource(flowSource))) {
+        if (exists.isPresent() && exists.get().isUpdatable(flow, flowSource)) {
             return exists.get();
         }
 

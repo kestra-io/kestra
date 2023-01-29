@@ -66,7 +66,7 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
 
         Flow flow = SchedulerThreadTest.createThreadFlow();
 
-        flowRepositoryInterface.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow));
+        flowRepositoryInterface.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
 
         kafkaExecutor.run();
 

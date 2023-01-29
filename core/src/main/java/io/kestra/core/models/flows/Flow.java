@@ -1,6 +1,7 @@
 package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
@@ -263,6 +264,19 @@ public class Flow implements DeletedInterface {
         } else {
             return Optional.empty();
         }
+    }
+
+    public String generateSource() throws JsonProcessingException {
+        return JacksonMapper.ofYaml()
+            .writeValueAsString(
+                JacksonMapper
+                    .ofJson()
+                    .readTree(
+                        jsonMapper.copy()
+                            .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
+                            .writeValueAsString(this)
+                    )
+            );
     }
 
     public Flow toDeleted() {

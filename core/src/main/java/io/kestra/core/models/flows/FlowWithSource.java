@@ -3,7 +3,6 @@ package io.kestra.core.models.flows;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.FlowService;
 import io.micronaut.core.annotation.Introspected;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -61,7 +60,16 @@ public class FlowWithSource extends Flow {
         }
 
         // same here but with version that don't make any sense on the source code, so removing it
-        return FlowService.cleanupSource(source);
+        return cleanupSource(source);
+    }
+
+    private static String cleanupSource(String source) {
+        return source.replaceFirst("(?m)^revision: \\d+\n?","");
+    }
+
+    public boolean isUpdatable(Flow flow, String flowSource) {
+        return flow.equalsWithoutRevision(flow) &&
+            this.source.equals(cleanupSource(flowSource));
     }
 
     public static FlowWithSource of(Flow flow, String source) {

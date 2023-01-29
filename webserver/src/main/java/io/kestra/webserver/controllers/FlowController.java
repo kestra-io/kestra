@@ -27,6 +27,7 @@ import io.kestra.webserver.utils.PageableUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import io.micronaut.core.annotation.Nullable;
@@ -165,7 +166,7 @@ public class FlowController {
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body @Valid Flow flow
     ) throws ConstraintViolationException, JsonProcessingException {
-        return HttpResponse.ok(flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)));
+        return HttpResponse.ok(flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -176,15 +177,20 @@ public class FlowController {
         description = "All flow will be created / updated for this namespace.\n" +
             "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
     )
-    public List<Flow> updateNamespace(
+    public List<FlowWithSource> updateNamespace(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "A list of flows") @Body String flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
+        List<String> sources = List.of(flows.split("---"));
+
         return this.updateCompleteNamespace(
-            namespace, Stream.of(flows.split("---"))
+            namespace,
+            sources
+                .stream()
                 .map(flow -> new YamlFlowParser().parse(flow))
                 .collect(Collectors.toList()),
+            sources,
             delete
         );
     }
@@ -201,11 +207,23 @@ public class FlowController {
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
-    ) throws ConstraintViolationException {
-        return this.updateCompleteNamespace(namespace, flows, delete);
+    ) throws ConstraintViolationException, JsonProcessingException {
+        return this
+            .updateCompleteNamespace(
+                namespace,
+                flows,
+                flows
+                    .stream()
+                    .map(throwFunction(Flow::generateSource))
+                    .collect(Collectors.toList()),
+                delete
+            )
+            .stream()
+            .map(FlowWithSource::toFlow)
+            .collect(Collectors.toList());
     }
 
-    private List<Flow> updateCompleteNamespace(String namespace, List<Flow> flows, Boolean delete) {
+    private List<FlowWithSource> updateCompleteNamespace(String namespace, List<Flow> flows, List<String> sources, Boolean delete) {
         // control namespace to update
         Set<ManualConstraintViolation<Flow>> invalids = flows
             .stream()
@@ -256,18 +274,16 @@ public class FlowController {
         }
 
         // update or create flows
-        return flows
-            .stream()
-            .map(flow -> {
+        return IntStream.range(0, flows.size())
+            .mapToObj(index -> {
+                Flow flow = flows.get(index);
+                String source = sources.get(index);
+
                 Optional<Flow> existingFlow = flowRepository.findById(namespace, flow.getId());
-                try {
-                    if (existingFlow.isPresent()) {
-                        return flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow),taskDefaultService.injectDefaults(flow));
-                    } else {
-                        return flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow),taskDefaultService.injectDefaults(flow));
-                    }
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
+                if (existingFlow.isPresent()) {
+                    return flowRepository.update(flow, existingFlow.get(), source, taskDefaultService.injectDefaults(flow));
+                } else {
+                    return flowRepository.create(flow, source, taskDefaultService.injectDefaults(flow));
                 }
             })
             .collect(Collectors.toList());
@@ -304,7 +320,7 @@ public class FlowController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
 
-        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow)));
+        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
     }
 
     @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)
@@ -329,7 +345,7 @@ public class FlowController {
         Flow flow = existingFlow.get();
         try {
             Flow newValue = flow.updateTask(taskId, task);
-            return HttpResponse.ok(flowRepository.update(newValue, flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(newValue)));
+            return HttpResponse.ok(flowRepository.update(newValue, flow, flow.generateSource(), taskDefaultService.injectDefaults(newValue)).toFlow());
         } catch (InternalException | JsonProcessingException e) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }

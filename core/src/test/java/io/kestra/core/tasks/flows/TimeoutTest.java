@@ -54,7 +54,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
                 .build()))
             .build();
 
-        flowRepository.create(flow, JacksonMapper.ofYaml().writeValueAsString(flow), taskDefaultService.injectDefaults(flow));
+        flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
 
         Execution execution = runnerUtils.runOne(flow.getNamespace(), flow.getId());
 

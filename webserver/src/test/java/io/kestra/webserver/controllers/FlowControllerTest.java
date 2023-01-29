@@ -208,11 +208,11 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             generateFlowAsString("flow3","io.kestra.updatenamespace","a")
         ));
 
-        List<Flow> updated = client.toBlocking()
+        List<FlowWithSource> updated = client.toBlocking()
             .retrieve(
                 HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows)
                     .contentType(MediaType.APPLICATION_YAML),
-                Argument.listOf(Flow.class)
+                Argument.listOf(FlowWithSource.class)
             );
         assertThat(updated.size(), is(3));
 
@@ -240,7 +240,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     void deleteFlow() {
         Flow flow = generateFlow("io.kestra.unittest", "a");
 
-        Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
+        FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), FlowWithSource.class);
         assertThat(result.getId(), is(flow.getId()));
         assertThat(result.getRevision(), is(1));
 

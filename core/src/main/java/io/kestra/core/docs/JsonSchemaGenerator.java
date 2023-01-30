@@ -207,13 +207,13 @@ public class JsonSchemaGenerator {
 
         // PluginProperty $dynamic && deprecated swagger properties
         builder.forFields().withInstanceAttributeOverride((memberAttributes, member, context) -> {
-            PluginProperty pluginPropertyAnnotation = member.getAnnotation(PluginProperty.class);
+            PluginProperty pluginPropertyAnnotation = member.getAnnotationConsideringFieldAndGetter(PluginProperty.class);
             if (pluginPropertyAnnotation != null) {
                 memberAttributes.put("$dynamic", pluginPropertyAnnotation.dynamic());
             }
 
 
-            Schema schema = member.getAnnotation(Schema.class);
+            Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
             if (schema != null && schema.deprecated()) {
                 memberAttributes.put("$deprecated", true);
             }
@@ -242,7 +242,7 @@ public class JsonSchemaGenerator {
 
         // PluginProperty additionalProperties
         builder.forFields().withAdditionalPropertiesResolver(target -> {
-            PluginProperty pluginPropertyAnnotation = target.getAnnotation(PluginProperty.class);
+            PluginProperty pluginPropertyAnnotation = target.getAnnotationConsideringFieldAndGetter(PluginProperty.class);
             if (pluginPropertyAnnotation != null) {
                 return pluginPropertyAnnotation.additionalProperties();
             }

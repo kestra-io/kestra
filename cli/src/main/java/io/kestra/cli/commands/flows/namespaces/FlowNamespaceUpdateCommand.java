@@ -14,6 +14,7 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
+import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -35,37 +36,43 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
     public Integer call() throws Exception {
         super.call();
 
-        List<String> flows = Files.walk(directory)
-            .filter(Files::isRegularFile)
-            .filter(YamlFlowParser::isValidExtension)
-            .map(path -> {
-                try {
-                    return Files.readString(path, Charset.defaultCharset());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            })
-            .collect(Collectors.toList());
+        try {
+            List<String> flows = Files.walk(directory)
+                .filter(Files::isRegularFile)
+                .filter(YamlFlowParser::isValidExtension)
+                .map(path -> {
+                    try {
+                        return Files.readString(path, Charset.defaultCharset());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList());
 
-        String body = "";
-        if (flows.size() == 0) {
-            stdOut("No flow found on '{}'", directory.toFile().getAbsolutePath());
-        } else {
-            body = String.join("\n---\n", flows);
-        }
-        try(DefaultHttpClient client = client()) {
-            MutableHttpRequest<String> request = HttpRequest
-                .POST("/api/v1/flows/" + namespace, body).contentType(MediaType.APPLICATION_YAML);
+            String body = "";
+            if (flows.size() == 0) {
+                stdOut("No flow found on '{}'", directory.toFile().getAbsolutePath());
+            } else {
+                body = String.join("\n---\n", flows);
+            }
+            try(DefaultHttpClient client = client()) {
+                MutableHttpRequest<String> request = HttpRequest
+                    .POST("/api/v1/flows/" + namespace, body).contentType(MediaType.APPLICATION_YAML);
 
-            List<FlowWithSource> updated = client.toBlocking().retrieve(
-                this.requestOptions(request),
-                Argument.listOf(FlowWithSource.class)
-            );
+                List<FlowWithSource> updated = client.toBlocking().retrieve(
+                    this.requestOptions(request),
+                    Argument.listOf(FlowWithSource.class)
+                );
 
-            stdOut(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");
-            updated.forEach(flow -> stdOut("- " + flow.getNamespace() + "."  + flow.getId()));
-        } catch (HttpClientResponseException e){
-            ValidateCommand.handleHttpException(e);
+                stdOut(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");
+                updated.forEach(flow -> stdOut("- " + flow.getNamespace() + "."  + flow.getId()));
+            } catch (HttpClientResponseException e){
+                ValidateCommand.handleHttpException(e, "flow");
+                return 1;
+            }
+        } catch (ConstraintViolationException e) {
+            ValidateCommand.handleException(e, "flow");
+
             return 1;
         }
 

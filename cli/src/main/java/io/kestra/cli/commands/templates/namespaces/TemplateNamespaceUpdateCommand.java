@@ -1,12 +1,13 @@
 package io.kestra.cli.commands.templates.namespaces;
 
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
-import io.kestra.cli.commands.flows.ValidateCommand;
+import io.kestra.cli.commands.templates.ValidateCommand;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(
     name = "update",
-    description = "handle namespace flows",
+    description = "handle namespace templates",
     mixinStandardHelpOptions = true
 )
 @Slf4j
@@ -42,9 +43,9 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
                 stdOut("No template found on '{}'", directory.toFile().getAbsolutePath());
             }
 
-            try(DefaultHttpClient client = client()) {
+            try (DefaultHttpClient client = client()) {
                 MutableHttpRequest<List<Template>> request = HttpRequest
-                    .POST("/api/v1/templates/" + namespace, templates   );
+                    .POST("/api/v1/templates/" + namespace, templates);
 
                 List<Template> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),
@@ -52,10 +53,14 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
                 );
 
                 stdOut(updated.size() + " template(s) for namespace '" + namespace + "' successfully updated !");
-                updated.forEach(template -> stdOut("- " + template.getNamespace() + "."  + template.getId()));
+                updated.forEach(template -> stdOut("- " + template.getNamespace() + "." + template.getId()));
+            } catch (HttpClientResponseException e) {
+                ValidateCommand.handleHttpException(e, "template");
+
+                return 1;
             }
         } catch (ConstraintViolationException e) {
-            ValidateCommand.handleException(e);
+            ValidateCommand.handleException(e, "template");
 
             return 1;
         }

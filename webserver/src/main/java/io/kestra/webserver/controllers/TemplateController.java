@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -17,6 +18,10 @@ import io.kestra.webserver.utils.PageableUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,6 +30,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
+
 
 @Validated
 @Controller("/api/v1/templates")
@@ -118,4 +124,94 @@ public class TemplateController {
     public List<String> listDistinctNamespace() {
         return templateRepository.findDistinctNamespace();
     }
+
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Update a complete namespace from json object",
+        description = "All flow will be created / updated for this namespace.\n" +
+            "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
+    )
+    public List<Template> updateNamespace(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "A list of flows") @Body @Valid List<Template> templates,
+        @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
+    ) throws ConstraintViolationException, JsonProcessingException {
+        return this
+            .updateCompleteNamespace(
+                namespace,
+                templates,
+                delete
+            )
+            .stream()
+            .collect(Collectors.toList());
+    }
+
+    private List<Template> updateCompleteNamespace(String namespace, List<Template> templates, Boolean delete) {
+        // control namespace to update
+        Set<ManualConstraintViolation<Template>> invalids = templates
+            .stream()
+            .filter(template -> !template.getNamespace().equals(namespace))
+            .map(template -> ManualConstraintViolation.of(
+                "Template namespace is invalid",
+                template,
+                Template.class,
+                "template.namespace",
+                template.getNamespace()
+            ))
+            .collect(Collectors.toSet());
+
+        if (invalids.size() > 0) {
+            throw new ConstraintViolationException(invalids);
+        }
+
+        // multiple same templates
+        List<String> duplicate = templates
+            .stream()
+            .map(Template::getId)
+            .distinct()
+            .collect(Collectors.toList());
+
+        if (duplicate.size() < templates.size()) {
+            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
+                "Duplicate template id",
+                templates,
+                List.class,
+                "template.id",
+                duplicate
+            )));
+        }
+
+        // list all ids of updated templates
+        List<String> ids = templates
+            .stream()
+            .map(Template::getId)
+            .collect(Collectors.toList());
+
+        // delete all not in updated ids
+        if (delete) {
+            templateRepository
+                .findByNamespace(namespace)
+                .stream()
+                .filter(flow -> !ids.contains(flow.getId()))
+                .forEach(flow -> templateRepository.delete(flow));
+        }
+
+        // update or create templates
+        return IntStream.range(0, templates.size())
+            .mapToObj(index -> {
+                Template template = templates.get(index);
+
+                Optional<Template> existingTemplate = templateRepository.findById(namespace, template.getId());
+                if (existingTemplate.isPresent()) {
+                    return templateRepository.update(template, existingTemplate.get());
+                } else {
+                    return templateRepository.create(template);
+                }
+            })
+            .collect(Collectors.toList());
+    }
+
 }

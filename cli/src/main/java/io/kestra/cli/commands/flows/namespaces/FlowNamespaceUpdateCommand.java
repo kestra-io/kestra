@@ -8,6 +8,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.validation.ConstraintViolationException;
 
 @CommandLine.Command(
     name = "update",
@@ -47,13 +47,15 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
             })
             .collect(Collectors.toList());
 
-            if (flows.size() == 0) {
-                stdErr("No flow found on '{}'", directory.toFile().getAbsolutePath());
-                return 1;
-            }
-            try(DefaultHttpClient client = client()) {
-                MutableHttpRequest<String> request = HttpRequest
-                    .POST("/api/v1/flows/" + namespace, String.join("\n---\n", flows)).contentType(MediaType.APPLICATION_YAML);
+        String body = "";
+        if (flows.size() == 0) {
+            stdOut("No flow found on '{}'", directory.toFile().getAbsolutePath());
+        } else {
+            body = String.join("\n---\n", flows);
+        }
+        try(DefaultHttpClient client = client()) {
+            MutableHttpRequest<String> request = HttpRequest
+                .POST("/api/v1/flows/" + namespace, body).contentType(MediaType.APPLICATION_YAML);
 
             List<FlowWithSource> updated = client.toBlocking().retrieve(
                 this.requestOptions(request),

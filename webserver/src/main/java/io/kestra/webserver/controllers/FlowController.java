@@ -30,12 +30,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 
@@ -178,10 +176,10 @@ public class FlowController {
     )
     public List<FlowWithSource> updateNamespace(
         @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "A list of flows") @Body String flows,
+        @Parameter(description = "A list of flows") @Body  @Nullable String flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
-        List<String> sources = List.of(flows.split("---"));
+        List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
 
         return this.updateCompleteNamespace(
             namespace,
@@ -264,16 +262,22 @@ public class FlowController {
             .collect(Collectors.toList());
 
         // delete all not in updated ids
+        List<FlowWithSource> deleted = new ArrayList<>();
         if (delete) {
-            flowRepository
+            deleted = flowRepository
                 .findByNamespace(namespace)
                 .stream()
                 .filter(flow -> !ids.contains(flow.getId()))
-                .forEach(flow -> flowRepository.delete(flow));
+                .map(flow -> {
+                    FlowWithSource flowWithSource = new FlowWithSource(flow.generateSource());
+                    flowRepository.delete(flow);
+                    return flowWithSource;
+                })
+                .collect(Collectors.toList());
         }
 
         // update or create flows
-        return IntStream.range(0, flows.size())
+        List<FlowWithSource> updatedOrCreated =  IntStream.range(0, flows.size())
             .mapToObj(index -> {
                 Flow flow = flows.get(index);
                 String source = sources.get(index);
@@ -286,6 +290,8 @@ public class FlowController {
                 }
             })
             .collect(Collectors.toList());
+
+        return Stream.concat(deleted.stream(), updatedOrCreated.stream()).collect(Collectors.toList());
     }
 
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)

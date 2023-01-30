@@ -63,6 +63,10 @@ class PluginDocCommandTest {
                 "# Plugin template test\n" +
                 "\n" +
                 "Plugin template for Kestra\n" +
+                "\n" +
+                "This is a more complex description of the plugin.\n" +
+                "\n" +
+                "This is in markdown and will be inline inside the plugin page.\n" +
                 "## Subgroup title\n" +
                 "    \n" +
                 "Subgroup description\n" +

@@ -65,6 +65,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .map(integer -> this.findRevisions(namespace, id)
                 .stream()
                 .filter(flow -> flow.getRevision().equals(integer))
+                .map(FlowWithSource::toFlow)
                 .findFirst()
             )
             .orElseGet(() -> this.flows.containsKey(flowId(namespace, id)) ?
@@ -90,11 +91,12 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
     }
 
     @Override
-    public List<Flow> findRevisions(String namespace, String id) {
+    public List<FlowWithSource> findRevisions(String namespace, String id) {
         return revisions
             .values()
             .stream()
             .filter(flow -> flow.getNamespace().equals(namespace) && flow.getId().equals(id))
+            .map(flow -> FlowWithSource.of(flow, flow.generateSource()))
             .sorted(Comparator.comparingInt(Flow::getRevision))
             .collect(Collectors.toList());
     }
@@ -176,7 +178,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             return FlowWithSource.of(exists.get(), existsSource.get());
         }
 
-        List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
+        List<FlowWithSource> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
 
         if (revisions.size() > 0) {
             flow = flow.withRevision(revisions.get(revisions.size() - 1).getRevision() + 1);

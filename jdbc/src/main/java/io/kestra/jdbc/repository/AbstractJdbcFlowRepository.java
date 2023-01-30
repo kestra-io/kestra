@@ -139,19 +139,27 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public List<Flow> findRevisions(String namespace, String id) {
-        return jdbcRepository
+    public List<FlowWithSource> findRevisions(String namespace, String id) {
+         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                Select<Record1<String>> select = DSL
+                Select<Record2<String, String>> select = DSL
                     .using(configuration)
-                    .select(field("value", String.class))
+                    .select(
+                        field("source_code", String.class),
+                        field("value", String.class)
+                    )
                     .from(jdbcRepository.getTable())
                     .where(field("namespace", String.class).eq(namespace))
                     .and(field("id", String.class).eq(id))
                     .orderBy(field("revision", Integer.class).asc());
 
-                return this.jdbcRepository.fetch(select);
+                return select
+                    .fetch()
+                    .map(record -> FlowWithSource.of(
+                        jdbcRepository.map(record),
+                        record.get("source_code", String.class)
+                    ));
             });
     }
 
@@ -306,7 +314,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             return exists.get();
         }
 
-        List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
+        List<FlowWithSource> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
 
         if (revisions.size() > 0) {
             flow = flow.withRevision(revisions.get(revisions.size() - 1).getRevision() + 1);

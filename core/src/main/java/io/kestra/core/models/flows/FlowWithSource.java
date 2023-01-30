@@ -43,14 +43,14 @@ public class FlowWithSource extends Flow {
     public String getSource() {
         String source = this.source;
 
-        if (source == null) {
-            return null;
-        }
-
         // previously, we insert source on database keeping default value (like deleted, ...)
         // if the previous serialization is the same as actual one, we use a clean version removing them
         try {
             Flow flow = toFlow();
+
+            if (source == null) {
+                return toYamlWithoutDefault(flow);
+            }
 
             if (JacksonMapper.ofYaml().writeValueAsString(flow).equals(source)) {
                 source = toYamlWithoutDefault(flow);

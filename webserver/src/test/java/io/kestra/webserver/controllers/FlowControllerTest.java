@@ -27,6 +27,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -34,6 +35,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.inject.Inject;
 
@@ -57,11 +59,11 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void idNoSource() {
-        FlowWithSource result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), FlowWithSource.class);
-        assertThat(result.getSource(), is(nullValue()));
+    void idNoSource() throws NoSuchFieldException, IllegalAccessException {
+        Map<String, Object> map = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), Argument.mapOf(String.class, Object.class));
+        assertThat(map.get("source"), is(nullValue()));
 
-        result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full?source=true"), FlowWithSource.class);
+        FlowWithSource result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full?source=true"), FlowWithSource.class);
         assertThat(result.getSource(), containsString("#triggers:"));
     }
 

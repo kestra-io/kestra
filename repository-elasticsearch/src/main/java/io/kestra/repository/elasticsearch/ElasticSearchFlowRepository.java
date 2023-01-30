@@ -161,7 +161,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     @Override
-    public List<Flow> findRevisions(String namespace, String id) {
+    public List<FlowWithSource> findRevisions(String namespace, String id) {
         BoolQueryBuilder defaultFilter = this.defaultFilter();
 
         BoolQueryBuilder bool = defaultFilter
@@ -172,10 +172,22 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
 
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder()
             .query(bool)
-            .fetchSource("*", "sourceCode")
             .sort(new FieldSortBuilder("revision").order(SortOrder.ASC));
 
-        return this.scroll(REVISIONS_NAME, sourceBuilder);
+        List<FlowWithSource> result = new ArrayList<>();
+
+        this.internalScroll(
+            REVISIONS_NAME,
+            sourceBuilder,
+            documentFields -> result.add(
+                FlowWithSource.of(
+                    this.deserialize(documentFields.getSourceAsString()),
+                    (String) documentFields.getSourceAsMap().get("sourceCode")
+                )
+            )
+        );
+
+        return result;
     }
 
     @Override
@@ -317,7 +329,7 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
             return exists.get();
         }
 
-        List<Flow> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
+        List<FlowWithSource> revisions = this.findRevisions(flow.getNamespace(), flow.getId());
 
         if (revisions.size() > 0) {
             flow = flow.withRevision(revisions.get(revisions.size() - 1).getRevision() + 1);

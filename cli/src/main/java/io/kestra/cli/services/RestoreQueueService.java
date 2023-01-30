@@ -2,6 +2,7 @@ package io.kestra.cli.services;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -35,6 +36,7 @@ public class RestoreQueueService {
             .flatMap(flow -> flowRepository.findRevisions(flow.getNamespace(), flow.getId()).stream())
             // we can't resend FlowSource since deserialize failed & will be invalid
             .filter(flow -> !(flow instanceof FlowWithException))
+            .map(FlowWithSource::toFlow)
             .collect(Collectors.toList());
 
         return this.send(flows, QueueFactoryInterface.FLOW_NAMED, Flow.class, noRecreate);

@@ -87,7 +87,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/revisions", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Get revisions for a flow")
-    public List<Flow> revisions(
+    public List<FlowWithSource> revisions(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id
     ) {

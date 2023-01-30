@@ -42,7 +42,7 @@ public interface FlowRepositoryInterface {
         return this.findByIdWithSource(namespace, id, Optional.empty());
     }
 
-    List<Flow> findRevisions(String namespace, String id);
+    List<FlowWithSource> findRevisions(String namespace, String id);
 
     List<Flow> findAll();
 

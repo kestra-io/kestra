@@ -140,7 +140,7 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(incremented.getRevision(), is(2));
 
         // revision is well saved
-        List<Flow> revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
+        List<FlowWithSource> revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
         assertThat(revisions.size(), is(2));
 
         // submit the same one serialized, no changed
@@ -228,7 +228,7 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent(), is(false));
         assertThat(flowRepository.findById(flow.getNamespace(), flow.getId(), Optional.of(save.getRevision())).isPresent(), is(true));
 
-        List<Flow> revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
+        List<FlowWithSource> revisions = flowRepository.findRevisions(flow.getNamespace(), flow.getId());
         assertThat(revisions.get(revisions.size() - 1).getRevision(), is(delete.getRevision()));
     }
 

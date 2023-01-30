@@ -1,5 +1,6 @@
 package io.kestra.cli;
 
+import io.kestra.cli.commands.templates.TemplateCommand;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -37,6 +38,7 @@ import java.util.concurrent.Callable;
         PluginCommand.class,
         ServerCommand.class,
         FlowCommand.class,
+        TemplateCommand.class,
         SysCommand.class,
         ConfigCommand.class,
     }

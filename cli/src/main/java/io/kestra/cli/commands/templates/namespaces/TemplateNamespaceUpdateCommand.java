@@ -1,8 +1,8 @@
-package io.kestra.cli.commands.flows.namespaces;
+package io.kestra.cli.commands.templates.namespaces;
 
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
 import io.kestra.cli.commands.flows.ValidateCommand;
-import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.templates.Template;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -12,12 +12,10 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
+import javax.validation.ConstraintViolationException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.validation.ConstraintViolationException;
 
 @CommandLine.Command(
     name = "update",
@@ -25,43 +23,37 @@ import javax.validation.ConstraintViolationException;
     mixinStandardHelpOptions = true
 )
 @Slf4j
-public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
+public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
     @Inject
     public YamlFlowParser yamlFlowParser;
-
 
     @Override
     public Integer call() throws Exception {
         super.call();
 
         try {
-            List<String> flows = Files.walk(directory)
+            List<Template> templates = Files.walk(directory)
                 .filter(Files::isRegularFile)
                 .filter(YamlFlowParser::isValidExtension)
-                .map(path -> {
-                    try {
-                        return Files.readString(path, Charset.defaultCharset());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
+                .map(path -> yamlFlowParser.parseTemplate(path.toFile()))
                 .collect(Collectors.toList());
 
-            if (flows.size() == 0) {
+            if (templates.size() == 0) {
                 stdErr("No flow found on '{}'", directory.toFile().getAbsolutePath());
                 return 1;
             }
-            try(DefaultHttpClient client = client()) {
-                MutableHttpRequest<List<String>> request = HttpRequest
-                    .POST("/api/v1/flows/" + namespace + "/source", flows);
 
-                List<FlowWithSource> updated = client.toBlocking().retrieve(
+            try(DefaultHttpClient client = client()) {
+                MutableHttpRequest<List<Template>> request = HttpRequest
+                    .POST("/api/v1/templates/" + namespace, templates   );
+
+                List<Template> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),
-                    Argument.listOf(FlowWithSource.class)
+                    Argument.listOf(Template.class)
                 );
 
-                stdOut(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");
-                updated.forEach(flow -> stdOut("- " + flow.getNamespace() + "."  + flow.getId()));
+                stdOut(updated.size() + " template(s) for namespace '" + namespace + "' successfully updated !");
+                updated.forEach(template -> stdOut("- " + template.getNamespace() + "."  + template.getId()));
             }
         } catch (ConstraintViolationException e) {
             ValidateCommand.handleException(e);

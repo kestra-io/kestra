@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.helpers.HandleBarDeserializer;
 import jakarta.inject.Singleton;
@@ -34,19 +35,48 @@ public class YamlFlowParser {
     }
 
     public Flow parse(String input) {
-        return readFlow(mapper, input);
+        return (Flow) readFlow(mapper, input, Flow.class);
+    }
+
+    public Template parseTemplate(File file) throws ConstraintViolationException {
+        try {
+            String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
+            return (Template) readFlow(
+                mapper.copy()
+                    .setInjectableValues(new InjectableValues.Std()
+                        .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
+                    ),
+                input,
+                Template.class
+            );
+
+        } catch (IOException e) {
+            throw new ConstraintViolationException(
+                "Illegal template path:" + e.getMessage(),
+                Collections.singleton(
+                    ManualConstraintViolation.of(
+                        e.getMessage(),
+                        file,
+                        File.class,
+                        "template",
+                        file.getAbsolutePath()
+                    )
+                )
+            );
+        }
     }
 
     public Flow parse(File file) throws ConstraintViolationException {
 
         try {
             String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
-            return readFlow(
+            return (Flow) readFlow(
                 mapper.copy()
                 .setInjectableValues(new InjectableValues.Std()
                     .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
                 ),
-                input
+                input,
+                Flow.class
             );
 
         } catch (IOException e) {
@@ -65,9 +95,9 @@ public class YamlFlowParser {
         }
     }
 
-    private Flow readFlow(ObjectMapper mapper, String input) {
+    private Object readFlow(ObjectMapper mapper, String input, Class objectClass) {
         try {
-            return mapper.readValue(input, Flow.class);
+            return mapper.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException) {
                 throw (ConstraintViolationException) e.getCause();

@@ -39,8 +39,7 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
                 .collect(Collectors.toList());
 
             if (templates.size() == 0) {
-                stdErr("No flow found on '{}'", directory.toFile().getAbsolutePath());
-                return 1;
+                stdOut("No template found on '{}'", directory.toFile().getAbsolutePath());
             }
 
             try(DefaultHttpClient client = client()) {

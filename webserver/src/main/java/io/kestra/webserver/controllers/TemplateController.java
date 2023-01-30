@@ -15,12 +15,10 @@ import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Operation;
@@ -129,15 +127,15 @@ public class TemplateController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON)
     @Operation(
-        tags = {"Flows"},
+        tags = {"Templates"},
         summary = "Update a complete namespace from json object",
-        description = "All flow will be created / updated for this namespace.\n" +
-            "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
+        description = "All Template will be created / updated for this namespace.\n" +
+            "Template already created but not in `templates` will be deleted if the query delete is `true`"
     )
     public List<Template> updateNamespace(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "A list of flows") @Body @Valid List<Template> templates,
-        @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
+        @Parameter(description = "The template namespace") String namespace,
+        @Parameter(description = "A list of templates") @Body @Valid List<Template> templates,
+        @Parameter(description = "If missing template should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException, JsonProcessingException {
         return this
             .updateCompleteNamespace(
@@ -191,16 +189,21 @@ public class TemplateController {
             .collect(Collectors.toList());
 
         // delete all not in updated ids
+        List<Template> deleted = new ArrayList<>();
         if (delete) {
-            templateRepository
+            deleted = templateRepository
                 .findByNamespace(namespace)
                 .stream()
-                .filter(flow -> !ids.contains(flow.getId()))
-                .forEach(flow -> templateRepository.delete(flow));
+                .filter(template -> !ids.contains(template.getId()))
+                .map(template -> {
+                    templateRepository.delete(template);
+                    return template;
+                })
+                .collect(Collectors.toList());;
         }
 
         // update or create templates
-        return IntStream.range(0, templates.size())
+        List<Template> updatedOrCreated =  IntStream.range(0, templates.size())
             .mapToObj(index -> {
                 Template template = templates.get(index);
 
@@ -212,6 +215,8 @@ public class TemplateController {
                 }
             })
             .collect(Collectors.toList());
+
+        return Stream.concat(deleted.stream(), updatedOrCreated.stream()).collect(Collectors.toList());
     }
 
 }

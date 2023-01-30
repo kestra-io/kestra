@@ -269,9 +269,8 @@ public class FlowController {
                 .stream()
                 .filter(flow -> !ids.contains(flow.getId()))
                 .map(flow -> {
-                    FlowWithSource flowWithSource = new FlowWithSource(flow.generateSource());
                     flowRepository.delete(flow);
-                    return flowWithSource;
+                    return  FlowWithSource.of(flow, flow.generateSource());
                 })
                 .collect(Collectors.toList());
         }

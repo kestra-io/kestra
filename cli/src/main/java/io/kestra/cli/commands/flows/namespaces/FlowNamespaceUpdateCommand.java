@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import jakarta.inject.Inject;
@@ -52,8 +53,8 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
                 return 1;
             }
             try(DefaultHttpClient client = client()) {
-                MutableHttpRequest<List<String>> request = HttpRequest
-                    .POST("/api/v1/flows/" + namespace + "/source", flows);
+                MutableHttpRequest<String> request = HttpRequest
+                    .POST("/api/v1/flows/" + namespace, String.join("\n---\n", flows)).contentType(MediaType.APPLICATION_YAML);
 
                 List<FlowWithSource> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),

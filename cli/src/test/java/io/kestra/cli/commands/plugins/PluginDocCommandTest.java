@@ -53,9 +53,9 @@ class PluginDocCommandTest {
             assertThat(files.get(0).getFileName().toString(), is("plugin-template-test"));
             var directory = files.get(0).toFile();
             assertThat(directory.isDirectory(), is(true));
-            assertThat(directory.listFiles().length, is(2));
+            assertThat(directory.listFiles().length, is(3));
+
             var readme = directory.toPath().resolve("README.md");
-            var task = directory.toPath().resolve("tasks/io.kestra.plugin.templates.ExampleTask.md");
             assertThat(new String(Files.readAllBytes(readme)), is("---\n" +
                 "title: Plugin template test\n" +
                 "editLink: false\n" +
@@ -72,9 +72,16 @@ class PluginDocCommandTest {
                 "Subgroup description\n" +
                 "### Tasks\n" +
                 "\n" +
-                "* [ExampleTask](tasks/templates/io.kestra.plugin.templates.ExampleTask.html)\n"));
+                "* [ExampleTask](tasks/templates/io.kestra.plugin.templates.ExampleTask.html)\n" +
+                "\n" +
+                "## Guides\n" +
+                "* [Authentication](guides/authentication.html)\n" +
+                "    \n" +
+                "* [Reporting](guides/reporting.html)\n" +
+                "    \n"));
 
             // check @PluginProperty from an interface
+            var task = directory.toPath().resolve("tasks/io.kestra.plugin.templates.ExampleTask.md");
             assertThat(new String(Files.readAllBytes(task)), containsString("### `example`\n" +
                 "\n" +
                 "* **Type:** ==string==\n" +
@@ -84,6 +91,11 @@ class PluginDocCommandTest {
                 "\n" +
                 "\n" +
                 "> Example interface\n"));
+
+            var authenticationGuide = directory.toPath().resolve("guides/authentication.md");
+            assertThat(new String(Files.readAllBytes(authenticationGuide)), containsString("This is how to authenticate for this plugin:"));
+            var reportingGuide = directory.toPath().resolve("guides/reporting.md");
+            assertThat(new String(Files.readAllBytes(reportingGuide)), containsString("This is the reporting of the plugin:"));
         }
     }
 }

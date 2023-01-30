@@ -1,5 +1,6 @@
 package io.kestra.core.tasks.flows;
 
+import io.kestra.core.models.annotations.PluginProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -82,13 +83,16 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
         title = "Number of concurrent parrallels tasks",
         description = "If the value is `0`, no limit exist and all the tasks will start at the same time"
     )
+    @PluginProperty
     private final Integer concurrent = 0;
 
     @NotNull
     @NotBlank
+    @PluginProperty(dynamic = true)
     private String value;
 
     @Valid
+    @PluginProperty
     protected List<Task> errors;
 
     @Override

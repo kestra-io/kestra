@@ -62,27 +62,27 @@ public class Purge extends Task implements RunnableTask<Purge.Output> {
     @Schema(
         title = "The state of the execution that can be purged."
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private List<State.Type> states;
 
     @Schema(
         title = "Purge execution from repository"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @Builder.Default
     private boolean purgeExecution = true;
 
     @Schema(
         title = "Purge log from repository"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @Builder.Default
     private boolean purgeLog = true;
 
     @Schema(
         title = "Purge file from internal storage"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @Builder.Default
     private boolean purgeStorage = true;
 

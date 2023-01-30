@@ -1,5 +1,5 @@
 import JsYaml from "js-yaml";
-import yaml from "yaml";
+import yaml, {Document, YAMLMap} from "yaml";
 import _cloneDeep from "lodash/cloneDeep"
 
 export default class YamlUtils {
@@ -25,28 +25,81 @@ export default class YamlUtils {
 
     static extractTask(source, taskId) {
         const yamlDoc = yaml.parseDocument(source);
-        for (const [index, item] of yamlDoc.get("tasks").items.entries()) {
-            if (taskId === item.get("id")) {
-                const task = new yaml.Document(item).toString();
-                return {task, index};
+        let taskNode = YamlUtils._extractTask(yamlDoc, taskId);
+
+        return taskNode === undefined ? undefined : new yaml.Document(taskNode).toString();
+    }
+
+    static _extractTask(yamlDoc, taskId, callback) {
+        const find = (element) => {
+            if (element === undefined) {
+                return;
+            }
+
+            if (element instanceof YAMLMap) {
+                if (element.get("type") !== undefined && taskId === element.get("id")) {
+                    return callback ? callback(element) : element;
+                }
+            }
+
+            if (element.items) {
+                for (const [key, item] of element.items.entries()) {
+                    let result;
+
+                    if (item instanceof YAMLMap) {
+                        result = find(item);
+                    } else {
+                        result = find(item.value);
+                    }
+
+                    if (result) {
+                        if (callback) {
+                            if (element instanceof YAMLMap) {
+                                element.set(item.key.value, result);
+                            } else {
+                                element.items[key] = result;
+                            }
+                        }
+
+                        if (!callback && result) {
+                            return result
+                        }
+                    }
+                }
             }
         }
-        return null
+
+
+
+        let result = find(yamlDoc.contents);
+
+        if (result === undefined) {
+            return undefined;
+        }
+
+        if (callback) {
+            return new Document(result)
+        } else {
+            return new Document(result);
+        }
     }
 
-    static replaceTaskInDocument(source, index, newContent) {
+    static replaceTaskInDocument(source, taskId, newContent) {
         const yamlDoc = yaml.parseDocument(source);
-        const newItem = new yaml.Document(yaml.parseDocument(newContent))
-        YamlUtils.replaceCommentInTask(yamlDoc.get("tasks").items[index], newItem);
-        yamlDoc.get("tasks").items[index] = newItem
-        return yamlDoc.toString();
+        const newItem = yamlDoc.createNode(yaml.parseDocument(newContent))
 
+        YamlUtils._extractTask(yamlDoc, taskId, (oldValue) => {
+            YamlUtils.replaceCommentInTask(oldValue, newItem)
+
+            return newItem;
+        })
+
+        return yamlDoc.toString();
     }
 
-    // oldTask a YAMLMap, newTask a YAML document containing a YAMLMap
     static replaceCommentInTask(oldTask, newTask) {
         for (const oldProp of oldTask.items) {
-            for (const newProp of newTask.contents.items) {
+            for (const newProp of newTask.items) {
                 if (oldProp.key.value === newProp.key.value && newProp.value.comment === undefined) {
                     newProp.value.comment = oldProp.value.comment
                     break;

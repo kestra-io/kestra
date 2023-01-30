@@ -71,12 +71,16 @@
         },
         methods: {
             load(taskId) {
-                return YamlUtils.extractTask(this.flow.source, taskId);
+                return YamlUtils.extractTask(this.flow.source, taskId).toString();
             },
             saveTask() {
                 let updatedSource;
                 try {
-                    updatedSource = YamlUtils.replaceTaskInDocument(this.flow.source, this.taskIndex, this.taskYaml)
+                    updatedSource = YamlUtils.replaceTaskInDocument(
+                        this.flow.source,
+                        this.taskId ? this.taskId : this.task.id,
+                        this.taskYaml
+                    );
                 } catch (err) {
                     this.$toast().warning(
                         err.message,
@@ -93,9 +97,7 @@
             onShow() {
                 this.isModalOpen = !this.isModalOpen;
                 if (this.taskId || this.task.id) {
-                    const value = this.load(this.taskId ? this.taskId : this.task.id)
-                    this.taskIndex = value.index
-                    this.taskYaml = value.task;
+                    this.taskYaml = this.load(this.taskId ? this.taskId : this.task.id)
                 } else {
                     this.taskYaml = YamlUtils.stringify(this.task);
                 }
@@ -105,7 +107,6 @@
             return {
                 uuid: Utils.uid(),
                 taskYaml: undefined,
-                taskIndex: undefined,
                 isModalOpen: false,
             };
         },

@@ -86,7 +86,7 @@ public class DocumentationGenerator {
             builder.put("title", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Title"));
             builder.put("description", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description"));
             builder.put("group", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Group"));
-            builder.put("docs", JacksonMapper.toMap(pluginDocumentation));
+            builder.put("classPlugins", pluginDocumentation.getClassPlugins());
         }
 
         return Collections.singletonList(new Document(

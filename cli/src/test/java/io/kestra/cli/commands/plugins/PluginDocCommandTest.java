@@ -63,10 +63,12 @@ class PluginDocCommandTest {
                 "# Plugin template test\n" +
                 "\n" +
                 "Plugin template for Kestra\n" +
-                "## Common\n" +
+                "## Subgroup title\n" +
+                "    \n" +
+                "Subgroup description\n" +
                 "### Tasks\n" +
                 "\n" +
-                "* [ExampleTask](tasks/io.kestra.plugin.templates.ExampleTask.html)\n"));
+                "* [ExampleTask](tasks/templates/io.kestra.plugin.templates.ExampleTask.html)\n"));
 
             // check @PluginProperty from an interface
             assertThat(new String(Files.readAllBytes(task)), containsString("### `example`\n" +

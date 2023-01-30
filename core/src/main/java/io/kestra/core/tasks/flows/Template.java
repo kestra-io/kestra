@@ -80,20 +80,21 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 )
 public class Template extends Task implements FlowableTask<Template.Output> {
     @Valid
+    @PluginProperty
     protected List<Task> errors;
 
     @NotNull
     @Schema(
         title = "The namespace of the template"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private String namespace;
 
     @NotNull
     @Schema(
         title = "The id of the template"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private String templateId;
 
     @Schema(

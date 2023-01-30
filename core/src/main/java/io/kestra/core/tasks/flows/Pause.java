@@ -3,6 +3,7 @@ package io.kestra.core.tasks.flows;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
@@ -59,6 +60,7 @@ public class Pause extends Sequential implements FlowableTask<VoidOutput> {
         title = "Duration of the pause.",
         description = "If null, a manual approval is need, if not, the delay before automatically continue the execution"
     )
+    @PluginProperty
     private Duration delay;
 
     @Override

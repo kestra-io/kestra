@@ -77,7 +77,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         title = "Wait the end of the execution.",
         description = "By default, we don't wait till the end of the flow, if you set to true, we wait the end of the trigger flow before continue this one."
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private final Boolean wait = false;
 
     @Builder.Default
@@ -85,7 +85,7 @@ public class Flow extends Task implements RunnableTask<Flow.Output> {
         title = "Failed the current execution if the waited execution is failed or killed.",
         description = "`wait` need to be true to make it work"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private final Boolean transmitFailed = false;
 
     @Schema(

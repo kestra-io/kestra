@@ -98,7 +98,7 @@ public class Python extends AbstractPython implements RunnableTask<ScriptOutput>
             "Disabled it if all the requirements is already on the file system.\n" +
             "If you disabled the virtual env creation, the `requirements` will be ignored."
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @Builder.Default
     protected Boolean virtualEnv = true;
 

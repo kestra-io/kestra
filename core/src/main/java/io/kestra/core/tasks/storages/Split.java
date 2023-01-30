@@ -87,7 +87,7 @@ public class Split extends Task implements RunnableTask<Split.Output> {
     @Schema(
         title = "The separator to used between rows"
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @Builder.Default
     private String separator = "\n";
 

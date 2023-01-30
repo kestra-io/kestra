@@ -98,12 +98,15 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @Schema(
         title = "The case switch, as map with key the value, value the list of tasks"
     )
+    @PluginProperty
     private Map<String, List<Task>> cases;
 
     @Valid
+    @PluginProperty
     private List<Task> defaults;
 
     @Valid
+    @PluginProperty
     protected List<Task> errors;
 
     private String rendererValue(RunContext runContext) throws IllegalVariableEvaluationException {

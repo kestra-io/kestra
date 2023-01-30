@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -56,5 +57,13 @@ public class ValidateCommand extends AbstractCommand {
                     constraintViolation.getInvalidValue()
                 );
             });
+    }
+
+    public static void handleHttpException(HttpClientResponseException e) {
+        stdErr("@|fg(red) Unable to update flows due to the following error:|@");
+        stdErr(
+            "- @|bold,yellow {0}|@",
+            e.getMessage()
+        );
     }
 }

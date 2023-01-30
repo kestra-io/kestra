@@ -4,9 +4,7 @@ import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.runtime.server.EmbeddedServer;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import io.kestra.core.contexts.KestraClassLoader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -59,14 +57,14 @@ class FlowNamespaceUpdateCommandTest {
                 embeddedServer.getURL().toString(),
                 "--user",
                 "myuser:pass:word",
-                "io.kestra.cli",
+                "io.kestra.tests",
                 directory.getPath(),
 
             };
             Integer call = PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
             assertThat(call, is(1));
-            assertThat(out.toString(), containsString("Unable to parse flow"));
+            assertThat(out.toString(), containsString("Unable to update flows"));
             assertThat(out.toString(), containsString("must not be empty"));
         }
     }

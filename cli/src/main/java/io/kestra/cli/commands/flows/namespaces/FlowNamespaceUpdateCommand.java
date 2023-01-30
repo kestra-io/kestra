@@ -35,18 +35,17 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
     public Integer call() throws Exception {
         super.call();
 
-        try {
-            List<String> flows = Files.walk(directory)
-                .filter(Files::isRegularFile)
-                .filter(YamlFlowParser::isValidExtension)
-                .map(path -> {
-                    try {
-                        return Files.readString(path, Charset.defaultCharset());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .collect(Collectors.toList());
+        List<String> flows = Files.walk(directory)
+            .filter(Files::isRegularFile)
+            .filter(YamlFlowParser::isValidExtension)
+            .map(path -> {
+                try {
+                    return Files.readString(path, Charset.defaultCharset());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            })
+            .collect(Collectors.toList());
 
             if (flows.size() == 0) {
                 stdErr("No flow found on '{}'", directory.toFile().getAbsolutePath());
@@ -56,17 +55,15 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
                 MutableHttpRequest<String> request = HttpRequest
                     .POST("/api/v1/flows/" + namespace, String.join("\n---\n", flows)).contentType(MediaType.APPLICATION_YAML);
 
-                List<FlowWithSource> updated = client.toBlocking().retrieve(
-                    this.requestOptions(request),
-                    Argument.listOf(FlowWithSource.class)
-                );
+            List<FlowWithSource> updated = client.toBlocking().retrieve(
+                this.requestOptions(request),
+                Argument.listOf(FlowWithSource.class)
+            );
 
-                stdOut(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");
-                updated.forEach(flow -> stdOut("- " + flow.getNamespace() + "."  + flow.getId()));
-            }
-        } catch (ConstraintViolationException e) {
-            ValidateCommand.handleException(e);
-
+            stdOut(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");
+            updated.forEach(flow -> stdOut("- " + flow.getNamespace() + "."  + flow.getId()));
+        } catch (HttpClientResponseException e){
+            ValidateCommand.handleHttpException(e);
             return 1;
         }
 

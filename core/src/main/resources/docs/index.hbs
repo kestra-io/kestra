@@ -25,3 +25,10 @@ editLink: false
 
 {{/each ~}}
 {{/each ~}}
+
+{{~#if guides }}
+## Guides
+    {{~#each guides as | guide | }}
+* [{{ capitalizeFirst guide }}](guides/{{ guide }}.html)
+    {{/each}}
+{{/if}}

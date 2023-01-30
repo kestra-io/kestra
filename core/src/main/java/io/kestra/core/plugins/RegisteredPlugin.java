@@ -11,6 +11,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.storages.StorageInterface;
 
+import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
@@ -28,6 +29,8 @@ public class RegisteredPlugin {
     private final List<Class<? extends Condition>> conditions;
     private final List<Class<?>> controllers;
     private final List<Class<? extends StorageInterface>> storages;
+
+    private final List<String> guides;
 
     public boolean isValid() {
         return tasks.size() > 0 || triggers.size() > 0 || conditions.size() > 0 || controllers.size() > 0 || storages.size() > 0;

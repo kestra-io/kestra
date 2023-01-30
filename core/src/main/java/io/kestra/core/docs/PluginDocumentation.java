@@ -21,6 +21,8 @@ public class PluginDocumentation {
     private String group;
     private Map<SubGroup, Map<String, List<ClassPlugin>>> classPlugins;
 
+    private Map<String, String> guides;
+
     private PluginDocumentation(RegisteredPlugin plugin) {
         this.title = plugin.title();
         this.group = plugin.group();

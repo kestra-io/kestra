@@ -1,5 +1,6 @@
 package io.kestra.core.plugins;
 
+import io.kestra.core.docs.Document;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -12,15 +13,21 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 public class PluginScanner {
@@ -85,6 +92,7 @@ public class PluginScanner {
         List<Class<? extends Condition>> conditions = new ArrayList<>();
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<?>> controllers = new ArrayList<>();
+        List<String> guides = new ArrayList<>();
 
         final SoftServiceLoader<BeanIntrospectionReference> loader = SoftServiceLoader.load(
             BeanIntrospectionReference.class,
@@ -126,6 +134,23 @@ public class PluginScanner {
             }
         }
 
+        var guidesDirectory = classLoader.getResource("doc/guides");
+        if(guidesDirectory != null) {
+            try (var fileSystem = FileSystems.newFileSystem(guidesDirectory.toURI(), Collections.emptyMap())) {
+                var root = fileSystem.getPath("/doc/guides");
+                try (var stream = Files.walk(root, 1)) {
+                    stream
+                        .skip(1) // first element is the root element
+                        .forEach(guide -> {
+                            var guideName = guide.getName(guide.getParent().getNameCount()).toString();
+                            guides.add(guideName.substring(0, guideName.lastIndexOf('.')));
+                        });
+                }
+            } catch (IOException |  URISyntaxException e) {
+                // silently fail
+            }
+        }
+
         return RegisteredPlugin.builder()
             .externalPlugin(externalPlugin)
             .manifest(manifest)
@@ -135,6 +160,7 @@ public class PluginScanner {
             .conditions(conditions)
             .controllers(controllers)
             .storages(storages)
+            .guides(guides)
             .build();
     }
 

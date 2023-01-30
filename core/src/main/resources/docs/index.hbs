@@ -6,14 +6,19 @@ editLink: false
 
 {{ description }}
 
-{{~#each docs.classPlugins as | classPlugin subgroup | }}
-## {{ defaultIfEmpty (capitalizeFirst subgroup) "Common" }}
+{{~#each classPlugins }}
+    {{~#if @key.title}}
+## {{ @key.title }}
+    {{else}}
+## {{ @key.name }}
+    {{/if}}
+{{ @key.description }}
 
-{{~#each classPlugin as | classes type | }}
+{{~#each this as | classes type | }}
 ### {{ capitalizeFirst type }}
 
 {{#each classes as | class | ~}}
-* [{{simpleName}}]({{ type }}/{{#and subgroup}}{{subgroup}}/{{/and}}{{ name }}.html)
+* [{{simpleName}}]({{ type }}/{{#and subgroup.name}}{{subgroup.name}}/{{/and}}{{ name }}.html)
 {{/each ~}}
 
 {{/each ~}}

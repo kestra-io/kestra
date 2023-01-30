@@ -1,8 +1,6 @@
 package io.kestra.cli.commands.sys;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -54,8 +52,6 @@ class FlowListenersRestoreCommandTest {
 
             assertThat(out.toString(), containsString("Received 1 active flows"));
             assertThat(out.toString(), containsString("Received 5 active flows"));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         }
     }
 }

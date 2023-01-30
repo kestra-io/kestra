@@ -52,16 +52,19 @@ class ExecutionServiceTest extends AbstractMemoryRunnerTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
 
         Flow flow = flowRepository.findById("io.kestra.tests", "restart_last_failed").orElseThrow();
-        flowRepository.update(flow, flow.updateTask(
-            "a",
-            Return.builder()
-                .id("a")
-                .type(Return.class.getName())
-                .format("replace")
-                .build()
-        ),
+        flowRepository.update(
+            flow,
+            flow.updateTask(
+                "a",
+                Return.builder()
+                    .id("a")
+                    .type(Return.class.getName())
+                    .format("replace")
+                    .build()
+            ),
             JacksonMapper.ofYaml().writeValueAsString(flow),
-            taskDefaultService.injectDefaults(flow));
+            taskDefaultService.injectDefaults(flow)
+        );
 
 
         Execution restart = executionService.restart(execution, 2);

@@ -1,6 +1,5 @@
 package io.kestra.runner.postgres;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.FlowListenersTest;
 import io.kestra.jdbc.JdbcTestUtils;
@@ -16,7 +15,7 @@ class PostgresFlowListenersTest extends FlowListenersTest {
     JdbcTestUtils jdbcTestUtils;
 
     @Test
-    public void all() throws JsonProcessingException {
+    public void all() {
         this.suite(flowListenersService);
     }
 

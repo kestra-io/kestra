@@ -73,7 +73,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void findById() throws JsonProcessingException {
+    void findById() {
         Flow flow = builder()
             .revision(3)
             .build();
@@ -88,7 +88,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void findByIdWithSource() throws JsonProcessingException {
+    void findByIdWithSource() {
         Flow flow = builder()
             .revision(3)
             .build();
@@ -183,7 +183,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void save() throws JsonProcessingException {
+    void save() {
         Flow flow = builder().revision(12).build();
         Flow save = flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
 
@@ -191,7 +191,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void saveNoRevision() throws JsonProcessingException {
+    void saveNoRevision() {
         Flow flow = builder().build();
         Flow save = flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
 
@@ -217,7 +217,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void delete() throws JsonProcessingException {
+    void delete() {
         Flow flow = builder().build();
 
         Flow save = flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
@@ -233,7 +233,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void updateConflict() throws JsonProcessingException {
+    void updateConflict() {
         String flowId = IdUtils.create();
 
         Flow flow = Flow.builder()
@@ -266,7 +266,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    void removeTrigger() throws InterruptedException, JsonProcessingException {
+    void removeTrigger() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         triggerQueue.receive(trigger -> {
@@ -313,7 +313,7 @@ public abstract class AbstractFlowRepositoryTest {
 
 
     @Test
-    void removeTriggerDelete() throws InterruptedException, JsonProcessingException {
+    void removeTriggerDelete() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         triggerQueue.receive(trigger -> {

@@ -266,17 +266,21 @@ public class Flow implements DeletedInterface {
         }
     }
 
-    public String generateSource() throws JsonProcessingException {
-        return JacksonMapper.ofYaml()
-            .writeValueAsString(
-                JacksonMapper
-                    .ofJson()
-                    .readTree(
-                        jsonMapper.copy()
-                            .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
-                            .writeValueAsString(this)
-                    )
-            );
+    public String generateSource() {
+        try {
+            return JacksonMapper.ofYaml()
+                .writeValueAsString(
+                    JacksonMapper
+                        .ofJson()
+                        .readTree(
+                            jsonMapper.copy()
+                                .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
+                                .writeValueAsString(this)
+                        )
+                );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Flow toDeleted() {

@@ -1,7 +1,5 @@
 package io.kestra.cli.commands.sys;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -68,8 +66,6 @@ class RestoreQueueCommandTest {
 
             countDownLatch.await();
             assertThat(atomicInteger.get(), is(COUNT));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         }
     }
 }

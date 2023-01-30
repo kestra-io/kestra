@@ -41,7 +41,7 @@ abstract public class FlowListenersTest {
             .build();
     }
 
-    public void suite(FlowListenersInterface flowListenersService) throws JsonProcessingException {
+    public void suite(FlowListenersInterface flowListenersService) {
         flowListenersService.run();
 
         AtomicInteger count = new AtomicInteger();

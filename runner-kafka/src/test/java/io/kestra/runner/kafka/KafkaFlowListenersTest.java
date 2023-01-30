@@ -45,7 +45,7 @@ class KafkaFlowListenersTest extends FlowListenersTest {
     }
 
     @Test
-    public void all() throws JsonProcessingException {
+    public void all() {
         this.suite(flowListenersService);
     }
 

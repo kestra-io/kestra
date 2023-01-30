@@ -1,12 +1,20 @@
 package io.kestra.webserver.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.TaskDefaultService;
+import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -15,28 +23,19 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.hierarchies.FlowGraph;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 
@@ -165,7 +164,7 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "Create a flow from json object")
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body @Valid Flow flow
-    ) throws ConstraintViolationException, JsonProcessingException {
+    ) throws ConstraintViolationException {
         return HttpResponse.ok(flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
     }
 
@@ -207,7 +206,7 @@ public class FlowController {
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
-    ) throws ConstraintViolationException, JsonProcessingException {
+    ) throws ConstraintViolationException {
         return this
             .updateCompleteNamespace(
                 namespace,
@@ -314,7 +313,7 @@ public class FlowController {
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id,
         @Parameter(description = "The flow") @Body @Valid Flow flow
-    ) throws ConstraintViolationException, JsonProcessingException {
+    ) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
         if (existingFlow.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
@@ -346,7 +345,7 @@ public class FlowController {
         try {
             Flow newValue = flow.updateTask(taskId, task);
             return HttpResponse.ok(flowRepository.update(newValue, flow, flow.generateSource(), taskDefaultService.injectDefaults(newValue)).toFlow());
-        } catch (InternalException | JsonProcessingException e) {
+        } catch (InternalException e) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
     }

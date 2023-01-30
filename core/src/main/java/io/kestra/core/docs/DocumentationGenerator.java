@@ -85,7 +85,9 @@ public class DocumentationGenerator {
         if (plugin.getManifest() != null) {
             builder.put("title", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Title"));
             builder.put("description", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description"));
-            builder.put("group", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Group"));
+            var group = plugin.getManifest().getMainAttributes().getValue("X-Kestra-Group");
+            builder.put("group", group);
+            longDescription(plugin, builder, group);
             builder.put("classPlugins", pluginDocumentation.getClassPlugins());
         }
 
@@ -94,6 +96,17 @@ public class DocumentationGenerator {
             render("index", builder.build()),
             null
         ));
+    }
+
+    private static void longDescription(RegisteredPlugin plugin, ImmutableMap.Builder<String, Object> builder, String group) {
+        try (var is = plugin.getClassLoader().getResourceAsStream("doc/" + group + ".md")) {
+            if(is != null) {
+                builder.put("longDescription", IOUtils.toString(is, Charsets.UTF_8));
+            }
+        }
+        catch (Exception e) {
+            // silently fail
+        }
     }
 
     private <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {

@@ -40,7 +40,18 @@ icon: {{ icon }}
 🔒 *Deprecated*
     {{~/if}}
 
+    {{~#if type }}
 * **Type:** =={{> type }}==
+    {{~else if $ref }}
+* **Type:** =={{> type }}==
+    {{~else if anyOf }}
+* **Type:**
+        {{~#each anyOf as | current |}}
+            =={{>type current}}==
+        {{~/each~}}
+    {{~else}}
+* **Type:** ==object==
+    {{~/if~}}
     {{~#if items }}
 * **SubType:** =={{> type items }}==
     {{~/if~}}

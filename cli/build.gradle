@@ -31,8 +31,6 @@ dependencies {
     implementation project(":runner-memory")
     implementation project(":runner-kafka")
 
-    implementation project(":indexer-kafka-elasticsearch")
-
     implementation project(":jdbc")
     implementation project(":jdbc-h2")
     implementation project(":jdbc-mysql")

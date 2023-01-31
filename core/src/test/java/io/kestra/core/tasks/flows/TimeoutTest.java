@@ -1,6 +1,5 @@
 package io.kestra.core.tasks.flows;
 
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
@@ -9,16 +8,18 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.tasks.scripts.Bash;
 import io.kestra.core.utils.IdUtils;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -26,6 +27,9 @@ import static org.hamcrest.Matchers.is;
 class TimeoutTest extends AbstractMemoryRunnerTest {
     @Inject
     FlowRepositoryInterface flowRepository;
+
+    @Inject
+    TaskDefaultService taskDefaultService;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -48,7 +52,7 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
                 .build()))
             .build();
 
-        flowRepository.create(flow);
+        flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
 
         Execution execution = runnerUtils.runOne(flow.getNamespace(), flow.getId());
 

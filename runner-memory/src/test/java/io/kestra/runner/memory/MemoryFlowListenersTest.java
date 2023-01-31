@@ -1,10 +1,9 @@
 package io.kestra.runner.memory;
 
 import io.kestra.core.runners.FlowListeners;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.runners.FlowListenersTest;
-
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 class MemoryFlowListenersTest extends FlowListenersTest {
     @Inject

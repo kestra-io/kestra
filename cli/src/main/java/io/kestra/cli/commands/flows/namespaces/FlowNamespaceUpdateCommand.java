@@ -3,6 +3,7 @@ package io.kestra.cli.commands.flows.namespaces;
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.commands.flows.ValidateCommand;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -28,6 +29,9 @@ public class FlowNamespaceUpdateCommand extends AbstractApiCommand {
     @Inject
     private YamlFlowParser yamlFlowParser;
 
+    @Inject
+    private ModelValidator modelValidator;
+
     @CommandLine.Parameters(index = "0", description = "the namespace of flow to update")
     private String namespace;
 
@@ -42,7 +46,12 @@ public class FlowNamespaceUpdateCommand extends AbstractApiCommand {
             List<Flow> flows = Files.walk(directory)
                 .filter(Files::isRegularFile)
                 .filter(YamlFlowParser::isValidExtension)
-                .map(path -> yamlFlowParser.parse(path.toFile()))
+                .map(path -> {
+                    Flow flow = yamlFlowParser.parse(path.toFile());
+                    modelValidator.validate(flow);
+
+                    return flow;
+                })
                 .collect(Collectors.toList());
 
             if (flows.size() == 0) {

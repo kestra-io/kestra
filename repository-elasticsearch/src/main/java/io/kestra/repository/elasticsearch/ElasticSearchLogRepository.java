@@ -36,10 +36,9 @@ public class ElasticSearchLogRepository extends AbstractElasticSearchRepository<
     public ElasticSearchLogRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils
     ) {
-        super(client, elasticSearchIndicesService, modelValidator, executorsUtils, LogEntry.class);
+        super(client, elasticSearchIndicesService, executorsUtils, LogEntry.class);
     }
 
     @Override

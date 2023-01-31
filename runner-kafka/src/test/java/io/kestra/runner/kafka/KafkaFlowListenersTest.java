@@ -95,7 +95,7 @@ class KafkaFlowListenersTest extends FlowListenersTest {
         String flowId = IdUtils.create();
 
         Flow flow = create(flowId, IdUtils.create());
-        flowRepository.create(flow);
+        flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
         flowListenersService.listen(flows -> {

@@ -1,7 +1,20 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.services.TaskDefaultService;
+import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -10,24 +23,19 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.hierarchies.FlowGraph;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 
@@ -38,6 +46,9 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class FlowController {
     @Inject
     private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private TaskDefaultService taskDefaultService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
@@ -56,19 +67,27 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Get a flow")
+    @Schema(
+        anyOf = {FlowWithSource.class, Flow.class}
+    )
     public Flow index(
         @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "Include the source code") @QueryValue(value = "source", defaultValue = "false") boolean source
     ) {
-        return flowRepository
-            .findById(namespace, id)
-            .orElse(null);
+        return source ?
+            flowRepository
+                .findByIdWithSource(namespace, id)
+                .orElse(null):
+            flowRepository
+                .findById(namespace, id)
+                .orElse(null);
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/revisions", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Get revisions for a flow")
-    public List<Flow> revisions(
+    public List<FlowWithSource> revisions(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id
     ) {
@@ -128,37 +147,82 @@ public class FlowController {
         return PagedResults.of(flowRepository.findSourceCode(PageableUtils.from(page, size, sort), query, namespace));
     }
 
+
     @ExecuteOn(TaskExecutors.IO)
-    @Post(produces = MediaType.TEXT_JSON)
-    @Operation(tags = {"Flows"}, summary = "Create a flow")
+    @Post(produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Operation(tags = {"Flows"}, summary = "Create a flow from yaml source")
+    public HttpResponse<FlowWithSource> create(
+        @Parameter(description = "The flow") @Body String flow
+    ) throws ConstraintViolationException {
+        Flow flowParsed = new YamlFlowParser().parse(flow);
+
+        return HttpResponse.ok(flowRepository.create(flowParsed, flow, taskDefaultService.injectDefaults(flowParsed)));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(consumes = MediaType.ALL, produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Flows"}, summary = "Create a flow from json object")
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body @Valid Flow flow
     ) throws ConstraintViolationException {
-        if (flowRepository.findById(flow.getNamespace(), flow.getId()).isPresent()) {
-            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
-                "Flow id already exists",
-                flow,
-                Flow.class,
-                "flow.id",
-                flow.getId()
-            )));
-        }
+        return HttpResponse.ok(flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
+    }
 
-        return HttpResponse.ok(flowRepository.create(flow));
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Update a complete namespace from yaml source",
+        description = "All flow will be created / updated for this namespace.\n" +
+            "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
+    )
+    public List<FlowWithSource> updateNamespace(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "A list of flows") @Body String flows,
+        @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
+    ) throws ConstraintViolationException {
+        List<String> sources = List.of(flows.split("---"));
+
+        return this.updateCompleteNamespace(
+            namespace,
+            sources
+                .stream()
+                .map(flow -> new YamlFlowParser().parse(flow))
+                .collect(Collectors.toList()),
+            sources,
+            delete
+        );
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}", produces = MediaType.TEXT_JSON)
     @Operation(
         tags = {"Flows"},
-        summary = "Update a complete namespace",
+        summary = "Update a complete namespace from json object",
         description = "All flow will be created / updated for this namespace.\n" +
-            "Flow that already created but not in `flows` will be deleted"
+            "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
     )
     public List<Flow> updateNamespace(
         @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows
+        @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows,
+        @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
+        return this
+            .updateCompleteNamespace(
+                namespace,
+                flows,
+                flows
+                    .stream()
+                    .map(throwFunction(Flow::generateSource))
+                    .collect(Collectors.toList()),
+                delete
+            )
+            .stream()
+            .map(FlowWithSource::toFlow)
+            .collect(Collectors.toList());
+    }
+
+    private List<FlowWithSource> updateCompleteNamespace(String namespace, List<Flow> flows, List<String> sources, Boolean delete) {
         // control namespace to update
         Set<ManualConstraintViolation<Flow>> invalids = flows
             .stream()
@@ -200,27 +264,49 @@ public class FlowController {
             .collect(Collectors.toList());
 
         // delete all not in updated ids
-        flowRepository
-            .findByNamespace(namespace)
-            .stream()
-            .filter(flow -> !ids.contains(flow.getId()))
-            .forEach(flow -> flowRepository.delete(flow));
+        if (delete) {
+            flowRepository
+                .findByNamespace(namespace)
+                .stream()
+                .filter(flow -> !ids.contains(flow.getId()))
+                .forEach(flow -> flowRepository.delete(flow));
+        }
 
         // update or create flows
-        return flows
-            .stream()
-            .map(flow -> {
+        return IntStream.range(0, flows.size())
+            .mapToObj(index -> {
+                Flow flow = flows.get(index);
+                String source = sources.get(index);
+
                 Optional<Flow> existingFlow = flowRepository.findById(namespace, flow.getId());
                 if (existingFlow.isPresent()) {
-                    return flowRepository.update(flow, existingFlow.get());
+                    return flowRepository.update(flow, existingFlow.get(), source, taskDefaultService.injectDefaults(flow));
                 } else {
-                    return flowRepository.create(flow);
+                    return flowRepository.create(flow, source, taskDefaultService.injectDefaults(flow));
                 }
             })
             .collect(Collectors.toList());
     }
 
-    @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
+    @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Flows"}, summary = "Update a flow")
+    public HttpResponse<FlowWithSource> update(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The flow") @Body String flow
+    ) throws ConstraintViolationException {
+        Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
+        if (existingFlow.isEmpty()) {
+
+            return HttpResponse.status(HttpStatus.NOT_FOUND);
+        }
+        Flow flowParsed = new YamlFlowParser().parse(flow);
+
+        return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow, taskDefaultService.injectDefaults(flowParsed)));
+    }
+
+    @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.ALL)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a flow")
     public HttpResponse<Flow> update(
@@ -229,12 +315,11 @@ public class FlowController {
         @Parameter(description = "The flow") @Body @Valid Flow flow
     ) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
-
         if (existingFlow.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
 
-        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get()));
+        return HttpResponse.ok(flowRepository.update(flow, existingFlow.get(), flow.generateSource(), taskDefaultService.injectDefaults(flow)).toFlow());
     }
 
     @Patch(uri = "{namespace}/{id}/{taskId}", produces = MediaType.TEXT_JSON)
@@ -259,7 +344,7 @@ public class FlowController {
         Flow flow = existingFlow.get();
         try {
             Flow newValue = flow.updateTask(taskId, task);
-            return HttpResponse.ok(flowRepository.update(newValue, flow));
+            return HttpResponse.ok(flowRepository.update(newValue, flow, flow.generateSource(), taskDefaultService.injectDefaults(newValue)).toFlow());
         } catch (InternalException e) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }

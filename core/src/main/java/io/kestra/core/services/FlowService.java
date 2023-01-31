@@ -200,7 +200,6 @@ public class FlowService {
             .collect(Collectors.toList());
     }
 
-
     public static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
         return ListUtils.emptyOnNull(previous.getTriggers())
             .stream()
@@ -209,6 +208,10 @@ public class FlowService {
                 .noneMatch(c -> c.getId().equals(p.getId()))
             )
             .collect(Collectors.toList());
+    }
+
+    public static String cleanupSource(String source) {
+        return source.replaceFirst("(?m)^revision: \\d+\n?","");
     }
 
     @AllArgsConstructor

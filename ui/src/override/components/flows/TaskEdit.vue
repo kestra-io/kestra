@@ -41,8 +41,8 @@
 <script>
     import YamlUtils from "../../../utils/yamlUtils";
     import Editor from "../../../components/inputs/Editor.vue";
-    import {canSaveFlowTemplate} from "../../../utils/flowTemplate";
-    import {mapState} from "vuex";
+    import {canSaveFlowTemplate, saveFlowTemplate} from "../../../utils/flowTemplate";
+    import {mapGetters, mapState} from "vuex";
     import Utils from "../../../utils/utils";
 
     export default {
@@ -70,13 +70,17 @@
             },
         },
         methods: {
-            load() {
-                return this.$store.dispatch("flow/loadTask", {namespace: this.namespace, id: this.flowId, taskId: this.taskId});
+            load(taskId) {
+                return YamlUtils.extractTask(this.flow.source, taskId).toString();
             },
             saveTask() {
-                let task;
+                let updatedSource;
                 try {
-                    task = YamlUtils.parse(this.taskYaml);
+                    updatedSource = YamlUtils.replaceTaskInDocument(
+                        this.flow.source,
+                        this.taskId ? this.taskId : this.task.id,
+                        this.taskYaml
+                    );
                 } catch (err) {
                     this.$toast().warning(
                         err.message,
@@ -85,27 +89,15 @@
 
                     return;
                 }
-
-                return this.$store
-                    .dispatch("flow/updateFlowTask", {
-                        flow: {
-                            id: this.flowId,
-                            namespace: this.namespace
-                        },
-                        task: task
-                    })
-                    .then((response) => {
-                        this.$toast().saved(response.id);
+                saveFlowTemplate(this, updatedSource, "flow")
+                    .then(() => {
                         this.isModalOpen = false;
                     })
             },
             onShow() {
                 this.isModalOpen = !this.isModalOpen;
-                if (this.taskId) {
-                    this.load()
-                        .then(value => {
-                            this.taskYaml = YamlUtils.stringify(value);
-                        })
+                if (this.taskId || this.task.id) {
+                    this.taskYaml = this.load(this.taskId ? this.taskId : this.task.id)
                 } else {
                     this.taskYaml = YamlUtils.stringify(this.task);
                 }
@@ -122,9 +114,10 @@
 
         },
         computed: {
+            ...mapState("flow", ["flow"]),
             ...mapState("auth", ["user"]),
             canSave() {
-                return canSaveFlowTemplate(true, this.user, {namespace:this.namespace}, "flow");
+                return canSaveFlowTemplate(true, this.user, {namespace: this.namespace}, "flow");
             }
         }
     };

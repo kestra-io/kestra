@@ -1,5 +1,6 @@
 package io.kestra.cli.commands.sys;
 
+import io.kestra.core.services.TaskDefaultService;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -46,11 +47,13 @@ class RestoreQueueCommandTest {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             FlowRepositoryInterface flowRepository = ctx.getBean(FlowRepositoryInterface.class);
             QueueInterface<Flow> flowQueue = ctx.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED));
+            TaskDefaultService taskDefaultService = ctx.getBean(TaskDefaultService.class);
 
             AtomicInteger atomicInteger = new AtomicInteger();
 
             for (int i = 0; i < COUNT; i++) {
-                flowRepository.create(create());
+                Flow flow = create();
+                flowRepository.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
             }
             CountDownLatch countDownLatch = new CountDownLatch(COUNT);
 

@@ -1,3 +1,5 @@
+import YamlUtils from "../utils/yamlUtils";
+
 export default {
     namespaced: true,
     state: {
@@ -33,7 +35,8 @@ export default {
             })
         },
         saveTemplate({commit}, options) {
-            return this.$http.put(`/api/v1/templates/${options.template.namespace}/${options.template.id}`, options.template).then(response => {
+            const template = YamlUtils.parse(options.template)
+            return this.$http.put(`/api/v1/templates/${template.namespace}/${template.id}`, template).then(response => {
                 if (response.status >= 300) {
                     return Promise.reject(new Error("Server error on template save"))
                 } else {
@@ -44,7 +47,7 @@ export default {
             })
         },
         createTemplate({commit}, options) {
-            return this.$http.post("/api/v1/templates", options.template).then(response => {
+            return this.$http.post("/api/v1/templates", YamlUtils.parse(options.template)).then(response => {
                 commit("setTemplate", response.data)
 
                 return response.data;

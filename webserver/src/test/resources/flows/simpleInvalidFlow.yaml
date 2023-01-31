@@ -1,0 +1,12 @@
+id: test-flow-invalid
+namespace: io.kestra.unittest
+inputs:
+  - name: a
+    type: STRING
+tasks:
+  - id: test
+    type: io.kestra.core.tasks.debugs.Return
+    badProperties: true
+    format: test
+disabled: false
+deleted: false

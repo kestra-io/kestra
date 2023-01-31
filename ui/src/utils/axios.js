@@ -6,7 +6,6 @@ let root = (import.meta.env.VITE_APP_API_URL || "") + KESTRA_BASE_PATH;
 if (!root.endsWith("/")) {
     root = root + "/";
 }
-
 // nprogress
 let requestsTotal = 0
 let requestsCompleted = 0

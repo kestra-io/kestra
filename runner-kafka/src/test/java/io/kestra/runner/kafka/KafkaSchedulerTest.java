@@ -9,6 +9,8 @@ import io.kestra.core.runners.Executor;
 import io.kestra.core.schedulers.AbstractScheduler;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.schedulers.SchedulerThreadTest;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.TaskDefaultService;
 import io.kestra.runner.kafka.configs.TopicsConfig;
 import io.kestra.runner.kafka.serializers.JsonSerde;
 import io.kestra.runner.kafka.services.KafkaAdminService;
@@ -41,6 +43,9 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
     @Inject
     protected FlowRepositoryInterface flowRepositoryInterface;
 
+    @Inject
+    protected TaskDefaultService taskDefaultService;
+
     protected KafkaQueue<Executor> executorQueue;
     protected KafkaQueue<Trigger> triggerQueue;
     protected KafkaProducer<String, Execution> executorProducer;
@@ -61,7 +66,7 @@ class KafkaSchedulerTest extends AbstractSchedulerTest {
 
         Flow flow = SchedulerThreadTest.createThreadFlow();
 
-        flowRepositoryInterface.create(flow);
+        flowRepositoryInterface.create(flow, flow.generateSource(), taskDefaultService.injectDefaults(flow));
 
         kafkaExecutor.run();
 

@@ -1,10 +1,6 @@
 package io.kestra.core.tasks.flows;
 
 import com.google.common.collect.ImmutableMap;
-import io.micronaut.core.annotation.Introspected;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -13,21 +9,26 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.hierarchies.*;
+import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.TaskValidationInterface;
-import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.GraphService;
+import io.kestra.core.validations.SwitchTaskValidation;
+import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.validation.ConstraintViolation;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -82,7 +83,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
     }
 )
 @Introspected
-public class Switch extends Task implements FlowableTask<Switch.Output>, TaskValidationInterface<Switch> {
+@SwitchTaskValidation
+public class Switch extends Task implements FlowableTask<Switch.Output> {
     @NotBlank
     @NotNull
     @Schema(
@@ -184,21 +186,6 @@ public class Switch extends Task implements FlowableTask<Switch.Output>, TaskVal
                 .noneMatch(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))
             )
             .build();
-    }
-
-    @Override
-    public List<ConstraintViolation<Switch>> failedConstraints() {
-        if ((this.cases == null || this.cases.size() == 0) && (this.defaults == null || this.defaults.size() == 0)) {
-            return Collections.singletonList(ManualConstraintViolation.of(
-                "No task defined, neither cases or default have any tasks",
-                this,
-                Switch.class,
-                "switch.tasks",
-                this.getId()
-            ));
-        }
-
-        return Collections.emptyList();
     }
 
     @Builder

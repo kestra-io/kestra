@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -72,7 +71,6 @@ abstract public class AbstractElasticSearchRepository<T> {
     private static ExecutorService poolExecutor;
     protected Class<T> cls;
     protected RestHighLevelClient client;
-    protected ModelValidator modelValidator;
     protected ElasticSearchIndicesService elasticSearchIndicesService;
     protected Map<String, IndicesConfig> indicesConfigs;
 
@@ -80,7 +78,6 @@ abstract public class AbstractElasticSearchRepository<T> {
     public AbstractElasticSearchRepository(
         RestHighLevelClient client,
         ElasticSearchIndicesService elasticSearchIndicesService,
-        ModelValidator modelValidator,
         ExecutorsUtils executorsUtils,
         Class<T> cls
     ) {
@@ -88,7 +85,6 @@ abstract public class AbstractElasticSearchRepository<T> {
 
         this.client = client;
         this.cls = cls;
-        this.modelValidator = modelValidator;
         this.elasticSearchIndicesService = elasticSearchIndicesService;
 
         this.indicesConfigs = elasticSearchIndicesService.findConfig(cls);
@@ -142,7 +138,7 @@ abstract public class AbstractElasticSearchRepository<T> {
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
-            return this.map(searchResponse.getHits().getHits())
+            return this.map(List.of(searchResponse.getHits().getHits()))
                 .stream()
                 .findFirst();
         } catch (IOException e) {
@@ -388,8 +384,9 @@ abstract public class AbstractElasticSearchRepository<T> {
         return this.scroll(index, sourceBuilder);
     }
 
-    protected List<T> map(SearchHit[] searchHits) {
-        return Arrays.stream(searchHits)
+    protected List<T> map(List<SearchHit> searchHits) {
+        return searchHits
+            .stream()
             .map(searchHit -> this.deserialize(searchHit.getSourceAsString()))
             .filter(Objects::nonNull)
             .collect(Collectors.toList());
@@ -410,21 +407,31 @@ abstract public class AbstractElasticSearchRepository<T> {
 
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
-            return new ArrayListTotal<T>(this.map(searchResponse.getHits().getHits()), searchResponse.getHits().getTotalHits().value);
+            return new ArrayListTotal<>(this.map(List.of(searchResponse.getHits().getHits())), searchResponse.getHits().getTotalHits().value);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    protected List<T>  scroll(String index, SearchSourceBuilder sourceBuilder) {
+    protected List<T> scroll(String index, SearchSourceBuilder sourceBuilder) {
         List<T> result = new ArrayList<>();
 
-        this.scroll(index, sourceBuilder, result::add);
+        this.internalScroll(index, sourceBuilder, documentFields -> {
+            result.addAll(this.map(List.of(documentFields)));
+        });
 
         return result;
     }
 
     protected void scroll(String index, SearchSourceBuilder sourceBuilder, Consumer<T> consumer) {
+        this.internalScroll(
+            index,
+            sourceBuilder,
+            documentFields -> this.map(List.of(documentFields)).forEach(consumer)
+        );
+    }
+
+    protected void internalScroll(String index, SearchSourceBuilder sourceBuilder, Consumer<SearchHit> consumer) {
         String scrollId = null;
         SearchRequest searchRequest = searchRequest(index, sourceBuilder, true);
         try {
@@ -433,7 +440,7 @@ abstract public class AbstractElasticSearchRepository<T> {
             scrollId = searchResponse.getScrollId();
 
             do {
-                this.map(searchResponse.getHits().getHits())
+                List.of(searchResponse.getHits().getHits())
                     .forEach(consumer);
 
                 SearchScrollRequest searchScrollRequest = new SearchScrollRequest()

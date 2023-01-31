@@ -2,7 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.models.flows.FlowSource;
+import io.kestra.core.models.flows.FlowWithException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.models.flows.Flow;
@@ -44,7 +44,7 @@ public class FlowListeners implements FlowListenersInterface {
         this.flowQueue = flowQueue;
         this.flows = flowRepository.findAll()
             .stream()
-            .filter(flow -> !(flow instanceof FlowSource))
+            .filter(flow -> !(flow instanceof FlowWithException))
             .collect(Collectors.toList());
     }
 

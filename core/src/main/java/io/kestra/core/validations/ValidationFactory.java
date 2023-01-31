@@ -1,17 +1,19 @@
 package io.kestra.core.validations;
 
 import com.cronutils.model.Cron;
-import com.cronutils.model.CronType;
-import com.cronutils.model.definition.CronDefinitionBuilder;
-import com.cronutils.parser.CronParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.tasks.flows.Switch;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
+import jakarta.inject.Singleton;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import jakarta.inject.Singleton;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.validation.ConstraintViolation;
 
 @Factory
 public class ValidationFactory {
@@ -89,6 +91,58 @@ public class ValidationFactory {
                 return false;
             }
             return true;
+        };
+    }
+
+    @Singleton
+    ConstraintValidator<SwitchTaskValidation, Switch> switchTaskValidation() {
+        return (value, annotationMetadata, context) -> {
+            Set<ConstraintViolation<?>> violations = new HashSet<>();
+            if (value == null) {
+                return true;
+            }
+
+            if ((value.getCases() == null || value.getCases().size() == 0) && (value.getDefaults() == null || value.getDefaults().size() == 0)) {
+                context.messageTemplate("No task defined, neither cases or default have any tasks");
+
+                return false;
+            }
+
+            return true;
+        };
+    }
+
+    @Singleton
+    ConstraintValidator<FlowValidation, Flow> flowValidation() {
+        return (value, annotationMetadata, context) -> {
+            if (value == null) {
+                return true;
+            }
+
+            List<String> violations = new ArrayList<>();
+            List<Task> allTasks = value.allTasksWithChilds();
+
+            // unique id
+            List<String> ids = allTasks
+                .stream()
+                .map(Task::getId)
+                .collect(Collectors.toList());
+
+            List<String> duplicates = ids
+                .stream()
+                .distinct()
+                .filter(entry -> Collections.frequency(ids, entry) > 1).collect(Collectors.toList());
+
+            if (duplicates.size() > 0) {
+                violations.add("Duplicate task id with name [" +   String.join(", ", duplicates) + "]");
+            }
+
+            if (violations.size() > 0) {
+                context.messageTemplate("Invalid Flow: " + String.join(", ", violations));
+                return false;
+            } else {
+                return true;
+            }
         };
     }
 }

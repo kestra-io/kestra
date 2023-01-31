@@ -175,7 +175,7 @@
                     return YamlUtils.stringify(YamlUtils.parse(source.source));
                 }
 
-                return YamlUtils.stringify(source);
+                return source.source ? source.source : YamlUtils.stringify(source);
             }
         },
         computed: {

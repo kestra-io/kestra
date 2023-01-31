@@ -4,7 +4,6 @@ include 'cli'
 include 'core'
 
 include 'runner-memory'
-include 'runner-kafka'
 
 include 'storage-local'
 

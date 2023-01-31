@@ -28,7 +28,6 @@ dependencies {
     implementation project(":repository-memory")
 
     implementation project(":runner-memory")
-    implementation project(":runner-kafka")
 
     implementation project(":jdbc")
     implementation project(":jdbc-h2")

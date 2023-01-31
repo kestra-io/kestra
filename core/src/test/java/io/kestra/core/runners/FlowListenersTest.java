@@ -59,7 +59,7 @@ abstract public class FlowListenersTest {
         });
 
         // resend on startup done for kafka
-        if (flowListenersService.getClass().getName().equals("io.kestra.runner.kafka.KafkaFlowListeners")) {
+        if (flowListenersService.getClass().getName().equals("io.kestra.ee.runner.kafka.KafkaFlowListeners")) {
             wait(ref, () -> {
                 assertThat(count.get(), is(0));
                 assertThat(flowListenersService.flows().size(), is(0));

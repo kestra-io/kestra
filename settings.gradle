@@ -8,7 +8,6 @@ include 'runner-kafka'
 
 include 'storage-local'
 
-include 'repository-elasticsearch'
 include 'repository-memory'
 
 include 'jdbc'

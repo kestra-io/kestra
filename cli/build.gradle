@@ -26,7 +26,6 @@ dependencies {
     implementation project(":core")
 
     implementation project(":repository-memory")
-    implementation project(":repository-elasticsearch")
 
     implementation project(":runner-memory")
     implementation project(":runner-kafka")

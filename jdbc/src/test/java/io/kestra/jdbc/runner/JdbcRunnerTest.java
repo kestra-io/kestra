@@ -17,7 +17,6 @@ import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -185,7 +184,7 @@ public abstract class JdbcRunnerTest {
 
     @Test
     void invalidTaskDefaults() throws TimeoutException, IOException, URISyntaxException {
-        repositoryLoader.loadForTest(new File(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")).toURI()));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/invalid-task-defaults.yaml")));
         taskDefaultsCaseTest.invalidTaskDefaults();
     }
 

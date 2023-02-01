@@ -64,7 +64,7 @@ class FlowNamespaceUpdateCommandTest {
             Integer call = PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
             assertThat(call, is(1));
-            assertThat(out.toString(), containsString("Unable to update flows"));
+            assertThat(out.toString(), containsString("Unable to parse flows"));
             assertThat(out.toString(), containsString("must not be empty"));
         }
     }

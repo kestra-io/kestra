@@ -25,6 +25,7 @@
                 v-if="taskYaml"
                 @save="saveTask"
                 v-model="taskYaml"
+                schema-type="task"
                 :full-height="false"
                 :navbar="false"
                 lang="yaml"
@@ -39,11 +40,11 @@
 </script>
 
 <script>
-    import YamlUtils from "../../../utils/yamlUtils";
-    import Editor from "../../../components/inputs/Editor.vue";
-    import {canSaveFlowTemplate, saveFlowTemplate} from "../../../utils/flowTemplate";
-    import {mapGetters, mapState} from "vuex";
-    import Utils from "../../../utils/utils";
+    import YamlUtils from "../../utils/yamlUtils";
+    import Editor from "../inputs/Editor.vue";
+    import {canSaveFlowTemplate, saveFlowTemplate} from "../../utils/flowTemplate";
+    import {mapState} from "vuex";
+    import Utils from "../../utils/utils";
 
     export default {
         components: {Editor},

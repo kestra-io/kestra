@@ -1,7 +1,9 @@
 package io.kestra.core.docs;
 
 import com.fasterxml.classmate.ResolvedType;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.github.victools.jsonschema.generator.*;
@@ -14,22 +16,112 @@ import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.conditions.ScheduleCondition;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.PluginService;
 import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.lang.reflect.*;
 import java.time.Duration;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
 public class JsonSchemaGenerator {
+    @Inject
+    private PluginService pluginService;
+
     Map<Class<?>, Object> defaultInstances = new HashMap<>();
+
+    public <T> Map<String, Object> schemas(Class<? extends T> cls) {
+        SchemaGeneratorConfigBuilder builder = new SchemaGeneratorConfigBuilder(
+            SchemaVersion.DRAFT_7,
+            OptionPreset.PLAIN_JSON
+        );
+
+        this.build(builder, cls);
+
+        SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
+
+        SchemaGenerator generator = new SchemaGenerator(schemaGeneratorConfig);
+        try {
+            ObjectNode objectNode = generator.generateSchema(cls);
+
+            Map<String, Object> map = JacksonMapper.toMap(objectNode);
+
+            // hack
+            if (cls == Task.class) {
+                fixTask(map);
+            } else if (cls == Flow.class) {
+                fixFlow(map);
+            }
+
+
+            return map;
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
+        }
+    }
+
+    private void mutateDescription(ObjectNode collectedTypeAttributes) {
+        if (collectedTypeAttributes.has("description")) {
+            collectedTypeAttributes.set("markdownDescription", collectedTypeAttributes.get("description"));
+            collectedTypeAttributes.remove("description");
+        }
+
+        if (collectedTypeAttributes.has("description")) {
+            collectedTypeAttributes.set("markdownDescription", collectedTypeAttributes.get("description"));
+            collectedTypeAttributes.remove("description");
+        }
+
+        if (collectedTypeAttributes.has("default")) {
+            StringBuilder sb = new StringBuilder();
+            if (collectedTypeAttributes.has("markdownDescription")) {
+                sb.append(collectedTypeAttributes.get("markdownDescription").asText());
+                sb.append("\n\n");
+            }
+
+            try {
+                sb.append("Default value is : `")
+                    .append(JacksonMapper.ofYaml().writeValueAsString(collectedTypeAttributes.get("default")).trim())
+                    .append("`");
+            } catch (JsonProcessingException ignored) {
+
+            }
+
+            collectedTypeAttributes.set("markdownDescription", new TextNode(sb.toString()));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void fixTask(Map<String, Object> map) {
+        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
+        var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
+        var allOf = (List<Object>) task.get("allOf");
+        allOf.remove(1);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void fixFlow(Map<String, Object> map) {
+        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
+        var flow = (Map<String, Object>) definitions.get("io.kestra.core.models.flows.Flow");
+
+        var requireds = (List<String>) flow.get("required");
+        requireds.remove("deleted");
+
+        var properties = (Map<String, Object>) flow.get("properties");
+        properties.remove("deleted");
+    }
 
     public <T> Map<String, Object> properties(Class<T> base, Class<? extends T> cls) {
         return this.generate(cls, base);
@@ -61,6 +153,7 @@ public class JsonSchemaGenerator {
     }
 
     protected <T> void build(SchemaGeneratorConfigBuilder builder, Class<? extends T> cls) {
+
         builder
             .with(new JacksonModule())
             .with(new JavaxValidationModule(
@@ -156,6 +249,109 @@ public class JsonSchemaGenerator {
 
             return Object.class;
         });
+        if(builder.build().getSchemaVersion() != SchemaVersion.DRAFT_2019_09) {
+            builder.forTypesInGeneral()
+                .withSubtypeResolver((declaredType, context) -> {
+                    TypeContext typeContext = context.getTypeContext();
+
+                    if (declaredType.getErasedType() == Task.class) {
+                        return pluginService
+                            .allPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getTasks().stream())
+                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
+                            .collect(Collectors.toList());
+                    } else if (declaredType.getErasedType() == AbstractTrigger.class) {
+                        return pluginService
+                            .allPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getTriggers().stream())
+                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
+                            .collect(Collectors.toList());
+                    } else if (declaredType.getErasedType() == Condition.class) {
+                        return pluginService
+                            .allPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
+                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
+                            .collect(Collectors.toList());
+                    } else if (declaredType.getErasedType() == ScheduleCondition.class) {
+                        return pluginService
+                            .allPlugins()
+                            .stream()
+                            .flatMap(registeredPlugin -> registeredPlugin.getConditions().stream())
+                            .filter(ScheduleCondition.class::isAssignableFrom)
+                            .map(clz -> typeContext.resolveSubtype(declaredType, clz))
+                            .collect(Collectors.toList());
+                    }
+
+                    return null;
+                });
+            // description as Markdown
+            builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
+                this.mutateDescription(collectedTypeAttributes);
+            });
+
+            builder.forFields().withInstanceAttributeOverride((collectedTypeAttributes, scope, context) -> {
+                this.mutateDescription(collectedTypeAttributes);
+            });
+
+            // default is no more required
+            builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
+                if (collectedTypeAttributes.has("required") && collectedTypeAttributes.get("required") instanceof ArrayNode) {
+                    ArrayNode required = context.getGeneratorConfig().createArrayNode();
+
+                    collectedTypeAttributes.get("required").forEach(jsonNode -> {
+                        if (!collectedTypeAttributes.get("properties").get(jsonNode.asText()).has("default")) {
+                            required.add(jsonNode.asText());
+                        }
+                    });
+
+                    collectedTypeAttributes.set("required", required);
+                }
+            });
+
+            // invalid regexp for jsonschema
+            builder.forFields().withInstanceAttributeOverride((collectedTypeAttributes, scope, context) -> {
+                if (collectedTypeAttributes.has("pattern") && collectedTypeAttributes.get("pattern").asText().contains("javaJavaIdentifier")) {
+                    collectedTypeAttributes.remove("pattern");
+                }
+            });
+
+            // examples in description
+            builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
+                if (collectedTypeAttributes.has("$examples")) {
+                    ArrayNode examples = (ArrayNode) collectedTypeAttributes.get("$examples");
+
+                    String doc = StreamSupport.stream(examples.spliterator(), true)
+                        .map(jsonNode -> {
+                            String description = "";
+                            if (jsonNode.has("title")) {
+                                description += "> " + jsonNode.get("title").asText() + "\n";
+                            }
+
+                            description += "```" +
+                                (jsonNode.has("lang") ? jsonNode.get("lang").asText() : "yaml")
+                                + "\n" +
+                                jsonNode.get("code").asText() +
+                                "\n```";
+
+                            return description;
+                        })
+                        .collect(Collectors.joining("\n\n"));
+
+                    String description = collectedTypeAttributes.has("markdownDescription") ?
+                        collectedTypeAttributes.get("markdownDescription").asText() :
+                        "";
+
+                    description += "##### Examples\n" + doc;
+
+                    collectedTypeAttributes.set("markdownDescription", new TextNode(description));
+
+                    collectedTypeAttributes.remove("$examples");
+                }
+            });
+        }
     }
 
     protected <T> Map<String, Object> generate(Class<? extends T> cls, @Nullable Class<T> base) {

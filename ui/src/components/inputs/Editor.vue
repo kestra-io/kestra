@@ -20,10 +20,10 @@
                     :options="options"
                     :diff-editor="original !== undefined"
                     :original="original"
-                    :schemas="schemas"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
                     :language="lang"
+                    :schema-type="schemaType"
                 />
 
                 <div
@@ -52,7 +52,7 @@
             modelValue: {type: String, required: true},
             original: {type: String, default: undefined},
             lang: {type: String, default: undefined},
-            schemas: {type: Array, default: undefined},
+            schemaType: {type: String, default: undefined},
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
             fullHeight: {type: Boolean, default: true},

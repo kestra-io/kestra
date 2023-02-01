@@ -59,7 +59,6 @@
                         </el-button>
                     </el-tooltip>
 
-
                     <task-edit
                         class="node-action"
                         :modal-id="`modal-source-${hash}`"
@@ -109,7 +108,7 @@
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import SearchField from "../layout/SearchField.vue";
     import TaskIcon from "../plugins/TaskIcon.vue";
-    import TaskEdit from "override/components/flows/TaskEdit.vue";
+    import TaskEdit from "../flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Collapse from "../layout/Collapse.vue";

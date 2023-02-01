@@ -1,6 +1,6 @@
 <template>
     <div>
-        <flow-editor @save="save" v-model="content" lang="yaml" @update:model-value="onChange($event)" />
+        <editor @save="save" v-model="content" schemaType="flow" lang="yaml" @update:model-value="onChange($event)" />
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>

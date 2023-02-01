@@ -63,7 +63,7 @@ class TemplateNamespaceUpdateCommandTest {
             Integer call = PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, args);
 
 //            assertThat(call, is(1));
-            assertThat(out.toString(), containsString("Unable to update templates"));
+            assertThat(out.toString(), containsString("Unable to parse templates"));
             assertThat(out.toString(), containsString("must not be empty"));
         }
     }

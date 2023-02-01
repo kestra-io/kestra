@@ -116,19 +116,19 @@
 
         <bottom-line v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
             <ul>
-                <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" />
+                <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()" />
                 <li v-if="canUpdate">
-                    <el-button :icon="Restart" type="success" class="bulk-button" @click="this.restartExecutions()">
+                    <el-button :icon="Restart" type="success" class="bulk-button" @click="restartExecutions()">
                         {{ $t('restart') }}
                     </el-button>
                 </li>
                 <li v-if="canUpdate">
-                    <el-button :icon="StopCircleOutline" type="warning" class="bulk-button" @click="this.killExecutions()">
+                    <el-button :icon="StopCircleOutline" type="warning" class="bulk-button" @click="killExecutions()">
                         {{ $t('kill') }}
                     </el-button>
                 </li>
                 <li v-if="canDelete">
-                    <el-button :icon="Delete" type="danger" class="bulk-button" @click="this.deleteExecutions()">
+                    <el-button :icon="Delete" type="danger" class="bulk-button" @click="deleteExecutions()">
                         {{ $t('delete') }}
                     </el-button>
                 </li>
@@ -243,6 +243,9 @@
                 }
                 this.executionsSelection = val.map(x => x.id);
             },
+            selectAll() {
+                this.$refs.table.toggleAllSelection();
+            },
             isRunning(item){
                 return State.isRunning(item.state.current);
             },
@@ -312,7 +315,8 @@
                                     return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
                                 }), this.$t(e.message)))
                         }
-                    }
+                    },
+                    () => {}
                 )
             },
             deleteExecutions() {
@@ -339,7 +343,8 @@
                                     return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
                                 }), this.$t(e.message)))
                         }
-                    }
+                    },
+                    () => {}
                 )
             },
             killExecutions() {
@@ -366,7 +371,8 @@
                                     return {message: this.$t(exec.message, {executionId: exec.invalidValue})}
                                 }), this.$t(e.message)))
                         }
-                    }
+                    },
+                    () => {}
                 )
             },
         }

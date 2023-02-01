@@ -306,7 +306,7 @@ public class ExecutionController {
             }
         }
         if (invalids.size() > 0) {
-            return HttpResponse.unprocessableEntity()
+            return HttpResponse.badRequest()
                 .body(BulkErrorResponse
                     .builder()
                     .message("invalid bulk delete")
@@ -635,8 +635,7 @@ public class ExecutionController {
             }
         }
         if (invalids.size() > 0) {
-                return HttpResponse.unprocessableEntity()
-                    .body(BulkErrorResponse
+                return HttpResponse.badRequest(BulkErrorResponse
                         .builder()
                         .message("invalid bulk restart")
                         .invalids(invalids)
@@ -792,7 +791,7 @@ public class ExecutionController {
             Optional<Execution> execution = executionRepository.findById(executionId);
             if (execution.isPresent() && execution.get().getState().isTerninated()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "Execution already finished",
+                    "execution already finished",
                     executionId,
                     String.class,
                     "execution",
@@ -800,7 +799,7 @@ public class ExecutionController {
                 ));
             } else if (execution.isEmpty()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "Execution not found",
+                    "execution not found",
                     executionId,
                     String.class,
                     "execution",
@@ -812,10 +811,9 @@ public class ExecutionController {
         }
 
         if (invalids.size() > 0) {
-            return HttpResponse.unprocessableEntity()
-                .body(BulkErrorResponse
+            return HttpResponse.badRequest(BulkErrorResponse
                     .builder()
-                    .message("Invalid bulk kill")
+                    .message("invalid bulk kill")
                     .invalids(invalids)
                     .build()
                 );

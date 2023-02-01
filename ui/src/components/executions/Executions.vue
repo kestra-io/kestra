@@ -116,8 +116,7 @@
 
         <bottom-line v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
             <ul>
-                <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total"
-                    @update:model-value="selectAll()" />
+                <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()" />
                 <li v-if="canUpdate">
                     <el-button :icon="Restart" type="success" class="bulk-button" @click="restartExecutions()">
                         {{ $t('restart') }}

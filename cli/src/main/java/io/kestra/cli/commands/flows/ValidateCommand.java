@@ -15,13 +15,9 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import picocli.CommandLine;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import jakarta.inject.Inject;
 
@@ -39,10 +35,6 @@ public class ValidateCommand extends AbstractValidateCommand {
 
     @Inject
     private ModelValidator modelValidator;
-
-
-    @CommandLine.Parameters(index = "0", description = "the directory containing flows to check")
-    public Path directory;
 
     @Override
     public Integer call() throws Exception {
@@ -65,17 +57,7 @@ public class ValidateCommand extends AbstractValidateCommand {
                     }
                 });
         } else {
-            String body = String.join("\n---\n",Files.walk(directory)
-                .filter(Files::isRegularFile)
-                .filter(YamlFlowParser::isValidExtension)
-                .map(path -> {
-                    try {
-                        return Files.readString(path, Charset.defaultCharset());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .collect(Collectors.toList()));
+            String body = io.kestra.cli.commands.templates.ValidateCommand.buildYamlBody(directory);
 
             try(DefaultHttpClient client = client()) {
                 MutableHttpRequest<String> request = HttpRequest

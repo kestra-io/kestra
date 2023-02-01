@@ -35,7 +35,11 @@ public class YamlFlowParser {
     }
 
     public Flow parse(String input) {
-        return (Flow) readFlow(mapper, input, Flow.class);
+        return (Flow) readFlow(mapper, input, Flow.class, "flow");
+    }
+
+    public Template parseTemplate(String input) {
+        return (Template) readFlow(mapper, input, Template.class, "template");
     }
 
     public Template parseTemplate(File file) throws ConstraintViolationException {
@@ -47,7 +51,8 @@ public class YamlFlowParser {
                         .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
                     ),
                 input,
-                Template.class
+                Template.class,
+                "template"
             );
 
         } catch (IOException e) {
@@ -72,11 +77,12 @@ public class YamlFlowParser {
             String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
             return (Flow) readFlow(
                 mapper.copy()
-                .setInjectableValues(new InjectableValues.Std()
-                    .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
-                ),
+                    .setInjectableValues(new InjectableValues.Std()
+                        .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
+                    ),
                 input,
-                Flow.class
+                Flow.class,
+                "flow"
             );
 
         } catch (IOException e) {
@@ -95,7 +101,7 @@ public class YamlFlowParser {
         }
     }
 
-    private Object readFlow(ObjectMapper mapper, String input, Class objectClass) {
+    private Object readFlow(ObjectMapper mapper, String input, Class objectClass, String resource) {
         try {
             return mapper.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
@@ -103,7 +109,7 @@ public class YamlFlowParser {
                 throw (ConstraintViolationException) e.getCause();
             } else {
                 throw new ConstraintViolationException(
-                    "Illegal flow yaml:" + e.getMessage(),
+                    "Illegal "+ resource +" yaml:" + e.getMessage(),
                     Collections.singleton(
                         ManualConstraintViolation.of(
                             "Caused by: " + e.getCause() + "\nMessage: " + e.getMessage(),

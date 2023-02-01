@@ -1,6 +1,9 @@
 package io.kestra.webserver.controllers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.serializers.YamlFlowParser;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -16,6 +19,7 @@ import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -35,6 +39,8 @@ import javax.validation.Valid;
 public class TemplateController {
     @Inject
     private TemplateRepositoryInterface templateRepository;
+    @Inject
+    private ModelValidator modelValidator;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
@@ -219,4 +225,31 @@ public class TemplateController {
         return Stream.concat(deleted.stream(), updatedOrCreated.stream()).collect(Collectors.toList());
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "validate", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Operation(tags = {"Templates"}, summary = "Validate a list of templates")
+    public List<ValidateConstraintViolation> validateTemplates(
+        @Parameter(description= "A list of templates") @Body @Nullable String templates
+    ) {
+        AtomicInteger index = new AtomicInteger(0);
+        return List
+            .of(templates.split("---"))
+            .stream()
+            .map(template -> {
+                ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+                validateConstraintViolationBuilder.index(index.getAndIncrement());
+                try {
+                    Template templateParse = new YamlFlowParser().parseTemplate(template);
+
+                    validateConstraintViolationBuilder.flow(templateParse.getId());
+                    validateConstraintViolationBuilder.namespace(templateParse.getNamespace());
+
+                    modelValidator.validate(templateParse);
+                } catch (ConstraintViolationException e){
+                    validateConstraintViolationBuilder.constraints(e.getMessage());
+                }
+                return validateConstraintViolationBuilder.build();
+            })
+            .collect(Collectors.toList());
+    }
 }

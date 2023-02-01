@@ -1,29 +1,42 @@
 package io.kestra.cli;
 
+import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import picocli.CommandLine;
 
 import javax.validation.ConstraintViolationException;
 
-public class AbstractValidateCommand extends AbstractCommand {
+
+public class AbstractValidateCommand extends AbstractApiCommand {
+    @CommandLine.Option(names = {"--local"}, description = "If validation should be done by the client", defaultValue = "false")
+    protected boolean local;
 
     public static void handleException(ConstraintViolationException e, String resource) {
-        stdErr("@|fg(red) Unable to parse {0} due to the following error(s):|@", resource);
+        stdErr("\t@|fg(red) Unable to parse {0} due to the following error(s):|@", resource);
         e.getConstraintViolations()
             .forEach(constraintViolation -> {
                 stdErr(
-                    "- {0} at @|underline,blue {1}|@ with value @|bold,yellow {2}|@ ",
-                    constraintViolation.getMessage(),
-                    constraintViolation.getPropertyPath(),
-                    constraintViolation.getInvalidValue()
+                    "\t- @|bold,yellow {0} : {1} |@",
+                    constraintViolation.getMessage().replace("\n"," - "),
+                    constraintViolation.getPropertyPath()
                 );
             });
     }
 
     public static void handleHttpException(HttpClientResponseException e, String resource) {
-        stdErr("@|fg(red) Unable to update {0}s due to the following error:|@", resource);
+        stdErr("\t@|fg(red) Unable to parse {0}s due to the following error:|@", resource);
         stdErr(
-            "- @|bold,yellow {0}|@",
+            "\t- @|bold,yellow {0}|@",
             e.getMessage()
         );
+    }
+
+    public static void handleValidateConstraintViolation(ValidateConstraintViolation validateConstraintViolation, String resource){
+        stdErr("\t@|fg(red) Unable to parse {0}s due to the following error:|@", resource);
+        stdErr(
+            "\t- @|bold,yellow {0}|@",
+            validateConstraintViolation.getConstraints()
+        );
+
     }
 }

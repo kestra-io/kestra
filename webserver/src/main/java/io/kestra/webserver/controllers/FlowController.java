@@ -8,6 +8,8 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.TaskDefaultService;
@@ -31,6 +33,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -47,6 +50,8 @@ public class FlowController {
 
     @Inject
     private TaskDefaultService taskDefaultService;
+    @Inject
+    private ModelValidator modelValidator;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
@@ -176,7 +181,7 @@ public class FlowController {
     )
     public List<FlowWithSource> updateNamespace(
         @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "A list of flows") @Body  @Nullable String flows,
+        @Parameter(description = "A list of flows") @Body @Nullable String flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
         List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
@@ -379,5 +384,35 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "List all distinct namespaces")
     public List<String> listDistinctNamespace() {
         return flowRepository.findDistinctNamespace();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "validate", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
+    public List<ValidateConstraintViolation> validateFlows(
+        @Parameter(description= "A list of flows") @Body @Nullable String flows
+    ) {
+        AtomicInteger index = new AtomicInteger(0);
+        return List
+            .of(flows.split("---"))
+            .stream()
+            .map(flow -> {
+                ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+                validateConstraintViolationBuilder.index(index.getAndIncrement());
+
+                try {
+                    Flow flowParse = new YamlFlowParser().parse(flow);
+
+                    validateConstraintViolationBuilder.flow(flowParse.getId());
+                    validateConstraintViolationBuilder.namespace(flowParse.getNamespace());
+
+                    modelValidator.validate(taskDefaultService.injectDefaults(flowParse));
+
+                } catch (ConstraintViolationException e){
+                    validateConstraintViolationBuilder.constraints(e.getMessage());
+                }
+                return validateConstraintViolationBuilder.build();
+            })
+            .collect(Collectors.toList());
     }
 }

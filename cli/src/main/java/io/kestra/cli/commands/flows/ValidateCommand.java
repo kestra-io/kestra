@@ -4,12 +4,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.netty.DefaultHttpClient;
 import picocli.CommandLine;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
 import jakarta.inject.Inject;
+
 import javax.validation.ConstraintViolationException;
 
 @CommandLine.Command(
@@ -25,23 +40,69 @@ public class ValidateCommand extends AbstractValidateCommand {
     @Inject
     private ModelValidator modelValidator;
 
-    @CommandLine.Parameters(index = "0", description = "the flow file to test")
-    private Path file;
+
+    @CommandLine.Parameters(index = "0", description = "the directory containing flows to check")
+    public Path directory;
 
     @Override
     public Integer call() throws Exception {
         super.call();
+        AtomicInteger returnCode = new AtomicInteger(0);
 
-        try {
-            Flow parse = yamlFlowParser.parse(file.toFile());
-            modelValidator.validate(parse);
-            stdOut(mapper.writeValueAsString(parse));
-        } catch (ConstraintViolationException e) {
-            ValidateCommand.handleException(e, "flow");
+        if(this.local) {
+            Files.walk(directory)
+                .filter(Files::isRegularFile)
+                .filter(YamlFlowParser::isValidExtension)
+                .forEach(path -> {
+                    try {
+                        Flow parse = yamlFlowParser.parse(path.toFile());
+                        modelValidator.validate(parse);
+                        stdOut("@|green \u2713|@ - " + parse.getId());
+                    } catch (ConstraintViolationException e) {
+                        stdErr("@|red \u2718|@ - " + path);
+                        ValidateCommand.handleException(e, "flow");
+                        returnCode.set(1);
+                    }
+                });
+        } else {
+            String body = String.join("\n---\n",Files.walk(directory)
+                .filter(Files::isRegularFile)
+                .filter(YamlFlowParser::isValidExtension)
+                .map(path -> {
+                    try {
+                        return Files.readString(path, Charset.defaultCharset());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .collect(Collectors.toList()));
 
-            return 1;
+            try(DefaultHttpClient client = client()) {
+                MutableHttpRequest<String> request = HttpRequest
+                    .POST("/api/v1/flows/validate", body).contentType(MediaType.APPLICATION_YAML);
+
+                List<ValidateConstraintViolation> validations = client.toBlocking().retrieve(
+                    this.requestOptions(request),
+                    Argument.listOf(ValidateConstraintViolation.class)
+                );
+                validations.forEach(
+                    validation -> {
+                        if (validation.getConstraints() == null){
+                            stdOut("@|green \u2713|@ - " + validation.getIdentity());
+                        } else {
+                            stdErr("@|red \u2718|@ - " + validation.getIdentity());
+                            ValidateCommand.handleValidateConstraintViolation(validation, "flow");
+                            returnCode.set(1);
+                        }
+                    }
+                );
+            } catch (HttpClientResponseException e){
+                ValidateCommand.handleHttpException(e, "flow");
+
+                return 1;
+            }
         }
 
-        return 0;
+        return returnCode.get();
     }
 }

@@ -9,6 +9,10 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Collectors;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -28,7 +32,11 @@ public class ValidateConstraintViolation {
     private String constraints;
 
     public String getIdentity(){
-        return flow != null & namespace != null ? getFlowId() : flow != null ? flow : "Flow at index " + index;
+        return flow != null & namespace != null ? getFlowId() : flow != null ? flow : String.valueOf(index);
+    }
+
+    public String getIdentity(Path directory) throws IOException {
+        return flow != null & namespace != null ? getFlowId() : flow != null ? flow : String.valueOf(Files.walk(directory).collect(Collectors.toList()).get(index));
     }
 
     public String getFlowId(){

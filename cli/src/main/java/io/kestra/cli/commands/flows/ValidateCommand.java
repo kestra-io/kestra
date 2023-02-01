@@ -15,6 +15,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import picocli.CommandLine;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,7 +58,7 @@ public class ValidateCommand extends AbstractValidateCommand {
                     }
                 });
         } else {
-            String body = io.kestra.cli.commands.templates.ValidateCommand.buildYamlBody(directory);
+            String body = ValidateCommand.buildYamlBody(directory);
 
             try(DefaultHttpClient client = client()) {
                 MutableHttpRequest<String> request = HttpRequest
@@ -72,7 +73,11 @@ public class ValidateCommand extends AbstractValidateCommand {
                         if (validation.getConstraints() == null){
                             stdOut("@|green \u2713|@ - " + validation.getIdentity());
                         } else {
-                            stdErr("@|red \u2718|@ - " + validation.getIdentity());
+                            try {
+                                stdErr("@|red \u2718|@ - " + validation.getIdentity(directory));
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
                             ValidateCommand.handleValidateConstraintViolation(validation, "flow");
                             returnCode.set(1);
                         }

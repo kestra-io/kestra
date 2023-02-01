@@ -17,6 +17,7 @@ import jakarta.inject.Inject;
 import picocli.CommandLine;
 
 import javax.validation.ConstraintViolationException;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,7 +72,11 @@ public class ValidateCommand extends AbstractValidateCommand {
                         if (validation.getConstraints() == null){
                             stdOut("@|green \u2713|@ - " + validation.getIdentity());
                         } else {
-                            stdErr("@|red \u2718|@ - " + validation.getIdentity());
+                            try {
+                                stdErr("@|red \u2718|@ - " + validation.getIdentity(directory));
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
                             io.kestra.cli.commands.flows.ValidateCommand.handleValidateConstraintViolation(validation, "template");
                             returnCode.set(1);
                         }

@@ -15,7 +15,7 @@ import static org.hamcrest.core.StringContains.containsString;
 
 class TemplateNamespaceUpdateCommandTest {
     @Test
-    void run()  {
+    void run() {
         URL directory = TemplateNamespaceUpdateCommandTest.class.getClassLoader().getResource("templates");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
@@ -36,12 +36,12 @@ class TemplateNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("2 template(s)"));
+            assertThat(out.toString(), containsString("3 template(s)"));
         }
     }
 
     @Test
-    void invalid()  {
+    void invalid() {
         URL directory = TemplateNamespaceUpdateCommandTest.class.getClassLoader().getResource("invalidsTemplates");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setErr(new PrintStream(out));
@@ -65,6 +65,48 @@ class TemplateNamespaceUpdateCommandTest {
 //            assertThat(call, is(1));
             assertThat(out.toString(), containsString("Unable to parse templates"));
             assertThat(out.toString(), containsString("must not be empty"));
+        }
+    }
+
+    @Test
+    void runNoDelete() {
+        URL directory = TemplateNamespaceUpdateCommandTest.class.getClassLoader().getResource("templates");
+        URL subDirectory = TemplateNamespaceUpdateCommandTest.class.getClassLoader().getResource("templates/templatesSubFolder");
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+
+            EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
+            embeddedServer.start();
+
+            String[] args = {
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "io.kestra.tests",
+                directory.getPath(),
+
+            };
+            PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, args);
+
+            assertThat(out.toString(), containsString("3 template(s)"));
+
+            String[] newArgs = {
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "io.kestra.tests",
+                subDirectory.getPath(),
+                "--no-delete"
+
+            };
+            PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, newArgs);
+
+            assertThat(out.toString(), containsString("1 template(s)"));
         }
     }
 }

@@ -37,7 +37,7 @@ class FlowNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("2 flow(s)"));
+            assertThat(out.toString(), containsString("3 flow(s)"));
         }
     }
 
@@ -66,6 +66,47 @@ class FlowNamespaceUpdateCommandTest {
             assertThat(call, is(1));
             assertThat(out.toString(), containsString("Unable to parse flows"));
             assertThat(out.toString(), containsString("must not be empty"));
+        }
+    }
+
+    @Test
+    void runNoDelete()  {
+        URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows");
+        URL subDirectory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows/flowsSubFolder");
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+
+            EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
+            embeddedServer.start();
+
+            String[] args = {
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "io.kestra.cli",
+                directory.getPath(),
+
+            };
+            PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
+
+            assertThat(out.toString(), containsString("3 flow(s)"));
+
+            String[] newArgs = {
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "io.kestra.cli",
+                subDirectory.getPath(),
+                "--no-delete"
+            };
+            PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, newArgs);
+
+            assertThat(out.toString(), containsString("1 flow(s)"));
         }
     }
 }

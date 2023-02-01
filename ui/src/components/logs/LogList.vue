@@ -125,7 +125,7 @@
     import State from "../../utils/state";
     import Status from "../Status.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue"
-    import TaskEdit from "override/components/flows/TaskEdit.vue";
+    import TaskEdit from "../flows/TaskEdit.vue";
     import Duration from "../layout/Duration.vue";
 
     export default {

@@ -18,6 +18,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -58,10 +59,13 @@ public class JsonSchemaGenerator {
 
             Map<String, Object> map = JacksonMapper.toMap(objectNode);
 
-            // hack for Task
+            // hack
             if (cls == Task.class) {
                 fixTask(map);
+            } else if (cls == Flow.class) {
+                fixFlow(map);
             }
+
 
             return map;
         } catch (IllegalArgumentException e) {
@@ -105,6 +109,18 @@ public class JsonSchemaGenerator {
         var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
         var allOf = (List<Object>) task.get("allOf");
         allOf.remove(1);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void fixFlow(Map<String, Object> map) {
+        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
+        var flow = (Map<String, Object>) definitions.get("io.kestra.core.models.flows.Flow");
+
+        var requireds = (List<String>) flow.get("required");
+        requireds.remove("deleted");
+
+        var properties = (Map<String, Object>) flow.get("properties");
+        properties.remove("deleted");
     }
 
     public <T> Map<String, Object> properties(Class<T> base, Class<? extends T> cls) {

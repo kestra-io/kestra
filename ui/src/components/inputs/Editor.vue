@@ -52,7 +52,7 @@
             modelValue: {type: String, required: true},
             original: {type: String, default: undefined},
             lang: {type: String, default: undefined},
-            schemaType: {type: String, default: "flow"},
+            schemaType: {type: String, default: undefined},
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
             fullHeight: {type: Boolean, default: true},

@@ -4,7 +4,7 @@
 
 <script>
     import {mapGetters} from "vuex";
-    import FlowEdit from "override/components/flows/FlowEdit.vue";
+    import FlowEdit from "./FlowEdit.vue";
     import RouteContext from "../../mixins/routeContext";
 
     export default {

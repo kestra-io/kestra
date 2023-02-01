@@ -66,12 +66,12 @@
                 required: true,
             },
             options: {
-                type:Object,
+                type: Object,
                 default: undefined
             },
             schemaType: {
                 type: String,
-                default: "flow"
+                default: undefined
             },
             diffEditor: {
                 type: Boolean,
@@ -157,7 +157,12 @@
                         modified: modifiedModel
                     });
                 } else {
-                    options["model"] = monaco.editor.createModel(this.value, this.language, monaco.Uri.parse(`file:///${this.schemaType}-${Utils.uid()}.yaml`))
+                    if (this.schemaType) {
+                        options["model"] = monaco.editor.createModel(this.value, this.language, monaco.Uri.parse(`file:///${this.schemaType}-${Utils.uid()}.yaml`))
+                    } else {
+                        options["model"] = monaco.editor.createModel(this.value, this.language);
+                    }
+
                     this.editor = monaco.editor.create(this.$el, options);
                 }
 

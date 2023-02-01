@@ -2,13 +2,13 @@ package io.kestra.core.docs;
 
 import io.kestra.core.Helpers;
 import io.kestra.core.models.flows.Flow;
-import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.tasks.scripts.Bash;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -16,8 +16,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -52,7 +50,6 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @Disabled("temp disabled")
     void flow() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) -> {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
@@ -63,10 +60,10 @@ class JsonSchemaGeneratorTest {
 
             var flow = definitions.get("io.kestra.core.models.flows.Flow");
             assertThat((List<String>) flow.get("required"), not(contains("deleted")));
-            assertThat((List<String>) flow.get("required"), containsInAnyOrder("id", "namespace", "tasks"));
+            assertThat((List<String>) flow.get("required"), hasItems("id", "namespace", "tasks"));
 
             var bash = definitions.get("io.kestra.core.tasks.scripts.Bash-1");
-            assertThat((List<String>) bash.get("required"), not(hasItem("exitOnFailed")));
+            assertThat((List<String>) bash.get("required"), not(contains("exitOnFailed")));
             assertThat((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("exitOnFailed").get("markdownDescription"), containsString("Default value is : `true`"));
             assertThat(((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("exitOnFailed").get("markdownDescription")).startsWith("This tells bash that"), is(true));
             assertThat(((Map<String, Map<String, Object>>) bash.get("properties")).get("type").containsKey("pattern"), is(false));
@@ -82,7 +79,6 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @Disabled("temp disabled")
     void task() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) -> {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
@@ -99,7 +95,6 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @Disabled("temp disabled")
     void bash() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) -> {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
@@ -109,8 +104,8 @@ class JsonSchemaGeneratorTest {
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
 
             var bash = definitions.get("io.kestra.core.tasks.scripts.Bash-1");
-            assertThat((List<String>) bash.get("required"), not(hasItem("exitOnFailed")));
-            assertThat((List<String>) bash.get("required"), not(hasItem("interpreter")));
+            assertThat((List<String>) bash.get("required"), not(contains("exitOnFailed")));
+            assertThat((List<String>) bash.get("required"), not(contains("interpreter")));
         });
     }
 

@@ -26,7 +26,7 @@
                         {{ taskRuns.length }}
                     </el-tag>
 
-                    <span v-if="histories"><duration :histories="histories" /></span>
+                    <span v-if="execution && histories"><duration :histories="histories" /></span>
                 </span>
 
                 <el-button-group>

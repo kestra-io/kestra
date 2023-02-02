@@ -96,6 +96,7 @@ abstract public class JacksonMapper {
             new IonObjectMapper(new IonFactory())
         )
         .registerModule(new IonModule())
+        // USE_DEFAULTS is not use because NON_EMPTY overwrite it and we can only have one SerializationInclusion at time
         .setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS)
         .setSerializationInclusion(JsonInclude.Include.ALWAYS);
 
@@ -109,7 +110,7 @@ abstract public class JacksonMapper {
             TypeFactory tf = TypeFactory.defaultInstance().withClassLoader(KestraClassLoader.instance());
             mapper.setTypeFactory(tf);
         }
-
+        // NON_NULL is not use because NON_EMPTY overwrite it and we can only have one SerializationInclusion at time
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)

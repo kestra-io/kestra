@@ -245,29 +245,30 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
 
             // pull image
             if (abstractBash.getDockerOptions().getPullImage()) {
-                PullImageCmd pull = dockerClient.pullImageCmd(image);
-                retryUtils.<Boolean, InternalServerErrorException>of(
-                    Exponential.builder()
-                        .delayFactor(2.0)
-                        .interval(Duration.ofSeconds(5))
-                        .maxInterval(Duration.ofSeconds(120))
-                        .maxAttempt(5)
-                        .build()
-                ).run(
-                    (bool, throwable) -> throwable instanceof InternalServerErrorException ||
-                        throwable.getCause() instanceof ConnectionClosedException,
-                    () -> {
-                        String tag = !imageParse.tag.isEmpty() ? imageParse.tag : "latest";
-                        String repository = pull.getRepository().contains(":")
-                            ? pull.getRepository().split(":")[0] : pull.getRepository();
-                        pull
-                            .withTag(tag)
-                            .exec(new PullImageResultCallback())
-                            .awaitCompletion();
-                        logger.debug("Image pulled [{}:{}]", repository, tag);
-                        return true;
-                    }
-                );
+                try (PullImageCmd pull = dockerClient.pullImageCmd(image)) {
+                    retryUtils.<Boolean, InternalServerErrorException>of(
+                        Exponential.builder()
+                            .delayFactor(2.0)
+                            .interval(Duration.ofSeconds(5))
+                            .maxInterval(Duration.ofSeconds(120))
+                            .maxAttempt(5)
+                            .build()
+                    ).run(
+                        (bool, throwable) -> throwable instanceof InternalServerErrorException ||
+                            throwable.getCause() instanceof ConnectionClosedException,
+                        () -> {
+                            String tag = !imageParse.tag.isEmpty() ? imageParse.tag : "latest";
+                            String repository = pull.getRepository().contains(":")
+                                ? pull.getRepository().split(":")[0] : pull.getRepository();
+                            pull
+                                .withTag(tag)
+                                .exec(new PullImageResultCallback())
+                                .awaitCompletion();
+                            logger.debug("Image pulled [{}:{}]", repository, tag);
+                            return true;
+                        }
+                    );
+                }
             }
 
             // start container
@@ -319,20 +320,23 @@ public class DockerScriptRunner implements ScriptRunnerInterface {
                 logger.warn("Killing process {} for InterruptedException", exec.getId());
 
                 throw e;
-            }
-            finally {
-                var inspect = dockerClient.inspectContainerCmd(exec.getId()).exec();
-                if(Boolean.TRUE.equals(inspect.getState().getRunning())) {
-                    // kill container as it's still running, this means there was an exception and the container didn't
-                    // come to a normal end.
-                    try {
-                        dockerClient.killContainerCmd(exec.getId()).exec();
+            } finally {
+                try  {
+                    var inspect = dockerClient.inspectContainerCmd(exec.getId()).exec();
+                    if (Boolean.TRUE.equals(inspect.getState().getRunning())) {
+                        // kill container as it's still running, this means there was an exception and the container didn't
+                        // come to a normal end.
+                        try {
+                            dockerClient.killContainerCmd(exec.getId()).exec();
+                        } catch (Exception e) {
+                            logger.error("Unable to kill a running container", e);
+                        }
                     }
-                    catch (Exception e) {
-                        logger.error("Unable to kill a running container", e);
-                    }
+                    dockerClient.removeContainerCmd(exec.getId()).exec();
+                } catch (Exception ignored) {
+
                 }
-                dockerClient.removeContainerCmd(exec.getId()).exec();
+
             }
         }
     }

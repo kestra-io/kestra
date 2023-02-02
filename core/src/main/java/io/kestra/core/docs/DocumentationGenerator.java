@@ -92,7 +92,11 @@ public class DocumentationGenerator {
 
         if (plugin.getManifest() != null) {
             builder.put("title", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Title"));
-            builder.put("description", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description"));
+
+            if (plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description") != null) {
+                builder.put("description", plugin.getManifest().getMainAttributes().getValue("X-Kestra-Description"));
+            }
+
             var group = plugin.getManifest().getMainAttributes().getValue("X-Kestra-Group");
             builder.put("group", group);
             longDescription(plugin, builder, group);

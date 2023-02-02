@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractApiCommand extends AbstractCommand {
-    @CommandLine.Option(names = {"--server"}, description = "Also write core tasks plugins", defaultValue = "http://localhost:8080")
+    @CommandLine.Option(names = {"--server"}, description = " Kestra server url", defaultValue = "http://localhost:8080")
     protected URL server;
 
-    @CommandLine.Option(names = {"--headers"}, description = "Also write core tasks plugins")
+    @CommandLine.Option(names = {"--headers"}, description = "Headers to add to the request")
     protected Map<CharSequence, CharSequence> headers;
 
     @CommandLine.Option(names = {"--user"}, description = "<user:password> Server user and password")

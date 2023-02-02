@@ -46,7 +46,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
     void create() {
         Template template = createTemplate();
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getId()));
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/io.kestra.tests/" + template.getId()));
         });
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
 
@@ -59,7 +59,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
     @Test
     void idNotFound() {
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/notFound"));
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/io.kestra.tests/notFound"));
         });
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
     }

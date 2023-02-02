@@ -1,0 +1,7 @@
+id: template
+namespace: io.kestra.tests
+tasks:
+  - id: 1-return
+    type: io.kestra.core.tasks.debugs.Return
+    format: "{{ parent.outputs.args.renamedStore }}"
+

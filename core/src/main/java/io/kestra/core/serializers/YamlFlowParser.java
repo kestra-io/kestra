@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.helpers.HandleBarDeserializer;
 import jakarta.inject.Singleton;
@@ -33,31 +34,36 @@ public class YamlFlowParser {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
     }
 
-    public Flow parse(String input) {
-        return readFlow(mapper, input);
+    public <T> T parse(String input, Class<T> cls) {
+        return readFlow(mapper, input, cls, type(cls));
     }
 
-    public Flow parse(File file) throws ConstraintViolationException {
+    private static <T> String type(Class<T> cls) {
+        return cls.getSimpleName().toLowerCase();
+    }
 
+    public <T> T parse(File file, Class<T> cls) throws ConstraintViolationException {
         try {
             String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
             return readFlow(
                 mapper.copy()
-                .setInjectableValues(new InjectableValues.Std()
-                    .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
-                ),
-                input
+                    .setInjectableValues(new InjectableValues.Std()
+                        .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
+                    ),
+                input,
+                cls,
+                type(cls)
             );
 
         } catch (IOException e) {
             throw new ConstraintViolationException(
-                "Illegal flow path:" + e.getMessage(),
+                "Illegal " + type(cls) + " path:" + e.getMessage(),
                 Collections.singleton(
                     ManualConstraintViolation.of(
                         e.getMessage(),
                         file,
                         File.class,
-                        "flow",
+                        type(cls),
                         file.getAbsolutePath()
                     )
                 )
@@ -65,15 +71,15 @@ public class YamlFlowParser {
         }
     }
 
-    private Flow readFlow(ObjectMapper mapper, String input) {
+    private <T> T readFlow(ObjectMapper mapper, String input, Class<T> objectClass, String resource) {
         try {
-            return mapper.readValue(input, Flow.class);
+            return mapper.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException) {
                 throw (ConstraintViolationException) e.getCause();
             } else {
                 throw new ConstraintViolationException(
-                    "Illegal flow yaml:" + e.getMessage(),
+                    "Illegal "+ resource +" yaml:" + e.getMessage(),
                     Collections.singleton(
                         ManualConstraintViolation.of(
                             "Caused by: " + e.getCause() + "\nMessage: " + e.getMessage(),

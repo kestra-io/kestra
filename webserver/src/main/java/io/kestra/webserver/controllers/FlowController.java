@@ -8,6 +8,8 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.TaskDefaultService;
@@ -30,12 +32,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 
@@ -49,6 +50,9 @@ public class FlowController {
 
     @Inject
     private TaskDefaultService taskDefaultService;
+
+    @Inject
+    private ModelValidator modelValidator;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
@@ -154,7 +158,7 @@ public class FlowController {
     public HttpResponse<FlowWithSource> create(
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
-        Flow flowParsed = new YamlFlowParser().parse(flow);
+        Flow flowParsed = new YamlFlowParser().parse(flow, Flow.class);
 
         return HttpResponse.ok(flowRepository.create(flowParsed, flow, taskDefaultService.injectDefaults(flowParsed)));
     }
@@ -178,16 +182,16 @@ public class FlowController {
     )
     public List<FlowWithSource> updateNamespace(
         @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "A list of flows") @Body String flows,
+        @Parameter(description = "A list of flows") @Body @Nullable String flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
-        List<String> sources = List.of(flows.split("---"));
+        List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
 
         return this.updateCompleteNamespace(
             namespace,
             sources
                 .stream()
-                .map(flow -> new YamlFlowParser().parse(flow))
+                .map(flow -> new YamlFlowParser().parse(flow, Flow.class))
                 .collect(Collectors.toList()),
             sources,
             delete
@@ -264,16 +268,21 @@ public class FlowController {
             .collect(Collectors.toList());
 
         // delete all not in updated ids
+        List<FlowWithSource> deleted = new ArrayList<>();
         if (delete) {
-            flowRepository
+            deleted = flowRepository
                 .findByNamespace(namespace)
                 .stream()
                 .filter(flow -> !ids.contains(flow.getId()))
-                .forEach(flow -> flowRepository.delete(flow));
+                .map(flow -> {
+                    flowRepository.delete(flow);
+                    return  FlowWithSource.of(flow, flow.generateSource());
+                })
+                .collect(Collectors.toList());
         }
 
         // update or create flows
-        return IntStream.range(0, flows.size())
+        List<FlowWithSource> updatedOrCreated =  IntStream.range(0, flows.size())
             .mapToObj(index -> {
                 Flow flow = flows.get(index);
                 String source = sources.get(index);
@@ -286,6 +295,8 @@ public class FlowController {
                 }
             })
             .collect(Collectors.toList());
+
+        return Stream.concat(deleted.stream(), updatedOrCreated.stream()).collect(Collectors.toList());
     }
 
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
@@ -301,7 +312,7 @@ public class FlowController {
 
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        Flow flowParsed = new YamlFlowParser().parse(flow);
+        Flow flowParsed = new YamlFlowParser().parse(flow, Flow.class);
 
         return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow, taskDefaultService.injectDefaults(flowParsed)));
     }
@@ -374,5 +385,34 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "List all distinct namespaces")
     public List<String> listDistinctNamespace() {
         return flowRepository.findDistinctNamespace();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "validate", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
+    public List<ValidateConstraintViolation> validateFlows(
+        @Parameter(description= "A list of flows") @Body String flows
+    ) {
+        AtomicInteger index = new AtomicInteger(0);
+        return Stream
+            .of(flows.split("---"))
+            .map(flow -> {
+                ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+                validateConstraintViolationBuilder.index(index.getAndIncrement());
+
+                try {
+                    Flow flowParse = new YamlFlowParser().parse(flow, Flow.class);
+
+                    validateConstraintViolationBuilder.flow(flowParse.getId());
+                    validateConstraintViolationBuilder.namespace(flowParse.getNamespace());
+
+                    modelValidator.validate(taskDefaultService.injectDefaults(flowParse));
+
+                } catch (ConstraintViolationException e){
+                    validateConstraintViolationBuilder.constraints(e.getMessage());
+                }
+                return validateConstraintViolationBuilder.build();
+            })
+            .collect(Collectors.toList());
     }
 }

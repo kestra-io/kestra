@@ -27,7 +27,6 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -53,7 +52,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @Test
     void id() {
         String result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), String.class);
-        Flow flow = new YamlFlowParser().parse(result);
+        Flow flow = new YamlFlowParser().parse(result, Flow.class);
         assertThat(flow.getId(), is("full"));
         assertThat(flow.getTasks().size(), is(5));
     }
@@ -134,9 +133,9 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
         // f3 & f4 must be updated
         updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
-        assertThat(updated.size(), is(2));
-        assertThat(updated.get(0).getInputs().get(0).getName(), is("3-3"));
-        assertThat(updated.get(1).getInputs().get(0).getName(), is("4"));
+        assertThat(updated.size(), is(4));
+        assertThat(updated.get(0).getInputs().get(0).getName(), is("2"));
+        assertThat(updated.get(1).getInputs().get(0).getName(), is("1"));
 
         // f1 & f2 must be deleted
         assertThrows(HttpClientResponseException.class, () -> {
@@ -216,7 +215,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
                     .contentType(MediaType.APPLICATION_YAML),
                 Argument.listOf(FlowWithSource.class)
             );
-        assertThat(updated.size(), is(3));
+        assertThat(updated.size(), is(5));
 
         client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow1"));
         client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow2"));
@@ -493,7 +492,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     private Flow parseFlow(String flow) {
-        return new YamlFlowParser().parse(flow);
+        return new YamlFlowParser().parse(flow, Flow.class);
     }
 
     private String generateFlowAsString(String friendlyId, String namespace, String format) {

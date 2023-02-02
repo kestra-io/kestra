@@ -16,7 +16,7 @@ import static org.hamcrest.core.StringContains.containsString;
 class FlowDotCommandTest {
     @Test
     void run()  {
-        URL directory = ValidateCommandTest.class.getClassLoader().getResource("flows/first.yaml");
+        URL directory = TemplateValidateCommandTest.class.getClassLoader().getResource("flows/first.yaml");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 

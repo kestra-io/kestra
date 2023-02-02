@@ -335,7 +335,7 @@
 
             .task-icon {
                 width: 36px;
-                background: var(--bs-gray-400);
+                background: whitesmoke;
             }
 
             small {

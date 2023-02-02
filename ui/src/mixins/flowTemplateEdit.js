@@ -101,8 +101,13 @@ export default {
                 this.content = YamlUtils.stringify(this.template);
                 this.previousContent = this.content;
             } else {
-                this.content = this.flow.source;
-                this.previousContent = this.content;
+                if (this.flow) {
+                    this.content = this.flow.source;
+                    this.previousContent = this.content;
+                } else {
+                    this.content = "";
+                    this.previousContent = "";
+                }
             }
 
             if (this.isEdit) {

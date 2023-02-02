@@ -100,6 +100,7 @@ public class FlowWithSource extends Flow {
                     .readTree(
                         JacksonMapper
                             .ofJson()
+                            .copy()
                             .setSerializationInclusion(
                                 JsonInclude.Include.NON_DEFAULT)
                             .writeValueAsString(Object)

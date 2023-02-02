@@ -22,7 +22,6 @@
 
             <editor
                 ref="editor"
-                v-if="taskYaml"
                 @save="saveTask"
                 v-model="taskYaml"
                 schema-type="task"

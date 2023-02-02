@@ -34,36 +34,36 @@ public class YamlFlowParser {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
     }
 
-    public Flow parse(String input) {
-        return (Flow) readFlow(mapper, input, Flow.class, "flow");
+    public <T> T parse(String input, Class<T> cls) {
+        return readFlow(mapper, input, cls, type(cls));
     }
 
-    public Template parseTemplate(String input) {
-        return (Template) readFlow(mapper, input, Template.class, "template");
+    private static <T> String type(Class<T> cls) {
+        return cls.getSimpleName().toLowerCase();
     }
 
-    public Template parseTemplate(File file) throws ConstraintViolationException {
+    public <T> T parse(File file, Class<T> cls) throws ConstraintViolationException {
         try {
             String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
-            return (Template) readFlow(
+            return readFlow(
                 mapper.copy()
                     .setInjectableValues(new InjectableValues.Std()
                         .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
                     ),
                 input,
-                Template.class,
-                "template"
+                cls,
+                type(cls)
             );
 
         } catch (IOException e) {
             throw new ConstraintViolationException(
-                "Illegal template path:" + e.getMessage(),
+                "Illegal " + type(cls) + " path:" + e.getMessage(),
                 Collections.singleton(
                     ManualConstraintViolation.of(
                         e.getMessage(),
                         file,
                         File.class,
-                        "template",
+                        type(cls),
                         file.getAbsolutePath()
                     )
                 )
@@ -71,37 +71,7 @@ public class YamlFlowParser {
         }
     }
 
-    public Flow parse(File file) throws ConstraintViolationException {
-
-        try {
-            String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
-            return (Flow) readFlow(
-                mapper.copy()
-                    .setInjectableValues(new InjectableValues.Std()
-                        .addValue(CONTEXT_FLOW_DIRECTORY, file.getAbsoluteFile().getParentFile().getAbsolutePath())
-                    ),
-                input,
-                Flow.class,
-                "flow"
-            );
-
-        } catch (IOException e) {
-            throw new ConstraintViolationException(
-                "Illegal flow path:" + e.getMessage(),
-                Collections.singleton(
-                    ManualConstraintViolation.of(
-                        e.getMessage(),
-                        file,
-                        File.class,
-                        "flow",
-                        file.getAbsolutePath()
-                    )
-                )
-            );
-        }
-    }
-
-    private Object readFlow(ObjectMapper mapper, String input, Class objectClass, String resource) {
+    private <T> T readFlow(ObjectMapper mapper, String input, Class<T> objectClass, String resource) {
         try {
             return mapper.readValue(input, objectClass);
         } catch (JsonProcessingException e) {

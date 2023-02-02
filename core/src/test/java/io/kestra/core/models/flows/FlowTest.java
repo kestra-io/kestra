@@ -96,6 +96,6 @@ class FlowTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file);
+        return yamlFlowParser.parse(file, Flow.class);
     }
 }

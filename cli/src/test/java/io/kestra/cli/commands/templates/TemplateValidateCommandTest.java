@@ -1,4 +1,4 @@
-package io.kestra.cli.commands.flows;
+package io.kestra.cli.commands.templates;
 
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -14,10 +14,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
-class ValidateCommandTest {
+public class TemplateValidateCommandTest {
     @Test
     void runLocal()  {
-        URL directory = ValidateCommandTest.class.getClassLoader().getResource("invalids/empty.yaml");
+        URL directory = TemplateValidateCommandTest.class.getClassLoader().getResource("invalidsTemplates/template.yml");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setErr(new PrintStream(out));
 
@@ -26,17 +26,17 @@ class ValidateCommandTest {
                 "--local",
                 directory.getPath()
             };
-            Integer call = PicocliRunner.call(ValidateCommand.class, ctx, args);
+            Integer call = PicocliRunner.call(TemplateValidateCommand.class, ctx, args);
 
             assertThat(call, is(1));
-            assertThat(out.toString(), containsString("Unable to parse flow"));
+            assertThat(out.toString(), containsString("Unable to parse template"));
             assertThat(out.toString(), containsString("must not be empty"));
         }
     }
 
     @Test
     void runServer()  {
-        URL directory = ValidateCommandTest.class.getClassLoader().getResource("invalids/empty.yaml");
+        URL directory = TemplateValidateCommandTest.class.getClassLoader().getResource("invalidsTemplates/template.yml");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setErr(new PrintStream(out));
 
@@ -52,10 +52,10 @@ class ValidateCommandTest {
                 "myuser:pass:word",
                 directory.getPath()
             };
-            Integer call = PicocliRunner.call(ValidateCommand.class, ctx, args);
+            Integer call = PicocliRunner.call(TemplateValidateCommand.class, ctx, args);
 
             assertThat(call, is(1));
-            assertThat(out.toString(), containsString("Unable to parse flow"));
+            assertThat(out.toString(), containsString("Unable to parse template"));
             assertThat(out.toString(), containsString("must not be empty"));
         }
     }

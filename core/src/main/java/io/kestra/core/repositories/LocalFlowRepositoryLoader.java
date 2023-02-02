@@ -67,7 +67,7 @@ public class LocalFlowRepositoryLoader {
 
         for (Path file : list) {
             try {
-                Flow parse = yamlFlowParser.parse(file.toFile());
+                Flow parse = yamlFlowParser.parse(file.toFile(), Flow.class);
 
                 modelValidator.validate(parse);
 

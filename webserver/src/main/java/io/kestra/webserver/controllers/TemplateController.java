@@ -1,9 +1,14 @@
 package io.kestra.webserver.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.models.templates.Template;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -12,33 +17,26 @@ import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
-import io.kestra.core.models.templates.Template;
-import io.kestra.core.models.validations.ManualConstraintViolation;
-import io.kestra.core.repositories.TemplateRepositoryInterface;
-import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.utils.PageableUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.inject.Inject;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
-import io.micronaut.core.annotation.Nullable;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.inject.Inject;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
-
 
 @Validated
 @Controller("/api/v1/templates")
 public class TemplateController {
     @Inject
     private TemplateRepositoryInterface templateRepository;
+
     @Inject
     private ModelValidator modelValidator;
 
@@ -142,15 +140,14 @@ public class TemplateController {
         @Parameter(description = "The template namespace") String namespace,
         @Parameter(description = "A list of templates") @Body @Valid List<Template> templates,
         @Parameter(description = "If missing template should be deleted") @QueryValue(defaultValue = "true") Boolean delete
-    ) throws ConstraintViolationException, JsonProcessingException {
-        return this
+    ) throws ConstraintViolationException {
+        return new ArrayList<>(this
             .updateCompleteNamespace(
                 namespace,
                 templates,
                 delete
             )
-            .stream()
-            .collect(Collectors.toList());
+        );
     }
 
     private List<Template> updateCompleteNamespace(String namespace, List<Template> templates, Boolean delete) {
@@ -201,23 +198,19 @@ public class TemplateController {
                 .findByNamespace(namespace)
                 .stream()
                 .filter(template -> !ids.contains(template.getId()))
-                .map(template -> {
-                    templateRepository.delete(template);
-                    return template;
-                })
+                .peek(template -> templateRepository.delete(template))
                 .collect(Collectors.toList());;
         }
 
         // update or create templates
-        List<Template> updatedOrCreated =  IntStream.range(0, templates.size())
-            .mapToObj(index -> {
-                Template template = templates.get(index);
-
-                Optional<Template> existingTemplate = templateRepository.findById(namespace, template.getId());
+        List<Template> updatedOrCreated = templates
+            .stream()
+            .map(item -> {
+                Optional<Template> existingTemplate = templateRepository.findById(namespace, item.getId());
                 if (existingTemplate.isPresent()) {
-                    return templateRepository.update(template, existingTemplate.get());
+                    return templateRepository.update(item, existingTemplate.get());
                 } else {
-                    return templateRepository.create(template);
+                    return templateRepository.create(item);
                 }
             })
             .collect(Collectors.toList());
@@ -229,17 +222,16 @@ public class TemplateController {
     @Post(uri = "validate", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Templates"}, summary = "Validate a list of templates")
     public List<ValidateConstraintViolation> validateTemplates(
-        @Parameter(description= "A list of templates") @Body @Nullable String templates
+        @Parameter(description= "A list of templates") @Body String templates
     ) {
         AtomicInteger index = new AtomicInteger(0);
-        return List
+        return Stream
             .of(templates.split("---"))
-            .stream()
             .map(template -> {
                 ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
                 try {
-                    Template templateParse = new YamlFlowParser().parseTemplate(template);
+                    Template templateParse = new YamlFlowParser().<Template>parse(template, Template.class);
 
                     validateConstraintViolationBuilder.flow(templateParse.getId());
                     validateConstraintViolationBuilder.namespace(templateParse.getNamespace());

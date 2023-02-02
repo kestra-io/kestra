@@ -206,7 +206,7 @@ class YamlFlowParserTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file);
+        return yamlFlowParser.parse(file, Flow.class);
     }
 
     private Flow parseString(String path) throws IOException {
@@ -215,6 +215,6 @@ class YamlFlowParserTest {
 
         String input = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
 
-        return yamlFlowParser.parse(input);
+        return yamlFlowParser.parse(input, Flow.class);
     }
 }

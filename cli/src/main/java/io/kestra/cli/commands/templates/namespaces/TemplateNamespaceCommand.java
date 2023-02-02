@@ -13,6 +13,6 @@ import picocli.CommandLine;
     }
 )
 @Slf4j
-
 public class TemplateNamespaceCommand extends AbstractCommand {
+
 }

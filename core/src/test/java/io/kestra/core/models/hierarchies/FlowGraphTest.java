@@ -201,7 +201,7 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
 
         File file = new File(resource.getFile());
 
-        return yamlFlowParser.parse(file);
+        return yamlFlowParser.parse(file, Flow.class);
     }
 
     private AbstractGraphTask node(FlowGraph flowGraph, String taskId) {

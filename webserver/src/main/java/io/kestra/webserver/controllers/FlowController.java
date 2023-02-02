@@ -50,6 +50,7 @@ public class FlowController {
 
     @Inject
     private TaskDefaultService taskDefaultService;
+
     @Inject
     private ModelValidator modelValidator;
 
@@ -157,7 +158,7 @@ public class FlowController {
     public HttpResponse<FlowWithSource> create(
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
-        Flow flowParsed = new YamlFlowParser().parse(flow);
+        Flow flowParsed = new YamlFlowParser().parse(flow, Flow.class);
 
         return HttpResponse.ok(flowRepository.create(flowParsed, flow, taskDefaultService.injectDefaults(flowParsed)));
     }
@@ -190,7 +191,7 @@ public class FlowController {
             namespace,
             sources
                 .stream()
-                .map(flow -> new YamlFlowParser().parse(flow))
+                .map(flow -> new YamlFlowParser().parse(flow, Flow.class))
                 .collect(Collectors.toList()),
             sources,
             delete
@@ -311,7 +312,7 @@ public class FlowController {
 
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        Flow flowParsed = new YamlFlowParser().parse(flow);
+        Flow flowParsed = new YamlFlowParser().parse(flow, Flow.class);
 
         return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow, taskDefaultService.injectDefaults(flowParsed)));
     }
@@ -390,18 +391,17 @@ public class FlowController {
     @Post(uri = "validate", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
     public List<ValidateConstraintViolation> validateFlows(
-        @Parameter(description= "A list of flows") @Body @Nullable String flows
+        @Parameter(description= "A list of flows") @Body String flows
     ) {
         AtomicInteger index = new AtomicInteger(0);
-        return List
+        return Stream
             .of(flows.split("---"))
-            .stream()
             .map(flow -> {
                 ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
 
                 try {
-                    Flow flowParse = new YamlFlowParser().parse(flow);
+                    Flow flowParse = new YamlFlowParser().parse(flow, Flow.class);
 
                     validateConstraintViolationBuilder.flow(flowParse.getId());
                     validateConstraintViolationBuilder.namespace(flowParse.getNamespace());

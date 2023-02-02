@@ -1,7 +1,7 @@
 package io.kestra.cli.commands.templates.namespaces;
 
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
-import io.kestra.cli.commands.templates.ValidateCommand;
+import io.kestra.cli.commands.templates.TemplateValidateCommand;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.micronaut.core.type.Argument;
@@ -36,7 +36,7 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
             List<Template> templates = Files.walk(directory)
                 .filter(Files::isRegularFile)
                 .filter(YamlFlowParser::isValidExtension)
-                .map(path -> yamlFlowParser.parseTemplate(path.toFile()))
+                .map(path -> yamlFlowParser.parse(path.toFile(), Template.class))
                 .collect(Collectors.toList());
 
             if (templates.size() == 0) {
@@ -55,12 +55,12 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
                 stdOut(updated.size() + " template(s) for namespace '" + namespace + "' successfully updated !");
                 updated.forEach(template -> stdOut("- " + template.getNamespace() + "." + template.getId()));
             } catch (HttpClientResponseException e) {
-                ValidateCommand.handleHttpException(e, "template");
+                TemplateValidateCommand.handleHttpException(e, "template");
 
                 return 1;
             }
         } catch (ConstraintViolationException e) {
-            ValidateCommand.handleException(e, "template");
+            TemplateValidateCommand.handleException(e, "template");
 
             return 1;
         }

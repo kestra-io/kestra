@@ -9,9 +9,9 @@ public abstract class AbstractServiceNamespaceUpdateCommand extends AbstractApiC
     @CommandLine.Parameters(index = "0", description = "the namespace of flow to update")
     public String namespace;
 
-    @CommandLine.Parameters(index = "1", description = "the directory containing flows to from current namespace")
+    @CommandLine.Parameters(index = "1", description = "the directory containing files for current namespace")
     public Path directory;
 
-    @CommandLine.Option(names = {"--no-delete"}, description = "if flow not contained in the directory should not be delete")
+    @CommandLine.Option(names = {"--no-delete"}, description = "if missing should not be deleted")
     public boolean noDelete = false ;
 }

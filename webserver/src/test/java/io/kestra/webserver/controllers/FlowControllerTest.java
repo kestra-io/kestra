@@ -52,7 +52,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @Test
     void id() {
         String result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), String.class);
-        Flow flow = new YamlFlowParser().parse(result);
+        Flow flow = new YamlFlowParser().parse(result, Flow.class);
         assertThat(flow.getId(), is("full"));
         assertThat(flow.getTasks().size(), is(5));
     }
@@ -492,7 +492,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     private Flow parseFlow(String flow) {
-        return new YamlFlowParser().parse(flow);
+        return new YamlFlowParser().parse(flow, Flow.class);
     }
 
     private String generateFlowAsString(String friendlyId, String namespace, String format) {

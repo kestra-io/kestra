@@ -15,12 +15,16 @@
             :append-to-body="true"
         >
             <template #footer>
-                <el-button :icon="ContentSave" @click="saveTask" v-if="canSave" type="primary">
+                <el-button :icon="ContentSave" @click="saveTask" v-if="canSave && !readOnly" type="primary">
                     {{ $t('save') }}
                 </el-button>
+                <el-alert show-icon :closable="false" class="mb-0 mt-3" v-if="revision && revision !== flow.revision" type="warning">
+                    <strong>You're seeing an old revision ({{ revision }})</strong><br>
+                </el-alert>
             </template>
 
             <editor
+                :read-only="readOnly"
                 ref="editor"
                 @save="saveTask"
                 v-model="taskYaml"
@@ -68,8 +72,19 @@
                 type: String,
                 required: true
             },
+            readOnly: {
+                type: Boolean,
+                default: false
+            },
+            revision: {
+                type: Number,
+                default: undefined
+            }
         },
         methods: {
+            loadWithRevision(taskId){
+                return this.$store.dispatch("flow/loadTask", {namespace: this.namespace, id: this.flowId, taskId: taskId, revision: this.revision});
+            },
             load(taskId) {
                 return YamlUtils.extractTask(this.flow.source, taskId).toString();
             },
@@ -97,7 +112,12 @@
             onShow() {
                 this.isModalOpen = !this.isModalOpen;
                 if (this.taskId || this.task.id) {
-                    this.taskYaml = this.load(this.taskId ? this.taskId : this.task.id)
+                    if(this.readOnly) {
+                        this.loadWithRevision(this.taskId || this.task.id).then(value => this.taskYaml = YamlUtils.stringify(value));
+                    } else {
+                        console.log(this.load(this.taskId ? this.taskId : this.task.id))
+                        this.taskYaml = this.load(this.taskId ? this.taskId : this.task.id);
+                    }
                 } else {
                     this.taskYaml = YamlUtils.stringify(this.task);
                 }

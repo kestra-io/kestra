@@ -11,7 +11,6 @@
                                 <div class="attempt-number me-1">
                                     {{ $t("attempt") }} {{ index + 1 }}
                                 </div>
-
                                 <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
                                     <el-tooltip :persistent="false" transition="" :hide-after="0">
                                         <template #content>
@@ -83,10 +82,12 @@
                                             />
 
                                             <task-edit
+                                                :read-only="true"
                                                 component="el-dropdown-item"
                                                 :task-id="currentTaskRun.taskId"
                                                 :flow-id="execution.flowId"
                                                 :namespace="execution.namespace"
+                                                :revision="execution.flowRevision"
                                             />
                                         </el-dropdown-menu>
                                     </template>
@@ -202,10 +203,8 @@
                     return false;
                 }
 
-                if (this.task && this.task.id !== currentTaskRun.taskId) {
-                    return false;
-                }
-                return  true;
+                return !(this.task && this.task.id !== currentTaskRun.taskId);
+
             },
             toggleShowOutput(taskRun) {
                 this.showOutputs[taskRun.id] = !this.showOutputs[taskRun.id];

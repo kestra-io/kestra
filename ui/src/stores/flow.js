@@ -66,7 +66,7 @@ export default {
                 })
         },
         loadTask({commit}, options) {
-            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}`).then(response => {
+            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`).then(response => {
                 commit("setTask", response.data)
 
                 return response.data;

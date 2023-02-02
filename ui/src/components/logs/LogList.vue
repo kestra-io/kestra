@@ -11,6 +11,9 @@
                                 <div class="attempt-number me-1">
                                     {{ $t("attempt") }} {{ index + 1 }}
                                 </div>
+                                <div class="task-icon">
+                                    <task-icon :cls="tasksIcons[currentTaskRun.id]" only-icon />
+                                </div>
                                 <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
                                     <el-tooltip :persistent="false" transition="" :hide-after="0">
                                         <template #content>
@@ -128,6 +131,7 @@
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import TaskEdit from "../flows/TaskEdit.vue";
     import Duration from "../layout/Duration.vue";
+    import TaskIcon from "../plugins/TaskIcon.vue";
 
     export default {
         components: {
@@ -141,7 +145,8 @@
             Status,
             SubFlowLink,
             TaskEdit,
-            Duration
+            Duration,
+            TaskIcon
         },
         props: {
             level: {
@@ -174,6 +179,7 @@
                 showOutputs: {},
                 showMetrics: {},
                 fullscreen: false,
+                tasksIcons: {}
             };
         },
         watch: {
@@ -189,6 +195,18 @@
         created() {
             if (!this.fullScreenModal) {
                 this.loadLogs();
+            }
+            if (this.execution){
+                for(let currentTaskRun of this.execution.taskRunList){
+                    this.$store.dispatch("flow/loadTask", {
+                        namespace: currentTaskRun.namespace,
+                        id: currentTaskRun.flowId,
+                        taskId: currentTaskRun.taskId,
+                        revision: currentTaskRun.revision
+                    }).then(value => {
+                        this.tasksIcons[currentTaskRun.id] = value.type
+                    })
+                }
             }
         },
         computed: {
@@ -272,7 +290,7 @@
                         log.attemptNumber === attemptNumber
                     );
                 });
-            },
+            }
         },
         beforeUnmount() {
             if (this.sse) {
@@ -313,6 +331,11 @@
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+            }
+
+            .task-icon {
+                width: 36px;
+                background: var(--bs-gray-400);
             }
 
             small {

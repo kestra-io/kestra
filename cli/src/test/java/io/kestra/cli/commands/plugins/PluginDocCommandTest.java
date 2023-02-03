@@ -72,7 +72,7 @@ class PluginDocCommandTest {
                 "Subgroup description\n" +
                 "### Tasks\n" +
                 "\n" +
-                "* [ExampleTask](tasks/templates/io.kestra.plugin.templates.ExampleTask.html)\n" +
+                "* [ExampleTask](tasks/io.kestra.plugin.templates.ExampleTask.html)\n" +
                 "\n" +
                 "## Guides\n" +
                 "* [Authentication](guides/authentication.html)\n" +

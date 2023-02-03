@@ -38,13 +38,14 @@ public class PluginDocumentation {
                         .name(cls.getName())
                         .simpleName(cls.getSimpleName())
                         .type(entry.getKey());
-
                     if (cls.getPackageName().startsWith(this.group)) {
                         var pluginSubGroup = cls.getPackage().getDeclaredAnnotation(PluginSubGroup.class);
                         var subGroupName =  cls.getPackageName().substring(cls.getPackageName().lastIndexOf('.') + 1);
                         var subGroupTitle = pluginSubGroup != null ? pluginSubGroup.title() : subGroupName;
-                        var subGroupDescription =pluginSubGroup != null ? pluginSubGroup.description() : null;
-                        var subgroup = new SubGroup(subGroupName, subGroupTitle, subGroupDescription);
+                        var subGroupDescription = pluginSubGroup != null ? pluginSubGroup.description() : null;
+                        // hack to avoid adding the subgroup in the task URL when it's the group to keep search engine indexes
+                        var subgroupIsGroup = cls.getPackageName().length() <= this.group.length();
+                        var subgroup = new SubGroup(subGroupName, subGroupTitle, subGroupDescription, subgroupIsGroup);
                         builder.subgroup(subgroup);
                     } else {
                         // should never occur
@@ -87,6 +88,8 @@ public class PluginDocumentation {
         String name;
         String title;
         String description;
+
+        boolean subgroupIsGroup;
 
         SubGroup(String name) {
             this.name = name;

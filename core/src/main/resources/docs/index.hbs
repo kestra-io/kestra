@@ -20,7 +20,7 @@ editLink: false
 ### {{ capitalizeFirst type }}
 
 {{#each classes as | class | ~}}
-* [{{simpleName}}]({{ type }}/{{#and subgroup.name}}{{subgroup.name}}/{{/and}}{{ name }}.html)
+* [{{simpleName}}]({{ type }}/{{#and subgroup.name}}{{#not subgroup.subgroupIsGroup}}{{subgroup.name}}/{{/not}}{{/and}}{{ name }}.html)
 {{/each ~}}
 
 {{/each ~}}

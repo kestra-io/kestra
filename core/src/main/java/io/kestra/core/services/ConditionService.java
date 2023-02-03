@@ -118,7 +118,7 @@ public class ConditionService {
     }
 
     public boolean isTerminatedWithListeners(Flow flow, Execution execution) {
-        if (!execution.getState().isTerninated()) {
+        if (!execution.getState().isTerminated()) {
             return false;
         }
 

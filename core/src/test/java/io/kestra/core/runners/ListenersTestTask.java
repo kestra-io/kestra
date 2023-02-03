@@ -39,7 +39,7 @@ public class ListenersTestTask extends Task implements RunnableTask<ListenersTes
         Execution execution = retryInstance.run(
             NoSuchElementException.class,
             () -> executionRepository.findById(executionRendererId)
-                .filter(e -> e.getState().getCurrent().isTerninated())
+                .filter(e -> e.getState().getCurrent().isTerminated())
                 .orElseThrow(() -> new NoSuchElementException("Unable to find execution '" + executionRendererId + "'"))
         );
 

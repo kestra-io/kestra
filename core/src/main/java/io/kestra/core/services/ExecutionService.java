@@ -51,7 +51,7 @@ public class ExecutionService {
     private LogRepositoryInterface logRepository;
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
-        if (!execution.getState().isTerninated()) {
+        if (!execution.getState().isTerminated()) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
@@ -116,7 +116,7 @@ public class ExecutionService {
     }
 
     public Execution replay(final Execution execution, String taskRunId, @Nullable Integer revision) throws Exception {
-        if (!execution.getState().isTerninated()) {
+        if (!execution.getState().isTerminated()) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
@@ -174,7 +174,7 @@ public class ExecutionService {
     }
 
     public Execution markAs(final Execution execution, String taskRunId, State.Type newState) throws Exception {
-        if (!execution.getState().isTerninated()) {
+        if (!execution.getState().isTerminated()) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );

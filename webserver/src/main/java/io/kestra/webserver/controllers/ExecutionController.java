@@ -759,7 +759,7 @@ public class ExecutionController {
         @Parameter(description = "The execution id") String executionId
     ) {
         Optional<Execution> execution = executionRepository.findById(executionId);
-        if (execution.isPresent() && execution.get().getState().isTerninated()) {
+        if (execution.isPresent() && execution.get().getState().isTerminated()) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
         }
 
@@ -789,7 +789,7 @@ public class ExecutionController {
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(executionId);
-            if (execution.isPresent() && execution.get().getState().isTerninated()) {
+            if (execution.isPresent() && execution.get().getState().isTerminated()) {
                 invalids.add(ManualConstraintViolation.of(
                     "execution already finished",
                     executionId,

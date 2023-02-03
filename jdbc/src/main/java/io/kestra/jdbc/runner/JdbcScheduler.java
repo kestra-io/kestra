@@ -51,7 +51,7 @@ public class JdbcScheduler extends AbstractScheduler {
                 if (
                     execution.getTrigger() != null && (
                         execution.isDeleted() ||
-                            execution.getState().getCurrent().isTerninated()
+                            execution.getState().getCurrent().isTerminated()
                     )
                 ) {
                     triggerRepository

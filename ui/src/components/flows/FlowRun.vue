@@ -13,6 +13,7 @@
                 :prop="input.name"
             >
                 <el-input
+                    @keydown.enter.prevent
                     v-if="input.type === 'STRING' || input.type === 'URI'"
                     v-model="inputs[input.name]"
                 />
@@ -114,12 +115,12 @@
             }, 500)
 
             this._keyListener = function(e) {
-                if (e.keyCode === 13) {
-                    if(e.shiftKey){
-                        return true;
+                if (e.keyCode === 13)  {
+                    if(e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        this.onSubmit(this.$refs.form);
                     }
-                    e.preventDefault()
-                    this.onSubmit(this.$refs.form);
+                    return true
                 }
             };
 

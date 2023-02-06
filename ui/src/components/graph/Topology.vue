@@ -89,11 +89,11 @@
         const position = {x: n.x - n.width / 2, y: n.y - n.height / 2};
 
         // bug with parent node,
-        // if (parent) {
-        //     const parentPosition = getNodePosition(parent);
-        //     position.x = position.x - parentPosition.x;
-        //     position.y = position.y - parentPosition.y;
-        // }
+        if (parent) {
+            const parentPosition = getNodePosition(parent);
+            position.x = position.x - parentPosition.x;
+            position.y = position.y - parentPosition.y;
+        }
 
         return position;
     };
@@ -134,7 +134,7 @@
                 id: cluster.cluster.uid,
                 label: cluster.cluster.task.id,
                 type: "cluster",
-                // parentNode: parentNode,
+                parentNode: parentNode,
                 position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
                 style: {
                     width: dagreNode.width + "px",
@@ -166,7 +166,7 @@
                 },
                 sourcePosition: isHorizontal.value ? Position.Right : Position.Bottom,
                 targetPosition: isHorizontal.value ? Position.Left : Position.Top,
-                // parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
+                parentNode: clusters[node.uid] ? clusters[node.uid].uid : undefined,
                 data: {
                     node: node,
                     namespace: props.namespace,
@@ -222,7 +222,8 @@
             :fit-view-on-init="true"
             :nodes-connectable="true"
             :nodes-draggable="false"
-            :elevate-nodes-on-select="false"
+            :elevate-nodes-on-select="true"
+            :elevate-edges-on-select="true"
         >
             <template #node-cluster="props">
                 <Cluster v-bind="props" />

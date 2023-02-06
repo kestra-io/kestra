@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,5 +24,6 @@ public interface PollingTriggerInterface {
             "See [ISO_8601 Durations](https://en.wikipedia.org/wiki/ISO_8601#Durations) for more information of available interval value",
         defaultValue = "PT1S"
     )
+    @PluginProperty
     Duration getInterval();
 }

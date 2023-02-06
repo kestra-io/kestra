@@ -13,6 +13,7 @@
                 :prop="input.name"
             >
                 <el-input
+                    @keydown.enter.prevent
                     v-if="input.type === 'STRING' || input.type === 'URI'"
                     v-model="inputs[input.name]"
                 />
@@ -112,24 +113,38 @@
                     input.focus()
                 }
             }, 500)
+
+            this._keyListener = function(e) {
+                if (e.keyCode === 13 && (e.ctrlKey || e.metaKey))  {
+                    e.preventDefault();
+                    this.onSubmit(this.$refs.form);
+                }
+            };
+
+            document.addEventListener("keydown", this._keyListener.bind(this));
+        },
+        beforeUnmount() {
+            document.removeEventListener("keydown", this._keyListener);
         },
         computed: {
             ...mapState("flow", ["flow"]),
         },
         methods: {
             onSubmit(formRef) {
-                formRef.validate((valid) => {
-                    if (!valid) {
-                        return false;
-                    }
+                if (formRef) {
+                    formRef.validate((valid) => {
+                        if (!valid) {
+                            return false;
+                        }
 
-                    executeTask(this, this.flow, this.inputs, {
-                        redirect: this.redirect,
-                        id: this.flow.id,
-                        namespace: this.flow.namespace
-                    })
-                    this.$emit("executionTrigger");
-                });
+                        executeTask(this, this.flow, this.inputs, {
+                            redirect: this.redirect,
+                            id: this.flow.id,
+                            namespace: this.flow.namespace
+                        })
+                        this.$emit("executionTrigger");
+                    });
+                }
             },
             onFileChange(input, e) {
                 if (!e.target) {

@@ -150,7 +150,7 @@
                         value: revision.revision,
                         text: revision.revision + (this.sameRevision(revision.revision) ? " (" + this.$t("current") + ")" : ""),
                     };
-                });
+                }).reverse();
             },
             enabled() {
                 if (this.isReplay && !(this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace))) {

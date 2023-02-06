@@ -467,6 +467,23 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/validate/task", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
+    public ValidateConstraintViolation validateTask(
+        @Parameter(description = "A list of flows") @Body String task
+    ) {
+        ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+
+        try {
+            Task taskParse = yamlFlowParser.parse(task, Task.class);
+            modelValidator.validate(taskParse);
+        } catch (ConstraintViolationException e) {
+            validateConstraintViolationBuilder.constraints(e.getMessage());
+        }
+        return validateConstraintViolationBuilder.build();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/export/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(
         tags = {"Flows"},

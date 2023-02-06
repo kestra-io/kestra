@@ -1,13 +1,15 @@
 <template>
     <topology
-        v-if="flow && flowGraph"
+        v-if="flow"
         :flow-id="flow.id"
         :namespace="flow.namespace"
         :flow-graph="flowGraph"
+        :is-read-only="false"
+        :flow-error="flowError"
     />
 </template>
 <script>
-    import {mapState} from "vuex";
+    import {mapGetters, mapState} from "vuex";
     import Topology from "../graph/Topology.vue";
 
     export default {
@@ -22,6 +24,10 @@
         },
         computed: {
             ...mapState("flow", ["flow", "flowGraph"]),
+            ...mapGetters("flow", ["flowError"]),
+        },
+        beforeUnmount() {
+            this.$store.commit("flow/setFlowError", undefined);
         },
     };
 </script>

@@ -18,6 +18,8 @@ export default {
         flowGraph: undefined,
         flowGraphParam: undefined,
         revisions: undefined,
+        flowError: undefined,
+        taskError: undefined
     },
 
     actions: {
@@ -143,21 +145,27 @@ export default {
             })
         },
         loadGraphFromSource({commit}, options) {
-            return this.$http.post("/api/v1/flows/graph", options.flow, textYamlHeader).then(response => {
-                commit("setFlowGraph", response.data)
+            const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
+            return this.$http.post("/api/v1/flows/graph", options.flow, {...config})
+                .then(response => {
+                    if (response.status === 422) {
+                        return response;
+                    }
+                    commit("setFlowGraph", response.data)
 
-                let flow = YamlUtils.parse(options.flow);
-                flow.source = options.flow;
+                    let flow = YamlUtils.parse(options.flow);
+                    flow.source = options.flow;
+                    if (flow.id && flow.namespace) {
+                        commit("setFlow", flow)
+                        commit("setFlowGraphParam", {
+                            namespace: flow.namespace,
+                            id: flow.id,
+                            revision: flow.revision
+                        })
+                    }
 
-                commit("setFlow", flow)
-                commit("setFlowGraphParam", {
-                    namespace: flow.namespace,
-                    id: flow.id,
-                    revision: flow.revision
+                    return response;
                 })
-
-                return response.data;
-            })
         },
         loadRevisions({commit}, options) {
             return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/revisions`).then(response => {
@@ -193,7 +201,21 @@ export default {
         },
         deleteFlowByQuery(_, options) {
             return this.$http.delete("/api/v1/flows/delete/by-query", options, {params: options})
-        }
+        },
+        validateFlow({commit}, options) {
+            return this.$http.post("/api/v1/flows/validate", options.flow, textYamlHeader)
+                .then(response => {
+                    commit("setFlowError", response.data[0] ? response.data[0].constraints : undefined)
+                    return response.data
+                })
+        },
+        validateTask({commit}, options) {
+            return this.$http.post("/api/v1/flows/validate/task", options.task, textYamlHeader)
+                .then(response => {
+                    commit("setTaskError", response.data.constraints)
+                    return response.data
+                })
+        },
     },
     mutations: {
         setFlows(state, flows) {
@@ -207,11 +229,11 @@ export default {
         },
         setFlow(state, flow) {
             state.flow = flow;
-            if (state.flowGraph !== undefined && state.flowGraphParam && flow) {
-                if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id) {
-                    state.flowGraph = undefined
-                }
-            }
+            // if (state.flowGraph !== undefined && state.flowGraphParam && flow) {
+            //     if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id) {
+            //         state.flowGraph = undefined
+            //     }
+            // }
 
         },
         setFlowGraphParam(state, flow) {
@@ -263,6 +285,12 @@ export default {
         setFlowGraph(state, flowGraph) {
             state.flowGraph = flowGraph
         },
+        setFlowError(state, flowError) {
+            state.flowError = flowError
+        },
+        setTaskError(state, taskError) {
+            state.taskError = taskError
+        },
     },
     getters: {
         flow(state) {
@@ -270,5 +298,15 @@ export default {
                 return state.flow;
             }
         },
+        flowError(state) {
+            if (state.flowError) {
+                return state.flowError;
+            }
+        },
+        taskError(state) {
+            if (state.taskError) {
+                return state.taskError;
+            }
+        }
     }
 }

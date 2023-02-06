@@ -89,12 +89,12 @@
                     {
                         name: undefined,
                         component: Topology,
-                        title: this.$t("topology"),
+                        title: this.$t("editor"),
                     },
                 ];
 
                 if (this.user.hasAny(permission.EXECUTION)) {
-                    tabs[0].name = "topology";
+                    tabs[0].name = "editor";
 
                     tabs = [
                         {
@@ -155,7 +155,7 @@
             },
             displayBottomLine() {
                 const name = this.activeTabName();
-                return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "topology";
+                return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "editor";
             },
             editFlow() {
                 this.$router.push({name:"flows/update", params: {
@@ -200,7 +200,10 @@
                 return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
             },
             canExecute() {
-                return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)
+                if(this.flow) {
+                    return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)
+                }
+                return false;
             },
         },
         unmounted () {

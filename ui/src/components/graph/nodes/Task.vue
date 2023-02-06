@@ -2,7 +2,7 @@
     import {Handle} from "@vue-flow/core"
     import TreeTaskNode from "../TreeTaskNode.vue";
 
-    const emit = defineEmits(["follow", "mouseover", "mouseleave", "edit"])
+    const emit = defineEmits(["follow", "mouseover", "mouseleave", "edit", "delete", "addFlowableError"])
 
     const props = defineProps({
         sourcePosition: {
@@ -45,8 +45,11 @@
         :namespace="data.namespace"
         :flow-id="data.flowId"
         :revision="data.revision"
+        :is-flowable="data.isFlowable"
         @follow="forwardEvent('follow', $event)"
         @edit="forwardEvent('edit', $event)"
+        @delete="forwardEvent('delete', $event)"
+        @addFlowableError="forwardEvent('addFlowableError', $event)"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
     />

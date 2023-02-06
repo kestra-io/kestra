@@ -2,7 +2,12 @@
     <el-form label-position="top">
         <el-form-item>
             <template #label>
-                <code>{{ $t('type') }}</code>&nbsp;
+                <div class="typeDiv">
+                    <code>{{ $t("type") }}</code>
+                    <el-tooltip :disabled="!taskError" :content="taskErrorContent" raw-content>
+                        <el-button :type="taskError ? 'danger' : 'success'" :icon="taskError ? Close : Check" />
+                    </el-tooltip>
+                </div>
             </template>
             <plugin-select
                 v-model="selectedTaskType"
@@ -26,8 +31,25 @@
     import TaskRoot from "./tasks/TaskRoot.vue";
     import YamlUtils from "../../utils/yamlUtils";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
+    import Close from "vue-material-design-icons/Close.vue";
+    import Check from "vue-material-design-icons/Check.vue";
+    import {mapGetters} from "vuex";
 
     export default {
+        computed: {
+            ...mapGetters("flow", ["taskError"]),
+            Check() {
+                return Check
+            },
+            Close() {
+                return Close
+            },
+            taskErrorContent() {
+                return this.taskError
+                    ? "<pre style='max-width: 40vw; white-space: pre-wrap'>" + this.taskError + "</pre>"
+                    :  ""
+            }
+        },
         components: {
             TaskRoot,
             PluginSelect
@@ -37,9 +59,13 @@
             if (this.modelValue) {
                 this.taskObject = YamlUtils.parse(this.modelValue);
                 this.selectedTaskType = this.taskObject.type;
+                this.$store.dispatch("flow/validateTask", {task: this.modelValue})
 
                 this.load();
             }
+        },
+        beforeUnmount() {
+            this.$store.commit("flow/setTaskError", undefined);
         },
         props: {
             modelValue: {
@@ -58,7 +84,7 @@
                 selectedTaskType: undefined,
                 taskObject: undefined,
                 isLoading: false,
-                plugin: undefined
+                plugin: undefined,
             };
         },
         methods: {
@@ -75,8 +101,12 @@
 
             },
             onInput(value) {
-                this.taskObject = value;
-                this.$emit("update:modelValue", YamlUtils.stringify(value));
+                clearTimeout(this.timer);
+                this.timer = setTimeout(() => {
+                    this.taskObject = value;
+                    this.$store.dispatch("flow/validateTask", {task: value})
+                    this.$emit("update:modelValue", YamlUtils.stringify(value));
+                }, 500);
             },
             onTaskTypeSelect() {
                 this.load();
@@ -94,4 +124,9 @@
         },
     };
 </script>
-
+<style lang="scss">
+    .typeDiv {
+        display: flex;
+        justify-content: space-between;
+    }
+</style>

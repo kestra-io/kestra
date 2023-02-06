@@ -40,7 +40,6 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import {shallowRef} from "vue";
-    import yamlUtils from "../../utils/yamlUtils";
 
     export default {
         components: {

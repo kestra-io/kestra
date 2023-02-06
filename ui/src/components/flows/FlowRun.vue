@@ -131,18 +131,20 @@
         },
         methods: {
             onSubmit(formRef) {
-                formRef.validate((valid) => {
-                    if (!valid) {
-                        return false;
-                    }
+                if (formRef) {
+                    formRef.validate((valid) => {
+                        if (!valid) {
+                            return false;
+                        }
 
-                    executeTask(this, this.flow, this.inputs, {
-                        redirect: this.redirect,
-                        id: this.flow.id,
-                        namespace: this.flow.namespace
-                    })
-                    this.$emit("executionTrigger");
-                });
+                        executeTask(this, this.flow, this.inputs, {
+                            redirect: this.redirect,
+                            id: this.flow.id,
+                            namespace: this.flow.namespace
+                        })
+                        this.$emit("executionTrigger");
+                    });
+                }
             },
             onFileChange(input, e) {
                 if (!e.target) {

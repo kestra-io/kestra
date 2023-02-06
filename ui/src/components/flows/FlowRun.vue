@@ -112,6 +112,21 @@
                     input.focus()
                 }
             }, 500)
+
+            this._keyListener = function(e) {
+                if (e.keyCode === 13) {
+                    if(e.shiftKey){
+                        return true;
+                    }
+                    e.preventDefault()
+                    this.onSubmit(this.$refs.form);
+                }
+            };
+
+            document.addEventListener("keydown", this._keyListener.bind(this));
+        },
+        beforeUnmount() {
+            document.removeEventListener("keydown", this._keyListener);
         },
         computed: {
             ...mapState("flow", ["flow"]),

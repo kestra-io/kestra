@@ -115,12 +115,9 @@
             }, 500)
 
             this._keyListener = function(e) {
-                if (e.keyCode === 13)  {
-                    if(e.ctrlKey || e.metaKey) {
-                        e.preventDefault();
-                        this.onSubmit(this.$refs.form);
-                    }
-                    return true
+                if (e.keyCode === 13 && (e.ctrlKey || e.metaKey))  {
+                    e.preventDefault();
+                    this.onSubmit(this.$refs.form);
                 }
             };
 

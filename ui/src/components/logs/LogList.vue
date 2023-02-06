@@ -11,7 +11,7 @@
                                 <div class="attempt-number me-1">
                                     {{ $t("attempt") }} {{ index + 1 }}
                                 </div>
-                                <div class="task-icon">
+                                <div class="task-icon me-1" v-loading="this.tasksIcons[currentTaskRun.id] === undefined">
                                     <task-icon :cls="tasksIcons[currentTaskRun.id]" only-icon />
                                 </div>
                                 <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
@@ -337,7 +337,8 @@
 
             .task-icon {
                 width: 36px;
-                background: var(--bs-gray-400);
+                background: var(--bs-white);
+                padding: 6px;
             }
 
             small {

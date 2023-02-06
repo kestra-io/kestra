@@ -70,7 +70,7 @@
             },
             icon() {
                 return (this.icons || {})[this.cls]
-            },
+            }
         }
     };
 </script>

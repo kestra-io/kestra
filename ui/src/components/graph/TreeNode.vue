@@ -269,7 +269,7 @@
         > .icon {
             width: 35px;
             height: 53px;
-            background: var(--white);
+            background: var(--bs-white);
             position: relative;
         }
 
@@ -279,11 +279,6 @@
             border-right: 1px solid var(--bs-border-color);
         }
 
-        .icon {
-            html.dark & {
-                background-color: var(--bs-gray-700);
-            }
-        }
 
         .is-success {
             background-color: var(--green);

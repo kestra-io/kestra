@@ -1,6 +1,7 @@
 {
   "en": {
     "id": "Id",
+    "ok": "OK",
     "namespace": "Namespace",
     "description": "Description",
     "revision": "Revision",
@@ -273,6 +274,7 @@
   },
   "fr": {
     "id": "Identifiant",
+    "ok": "OK",
     "description": "Description",
     "namespace": "Espace de nom",
     "revision": "Révision",
@@ -546,6 +548,7 @@
   },
   "de": {
     "id": "Id",
+    "ok": "OK",
     "namespace": "Namespace",
     "description": "Beschreibung",
     "revision": "Revision",
@@ -646,7 +649,7 @@
     "restart confirm": "Möchten Sie die Ausführung <code>{id}</code> wirklich neu starten?",
     "restart change revision": "Sie können die Revision ändern, diese wird für die neue Ausführung verwendet werden.",
     "replay": "Wiederholen",
-    "replay latest revision": "Replay using latest revision",
+    "replay latest revision": "Wiedergabe mit der neuesten Revision",
     "replayed": "Ausführung wurde wiederholt",
     "replay confirm": "Möchten Sie diese Ausführung <code>{id}</code> wirklich wiederholen und eine neue erstellen?",
     "current": "aktuell",
@@ -814,6 +817,6 @@
     "execution not found": "Ausführung <code>{executionId}</code> nicht gefunden",
     "execution not in state FAILED": "Ausführung <code>{executionId}</code> nicht im Status FAILED",
     "execution already finished": "Ausführung <code>{executionId}</code> bereits abgeschlossen",
-    "seeing old revision": "You are seeing an old revision: {revision}"
+    "seeing old revision": "Sie sehen eine alte Revision: {revision}"
   }
 }

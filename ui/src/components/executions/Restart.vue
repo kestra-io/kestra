@@ -17,13 +17,13 @@
 
         <template #footer>
             <el-button @click="isOpen = false">
-                Cancel
+                {{ $t('cancel') }}
             </el-button>
             <el-button @click="restartLastRevision()">
                 {{ $t('replay latest revision') }}
             </el-button>
             <el-button type="primary" @click="restart()">
-                OK
+                {{ $t('ok') }}
             </el-button>
         </template>
 

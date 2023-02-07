@@ -8,6 +8,10 @@
     --el-button-disabled-border-color: var(--bs-border-color);
     --el-button-hover-text-color: var(--bs-body-color);
 
+    html.dark & {
+        --el-button-disabled-text-color: var(--bs-gray-200);
+    }
+
     a:hover & {
         color:  var(--el-button-text-color) !important;
     }
@@ -151,6 +155,10 @@ form.ks-horizontal {
         }
     }
 
+    .cell {
+        padding: 0 8px;
+    }
+
     .el-table__cell {
         vertical-align: top;
     }
@@ -169,7 +177,7 @@ form.ks-horizontal {
     }
 
     th.row-action, td.row-action {
-        width: 16px;
+        width: 24px;
         .cell {
             white-space: nowrap;
         }
@@ -466,5 +474,40 @@ form.ks-horizontal {
             --el-tag-bg-color: var(--el-color-#{$i});
             --el-tag-hover-color: var(--el-color-#{$i}-dark-2);
         }
+    }
+}
+
+// avatar
+.el-avatar {
+    --el-avatar-bg-color: var(--bs-gray-400);
+}
+
+
+// dialog
+.el-dialog {
+    .el-dialog__header {
+        padding: var(--spacer);
+        background-color: var(--bs-gray-300);
+
+        html.dark & {
+            background-color: var(--bs-gray-200);
+        }
+        margin-right: 0;
+    }
+
+    .el-dialog__title {
+        html.dark & {
+            color: var(--bs-white)
+        }
+    }
+}
+
+// date picker
+.el-date-range-picker {
+    --el-datepicker-border-color: var(--bs-border-color);
+    --el-datepicker-inner-border-color: var(--bs-border-color);
+
+    .el-date-table th {
+        border-bottom-color: var(--bs-border-color);
     }
 }

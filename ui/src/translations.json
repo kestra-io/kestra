@@ -267,7 +267,8 @@
     "invalid bulk delete": "Could not delete executions",
     "execution not found": "Execution <code>{executionId}</code> not found",
     "execution not in state FAILED": "Execution <code>{executionId}</code> not in state FAILED",
-    "execution already finished": "Execution <code>{executionId}</code> already finished"
+    "execution already finished": "Execution <code>{executionId}</code> already finished",
+    "seeing old revision": "You are seeing an old revision: {revision}"
   },
   "fr": {
     "id": "Identifiant",
@@ -538,7 +539,8 @@
     "execution not found": "Execution <code>{executionId}</code> non trouvée",
     "execution not in state FAILED": "Execution <code>{executionId}</code> n'est pas dans l'état FAILED",
     "execution already finished": "Execution <code>{executionId}</code> déjà terminée",
-    "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?"
+    "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
+    "seeing old revision": "Vous visualisez une ancienne revision : {revision}"
   },
   "de": {
     "id": "Id",
@@ -808,6 +810,7 @@
     "invalid bulk delete": "Ausführungen konnten nicht gelöscht werden",
     "execution not found": "Ausführung <code>{executionId}</code> nicht gefunden",
     "execution not in state FAILED": "Ausführung <code>{executionId}</code> nicht im Status FAILED",
-    "execution already finished": "Ausführung <code>{executionId}</code> bereits abgeschlossen"
+    "execution already finished": "Ausführung <code>{executionId}</code> bereits abgeschlossen",
+    "seeing old revision": "You are seeing an old revision: {revision}"
   }
 }

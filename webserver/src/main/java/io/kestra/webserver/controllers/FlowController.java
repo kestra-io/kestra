@@ -104,10 +104,11 @@ public class FlowController {
     public Task flowTask(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id,
-        @Parameter(description = "The task id") String taskId
+        @Parameter(description = "The task id") String taskId,
+        @Parameter(description = "The flow revision") @Nullable @QueryValue(value = "revision") Integer revision
     ) {
         return flowRepository
-            .findById(namespace, id)
+            .findById(namespace, id, Optional.ofNullable(revision))
             .flatMap(flow -> {
                 try {
                     return Optional.of(flow.findTaskByTaskId(taskId));

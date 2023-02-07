@@ -171,6 +171,7 @@
                     node: node,
                     namespace: props.namespace,
                     flowId: props.flowId,
+                    revision: props.execution ? props.execution.flowRevision : undefined,
                 },
             })
         }

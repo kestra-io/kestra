@@ -7,7 +7,7 @@
         <div class="task-content">
             <div class="card-header">
                 <div class="task-title">
-                    <span>{{ task.id }} {{ state }}</span>
+                    <span>{{ task.id }}</span>
                 </div>
             </div>
             <div v-if="task.state" class="status-wrapper">
@@ -66,6 +66,7 @@
                         :flow-id="flowId"
                         size="small"
                         :namespace="namespace"
+                        :revision="revision"
                     />
                 </el-button-group>
             </div>
@@ -141,7 +142,10 @@
                 type: String,
                 required: true
             },
-
+            revision: {
+                type: Number,
+                default: undefined
+            },
         },
         methods: {
             forwardEvent(type, event) {

@@ -1,5 +1,6 @@
 <template>
     <topology
+        :key="execution.id"
         v-if="execution && flowGraph"
         :flow-id="execution.flowId"
         :namespace="execution.namespace"

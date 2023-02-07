@@ -44,6 +44,7 @@
         :n="data.node"
         :namespace="data.namespace"
         :flow-id="data.flowId"
+        :revision="data.revision"
         @follow="forwardEvent('follow', $event)"
         @mouseover="mouseover"
         @mouseleave="mouseleave"

@@ -105,7 +105,7 @@ public class FlowController {
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id,
         @Parameter(description = "The task id") String taskId,
-        @Parameter(description = "The flow revision") @Nullable @QueryValue(value = "source") Integer revision
+        @Parameter(description = "The flow revision") @Nullable @QueryValue(value = "revision") Integer revision
     ) {
         return flowRepository
             .findById(namespace, id, Optional.ofNullable(revision))

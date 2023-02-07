@@ -89,7 +89,20 @@
                                 self.closeSSE();
                             }
 
-                            this.$store.commit("execution/setExecution", JSON.parse(event.data));
+                            let execution = JSON.parse(event.data);
+
+                            if (!this.flow ||
+                                execution.flowId !== this.flow.id ||
+                                execution.namespace !== this.flow.namespace ||
+                                execution.flowRevision !== this.flow.revision
+                            ) {
+                                this.$store.dispatch(
+                                    "flow/loadFlow",
+                                    {namespace: execution.namespace, id: execution.flowId, revision: execution.flowRevision}
+                                );
+                            }
+
+                            this.$store.commit("execution/setExecution", execution);
                         }
                     });
             },
@@ -162,6 +175,7 @@
             },
         },
         computed: {
+            ...mapState("flow", ["flow"]),
             ...mapState("execution", ["execution"]),
             ...mapState("auth", ["user"]),
             tabs() {

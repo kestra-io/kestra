@@ -7,7 +7,6 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateSource;
-import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -161,6 +160,6 @@ public class ElasticSearchTemplateRepository extends AbstractElasticSearchReposi
     }
 
     public List<String> findDistinctNamespace() {
-        return findDistinctNamespace(INDEX_NAME);
+        return findDistinct(INDEX_NAME, "namespace");
     }
 }

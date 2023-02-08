@@ -381,6 +381,6 @@ public class ElasticSearchFlowRepository extends AbstractElasticSearchRepository
     }
 
     public List<String> findDistinctNamespace() {
-        return findDistinctNamespace(INDEX_NAME);
+        return findDistinct(INDEX_NAME, "namespace");
     }
 }

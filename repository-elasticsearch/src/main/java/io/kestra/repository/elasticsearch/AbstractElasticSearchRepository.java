@@ -480,14 +480,14 @@ abstract public class AbstractElasticSearchRepository<T> {
     }
 
 
-    protected List<String> findDistinctNamespace(String index) {
+    protected List<String> findDistinct(String index, String field) {
         BoolQueryBuilder query = this.defaultFilter();
 
         // We want to keep only "distinct" values of field "namespace"
         // @TODO: use includeExclude(new IncludeExclude(0, 10)) to partition results
         TermsAggregationBuilder termsAggregationBuilder = AggregationBuilders
-            .terms("distinct_namespace")
-            .field("namespace")
+            .terms("distinct_values")
+            .field(field)
             .size(10000)
             .order(BucketOrder.key(true));
 
@@ -500,7 +500,7 @@ abstract public class AbstractElasticSearchRepository<T> {
         try {
             SearchResponse searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
 
-            Terms namespaces = searchResponse.getAggregations().get("distinct_namespace");
+            Terms namespaces = searchResponse.getAggregations().get("distinct_values");
 
             return new ArrayListTotal<>(
                 namespaces.getBuckets()

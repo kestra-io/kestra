@@ -61,7 +61,7 @@
     "jsdom": "^21.1.0",
     "monaco-editor": "0.34.1",
     "monaco-yaml": "4.0.0-alpha.0",
-    "prettier": "^2.8.2",
+    "prettier": "^2.8.4",
     "sass": "^1.58.0",
     "vite": "^4.1.1",
     "vitest": "^0.28.4"

@@ -245,7 +245,7 @@
                     })
             },
             rowClasses(row) {
-                return row && row.disabled ? "disabled" : "";
+                return row && row.row && row.row.disabled ? "disabled" : "";
             }
         }
     };

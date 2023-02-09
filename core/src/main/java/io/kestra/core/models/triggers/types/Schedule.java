@@ -125,12 +125,13 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             "* `@midnight`\n" +
             "* `@hourly`"
     )
+    @PluginProperty
     private String cron;
 
     @Schema(
         title = "The time zone id to use for evaluate cron. Default value is the server default zone id."
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();
 
@@ -140,6 +141,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
             "\n" +
             "Backfill will do all schedules between define date & current date and will start after the normal schedule."
     )
+    @PluginProperty
     private ScheduleBackfill backfill;
 
     @Builder.Default
@@ -149,6 +151,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
     @Schema(
         title = "List of schedule Conditions in order to limit schedule date."
     )
+    @PluginProperty
     private List<ScheduleCondition> scheduleConditions;
 
     @Schema(
@@ -161,6 +164,7 @@ public class Schedule extends AbstractTrigger implements PollingTriggerInterface
         title = "The maximum late delay accepted",
         description = "If the schedule didn't start after this delay, the execution will be skip."
     )
+    @PluginProperty
     private Duration lateMaximumDelay;
 
     @Getter(AccessLevel.NONE)

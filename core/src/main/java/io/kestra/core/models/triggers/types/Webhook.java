@@ -2,6 +2,7 @@ package io.kestra.core.models.triggers.types;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.micronaut.http.HttpRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -69,8 +70,10 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
             "\n" +
             "::: warning\n" +
             "Take care when using manual key, the key is the only security to protect your webhook and must be considered as a secret !\n" +
-            ":::\n"
+            ":::\n",
+        defaultValue = "<generated-hash>"
     )
+    @PluginProperty
     private final String key = IdUtils.create();
 
     public Optional<Execution> evaluate(HttpRequest<String> request, io.kestra.core.models.flows.Flow flow) {

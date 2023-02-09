@@ -10,7 +10,7 @@ import java.util.List;
 @Getter
 public class GraphCluster extends AbstractGraphTask {
     @JsonIgnore
-    private final Graph<AbstractGraphTask, Relation> graph = new Graph<>();
+    private final Graph<AbstractGraph, Relation> graph = new Graph<>();
 
     @JsonIgnore
     private final GraphClusterRoot root;

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @Value
 @Builder
 public class FlowGraph {
-    List<AbstractGraphTask> nodes;
+    List<AbstractGraph> nodes;
     List<Edge> edges;
     List<Cluster> clusters;
 
@@ -32,7 +32,7 @@ public class FlowGraph {
                 .map(g -> new Cluster(g.getKey(), g.getKey().getGraph()
                     .nodes()
                     .stream()
-                    .map(AbstractGraphTask::getUid)
+                    .map(AbstractGraph::getUid)
                     .collect(Collectors.toList()),
                     g.getValue()
                 ))

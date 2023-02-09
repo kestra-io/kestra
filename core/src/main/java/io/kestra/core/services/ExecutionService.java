@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -150,10 +151,10 @@ public class ExecutionService {
         // remove all child for replay task id
         Set<String> taskRunToRemove = GraphService.successors(graphCluster, List.of(taskRunId))
             .stream()
-            .filter(task -> task.getTaskRun() != null)
-            .filter(task -> !task.getTaskRun().getId().equals(taskRunId))
-            .filter(task -> !taskRunToRestart.contains(task.getTaskRun().getId()))
-            .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
+            .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null)
+            .filter(task -> !((AbstractGraphTask) task).getTaskRun().getId().equals(taskRunId))
+            .filter(task -> !taskRunToRestart.contains(((AbstractGraphTask) task).getTaskRun().getId()))
+            .map(s -> mappingTaskRunId.get(((AbstractGraphTask) s).getTaskRun().getId()))
             .collect(Collectors.toSet());
 
         taskRunToRemove
@@ -292,9 +293,9 @@ public class ExecutionService {
 
         return GraphService.successors(graphCluster, new ArrayList<>(workerTaskRunId))
             .stream()
-            .filter(task -> task.getTaskRun() != null)
-            .filter(s -> !workerTaskRunId.contains(s.getTaskRun().getId()))
-            .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
+            .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null)
+            .filter(s -> !workerTaskRunId.contains(((AbstractGraphTask) s).getTaskRun().getId()))
+            .map(s -> mappingTaskRunId.get(((AbstractGraphTask) s).getTaskRun().getId()))
             .collect(Collectors.toSet());
     }
 

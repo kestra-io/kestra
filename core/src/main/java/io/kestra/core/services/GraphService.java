@@ -29,7 +29,7 @@ public class GraphService {
         return graph;
     }
 
-    public static List<AbstractGraphTask> nodes(GraphCluster graphCluster) {
+    public static List<AbstractGraph> nodes(GraphCluster graphCluster) {
         return graphCluster.getGraph().nodes()
             .stream()
             .flatMap(t -> t instanceof GraphCluster ? nodes((GraphCluster) t).stream() : Stream.of(t))
@@ -37,7 +37,7 @@ public class GraphService {
             .collect(Collectors.toList());
     }
 
-    private static List<Triple<AbstractGraphTask, AbstractGraphTask, Relation>> rawEdges(GraphCluster graphCluster) {
+    private static List<Triple<AbstractGraph, AbstractGraph, Relation>> rawEdges(GraphCluster graphCluster) {
         return Stream.concat(
                 graphCluster.getGraph().edges()
                     .stream()
@@ -76,13 +76,13 @@ public class GraphService {
             .collect(Collectors.toList());
     }
 
-    public static Set<AbstractGraphTask> successors(GraphCluster graphCluster, List<String> taskRunIds) {
+    public static Set<AbstractGraph> successors(GraphCluster graphCluster, List<String> taskRunIds) {
         List<FlowGraph.Edge> edges = GraphService.edges(graphCluster);
-        List<AbstractGraphTask> nodes = GraphService.nodes(graphCluster);
+        List<AbstractGraph> nodes = GraphService.nodes(graphCluster);
 
-        List<AbstractGraphTask> selectedTaskRuns = nodes
+        List<AbstractGraph> selectedTaskRuns = nodes
             .stream()
-            .filter(task -> task.getTaskRun() != null && taskRunIds.contains(task.getTaskRun().getId()))
+            .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null && taskRunIds.contains(((AbstractGraphTask) task).getTaskRun().getId()))
             .collect(Collectors.toList());
 
         Set<String> edgeUuid = selectedTaskRuns

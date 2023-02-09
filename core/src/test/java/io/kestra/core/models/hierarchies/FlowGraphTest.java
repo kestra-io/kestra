@@ -32,13 +32,13 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         assertThat(flowGraph.getEdges().size(), is(4));
         assertThat(flowGraph.getClusters().size(), is(0));
 
-        assertThat(flowGraph.getNodes().get(2).getTask().getId(), is("date"));
-        assertThat(flowGraph.getNodes().get(2).getRelationType(), is(RelationType.SEQUENTIAL));
-        assertThat(flowGraph.getNodes().get(2).getValues(), is(nullValue()));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getTask().getId(), is("date"));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getRelationType(), is(RelationType.SEQUENTIAL));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getValues(), is(nullValue()));
 
-        assertThat(flowGraph.getNodes().get(3).getTask().getId(), is("task-id"));
-        assertThat(flowGraph.getNodes().get(3).getRelationType(), is(RelationType.SEQUENTIAL));
-        assertThat(flowGraph.getNodes().get(3).getValues(), is(nullValue()));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getTask().getId(), is("task-id"));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getRelationType(), is(RelationType.SEQUENTIAL));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getValues(), is(nullValue()));
     }
 
     @Test
@@ -172,8 +172,8 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         assertThat(edge(flowGraph, "t1", "parent_.*_end").getSource(), is("t1"));
         assertThat(edge(flowGraph, "t4", "parent_.*_end").getSource(), is("t4"));
 
-        assertThat(node(flowGraph, "t1").getTaskRun(), is(notNullValue()));
-        assertThat(node(flowGraph, "t4").getTaskRun(), is(notNullValue()));
+        assertThat(((AbstractGraphTask) node(flowGraph, "t1")).getTaskRun(), is(notNullValue()));
+        assertThat(((AbstractGraphTask) node(flowGraph, "t4")).getTaskRun(), is(notNullValue()));
     }
 
     @Test
@@ -204,11 +204,11 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         return yamlFlowParser.parse(file, Flow.class);
     }
 
-    private AbstractGraphTask node(FlowGraph flowGraph, String taskId) {
+    private AbstractGraph node(FlowGraph flowGraph, String taskId) {
         return flowGraph
             .getNodes()
             .stream()
-            .filter(e -> e.getTask() != null && e.getTask().getId().equals(taskId))
+            .filter(e -> ((AbstractGraphTask) e).getTask() != null && ((AbstractGraphTask) e).getTask().getId().equals(taskId))
             .findFirst()
             .orElseThrow();
     }

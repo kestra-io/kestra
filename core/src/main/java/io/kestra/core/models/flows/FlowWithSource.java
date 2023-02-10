@@ -4,12 +4,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.core.annotation.Introspected;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.AbstractMap;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -92,19 +95,61 @@ public class FlowWithSource extends Flow {
             .build();
     }
 
-    private static String toYamlWithoutDefault(Object Object) throws JsonProcessingException {
-        return JacksonMapper.ofYaml()
-            .writeValueAsString(
-                JacksonMapper
-                    .ofJson()
-                    .readTree(
-                        JacksonMapper
-                            .ofJson()
-                            .copy()
-                            .setSerializationInclusion(
-                                JsonInclude.Include.NON_DEFAULT)
-                            .writeValueAsString(Object)
-                    )
-            );
+    @SneakyThrows
+    private static String toYamlWithoutDefault(Object object) throws JsonProcessingException {
+        String json = JacksonMapper
+            .ofJson()
+            .copy()
+            .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
+            .writeValueAsString(object);
+
+        Object map = fixSnakeYaml(JacksonMapper.toMap(json));
+
+        return JacksonMapper.ofYaml().writeValueAsString(map);
+    }
+
+    /**
+     * Dirty hack but only concern previous flow with no source code in org.yaml.snakeyaml.emitter.Emitter:
+     * <pre>
+     * if (previousSpace) {
+     *   spaceBreak = true;
+     * }
+     * </pre>
+     * This control will detect ` \n` as a no valid entry on a string and will break the multiline to transform in single line
+     *
+     * @param object the object to fix
+     * @return the modified object
+     */
+    private static Object fixSnakeYaml(Object object) {
+        if (object instanceof Map) {
+            return ((Map<?, ?>) object)
+                .entrySet()
+                .stream()
+                .map(entry -> new AbstractMap.SimpleEntry<>(
+                    fixSnakeYaml(entry.getKey()),
+                    fixSnakeYaml(entry.getValue())
+                ))
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (u, v) -> {
+                        throw new IllegalStateException(String.format("Duplicate key %s", u));
+                    },
+                    LinkedHashMap::new
+                ));
+        } else if (object instanceof Collection) {
+            return ((Collection<?>) object)
+                .stream()
+                .map(FlowWithSource::fixSnakeYaml)
+                .collect(Collectors.toList());
+        } else if (object instanceof String) {
+            String item = (String) object;
+
+            if (item.contains("\n")) {
+                return item.replaceAll("\\s+\\n", "\\\n");
+            }
+        }
+
+        return object;
     }
 }

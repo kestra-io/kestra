@@ -48,7 +48,7 @@ public class DayWeekCondition extends Condition implements ScheduleCondition {
 
     @NotNull
     @Schema(title = "The day of week")
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private DayOfWeek dayOfWeek;
 
     @Override

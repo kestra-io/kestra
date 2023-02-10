@@ -2,6 +2,7 @@ package io.kestra.core.models.conditions.types;
 
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -40,12 +41,14 @@ public class ExecutionNamespaceCondition extends Condition {
     @Schema(
         description = "The namespace of the flow or the prefix if `prefix` is true"
     )
+    @PluginProperty
     private String namespace;
 
     @Builder.Default
     @Schema(
         description = "If we must look at the flow namespace by prefix (simple startWith case sensitive)"
     )
+    @PluginProperty
     private final Boolean prefix = false;
 
     @Override

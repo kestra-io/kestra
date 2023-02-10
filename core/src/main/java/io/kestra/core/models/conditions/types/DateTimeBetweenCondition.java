@@ -47,11 +47,11 @@ public class DateTimeBetweenCondition extends Condition implements ScheduleCondi
     private final String date = "{{ now() }}";
 
     @Schema(title = "The date must after this one")
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private ZonedDateTime after;
 
     @Schema(title = "The date must before this one")
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private ZonedDateTime before;
 
     @Override

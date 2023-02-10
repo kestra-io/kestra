@@ -104,17 +104,13 @@ public abstract class AbstractPython extends AbstractBash {
         if (this.exitOnFailed) {
             renderer.add("set -o errexit");
         }
+        renderer.add(this.pythonPath + " -m venv --system-site-packages " + workingDirectory + " > /dev/null");
 
-        String requirementsAsString = "";
         if (requirements != null) {
-            requirementsAsString = "./bin/pip install " + runContext.render(String.join(" ", requirements), additionalVars) + " > /dev/null";
+            renderer.addAll(Arrays.asList(
+                "./bin/pip install pip --upgrade > /dev/null",
+                "./bin/pip install " + runContext.render(String.join(" ", requirements), additionalVars) + " > /dev/null"));
         }
-
-        renderer.addAll(Arrays.asList(
-            this.pythonPath + " -m venv --system-site-packages " + workingDirectory + " > /dev/null",
-            "./bin/pip install pip --upgrade > /dev/null",
-            requirementsAsString
-        ));
 
         return String.join("\n", renderer);
     }

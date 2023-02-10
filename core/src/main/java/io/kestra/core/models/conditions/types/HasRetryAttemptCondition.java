@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.State;
@@ -41,10 +42,12 @@ import javax.validation.Valid;
 public class HasRetryAttemptCondition extends Condition {
     @Valid
     @Schema(title = "List of state that are authorized")
+    @PluginProperty
     private List<State.Type> in;
 
     @Valid
     @Schema(title = "List of state that aren't authorized")
+    @PluginProperty
     private List<State.Type> notIn;
 
     @Override

@@ -1,6 +1,7 @@
 package io.kestra.core.models.conditions.types;
 
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -39,10 +40,12 @@ import javax.validation.constraints.NotNull;
 public class FlowCondition extends Condition {
     @NotNull
     @Schema(title = "The namespace of the flow")
+    @PluginProperty
     private String namespace;
 
     @NotNull
     @Schema(title = "The flow id")
+    @PluginProperty
     private String flowId;
 
     @Override

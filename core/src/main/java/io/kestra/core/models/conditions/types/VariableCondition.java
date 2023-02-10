@@ -3,6 +3,7 @@ package io.kestra.core.models.conditions.types;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
@@ -41,6 +42,7 @@ import javax.validation.constraints.NotNull;
 public class VariableCondition extends Condition implements ScheduleCondition {
     @NotNull
     @NotEmpty
+    @PluginProperty
     private String expression;
 
     @Override

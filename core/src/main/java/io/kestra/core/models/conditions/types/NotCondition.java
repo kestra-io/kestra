@@ -50,7 +50,7 @@ public class NotCondition extends Condition implements ScheduleCondition {
         title = "The list of conditions to exclude",
         description = "If any conditions is true, it will prevent events execution."
     )
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private List<Condition> conditions;
 
     @Override

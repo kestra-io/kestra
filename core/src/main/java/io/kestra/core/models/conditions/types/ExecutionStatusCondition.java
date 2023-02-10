@@ -2,6 +2,7 @@ package io.kestra.core.models.conditions.types;
 
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -41,10 +42,12 @@ import javax.validation.Valid;
 public class ExecutionStatusCondition extends Condition {
     @Valid
     @Schema(title = "List of state that are authorized")
+    @PluginProperty
     private List<State.Type> in;
 
     @Valid
     @Schema(title = "List of state that aren't authorized")
+    @PluginProperty
     private List<State.Type> notIn;
 
     @Override

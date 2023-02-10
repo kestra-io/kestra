@@ -50,12 +50,12 @@ public class DayWeekInMonthCondition extends Condition implements ScheduleCondit
 
     @NotNull
     @Schema(title = "The day of week")
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private DayOfWeek dayOfWeek;
 
     @NotNull
     @Schema(title = "Are you looking at first or last day in month")
-    @PluginProperty(dynamic = false)
+    @PluginProperty
     private DayWeekInMonthCondition.DayInMonth dayInMonth;
 
     @Override

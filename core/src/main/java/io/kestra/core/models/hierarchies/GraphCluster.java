@@ -30,47 +30,4 @@ public class GraphCluster extends AbstractGraph {
         graph.addNode(this.end);
     }
 
-    public GraphCluster(RelationType relationType) {
-        super();
-
-        this.relationType = relationType;
-        this.root = new GraphClusterRoot();
-        this.end = new GraphClusterEnd();
-
-        graph.addNode(this.root);
-        graph.addNode(this.end);
-    }
-
-    public GraphCluster(RelationType relationType, GraphClusterRoot root, GraphClusterEnd end) {
-        super();
-
-        this.relationType = relationType;
-
-        if(root != null){
-            graph.addNode(root);
-        }
-        if(end != null){
-            graph.addNode(end);
-        }
-
-        this.root = root;
-        this.end = end;
-    }
-
-    public GraphCluster(GraphClusterRoot root, GraphClusterEnd end) {
-        super();
-
-        this.relationType = null;
-
-        if(root != null){
-            graph.addNode(root);
-        }
-        if(end != null){
-            graph.addNode(end);
-        }
-
-        this.root = root;
-        this.end = end;
-    }
-
 }

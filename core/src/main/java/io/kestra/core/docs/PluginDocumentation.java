@@ -40,7 +40,8 @@ public class PluginDocumentation {
                         .type(entry.getKey());
                     if (cls.getPackageName().startsWith(this.group)) {
                         var pluginSubGroup = cls.getPackage().getDeclaredAnnotation(PluginSubGroup.class);
-                        var subGroupName =  cls.getPackageName().substring(this.group.length() + 1);
+                        var subGroupName =  cls.getPackageName().length() > this.group.length() ?
+                            cls.getPackageName().substring(this.group.length() + 1) : "";
                         var subGroupTitle = pluginSubGroup != null ? pluginSubGroup.title() : subGroupName;
                         var subGroupDescription = pluginSubGroup != null ? pluginSubGroup.description() : null;
                         // hack to avoid adding the subgroup in the task URL when it's the group to keep search engine indexes

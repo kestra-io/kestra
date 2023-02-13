@@ -137,7 +137,7 @@ public class GraphService {
         Execution execution
     ) throws IllegalVariableEvaluationException {
         for (Map.Entry<String, List<Task>> entry: tasks.entrySet()) {
-                fillGraph(graph, entry.getValue(), RelationType.SEQUENTIAL, parent, execution, entry.getKey());
+            fillGraph(graph, entry.getValue(), RelationType.SEQUENTIAL, parent, execution, entry.getKey());
         }
 
         // error cases

@@ -296,9 +296,10 @@ public class ExecutionService {
         return GraphService.successors(graphCluster, new ArrayList<>(workerTaskRunId))
             .stream()
             .filter(task -> task instanceof AbstractGraphTask)
-            .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null)
-            .filter(s -> !workerTaskRunId.contains(((AbstractGraphTask) s).getTaskRun().getId()))
-            .map(s -> mappingTaskRunId.get(((AbstractGraphTask) s).getTaskRun().getId()))
+            .map(task -> (AbstractGraphTask) task)
+            .filter(task -> task.getTaskRun() != null)
+            .filter(s -> !workerTaskRunId.contains(s.getTaskRun().getId()))
+            .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
             .collect(Collectors.toSet());
     }
 

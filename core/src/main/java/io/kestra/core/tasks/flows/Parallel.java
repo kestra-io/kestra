@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.flows;
 
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.hierarchies.RelationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -81,8 +82,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues, GraphCluster graphCluster) throws IllegalVariableEvaluationException {
-
-
+        graphCluster.setRelationType(RelationType.PARALLEL);
         GraphService.parallel(
             graphCluster,
             this.tasks,

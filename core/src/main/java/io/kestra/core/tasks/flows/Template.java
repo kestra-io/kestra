@@ -10,7 +10,6 @@ import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.GraphCluster;
-import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -116,19 +115,18 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     private Map<String, String> args;
 
     @Override
-    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
-        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
+    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues, GraphCluster graphCluster) throws IllegalVariableEvaluationException {
         io.kestra.core.models.templates.Template template = this.findTemplate(ContextHelper.context());
 
         GraphService.sequential(
-            subGraph,
+            graphCluster,
             template.getTasks(),
             template.getErrors(),
             taskRun,
             execution
         );
 
-        return subGraph;
+        return graphCluster;
     }
 
     @Override

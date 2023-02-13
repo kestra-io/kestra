@@ -2,15 +2,17 @@ package io.kestra.core.models.hierarchies;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.tasks.Task;
+import lombok.Setter;
 
-import java.util.List;
 
 @Getter
-public class GraphCluster extends AbstractGraphTask {
+@Setter
+public class GraphCluster extends AbstractGraph {
     @JsonIgnore
-    private final Graph<AbstractGraph, Relation> graph = new Graph<>();
+    protected final Graph<AbstractGraph, Relation> graph = new Graph<>();
+
+    @JsonIgnore
+    protected final RelationType relationType;
 
     @JsonIgnore
     private final GraphClusterRoot root;
@@ -21,6 +23,7 @@ public class GraphCluster extends AbstractGraphTask {
     public GraphCluster() {
         super();
 
+        this.relationType = null;
         this.root = new GraphClusterRoot();
         this.end = new GraphClusterEnd();
 
@@ -28,12 +31,46 @@ public class GraphCluster extends AbstractGraphTask {
         graph.addNode(this.end);
     }
 
-    public GraphCluster(Task task, TaskRun taskRun, List<String> values, RelationType relationType) {
-        super(task, taskRun, values, relationType);
-        this.root = new GraphClusterRoot(this);
-        this.end = new GraphClusterEnd(this);
+    public GraphCluster(RelationType relationType) {
+        super();
+
+        this.relationType = relationType;
+        this.root = new GraphClusterRoot();
+        this.end = new GraphClusterEnd();
 
         graph.addNode(this.root);
         graph.addNode(this.end);
+    }
+
+    public GraphCluster(RelationType relationType, GraphClusterRoot root, GraphClusterEnd end) {
+        super();
+
+        this.relationType = relationType;
+
+        if(root != null){
+            graph.addNode(root);
+        }
+        if(end != null){
+            graph.addNode(end);
+        }
+
+        this.root = root;
+        this.end = end;
+    }
+
+    public GraphCluster(GraphClusterRoot root, GraphClusterEnd end) {
+        super();
+
+        this.relationType = null;
+
+        if(root != null){
+            graph.addNode(root);
+        }
+        if(end != null){
+            graph.addNode(end);
+        }
+
+        this.root = root;
+        this.end = end;
     }
 }

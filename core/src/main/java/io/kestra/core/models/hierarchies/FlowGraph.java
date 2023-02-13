@@ -56,7 +56,7 @@ public class FlowGraph {
     @ToString
     @EqualsAndHashCode
     public static class Cluster {
-        private final GraphCluster cluster;
+        private final AbstractGraph cluster;
         private final List<String> nodes;
         private final List<String> parents;
     }

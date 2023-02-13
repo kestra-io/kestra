@@ -1,5 +1,6 @@
 package io.kestra.core.models.hierarchies;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.utils.IdUtils;
@@ -23,6 +24,7 @@ public abstract class AbstractGraph {
         this.type = this.getClass().getName();
     }
 
+    @JsonIgnore
     public String getLabel() {
         return this.getUid();
     }

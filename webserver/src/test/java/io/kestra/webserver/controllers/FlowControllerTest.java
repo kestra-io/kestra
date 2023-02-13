@@ -88,8 +88,8 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         FlowGraph result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra" +
             ".tests/all-flowable/graph"), FlowGraph.class);
 
-        assertThat(result.getNodes().size(), is(28));
-        assertThat(result.getEdges().size(), is(31));
+        assertThat(result.getNodes().size(), is(34));
+        assertThat(result.getEdges().size(), is(37));
         assertThat(result.getClusters().size(), is(6));
     }
 

@@ -132,7 +132,7 @@
 
             elements.value.push({
                 id: cluster.cluster.uid,
-                label: cluster.cluster.task.id,
+                label: cluster.cluster.uid,
                 type: "cluster",
                 parentNode: parentNode,
                 position: getNodePosition(dagreNode, parentNode ? dagreGraph.node(parentNode) : undefined),
@@ -152,7 +152,7 @@
             } else if (clusters[node.uid] === undefined && node.type.includes("GraphClusterRoot")) {
                 nodeType = "dot";
             } else if (node.type.includes("GraphClusterRoot")) {
-                nodeType = "task";
+                nodeType = "dot";
             }
 
             elements.value.push({

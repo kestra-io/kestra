@@ -204,7 +204,15 @@ public class GraphService {
                 // detect kind
                 if (currentTask instanceof FlowableTask) {
                     FlowableTask<?> flowableTask = ((FlowableTask<?>) currentTask);
-                    currentGraph = flowableTask.tasksTree(execution, currentTaskRun, parentValues);
+
+                    GraphCluster flowableCluster = new GraphCluster();
+                    flowableCluster.setUid("cluster_"+currentTask.getId());
+                    GraphTask flowableGraphTask = new GraphTask(currentTask, currentTaskRun, parentValues, relationType);
+                    flowableCluster.getGraph().addNode(flowableGraphTask);
+                    flowableCluster.getGraph().addEdge(flowableCluster.getRoot(), flowableGraphTask, new Relation());
+                    currentGraph = flowableTask.tasksTree(execution, currentTaskRun, parentValues, flowableCluster);
+
+
                 } else {
                     currentGraph = new GraphTask(currentTask, currentTaskRun, parentValues, relationType);
                 }

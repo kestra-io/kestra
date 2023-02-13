@@ -3,6 +3,7 @@ package io.kestra.core.models.hierarchies;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @ToString
 @Getter
+@Setter
 @Introspected
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 public abstract class AbstractGraphTask extends AbstractGraph {

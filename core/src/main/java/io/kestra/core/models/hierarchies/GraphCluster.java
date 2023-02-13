@@ -11,8 +11,7 @@ public class GraphCluster extends AbstractGraph {
     @JsonIgnore
     protected final Graph<AbstractGraph, Relation> graph = new Graph<>();
 
-    @JsonIgnore
-    protected final RelationType relationType;
+    protected RelationType relationType;
 
     @JsonIgnore
     private final GraphClusterRoot root;
@@ -73,4 +72,5 @@ public class GraphCluster extends AbstractGraph {
         this.root = root;
         this.end = end;
     }
+
 }

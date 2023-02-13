@@ -82,6 +82,7 @@ public class GraphService {
 
         List<AbstractGraph> selectedTaskRuns = nodes
             .stream()
+            .filter(task -> task instanceof AbstractGraphTask)
             .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null && taskRunIds.contains(((AbstractGraphTask) task).getTaskRun().getId()))
             .collect(Collectors.toList());
 
@@ -136,7 +137,7 @@ public class GraphService {
         Execution execution
     ) throws IllegalVariableEvaluationException {
         for (Map.Entry<String, List<Task>> entry: tasks.entrySet()) {
-            fillGraph(graph, entry.getValue(), RelationType.SEQUENTIAL, parent, execution, entry.getKey());
+                fillGraph(graph, entry.getValue(), RelationType.SEQUENTIAL, parent, execution, entry.getKey());
         }
 
         // error cases
@@ -172,7 +173,7 @@ public class GraphService {
     ) throws IllegalVariableEvaluationException {
         Iterator<Task> iterator = tasks.iterator();
         AbstractGraph previous;
-        if(graph.getGraph().nodes().size() == 3 &&  new ArrayList<>(graph.getGraph().nodes()).get(2) instanceof GraphTask){
+        if(graph.getGraph().nodes().size() >= 3 &&  new ArrayList<>(graph.getGraph().nodes()).get(2) instanceof GraphTask){
             previous = new ArrayList<>(graph.getGraph().nodes()).get(2);
         } else {
             previous = graph.getRoot();

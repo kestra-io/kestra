@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.flows;
 
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.hierarchies.RelationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -73,17 +74,16 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues, GraphCluster graphCluster) throws IllegalVariableEvaluationException {
-        GraphCluster subGraph = new GraphCluster();
-
+        graphCluster.setRelationType(RelationType.SEQUENTIAL);
         GraphService.sequential(
-            subGraph,
+            graphCluster,
             this.tasks,
             this.errors,
             taskRun,
             execution
         );
 
-        return subGraph;
+        return graphCluster;
     }
 
     @Override

@@ -151,10 +151,12 @@ public class ExecutionService {
         // remove all child for replay task id
         Set<String> taskRunToRemove = GraphService.successors(graphCluster, List.of(taskRunId))
             .stream()
-            .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null)
-            .filter(task -> !((AbstractGraphTask) task).getTaskRun().getId().equals(taskRunId))
-            .filter(task -> !taskRunToRestart.contains(((AbstractGraphTask) task).getTaskRun().getId()))
-            .map(s -> mappingTaskRunId.get(((AbstractGraphTask) s).getTaskRun().getId()))
+            .filter(task -> task instanceof AbstractGraphTask)
+            .map(task -> ((AbstractGraphTask) task))
+            .filter(task -> task.getTaskRun() != null)
+            .filter(task -> !task.getTaskRun().getId().equals(taskRunId))
+            .filter(task -> !taskRunToRestart.contains(task.getTaskRun().getId()))
+            .map(s -> mappingTaskRunId.get(s.getTaskRun().getId()))
             .collect(Collectors.toSet());
 
         taskRunToRemove
@@ -293,6 +295,7 @@ public class ExecutionService {
 
         return GraphService.successors(graphCluster, new ArrayList<>(workerTaskRunId))
             .stream()
+            .filter(task -> task instanceof AbstractGraphTask)
             .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null)
             .filter(s -> !workerTaskRunId.contains(((AbstractGraphTask) s).getTaskRun().getId()))
             .map(s -> mappingTaskRunId.get(((AbstractGraphTask) s).getTaskRun().getId()))

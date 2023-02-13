@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -89,17 +90,16 @@ public class TaskDefaultsCaseTest {
 
         @Override
         public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues, GraphCluster graphCluster) throws IllegalVariableEvaluationException {
-            GraphCluster subGraph = new GraphCluster();
-
+            graphCluster.setRelationType(RelationType.SEQUENTIAL);
             GraphService.sequential(
-                subGraph,
+                graphCluster,
                 this.tasks,
                 this.errors,
                 taskRun,
                 execution
             );
 
-            return subGraph;
+            return graphCluster;
         }
 
         @Override

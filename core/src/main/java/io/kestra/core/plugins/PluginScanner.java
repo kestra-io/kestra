@@ -8,6 +8,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.micronaut.core.beans.BeanIntrospectionReference;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.http.annotation.Controller;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
@@ -110,6 +111,10 @@ public class PluginScanner {
             Class beanType = definition.getBeanType();
 
             if (Modifier.isAbstract(beanType.getModifiers())) {
+                continue;
+            }
+
+            if(beanType.isAnnotationPresent(Hidden.class)) {
                 continue;
             }
 

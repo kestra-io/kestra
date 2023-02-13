@@ -171,13 +171,17 @@ public class GraphService {
         String value
     ) throws IllegalVariableEvaluationException {
         Iterator<Task> iterator = tasks.iterator();
-        AbstractGraphTask previous = graph.getRoot();
-
+        AbstractGraph previous;
+        if(graph.getGraph().nodes().size() == 3 &&  new ArrayList<>(graph.getGraph().nodes()).get(2) instanceof GraphTask){
+            previous = new ArrayList<>(graph.getGraph().nodes()).get(2);
+        } else {
+            previous = graph.getRoot();
+        }
         boolean isFirst = true;
         while (iterator.hasNext()) {
             Task currentTask = iterator.next();
             for (TaskRun currentTaskRun : findTaskRuns(currentTask, execution, parent)) {
-                AbstractGraphTask currentGraph;
+                AbstractGraph currentGraph;
                 List<String> parentValues = null;
 
                 // we use the graph relation type by default but we change it to pass relation for case below
@@ -210,11 +214,19 @@ public class GraphService {
 
                 // link to previous one
                 if (previous != null) {
-                    graph.getGraph().addEdge(
-                        previous instanceof GraphCluster ? ((GraphCluster) previous).getEnd() : previous,
-                        currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getRoot() : currentGraph,
-                        relation
-                    );
+                    if (previous instanceof GraphCluster && ((GraphCluster) previous).getEnd() != null) {
+                        graph.getGraph().addEdge(
+                            ((GraphCluster) previous).getEnd(),
+                            currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getRoot() : currentGraph,
+                            relation
+                        );
+                    } else {
+                        graph.getGraph().addEdge(
+                            previous,
+                            currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getRoot() : currentGraph,
+                            relation
+                        );
+                    }
                 }
 
                 // change previous for current one to link
@@ -224,11 +236,19 @@ public class GraphService {
 
                 // link to end task
                 if (GraphService.isAllLinkToEnd(relationType)) {
-                    graph.getGraph().addEdge(
-                        currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getEnd() : currentGraph,
-                        graph.getEnd(),
-                        new Relation()
-                    );
+                    if (currentGraph instanceof GraphCluster && ((GraphCluster) currentGraph).getEnd() != null) {
+                        graph.getGraph().addEdge(
+                            ((GraphCluster) currentGraph).getEnd(),
+                            graph.getEnd(),
+                            new Relation()
+                        );
+                    } else {
+                        graph.getGraph().addEdge(
+                            currentGraph,
+                            graph.getEnd(),
+                            new Relation()
+                        );
+                    }
                 }
 
                 isFirst = false;

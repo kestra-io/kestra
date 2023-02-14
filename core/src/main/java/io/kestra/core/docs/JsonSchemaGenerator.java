@@ -64,6 +64,8 @@ public class JsonSchemaGenerator {
                 fixTask(map);
             } else if (cls == Flow.class) {
                 fixFlow(map);
+            } else if (cls == AbstractTrigger.class) {
+                fixTrigger(map);
             }
 
 
@@ -107,6 +109,13 @@ public class JsonSchemaGenerator {
     private static void fixTask(Map<String, Object> map) {
         var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
         var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
+        var allOf = (List<Object>) task.get("allOf");
+        allOf.remove(1);
+    }
+
+    private static void fixTrigger(Map<String, Object> map) {
+        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
+        var task = (Map<String, Object>) definitions.get("io.kestra.core.models.triggers.AbstractTrigger-2");
         var allOf = (List<Object>) task.get("allOf");
         allOf.remove(1);
     }

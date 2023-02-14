@@ -7,7 +7,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.services.PluginService;
 import io.micronaut.cache.annotation.Cacheable;
@@ -59,7 +59,7 @@ public class PluginController {
         } else if (type == SchemaType.task) {
             return jsonSchemaGenerator.schemas(Task.class);
         } else if (type == SchemaType.trigger) {
-            return jsonSchemaGenerator.schemas(Trigger.class);
+            return jsonSchemaGenerator.schemas(AbstractTrigger.class);
         } else {
             throw new IllegalArgumentException("Invalid type " + type);
         }

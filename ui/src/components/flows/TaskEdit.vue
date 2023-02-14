@@ -32,7 +32,7 @@
                     ref="editor"
                     @save="saveTask"
                     v-model="taskYaml"
-                    schema-type="task"
+                    :schema-type="mapSectionWithSchema()"
                     :full-height="false"
                     :navbar="false"
                     lang="yaml"
@@ -92,6 +92,16 @@
             },
             load(taskId) {
                 return YamlUtils.extractTask(this.flow.source, taskId, this.section).toString();
+            },
+            mapSectionWithSchema(){
+                switch(this.section){
+                case "tasks":
+                    return "task";
+                case "triggers":
+                    return "trigger";
+                default:
+                    return "task";
+                }
             },
             saveTask() {
                 let updatedSource;

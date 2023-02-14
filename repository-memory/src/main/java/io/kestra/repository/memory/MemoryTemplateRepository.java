@@ -1,6 +1,8 @@
 package io.kestra.repository.memory;
 
+import io.kestra.core.models.flows.Flow;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.value.ValueException;
 import io.micronaut.data.model.Pageable;
 import io.kestra.core.events.CrudEvent;
@@ -48,9 +50,17 @@ public class MemoryTemplateRepository implements TemplateRepositoryInterface {
             throw new ValueException("Page cannot be < 1");
         }
 
-        List<Template> filteredTemplates = new ArrayList<>(templates.values());
+        List<Template> filteredTemplates = find(query, namespace);
 
         return ArrayListTotal.of(pageable, filteredTemplates);
+    }
+
+    @Override
+    public List<Template> find(@Nullable String query, @Nullable String namespace) {
+        return templates.values()
+            .stream()
+            .filter(flow -> namespace == null || flow.getNamespace().equals(namespace))
+            .collect(Collectors.toList());
     }
 
     @Override

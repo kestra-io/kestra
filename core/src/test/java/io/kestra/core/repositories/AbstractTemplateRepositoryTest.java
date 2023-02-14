@@ -1,11 +1,15 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -89,6 +93,28 @@ public abstract class AbstractTemplateRepositoryTest {
         assertThat(size, greaterThan(saveCount));
         templateRepository.delete(template);
         assertThat((long) templateRepository.findAll().size(), is(saveCount));
+    }
+
+    @Test
+    void find() {
+        Template template1 = builder().build();
+        templateRepository.create(template1);
+        Template template2 = builder().build();
+        templateRepository.create(template2);
+        Template template3 = builder().build();
+        templateRepository.create(template3);
+
+        // with pageable
+        List<Template> save = templateRepository.find(Pageable.from(1, 10),null, "kestra.test");
+        assertThat((long) save.size(), greaterThanOrEqualTo(3L));
+
+        // without pageable
+        save = templateRepository.find(null, "kestra.test");
+        assertThat((long) save.size(), greaterThanOrEqualTo(3L));
+
+        templateRepository.delete(template1);
+        templateRepository.delete(template2);
+        templateRepository.delete(template3);
     }
 
     @Test

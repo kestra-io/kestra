@@ -19,6 +19,7 @@ import io.kestra.core.tasks.scripts.Bash;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -213,6 +214,24 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
 
         save = flowRepository.findByNamespace("io.kestra.tests.minimal.bis");
+        assertThat((long) save.size(), is(1L));
+    }
+
+    @Test
+    void find() {
+        List<Flow> save = flowRepository.find(Pageable.from(1, 10),null, "io.kestra.tests", Collections.emptyMap());
+        assertThat((long) save.size(), is(10L));
+
+        save = flowRepository.find(Pageable.from(1),null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
+        assertThat((long) save.size(), is(1L));
+    }
+
+    @Test
+    void findWithSource() {
+        List<FlowWithSource> save = flowRepository.findWithSource(null, "io.kestra.tests", Collections.emptyMap());
+        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+
+        save = flowRepository.findWithSource(null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
         assertThat((long) save.size(), is(1L));
     }
 

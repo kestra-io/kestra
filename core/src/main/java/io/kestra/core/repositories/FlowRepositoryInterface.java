@@ -55,6 +55,12 @@ public interface FlowRepositoryInterface {
         @Nullable Map<String, String> labels
     );
 
+    List<FlowWithSource> findWithSource(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable Map<String, String> labels
+    );
+
     ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String namespace);
 
     List<String> findDistinctNamespace();

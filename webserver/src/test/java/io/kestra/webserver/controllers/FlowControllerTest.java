@@ -26,6 +26,7 @@ import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -35,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipFile;
 
 import jakarta.inject.Inject;
 
@@ -451,6 +453,35 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
         assertThat(jsonError, containsString("flow.id"));
         assertThat(jsonError, containsString("flow.namespace"));
+    }
+
+    @Test
+    void extractByQuery() throws IOException {
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/extract/by_query?namespace=io.kestra.tests"),
+            Argument.of(byte[].class));
+        File file = File.createTempFile("flows", ".zip");
+        Files.write(file.toPath(), zip);
+
+        try (ZipFile zipFile = new ZipFile(file)) {
+            assertThat(zipFile.stream().count(), is(52L));
+        }
+
+        file.delete();
+    }
+
+    @Test
+    void extractByIds() throws IOException {
+        List<String> ids = List.of("each-object", "webhook", "task-flow");
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/extract/by_ids?namespace=io.kestra.tests", ids),
+            Argument.of(byte[].class));
+        File file = File.createTempFile("flows", ".zip");
+        Files.write(file.toPath(), zip);
+
+        try(ZipFile zipFile = new ZipFile(file)) {
+            assertThat(zipFile.stream().count(), is(3L));
+        }
+
+        file.delete();
     }
 
     private Flow generateFlow(String namespace, String inputName) {

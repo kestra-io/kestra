@@ -1,9 +1,15 @@
 package io.kestra.core.models.templates;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.core.annotation.Introspected;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -25,6 +31,16 @@ import javax.validation.constraints.Pattern;
 @ToString
 @EqualsAndHashCode
 public class Template implements DeletedInterface {
+
+    private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
+        .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
+            @Override
+            public boolean hasIgnoreMarker(final AnnotatedMember m) {
+                List<String> exclusions = Arrays.asList("revision", "deleted", "source");
+                return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
+            }
+        });
+
     @NotNull
     @NotBlank
     @Pattern(regexp = "[a-zA-Z0-9._-]+")
@@ -90,6 +106,23 @@ public class Template implements DeletedInterface {
             return Optional.of(new ConstraintViolationException(violations));
         } else {
             return Optional.empty();
+        }
+    }
+
+    public String generateSource() {
+        try {
+            return JacksonMapper.ofYaml()
+                .writeValueAsString(
+                    JacksonMapper
+                        .ofJson()
+                        .readTree(
+                            jsonMapper.copy()
+                                .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
+                                .writeValueAsString(this)
+                        )
+                );
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -13,12 +13,6 @@ import lombok.ToString;
 public abstract class AbstractGraphTrigger extends AbstractGraph {
     private final AbstractTrigger trigger;
 
-    public AbstractGraphTrigger() {
-        super();
-
-        this.trigger = null;
-    }
-
     public AbstractGraphTrigger(AbstractTrigger trigger) {
         super();
 
@@ -29,7 +23,7 @@ public abstract class AbstractGraphTrigger extends AbstractGraph {
     @Override
     public String getUid() {
         if (this.trigger != null) {
-            return this.trigger.getId();
+            return  this.trigger.getId() + "_trigger";
         }
         return this.uid;
     }

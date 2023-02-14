@@ -38,7 +38,6 @@
                     lang="yaml"
                 />
             </div>
-
         </el-drawer>
     </component>
 </template>
@@ -81,6 +80,10 @@
             revision: {
                 type: Number,
                 default: undefined
+            },
+            section: {
+                type: String,
+                default: "tasks"
             }
         },
         methods: {
@@ -88,7 +91,7 @@
                 return this.$store.dispatch("flow/loadTask", {namespace: this.namespace, id: this.flowId, taskId: taskId, revision: this.revision});
             },
             load(taskId) {
-                return YamlUtils.extractTask(this.flow.source, taskId).toString();
+                return YamlUtils.extractTask(this.flow.source, taskId, this.section).toString();
             },
             saveTask() {
                 let updatedSource;
@@ -96,7 +99,8 @@
                     updatedSource = YamlUtils.replaceTaskInDocument(
                         this.flow.source,
                         this.taskId ? this.taskId : this.task.id,
-                        this.taskYaml
+                        this.taskYaml,
+                        this.section
                     );
                 } catch (err) {
                     this.$toast().warning(

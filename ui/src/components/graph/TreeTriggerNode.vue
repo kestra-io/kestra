@@ -9,6 +9,30 @@
                     <span>{{ trigger.id }}</span>
                 </div>
             </div>
+            <div class="info-wrapper">
+                <span class="bottom" />
+                <el-button-group>
+                    <el-button
+                        v-if="trigger.description"
+                        class="node-action"
+                        size="small"
+                        @click="$refs.descriptionTask.open()"
+                    >
+                        <markdown-tooltip ref="descriptionTask" :description="task.description" :id="hash" :title="task.id" />
+                    </el-button>
+
+                    <task-edit
+                        class="node-action"
+                        :modal-id="`modal-source-${hash}`"
+                        :task="trigger"
+                        :flow-id="flowId"
+                        size="small"
+                        :namespace="namespace"
+                        :revision="revision"
+                        section="triggers"
+                    />
+                </el-button-group>
+            </div>
         </div>
     </div>
 </template>
@@ -16,10 +40,14 @@
     import {mapState} from "vuex";
     import State from "../../utils/state"
     import TaskIcon from "../plugins/TaskIcon.vue";
+    import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
+    import TaskEdit from "../flows/TaskEdit.vue";
 
     export default {
         components: {
             TaskIcon,
+            MarkdownTooltip,
+            TaskEdit
         },
         props: {
             n: {

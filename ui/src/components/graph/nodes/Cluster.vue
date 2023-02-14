@@ -17,6 +17,7 @@
     .vue-flow__node-cluster {
         background-color: rgba(global-var.$cyan, 0.05);
         border: 1px solid var(--bs-cyan);
+        pointer-events: none !important;
 
         .label {
             color: var(--bs-cyan);

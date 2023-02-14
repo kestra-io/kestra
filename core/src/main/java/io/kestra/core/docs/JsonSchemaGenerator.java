@@ -155,7 +155,8 @@ public class JsonSchemaGenerator {
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
-            .with(Option.ALLOF_CLEANUP_AT_THE_END);
+            .with(Option.ALLOF_CLEANUP_AT_THE_END)
+            .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES);
 
         // default value
         builder.forFields().withDefaultResolver(this::defaults);

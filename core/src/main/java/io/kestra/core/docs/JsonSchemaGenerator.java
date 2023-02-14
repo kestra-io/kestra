@@ -10,6 +10,7 @@ import com.github.victools.jsonschema.generator.*;
 import com.github.victools.jsonschema.generator.impl.DefinitionKey;
 import com.github.victools.jsonschema.generator.naming.DefaultSchemaDefinitionNamingStrategy;
 import com.github.victools.jsonschema.module.jackson.JacksonModule;
+import com.github.victools.jsonschema.module.jackson.JacksonOption;
 import com.github.victools.jsonschema.module.javax.validation.JavaxValidationModule;
 import com.github.victools.jsonschema.module.javax.validation.JavaxValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
@@ -60,9 +61,7 @@ public class JsonSchemaGenerator {
             Map<String, Object> map = JacksonMapper.toMap(objectNode);
 
             // hack
-            if (cls == Task.class) {
-                fixTask(map);
-            } else if (cls == Flow.class) {
+            if (cls == Flow.class) {
                 fixFlow(map);
             }
 
@@ -101,14 +100,6 @@ public class JsonSchemaGenerator {
 
             collectedTypeAttributes.set("markdownDescription", new TextNode(sb.toString()));
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void fixTask(Map<String, Object> map) {
-        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
-        var allOf = (List<Object>) task.get("allOf");
-        allOf.remove(1);
     }
 
     @SuppressWarnings("unchecked")
@@ -155,7 +146,7 @@ public class JsonSchemaGenerator {
     protected <T> void build(SchemaGeneratorConfigBuilder builder, Class<? extends T> cls) {
 
         builder
-            .with(new JacksonModule())
+            .with(new JacksonModule(JacksonOption.IGNORE_TYPE_INFO_TRANSFORM))
             .with(new JavaxValidationModule(
                 JavaxValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
                 JavaxValidationOption.INCLUDE_PATTERN_EXPRESSIONS

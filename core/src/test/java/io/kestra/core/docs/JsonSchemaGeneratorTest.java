@@ -69,12 +69,11 @@ class JsonSchemaGeneratorTest {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Flow.class);
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
-
             var flow = definitions.get("io.kestra.core.models.flows.Flow");
             assertThat((List<String>) flow.get("required"), not(contains("deleted")));
             assertThat((List<String>) flow.get("required"), hasItems("id", "namespace", "tasks"));
 
-            var bash = definitions.get("io.kestra.core.tasks.scripts.Bash-1");
+            var bash = definitions.get("io.kestra.core.tasks.scripts.Bash");
             assertThat((List<String>) bash.get("required"), not(contains("exitOnFailed")));
             assertThat((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("exitOnFailed").get("markdownDescription"), containsString("Default value is : `true`"));
             assertThat(((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("exitOnFailed").get("markdownDescription")).startsWith("This tells bash that"), is(true));
@@ -82,9 +81,7 @@ class JsonSchemaGeneratorTest {
             assertThat((String) bash.get("markdownDescription"), containsString("Bash with some inputs files"));
             assertThat((String) bash.get("markdownDescription"), containsString("outputFiles.first"));
 
-            var bashType = definitions.get("io.kestra.core.tasks.scripts.Bash-2");
-
-            var python = definitions.get("io.kestra.core.tasks.scripts.Python-1");
+            var python = definitions.get("io.kestra.core.tasks.scripts.Python");
             assertThat((List<String>) python.get("required"), not(contains("exitOnFailed")));
         });
     }
@@ -98,10 +95,10 @@ class JsonSchemaGeneratorTest {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Task.class);
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
-            var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
-            var allOf = (List<Object>) task.get("allOf");
+            var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task");
+            var anyOf = (List<Object>) task.get("anyOf");
 
-            assertThat(allOf.size(), is(1));
+            assertThat(anyOf.size(), greaterThanOrEqualTo(31)); //31 in local but 56 in CI
         });
     }
 
@@ -115,7 +112,7 @@ class JsonSchemaGeneratorTest {
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
 
-            var bash = definitions.get("io.kestra.core.tasks.scripts.Bash-1");
+            var bash = definitions.get("io.kestra.core.tasks.scripts.Bash");
             assertThat((List<String>) bash.get("required"), not(contains("exitOnFailed")));
             assertThat((List<String>) bash.get("required"), not(contains("interpreter")));
         });
@@ -124,7 +121,6 @@ class JsonSchemaGeneratorTest {
     @Test
     void testEnum() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);
-        System.out.println(generate);
         assertThat(generate, is(not(nullValue())));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(3));
     }

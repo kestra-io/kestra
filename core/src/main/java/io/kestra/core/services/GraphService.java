@@ -29,7 +29,7 @@ public class GraphService {
         return graph;
     }
 
-    public static List<AbstractGraphTask> nodes(GraphCluster graphCluster) {
+    public static List<AbstractGraph> nodes(GraphCluster graphCluster) {
         return graphCluster.getGraph().nodes()
             .stream()
             .flatMap(t -> t instanceof GraphCluster ? nodes((GraphCluster) t).stream() : Stream.of(t))
@@ -37,7 +37,7 @@ public class GraphService {
             .collect(Collectors.toList());
     }
 
-    private static List<Triple<AbstractGraphTask, AbstractGraphTask, Relation>> rawEdges(GraphCluster graphCluster) {
+    private static List<Triple<AbstractGraph, AbstractGraph, Relation>> rawEdges(GraphCluster graphCluster) {
         return Stream.concat(
                 graphCluster.getGraph().edges()
                     .stream()
@@ -76,13 +76,14 @@ public class GraphService {
             .collect(Collectors.toList());
     }
 
-    public static Set<AbstractGraphTask> successors(GraphCluster graphCluster, List<String> taskRunIds) {
+    public static Set<AbstractGraph> successors(GraphCluster graphCluster, List<String> taskRunIds) {
         List<FlowGraph.Edge> edges = GraphService.edges(graphCluster);
-        List<AbstractGraphTask> nodes = GraphService.nodes(graphCluster);
+        List<AbstractGraph> nodes = GraphService.nodes(graphCluster);
 
-        List<AbstractGraphTask> selectedTaskRuns = nodes
+        List<AbstractGraph> selectedTaskRuns = nodes
             .stream()
-            .filter(task -> task.getTaskRun() != null && taskRunIds.contains(task.getTaskRun().getId()))
+            .filter(task -> task instanceof AbstractGraphTask)
+            .filter(task -> ((AbstractGraphTask) task).getTaskRun() != null && taskRunIds.contains(((AbstractGraphTask) task).getTaskRun().getId()))
             .collect(Collectors.toList());
 
         Set<String> edgeUuid = selectedTaskRuns
@@ -171,13 +172,20 @@ public class GraphService {
         String value
     ) throws IllegalVariableEvaluationException {
         Iterator<Task> iterator = tasks.iterator();
-        AbstractGraphTask previous = graph.getRoot();
+        AbstractGraph previous;
+
+        // we validate a GraphTask based on 3 nodes (root/ task / end)
+        if (graph.getGraph().nodes().size() >= 3 && new ArrayList<>(graph.getGraph().nodes()).get(2) instanceof GraphTask) {
+            previous = new ArrayList<>(graph.getGraph().nodes()).get(2);
+        } else {
+            previous = graph.getRoot();
+        }
 
         boolean isFirst = true;
         while (iterator.hasNext()) {
             Task currentTask = iterator.next();
             for (TaskRun currentTaskRun : findTaskRuns(currentTask, execution, parent)) {
-                AbstractGraphTask currentGraph;
+                AbstractGraph currentGraph;
                 List<String> parentValues = null;
 
                 // we use the graph relation type by default but we change it to pass relation for case below
@@ -210,11 +218,19 @@ public class GraphService {
 
                 // link to previous one
                 if (previous != null) {
-                    graph.getGraph().addEdge(
-                        previous instanceof GraphCluster ? ((GraphCluster) previous).getEnd() : previous,
-                        currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getRoot() : currentGraph,
-                        relation
-                    );
+                    if (previous instanceof GraphCluster && ((GraphCluster) previous).getEnd() != null) {
+                        graph.getGraph().addEdge(
+                            ((GraphCluster) previous).getEnd(),
+                            currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getRoot() : currentGraph,
+                            relation
+                        );
+                    } else {
+                        graph.getGraph().addEdge(
+                            previous,
+                            currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getRoot() : currentGraph,
+                            relation
+                        );
+                    }
                 }
 
                 // change previous for current one to link
@@ -224,11 +240,19 @@ public class GraphService {
 
                 // link to end task
                 if (GraphService.isAllLinkToEnd(relationType)) {
-                    graph.getGraph().addEdge(
-                        currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getEnd() : currentGraph,
-                        graph.getEnd(),
-                        new Relation()
-                    );
+                    if (currentGraph instanceof GraphCluster && ((GraphCluster) currentGraph).getEnd() != null) {
+                        graph.getGraph().addEdge(
+                            ((GraphCluster) currentGraph).getEnd(),
+                            graph.getEnd(),
+                            new Relation()
+                        );
+                    } else {
+                        graph.getGraph().addEdge(
+                            currentGraph,
+                            graph.getEnd(),
+                            new Relation()
+                        );
+                    }
                 }
 
                 isFirst = false;

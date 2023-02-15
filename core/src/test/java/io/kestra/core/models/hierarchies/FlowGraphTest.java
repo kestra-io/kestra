@@ -32,13 +32,13 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         assertThat(flowGraph.getEdges().size(), is(4));
         assertThat(flowGraph.getClusters().size(), is(0));
 
-        assertThat(flowGraph.getNodes().get(2).getTask().getId(), is("date"));
-        assertThat(flowGraph.getNodes().get(2).getRelationType(), is(RelationType.SEQUENTIAL));
-        assertThat(flowGraph.getNodes().get(2).getValues(), is(nullValue()));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getTask().getId(), is("date"));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getRelationType(), is(RelationType.SEQUENTIAL));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getValues(), is(nullValue()));
 
-        assertThat(flowGraph.getNodes().get(3).getTask().getId(), is("task-id"));
-        assertThat(flowGraph.getNodes().get(3).getRelationType(), is(RelationType.SEQUENTIAL));
-        assertThat(flowGraph.getNodes().get(3).getValues(), is(nullValue()));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getTask().getId(), is("task-id"));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getRelationType(), is(RelationType.SEQUENTIAL));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getValues(), is(nullValue()));
     }
 
     @Test
@@ -46,15 +46,15 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         Flow flow = this.parse("flows/valids/sequential.yaml");
         FlowGraph flowGraph = FlowGraph.of(flow);
 
-        assertThat(flowGraph.getNodes().size(), is(16));
-        assertThat(flowGraph.getEdges().size(), is(15));
+        assertThat(flowGraph.getNodes().size(), is(19));
+        assertThat(flowGraph.getEdges().size(), is(18));
         assertThat(flowGraph.getClusters().size(), is(3));
 
         assertThat(edge(flowGraph, "1-3-2-1").getTarget(), is("1-3-2-2_end"));
         assertThat(edge(flowGraph, "1-3-2-1").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));
 
-        assertThat(edge(flowGraph, "1-seq.*_end").getTarget(), is("2_end"));
-        assertThat(edge(flowGraph, "1-3-2_seq.*_end").getTarget(), is("1-3-3_end"));
+        assertThat(edge(flowGraph, "1-seq").getTarget(), is("1-1"));
+        assertThat(edge(flowGraph, "1-3-2_seq").getTarget(), is("1-3-2-1"));
     }
 
     @Test
@@ -62,12 +62,11 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         Flow flow = this.parse("flows/valids/errors.yaml");
         FlowGraph flowGraph = FlowGraph.of(flow);
 
-        assertThat(flowGraph.getNodes().size(), is(13));
-        assertThat(flowGraph.getEdges().size(), is(13));
+        assertThat(flowGraph.getNodes().size(), is(17));
+        assertThat(flowGraph.getEdges().size(), is(17));
         assertThat(flowGraph.getClusters().size(), is(4));
 
-        assertThat(edges(flowGraph, flowGraph.getNodes().get(0).getUid()), containsInAnyOrder("failed", "t2"));
-        assertThat(edge(flowGraph, flowGraph.getNodes().get(0).getUid(), "t2").getRelation().getRelationType(), is(RelationType.ERROR));
+        assertThat(edge(flowGraph, "failed", "t2").getRelation().getRelationType(), is(RelationType.ERROR));
     }
 
     @Test
@@ -75,15 +74,15 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         Flow flow = this.parse("flows/valids/parallel.yaml");
         FlowGraph flowGraph = FlowGraph.of(flow);
 
-        assertThat(flowGraph.getNodes().size(), is(11));
-        assertThat(flowGraph.getEdges().size(), is(15));
+        assertThat(flowGraph.getNodes().size(), is(12));
+        assertThat(flowGraph.getEdges().size(), is(16));
         assertThat(flowGraph.getClusters().size(), is(1));
 
-        assertThat(edge(flowGraph, "parent_.*_root", "t2").getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, "parent_.*_root", "t6").getRelation().getRelationType(), is(RelationType.PARALLEL));
+        assertThat(edge(flowGraph, "parent", "t2").getRelation().getRelationType(), is(RelationType.PARALLEL));
+        assertThat(edge(flowGraph, "parent", "t6").getRelation().getRelationType(), is(RelationType.PARALLEL));
 
-        assertThat(edge(flowGraph, "t1", "parent_.*_end").getSource(), is("t1"));
-        assertThat(edge(flowGraph, "t4", "parent_.*_end").getSource(), is("t4"));
+        assertThat(edge(flowGraph, "t1", ".*_end").getSource(), is("t1"));
+        assertThat(edge(flowGraph, "t4", ".*_end").getSource(), is("t4"));
     }
 
     @Test
@@ -91,15 +90,13 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         Flow flow = this.parse("flows/valids/parallel-nested.yaml");
         FlowGraph flowGraph = FlowGraph.of(flow);
 
-        assertThat(flowGraph.getNodes().size(), is(16));
-        assertThat(flowGraph.getEdges().size(), is(20));
+        assertThat(flowGraph.getNodes().size(), is(19));
+        assertThat(flowGraph.getEdges().size(), is(23));
         assertThat(flowGraph.getClusters().size(), is(3));
 
-        assertThat(flowGraph.getClusters().get(2).getParents(), containsInRelativeOrder("1_par", "1-3_par"));
-
-        assertThat(edge(flowGraph, "1_par_.*_root", "1-4_end").getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, "1_par_.*_root", "1-3_par_.*_root").getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, "1-3-2_par_.*_root", "1-3-2-1").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));
+        assertThat(edge(flowGraph, "1_par", "1-4_end").getRelation().getRelationType(), is(RelationType.PARALLEL));
+        assertThat(edge(flowGraph, "1_par", ".*_root").getRelation().getRelationType(), is(RelationType.PARALLEL));
+        assertThat(edge(flowGraph, "1-3-2_par", "1-3-2-1").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));
     }
 
     @Test
@@ -107,16 +104,16 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         Flow flow = this.parse("flows/valids/switch.yaml");
         FlowGraph flowGraph = FlowGraph.of(flow);
 
-        assertThat(flowGraph.getNodes().size(), is(12));
-        assertThat(flowGraph.getEdges().size(), is(15));
+        assertThat(flowGraph.getNodes().size(), is(14));
+        assertThat(flowGraph.getEdges().size(), is(17));
         assertThat(flowGraph.getClusters().size(), is(2));
 
-        assertThat(edge(flowGraph, "parent-seq_.*_root", "t3_.*_root").getRelation().getRelationType(), is(RelationType.CHOICE));
-        assertThat(edge(flowGraph, "parent-seq_.*_root", "t3_.*_root").getRelation().getValue(), is("THIRD"));
-        assertThat(edge(flowGraph, "parent-seq_.*_root", "t1").getRelation().getRelationType(), is(RelationType.CHOICE));
-        assertThat(edge(flowGraph, "parent-seq_.*_root", "t1").getRelation().getValue(), is("FIRST"));
-        assertThat(edge(flowGraph, "parent-seq_.*_root", "default").getRelation().getRelationType(), is(RelationType.CHOICE));
-        assertThat(edge(flowGraph, "parent-seq_.*_root", "default").getRelation().getValue(), is("defaults"));
+        assertThat(edge(flowGraph, "parent-seq", ".*_root").getRelation().getRelationType(), is(RelationType.CHOICE));
+        assertThat(edge(flowGraph, "parent-seq", ".*_root").getRelation().getValue(), is("THIRD"));
+        assertThat(edge(flowGraph, "parent-seq", "t1").getRelation().getRelationType(), is(RelationType.CHOICE));
+        assertThat(edge(flowGraph, "parent-seq", "t1").getRelation().getValue(), is("FIRST"));
+        assertThat(edge(flowGraph, "parent-seq", "default").getRelation().getRelationType(), is(RelationType.CHOICE));
+        assertThat(edge(flowGraph, "parent-seq", "default").getRelation().getValue(), is("defaults"));
         assertThat(edge(flowGraph, "t2", "t2_sub").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));
     }
 
@@ -125,24 +122,25 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         Flow flow = this.parse("flows/valids/each-sequential-nested.yaml");
         FlowGraph flowGraph = FlowGraph.of(flow);
 
+        assertThat(flowGraph.getNodes().size(), is(13));
+        assertThat(flowGraph.getEdges().size(), is(12));
+        assertThat(flowGraph.getClusters().size(), is(2));
+
+        assertThat(edge(flowGraph, "1-1_return", ".*_root").getRelation().getRelationType(), is(RelationType.DYNAMIC));
+        assertThat(edge(flowGraph, "1-2_each", "1-2-1_return").getRelation().getRelationType(), is(RelationType.DYNAMIC));
+    }
+
+    @Test
+    void eachParallel() throws IllegalVariableEvaluationException {
+        Flow flow = this.parse("flows/valids/each-parallel-nested.yaml");
+        FlowGraph flowGraph = FlowGraph.of(flow);
+
         assertThat(flowGraph.getNodes().size(), is(11));
         assertThat(flowGraph.getEdges().size(), is(10));
         assertThat(flowGraph.getClusters().size(), is(2));
 
-        assertThat(edge(flowGraph, "1-1_return", "1-2_each_.*_root").getRelation().getRelationType(), is(RelationType.DYNAMIC));
-        assertThat(edge(flowGraph, "1-2_each_.*_root", "1-2-1_return").getRelation().getRelationType(), is(RelationType.DYNAMIC));
-    }
-
-    @Test
-    void eachParralel() throws IllegalVariableEvaluationException {
-        Flow flow = this.parse("flows/valids/each-parallel-nested.yaml");
-        FlowGraph flowGraph = FlowGraph.of(flow);
-
-        assertThat(flowGraph.getNodes().size(), is(9));
-        assertThat(flowGraph.getEdges().size(), is(8));
-        assertThat(flowGraph.getClusters().size(), is(2));
-
-        assertThat(edge(flowGraph, "1_each_.*_root", "2-1_seq_.*_root").getRelation().getRelationType(), is(RelationType.DYNAMIC));
+        assertThat(edge(flowGraph, "1_each", ".*_root").getRelation().getRelationType(), is(RelationType.DYNAMIC));
+        assertThat(flowGraph.getClusters().get(1).getNodes().size(), is(5));
     }
 
     @Test
@@ -150,30 +148,30 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         Flow flow = this.parse("flows/valids/all-flowable.yaml");
         FlowGraph flowGraph = FlowGraph.of(flow);
 
-        assertThat(flowGraph.getNodes().size(), is(28));
-        assertThat(flowGraph.getEdges().size(), is(31));
+        assertThat(flowGraph.getNodes().size(), is(34));
+        assertThat(flowGraph.getEdges().size(), is(37));
         assertThat(flowGraph.getClusters().size(), is(6));
     }
 
     @Test
-    void parralelWithExecution() throws TimeoutException, IllegalVariableEvaluationException {
+    void parallelWithExecution() throws TimeoutException, IllegalVariableEvaluationException {
         Execution execution = runnerUtils.runOne("io.kestra.tests", "parallel");
 
         Flow flow = this.parse("flows/valids/parallel.yaml");
         FlowGraph flowGraph = FlowGraph.of(flow, execution);
 
-        assertThat(flowGraph.getNodes().size(), is(11));
-        assertThat(flowGraph.getEdges().size(), is(15));
+        assertThat(flowGraph.getNodes().size(), is(12));
+        assertThat(flowGraph.getEdges().size(), is(16));
         assertThat(flowGraph.getClusters().size(), is(1));
 
-        assertThat(edge(flowGraph, "parent_.*_root", "t2").getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, "parent_.*_root", "t6").getRelation().getRelationType(), is(RelationType.PARALLEL));
+        assertThat(edge(flowGraph, "parent", "t2").getRelation().getRelationType(), is(RelationType.PARALLEL));
+        assertThat(edge(flowGraph, "parent", "t6").getRelation().getRelationType(), is(RelationType.PARALLEL));
 
-        assertThat(edge(flowGraph, "t1", "parent_.*_end").getSource(), is("t1"));
-        assertThat(edge(flowGraph, "t4", "parent_.*_end").getSource(), is("t4"));
+        assertThat(edge(flowGraph, "t1", ((GraphCluster) flowGraph.getClusters().get(0).getCluster()).getEnd().getUid()).getSource(), is("t1"));
+        assertThat(edge(flowGraph, "t4", ((GraphCluster) flowGraph.getClusters().get(0).getCluster()).getEnd().getUid()).getSource(), is("t4"));
 
-        assertThat(node(flowGraph, "t1").getTaskRun(), is(notNullValue()));
-        assertThat(node(flowGraph, "t4").getTaskRun(), is(notNullValue()));
+        assertThat(((AbstractGraphTask) node(flowGraph, "t1")).getTaskRun(), is(notNullValue()));
+        assertThat(((AbstractGraphTask) node(flowGraph, "t4")).getTaskRun(), is(notNullValue()));
     }
 
     @Test
@@ -183,16 +181,15 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         Flow flow = this.parse("flows/valids/each-sequential.yaml");
         FlowGraph flowGraph = FlowGraph.of(flow, execution);
 
-        assertThat(flowGraph.getNodes().size(), is(17));
-        assertThat(flowGraph.getEdges().size(), is(18));
+        assertThat(flowGraph.getNodes().size(), is(21));
+        assertThat(flowGraph.getEdges().size(), is(22));
         assertThat(flowGraph.getClusters().size(), is(4));
 
         assertThat(edge(flowGraph, "1-1_value 1", "1-1_value 2").getRelation().getValue(), is("value 2"));
         assertThat(edge(flowGraph, "1-1_value 2", "1-1_value 3").getRelation().getValue(), is("value 3"));
-        assertThat(edge(flowGraph, "1-2_value 3", "failed_value 3_.*_end"), is(notNullValue()));
+        assertThat(edge(flowGraph, "1-2_value 3", ".*_end"), is(notNullValue()));
 
-        assertThat(edge(flowGraph, "failed_value 1_.*","failed_value 2_.*_root").getRelation().getValue(), is("value 2"));
-        assertThat(edge(flowGraph, "1-1_value 2","1-1_value 3").getRelation().getValue(), is("value 3"));
+        assertThat(edge(flowGraph, "failed_value 1","1-2_value 1").getTarget(), is("1-2_value 1"));
     }
 
     private Flow parse(String path) {
@@ -204,11 +201,12 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         return yamlFlowParser.parse(file, Flow.class);
     }
 
-    private AbstractGraphTask node(FlowGraph flowGraph, String taskId) {
+    private AbstractGraph node(FlowGraph flowGraph, String taskId) {
         return flowGraph
             .getNodes()
             .stream()
-            .filter(e -> e.getTask() != null && e.getTask().getId().equals(taskId))
+            .filter(e -> e instanceof AbstractGraphTask)
+            .filter(e -> ((AbstractGraphTask) e).getTask() != null && ((AbstractGraphTask) e).getTask().getId().equals(taskId))
             .findFirst()
             .orElseThrow();
     }

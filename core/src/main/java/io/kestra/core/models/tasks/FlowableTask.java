@@ -21,7 +21,7 @@ public interface FlowableTask <T extends Output> {
     @PluginProperty
     List<Task> getErrors();
 
-    GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues, GraphCluster graphCluster) throws IllegalVariableEvaluationException;
+    GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException;
 
     List<Task> allChildTasks();
 

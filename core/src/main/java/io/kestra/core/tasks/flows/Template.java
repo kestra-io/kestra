@@ -117,18 +117,19 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     private Map<String, String> args;
 
     @Override
-    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues, GraphCluster graphCluster) throws IllegalVariableEvaluationException {
+    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
         io.kestra.core.models.templates.Template template = this.findTemplate(ContextHelper.context());
-        graphCluster.setRelationType(RelationType.SEQUENTIAL);
+
         GraphService.sequential(
-            graphCluster,
+            subGraph,
             template.getTasks(),
             template.getErrors(),
             taskRun,
             execution
         );
 
-        return graphCluster;
+        return subGraph;
     }
 
     @Override

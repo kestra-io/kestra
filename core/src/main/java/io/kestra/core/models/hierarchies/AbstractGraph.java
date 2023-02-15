@@ -11,7 +11,6 @@ import lombok.ToString;
 
 @ToString
 @Getter
-@Setter
 @Introspected
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 public abstract class AbstractGraph {

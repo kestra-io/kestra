@@ -127,10 +127,11 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     }
 
     @Override
-    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues, GraphCluster graphCluster) throws IllegalVariableEvaluationException {
-        graphCluster.setRelationType(RelationType.CHOICE);
+    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.CHOICE);
+
         GraphService.switchCase(
-            graphCluster,
+            subGraph,
             Stream
                 .concat(
                     this.defaults != null ? ImmutableMap.of("defaults", this.defaults).entrySet().stream() : Stream.empty(),
@@ -142,7 +143,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
             execution
         );
 
-        return graphCluster;
+        return subGraph;
     }
 
     @Override

@@ -67,8 +67,7 @@ public class Graph2DotService {
 
     private static String label(AbstractGraph node) {
         String shape = node instanceof GraphClusterEnd ? "point" : "box";
-        String label = node instanceof GraphClusterEnd ? "end" :
-           node.getLabel();
+        String label = node instanceof GraphClusterEnd ? "end" : node.getLabel();
 
         return "[shape=" + shape + ",label=\"" + label + "\"]";
     }

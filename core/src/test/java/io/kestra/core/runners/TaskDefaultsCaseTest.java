@@ -89,17 +89,18 @@ public class TaskDefaultsCaseTest {
         private String def;
 
         @Override
-        public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues, GraphCluster graphCluster) throws IllegalVariableEvaluationException {
-            graphCluster.setRelationType(RelationType.SEQUENTIAL);
+        public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+            GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.SEQUENTIAL);
+
             GraphService.sequential(
-                graphCluster,
+                subGraph,
                 this.tasks,
                 this.errors,
                 taskRun,
                 execution
             );
 
-            return graphCluster;
+            return subGraph;
         }
 
         @Override

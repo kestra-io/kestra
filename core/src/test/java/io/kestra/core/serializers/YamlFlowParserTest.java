@@ -190,6 +190,18 @@ class YamlFlowParserTest {
     }
 
     @Test
+    void invalidTask() {
+        ConstraintViolationException exception = assertThrows(
+            ConstraintViolationException.class,
+            () -> this.parse("flows/invalids/invalid-task.yaml")
+        );
+
+        assertThat(exception.getConstraintViolations().size(), is(2));
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).stream().filter(e -> e.getMessage().contains("Invalid type")).findFirst().orElseThrow().getMessage(), containsString("Invalid type: io.kestra.core.tasks.debugs.MissingOne"));
+    }
+
+
+    @Test
     void includeFailed() {
         ConstraintViolationException exception = assertThrows(
             ConstraintViolationException.class,

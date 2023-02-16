@@ -44,7 +44,7 @@ public class TemplateNamespaceExtractCommand extends AbstractApiCommand {
 
         try(DefaultHttpClient client = client()) {
             MutableHttpRequest<Object> request = HttpRequest
-                .GET("/api/v1/templates/extract/by_query?namespace=" + namespace).accept(MediaType.APPLICATION_OCTET_STREAM);
+                .GET("/api/v1/templates/extract/by-query?namespace=" + namespace).accept(MediaType.APPLICATION_OCTET_STREAM);
 
             HttpResponse<byte[]> response = client.toBlocking().exchange(this.requestOptions(request), byte[].class);
             Path zipFile = Path.of(directory.toString(), DEFAULT_FILE_NAME);

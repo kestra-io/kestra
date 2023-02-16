@@ -451,7 +451,7 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/extract/by_query", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Get(uri = "/extract/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(
         tags = {"Flows"},
         summary = "Extract flows as a ZIP archive of yaml sources."
@@ -461,25 +461,13 @@ public class FlowController {
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace,
         @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
     ) throws IOException {
-        try(ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ZipOutputStream archive = new ZipOutputStream(bos)) {
-
-            List<FlowWithSource> toExtract = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));
-            for(var flowWithSource : toExtract) {
-                var zipEntry = new ZipEntry(flowWithSource.getNamespace() + "-" + flowWithSource.getId() + ".yml");
-                archive.putNextEntry(zipEntry);
-                archive.write(flowWithSource.getSource().getBytes());
-                archive.closeEntry();
-            }
-
-            archive.finish();
-            return HttpResponse.ok(bos.toByteArray())
-                .header("Content-Disposition", "attachment; filename=\"flows.zip\"");
-        }
+        var flows = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));
+        var bytes = zipFlows(flows);
+        return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/extract/by_ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Post(uri = "/extract/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
     @Operation(
         tags = {"Flows"},
         summary = "Extract flows as a ZIP archive of yaml sources."
@@ -488,20 +476,24 @@ public class FlowController {
         @Parameter(description = "A namespace filter prefix") @QueryValue(value = "namespace") String namespace,
         @Parameter(description = "A list of string identifiers") @Body List<String> ids
     ) throws IOException {
+        var flows = ids.stream().map(id -> flowRepository.findByIdWithSource(namespace, id).orElseThrow()).collect(Collectors.toList());
+        var bytes = zipFlows(flows);
+        return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
+    }
+
+    private byte[] zipFlows(List<FlowWithSource> flows) throws IOException {
         try(ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ZipOutputStream archive = new ZipOutputStream(bos)) {
 
-            for(var id : ids) {
-                FlowWithSource flowWithSource = flowRepository.findByIdWithSource(namespace, id).orElseThrow();
-                var zipEntry = new ZipEntry(flowWithSource.getNamespace() + "-" + flowWithSource.getId() + ".yml");
+            for(var flow : flows) {
+                var zipEntry = new ZipEntry(flow.getNamespace() + "-" + flow.getId() + ".yml");
                 archive.putNextEntry(zipEntry);
-                archive.write(flowWithSource.getSource().getBytes());
+                archive.write(flow.getSource().getBytes());
                 archive.closeEntry();
             }
 
             archive.finish();
-            return HttpResponse.ok(bos.toByteArray())
-                .header("Content-Disposition", "attachment; filename=\"flows.zip\"");
+            return bos.toByteArray();
         }
     }
 }

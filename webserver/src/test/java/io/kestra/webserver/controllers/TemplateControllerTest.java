@@ -135,7 +135,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
         int size = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/search?namespace=kestra.test"), Argument.of(PagedResults.class, Template.class)).getResults().size();
 
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/extract/by_query?namespace=kestra.test"),
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/extract/by-query?namespace=kestra.test"),
             Argument.of(byte[].class));
         File file = File.createTempFile("templates", ".zip");
         Files.write(file.toPath(), zip);
@@ -155,7 +155,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         var template3 = client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
 
         List<String> ids = List.of(template1.getId(), template2.getId(), template3.getId());
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/templates/extract/by_ids?namespace=kestra.test", ids),
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/templates/extract/by-ids?namespace=kestra.test", ids),
             Argument.of(byte[].class));
         File file = File.createTempFile("templates", ".zip");
         Files.write(file.toPath(), zip);

@@ -32,14 +32,15 @@ import javax.validation.constraints.Pattern;
 @EqualsAndHashCode
 public class Template implements DeletedInterface {
 
-    private static final ObjectMapper jsonMapper = JacksonMapper.ofJson().copy()
+    private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override
             public boolean hasIgnoreMarker(final AnnotatedMember m) {
                 List<String> exclusions = Arrays.asList("revision", "deleted", "source");
                 return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
             }
-        });
+        })
+        .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
     @NotNull
     @NotBlank
@@ -111,16 +112,7 @@ public class Template implements DeletedInterface {
 
     public String generateSource() {
         try {
-            return JacksonMapper.ofYaml()
-                .writeValueAsString(
-                    JacksonMapper
-                        .ofJson()
-                        .readTree(
-                            jsonMapper.copy()
-                                .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT)
-                                .writeValueAsString(this)
-                        )
-                );
+            return YAML_MAPPER.writeValueAsString(this);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

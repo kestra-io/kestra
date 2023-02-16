@@ -250,7 +250,7 @@ public class TemplateController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/extract/by_query", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Get(uri = "/extract/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(
         summary = "Extract templates as a ZIP archive of yaml sources."
     )
@@ -258,26 +258,13 @@ public class TemplateController {
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace
     ) throws IOException {
-        try(ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ZipOutputStream archive = new ZipOutputStream(bos)) {
-
-            List<Template> toExtract = templateRepository.find(query, namespace);
-            System.out.println(toExtract.size());
-            for(var template : toExtract) {
-                var zipEntry = new ZipEntry(template.getNamespace() + "-" + template.getId() + ".yml");
-                archive.putNextEntry(zipEntry);
-                archive.write(template.generateSource().getBytes());
-                archive.closeEntry();
-            }
-
-            archive.finish();
-            return HttpResponse.ok(bos.toByteArray())
-                .header("Content-Disposition", "attachment; filename=\"templates.zip\"");
-        }
+        var templates = templateRepository.find(query, namespace);
+        var bytes = zipTemplates(templates);
+        return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/extract/by_ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Post(uri = "/extract/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
     @Operation(
         summary = "Extract templates as a ZIP archive of yaml sources."
     )
@@ -285,11 +272,16 @@ public class TemplateController {
         @Parameter(description = "A namespace filter prefix") @QueryValue(value = "namespace") String namespace,
         @Parameter(description = "A list of string identifiers") @Body List<String> ids
     ) throws IOException {
+        var templates = ids.stream().map(id -> templateRepository.findById(namespace, id).orElseThrow()).collect(Collectors.toList());
+        var bytes = zipTemplates(templates);
+        return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
+    }
+
+    private byte[] zipTemplates(List<Template> templates) throws IOException {
         try(ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ZipOutputStream archive = new ZipOutputStream(bos)) {
 
-            for(var id : ids) {
-                var template = templateRepository.findById(namespace, id).orElseThrow();
+            for(var template : templates) {
                 var zipEntry = new ZipEntry(template.getNamespace() + "-" + template.getId() + ".yml");
                 archive.putNextEntry(zipEntry);
                 archive.write(template.generateSource().getBytes());
@@ -297,8 +289,7 @@ public class TemplateController {
             }
 
             archive.finish();
-            return HttpResponse.ok(bos.toByteArray())
-                .header("Content-Disposition", "attachment; filename=\"templates.zip\"");
+            return bos.toByteArray();
         }
     }
 }

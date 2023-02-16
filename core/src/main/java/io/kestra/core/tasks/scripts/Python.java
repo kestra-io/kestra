@@ -70,6 +70,16 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
                 "requirements:",
                 "  - requests"
             }
+        ),
+        @Example(
+            title = "Execute a python script with an input file from Kestra's local storage created by a previous task.",
+            code = {
+                "inputFiles:",
+                "  data.csv: {{outputs.previousTaskId.uri}}",
+                "  main.py: |",
+                "    with open('data.csv', 'r') as f:",
+                "      print(f.read())"
+            }
         )
     }
 )

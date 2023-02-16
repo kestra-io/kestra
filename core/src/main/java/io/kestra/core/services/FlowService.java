@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.core.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -98,7 +99,7 @@ public class FlowService {
         return !f.uidWithoutRevision().equals(Flow.uidWithoutRevision(execution));
     }
 
-    public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
+    public List<Execution> flowTriggerExecution(Stream<Flow> flowStream, Execution execution, @Nullable MultipleConditionStorageInterface multipleConditionStorage) {
         return flowStream
             .filter(flow -> flow.getTriggers() != null && flow.getTriggers().size() > 0)
             .filter(flow -> !flow.isDisabled())

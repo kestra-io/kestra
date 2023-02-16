@@ -1,7 +1,6 @@
 package io.kestra.core.tasks.flows;
 
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.hierarchies.RelationType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -15,6 +14,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -86,7 +86,6 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
 
         return subGraph;
     }
-
 
     @Override
     public List<Task> allChildTasks() {

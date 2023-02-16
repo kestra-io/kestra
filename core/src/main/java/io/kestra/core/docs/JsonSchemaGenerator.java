@@ -104,14 +104,6 @@ public class JsonSchemaGenerator {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static void fixTask(Map<String, Object> map) {
-        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
-        var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
-        var allOf = (List<Object>) task.get("allOf");
-        allOf.remove(1);
-    }
-
     private static void fixTrigger(Map<String, Object> map) {
         var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
         var task = (Map<String, Object>) definitions.get("io.kestra.core.models.triggers.AbstractTrigger-2");

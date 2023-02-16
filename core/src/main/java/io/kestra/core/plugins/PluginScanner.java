@@ -1,5 +1,6 @@
 package io.kestra.core.plugins;
 
+import io.kestra.core.docs.Document;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -27,6 +28,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 public class PluginScanner {

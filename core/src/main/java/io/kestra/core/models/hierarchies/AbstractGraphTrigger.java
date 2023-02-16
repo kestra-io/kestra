@@ -19,7 +19,6 @@ public abstract class AbstractGraphTrigger extends AbstractGraph {
         this.trigger = trigger;
     }
 
-
     @Override
     public String getUid() {
         if (this.trigger != null) {

@@ -80,6 +80,17 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
                 "args:",
                 "  - data.json",
             }
+        ),
+        @Example(
+            title = "Execute a node script with an input file from Kestra's local storage created by a previous task.",
+            code = {
+                "inputFiles:",
+                "  data.csv: {{outputs.previousTaskId.uri}}",
+                "  main.js: |",
+                "    const fs = require('fs')",
+                "    const result = fs.readFileSync('data.csv', 'utf-8')",
+                "    console.log(result)"
+            }
         )
     }
 )

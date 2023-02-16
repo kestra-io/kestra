@@ -1,4 +1,5 @@
 import YamlUtils from "../utils/yamlUtils";
+import Utils from "../utils/utils";
 
 const textYamlHeader = {
     headers: {
@@ -50,20 +51,20 @@ export default {
                         return options.deleted ? status === 200 || status === 404 : status === 200;
                     }
                 }).then(response => {
-                    if (response.data.exception) {
-                        commit("core/setMessage", {
-                            title: "Invalid source code",
-                            message: response.data.exception,
-                            variant: "danger"
-                        }, {root: true});
-                        delete response.data.exception;
-                        commit("setFlow", JSON.parse(response.data.source));
-                    } else {
-                        commit("setFlow", response.data);
-                    }
+                if (response.data.exception) {
+                    commit("core/setMessage", {
+                        title: "Invalid source code",
+                        message: response.data.exception,
+                        variant: "danger"
+                    }, {root: true});
+                    delete response.data.exception;
+                    commit("setFlow", JSON.parse(response.data.source));
+                } else {
+                    commit("setFlow", response.data);
+                }
 
-                    return response.data;
-                })
+                return response.data;
+            })
         },
         loadTask({commit}, options) {
             return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`).then(response => {
@@ -131,9 +132,22 @@ export default {
         loadRevisions({commit}, options) {
             return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/revisions`).then(response => {
                 commit("setRevisions", response.data)
-
                 return response.data;
             })
+        },
+        exportFlowByIds(_, options) {
+            return this.$http.post("/api/v1/flows/extract/by-ids", options.ids, {responseType: "blob"})
+                .then(response => {
+                    const blob = new Blob([response.data], {type: "application/octet-stream"});
+                    const url = window.URL.createObjectURL(blob)
+                    Utils.downloadUrl(url, "flows.zip");
+                });
+        },
+        exportFlowByQuery(_, options) {
+            return this.$http.get("/api/v1/flows/extract/by-query", {params: options})
+                .then(response => {
+                    Utils.downloadUrl(response.request.responseURL, "flows.zip");
+                });
         },
     },
     mutations: {
@@ -181,7 +195,7 @@ export default {
         addTrigger(state, trigger) {
             let flow = state.flow;
 
-            if (trigger.backfill  === undefined) {
+            if (trigger.backfill === undefined) {
                 trigger.backfill = {
                     start: undefined
                 }
@@ -200,10 +214,10 @@ export default {
         },
         setFlowGraph(state, flowGraph) {
             state.flowGraph = flowGraph
-        }
+        },
     },
     getters: {
-        flow (state) {
+        flow(state) {
             if (state.flow) {
                 return state.flow;
             }

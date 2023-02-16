@@ -36,8 +36,7 @@ public class GraphService {
     }
 
     public static GraphCluster triggers(GraphCluster graph, List<AbstractTrigger> triggers) throws IllegalVariableEvaluationException {
-        GraphCluster triggerCluster = new GraphCluster();
-        triggerCluster.setUid("Triggers");
+        GraphCluster triggerCluster = new GraphCluster("Triggers");
         triggers.forEach(trigger -> {
             GraphTrigger triggerNode = new GraphTrigger(trigger);
             triggerCluster.getGraph().addNode(triggerNode);
@@ -193,11 +192,14 @@ public class GraphService {
     ) throws IllegalVariableEvaluationException {
         Iterator<Task> iterator = tasks.iterator();
         AbstractGraph previous;
-        if(graph.getGraph().nodes().size() >= 3 &&  new ArrayList<>(graph.getGraph().nodes()).get(2) instanceof GraphTask){
+
+        // we validate a GraphTask based on 3 nodes (root/ task / end)
+        if (graph.getGraph().nodes().size() >= 3 && new ArrayList<>(graph.getGraph().nodes()).get(2) instanceof GraphTask) {
             previous = new ArrayList<>(graph.getGraph().nodes()).get(2);
         } else {
             previous = graph.getRoot();
         }
+
         boolean isFirst = true;
         while (iterator.hasNext()) {
             Task currentTask = iterator.next();
@@ -225,15 +227,7 @@ public class GraphService {
                 // detect kind
                 if (currentTask instanceof FlowableTask) {
                     FlowableTask<?> flowableTask = ((FlowableTask<?>) currentTask);
-
-                    GraphCluster flowableCluster = new GraphCluster();
-                    flowableCluster.setUid("cluster_"+currentTask.getId());
-                    GraphTask flowableGraphTask = new GraphTask(currentTask, currentTaskRun, parentValues, relationType);
-                    flowableCluster.getGraph().addNode(flowableGraphTask);
-                    flowableCluster.getGraph().addEdge(flowableCluster.getRoot(), flowableGraphTask, new Relation());
-                    currentGraph = flowableTask.tasksTree(execution, currentTaskRun, parentValues, flowableCluster);
-
-
+                    currentGraph = flowableTask.tasksTree(execution, currentTaskRun, parentValues);
                 } else {
                     currentGraph = new GraphTask(currentTask, currentTaskRun, parentValues, relationType);
                 }

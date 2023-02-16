@@ -65,17 +65,18 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
     protected List<Task> errors;
 
     @Override
-    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues, GraphCluster graphCluster) throws IllegalVariableEvaluationException {
-        graphCluster.setRelationType(RelationType.DYNAMIC);
+    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.DYNAMIC);
+
         GraphService.sequential(
-            graphCluster,
+            subGraph,
             this.getTasks(),
             this.errors,
             taskRun,
             execution
         );
 
-        return graphCluster;
+        return subGraph;
     }
 
     @Override

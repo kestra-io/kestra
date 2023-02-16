@@ -5,7 +5,6 @@ import lombok.Getter;
 
 @Getter
 public class GraphClusterRoot extends AbstractGraph {
-
     public GraphClusterRoot() {
         super();
     }

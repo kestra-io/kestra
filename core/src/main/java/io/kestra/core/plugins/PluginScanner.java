@@ -1,6 +1,5 @@
 package io.kestra.core.plugins;
 
-import io.kestra.core.docs.Document;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -8,6 +7,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.micronaut.core.beans.BeanIntrospectionReference;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.http.annotation.Controller;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
@@ -27,7 +27,6 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 public class PluginScanner {
@@ -110,6 +109,10 @@ public class PluginScanner {
             Class beanType = definition.getBeanType();
 
             if (Modifier.isAbstract(beanType.getModifiers())) {
+                continue;
+            }
+
+            if(beanType.isAnnotationPresent(Hidden.class)) {
                 continue;
             }
 

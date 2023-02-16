@@ -4,9 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.helpers.HandleBarDeserializer;
 import jakarta.inject.Singleton;
@@ -18,6 +17,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Set;
 import javax.validation.ConstraintViolationException;
 
 @Singleton
@@ -77,12 +77,36 @@ public class YamlFlowParser {
         } catch (JsonProcessingException e) {
             if (e.getCause() instanceof ConstraintViolationException) {
                 throw (ConstraintViolationException) e.getCause();
-            } else {
+            }
+            else if (e instanceof InvalidTypeIdException) {
+                // This error is thrown when a non-existing task is used
+                InvalidTypeIdException invalidTypeIdException = (InvalidTypeIdException) e;
                 throw new ConstraintViolationException(
-                    "Illegal "+ resource +" yaml:" + e.getMessage(),
+                    "Invalid type: " + invalidTypeIdException.getTypeId(),
+                    Set.of(
+                        ManualConstraintViolation.of(
+                            "Invalid type: " + invalidTypeIdException.getTypeId(),
+                            input,
+                            String.class,
+                            invalidTypeIdException.getPathReference(),
+                            null
+                        ),
+                        ManualConstraintViolation.of(
+                            e.getMessage(),
+                            input,
+                            String.class,
+                            invalidTypeIdException.getPathReference(),
+                            null
+                        )
+                    )
+                );
+            }
+            else {
+                throw new ConstraintViolationException(
+                    "Illegal "+ resource +" yaml: " + e.getMessage(),
                     Collections.singleton(
                         ManualConstraintViolation.of(
-                            "Caused by: " + e.getCause() + "\nMessage: " + e.getMessage(),
+                            e.getCause() == null ? e.getMessage() : e.getMessage() + "\nCaused by: " + e.getCause().getMessage(),
                             input,
                             String.class,
                             "flow",

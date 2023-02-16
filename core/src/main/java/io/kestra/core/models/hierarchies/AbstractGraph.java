@@ -6,12 +6,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 @ToString
 @Getter
-@Setter
 @Introspected
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 public abstract class AbstractGraph {
@@ -21,6 +19,11 @@ public abstract class AbstractGraph {
 
     public AbstractGraph() {
         this.uid = IdUtils.create();
+        this.type = this.getClass().getName();
+    }
+
+    public AbstractGraph(String uid) {
+        this.uid = uid;
         this.type = this.getClass().getName();
     }
 

@@ -10,6 +10,7 @@ import com.github.victools.jsonschema.generator.*;
 import com.github.victools.jsonschema.generator.impl.DefinitionKey;
 import com.github.victools.jsonschema.generator.naming.DefaultSchemaDefinitionNamingStrategy;
 import com.github.victools.jsonschema.module.jackson.JacksonModule;
+import com.github.victools.jsonschema.module.jackson.JacksonOption;
 import com.github.victools.jsonschema.module.javax.validation.JavaxValidationModule;
 import com.github.victools.jsonschema.module.javax.validation.JavaxValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
@@ -60,9 +61,7 @@ public class JsonSchemaGenerator {
             Map<String, Object> map = JacksonMapper.toMap(objectNode);
 
             // hack
-            if (cls == Task.class) {
-                fixTask(map);
-            } else if (cls == Flow.class) {
+            if (cls == Flow.class) {
                 fixFlow(map);
             } else if (cls == AbstractTrigger.class) {
                 fixTrigger(map);
@@ -164,7 +163,7 @@ public class JsonSchemaGenerator {
     protected <T> void build(SchemaGeneratorConfigBuilder builder, Class<? extends T> cls) {
 
         builder
-            .with(new JacksonModule())
+            .with(new JacksonModule(JacksonOption.IGNORE_TYPE_INFO_TRANSFORM))
             .with(new JavaxValidationModule(
                 JavaxValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
                 JavaxValidationOption.INCLUDE_PATTERN_EXPRESSIONS
@@ -173,7 +172,8 @@ public class JsonSchemaGenerator {
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
-            .with(Option.ALLOF_CLEANUP_AT_THE_END);
+            .with(Option.ALLOF_CLEANUP_AT_THE_END)
+            .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES);
 
         // default value
         builder.forFields().withDefaultResolver(this::defaults);

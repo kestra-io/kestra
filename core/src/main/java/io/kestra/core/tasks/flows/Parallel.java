@@ -81,17 +81,18 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     private List<Task> errors;
 
     @Override
-    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues, GraphCluster graphCluster) throws IllegalVariableEvaluationException {
-        graphCluster.setRelationType(RelationType.PARALLEL);
+    public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
+        GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.PARALLEL);
+
         GraphService.parallel(
-            graphCluster,
+            subGraph,
             this.tasks,
             this.errors,
             taskRun,
             execution
         );
 
-        return graphCluster;
+        return subGraph;
     }
 
     @Override

@@ -83,9 +83,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
         return trigger;
     }
 
-    public Trigger delete(Trigger trigger) {
+    @Override
+    public void delete(Trigger trigger) {
         this.jdbcRepository.delete(trigger);
-
-        return trigger;
     }
 }

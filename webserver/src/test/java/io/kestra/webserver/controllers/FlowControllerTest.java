@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.tasks.flows.Sequential;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -471,8 +472,11 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
 
     @Test
     void extractByIds() throws IOException {
-        List<String> ids = List.of("each-object", "webhook", "task-flow");
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/extract/by-ids?namespace=io.kestra.tests", ids),
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("io.kestra.tests", "each-object"),
+            new IdWithNamespace("io.kestra.tests", "webhook"),
+            new IdWithNamespace("io.kestra.tests", "task-flow"));
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/extract/by-ids", ids),
             Argument.of(byte[].class));
         File file = File.createTempFile("flows", ".zip");
         Files.write(file.toPath(), zip);

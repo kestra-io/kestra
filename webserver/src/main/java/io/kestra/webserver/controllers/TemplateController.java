@@ -6,6 +6,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -269,10 +270,11 @@ public class TemplateController {
         summary = "Extract templates as a ZIP archive of yaml sources."
     )
     public HttpResponse<byte[]> extractByIds(
-        @Parameter(description = "A namespace filter prefix") @QueryValue(value = "namespace") String namespace,
-        @Parameter(description = "A list of string identifiers") @Body List<String> ids
+        @Parameter(description = "A list of tuple flow ID and namespace as template identifiers") @Body List<IdWithNamespace> ids
     ) throws IOException {
-        var templates = ids.stream().map(id -> templateRepository.findById(namespace, id).orElseThrow()).collect(Collectors.toList());
+        var templates = ids.stream()
+            .map(id -> templateRepository.findById(id.getNamespace(), id.getId()).orElseThrow())
+            .collect(Collectors.toList());
         var bytes = zipTemplates(templates);
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
     }
@@ -282,7 +284,7 @@ public class TemplateController {
             ZipOutputStream archive = new ZipOutputStream(bos)) {
 
             for(var template : templates) {
-                var zipEntry = new ZipEntry(template.getNamespace() + "-" + template.getId() + ".yml");
+                var zipEntry = new ZipEntry(template.getNamespace() + "." + template.getId() + ".yml");
                 archive.putNextEntry(zipEntry);
                 archive.write(template.generateSource().getBytes());
                 archive.closeEntry();

@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -154,7 +155,10 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         var template2 = client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
         var template3 = client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
 
-        List<String> ids = List.of(template1.getId(), template2.getId(), template3.getId());
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("kestra.test", template1.getId()),
+            new IdWithNamespace("kestra.test", template2.getId()),
+            new IdWithNamespace("kestra.test", template3.getId()));
         byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/templates/extract/by-ids?namespace=kestra.test", ids),
             Argument.of(byte[].class));
         File file = File.createTempFile("templates", ".zip");

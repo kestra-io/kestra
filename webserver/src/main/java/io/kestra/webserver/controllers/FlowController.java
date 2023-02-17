@@ -17,6 +17,7 @@ import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.topologies.FlowTopologyService;
+import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
@@ -473,10 +474,11 @@ public class FlowController {
         summary = "Extract flows as a ZIP archive of yaml sources."
     )
     public HttpResponse<byte[]> extractByIds(
-        @Parameter(description = "A namespace filter prefix") @QueryValue(value = "namespace") String namespace,
-        @Parameter(description = "A list of string identifiers") @Body List<String> ids
+        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids
     ) throws IOException {
-        var flows = ids.stream().map(id -> flowRepository.findByIdWithSource(namespace, id).orElseThrow()).collect(Collectors.toList());
+        var flows = ids.stream()
+            .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
+            .collect(Collectors.toList());
         var bytes = zipFlows(flows);
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
@@ -486,7 +488,7 @@ public class FlowController {
             ZipOutputStream archive = new ZipOutputStream(bos)) {
 
             for(var flow : flows) {
-                var zipEntry = new ZipEntry(flow.getNamespace() + "-" + flow.getId() + ".yml");
+                var zipEntry = new ZipEntry(flow.getNamespace() + "." + flow.getId() + ".yml");
                 archive.putNextEntry(zipEntry);
                 archive.write(flow.getSource().getBytes());
                 archive.closeEntry();

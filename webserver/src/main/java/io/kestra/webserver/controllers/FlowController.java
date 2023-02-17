@@ -34,7 +34,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 
 import java.io.ByteArrayOutputStream;
@@ -381,9 +380,7 @@ public class FlowController {
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Delete a flow")
-    @ApiResponses(
-        @ApiResponse(responseCode = "204", description = "On success")
-    )
+    @ApiResponse(responseCode = "204", description = "On success")
     public HttpResponse<Void> delete(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id

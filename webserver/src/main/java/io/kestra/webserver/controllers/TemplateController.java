@@ -21,7 +21,6 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 
 import java.io.ByteArrayOutputStream;
@@ -108,9 +107,7 @@ public class TemplateController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Template"}, summary = "Delete a template")
-    @ApiResponses(
-        @ApiResponse(responseCode = "204", description = "On success")
-    )
+    @ApiResponse(responseCode = "204", description = "On success")
     public HttpResponse<Void> delete(
         @Parameter(description = "The template namespace") String namespace,
         @Parameter(description = "The template id") String id

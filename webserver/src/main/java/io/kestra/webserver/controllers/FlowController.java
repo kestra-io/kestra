@@ -456,7 +456,7 @@ public class FlowController {
     )
     public HttpResponse<byte[]> extractByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
     ) throws IOException {
         var flows = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));

@@ -254,7 +254,7 @@ public class TemplateController {
     )
     public HttpResponse<byte[]> extractByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) throws IOException {
         var templates = templateRepository.find(query, namespace);
         var bytes = zipTemplates(templates);

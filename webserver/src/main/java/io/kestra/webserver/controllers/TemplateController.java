@@ -49,8 +49,8 @@ public class TemplateController {
     @Get(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Template"}, summary = "Get a template")
     public Template index(
-        @Parameter(description = "The template namespace") String namespace,
-        @Parameter(description = "The template id") String id
+        @Parameter(description = "The template namespace") @PathVariable String namespace,
+        @Parameter(description = "The template id") @PathVariable String id
     ) {
         return templateRepository
             .findById(namespace, id)
@@ -61,11 +61,11 @@ public class TemplateController {
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Template"}, summary = "Search for templates")
     public PagedResults<Template> find(
-        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) throws HttpStatusException {
         return PagedResults.of(templateRepository.find(PageableUtils.from(page, size, sort), query, namespace));
     }
@@ -93,8 +93,8 @@ public class TemplateController {
     @Put(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Template"}, summary = "Update a template")
     public HttpResponse<Template> update(
-        @Parameter(description = "The template namespace") String namespace,
-        @Parameter(description = "The template id") String id,
+        @Parameter(description = "The template namespace") @PathVariable String namespace,
+        @Parameter(description = "The template id") @PathVariable String id,
         @Parameter(description = "The template") @Valid @Body Template template
     ) throws ConstraintViolationException {
         Optional<Template> existingTemplate = templateRepository.findById(namespace, id);
@@ -111,8 +111,8 @@ public class TemplateController {
     @Operation(tags = {"Template"}, summary = "Delete a template")
     @ApiResponse(responseCode = "204", description = "On success")
     public HttpResponse<Void> delete(
-        @Parameter(description = "The template namespace") String namespace,
-        @Parameter(description = "The template id") String id
+        @Parameter(description = "The template namespace") @PathVariable String namespace,
+        @Parameter(description = "The template id") @PathVariable String id
     ) {
         Optional<Template> template = templateRepository.findById(namespace, id);
         if (template.isPresent()) {
@@ -140,7 +140,7 @@ public class TemplateController {
             "Template already created but not in `templates` will be deleted if the query delete is `true`"
     )
     public List<Template> updateNamespace(
-        @Parameter(description = "The template namespace") String namespace,
+        @Parameter(description = "The template namespace") @PathVariable String namespace,
         @Parameter(description = "A list of templates") @Body @Valid List<Template> templates,
         @Parameter(description = "If missing template should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {

@@ -5,6 +5,7 @@ import io.micronaut.core.convert.format.Format;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.sse.Event;
 import io.micronaut.scheduling.TaskExecutors;
@@ -45,14 +46,14 @@ public class LogController {
     @Operation(tags = {"Logs"}, summary = "Search for logs")
     public PagedResults<LogEntry> find(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "A namespace filter prefix") @Nullable String namespace,
-        @Parameter(description = "A flow id filter") @Nullable String flowId,
-        @Parameter(description = "The min log level filter") @Nullable @QueryValue(value = "minLevel") Level minLevel,
-        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
-        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
+        @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
+        @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
     ) {
         return PagedResults.of(
             logRepository.find(PageableUtils.from(page, size, sort), query, namespace, flowId, minLevel, startDate, endDate)
@@ -63,10 +64,10 @@ public class LogController {
     @Get(uri = "logs/{executionId}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Logs"}, summary = "Get logs for a specific execution")
     public List<LogEntry> findByExecution(
-        @Parameter(description = "The execution id") String executionId,
-        @Parameter(description = "The min log level filter") @Nullable @QueryValue(value = "minLevel") Level minLevel,
-        @Parameter(description = "The taskrun id") @Nullable @QueryValue(value = "taskRunId") String taskRunId,
-        @Parameter(description = "The task id") @Nullable @QueryValue(value = "taskId") String taskId
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
+        @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
+        @Parameter(description = "The task id") @Nullable @QueryValue String taskId
     ) {
         if (taskId != null) {
             return logRepository.findByExecutionIdAndTaskId(executionId, taskId, minLevel);
@@ -81,8 +82,8 @@ public class LogController {
     @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Logs"}, summary = "Follow log for a specific execution")
     public Flowable<Event<LogEntry>> follow(
-        @Parameter(description = "The execution id") String executionId,
-        @Parameter(description = "The min log level filter") @Nullable @QueryValue(value = "minLevel") Level minLevel
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
         AtomicReference<Runnable> cancel = new AtomicReference<>();
         List<String> levels = LogEntry.findLevelsByMin(minLevel);

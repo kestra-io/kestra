@@ -14,6 +14,7 @@ import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
@@ -44,7 +45,7 @@ public class PluginController {
         summary = "Get all json schemas for a type",
         description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
     )
-    public HttpResponse<Map<String, Object>> schemas(SchemaType type) {
+    public HttpResponse<Map<String, Object>> schemas(@PathVariable SchemaType type) {
         return HttpResponse.ok()
             .body(this.schemasCache(type))
             .header("Cache-Control", "public, max-age=3600");
@@ -114,7 +115,7 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
     public Doc pluginDocumentation(
-        @Parameter(description = "The plugin full class name") String cls
+        @Parameter(description = "The plugin full class name") @PathVariable String cls
     ) throws IOException {
         ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(
             pluginService.allPlugins(),

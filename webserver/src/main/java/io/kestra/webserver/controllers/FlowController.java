@@ -7,12 +7,16 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.TaskDefaultService;
+import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
@@ -53,6 +57,12 @@ public class FlowController {
 
     @Inject
     private ModelValidator modelValidator;
+
+    @Inject
+    private FlowTopologyService flowTopologyService;
+
+    @Inject
+    private FlowTopologyRepositoryInterface flowTopologyRepository;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
@@ -387,6 +397,24 @@ public class FlowController {
     public List<String> listDistinctNamespace() {
         return flowRepository.findDistinctNamespace();
     }
+
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "{namespace}/{id}/dependencies", produces = MediaType.TEXT_JSON)
+    @Operation(tags = {"Flows"}, summary = "Get flow dependencies")
+    public FlowTopologyGraph dependencies(
+        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "if true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(value = "destinationOnly", defaultValue = "false") boolean destinationOnly
+    ) {
+        List<FlowTopology> flowTopologies = flowTopologyRepository.findByFlow(namespace, id, destinationOnly);
+
+        return flowTopologyService.graph(
+            flowTopologies.stream(),
+            (flowNode -> flowNode)
+        );
+    }
+
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "validate", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)

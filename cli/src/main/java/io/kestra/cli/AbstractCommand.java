@@ -106,7 +106,7 @@ abstract public class AbstractCommand implements Callable<Integer> {
                 (
                     this.internalLog && (
                         logger.getName().startsWith("io.kestra") &&
-                            !logger.getName().startsWith("io.kestra.runner.kafka.services"))
+                            !logger.getName().startsWith("io.kestra.ee.runner.kafka.services"))
                 )
                     || logger.getName().startsWith("flow")
             )

@@ -1,104 +1,97 @@
 <template>
-    <div class="node-wrapper" :class="nodeClass">
-        <div class="status-color" v-if="this.execution" :class="statusClass" />
-        <div class="icon">
-            <task-icon :cls="task.type" />
-        </div>
-        <div class="task-content">
-            <div class="card-header">
-                <div class="task-title">
-                    <span>{{ task.id }}</span>
-                </div>
-            </div>
+    <tree-node
+        :id="task.id"
+        :type="task.type"
+        :disabled="task.disabled"
+        :state="this.state"
+    >
+        <template #content>
             <div v-if="task.state" class="status-wrapper">
                 <status :status="state" />
             </div>
-            <div class="info-wrapper">
-                <span class="bottom">
-                    <el-tag
-                        v-if="this.execution"
-                        type="info"
-                        class="me-1"
-                        size="small"
-                        round
-                        disable-transitions
-                    >
-                        {{ taskRuns.length }}
-                    </el-tag>
+        </template>
+        <template #info>
+            <span class="bottom">
+                <el-tag
+                    v-if="this.execution"
+                    type="info"
+                    class="me-1"
+                    size="small"
+                    round
+                    disable-transitions
+                >
+                    {{ taskRuns.length }}
+                </el-tag>
 
-                    <span v-if="execution && histories"><duration :histories="histories" /></span>
-                </span>
+                <span v-if="execution && histories"><duration :histories="histories" /></span>
+            </span>
 
-                <el-button-group>
+            <el-button-group>
+                <el-button
+                    v-if="task.description"
+                    class="node-action"
+                    size="small"
+                    @click="$refs.descriptionTask.open()"
+                >
+                    <markdown-tooltip ref="descriptionTask" :description="task.description" :id="hash" :title="task.id" />
+                </el-button>
+
+                <sub-flow-link
+                    v-if="task.type === 'io.kestra.core.tasks.flows.Flow'"
+                    :execution-id="taskRunsFlowExecutionId"
+                    size="small"
+                    :namespace="task.namespace"
+                    :flow-id="task.flowId"
+                />
+
+
+                <el-tooltip v-if="this.execution" :content="$t('show task logs')" :persistent="false" transition="" :hide-after="0">
                     <el-button
-                        v-if="task.description"
                         class="node-action"
+                        :disabled="this.taskRuns.length === 0"
                         size="small"
-                        @click="$refs.descriptionTask.open()"
+                        @click="onTaskSelect()"
                     >
-                        <markdown-tooltip ref="descriptionTask" :description="task.description" :id="hash" :title="task.id" />
+                        <text-box-search />
                     </el-button>
+                </el-tooltip>
 
-                    <sub-flow-link
-                        v-if="task.type === 'io.kestra.core.tasks.flows.Flow'"
-                        :execution-id="taskRunsFlowExecutionId"
-                        size="small"
-                        :namespace="task.namespace"
-                        :flow-id="task.flowId"
-                    />
-
-
-                    <el-tooltip v-if="this.execution" :content="$t('show task logs')" :persistent="false" transition="" :hide-after="0">
-                        <el-button
-                            class="node-action"
-                            :disabled="this.taskRuns.length === 0"
-                            size="small"
-                            @click="onTaskSelect()"
-                        >
-                            <text-box-search />
-                        </el-button>
-                    </el-tooltip>
-
-                    <task-edit
-                        class="node-action"
-                        :modal-id="`modal-source-${hash}`"
-                        :task="task"
-                        :flow-id="flowId"
-                        size="small"
-                        :namespace="namespace"
-                        :revision="revision"
-                    />
-                </el-button-group>
-            </div>
-        </div>
-
-        <el-drawer
-            v-if="isOpen && execution"
-            v-model="isOpen"
-            :title="`Task ${task.id}`"
-            destroy-on-close
-            size=""
-            :append-to-body="true"
-        >
-            <collapse>
-                <el-form-item>
-                    <search-field :router="false" @search="onSearch" class="me-2" />
-                </el-form-item>
-                <el-form-item>
-                    <log-level-selector :value="logLevel" @update:model-value="onLevelChange" />
-                </el-form-item>
-            </collapse>
-
-
-            <log-list
-                :task-id="task.id"
-                :filter="this.filter"
-                :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
-                :level="logLevel"
-                @follow="forwardEvent('follow', $event)"
-            />
-        </el-drawer>
-    </div>
+                <task-edit
+                    class="node-action"
+                    :modal-id="`modal-source-${hash}`"
+                    :task="task"
+                    :flow-id="flowId"
+                    size="small"
+                    :namespace="namespace"
+                    :revision="revision"
+                />
+            </el-button-group>
+            <el-drawer
+                v-if="isOpen && execution"
+                v-model="isOpen"
+                :title="`Task ${task.id}`"
+                destroy-on-close
+                size=""
+                :append-to-body="true"
+            >
+                <collapse>
+                    <el-form-item>
+                        <search-field :router="false" @search="onSearch" class="me-2" />
+                    </el-form-item>
+                    <el-form-item>
+                        <log-level-selector :value="logLevel" @update:model-value="onLevelChange" />
+                    </el-form-item>
+                </collapse>
+                <log-list
+                    :task-id="task.id"
+                    :filter="this.filter"
+                    :exclude-metas="['namespace', 'flowId', 'taskId', 'executionId']"
+                    :level="logLevel"
+                    @follow="forwardEvent('follow', $event)"
+                />
+            </el-drawer>
+        </template>
+    </tree-node>
 </template>
 <script>
     import {mapState} from "vuex";
@@ -108,12 +101,12 @@
     import LogList from "../logs/LogList.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import SearchField from "../layout/SearchField.vue";
-    import TaskIcon from "../plugins/TaskIcon.vue";
     import TaskEdit from "../flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue"
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Collapse from "../layout/Collapse.vue";
     import Duration from "../layout/Duration.vue";
+    import TreeNode from "./TreeNode.vue";
 
     export default {
         components: {
@@ -123,11 +116,11 @@
             LogList,
             LogLevelSelector,
             SearchField,
-            TaskIcon,
             TaskEdit,
             SubFlowLink,
             Collapse,
-            Duration
+            Duration,
+            TreeNode,
         },
         props: {
             n: {
@@ -237,16 +230,6 @@
                     {date: this.$moment(max), state: this.state}
                 ]
             },
-            nodeClass() {
-                return {
-                    ["task-disabled"]: this.task.disabled,
-                };
-            },
-            statusClass() {
-                return {
-                    ["bg-" + State.colorClass()[this.state]]: true,
-                };
-            },
             task() {
                 return this.n.task;
             },
@@ -254,118 +237,29 @@
     };
 </script>
 <style scoped lang="scss">
-    .node-wrapper {
-        cursor: pointer;
-        display: flex;
-        width: 200px;
-        background: var(--bs-gray-100);
 
-        .el-button, .card-header {
-            border-radius: 0 !important;
-        }
+.node-action {
+    height: 28px;
+    padding-top: 1px;
+    padding-right: 5px;
+    padding-left: 5px;
+}
 
-        &.task-disabled {
-            .card-header .task-title {
-                text-decoration: line-through;
-            }
-        }
+.status-wrapper {
+    margin: 10px;
+}
 
-        > .icon {
-            width: 35px;
-            height: 53px;
-            background: var(--bs-white);
-            position: relative;
-        }
-
-        .status-color {
-            width: 10px;
-            height: 53px;
-            border-right: 1px solid var(--bs-border-color);
-        }
-
-
-        .is-success {
-            background-color: var(--green);
-        }
-
-        .is-running {
-            background-color: var(--blue);
-        }
-
-        .is-failed {
-            background-color: var(--red);
-        }
-
-        .bg-undefined {
-            background-color: var(--bs-gray-400);
-        }
-
-        .task-content {
-            flex-grow: 1;
-            width: 38px;
-
-            .card-header {
-                height: 25px;
-                padding: 2px;
-                margin: 0;
-                border-bottom: 1px solid var(--bs-border-color);
-                flex: 1;
-                flex-wrap: nowrap;
-                background-color: var(--bs-gray-200);
-                color: var(--bs-body-color);
-
-                html.dark & {
-                    background-color: var(--bs-gray-300);
-                }
-
-                .task-title {
-                    margin-left: 2px;
-                    display: inline-block;
-                    font-size: var(--font-size-sm);
-                    flex-grow: 1;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                    max-width: 100%;
-                    white-space: nowrap;
-                }
-
-                :deep(.node-action) {
-                    flex-shrink: 2;
-                    padding-top: 18px;
-                    padding-right: 18px;
-                }
-            }
-
-            .status-wrapper {
-                margin: 10px;
-            }
-        }
-
-        .card-wrapper {
-            top: 50px;
-            position: absolute;
-        }
-
-        .info-wrapper {
-            display: flex;
-            .bottom {
-                padding: 4px 4px;
-                color: var(--bs-body-color);
-                opacity: 0.7;
-                font-size: var(--font-size-xs);
-                flex-grow: 2;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                position: relative;
-            }
-        }
-
-        .node-action {
-            height: 28px;
-            padding-top: 1px;
-            padding-right: 5px;
-            padding-left: 5px;
-        }
+.info-wrapper {
+    .bottom {
+        padding: 4px 4px;
+        color: var(--bs-body-color);
+        opacity: 0.7;
+        font-size: var(--font-size-xs);
+        flex-grow: 2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        position: relative;
     }
+}
 </style>

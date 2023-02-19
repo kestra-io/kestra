@@ -36,7 +36,7 @@ public class GraphService {
     }
 
     public static GraphCluster triggers(GraphCluster graph, List<AbstractTrigger> triggers) throws IllegalVariableEvaluationException {
-        GraphCluster triggerCluster = new GraphCluster();
+        GraphCluster triggerCluster = new GraphCluster("Triggers");
 
         triggers.forEach(trigger -> {
             GraphTrigger triggerNode = new GraphTrigger(trigger);

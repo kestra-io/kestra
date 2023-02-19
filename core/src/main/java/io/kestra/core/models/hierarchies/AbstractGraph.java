@@ -23,6 +23,11 @@ public abstract class AbstractGraph {
         this.type = this.getClass().getName();
     }
 
+    public AbstractGraph(String uid) {
+        this.uid = uid;
+        this.type = this.getClass().getName();
+    }
+
     @JsonIgnore
     public String getLabel() {
         return this.getUid();

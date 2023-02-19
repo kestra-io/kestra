@@ -32,6 +32,18 @@ public class GraphCluster extends AbstractGraph {
         graph.addNode(this.end);
     }
 
+
+    public GraphCluster(String uid) {
+        super(uid);
+
+        this.relationType = null;
+        this.root = new GraphClusterRoot();
+        this.end = new GraphClusterEnd();
+
+        graph.addNode(this.root);
+        graph.addNode(this.end);
+    }
+
     public GraphCluster(Task task, TaskRun taskRun, List<String> values, RelationType relationType) {
         super();
 

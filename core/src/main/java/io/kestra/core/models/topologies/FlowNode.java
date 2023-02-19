@@ -2,14 +2,14 @@ package io.kestra.core.models.topologies;
 
 import io.kestra.core.models.flows.Flow;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
 
 @Getter
 @AllArgsConstructor
-@Builder(toBuilder = true)
+@SuperBuilder(toBuilder = true)
 public class FlowNode {
     @NotNull
     String uid;

@@ -7,6 +7,10 @@ kestra:
     type: memory
   queue:
     type: memory
+  storage:
+    type: local
+    local:
+      base-path: /tmp/unittest
   plugins:
     path: /tmp/plugins
     repositories:

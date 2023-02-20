@@ -1,5 +1,6 @@
-package io.kestra.cli.commands.templates.namespaces;
+package io.kestra.cli.commands.templates;
 
+import io.kestra.cli.commands.templates.namespaces.TemplateNamespaceUpdateCommand;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -17,10 +18,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.hamcrest.core.Is.is;
 
-class TemplateNamespaceExportCommandTest {
+class TemplateExportCommandTest {
     @Test
     void run() throws IOException {
-        URL directory = TemplateNamespaceExportCommandTest.class.getClassLoader().getResource("templates");
+        URL directory = TemplateExportCommandTest.class.getClassLoader().getResource("templates");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
@@ -48,10 +49,11 @@ class TemplateNamespaceExportCommandTest {
                 embeddedServer.getURL().toString(),
                 "--user",
                 "myuser:pass:word",
+                "--namespace",
                 "io.kestra.tests",
                 "/tmp",
             };
-            PicocliRunner.call(TemplateNamespaceExportCommand.class, ctx, exportArgs);
+            PicocliRunner.call(TemplateExportCommand.class, ctx, exportArgs);
             File file = new File("/tmp/templates.zip");
             assertThat(file.exists(), is(true));
             ZipFile zipFile = new ZipFile(file);

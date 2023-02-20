@@ -461,6 +461,7 @@ public class FlowController {
     ) throws IOException {
         var flows = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));
         var bytes = zipFlows(flows);
+
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
 
@@ -480,7 +481,7 @@ public class FlowController {
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
 
-    private byte[] zipFlows(List<FlowWithSource> flows) throws IOException {
+    private static byte[] zipFlows(List<FlowWithSource> flows) throws IOException {
         try(ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ZipOutputStream archive = new ZipOutputStream(bos)) {
 

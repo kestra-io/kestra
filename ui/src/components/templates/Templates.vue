@@ -68,7 +68,7 @@
                     <bottom-line-counter v-model="queryBulkAction" :selections="templatesSelection" :total="total" @update:model-value="selectAll()" />
                     <li v-if="canRead">
                         <el-button :icon="Download" type="info" class="bulk-button" @click="exportTemplates()">
-                            {{ $t('exports') }}
+                            {{ $t('export') }}
                         </el-button>
                     </li>
                 </ul>

@@ -1,7 +1,6 @@
-package io.kestra.cli.commands.templates.namespaces;
+package io.kestra.cli.commands.templates;
 
 import io.kestra.cli.AbstractApiCommand;
-import io.kestra.cli.commands.templates.TemplateValidateCommand;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -16,17 +15,17 @@ import java.nio.file.Path;
 
 @CommandLine.Command(
     name = "export",
-    description = "export namespace templates",
+    description = "export templates to a zip file",
     mixinStandardHelpOptions = true
 )
 @Slf4j
-public class TemplateNamespaceExportCommand extends AbstractApiCommand {
+public class TemplateExportCommand extends AbstractApiCommand {
     private static final String DEFAULT_FILE_NAME = "templates.zip";
 
-    @CommandLine.Parameters(index = "0", description = "the namespace of templates to export")
+    @CommandLine.Option(names = {"--namespace"}, description = "the namespace of templates to export")
     public String namespace;
 
-    @CommandLine.Parameters(index = "1", description = "the directory to export the file to")
+    @CommandLine.Parameters(index = "0", description = "the directory to export the file to")
     public Path directory;
 
     @Override
@@ -35,7 +34,8 @@ public class TemplateNamespaceExportCommand extends AbstractApiCommand {
 
         try(DefaultHttpClient client = client()) {
             MutableHttpRequest<Object> request = HttpRequest
-                .GET("/api/v1/templates/export/by-query?namespace=" + namespace).accept(MediaType.APPLICATION_OCTET_STREAM);
+                .GET("/api/v1/templates/export/by-query" + (namespace != null ? "?namespace=" + namespace : ""))
+                .accept(MediaType.APPLICATION_OCTET_STREAM);
 
             HttpResponse<byte[]> response = client.toBlocking().exchange(this.requestOptions(request), byte[].class);
             Path zipFile = Path.of(directory.toString(), DEFAULT_FILE_NAME);
@@ -50,5 +50,4 @@ public class TemplateNamespaceExportCommand extends AbstractApiCommand {
 
         return 0;
     }
-
 }

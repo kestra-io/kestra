@@ -146,5 +146,4 @@ export default class Utils {
         document.body.appendChild(link);
         link.click();
     }
-
 }

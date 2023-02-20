@@ -271,6 +271,7 @@
     "execution not in state FAILED": "Execution <code>{executionId}</code> not in state FAILED",
     "execution already finished": "Execution <code>{executionId}</code> already finished",
     "seeing old revision": "You are seeing an old revision: {revision}",
+    "export": "Export",
     "template export": "Are you sure you want to export <code>{templateCount}</code> template(s)?",
     "templates exported": "Templates exported",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
@@ -549,6 +550,7 @@
     "execution already finished": "Execution <code>{executionId}</code> déjà terminée",
     "restore revision": "Êtes-vous sur de vouloir restaurer la revision <code>{revision}</code> ?",
     "seeing old revision": "Vous visualisez une ancienne revision : {revision}",
+    "export": "Exporter",
     "template export": "Êtes vous sûr de vouloir exporter <code>{templateCount}</code> template(s)?",
     "templates exported": "Templates exportés",
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
@@ -826,9 +828,10 @@
     "execution not in state FAILED": "Ausführung <code>{executionId}</code> nicht im Status FAILED",
     "execution already finished": "Ausführung <code>{executionId}</code> bereits abgeschlossen",
     "seeing old revision": "Sie sehen eine alte Revision: {revision}",
-    "template export": "Are you sure you want to export <code>{templateCount}</code> template(s)?",
-    "templates exported": "Templates exported",
-    "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
-    "flows exported": "Flows exported"
+    "export": "Export",
+    "template export": "Sind Sie sicher, dass Sie <code>{templateCount}</code> Template(n) exportieren möchten?",
+    "templates exported": "Template exportiert",
+    "flow export": "Sind Sie sicher, dass Sie <code>{flowCount}</code> Flows exportieren möchten?",
+    "flows exported": "Flows exportiert"
   }
 }

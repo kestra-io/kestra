@@ -276,7 +276,7 @@ public class TemplateController {
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
     }
 
-    private byte[] zipTemplates(List<Template> templates) throws IOException {
+    private static byte[] zipTemplates(List<Template> templates) throws IOException {
         try(ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ZipOutputStream archive = new ZipOutputStream(bos)) {
 

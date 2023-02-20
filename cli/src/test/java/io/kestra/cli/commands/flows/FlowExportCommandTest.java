@@ -1,5 +1,6 @@
-package io.kestra.cli.commands.flows.namespaces;
+package io.kestra.cli.commands.flows;
 
+import io.kestra.cli.commands.flows.namespaces.FlowNamespaceUpdateCommand;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
@@ -17,15 +18,14 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
-class FlowNamespaceExportCommandTest {
+class FlowExportCommandTest {
     @Test
     void run() throws IOException {
-        URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows");
+        URL directory = FlowExportCommandTest.class.getClassLoader().getResource("flows");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
-
             EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
             embeddedServer.start();
 
@@ -37,7 +37,6 @@ class FlowNamespaceExportCommandTest {
                 "myuser:pass:word",
                 "io.kestra.cli",
                 directory.getPath(),
-
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, updateArgs);
             assertThat(out.toString(), containsString("3 flow(s)"));
@@ -48,10 +47,11 @@ class FlowNamespaceExportCommandTest {
                 embeddedServer.getURL().toString(),
                 "--user",
                 "myuser:pass:word",
+                "--namespace",
                 "io.kestra.cli",
                 "/tmp",
             };
-            PicocliRunner.call(FlowNamespaceExportCommand.class, ctx, exportArgs);
+            PicocliRunner.call(FlowExportCommand.class, ctx, exportArgs);
             File file = new File("/tmp/flows.zip");
             assertThat(file.exists(), is(true));
             ZipFile zipFile = new ZipFile(file);

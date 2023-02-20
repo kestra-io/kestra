@@ -31,7 +31,6 @@ import javax.validation.constraints.Pattern;
 @ToString
 @EqualsAndHashCode
 public class Template implements DeletedInterface {
-
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override

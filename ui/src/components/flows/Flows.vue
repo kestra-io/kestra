@@ -108,7 +108,7 @@
                     <bottom-line-counter v-model="queryBulkAction" :selections="flowsSelection" :total="total" @update:model-value="selectAll()" />
                     <li v-if="canRead">
                         <el-button :icon="Download" type="info" class="bulk-button" @click="exportFlows()">
-                            {{ $t('exports') }}
+                            {{ $t('export') }}
                         </el-button>
                     </li>
                 </ul>

@@ -14,6 +14,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
 import org.junit.jupiter.api.Test;
@@ -61,7 +62,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void idNoSource() throws NoSuchFieldException, IllegalAccessException {
+    void idNoSource() {
         Map<String, Object> map = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), Argument.mapOf(String.class, Object.class));
         assertThat(map.get("source"), is(nullValue()));
 
@@ -486,6 +487,40 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         }
 
         file.delete();
+    }
+
+    @Test
+    void importFlowsWithYaml() throws IOException {
+        var yaml = generateFlowAsString("io.kestra.unittest","a") + "---" +
+            generateFlowAsString("io.kestra.unittest","b") + "---" +
+            generateFlowAsString("io.kestra.unittest","c");
+
+        var temp = File.createTempFile("flows", ".yaml");
+        Files.writeString(temp.toPath(), yaml);
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "flows.yaml", temp)
+            .build();
+        var response = client.toBlocking().exchange(POST("/api/v1/flows/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
+
+        assertThat(response.getStatus(), is(OK));
+        temp.delete();
+    }
+
+    @Test
+    void importFlowsWithZip() throws IOException {
+        // create a ZIP file using the extract endpoint
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/export/by-query?namespace=io.kestra.tests"),
+            Argument.of(byte[].class));
+        File temp = File.createTempFile("flows", ".zip");
+        Files.write(temp.toPath(), zip);
+
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "flows.zip", temp)
+            .build();
+        var response = client.toBlocking().exchange(POST("/api/v1/flows/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
+
+        assertThat(response.getStatus(), is(OK));
+        temp.delete();
     }
 
     private Flow generateFlow(String namespace, String inputName) {

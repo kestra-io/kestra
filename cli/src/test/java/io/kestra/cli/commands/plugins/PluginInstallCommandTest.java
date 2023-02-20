@@ -30,13 +30,13 @@ class PluginInstallCommandTest {
         pluginsPath.toFile().deleteOnExit();
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
-            String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "io.kestra.plugin:plugin-notifications:0.2.0-SNAPSHOT"};
+            String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "io.kestra.plugin:plugin-notifications:0.6.0"};
             PicocliRunner.call(PluginInstallCommand.class, ctx, args);
 
             List<Path> files = Files.list(pluginsPath).collect(Collectors.toList());
 
             assertThat(files.size(), is(1));
-            assertThat(files.get(0).getFileName().toString(), is("plugin-notifications-0.2.0-SNAPSHOT.jar"));
+            assertThat(files.get(0).getFileName().toString(), is("plugin-notifications-0.6.0.jar"));
         }
     }
 }

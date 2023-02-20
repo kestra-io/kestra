@@ -1,0 +1,17 @@
+.custom-upload{
+    background-color: var(--bs-gray-400);
+    label {
+        display: flex;
+        cursor: pointer;
+        margin-left: 10px;
+    }
+    input[type="file"] {
+        display: none;
+    }
+    ::-webkit-file-upload-button {
+        display: none;
+    }
+    ::file-selector-button {
+        display: none;
+    }
+}

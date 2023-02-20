@@ -24,6 +24,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 
+import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
@@ -33,8 +35,6 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
 
 @Validated
 @Controller("/api/v1/templates")
@@ -202,7 +202,7 @@ public class TemplateController {
                 .stream()
                 .filter(template -> !ids.contains(template.getId()))
                 .peek(template -> templateRepository.delete(template))
-                .collect(Collectors.toList());;
+                .collect(Collectors.toList());
         }
 
         // update or create templates
@@ -310,8 +310,11 @@ public class TemplateController {
         }
         else if(fileName.endsWith(".zip")) {
             try(ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
-                while(archive.available() == 1) {
-                    archive.getNextEntry();
+                ZipEntry entry;
+                while( (entry = archive.getNextEntry()) != null) {
+                    if(entry.isDirectory() || !entry.getName().endsWith(".yml") && !entry.getName().endsWith(".yaml")) {
+                        continue;
+                    }
                     String source = new String(archive.readAllBytes());
                     Template parsed = new YamlFlowParser().parse(source, Template.class);
                     importTemplate(parsed);

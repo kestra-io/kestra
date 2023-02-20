@@ -150,6 +150,9 @@ export default {
                     Utils.downloadUrl(response.request.responseURL, "flows.zip");
                 });
         },
+        importFlows(_, options) {
+            return this.$http.post("/api/v1/flows/import", options, {headers: {"Content-Type": "multipart/form-data"}})
+        }
     },
     mutations: {
         setFlows(state, flows) {

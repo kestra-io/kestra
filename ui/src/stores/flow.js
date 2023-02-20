@@ -136,7 +136,7 @@ export default {
             })
         },
         exportFlowByIds(_, options) {
-            return this.$http.post("/api/v1/flows/extract/by-ids", options.ids, {responseType: "blob"})
+            return this.$http.post("/api/v1/flows/export/by-ids", options.ids, {responseType: "blob"})
                 .then(response => {
                     const blob = new Blob([response.data], {type: "application/octet-stream"});
                     const url = window.URL.createObjectURL(blob)
@@ -144,7 +144,7 @@ export default {
                 });
         },
         exportFlowByQuery(_, options) {
-            return this.$http.get("/api/v1/flows/extract/by-query", {params: options})
+            return this.$http.get("/api/v1/flows/export/by-query", {params: options})
                 .then(response => {
                     Utils.downloadUrl(response.request.responseURL, "flows.zip");
                 });

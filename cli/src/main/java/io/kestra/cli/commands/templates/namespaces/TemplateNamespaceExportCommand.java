@@ -1,7 +1,7 @@
-package io.kestra.cli.commands.flows.namespaces;
+package io.kestra.cli.commands.templates.namespaces;
 
 import io.kestra.cli.AbstractApiCommand;
-import io.kestra.cli.commands.flows.FlowValidateCommand;
+import io.kestra.cli.commands.templates.TemplateValidateCommand;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -15,18 +15,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @CommandLine.Command(
-    name = "extract",
-    description = "extract namespace flows",
+    name = "export",
+    description = "export namespace templates",
     mixinStandardHelpOptions = true
 )
 @Slf4j
-public class FlowNamespaceExtractCommand extends AbstractApiCommand {
-    private static final String DEFAULT_FILE_NAME = "flows.zip";
+public class TemplateNamespaceExportCommand extends AbstractApiCommand {
+    private static final String DEFAULT_FILE_NAME = "templates.zip";
 
-    @CommandLine.Parameters(index = "0", description = "the namespace of templates to extract")
+    @CommandLine.Parameters(index = "0", description = "the namespace of templates to export")
     public String namespace;
 
-    @CommandLine.Parameters(index = "1", description = "the directory to extract the file to")
+    @CommandLine.Parameters(index = "1", description = "the directory to export the file to")
     public Path directory;
 
     @Override
@@ -35,16 +35,16 @@ public class FlowNamespaceExtractCommand extends AbstractApiCommand {
 
         try(DefaultHttpClient client = client()) {
             MutableHttpRequest<Object> request = HttpRequest
-                .GET("/api/v1/flows/extract/by-query?namespace=" + namespace).accept(MediaType.APPLICATION_OCTET_STREAM);
+                .GET("/api/v1/templates/export/by-query?namespace=" + namespace).accept(MediaType.APPLICATION_OCTET_STREAM);
 
             HttpResponse<byte[]> response = client.toBlocking().exchange(this.requestOptions(request), byte[].class);
             Path zipFile = Path.of(directory.toString(), DEFAULT_FILE_NAME);
             zipFile.toFile().createNewFile();
             Files.write(zipFile, response.body());
 
-            stdOut("Extracted flow(s) for namespace '" + namespace + "' successfully done !");
+            stdOut("Exporting template(s) for namespace '" + namespace + "' successfully done !");
         } catch (HttpClientResponseException e) {
-            FlowValidateCommand.handleHttpException(e, "flow");
+            TemplateValidateCommand.handleHttpException(e, "template");
             return 1;
         }
 

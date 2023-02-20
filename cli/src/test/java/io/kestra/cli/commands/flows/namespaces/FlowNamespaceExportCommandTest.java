@@ -17,7 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 
-class FlowNamespaceExtractCommandTest {
+class FlowNamespaceExportCommandTest {
     @Test
     void run() throws IOException {
         URL directory = FlowNamespaceUpdateCommandTest.class.getClassLoader().getResource("flows");
@@ -42,8 +42,8 @@ class FlowNamespaceExtractCommandTest {
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, updateArgs);
             assertThat(out.toString(), containsString("3 flow(s)"));
 
-            // then we extract them
-            String[] extractArgs = {
+            // then we export them
+            String[] exportArgs = {
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -51,7 +51,7 @@ class FlowNamespaceExtractCommandTest {
                 "io.kestra.cli",
                 "/tmp",
             };
-            PicocliRunner.call(FlowNamespaceExtractCommand.class, ctx, extractArgs);
+            PicocliRunner.call(FlowNamespaceExportCommand.class, ctx, exportArgs);
             File file = new File("/tmp/flows.zip");
             assertThat(file.exists(), is(true));
             ZipFile zipFile = new ZipFile(file);

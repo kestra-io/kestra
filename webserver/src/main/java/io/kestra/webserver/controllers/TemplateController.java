@@ -248,11 +248,11 @@ public class TemplateController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "/extract/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Get(uri = "/export/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(
-        summary = "Extract templates as a ZIP archive of yaml sources."
+        summary = "Export templates as a ZIP archive of yaml sources."
     )
-    public HttpResponse<byte[]> extractByQuery(
+    public HttpResponse<byte[]> exportByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) throws IOException {
@@ -262,11 +262,11 @@ public class TemplateController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/extract/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Post(uri = "/export/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
     @Operation(
-        summary = "Extract templates as a ZIP archive of yaml sources."
+        summary = "Export templates as a ZIP archive of yaml sources."
     )
-    public HttpResponse<byte[]> extractByIds(
+    public HttpResponse<byte[]> exportByIds(
         @Parameter(description = "A list of tuple flow ID and namespace as template identifiers") @Body List<IdWithNamespace> ids
     ) throws IOException {
         var templates = ids.stream()

@@ -17,10 +17,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.hamcrest.core.Is.is;
 
-class TemplateNamespaceExtractCommandTest {
+class TemplateNamespaceExportCommandTest {
     @Test
     void run() throws IOException {
-        URL directory = TemplateNamespaceExtractCommandTest.class.getClassLoader().getResource("templates");
+        URL directory = TemplateNamespaceExportCommandTest.class.getClassLoader().getResource("templates");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
@@ -42,8 +42,8 @@ class TemplateNamespaceExtractCommandTest {
             PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, args);
             assertThat(out.toString(), containsString("3 template(s)"));
 
-            // then we extract them
-            String[] extractArgs = {
+            // then we export them
+            String[] exportArgs = {
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -51,7 +51,7 @@ class TemplateNamespaceExtractCommandTest {
                 "io.kestra.tests",
                 "/tmp",
             };
-            PicocliRunner.call(TemplateNamespaceExtractCommand.class, ctx, extractArgs);
+            PicocliRunner.call(TemplateNamespaceExportCommand.class, ctx, exportArgs);
             File file = new File("/tmp/templates.zip");
             assertThat(file.exists(), is(true));
             ZipFile zipFile = new ZipFile(file);

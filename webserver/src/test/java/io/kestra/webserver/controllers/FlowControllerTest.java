@@ -457,8 +457,8 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void extractByQuery() throws IOException {
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/extract/by-query?namespace=io.kestra.tests"),
+    void exportByQuery() throws IOException {
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/export/by-query?namespace=io.kestra.tests"),
             Argument.of(byte[].class));
         File file = File.createTempFile("flows", ".zip");
         Files.write(file.toPath(), zip);
@@ -471,12 +471,12 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void extractByIds() throws IOException {
+    void exportByIds() throws IOException {
         List<IdWithNamespace> ids = List.of(
             new IdWithNamespace("io.kestra.tests", "each-object"),
             new IdWithNamespace("io.kestra.tests", "webhook"),
             new IdWithNamespace("io.kestra.tests", "task-flow"));
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/extract/by-ids", ids),
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/export/by-ids", ids),
             Argument.of(byte[].class));
         File file = File.createTempFile("flows", ".zip");
         Files.write(file.toPath(), zip);

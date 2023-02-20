@@ -60,7 +60,7 @@ export default {
             })
         },
         exportTemplateByIds(_, options) {
-            return this.$http.post("/api/v1/templates/extract/by-ids", options.ids, {responseType: "blob"})
+            return this.$http.post("/api/v1/templates/export/by-ids", options.ids, {responseType: "blob"})
                 .then(response => {
                     const blob = new Blob([response.data], {type: "application/octet-stream"});
                     const url = window.URL.createObjectURL(blob)
@@ -68,7 +68,7 @@ export default {
                 });
         },
         exportTemplateByQuery(_, options) {
-            return this.$http.get("/api/v1/templates/extract/by-query", {params: options})
+            return this.$http.get("/api/v1/templates/export/by-query", {params: options})
                 .then(response => {
                     Utils.downloadUrl(response.request.responseURL, "templates.zip");
                 });

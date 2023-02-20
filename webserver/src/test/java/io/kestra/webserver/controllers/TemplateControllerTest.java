@@ -129,14 +129,14 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void extractByQuery() throws IOException {
+    void exportByQuery() throws IOException {
         // create 3 templates, so we have at least 3 of them
         client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
         client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
         client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
         int size = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/search?namespace=kestra.test"), Argument.of(PagedResults.class, Template.class)).getResults().size();
 
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/extract/by-query?namespace=kestra.test"),
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/export/by-query?namespace=kestra.test"),
             Argument.of(byte[].class));
         File file = File.createTempFile("templates", ".zip");
         Files.write(file.toPath(), zip);
@@ -149,7 +149,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void extractByIds() throws IOException {
+    void exportByIds() throws IOException {
         // create 3 templates, so we can retrieve them by id
         var template1 = client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
         var template2 = client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
@@ -159,7 +159,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
             new IdWithNamespace("kestra.test", template1.getId()),
             new IdWithNamespace("kestra.test", template2.getId()),
             new IdWithNamespace("kestra.test", template3.getId()));
-        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/templates/extract/by-ids?namespace=kestra.test", ids),
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/templates/export/by-ids?namespace=kestra.test", ids),
             Argument.of(byte[].class));
         File file = File.createTempFile("templates", ".zip");
         Files.write(file.toPath(), zip);

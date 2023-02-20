@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -15,8 +16,10 @@ import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorService;
 import io.kestra.core.services.*;
 import io.kestra.core.tasks.flows.Template;
+import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.utils.Await;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
+import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import jakarta.inject.Inject;
@@ -32,6 +35,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 @JdbcRunnerEnabled
@@ -105,7 +109,17 @@ public class JdbcExecutor implements ExecutorInterface {
     @Inject
     private AbstractJdbcExecutorStateStorage executorStateStorage;
 
+    @Inject
+    private FlowTopologyService flowTopologyService;
+
+    @Inject
+    private AbstractJdbcFlowTopologyRepository flowTopologyRepository;
+
     protected List<Flow> allFlows;
+
+    @Inject
+    @Named(QueueFactoryInterface.FLOW_NAMED)
+    private QueueInterface<Flow> flowQueue;
 
     @SneakyThrows
     @Override
@@ -147,6 +161,29 @@ public class JdbcExecutor implements ExecutorInterface {
         );
 
         schedulerDelayThread.start();
+
+        flowQueue.receive(
+            FlowTopology.class,
+            flow -> {
+                if (flow == null) {
+                    return;
+                }
+
+                flowTopologyRepository.save(
+                    flow,
+                    (flow.isDeleted() ?
+                        Stream.<FlowTopology>empty() :
+                        flowTopologyService
+                            .topology(
+                                flow,
+                                this.allFlows.stream()
+                            )
+                    )
+                        .distinct()
+                        .collect(Collectors.toList())
+                );
+            }
+        );
     }
 
     private void executionQueue(Execution message) {

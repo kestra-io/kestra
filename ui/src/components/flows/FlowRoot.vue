@@ -28,6 +28,7 @@
     import BottomLine from "../../components/layout/BottomLine.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import Overview from "./Overview.vue";
+    import FlowDependencies from "./FlowDependencies.vue";
 
     export default {
         mixins: [RouteContext],
@@ -40,7 +41,8 @@
             return {
                 tabIndex: undefined,
                 mounted: false,
-                previousFlow: undefined
+                previousFlow: undefined,
+                depedenciesCount: undefined
             };
         },
         watch: {
@@ -60,6 +62,11 @@
                         if (this.flow) {
                             this.previousFlow = this.flowKey();
                             this.$store.dispatch("flow/loadGraph", this.flow);
+                            this.$http
+                                .get(`/api/v1/flows/${this.flow.namespace}/${this.flow.id}/dependencies`)
+                                .then(response => {
+                                    this.depedenciesCount = response.data && response.data.nodes ? response.data.nodes.length - 1 : 0;
+                                })
                         }
                     });
                 }
@@ -134,7 +141,14 @@
                         title: this.$t("logs"),
                     });
                 }
-
+                if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)){
+                    tabs.push({
+                        name: "dependencies",
+                        component: FlowDependencies,
+                        title: this.$t("dependencies"),
+                        count: this.depedenciesCount
+                    })
+                }
                 return tabs;
             },
             activeTabName() {

@@ -45,6 +45,8 @@ public class QueueService {
             return ((ExecutorState) object).getExecutionId();
         } else if (object.getClass() == Setting.class) {
             return ((Setting) object).getKey();
+        } else if (object.getClass() == Executor.class) {
+          return ((Executor) object).getExecution().getId();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

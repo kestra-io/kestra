@@ -58,6 +58,15 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
             }
         ),
         @Example(
+            title = "Bash with an input file from Kestra's local storage created by a previous task.",
+            code = {
+                "inputFiles:",
+                "  data.csv: {{outputs.previousTaskId.uri}}",
+                "commands:",
+                "  - cat data.csv"
+            }
+        ),
+        @Example(
             title = "Run a command on a docker image",
             code = {
                 "runner: DOCKER",

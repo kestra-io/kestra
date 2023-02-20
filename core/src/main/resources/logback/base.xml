@@ -7,10 +7,10 @@
     <logger name="io.kestra" level="INFO" />
     <logger name="flow" level="INFO" />
 
-    <logger name="io.kestra.runner.kafka.services.KafkaConsumerService" level="WARN" />
-    <logger name="io.kestra.runner.kafka.services.KafkaProducerService" level="WARN" />
-    <logger name="io.kestra.runner.kafka.services.KafkaStreamService" level="WARN" />
-    <logger name="io.kestra.runner.kafka.services.KafkaAdminService" level="WARN" />
+    <logger name="io.kestra.ee.runner.kafka.services.KafkaConsumerService" level="WARN" />
+    <logger name="io.kestra.ee.runner.kafka.services.KafkaProducerService" level="WARN" />
+    <logger name="io.kestra.ee.runner.kafka.services.KafkaStreamService" level="WARN" />
+    <logger name="io.kestra.ee.runner.kafka.services.KafkaAdminService" level="WARN" />
 
     <!-- The configuration '%s' was supplied but isn't a known config. > https://github.com/apache/kafka/pull/5876 -->
     <logger name="org.apache.kafka.clients.producer.ProducerConfig" level="ERROR" />

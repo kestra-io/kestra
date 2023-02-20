@@ -116,9 +116,9 @@ abstract public class AbstractBash extends Task {
     protected List<String> outputDirs;
 
     @Schema(
-        title = "Input files are extra files supplied by user that make it simpler organize code.",
-        description = "Describe a files map (that can be a map or a json string) that will be written and usable in execution context. " +
-            "You can reach files using a workingDir variable like 'source {{workingDir}}/myfile.sh' "
+        title = "Input files are extra files that will be available in the script working directory.",
+        description = "You can define the files as map or a JSON string." +
+            "Each file can be defined inlined or can reference a file from Kestra's internal storage."
     )
     @PluginProperty(
         additionalProperties = String.class,

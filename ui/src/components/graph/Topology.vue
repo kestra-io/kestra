@@ -194,7 +194,6 @@
                 }
             })
         }
-
         fitView();
         isLoading.value = false;
     }

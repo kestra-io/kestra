@@ -87,10 +87,10 @@
             }
         },
         methods: {
-            loadWithRevision(taskId){
-                return this.$store.dispatch("flow/loadTask", {namespace: this.namespace, id: this.flowId, taskId: taskId, revision: this.revision});
-            },
             load(taskId) {
+                if(this.revision){
+                    return YamlUtils.extractTask(this.revisions[this.revision-1].source, taskId, this.section).toString();
+                }
                 return YamlUtils.extractTask(this.flow.source, taskId, this.section).toString();
             },
             mapSectionWithSchema(){
@@ -128,11 +128,7 @@
             onShow() {
                 this.isModalOpen = !this.isModalOpen;
                 if (this.taskId || this.task.id) {
-                    if (this.revision) {
-                        this.loadWithRevision(this.taskId || this.task.id).then(value => this.taskYaml = YamlUtils.stringify(value));
-                    } else {
-                        this.taskYaml = this.load(this.taskId ? this.taskId : this.task.id);
-                    }
+                    this.taskYaml = this.load(this.taskId ? this.taskId : this.task.id);
                 } else {
                     this.taskYaml = YamlUtils.stringify(this.task);
                 }
@@ -151,6 +147,7 @@
         computed: {
             ...mapState("flow", ["flow"]),
             ...mapState("auth", ["user"]),
+            ...mapState("flow", ["revisions"]),
             canSave() {
                 return canSaveFlowTemplate(true, this.user, {namespace: this.namespace}, "flow");
             },

@@ -299,32 +299,33 @@ public class TemplateController {
     @Operation(
         summary = "Import templates as a ZIP archive of yaml sources or a multi-objects YAML file."
     )
+    @ApiResponse(responseCode = "204", description = "On success")
     public HttpResponse<Void> importTemplates(@Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file") @Part CompletedFileUpload fileUpload) throws IOException {
         String fileName = fileUpload.getFilename().toLowerCase();
-        if(fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
+        if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
-            for(String source: sources) {
+            for (String source : sources) {
                 Template parsed = new YamlFlowParser().parse(source, Template.class);
                 importTemplate(parsed);
             }
-        }
-        else if(fileName.endsWith(".zip")) {
-            try(ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
+        } else if (fileName.endsWith(".zip")) {
+            try (ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
                 ZipEntry entry;
-                while( (entry = archive.getNextEntry()) != null) {
-                    if(entry.isDirectory() || !entry.getName().endsWith(".yml") && !entry.getName().endsWith(".yaml")) {
+                while ((entry = archive.getNextEntry()) != null) {
+                    if (entry.isDirectory() || !entry.getName().endsWith(".yml") && !entry.getName().endsWith(".yaml")) {
                         continue;
                     }
+
                     String source = new String(archive.readAllBytes());
                     Template parsed = new YamlFlowParser().parse(source, Template.class);
                     importTemplate(parsed);
                 }
             }
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Cannot import file of type " + fileName.substring(fileName.lastIndexOf('.')));
         }
-        return HttpResponse.ok();
+
+        return HttpResponse.status(HttpStatus.NO_CONTENT);
     }
 
     protected void importTemplate(Template parsed) {

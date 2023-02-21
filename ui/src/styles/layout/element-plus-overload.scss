@@ -52,6 +52,43 @@
         }
     }
 }
+
+
+.el-input-file.custom-upload {
+    border-color: var(--el-button-border-color);
+    font-size: var(--el-font-size-base);
+    border-radius: var(--el-border-radius-base);
+    color: var(--el-button-text-color);
+
+    .el-input__wrapper {
+        background-color: transparent;
+    }
+
+    label {
+        display: flex;
+        cursor: pointer;
+        margin-left: 10px;
+        line-height: 30px;
+
+        .material-design-icon {
+            margin-right: 6px;
+        }
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    ::-webkit-file-upload-button {
+        display: none;
+    }
+
+    ::file-selector-button {
+        display: none;
+    }
+}
+
+
 .el-select {
     .el-tag {
         color: var(--el-select-input-color);

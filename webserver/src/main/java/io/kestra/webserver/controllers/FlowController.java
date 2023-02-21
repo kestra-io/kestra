@@ -505,39 +505,44 @@ public class FlowController {
         tags = {"Flows"},
         summary = "Import flows as a ZIP archive of yaml sources or a multi-objects YAML file."
     )
-    public HttpResponse<Void> importFlows(@Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file") @Part CompletedFileUpload fileUpload) throws IOException {
+    @ApiResponse(responseCode = "204", description = "On success")
+    public HttpResponse<Void> importFlows(
+        @Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file")
+        @Part CompletedFileUpload fileUpload
+    ) throws IOException {
         String fileName = fileUpload.getFilename().toLowerCase();
-        if(fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
+        if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
-            for(String source: sources) {
+            for (String source : sources) {
                 Flow parsed = new YamlFlowParser().parse(source, Flow.class);
                 importFlow(source, parsed);
             }
-        }
-        else if(fileName.endsWith(".zip")) {
-            try(ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
+        } else if (fileName.endsWith(".zip")) {
+            try (ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
                 ZipEntry entry;
-                while( (entry = archive.getNextEntry()) != null) {
-                    if(entry.isDirectory() || !entry.getName().endsWith(".yml") && !entry.getName().endsWith(".yaml")) {
+                while ((entry = archive.getNextEntry()) != null) {
+                    if (entry.isDirectory() || !entry.getName().endsWith(".yml") && !entry.getName().endsWith(".yaml")) {
                         continue;
                     }
+
                     String source = new String(archive.readAllBytes());
                     Flow parsed = new YamlFlowParser().parse(source, Flow.class);
                     importFlow(source, parsed);
                 }
             }
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Cannot import file of type " + fileName.substring(fileName.lastIndexOf('.')));
         }
-        return HttpResponse.ok();
+
+        return HttpResponse.status(HttpStatus.NO_CONTENT);
     }
 
     protected void importFlow(String source, Flow parsed) {
-        flowRepository.findById(parsed.getNamespace(), parsed.getId()).ifPresentOrElse(
-            previous -> flowRepository.update(parsed, previous, source, taskDefaultService.injectDefaults(parsed)),
-            () -> flowRepository.create(parsed, source, taskDefaultService.injectDefaults(parsed))
-        );
+        flowRepository
+            .findById(parsed.getNamespace(), parsed.getId())
+            .ifPresentOrElse(
+                previous -> flowRepository.update(parsed, previous, source, taskDefaultService.injectDefaults(parsed)),
+                () -> flowRepository.create(parsed, source, taskDefaultService.injectDefaults(parsed))
+            );
     }
-
 }

@@ -1,6 +1,12 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.templates.Template;
+import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.tasks.debugs.Return;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -10,13 +16,8 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.templates.Template;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
-import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.responses.PagedResults;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,11 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipFile;
 
-import jakarta.inject.Inject;
-
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.NO_CONTENT;
-import static io.micronaut.http.HttpStatus.OK;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -187,7 +185,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
             .build();
         var response = client.toBlocking().exchange(POST("/api/v1/templates/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
 
-        assertThat(response.getStatus(), is(OK));
+        assertThat(response.getStatus(), is(NO_CONTENT));
         temp.delete();
     }
 
@@ -211,7 +209,7 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
             .build();
         var response = client.toBlocking().exchange(POST("/api/v1/templates/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
 
-        assertThat(response.getStatus(), is(OK));
+        assertThat(response.getStatus(), is(NO_CONTENT));
         temp.delete();
     }
 }

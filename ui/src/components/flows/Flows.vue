@@ -114,8 +114,8 @@
                 </ul>
                 <li class="spacer" />
                 <li>
-                    <div class="el-input el-input-file">
-                        <div class="el-input__wrapper custom-upload">
+                    <div class="el-input el-input-file custom-upload">
+                        <div class="el-input__wrapper">
                             <label for="importFlows">
                                 <Upload />
                                 {{ $t('import') }}
@@ -337,6 +337,4 @@
         }
     };
 </script>
-<style lang="scss" scoped>
-@import "src/override/components/custom-css.scss";
-</style>
+

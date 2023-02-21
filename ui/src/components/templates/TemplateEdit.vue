@@ -1,7 +1,6 @@
 <template>
     <div>
-        <editor @on-save="save" v-model="content" schemaType="template" lang="yaml" @update:model-value="onChange($event)" />
-        <bottom-line v-if="canSave || canDelete">
+        <top-line v-if="canSave || canDelete">
             <ul>
                 <li>
                     <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteFile">
@@ -15,7 +14,8 @@
                     </template>
                 </li>
             </ul>
-        </bottom-line>
+        </top-line>
+        <editor @on-save="save" v-model="content" schema-type="template" lang="yaml" @update:model-value="onChange($event)" />
     </div>
 </template>
 

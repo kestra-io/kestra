@@ -527,7 +527,7 @@
     "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> execution(s) ?",
     "selection": {
       "selected": "<strong>{count}</strong> sélectionnés",
-      "all": "tous sélectionnés ({count})"
+      "all": "tout sélectionner ({count})"
     },
     "cancel": "Annuler",
     "homeDashboard": {

@@ -38,6 +38,27 @@
                     :ready="dailyReady"
                     :data="daily"
                 />
+                <top-line v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
+                    <ul>
+                        <top-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()" />
+                        <li v-if="canUpdate">
+                            <el-button :icon="Restart" type="success" class="bulk-button" @click="restartExecutions()">
+                                {{ $t('restart') }}
+                            </el-button>
+                        </li>
+                        <li v-if="canUpdate">
+                            <el-button :icon="StopCircleOutline" type="warning" class="bulk-button" @click="killExecutions()">
+                                {{ $t('kill') }}
+                            </el-button>
+                        </li>
+                        <li v-if="canDelete">
+                            <el-button :icon="Delete" type="danger" class="bulk-button" @click="deleteExecutions()">
+                                {{ $t('delete') }}
+                            </el-button>
+                        </li>
+                        <li class="spacer" />
+                    </ul>
+                </top-line>
             </template>
 
             <template #table>
@@ -113,28 +134,6 @@
                 </el-table>
             </template>
         </data-table>
-
-        <bottom-line v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
-            <ul>
-                <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()" />
-                <li v-if="canUpdate">
-                    <el-button :icon="Restart" type="success" class="bulk-button" @click="restartExecutions()">
-                        {{ $t('restart') }}
-                    </el-button>
-                </li>
-                <li v-if="canUpdate">
-                    <el-button :icon="StopCircleOutline" type="warning" class="bulk-button" @click="killExecutions()">
-                        {{ $t('kill') }}
-                    </el-button>
-                </li>
-                <li v-if="canDelete">
-                    <el-button :icon="Delete" type="danger" class="bulk-button" @click="deleteExecutions()">
-                        {{ $t('delete') }}
-                    </el-button>
-                </li>
-                <li class="spacer" />
-            </ul>
-        </bottom-line>
     </div>
 </template>
 
@@ -164,8 +163,8 @@
     import State from "../../utils/state";
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
-    import BottomLine from "../layout/BottomLine.vue";
-    import BottomLineCounter from "../layout/BottomLineCounter.vue";
+    import TopLine from "../layout/TopLine.vue";
+    import TopLineCounter from "../layout/TopLineCounter.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
 
@@ -185,8 +184,8 @@
             DateAgo,
             Kicon,
             Id,
-            BottomLine,
-            BottomLineCounter
+            TopLine,
+            TopLineCounter
         },
         props: {
             embed: {

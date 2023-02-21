@@ -1,7 +1,7 @@
 import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
 import {mapGetters, mapState} from "vuex";
 
-import BottomLine from "../components/layout/BottomLine.vue";
+import TopLine from "../components/layout/TopLine.vue";
 import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
 import Editor from "../components/inputs/Editor.vue";
@@ -16,7 +16,7 @@ export default {
         Editor,
         ContentSave,
         Delete,
-        BottomLine
+        TopLine
     },
     data() {
         return {

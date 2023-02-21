@@ -26,6 +26,34 @@
                         :ready="dailyReady"
                         :data="daily"
                     />
+                    <top-line>
+                        <ul>
+                            <ul v-if="flowsSelection.length !== 0 && canRead">
+                                <top-line-counter v-model="queryBulkAction" :selections="flowsSelection" :total="total" @update:model-value="selectAll()" />
+                                <li v-if="canRead">
+                                    <el-button :icon="Download" type="info" class="bulk-button" @click="exportFlows()">
+                                        {{ $t('export') }}
+                                    </el-button>
+                                </li>
+                            </ul>
+                            <li class="spacer" />
+                            <li>
+                                <router-link :to="{name: 'flows/search'}">
+                                    <el-button :icon="TextBoxSearch">
+                                        {{ $t('source search') }}
+                                    </el-button>
+                                </router-link>
+                            </li>
+
+                            <li v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
+                                <router-link :to="{name: 'flows/create'}">
+                                    <el-button :icon="Plus" type="primary">
+                                        {{ $t('create') }}
+                                    </el-button>
+                                </router-link>
+                            </li>
+                        </ul>
+                    </top-line>
                 </template>
 
                 <template #table>
@@ -101,35 +129,6 @@
                 </template>
             </data-table>
         </div>
-
-        <bottom-line>
-            <ul>
-                <ul v-if="flowsSelection.length !== 0 && canRead">
-                    <bottom-line-counter v-model="queryBulkAction" :selections="flowsSelection" :total="total" @update:model-value="selectAll()" />
-                    <li v-if="canRead">
-                        <el-button :icon="Download" type="info" class="bulk-button" @click="exportFlows()">
-                            {{ $t('export') }}
-                        </el-button>
-                    </li>
-                </ul>
-                <li class="spacer" />
-                <li>
-                    <router-link :to="{name: 'flows/search'}">
-                        <el-button :icon="TextBoxSearch">
-                            {{ $t('source search') }}
-                        </el-button>
-                    </router-link>
-                </li>
-
-                <li v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
-                    <router-link :to="{name: 'flows/create'}">
-                        <el-button :icon="Plus" type="primary">
-                            {{ $t('create') }}
-                        </el-button>
-                    </router-link>
-                </li>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 
@@ -146,7 +145,7 @@
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
-    import BottomLine from "../layout/BottomLine.vue";
+    import TopLine from "../layout/TopLine.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";
@@ -158,13 +157,13 @@
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
-    import BottomLineCounter from "../layout/BottomLineCounter.vue";
+    import TopLineCounter from "../layout/TopLineCounter.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             NamespaceSelect,
-            BottomLine,
+            TopLine,
             Eye,
             DataTable,
             SearchField,
@@ -174,7 +173,7 @@
             MarkdownTooltip,
             Kicon,
             Labels,
-            BottomLineCounter,
+            TopLineCounter,
         },
         data() {
             return {

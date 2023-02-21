@@ -1,19 +1,6 @@
 <template>
     <div>
-        <el-collapse v-if="triggers.length > 0" v-model="collapseActive">
-            <schedule-item
-                @remove="remove"
-                @set="set"
-                :schedule="schedule"
-                :index="x"
-                v-for="(schedule, x) in triggers"
-                :key="x"
-            />
-        </el-collapse>
-        <el-alert type="info" v-else :closable="false" class="mb-0">
-            {{ $t('no result') }}
-        </el-alert>
-        <bottom-line v-if="canSave">
+        <top-line v-if="canSave">
             <ul>
                 <li>
                     <el-button
@@ -30,7 +17,20 @@
                     </el-button>
                 </li>
             </ul>
-        </bottom-line>
+        </top-line>
+        <el-collapse v-if="triggers.length > 0" v-model="collapseActive">
+            <schedule-item
+                @remove="remove"
+                @set="set"
+                :schedule="schedule"
+                :index="x"
+                v-for="(schedule, x) in triggers"
+                :key="x"
+            />
+        </el-collapse>
+        <el-alert type="info" v-else :closable="false" class="mb-0">
+            {{ $t('no result') }}
+        </el-alert>
     </div>
 </template>
 
@@ -39,7 +39,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import ScheduleItem from "./ScheduleItem.vue";
-    import BottomLine from "../layout/BottomLine.vue";
+    import TopLine from "../layout/TopLine.vue";
     import {
         canSaveFlowTemplate,
         saveFlowTemplate,
@@ -50,7 +50,7 @@
             Plus,
             ContentSave,
             ScheduleItem,
-            BottomLine,
+            TopLine,
         },
         data() {
             return {

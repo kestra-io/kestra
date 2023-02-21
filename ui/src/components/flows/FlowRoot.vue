@@ -1,14 +1,14 @@
 <template>
     <div>
         <div v-if="ready">
-            <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" @hook:mounted="mounted = true" />
-            <bottom-line v-if="mounted && displayBottomLine()">
+            <top-line v-if="mounted && displayTopLine()">
                 <ul>
                     <li>
                         <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
                     </li>
                 </ul>
-            </bottom-line>
+            </top-line>
+            <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" @hook:mounted="mounted = true" />
         </div>
     </div>
 </template>
@@ -25,7 +25,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
-    import BottomLine from "../../components/layout/BottomLine.vue";
+    import TopLine from "../layout/TopLine.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
@@ -33,7 +33,7 @@
     export default {
         mixins: [RouteContext],
         components: {
-            BottomLine,
+            TopLine,
             TriggerFlow,
             Tabs
         },
@@ -158,7 +158,7 @@
 
                 return null;
             },
-            displayBottomLine() {
+            displayTopLine() {
                 const name = this.activeTabName();
                 return name != null &&  this.canExecute && name !== "execute" && name !== "source" && name !== "schedule";
             }

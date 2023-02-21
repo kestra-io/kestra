@@ -1,9 +1,6 @@
 <template>
     <div>
-        <div v-if="ready">
-            <tabs :route-name="$route.param && $route.param.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
-        </div>
-        <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
+        <top-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
                     <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteExecution">
@@ -21,7 +18,10 @@
                     </template>
                 </li>
             </ul>
-        </bottom-line>
+        </top-line>
+    </div>
+    <div v-if="ready">
+        <tabs :route-name="$route.param && $route.param.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
     </div>
 </template>
 
@@ -36,7 +36,7 @@
     import Logs from "./Logs.vue";
     import Topology from "./Topology.vue";
     import ExecutionOutput from "./ExecutionOutput.vue";
-    import BottomLine from "../layout/BottomLine.vue";
+    import TopLine from "../layout/TopLine.vue";
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
@@ -49,7 +49,7 @@
     export default {
         mixins: [RouteContext],
         components: {
-            BottomLine,
+            TopLine,
             TriggerFlow,
             Tabs,
         },

@@ -275,7 +275,8 @@
     "template export": "Are you sure you want to export <code>{templateCount}</code> template(s)?",
     "templates exported": "Templates exported",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
-    "flows exported": "Flows exported"
+    "flows exported": "Flows exported",
+    "import": "Import"
   },
   "fr": {
     "id": "Identifiant",
@@ -554,7 +555,8 @@
     "template export": "Êtes vous sûr de vouloir exporter <code>{templateCount}</code> template(s)?",
     "templates exported": "Templates exportés",
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
-    "flows exported": "Flows exportés"
+    "flows exported": "Flows exportés",
+    "import": "Importer"
   },
   "de": {
     "id": "Id",
@@ -832,6 +834,7 @@
     "template export": "Sind Sie sicher, dass Sie <code>{templateCount}</code> Template(n) exportieren möchten?",
     "templates exported": "Template exportiert",
     "flow export": "Sind Sie sicher, dass Sie <code>{flowCount}</code> Flows exportieren möchten?",
-    "flows exported": "Flows exportiert"
+    "flows exported": "Flows exportiert",
+    "import": "Importieren"
   }
 }

@@ -114,13 +114,29 @@
                 </ul>
                 <li class="spacer" />
                 <li>
+                    <div class="el-input el-input-file custom-upload">
+                        <div class="el-input__wrapper">
+                            <label for="importFlows">
+                                <Upload />
+                                {{ $t('import') }}
+                            </label>
+                            <input
+                                id="importFlows"
+                                class="el-input__inner"
+                                type="file"
+                                @change="importFlows()"
+                                ref="file"
+                            >
+                        </div>
+                    </div>
+                </li>
+                <li>
                     <router-link :to="{name: 'flows/search'}">
                         <el-button :icon="TextBoxSearch">
                             {{ $t('source search') }}
                         </el-button>
                     </router-link>
                 </li>
-
                 <li v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
                     <router-link :to="{name: 'flows/create'}">
                         <el-button :icon="Plus" type="primary">
@@ -159,7 +175,7 @@
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
     import BottomLineCounter from "../layout/BottomLineCounter.vue";
-
+    import Upload from "vue-material-design-icons/Upload.vue";
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
@@ -175,6 +191,7 @@
             Kicon,
             Labels,
             BottomLineCounter,
+            Upload
         },
         data() {
             return {
@@ -184,7 +201,8 @@
                 dailyGroupByFlowReady: false,
                 dailyReady: false,
                 flowsSelection: [],
-                queryBulkAction: false
+                queryBulkAction: false,
+                file: undefined,
             };
         },
         computed: {
@@ -248,6 +266,16 @@
                     },
                     () => {}
                 )
+            },
+            importFlows() {
+                const formData = new FormData();
+                formData.append("fileUpload", this.$refs.file.files[0]);
+                this.$store
+                    .dispatch("flow/importFlows", formData)
+                    .then(_ => {
+                        this.$toast().success(this.$t("flows imported"));
+                        this.loadData(() => {})
+                    })
             },
             chartData(row) {
                 if (this.dailyGroupByFlow && this.dailyGroupByFlow[row.namespace] && this.dailyGroupByFlow[row.namespace][row.id]) {

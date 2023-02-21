@@ -15,6 +15,7 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
@@ -23,6 +24,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 
+import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
@@ -30,9 +33,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-import javax.validation.ConstraintViolationException;
-import javax.validation.Valid;
 
 @Validated
 @Controller("/api/v1/templates")
@@ -200,7 +202,7 @@ public class TemplateController {
                 .stream()
                 .filter(template -> !ids.contains(template.getId()))
                 .peek(template -> templateRepository.delete(template))
-                .collect(Collectors.toList());;
+                .collect(Collectors.toList());
         }
 
         // update or create templates
@@ -290,5 +292,46 @@ public class TemplateController {
             archive.finish();
             return bos.toByteArray();
         }
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/import", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(
+        summary = "Import templates as a ZIP archive of yaml sources or a multi-objects YAML file."
+    )
+    @ApiResponse(responseCode = "204", description = "On success")
+    public HttpResponse<Void> importTemplates(@Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file") @Part CompletedFileUpload fileUpload) throws IOException {
+        String fileName = fileUpload.getFilename().toLowerCase();
+        if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
+            List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
+            for (String source : sources) {
+                Template parsed = new YamlFlowParser().parse(source, Template.class);
+                importTemplate(parsed);
+            }
+        } else if (fileName.endsWith(".zip")) {
+            try (ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
+                ZipEntry entry;
+                while ((entry = archive.getNextEntry()) != null) {
+                    if (entry.isDirectory() || !entry.getName().endsWith(".yml") && !entry.getName().endsWith(".yaml")) {
+                        continue;
+                    }
+
+                    String source = new String(archive.readAllBytes());
+                    Template parsed = new YamlFlowParser().parse(source, Template.class);
+                    importTemplate(parsed);
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("Cannot import file of type " + fileName.substring(fileName.lastIndexOf('.')));
+        }
+
+        return HttpResponse.status(HttpStatus.NO_CONTENT);
+    }
+
+    protected void importTemplate(Template parsed) {
+        templateRepository.findById(parsed.getNamespace(), parsed.getId()).ifPresentOrElse(
+            previous -> templateRepository.update(parsed, previous),
+            () -> templateRepository.create(parsed)
+        );
     }
 }

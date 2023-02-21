@@ -75,6 +75,23 @@
 
                 <li class="spacer" />
                 <li>
+                    <div class="el-input el-input-file custom-upload">
+                        <div class="el-input__wrapper">
+                            <label for="importFlows">
+                                <Upload />
+                                {{ $t('import') }}
+                            </label>
+                            <input
+                                id="importFlows"
+                                class="el-input__inner"
+                                type="file"
+                                @change="importTemplates()"
+                                ref="file"
+                            >
+                        </div>
+                    </div>
+                </li>
+                <li>
                     <router-link :to="{name: 'templates/create'}">
                         <el-button :icon="Plus" type="primary">
                             {{ $t('create') }}
@@ -107,6 +124,7 @@
     import _merge from "lodash/merge";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
     import BottomLineCounter from "../layout/BottomLineCounter.vue";
+    import Upload from "vue-material-design-icons/Upload.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -119,6 +137,7 @@
             Kicon,
             MarkdownTooltip,
             BottomLineCounter,
+            Upload
         },
         data() {
             return {
@@ -199,6 +218,17 @@
                     () => {}
                 )
             },
+            importTemplates() {
+                const formData = new FormData();
+                formData.append("fileUpload", this.$refs.file.files[0]);
+                this.$store
+                    .dispatch("template/importTemplates", formData)
+                    .then(_ => {
+                        this.$toast().success(this.$t("templates imported"));
+                        this.loadData(() => {})
+                    })
+            },
         },
     };
 </script>
+

@@ -73,6 +73,9 @@ export default {
                     Utils.downloadUrl(response.request.responseURL, "templates.zip");
                 });
         },
+        importTemplates(_, options) {
+            return this.$http.post("/api/v1/templates/import", options, {headers: {"Content-Type": "multipart/form-data"}})
+        }
     },
     mutations: {
         setTemplates(state, templates) {

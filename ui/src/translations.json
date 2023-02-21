@@ -276,7 +276,12 @@
     "templates exported": "Templates exported",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
     "flows exported": "Flows exported",
-    "import": "Import"
+    "import": "Import",
+    "dependencies": "Dependencies",
+    "see dependencies": "See dependencies",
+    "dependencies missing acls": "No permissions on this flow",
+    "dependencies delete flow": "This flow has dependencies. Deleting it will prevent theses dependencies to be executed!<br /><br /> Here is the list of concerned flows:",
+    "expand dependencies": "Expand dependencies"
   },
   "fr": {
     "id": "Identifiant",
@@ -556,7 +561,12 @@
     "templates exported": "Templates exportés",
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
     "flows exported": "Flows exportés",
-    "import": "Importer"
+    "import": "Importer",
+    "dependencies": "Dépendances",
+    "see dependencies": "Voir les dépendances",
+    "dependencies missing acls": "Aucune permission sur ce flow",
+    "dependencies delete flow": "Ce flow a des dépendances, effacer celui-ci empêchera les dépendances de s'exécuter !<br /><br /> Voici la liste des flows concernés :",
+    "expand dependencies": "Voir les dépendances"
   },
   "de": {
     "id": "Id",
@@ -835,6 +845,11 @@
     "templates exported": "Template exportiert",
     "flow export": "Sind Sie sicher, dass Sie <code>{flowCount}</code> Flows exportieren möchten?",
     "flows exported": "Flows exportiert",
-    "import": "Importieren"
+    "import": "Importieren",
+    "dependencies": "Abhängigkeiten",
+    "see dependencies": "Siehe Abhängigkeiten",
+    "dependencies missing acls": "Keinen Zugriff für diesen Flow",
+    "dependencies delete flow": "Dieser Flow besitzt Abhängigkeiten. Durch Löschen wird verhindert, dass diese Abhängigkeiten ausgeführt werden können!<br /><br /> Hier ist die Liste der betroffenen Flows:",
+    "expand dependencies": "Abhängigkeiten erweitern"
   }
 }

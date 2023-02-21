@@ -420,7 +420,6 @@ public class FlowController {
         );
     }
 
-
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "validate", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Validate a list of flows")

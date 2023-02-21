@@ -117,11 +117,38 @@ export default {
             }
         },
         deleteConfirmMessage() {
-            return new Promise((resolve) => {
-                resolve(this.$t("delete confirm", {name: this.item.id}));
-            });
-        }
-        ,
+            if (this.dataType === "template") {
+                return new Promise((resolve) => {
+                    resolve(this.$t("delete confirm", {name: this.item.id}));
+                });
+            }
+
+            return this.$http
+                .get(`/api/v1/flows/${this.flow.namespace}/${this.flow.id}/dependencies`, {params: {destinationOnly: true}})
+                .then(response => {
+                    let warning = "";
+
+                    if (response.data && response.data.nodes) {
+                        const deps = response.data.nodes
+                            .filter(n => !(n.namespace === this.flow.namespace && n.id  === this.flow.id))
+                            .map(n => "<li>" + n.namespace + ".<code>" + n.id  + "</code></li>")
+                            .join("\n");
+
+                        warning = "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                            "<div class=\"el-alert__content\">\n" +
+                            "<p class=\"el-alert__description\">\n" +
+                            this.$t("dependencies delete flow") +
+                            "<ul>\n" +
+                            deps +
+                            "</ul>\n" +
+                            "</p>\n" +
+                            "</div>\n" +
+                            "</div>"
+                    }
+
+                    return this.$t("delete confirm", {name: this.item.id}) + warning;
+                })
+        },
         deleteFile() {
             if (this.item) {
                 const item = this.item;

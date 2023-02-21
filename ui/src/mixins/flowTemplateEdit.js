@@ -195,9 +195,9 @@ export default {
                 this.previousContent = YamlUtils.stringify(this.item);
                 this.$store
                     .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content})
-                    .then((flow) => {
-                        this.previousContent = flow.source;
-                        this.content = flow.source;
+                    .then((data) => {
+                        this.previousContent = data.source ? data.source : YamlUtils.stringify(data);
+                        this.content = data.source ? data.source : YamlUtils.stringify(data);
                         this.onChange();
 
                         this.$router.push({

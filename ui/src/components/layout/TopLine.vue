@@ -1,5 +1,5 @@
 <template>
-    <nav class="top-line">
+    <nav class="top-line mb-3">
         <slot />
     </nav>
 </template>
@@ -12,12 +12,11 @@
     top: 0px;
     height: 50px;
     border-radius: 0;
-    //border-top: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-lg);
     z-index: 90;
     background-color: var(--bs-white);
     padding: 0.5rem;
     transition: margin-left ease 0.2s;
-    margin-bottom: 0.5rem;
 
     html.dark & {
         background-color: var(--bs-gray-100-darken-3);

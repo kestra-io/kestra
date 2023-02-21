@@ -16,6 +16,7 @@
                 </template>
             </el-tab-pane>
         </el-tabs>
+        <slot name="top"></slot>
         <component
             v-bind="{...activeTab.props, ...$attrs}"
             ref="tabContent"

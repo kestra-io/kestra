@@ -1,27 +1,28 @@
 <template>
-    <div>
-        <top-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
-            <ul>
-                <li>
-                    <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteExecution">
-                        {{ $t('delete') }}
-                    </el-button>
-
-                    <template v-if="isAllowedTrigger">
-                        <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
-                    </template>
-
-                    <template v-if="isAllowedEdit">
-                        <el-button :icon="Pencil" @click="editFlow">
-                            {{ $t('edit flow') }}
-                        </el-button>
-                    </template>
-                </li>
-            </ul>
-        </top-line>
-    </div>
     <div v-if="ready">
-        <tabs :route-name="$route.param && $route.param.id ? 'executions/update': ''" @follow="follow" :tabs="tabs" />
+        <tabs :route-name="$route.param && $route.param.id ? 'executions/update': ''" @follow="follow" :tabs="tabs">
+            <template #top>
+                <top-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
+                    <ul>
+                        <li>
+                            <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteExecution">
+                                {{ $t('delete') }}
+                            </el-button>
+
+                            <template v-if="isAllowedTrigger">
+                                <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
+                            </template>
+
+                            <template v-if="isAllowedEdit">
+                                <el-button :icon="Pencil" @click="editFlow">
+                                    {{ $t('edit flow') }}
+                                </el-button>
+                            </template>
+                        </li>
+                    </ul>
+                </top-line>
+            </template>
+        </tabs>
     </div>
 </template>
 

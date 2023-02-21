@@ -12,16 +12,16 @@
             </collapse>
 
             <state-global-chart
-                class="big mb-4"
+                class="big mb-3"
                 v-if="dailyReady"
                 :ready="dailyReady"
                 :data="daily"
                 :big="true"
             />
 
-            <home-description v-if="namespace" class="mb-4" />
+            <home-description v-if="namespace" class="mb-3" />
 
-            <el-row :gutter="15" class="auto-height mb-4">
+            <el-row :gutter="15" class="auto-height mb-3">
                 <el-col :lg="8" class="mb-3 mb-xl-0">
                     <home-summary-pie
                         v-if="dailyReady"
@@ -45,7 +45,7 @@
                 </el-col>
             </el-row>
 
-            <el-row :gutter="15" v-if="!namespace" class="auto-height mb-4">
+            <el-row :gutter="15" v-if="!namespace" class="auto-height mb-3">
                 <el-col :lg="12">
                     <home-summary-namespace
                         v-if="dailyGroupByFlowReady"
@@ -66,14 +66,14 @@
                     <home-summary-failed
                         v-if="dailyReady"
                         :filters="defaultFilters"
-                        class="mb-4"
+                        class="mb-3"
                     />
                 </el-col>
                 <el-col :lg="12">
                     <home-summary-log
                         v-if="dailyReady"
                         :filters="defaultFilters"
-                        class="mb-4"
+                        class="mb-3"
                     />
                 </el-col>
             </el-row>

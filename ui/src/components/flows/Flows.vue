@@ -21,7 +21,7 @@
 
                 <template #top>
                     <state-global-chart
-                        class="mb-4"
+                        class="mb-3"
                         v-if="daily"
                         :ready="dailyReady"
                         :data="daily"

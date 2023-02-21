@@ -34,7 +34,7 @@
             <template #top>
                 <state-global-chart
                     v-if="taskRunDaily"
-                    class="mb-4"
+                    class="mb-3"
                     :ready="dailyReady"
                     :data="taskRunDaily"
                 />

@@ -34,7 +34,7 @@
             <template #top v-if="embed === false">
                 <state-global-chart
                     v-if="daily"
-                    class="mb-4"
+                    class="mb-3"
                     :ready="dailyReady"
                     :data="daily"
                 />

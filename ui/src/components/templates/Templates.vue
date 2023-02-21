@@ -171,7 +171,9 @@
                 });
             },
             selectAll() {
-                this.$refs.table.toggleAllSelection();
+                if (this.$refs.table.getSelectionRows().length !== this.$refs.table.data.length) {
+                    this.$refs.table.toggleAllSelection();
+                }
             },
             exportTemplates() {
                 this.$toast().confirm(
@@ -180,8 +182,8 @@
                         if (this.queryBulkAction) {
                             return this.$store
                                 .dispatch("template/exportTemplateByQuery", this.loadQuery({
-                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : "",
-                                    q: this.$route.query.q ? [this.$route.query.q] : "",
+                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
+                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
                                 }, false))
                                 .then(_ => {
                                     this.$toast().success(this.$t("templates exported"));

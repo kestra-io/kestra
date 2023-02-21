@@ -47,6 +47,20 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
             .tasks(Arrays.asList(t1, t2)).build();
     }
 
+    private Template createTemplate(String friendlyId, String namespace) {
+        Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format("test").build();
+        Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format("test").build();
+        return Template.builder()
+            .id(friendlyId)
+            .namespace(namespace)
+            .description("My template description")
+            .tasks(Arrays.asList(t1, t2)).build();
+    }
+
+    private Template postTemplate(String friendlyId, String namespace) {
+        return client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate(friendlyId, namespace)), Template.class);
+    }
+
     @Test
     void create() {
         Template template = createTemplate();
@@ -211,5 +225,45 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
 
         assertThat(response.getStatus(), is(NO_CONTENT));
         temp.delete();
+    }
+
+    @Test
+    void deleteTemplatesByIds(){
+        postTemplate("template-a", "kestra.test.delete");
+        postTemplate("template-b", "kestra.test.delete");
+        postTemplate("template-c", "kestra.test.delete");
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("kestra.test.delete", "template-a"),
+            new IdWithNamespace("kestra.test.delete", "template-b"),
+            new IdWithNamespace("kestra.test.delete", "template-c"));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/templates/delete/by-ids", ids));
+
+        HttpClientResponseException templateA = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/kestra.test.delete/template-a"));
+        });
+        HttpClientResponseException templateB = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/kestra.test.delete/template-b"));
+        });
+        HttpClientResponseException templateC = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/kestra.test.delete/template-c"));
+        });
+        assertThat(templateA.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(templateB.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(templateC.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void deleteTemplatesByQuery(){
+        Template template = createTemplate("toDelete", "kestra.test.delete");
+        client.toBlocking().retrieve(POST("/api/v1/templates", template), String.class);
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/templates/delete/by-query?namespace=kestra.test.delete"));
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/kestra.test.delete/toDelete"));
+        });
+
+        assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
     }
 }

@@ -98,7 +98,7 @@ public class FlowController {
         return source ?
             flowRepository
                 .findByIdWithSource(namespace, id)
-                .orElse(null):
+                .orElse(null) :
             flowRepository
                 .findById(namespace, id)
                 .orElse(null);
@@ -294,13 +294,13 @@ public class FlowController {
                 .filter(flow -> !ids.contains(flow.getId()))
                 .map(flow -> {
                     flowRepository.delete(flow);
-                    return  FlowWithSource.of(flow, flow.generateSource());
+                    return FlowWithSource.of(flow, flow.generateSource());
                 })
                 .collect(Collectors.toList());
         }
 
         // update or create flows
-        List<FlowWithSource> updatedOrCreated =  IntStream.range(0, flows.size())
+        List<FlowWithSource> updatedOrCreated = IntStream.range(0, flows.size())
             .mapToObj(index -> {
                 Flow flow = flows.get(index);
                 String source = sources.get(index);
@@ -424,7 +424,7 @@ public class FlowController {
     @Post(uri = "validate", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
     public List<ValidateConstraintViolation> validateFlows(
-        @Parameter(description= "A list of flows") @Body String flows
+        @Parameter(description = "A list of flows") @Body String flows
     ) {
         AtomicInteger index = new AtomicInteger(0);
         return Stream
@@ -441,7 +441,7 @@ public class FlowController {
 
                     modelValidator.validate(taskDefaultService.injectDefaults(flowParse));
 
-                } catch (ConstraintViolationException e){
+                } catch (ConstraintViolationException e) {
                     validateConstraintViolationBuilder.constraints(e.getMessage());
                 }
                 return validateConstraintViolationBuilder.build();
@@ -482,11 +482,80 @@ public class FlowController {
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
 
-    private static byte[] zipFlows(List<FlowWithSource> flows) throws IOException {
-        try(ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ZipOutputStream archive = new ZipOutputStream(bos)) {
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/delete/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Delete flows returned by the query parameters."
+    )
+    public HttpResponse<Void> deleteByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels){
+        List<FlowWithSource> flows = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));
+        flows.stream().forEach(flowRepository::delete);
 
-            for(var flow : flows) {
+        return HttpResponse.status(HttpStatus.NO_CONTENT);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/delete/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Delete flows by their IDs."
+    )
+    public HttpResponse<Void> deleteByIds(
+        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids){
+        ids.stream()
+            .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
+            .forEach(flowRepository::delete);
+
+        return HttpResponse.status(HttpStatus.NO_CONTENT);
+    }
+
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/disable/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Disable flows returned by the query parameters."
+    )
+    public HttpResponse<Void> disableByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels){
+        List<FlowWithSource> flows = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));
+        flows.forEach(flow -> {
+            FlowWithSource flowUpdated = flow.toBuilder().disabled(true).build();
+            flowRepository.update(flowUpdated, flow, flowUpdated.getSource(), taskDefaultService.injectDefaults(flowUpdated));
+        });
+
+        return HttpResponse.status(HttpStatus.NO_CONTENT);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/disable/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Disable flows by their IDs."
+    )
+    public HttpResponse<Void> disableByIds(
+        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids){
+        ids.stream()
+            .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
+            .forEach(flow -> {
+                FlowWithSource flowUpdated = flow.toBuilder().disabled(true).build();
+                flowRepository.update(flowUpdated, flow, flowUpdated.getSource(), taskDefaultService.injectDefaults(flowUpdated));
+            });
+
+        return HttpResponse.status(HttpStatus.NO_CONTENT);
+    }
+
+    private static byte[] zipFlows(List<FlowWithSource> flows) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ZipOutputStream archive = new ZipOutputStream(bos)) {
+
+            for (var flow : flows) {
                 var zipEntry = new ZipEntry(flow.getNamespace() + "." + flow.getId() + ".yml");
                 archive.putNextEntry(zipEntry);
                 archive.write(flow.getSource().getBytes());

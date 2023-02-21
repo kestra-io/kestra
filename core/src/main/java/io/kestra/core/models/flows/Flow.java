@@ -22,13 +22,13 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -138,6 +138,10 @@ public class Flow implements DeletedInterface {
             execution.getNamespace(),
             execution.getFlowId()
         ));
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 
     public Stream<Task> allTasks() {

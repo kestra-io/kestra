@@ -522,6 +522,75 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         temp.delete();
     }
 
+    @Test
+    void disableFlowsByIds() {
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("io.kestra.tests", "each-object"),
+            new IdWithNamespace("io.kestra.tests", "webhook"),
+            new IdWithNamespace("io.kestra.tests", "task-flow"));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/flows/disable/by-ids", ids));
+
+        Flow eachObject = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/each-object"), String.class));
+        Flow webhook = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/webhook"), String.class));
+        Flow taskFlow = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/task-flow"), String.class));
+
+        assertThat(eachObject.isDisabled(), is(true));
+        assertThat(webhook.isDisabled(), is(true));
+        assertThat(taskFlow.isDisabled(), is(true));
+    }
+
+    @Test
+    void disableFlowsByQuery() {
+        Flow flow = generateFlow("toDisable","io.kestra.unittest.disabled", "a");
+        client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class);
+
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/flows/disable/by-query?namespace=io.kestra.unittest.disabled",null));
+        Flow toDisable = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/toDisable"), String.class));
+
+        assertThat(toDisable.isDisabled(), is(true));
+    }
+
+    @Test
+    void deleteFlowsByQuery(){
+        postFlow("flow-a","io.kestra.tests.delete", "a");
+        postFlow("flow-b","io.kestra.tests.delete", "b");
+        postFlow("flow-c","io.kestra.tests.delete", "c");
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("io.kestra.tests.delete", "flow-a"),
+            new IdWithNamespace("io.kestra.tests.delete", "flow-b"),
+            new IdWithNamespace("io.kestra.tests.delete", "flow-c"));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/flows/delete/by-ids", ids));
+
+        HttpClientResponseException flowA = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/flow-a"));
+        });
+        HttpClientResponseException flowB = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/flow-b"));
+        });
+        HttpClientResponseException flowC = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/flow-c"));
+        });
+
+        assertThat(flowA.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(flowB.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(flowC.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
+    @Test
+    void deleteFlowsByIds(){
+        Flow flow = generateFlow("toDelete","io.kestra.unittest.delete", "a");
+        client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class);
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/flows/delete/by-query?namespace=io.kestra.unittest.delete"));
+
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/toDelete"));
+        });
+
+        assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
+    }
+
     private Flow generateFlow(String namespace, String inputName) {
         return generateFlow(IdUtils.create(), namespace, inputName);
     }
@@ -593,5 +662,9 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
             "disabled: false\n" +
             "deleted: false", IdUtils.create(),namespace, format);
 
+    }
+
+    private String postFlow(String friendlyId, String namespace, String format) {
+        return client.toBlocking().retrieve(POST("/api/v1/flows", generateFlow(friendlyId, namespace, format)), String.class);
     }
 }

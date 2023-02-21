@@ -1,20 +1,23 @@
 package io.kestra.webserver.controllers;
 
-import io.kestra.webserver.controllers.domain.IdWithNamespace;
-import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.client.annotation.Client;
-import io.micronaut.http.client.exceptions.HttpClientResponseException;
-import io.micronaut.rxjava2.http.client.RxHttpClient;
-import org.junit.jupiter.api.Test;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.PagedResults;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
+import io.micronaut.rxjava2.http.client.RxHttpClient;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +25,6 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipFile;
-
-import jakarta.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.NO_CONTENT;
@@ -169,5 +170,46 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         }
 
         file.delete();
+    }
+
+    @Test
+    void importTemplatesWithYaml() throws IOException {
+        var yaml = createTemplate().generateSource() + "---" +
+            createTemplate().generateSource() + "---" +
+            createTemplate().generateSource();
+
+        var temp = File.createTempFile("templates", ".yaml");
+        Files.writeString(temp.toPath(), yaml);
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "templates.yaml", temp)
+            .build();
+        var response = client.toBlocking().exchange(POST("/api/v1/templates/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
+
+        assertThat(response.getStatus(), is(NO_CONTENT));
+        temp.delete();
+    }
+
+    @Test
+    void importTemplatesWithZip() throws IOException {
+        // create 3 templates, so we have at least 3 of them
+        client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+        client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+        client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+        int size = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/search?namespace=kestra.test"), Argument.of(PagedResults.class, Template.class)).getResults().size();
+
+        // extract the created templates
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/export/by-query?namespace=kestra.test"),
+            Argument.of(byte[].class));
+        File temp = File.createTempFile("templates", ".zip");
+        Files.write(temp.toPath(), zip);
+
+        // import the templates
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "templates.zip", temp)
+            .build();
+        var response = client.toBlocking().exchange(POST("/api/v1/templates/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
+
+        assertThat(response.getStatus(), is(NO_CONTENT));
+        temp.delete();
     }
 }

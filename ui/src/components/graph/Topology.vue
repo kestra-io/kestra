@@ -10,6 +10,7 @@
     import Cluster from "./nodes/Cluster.vue";
     import Dot from "./nodes/Dot.vue"
     import Task from "./nodes/Task.vue";
+    import Trigger from "./nodes/Trigger.vue";
     import Edge from "./nodes/Edge.vue";
     import {linkedElements} from "../../utils/vueFlow";
 
@@ -77,12 +78,16 @@
         return node.task !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTask" || node.type === "io.kestra.core.models.hierarchies.GraphClusterRoot")
     };
 
+    const isTriggerNode = (node) => {
+        return node.trigger !== undefined && (node.type === "io.kestra.core.models.hierarchies.GraphTrigger");
+    }
+
     const getNodeWidth = (node) => {
-        return isTaskNode(node) ? 202 : 5;
+        return isTaskNode(node) || isTriggerNode(node) ? 202 : 5;
     };
 
     const getNodeHeight = (node) => {
-        return isTaskNode(node) ? 55 : (isHorizontal.value ? 55 : 5);
+        return isTaskNode(node) || isTriggerNode(node) ? 55 : (isHorizontal.value ? 55 : 5);
     };
 
     const getNodePosition = (n, parent) => {
@@ -145,7 +150,6 @@
 
         for (const node of props.flowGraph.nodes) {
             const dagreNode = dagreGraph.node(node.uid);
-
             let nodeType = "task";
             if (node.type.includes("GraphClusterEnd")) {
                 nodeType = "dot";
@@ -153,6 +157,8 @@
                 nodeType = "dot";
             } else if (node.type.includes("GraphClusterRoot")) {
                 nodeType = "dot";
+            } else if (node.type.includes("GraphTrigger")) {
+                nodeType = "trigger";
             }
 
             elements.value.push({
@@ -188,7 +194,6 @@
                 }
             })
         }
-
         fitView();
         isLoading.value = false;
     }
@@ -238,6 +243,14 @@
                 <Task
                     v-bind="props"
                     @follow="forwardEvent('follow', $event)"
+                    @mouseover="onMouseOver"
+                    @mouseleave="onMouseLeave"
+                />
+            </template>
+
+            <template #node-trigger="props">
+                <Trigger
+                    v-bind="props"
                     @mouseover="onMouseOver"
                     @mouseleave="onMouseLeave"
                 />

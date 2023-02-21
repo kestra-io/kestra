@@ -1,13 +1,13 @@
 import {describe, it, expect} from "vitest"
 import _ from "lodash";
-import TreeNode from "../../../../src/components/graph/TreeNode.vue";
+import TreeTaskNode from "../../../../src/components/graph/TreeTaskNode.vue";
 import EACH_SEQUENTIAL_FLOWGRAPH from "../../../fixtures/flowgraphs/each-sequential.json";
 import EACH_SEQUENTIAL_EXECUTION from "../../../fixtures/executions/each-sequential.json";
 import mount from "../../../local.js";
 
 const localMount = (n, execution) => {
     return mount(
-        TreeNode,
+        TreeTaskNode,
         {
             props: {
                 n: n,
@@ -22,7 +22,7 @@ const localMount = (n, execution) => {
     )
 }
 
-describe("TreeNode", () => {
+describe("TreeTaskNode", () => {
     it("success execution", () => {
         const wrapper = localMount(
             EACH_SEQUENTIAL_FLOWGRAPH.nodes.filter(r => r.uid === "1-2")[0],

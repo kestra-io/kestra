@@ -1,12 +1,21 @@
 package io.kestra.webserver.controllers;
 
 import com.google.common.collect.ImmutableList;
+import io.kestra.core.Helpers;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.Input;
+import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Sequential;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -14,18 +23,11 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import io.kestra.core.Helpers;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.hierarchies.FlowGraph;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
-import io.kestra.core.tasks.debugs.Return;
-import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.responses.PagedResults;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,8 +40,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipFile;
-
-import jakarta.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
@@ -61,7 +61,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void idNoSource() throws NoSuchFieldException, IllegalAccessException {
+    void idNoSource() {
         Map<String, Object> map = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), Argument.mapOf(String.class, Object.class));
         assertThat(map.get("source"), is(nullValue()));
 
@@ -486,6 +486,40 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         }
 
         file.delete();
+    }
+
+    @Test
+    void importFlowsWithYaml() throws IOException {
+        var yaml = generateFlowAsString("io.kestra.unittest","a") + "---" +
+            generateFlowAsString("io.kestra.unittest","b") + "---" +
+            generateFlowAsString("io.kestra.unittest","c");
+
+        var temp = File.createTempFile("flows", ".yaml");
+        Files.writeString(temp.toPath(), yaml);
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "flows.yaml", temp)
+            .build();
+        var response = client.toBlocking().exchange(POST("/api/v1/flows/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
+
+        assertThat(response.getStatus(), is(NO_CONTENT));
+        temp.delete();
+    }
+
+    @Test
+    void importFlowsWithZip() throws IOException {
+        // create a ZIP file using the extract endpoint
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/export/by-query?namespace=io.kestra.tests"),
+            Argument.of(byte[].class));
+        File temp = File.createTempFile("flows", ".zip");
+        Files.write(temp.toPath(), zip);
+
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "flows.zip", temp)
+            .build();
+        var response = client.toBlocking().exchange(POST("/api/v1/flows/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
+
+        assertThat(response.getStatus(), is(NO_CONTENT));
+        temp.delete();
     }
 
     private Flow generateFlow(String namespace, String inputName) {

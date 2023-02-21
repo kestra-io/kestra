@@ -77,32 +77,32 @@ commands:
 
 describe("YamlUtils", () => {
     it("extractTask from a flat flow", () => {
-        let doc = YamlUtils.extractTask(flat, "1-1");
+        let doc = YamlUtils.extractTask(flat, "1-1", "tasks");
 
         expect(doc.toString()).toContain("echo \"1-1\"");
         expect(doc.toString()).toContain("# comment to keep");
     })
 
     it("extractTask from a flowable flow", () => {
-        let doc = YamlUtils.extractTask(flowable, "1-2");
+        let doc = YamlUtils.extractTask(flowable, "1-2", "tasks");
 
         expect(doc.toString()).toContain("echo \"1-2\"");
     })
 
     it("extractTask from a plugin flow", () => {
-        let doc = YamlUtils.extractTask(plugins, "1-1");
+        let doc = YamlUtils.extractTask(plugins, "1-1", "tasks");
 
         expect(doc.toString()).toContain("echo \"1-1\"");
     })
 
     it("extractTask undefined from a flowable flow", () => {
-        let doc = YamlUtils.extractTask(flowable, "X-X");
+        let doc = YamlUtils.extractTask(flowable, "X-X", "tasks");
 
         expect(doc).toBe(undefined);
     })
 
     it("replace from a flat flow", () => {
-        let doc = YamlUtils.replaceTaskInDocument(flat, "1-1", replace);
+        let doc = YamlUtils.replaceTaskInDocument(flat, "1-1", replace, "tasks");
 
         expect(doc.toString()).toContain("echo \"replaced\"");
         expect(doc.toString()).toContain("echo \"1-2\"");
@@ -111,7 +111,7 @@ describe("YamlUtils", () => {
     })
 
     it("replace from a flowable flow", () => {
-        let doc = YamlUtils.replaceTaskInDocument(flowable, "1-2", replace);
+        let doc = YamlUtils.replaceTaskInDocument(flowable, "1-2", replace, "tasks");
 
         expect(doc.toString()).toContain("echo \"replaced\"");
         expect(doc.toString()).toContain("echo \"1-1\"");
@@ -119,7 +119,7 @@ describe("YamlUtils", () => {
     })
 
     it("replace from a plugin flow", () => {
-        let doc = YamlUtils.replaceTaskInDocument(plugins, "1-1", replace);
+        let doc = YamlUtils.replaceTaskInDocument(plugins, "1-1", replace, "tasks");
 
         expect(doc.toString()).toContain("echo \"replaced\"");
         expect(doc.toString()).toContain("unittest.Example");

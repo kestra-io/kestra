@@ -314,7 +314,7 @@ public class ExecutionController {
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
-    @Delete(uri = "executions/query", produces = MediaType.TEXT_JSON)
+    @Delete(uri = "executions/by-query", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Executions"}, summary = "Delete executions filter by query parameters")
     public HttpResponse<BulkResponse> deleteByQuery(
@@ -641,7 +641,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "executions/restart/query", produces = MediaType.TEXT_JSON)
+    @Post(uri = "executions/restart/by-query", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Restart executions filter by query parameters")
     public HttpResponse<BulkResponse> restartByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
@@ -812,7 +812,7 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "executions/kill/query", produces = MediaType.TEXT_JSON)
+    @Delete(uri = "executions/kill/by-query", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Executions"}, summary = "Kill executions filter by query parameters")
     public HttpResponse<BulkResponse> killByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,

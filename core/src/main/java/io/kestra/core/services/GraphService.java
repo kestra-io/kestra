@@ -7,6 +7,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.hierarchies.*;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
@@ -18,6 +19,11 @@ public class GraphService {
     public static GraphCluster of(Flow flow, Execution execution) throws IllegalVariableEvaluationException {
         GraphCluster graph = new GraphCluster();
 
+        if (flow.getTriggers() != null) {
+            GraphCluster triggers = GraphService.triggers(graph, flow.getTriggers());
+            graph.getGraph().addEdge(triggers.getEnd(), graph.getRoot(), new Relation());
+        }
+
         GraphService.sequential(
             graph,
             flow.getTasks(),
@@ -27,6 +33,21 @@ public class GraphService {
         );
 
         return graph;
+    }
+
+    public static GraphCluster triggers(GraphCluster graph, List<AbstractTrigger> triggers) throws IllegalVariableEvaluationException {
+        GraphCluster triggerCluster = new GraphCluster("Triggers");
+
+        triggers.forEach(trigger -> {
+            GraphTrigger triggerNode = new GraphTrigger(trigger);
+            triggerCluster.getGraph().addNode(triggerNode);
+            triggerCluster.getGraph().addEdge(triggerCluster.getRoot(), triggerNode, new Relation());
+            triggerCluster.getGraph().addEdge(triggerNode, triggerCluster.getEnd(), new Relation());
+        });
+
+        graph.getGraph().addNode(triggerCluster);
+
+        return triggerCluster;
     }
 
     public static List<AbstractGraph> nodes(GraphCluster graphCluster) {

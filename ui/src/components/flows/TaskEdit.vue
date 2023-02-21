@@ -32,13 +32,12 @@
                     ref="editor"
                     @save="saveTask"
                     v-model="taskYaml"
-                    schema-type="task"
+                    :schema-type="mapSectionWithSchema()"
                     :full-height="false"
                     :navbar="false"
                     lang="yaml"
                 />
             </div>
-
         </el-drawer>
     </component>
 </template>
@@ -81,14 +80,28 @@
             revision: {
                 type: Number,
                 default: undefined
+            },
+            section: {
+                type: String,
+                default: "tasks"
             }
         },
         methods: {
-            loadWithRevision(taskId){
-                return this.$store.dispatch("flow/loadTask", {namespace: this.namespace, id: this.flowId, taskId: taskId, revision: this.revision});
-            },
             load(taskId) {
-                return YamlUtils.extractTask(this.flow.source, taskId).toString();
+                if(this.revision){
+                    return YamlUtils.extractTask(this.revisions[this.revision-1].source, taskId, this.section).toString();
+                }
+                return YamlUtils.extractTask(this.flow.source, taskId, this.section).toString();
+            },
+            mapSectionWithSchema() {
+                switch (this.section) {
+                    case "tasks":
+                        return "task";
+                    case "triggers":
+                        return "trigger";
+                    default:
+                        return "task";
+                }
             },
             saveTask() {
                 let updatedSource;
@@ -96,7 +109,8 @@
                     updatedSource = YamlUtils.replaceTaskInDocument(
                         this.flow.source,
                         this.taskId ? this.taskId : this.task.id,
-                        this.taskYaml
+                        this.taskYaml,
+                        this.section
                     );
                 } catch (err) {
                     this.$toast().warning(
@@ -114,11 +128,7 @@
             onShow() {
                 this.isModalOpen = !this.isModalOpen;
                 if (this.taskId || this.task.id) {
-                    if (this.revision) {
-                        this.loadWithRevision(this.taskId || this.task.id).then(value => this.taskYaml = YamlUtils.stringify(value));
-                    } else {
-                        this.taskYaml = this.load(this.taskId ? this.taskId : this.task.id);
-                    }
+                    this.taskYaml = this.load(this.taskId ? this.taskId : this.task.id);
                 } else {
                     this.taskYaml = YamlUtils.stringify(this.task);
                 }
@@ -137,6 +147,7 @@
         computed: {
             ...mapState("flow", ["flow"]),
             ...mapState("auth", ["user"]),
+            ...mapState("flow", ["revisions"]),
             canSave() {
                 return canSaveFlowTemplate(true, this.user, {namespace: this.namespace}, "flow");
             },

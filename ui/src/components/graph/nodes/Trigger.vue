@@ -26,7 +26,6 @@
     const mouseleave = () => {
         emit("mouseleave", props.data.node);
     };
-
 </script>
 
 <script>
@@ -49,7 +48,7 @@
 </template>
 
 <style lang="scss">
-.vue-flow__node-task {
-    border: 1px solid var(--bs-border-color);
-}
+    .vue-flow__node-task {
+        border: 1px solid var(--bs-border-color);
+    }
 </style>

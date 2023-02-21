@@ -84,15 +84,14 @@
         },
     };
 </script>
-<style scoped lang="scss">
 
+<style scoped lang="scss">
     .node-action {
         height: 28px;
         padding-top: 1px;
         padding-right: 5px;
         padding-left: 5px;
     }
-
 
 
     .info-wrapper {

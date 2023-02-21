@@ -93,14 +93,14 @@
                 }
                 return YamlUtils.extractTask(this.flow.source, taskId, this.section).toString();
             },
-            mapSectionWithSchema(){
-                switch(this.section){
-                case "tasks":
-                    return "task";
-                case "triggers":
-                    return "trigger";
-                default:
-                    return "task";
+            mapSectionWithSchema() {
+                switch (this.section) {
+                    case "tasks":
+                        return "task";
+                    case "triggers":
+                        return "trigger";
+                    default:
+                        return "task";
                 }
             },
             saveTask() {

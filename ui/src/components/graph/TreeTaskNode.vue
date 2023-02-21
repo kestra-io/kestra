@@ -44,7 +44,6 @@
                     :flow-id="task.flowId"
                 />
 
-
                 <el-tooltip v-if="this.execution" :content="$t('show task logs')" :persistent="false" transition="" :hide-after="0">
                     <el-button
                         class="node-action"
@@ -93,6 +92,7 @@
         </template>
     </tree-node>
 </template>
+
 <script>
     import {mapState} from "vuex";
     import Status from "../Status.vue";
@@ -237,29 +237,28 @@
     };
 </script>
 <style scoped lang="scss">
-
-.node-action {
-    height: 28px;
-    padding-top: 1px;
-    padding-right: 5px;
-    padding-left: 5px;
-}
-
-.status-wrapper {
-    margin: 10px;
-}
-
-.info-wrapper {
-    .bottom {
-        padding: 4px 4px;
-        color: var(--bs-body-color);
-        opacity: 0.7;
-        font-size: var(--font-size-xs);
-        flex-grow: 2;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        position: relative;
+    .node-action {
+        height: 28px;
+        padding-top: 1px;
+        padding-right: 5px;
+        padding-left: 5px;
     }
-}
+
+    .status-wrapper {
+        margin: 10px;
+    }
+
+    .info-wrapper {
+        .bottom {
+            padding: 4px 4px;
+            color: var(--bs-body-color);
+            opacity: 0.7;
+            font-size: var(--font-size-xs);
+            flex-grow: 2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+        }
+    }
 </style>

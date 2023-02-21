@@ -17,6 +17,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
+import io.reactivex.Flowable;
 import org.apache.commons.lang3.NotImplementedException;
 
 import jakarta.inject.Inject;
@@ -80,6 +81,7 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             Optional.empty();
     }
 
+    @Override
     public Optional<FlowWithSource> findByIdWithSource(String namespace, String id, Optional<Integer> revision) {
         Optional<Flow> flow = findById(namespace, id, revision);
         Optional<String> sourceCode = findSourceById(namespace, id);
@@ -115,18 +117,38 @@ public class MemoryFlowRepository implements FlowRepositoryInterface {
             .collect(Collectors.toList());
     }
 
+    @Override
     public ArrayListTotal<Flow> find(
         Pageable pageable,
         @Nullable String query,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
     ) {
-        //TODO Non used query, returns just all at the moment
         if (pageable.getNumber() < 1) {
             throw new ValueException("Page cannot be < 1");
         }
 
-        return ArrayListTotal.of(pageable, this.findAll());
+        //TODO Non used query, just returns all flow and filter by namespace if set
+        List<Flow> results = flows.values()
+            .stream()
+            .filter(flow -> namespace == null || flow.getNamespace().startsWith(namespace))
+            .collect(Collectors.toList());
+        return ArrayListTotal.of(pageable, results);
+    }
+
+    @Override
+    public List<FlowWithSource> findWithSource(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable Map<String, String> labels
+    ) {
+        //TODO Non used query, just returns all flow and filter by namespace if set
+        return flows.values()
+            .stream()
+            .filter(flow -> namespace == null || flow.getNamespace().startsWith(namespace))
+            .sorted(Comparator.comparingInt(Flow::getRevision))
+            .map(flow -> findByIdWithSource(flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision())).get())
+            .collect(Collectors.toList());
     }
 
     @Override

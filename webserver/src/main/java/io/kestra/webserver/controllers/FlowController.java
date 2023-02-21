@@ -17,6 +17,7 @@ import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.topologies.FlowTopologyService;
+import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
@@ -33,14 +34,17 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 
@@ -148,6 +152,7 @@ public class FlowController {
             RequestUtils.toMap(labels)
         ));
     }
+
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/source", produces = MediaType.TEXT_JSON)
@@ -375,9 +380,7 @@ public class FlowController {
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Delete a flow")
-    @ApiResponses(
-        @ApiResponse(responseCode = "204", description = "On success")
-    )
+    @ApiResponse(responseCode = "204", description = "On success")
     public HttpResponse<Void> delete(
         @Parameter(description = "The flow namespace") String namespace,
         @Parameter(description = "The flow id") String id
@@ -443,5 +446,54 @@ public class FlowController {
                 return validateConstraintViolationBuilder.build();
             })
             .collect(Collectors.toList());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/export/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Export flows as a ZIP archive of yaml sources."
+    )
+    public HttpResponse<byte[]> exportByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+    ) throws IOException {
+        var flows = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));
+        var bytes = zipFlows(flows);
+
+        return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/export/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Export flows as a ZIP archive of yaml sources."
+    )
+    public HttpResponse<byte[]> exportByIds(
+        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids
+    ) throws IOException {
+        var flows = ids.stream()
+            .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
+            .collect(Collectors.toList());
+        var bytes = zipFlows(flows);
+        return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
+    }
+
+    private static byte[] zipFlows(List<FlowWithSource> flows) throws IOException {
+        try(ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ZipOutputStream archive = new ZipOutputStream(bos)) {
+
+            for(var flow : flows) {
+                var zipEntry = new ZipEntry(flow.getNamespace() + "." + flow.getId() + ".yml");
+                archive.putNextEntry(zipEntry);
+                archive.write(flow.getSource().getBytes());
+                archive.closeEntry();
+            }
+
+            archive.finish();
+            return bos.toByteArray();
+        }
     }
 }

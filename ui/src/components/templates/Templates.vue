@@ -29,7 +29,9 @@
                         fixed
                         @row-dblclick="onRowDoubleClick"
                         @sort-change="onSort"
+                        @selection-change="handleSelectionChange"
                     >
+                        <el-table-column type="selection" v-if="(canRead)" />
                         <el-table-column prop="id" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('id')">
                             <template #default="scope">
                                 <router-link
@@ -62,6 +64,16 @@
 
         <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul>
+                <ul v-if="templatesSelection.length !== 0 && canRead">
+                    <bottom-line-counter v-model="queryBulkAction" :selections="templatesSelection" :total="total" @update:model-value="selectAll()" />
+                    <li v-if="canRead">
+                        <el-button :icon="Download" type="info" class="bulk-button" @click="exportTemplates()">
+                            {{ $t('export') }}
+                        </el-button>
+                    </li>
+                </ul>
+
+                <li class="spacer" />
                 <li>
                     <router-link :to="{name: 'templates/create'}">
                         <el-button :icon="Plus" type="primary">
@@ -76,6 +88,7 @@
 
 <script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
+    import Download from "vue-material-design-icons/Download.vue";
 </script>
 
 <script>
@@ -93,6 +106,7 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import _merge from "lodash/merge";
     import MarkdownTooltip from "../../components/layout/MarkdownTooltip.vue";
+    import BottomLineCounter from "../layout/BottomLineCounter.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -104,12 +118,15 @@
             NamespaceSelect,
             Kicon,
             MarkdownTooltip,
+            BottomLineCounter,
         },
         data() {
             return {
                 isDefaultNamespaceAllow: true,
                 permission: permission,
                 action: action,
+                templatesSelection: [],
+                queryBulkAction: false
             };
         },
         computed: {
@@ -120,6 +137,9 @@
                 return {
                     title: this.$t("templates")
                 };
+            },
+            canRead() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
             },
         },
         methods: {
@@ -138,6 +158,46 @@
                     .then(() => {
                         callback();
                     });
+            },
+            handleSelectionChange(val) {
+                if (val.length === 0) {
+                    this.queryBulkAction = false
+                }
+                this.templatesSelection = val.map(x => {
+                    return {
+                        id: x.id,
+                        namespace: x.namespace
+                    }
+                });
+            },
+            selectAll() {
+                if (this.$refs.table.getSelectionRows().length !== this.$refs.table.data.length) {
+                    this.$refs.table.toggleAllSelection();
+                }
+            },
+            exportTemplates() {
+                this.$toast().confirm(
+                    this.$t("template export", {"templateCount": this.queryBulkAction ? this.total : this.templatesSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("template/exportTemplateByQuery", this.loadQuery({
+                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
+                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
+                                }, false))
+                                .then(_ => {
+                                    this.$toast().success(this.$t("templates exported"));
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("template/exportTemplateByIds", {ids: this.templatesSelection})
+                                .then(_ => {
+                                    this.$toast().success(this.$t("templates exported"));
+                                })
+                        }
+                    },
+                    () => {}
+                )
             },
         },
     };

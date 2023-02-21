@@ -139,4 +139,11 @@ export default class Utils {
         throw new Error("Bad Hex");
     }
 
+    static downloadUrl(url, filename) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+    }
 }

@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.core.tasks.flows.Sequential;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -26,6 +27,7 @@ import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -35,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipFile;
 
 import jakarta.inject.Inject;
 
@@ -451,6 +454,38 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         assertThat(e.getStatus(), is(UNPROCESSABLE_ENTITY));
         assertThat(jsonError, containsString("flow.id"));
         assertThat(jsonError, containsString("flow.namespace"));
+    }
+
+    @Test
+    void exportByQuery() throws IOException {
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/export/by-query?namespace=io.kestra.tests"),
+            Argument.of(byte[].class));
+        File file = File.createTempFile("flows", ".zip");
+        Files.write(file.toPath(), zip);
+
+        try (ZipFile zipFile = new ZipFile(file)) {
+            assertThat(zipFile.stream().count(), is(52L));
+        }
+
+        file.delete();
+    }
+
+    @Test
+    void exportByIds() throws IOException {
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("io.kestra.tests", "each-object"),
+            new IdWithNamespace("io.kestra.tests", "webhook"),
+            new IdWithNamespace("io.kestra.tests", "task-flow"));
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/export/by-ids", ids),
+            Argument.of(byte[].class));
+        File file = File.createTempFile("flows", ".zip");
+        Files.write(file.toPath(), zip);
+
+        try(ZipFile zipFile = new ZipFile(file)) {
+            assertThat(zipFile.stream().count(), is(3L));
+        }
+
+        file.delete();
     }
 
     private Flow generateFlow(String namespace, String inputName) {

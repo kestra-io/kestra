@@ -14,7 +14,8 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         TemplateNamespaceCommand.class,
-        TemplateValidateCommand.class
+        TemplateValidateCommand.class,
+        TemplateExportCommand.class,
     }
 )
 @Slf4j

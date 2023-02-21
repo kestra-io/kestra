@@ -6,6 +6,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -20,14 +21,16 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.inject.Inject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.validation.ConstraintViolationException;
 import javax.validation.Valid;
 
@@ -104,9 +107,7 @@ public class TemplateController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "{namespace}/{id}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Template"}, summary = "Delete a template")
-    @ApiResponses(
-        @ApiResponse(responseCode = "204", description = "On success")
-    )
+    @ApiResponse(responseCode = "204", description = "On success")
     public HttpResponse<Void> delete(
         @Parameter(description = "The template namespace") String namespace,
         @Parameter(description = "The template id") String id
@@ -218,6 +219,7 @@ public class TemplateController {
         return Stream.concat(deleted.stream(), updatedOrCreated.stream()).collect(Collectors.toList());
     }
 
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "validate", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Templates"}, summary = "Validate a list of templates")
@@ -243,5 +245,50 @@ public class TemplateController {
                 return validateConstraintViolationBuilder.build();
             })
             .collect(Collectors.toList());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get(uri = "/export/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Operation(
+        summary = "Export templates as a ZIP archive of yaml sources."
+    )
+    public HttpResponse<byte[]> exportByQuery(
+        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
+    ) throws IOException {
+        var templates = templateRepository.find(query, namespace);
+        var bytes = zipTemplates(templates);
+        return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/export/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Operation(
+        summary = "Export templates as a ZIP archive of yaml sources."
+    )
+    public HttpResponse<byte[]> exportByIds(
+        @Parameter(description = "A list of tuple flow ID and namespace as template identifiers") @Body List<IdWithNamespace> ids
+    ) throws IOException {
+        var templates = ids.stream()
+            .map(id -> templateRepository.findById(id.getNamespace(), id.getId()).orElseThrow())
+            .collect(Collectors.toList());
+        var bytes = zipTemplates(templates);
+        return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
+    }
+
+    private static byte[] zipTemplates(List<Template> templates) throws IOException {
+        try(ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ZipOutputStream archive = new ZipOutputStream(bos)) {
+
+            for(var template : templates) {
+                var zipEntry = new ZipEntry(template.getNamespace() + "." + template.getId() + ".yml");
+                archive.putNextEntry(zipEntry);
+                archive.write(template.generateSource().getBytes());
+                archive.closeEntry();
+            }
+
+            archive.finish();
+            return bos.toByteArray();
+        }
     }
 }

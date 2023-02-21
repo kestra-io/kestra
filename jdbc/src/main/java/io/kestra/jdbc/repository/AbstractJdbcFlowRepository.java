@@ -239,6 +239,33 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             });
     }
 
+    @Override
+    public List<FlowWithSource> findWithSource(
+        @Nullable String query,
+        @Nullable String namespace,
+        @Nullable Map<String, String> labels
+    ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                List<Field<Object>> fields = List.of(field("value"), field("source_code"));
+                SelectConditionStep<Record> select = this.fullTextSelect(context, fields);
+
+                select.and(this.findCondition(query, labels));
+
+                if (namespace != null) {
+                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+                }
+
+                return select.fetch().map(record -> FlowWithSource.of(
+                    jdbcRepository.map(record),
+                    record.get("source_code", String.class)
+                ));
+            });
+    }
+
+
     abstract protected Condition findSourceCodeCondition(String query);
 
     @Override

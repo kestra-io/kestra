@@ -244,7 +244,9 @@
                 this.executionsSelection = val.map(x => x.id);
             },
             selectAll() {
-                this.$refs.table.toggleAllSelection();
+                if (this.$refs.table.getSelectionRows().length !== this.$refs.table.data.length) {
+                    this.$refs.table.toggleAllSelection();
+                }
             },
             isRunning(item){
                 return State.isRunning(item.state.current);

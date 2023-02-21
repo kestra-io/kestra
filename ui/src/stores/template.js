@@ -1,4 +1,5 @@
 import YamlUtils from "../utils/yamlUtils";
+import Utils from "../utils/utils";
 
 export default {
     namespaced: true,
@@ -57,6 +58,20 @@ export default {
             return this.$http.delete(`/api/v1/templates/${template.namespace}/${template.id}`).then(() => {
                 commit("setTemplate", null)
             })
+        },
+        exportTemplateByIds(_, options) {
+            return this.$http.post("/api/v1/templates/export/by-ids", options.ids, {responseType: "blob"})
+                .then(response => {
+                    const blob = new Blob([response.data], {type: "application/octet-stream"});
+                    const url = window.URL.createObjectURL(blob)
+                    Utils.downloadUrl(url, "templates.zip");
+                });
+        },
+        exportTemplateByQuery(_, options) {
+            return this.$http.get("/api/v1/templates/export/by-query", {params: options})
+                .then(response => {
+                    Utils.downloadUrl(response.request.responseURL, "templates.zip");
+                });
         },
     },
     mutations: {

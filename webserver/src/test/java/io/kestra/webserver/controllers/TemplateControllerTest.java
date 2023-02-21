@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers;
 
+import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -15,8 +16,13 @@ import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.webserver.responses.PagedResults;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.ZipFile;
+
 import jakarta.inject.Inject;
 
 import static io.micronaut.http.HttpRequest.*;
@@ -29,8 +35,6 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
     @Inject
     @Client("/")
     RxHttpClient client;
-
-    public static final String TESTS_FLOW_NS = "io.kestra.tests";
 
     private Template createTemplate() {
         Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format("test").build();
@@ -122,5 +126,48 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
             HttpRequest.GET("/api/v1/templates/distinct-namespaces"), Argument.listOf(String.class));
 
         assertThat(namespaces.size(), is(2));
+    }
+
+    @Test
+    void exportByQuery() throws IOException {
+        // create 3 templates, so we have at least 3 of them
+        client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+        client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+        client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+        int size = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/search?namespace=kestra.test"), Argument.of(PagedResults.class, Template.class)).getResults().size();
+
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/export/by-query?namespace=kestra.test"),
+            Argument.of(byte[].class));
+        File file = File.createTempFile("templates", ".zip");
+        Files.write(file.toPath(), zip);
+
+        try (ZipFile zipFile = new ZipFile(file)) {
+            assertThat(zipFile.stream().count(), is((long) size));
+        }
+
+        file.delete();
+    }
+
+    @Test
+    void exportByIds() throws IOException {
+        // create 3 templates, so we can retrieve them by id
+        var template1 = client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+        var template2 = client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+        var template3 = client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);
+
+        List<IdWithNamespace> ids = List.of(
+            new IdWithNamespace("kestra.test", template1.getId()),
+            new IdWithNamespace("kestra.test", template2.getId()),
+            new IdWithNamespace("kestra.test", template3.getId()));
+        byte[] zip = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/templates/export/by-ids?namespace=kestra.test", ids),
+            Argument.of(byte[].class));
+        File file = File.createTempFile("templates", ".zip");
+        Files.write(file.toPath(), zip);
+
+        try(ZipFile zipFile = new ZipFile(file)) {
+            assertThat(zipFile.stream().count(), is(3L));
+        }
+
+        file.delete();
     }
 }

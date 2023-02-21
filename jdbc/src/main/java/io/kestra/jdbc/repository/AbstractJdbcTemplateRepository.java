@@ -98,6 +98,33 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     }
 
     @Override
+    public List<Template> find(@Nullable String query, @Nullable String namespace) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = context
+                    .select(
+                        field("value")
+                    )
+                    .hint(configuration.dialect() == SQLDialect.MYSQL ? "SQL_CALC_FOUND_ROWS" : null)
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter());
+
+                if (query != null) {
+                    select.and(this.findCondition(query));
+                }
+
+                if (namespace != null) {
+                    select.and(field("namespace").likeIgnoreCase(namespace + "%"));
+                }
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    @Override
     public List<Template> findByNamespace(String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()

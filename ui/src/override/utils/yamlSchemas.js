@@ -12,5 +12,9 @@ export const yamlSchemas = [
     {
         fileMatch: ["template-*.yaml"],
         uri: [`${apiRoot}plugins/schemas/template`]
+    },
+    {
+        fileMatch: ["trigger-*.yaml"],
+        uri: [`${apiRoot}plugins/schemas/trigger`]
     }
 ]

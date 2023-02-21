@@ -37,11 +37,15 @@
             },
         },
         mounted() {
-            this.loadGraph();
+            this.loadData();
         },
         methods: {
             forwardEvent(type, event) {
                 this.$emit(type, event);
+            },
+            loadData(){
+                this.loadGraph();
+                this.loadRevisions();
             },
             loadGraph() {
                 if (this.execution && (this.flowGraph === undefined || this.previousExecutionId !== this.execution.id)) {
@@ -50,6 +54,14 @@
                         namespace: this.execution.namespace,
                         id: this.execution.flowId,
                         revision: this.execution.flowRevision
+                    })
+                }
+            },
+            loadRevisions() {
+                if(this.execution) {
+                    this.$store.dispatch("flow/loadRevisions", {
+                        namespace: this.execution.namespace,
+                        id: this.execution.flowId
                     })
                 }
             },

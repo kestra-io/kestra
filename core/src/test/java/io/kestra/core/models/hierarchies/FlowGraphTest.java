@@ -192,6 +192,26 @@ class FlowGraphTest extends AbstractMemoryRunnerTest {
         assertThat(edge(flowGraph, "failed_value 1","1-2_value 1").getTarget(), is("1-2_value 1"));
     }
 
+    @Test
+    void trigger() throws IllegalVariableEvaluationException {
+        Flow flow = this.parse("flows/valids/trigger-flow-listener.yaml");
+        FlowGraph flowGraph = FlowGraph.of(flow);
+
+        assertThat(flowGraph.getNodes().size(), is(6));
+        assertThat(flowGraph.getEdges().size(), is(5));
+        assertThat(flowGraph.getClusters().size(), is(1));
+    }
+
+    @Test
+    void multipleTriggers() throws IllegalVariableEvaluationException {
+        Flow flow = this.parse("flows/valids/trigger-flow-listener-no-inputs.yaml");
+        FlowGraph flowGraph = FlowGraph.of(flow);
+
+        assertThat(flowGraph.getNodes().size(), is(7));
+        assertThat(flowGraph.getEdges().size(), is(7));
+        assertThat(flowGraph.getClusters().size(), is(1));
+    }
+
     private Flow parse(String path) {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;

@@ -167,7 +167,7 @@ export default {
         setFlow(state, flow) {
             state.flow = flow;
             if (state.flowGraph !== undefined && state.flowGraphParam && flow) {
-                if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id || state.flowGraphParam.revision !== flow.revision) {
+                if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id) {
                     state.flowGraph = undefined
                 }
             }

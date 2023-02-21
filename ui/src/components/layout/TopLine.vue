@@ -14,11 +14,13 @@
     border-radius: 0;
     //border-top: 1px solid var(--bs-border-color);
     z-index: 90;
+    background-color: var(--bs-white);
     padding: 0.5rem;
     transition: margin-left ease 0.2s;
     margin-bottom: 0.5rem;
 
     html.dark & {
+        background-color: var(--bs-gray-100-darken-3);
     }
 
     button {

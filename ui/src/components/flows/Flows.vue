@@ -146,35 +146,6 @@
                 </template>
             </data-table>
         </div>
-
-        <bottom-line>
-            <ul>
-                <ul v-if="flowsSelection.length !== 0 && canRead">
-                    <bottom-line-counter v-model="queryBulkAction" :selections="flowsSelection" :total="total" @update:model-value="selectAll()" />
-                    <li v-if="canRead">
-                        <el-button :icon="Download" type="info" class="bulk-button" @click="exportFlows()">
-                            {{ $t('export') }}
-                        </el-button>
-                    </li>
-                </ul>
-                <li class="spacer" />
-                <li>
-                    <router-link :to="{name: 'flows/search'}">
-                        <el-button :icon="TextBoxSearch">
-                            {{ $t('source search') }}
-                        </el-button>
-                    </router-link>
-                </li>
-
-                <li v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
-                    <router-link :to="{name: 'flows/create'}">
-                        <el-button :icon="Plus" type="primary">
-                            {{ $t('create') }}
-                        </el-button>
-                    </router-link>
-                </li>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 

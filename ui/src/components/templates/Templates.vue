@@ -101,29 +101,6 @@
                 </template>
             </data-table>
         </div>
-
-
-        <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
-            <ul>
-                <ul v-if="templatesSelection.length !== 0 && canRead">
-                    <bottom-line-counter v-model="queryBulkAction" :selections="templatesSelection" :total="total" @update:model-value="selectAll()" />
-                    <li v-if="canRead">
-                        <el-button :icon="Download" type="info" class="bulk-button" @click="exportTemplates()">
-                            {{ $t('export') }}
-                        </el-button>
-                    </li>
-                </ul>
-
-                <li class="spacer" />
-                <li>
-                    <router-link :to="{name: 'templates/create'}">
-                        <el-button :icon="Plus" type="primary">
-                            {{ $t('create') }}
-                        </el-button>
-                    </router-link>
-                </li>
-            </ul>
-        </bottom-line>
     </div>
 </template>
 
@@ -138,7 +115,7 @@
     import action from "../../models/action";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
     import Eye from "vue-material-design-icons/Eye.vue";
-    import BottomLine from "../layout/BottomLine.vue";
+    import TopLine from "../layout/TopLine.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../layout/DataTable.vue";
@@ -153,7 +130,7 @@
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
-            BottomLine,
+            TopLine,
             Eye,
             DataTable,
             SearchField,

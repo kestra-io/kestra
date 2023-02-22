@@ -50,7 +50,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
         return select
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(10)
+            .limit(configuration.getPollSize())
             .forUpdate()
             .skipLocked()
             .fetchMany()
@@ -67,7 +67,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
             .where(DSL.condition("type = CAST(? AS queue_type)", this.cls.getName()))
             .and(AbstractJdbcRepository.field("consumer_" + consumerGroup, Boolean.class).isFalse())
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(10)
+            .limit(configuration.getPollSize())
             .forUpdate()
             .skipLocked()
             .fetchMany()

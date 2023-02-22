@@ -30,7 +30,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
 
         return select
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(10)
+            .limit(configuration.getPollSize())
             .forUpdate()
             .skipLocked()
             .fetchMany()
@@ -50,7 +50,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
                 DSL.condition("NOT(FIND_IN_SET(?, consumers) > 0)", consumerGroup)
             )))
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(10)
+            .limit(configuration.getPollSize())
             .forUpdate()
             .skipLocked()
             .fetchMany()

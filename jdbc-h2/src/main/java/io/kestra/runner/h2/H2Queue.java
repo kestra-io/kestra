@@ -31,7 +31,7 @@ public class H2Queue<T> extends JdbcQueue<T> {
 
         return select
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(10)
+            .limit(configuration.getPollSize())
             .forUpdate()
             .fetchMany()
             .get(0);
@@ -50,7 +50,7 @@ public class H2Queue<T> extends JdbcQueue<T> {
                 DSL.condition("NOT(ARRAY_CONTAINS(\"consumers\", ?))", consumerGroup)
             )))
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(10)
+            .limit(configuration.getPollSize())
             .forUpdate()
             .fetchMany()
             .get(0);

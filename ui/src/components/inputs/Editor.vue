@@ -93,7 +93,7 @@
             },
             showPlaceholder() {
                 return this.input === true && !this.focus &&
-                    (this.editor === undefined || !(this.editor.getValue() !== undefined && this.editor.getValue() !== ""));
+                    (!Object.hasOwn(this, "editor") || this.editor === undefined|| !(this.editor.getValue() !== undefined && this.editor.getValue() !== ""));
             },
             options() {
                 const options = {}
@@ -272,6 +272,7 @@
 
 <style lang="scss">
     .ks-editor {
+        width: 100%;
         .top-nav {
             background-color: var(--bs-gray-300);
             padding: calc(var(--spacer) / 2);

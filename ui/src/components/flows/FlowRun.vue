@@ -12,11 +12,12 @@
                 :required="input.required !== false"
                 :prop="input.name"
             >
-                <el-input
-                    @keydown.enter.prevent
+                <editor
+                    :full-height="false"
+                    :input="true"
+                    :navbar="false"
                     v-if="input.type === 'STRING' || input.type === 'URI'"
-                    v-model="inputs[input.name]"
-                />
+                    v-model="inputs[input.name]" />
                 <el-input-number
                     v-if="input.type === 'INT'"
                     v-model="inputs[input.name]"
@@ -58,13 +59,13 @@
                         >
                     </div>
                 </div>
-                <el-input
+                <editor
+                    :full-height="false"
+                    :input="true"
+                    :navbar="false"
                     v-if="input.type === 'JSON'"
-                    v-model="inputs[input.name]"
-                    type="textarea"
-                    autosize
-                    :state="state(input)"
-                />
+                    lang="json"
+                    v-model="inputs[input.name]" />
 
                 <small v-if="input.description" class="text-muted">{{ input.description }}</small>
             </el-form-item>
@@ -84,8 +85,10 @@
 <script>
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
+    import Editor from "../../components/inputs/Editor.vue";
 
     export default {
+        components: {Editor},
         props: {
             redirect: {
                 type: Boolean,

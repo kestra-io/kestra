@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 
 @SuperBuilder(toBuilder = true)
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Introspected

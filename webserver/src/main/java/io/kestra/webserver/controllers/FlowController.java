@@ -43,6 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -482,6 +483,22 @@ public class FlowController {
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
 
+    private static byte[] zipFlows(List<FlowWithSource> flows) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ZipOutputStream archive = new ZipOutputStream(bos)) {
+
+            for (var flow : flows) {
+                var zipEntry = new ZipEntry(flow.getNamespace() + "." + flow.getId() + ".yml");
+                archive.putNextEntry(zipEntry);
+                archive.write(flow.getSource().getBytes());
+                archive.closeEntry();
+            }
+
+            archive.finish();
+            return bos.toByteArray();
+        }
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/delete/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(
@@ -526,7 +543,7 @@ public class FlowController {
         @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels){
         List<FlowWithSource> flows = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));
         flows.forEach(flow -> {
-            FlowWithSource flowUpdated = flow.toBuilder().disabled(true).build();
+            FlowWithSource flowUpdated = flow.toBuilder().disabled(true).source(injectDisabledTrue(flow.getSource())).build();
             flowRepository.update(flowUpdated, flow, flowUpdated.getSource(), taskDefaultService.injectDefaults(flowUpdated));
         });
 
@@ -544,27 +561,19 @@ public class FlowController {
         ids.stream()
             .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
             .forEach(flow -> {
-                FlowWithSource flowUpdated = flow.toBuilder().disabled(true).build();
+                FlowWithSource flowUpdated = flow.toBuilder().disabled(true).source(injectDisabledTrue(flow.getSource())).build();
                 flowRepository.update(flowUpdated, flow, flowUpdated.getSource(), taskDefaultService.injectDefaults(flowUpdated));
             });
 
         return HttpResponse.status(HttpStatus.NO_CONTENT);
     }
 
-    private static byte[] zipFlows(List<FlowWithSource> flows) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             ZipOutputStream archive = new ZipOutputStream(bos)) {
-
-            for (var flow : flows) {
-                var zipEntry = new ZipEntry(flow.getNamespace() + "." + flow.getId() + ".yml");
-                archive.putNextEntry(zipEntry);
-                archive.write(flow.getSource().getBytes());
-                archive.closeEntry();
-            }
-
-            archive.finish();
-            return bos.toByteArray();
+    private static String injectDisabledTrue(String source) {
+        Pattern p = Pattern.compile("^disabled\\s*:\\s*false\\s*", Pattern.MULTILINE);
+        if(p.matcher(source).find()) {
+            return p.matcher(source).replaceAll("disabled: true\n");
         }
+        return source + "\ndisabled: true";
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -613,4 +622,5 @@ public class FlowController {
                 () -> flowRepository.create(parsed, source, taskDefaultService.injectDefaults(parsed))
             );
     }
+
 }

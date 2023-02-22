@@ -75,6 +75,12 @@ export default {
         },
         importTemplates(_, options) {
             return this.$http.post("/api/v1/templates/import", options, {headers: {"Content-Type": "multipart/form-data"}})
+        },
+        deleteTemplateByIds(_, options) {
+            return this.$http.delete("/api/v1/templates/delete/by-ids", {data: options.ids})
+        },
+        deleteTemplateByQuery(_, options) {
+            return this.$http.delete("/api/v1/templates/delete/by-query", options, {params: options})
         }
     },
     mutations: {

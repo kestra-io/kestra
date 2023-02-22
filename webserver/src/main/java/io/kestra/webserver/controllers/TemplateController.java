@@ -286,8 +286,7 @@ public class TemplateController {
     )
     public HttpResponse<Void> deleteByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels){
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace){
         List<Template> templates = templateRepository.find(query, namespace);
         templates.stream().forEach(templateRepository::delete);
 

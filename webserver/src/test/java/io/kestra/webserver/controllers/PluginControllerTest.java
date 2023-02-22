@@ -132,7 +132,7 @@ class PluginControllerTest {
                 Argument.mapOf(String.class, Object.class)
             );
 
-            assertThat(doc.get("$ref"), is("#/definitions/io.kestra.core.models.tasks.Task"));
+            assertThat(doc.get("$ref"), is("#/definitions/io.kestra.core.models.tasks.Task-2"));
         });
     }
 }

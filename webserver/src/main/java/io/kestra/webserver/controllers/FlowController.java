@@ -74,9 +74,9 @@ public class FlowController {
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Generate a graph for a flow")
     public FlowGraph flowGraph(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id,
-        @Parameter(description = "The flow revision") Optional<Integer> revision
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The flow revision") @QueryValue Optional<Integer> revision
     ) throws IllegalVariableEvaluationException {
         return flowRepository
             .findById(namespace, id, revision)
@@ -91,9 +91,9 @@ public class FlowController {
         anyOf = {FlowWithSource.class, Flow.class}
     )
     public Flow index(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id,
-        @Parameter(description = "Include the source code") @QueryValue(value = "source", defaultValue = "false") boolean source
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "Include the source code") @QueryValue(defaultValue = "false") boolean source
     ) {
         return source ?
             flowRepository
@@ -108,8 +108,8 @@ public class FlowController {
     @Get(uri = "{namespace}/{id}/revisions", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Get revisions for a flow")
     public List<FlowWithSource> revisions(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id
     ) {
         return flowRepository.findRevisions(namespace, id);
     }
@@ -118,10 +118,10 @@ public class FlowController {
     @Get(uri = "{namespace}/{id}/tasks/{taskId}", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Get a flow task")
     public Task flowTask(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id,
-        @Parameter(description = "The task id") String taskId,
-        @Parameter(description = "The flow revision") @Nullable @QueryValue(value = "revision") Integer revision
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The task id") @PathVariable String taskId,
+        @Parameter(description = "The flow revision") @Nullable @QueryValue Integer revision
     ) {
         return flowRepository
             .findById(namespace, id, Optional.ofNullable(revision))
@@ -139,11 +139,11 @@ public class FlowController {
     @Get(uri = "/search", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Search for flows")
     public PagedResults<Flow> find(
-        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace,
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
     ) throws HttpStatusException {
 
@@ -160,11 +160,11 @@ public class FlowController {
     @Get(uri = "/source", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Search for flows source code")
     public PagedResults<SearchResult<Flow>> source(
-        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
-        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
-        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue(value = "namespace") String namespace
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) throws HttpStatusException {
         return PagedResults.of(flowRepository.findSourceCode(PageableUtils.from(page, size, sort), query, namespace));
     }
@@ -199,7 +199,7 @@ public class FlowController {
             "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
     )
     public List<FlowWithSource> updateNamespace(
-        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "A list of flows") @Body @Nullable String flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
@@ -225,7 +225,7 @@ public class FlowController {
             "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
     )
     public List<Flow> updateNamespace(
-        @Parameter(description = "The flow namespace") String namespace,
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
@@ -321,8 +321,8 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a flow")
     public HttpResponse<FlowWithSource> update(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
@@ -339,8 +339,8 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a flow")
     public HttpResponse<Flow> update(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id,
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The flow") @Body @Valid Flow flow
     ) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
@@ -355,9 +355,9 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a single task on a flow")
     public HttpResponse<Flow> updateTask(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id,
-        @Parameter(description = "The task id") String taskId,
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "The task id") @PathVariable String taskId,
         @Parameter(description = "The task") @Valid @Body Task task
     ) throws ConstraintViolationException {
         Optional<Flow> existingFlow = flowRepository.findById(namespace, id);
@@ -384,8 +384,8 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "Delete a flow")
     @ApiResponse(responseCode = "204", description = "On success")
     public HttpResponse<Void> delete(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id
     ) {
         Optional<Flow> flow = flowRepository.findById(namespace, id);
         if (flow.isPresent()) {
@@ -408,9 +408,9 @@ public class FlowController {
     @Get(uri = "{namespace}/{id}/dependencies", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Get flow dependencies")
     public FlowTopologyGraph dependencies(
-        @Parameter(description = "The flow namespace") String namespace,
-        @Parameter(description = "The flow id") String id,
-        @Parameter(description = "if true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(value = "destinationOnly", defaultValue = "false") boolean destinationOnly
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @Parameter(description = "if true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly
     ) {
         List<FlowTopology> flowTopologies = flowTopologyRepository.findByFlow(namespace, id, destinationOnly);
 

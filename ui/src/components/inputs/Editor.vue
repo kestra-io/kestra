@@ -42,6 +42,7 @@
     import {defineAsyncComponent, shallowRef} from "vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
+    import {mapGetters} from "vuex";
 
     const MonacoEditor = defineAsyncComponent(() =>
         import("./MonacoEditor.vue")
@@ -74,7 +75,8 @@
                 icon: {
                     UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
                     UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal)
-                }
+                },
+                oldDecorations: [],
             };
         },
         computed: {
@@ -164,7 +166,8 @@
                     },
                     ...options
                 };
-            }
+            },
+            ...mapGetters("core", ["guidedProperties"]),
         },
         methods: {
             editorDidMount(editor) {
@@ -250,6 +253,35 @@
                         this.$refs.container.style.height = (e.contentHeight + 7) + "px";
                     });
                 }
+
+                this.editor.onDidContentSizeChange(_ => {
+                    if(this.guidedProperties.monacoRange) {
+                        editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
+                        let decorations = [
+                            {
+                                range: this.guidedProperties.monacoRange,
+                                options: {
+                                    isWholeLine: true,
+                                    inlineClassName: "highlightText"
+                                },
+                                className: "highlightText",
+                            }
+                        ];
+                        decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
+                            {
+                                range: this.guidedProperties.monacoDisableRange,
+                                options: {
+                                    isWholeLine: true,
+                                    inlineClassName: "disableText"
+                                },
+                                className: "disableText",
+                            },
+                        ]) : decorations;
+                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
+                    } else {
+                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
+                    }
+                });
 
             },
             autoFold(autoFold) {
@@ -360,4 +392,18 @@
             background-color: var(--bs-gray-100-darken-5);
         }
     }
+
+    .highlightText {
+        cursor: pointer;
+        font-weight: 700;
+        box-shadow: 0px 19px 44px rgba(157, 29, 236, 0.31);
+            html.dark & {
+                background-color: rgba(255,255,255,0.2);
+            }
+    }
+
+    .disableText {
+        color: grey !important;
+    }
+
 </style>

@@ -1,0 +1,96 @@
+#app .v-step {
+    border-radius: 8px;
+    border: 1px solid var(--bs-secondary);
+    padding: 19px;
+    max-width: 350px;
+    background-color: white;
+    border: 1px solid var(--bs-secondary);
+
+    html.dark & {
+        background-color: #202331;
+    }
+
+    animation: slideaway 300ms;
+}
+
+@keyframes slideaway {
+    to {
+        opacity: 1;
+    }
+    from {
+        opacity: 0;
+    }
+}
+
+
+#app .large-v-step {
+    max-width: 500px;
+}
+
+#app .v-step-title {
+    margin-bottom: 24px;
+    margin-top: 2px;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 28px;
+    text-align: center;
+    color: var(--bs-primary);
+
+    html.dark & {
+        color: white;
+    }
+}
+
+#app .v-step__content {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 24px;
+    text-align: center;
+    border: none;
+    color: var(--bs-secondary);
+    background-color: white;
+
+    html.dark & {
+        background-color: #202331;
+    }
+}
+
+#app .v-step-indicator {
+    margin-bottom: 10px;
+    width: fit-content;
+    padding: 0 7px;
+    height: 24px;
+    left: 0px;
+    top: 3px;
+
+    background: #6610F2;
+    border-radius: 2px;
+}
+
+#app .v-tour__target--highlighted {
+    box-shadow: 0px 19px 44px rgba(157, 29, 236, 0.31) !important;
+}
+
+#app #guided-right {
+    position: absolute;
+    top: 40px;
+    right: 50px;
+    height: 50vh;
+    width: 10px;
+    visibility: hidden;
+}
+
+#app .v-step__arrow:before {
+    visibility: hidden;
+}
+
+
+.onboarding-card-img-yaml {
+    margin: auto;
+    width: 150px;
+    height: 150px;
+    background: url("../../assets/onboarding/onboarding-help-light.svg") no-repeat;
+    html.dark & {
+        background: url("../../assets/onboarding/onboarding-help-dark.svg") no-repeat;
+    }
+}

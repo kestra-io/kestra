@@ -1,6 +1,6 @@
 <template>
     <div class="home">
-        <div>
+        <div v-if="displayCharts">
             <collapse v-if="!flowId">
                 <el-form-item>
                     <namespace-select
@@ -78,6 +78,9 @@
                 </el-col>
             </el-row>
         </div>
+        <div v-else>
+            <create-flow />
+        </div>
     </div>
 </template>
 <script>
@@ -94,6 +97,7 @@
     import HomeSummaryNamespace from "./HomeSummaryNamespace.vue";
     import HomeDescription from "./HomeDescription.vue";
     import _merge from "lodash/merge";
+    import CreateFlow from "../onboarding/CreateFlow.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
@@ -105,7 +109,8 @@
             HomeSummaryFailed,
             HomeSummaryLog,
             HomeSummaryNamespace,
-            HomeDescription
+            HomeDescription,
+            CreateFlow
         },
         props: {
             namespace: {
@@ -119,6 +124,7 @@
         },
         created() {
             this.loadStats();
+            this.loadFlows();
         },
         watch: {
             $route(newValue, oldValue) {
@@ -135,7 +141,8 @@
                 today: undefined,
                 yesterday: undefined,
                 alls: undefined,
-                namespacesStats: undefined
+                namespacesStats: undefined,
+                displayCharts: true
             };
         },
         methods: {
@@ -205,6 +212,14 @@
                 this.$router.push({
                     query: {...this.$route.query, namespace}
                 });
+            },
+            loadFlows() {
+                this.$store.dispatch("flow/findFlows", this.loadQuery({}))
+                    .then(flows => {
+                        if (flows.total === 0) {
+                            this.displayCharts = false;
+                        }
+                    });
             },
         },
         computed: {

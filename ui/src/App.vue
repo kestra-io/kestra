@@ -9,17 +9,21 @@
                 <errors :code="error" />
             </template>
         </main>
+        <VueTour />
     </el-config-provider>
 </template>
-
+<script setup>
+    import Errors from "./components/errors/Errors.vue";
+</script>
 <script>
     import LeftMenu from "override/components/LeftMenu.vue";
     import TopNavBar from "./components/layout/TopNavBar.vue";
     import ErrorToast from "./components/ErrorToast.vue";
-    import Errors from "./components/errors/Errors.vue";
-    import {mapState} from "vuex";
+    import {mapGetters, mapState} from "vuex";
     import Utils from "./utils/utils";
     import {pageFromRoute} from "./utils/eventsRouter";
+    import "./styles/layout/vue-tour-overload.scss"
+    import VueTour from "./components/onboarding/VueTour.vue";
 
     export default {
         name: "App",
@@ -27,7 +31,7 @@
             LeftMenu,
             TopNavBar,
             ErrorToast,
-            Errors
+            VueTour
         },
         data() {
             return {
@@ -37,7 +41,8 @@
             };
         },
         computed: {
-            ...mapState("core", ["message", "error"])
+            ...mapState("core", ["message", "error"]),
+            ...mapGetters("core", ["guidedProperties"]),
         },
         created() {
             if (this.created === false) {
@@ -51,7 +56,7 @@
             },
             displayApp() {
                 this.onMenuCollapse(localStorage.getItem("menuCollapsed") === "true");
-                this.switchTheme();
+                Utils.switchTheme();
 
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
@@ -78,30 +83,6 @@
                             uid: uid,
                         });
                     })
-            },
-            switchTheme(theme) {
-                // default theme
-                if (theme === undefined) {
-                    if (localStorage.getItem("theme")) {
-                        theme =  localStorage.getItem("theme");
-                    } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-                        theme = "dark";
-                    } else {
-                        theme = "light";
-                    }
-                }
-
-                // class name
-                let htmlClass = document.getElementsByTagName("html")[0].classList;
-
-                htmlClass.forEach((cls) => {
-                    if (cls === "dark" || cls === "light") {
-                        htmlClass.remove(cls);
-                    }
-                })
-
-                htmlClass.add(theme);
-                localStorage.setItem("theme", theme);
             }
         }
     };

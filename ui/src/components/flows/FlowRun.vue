@@ -17,7 +17,8 @@
                     :input="true"
                     :navbar="false"
                     v-if="input.type === 'STRING' || input.type === 'URI'"
-                    v-model="inputs[input.name]" />
+                    v-model="inputs[input.name]"
+                />
                 <el-input-number
                     v-if="input.type === 'INT'"
                     v-model="inputs[input.name]"
@@ -65,12 +66,13 @@
                     :navbar="false"
                     v-if="input.type === 'JSON'"
                     lang="json"
-                    v-model="inputs[input.name]" />
+                    v-model="inputs[input.name]"
+                />
 
                 <small v-if="input.description" class="text-muted">{{ input.description }}</small>
             </el-form-item>
             <el-form-item class="submit">
-                <el-button :icon="Flash" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled">
+                <el-button :icon="Flash" id="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled">
                     {{ $t('launch execution') }}
                 </el-button>
             </el-form-item>
@@ -131,9 +133,13 @@
         },
         computed: {
             ...mapState("flow", ["flow"]),
+            ...mapState("core", ["guidedProperties"]),
         },
         methods: {
             onSubmit(formRef) {
+                if(this.$tours["guidedTour"]){
+                    this.$tours["guidedTour"].finish();
+                }
                 if (formRef) {
                     formRef.validate((valid) => {
                         if (!valid) {
@@ -173,7 +179,16 @@
 
                 return true;
             }
-
+        },
+        watch: {
+            guidedProperties: {
+                handler() {
+                    if(this.guidedProperties.validateInputs){
+                        this.onSubmit(this.$refs.form);
+                    }
+                },
+                deep: true
+            }
         }
     };
 </script>

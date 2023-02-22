@@ -5,7 +5,7 @@
         </el-button>
         <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
             <template #title>
-                <span v-html="$t('execute the flow', {id: flowId})"/>
+                <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
             <flow-run @execution-trigger="closeModal" :redirect="true" />
         </el-dialog>
@@ -83,6 +83,17 @@
         },
         computed: {
             ...mapState("flow", ["flow"]),
+            ...mapState("core", ["guidedProperties"]),
+        },
+        watch: {
+            guidedProperties: {
+                handler() {
+                    if (this.guidedProperties.executeFlow) {
+                        this.onClick();
+                    }
+                },
+                deep: true
+            }
         }
     };
 </script>

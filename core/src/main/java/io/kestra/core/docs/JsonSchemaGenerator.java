@@ -50,7 +50,7 @@ public class JsonSchemaGenerator {
             OptionPreset.PLAIN_JSON
         );
 
-        this.build(builder, cls);
+        this.build(builder, cls, true);
 
         SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
 
@@ -143,10 +143,9 @@ public class JsonSchemaGenerator {
             .orElse(ImmutableMap.of());
     }
 
-    protected <T> void build(SchemaGeneratorConfigBuilder builder, Class<? extends T> cls) {
-
+    protected <T> void build(SchemaGeneratorConfigBuilder builder, Class<? extends T> cls, boolean draft7) {
         builder
-            .with(new JacksonModule(JacksonOption.IGNORE_TYPE_INFO_TRANSFORM))
+
             .with(new JavaxValidationModule(
                 JavaxValidationOption.NOT_NULLABLE_FIELD_IS_REQUIRED,
                 JavaxValidationOption.INCLUDE_PATTERN_EXPRESSIONS
@@ -155,8 +154,16 @@ public class JsonSchemaGenerator {
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
-            .with(Option.ALLOF_CLEANUP_AT_THE_END)
-            .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES);
+            .with(Option.ALLOF_CLEANUP_AT_THE_END);
+
+        if (!draft7) {
+            builder
+                .with(new JacksonModule(JacksonOption.IGNORE_TYPE_INFO_TRANSFORM))
+                .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES);
+        } else {
+            builder
+                .with(new JacksonModule());
+        }
 
         // default value
         builder.forFields().withDefaultResolver(this::defaults);
@@ -352,7 +359,7 @@ public class JsonSchemaGenerator {
             OptionPreset.PLAIN_JSON
         );
 
-        this.build(builder, cls);
+        this.build(builder, cls, false);
 
         // base is passed, we don't return base properties
         builder

@@ -4,12 +4,12 @@
         <bottom-line v-if="canSave || canDelete">
             <ul>
                 <li>
-                    <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteFile">
+                    <el-button :icon="Delete" type="danger" size="large" v-if="canDelete" @click="deleteFile">
                         {{ $t('delete') }}
                     </el-button>
 
                     <template v-if="canSave">
-                        <el-button :icon="ContentSave" @click="save" type="primary">
+                        <el-button :icon="ContentSave" @click="save" type="info" size="large">
                             {{ $t('save') }}
                         </el-button>
                     </template>

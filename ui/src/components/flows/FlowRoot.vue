@@ -1,9 +1,16 @@
 <template>
     <div>
         <div v-if="ready">
-            <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" @hook:mounted="mounted = true" />
-            <bottom-line v-if="mounted && displayBottomLine()">
+            <tabs route-name="flows/update" ref="currentTab" :tabs="tabs" />
+            <bottom-line v-if="displayBottomLine()">
                 <ul>
+                    <li>
+                        <template v-if="isAllowedEdit">
+                            <el-button :icon="Pencil" size="large" @click="editFlow">
+                                {{ $t('edit flow') }}
+                            </el-button>
+                        </template>
+                    </li>
                     <li>
                         <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
                     </li>
@@ -12,6 +19,12 @@
         </div>
     </div>
 </template>
+
+
+<script setup>
+    import Pencil from "vue-material-design-icons/Pencil.vue";
+</script>
+
 <script>
     import Topology from "./Topology.vue";
     import Schedule from "./Schedule.vue";
@@ -40,7 +53,6 @@
         data() {
             return {
                 tabIndex: undefined,
-                mounted: false,
                 previousFlow: undefined,
                 depedenciesCount: undefined
             };
@@ -104,14 +116,6 @@
                     });
                 }
 
-                if (this.user && this.flow && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)) {
-                    tabs.push({
-                        name: "execute",
-                        component: FlowRun,
-                        title: this.$t("launch execution")
-                    });
-                }
-
                 if (this.user && this.flow && this.user.isAllowed(permission.FLOW, action.READ, this.flow.namespace)) {
                     tabs.push({
                         name: "source",
@@ -161,7 +165,14 @@
             displayBottomLine() {
                 const name = this.activeTabName();
                 return name != null &&  this.canExecute && name !== "execute" && name !== "source" && name !== "schedule";
-            }
+            },
+            editFlow() {
+                this.$router.push({name:"flows/update", params: {
+                    namespace: this.flow.namespace,
+                    id: this.flow.id,
+                    tab: "source"
+                }})
+            },
         },
         computed: {
             ...mapState("flow", ["flow"]),
@@ -193,6 +204,9 @@
             },
             ready() {
                 return this.flow !== undefined;
+            },
+            isAllowedEdit() {
+                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
             },
             canExecute() {
                 return this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace)

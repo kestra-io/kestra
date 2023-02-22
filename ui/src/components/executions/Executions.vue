@@ -116,22 +116,20 @@
 
         <bottom-line v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
             <ul>
-                <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()" />
-                <li v-if="canUpdate">
-                    <el-button :icon="Restart" type="success" class="bulk-button" @click="restartExecutions()">
-                        {{ $t('restart') }}
-                    </el-button>
+                <li>
+                    <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()">
+                        <el-button v-if="canUpdate" :icon="Restart" size="large" @click="restartExecutions()">
+                            {{ $t('restart') }}
+                        </el-button>
+                        <el-button v-if="canUpdate" :icon="StopCircleOutline" size="large" @click="killExecutions()">
+                            {{ $t('kill') }}
+                        </el-button>
+                        <el-button v-if="canDelete" :icon="Delete" size="large" @click="deleteExecutions()">
+                            {{ $t('delete') }}
+                        </el-button>
+                    </bottom-line-counter>
                 </li>
-                <li v-if="canUpdate">
-                    <el-button :icon="StopCircleOutline" type="warning" class="bulk-button" @click="killExecutions()">
-                        {{ $t('kill') }}
-                    </el-button>
-                </li>
-                <li v-if="canDelete">
-                    <el-button :icon="Delete" type="danger" class="bulk-button" @click="deleteExecutions()">
-                        {{ $t('delete') }}
-                    </el-button>
-                </li>
+
                 <li class="spacer" />
             </ul>
         </bottom-line>
@@ -293,6 +291,7 @@
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
             },
+
             restartExecutions() {
                 this.$toast().confirm(
                     this.$t("bulk restart", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),
@@ -301,8 +300,8 @@
                             return this.$store
                                 .dispatch("execution/queryRestartExecution", this.loadQuery({
                                     sort: this.$route.query.sort || "state.startDate:desc",
-                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                                }, false))
+                                    state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
+                                }))
                                 .then(r => {
                                     this.$toast().success(this.$t("executions restarted", {executionCount: r.data.count}));
                                     this.loadData();

@@ -288,11 +288,11 @@
         .editor-container {
             display: flex;
             &.full-height {
-                height: calc(100vh - 335px);
+                height: calc(100vh - 361px);
             }
 
             &.diff {
-                height: calc(100vh - 380px);
+                height: calc(100vh - 435px);
             }
 
             &.single-line {

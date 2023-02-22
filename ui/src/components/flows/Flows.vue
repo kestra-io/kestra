@@ -105,16 +105,15 @@
         <bottom-line>
             <ul>
                 <ul v-if="flowsSelection.length !== 0 && canRead">
-                    <bottom-line-counter v-model="queryBulkAction" :selections="flowsSelection" :total="total" @update:model-value="selectAll()" />
-                    <li v-if="canRead">
-                        <el-button :icon="Download" type="info" class="bulk-button" @click="exportFlows()">
+                    <bottom-line-counter v-model="queryBulkAction" :selections="flowsSelection" :total="total" @update:model-value="selectAll()">
+                        <el-button v-if="canRead" :icon="Download" size="large" @click="exportFlows()">
                             {{ $t('export') }}
                         </el-button>
-                    </li>
+                    </bottom-line-counter>
                 </ul>
                 <li class="spacer" />
                 <li>
-                    <div class="el-input el-input-file custom-upload">
+                    <div class="el-input el-input-file el-input--large custom-upload">
                         <div class="el-input__wrapper">
                             <label for="importFlows">
                                 <Upload />
@@ -132,14 +131,14 @@
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
-                        <el-button :icon="TextBoxSearch">
+                        <el-button :icon="TextBoxSearch" size="large">
                             {{ $t('source search') }}
                         </el-button>
                     </router-link>
                 </li>
                 <li v-if="user && user.hasAnyAction(permission.FLOW, action.CREATE)">
                     <router-link :to="{name: 'flows/create'}">
-                        <el-button :icon="Plus" type="primary">
+                        <el-button :icon="Plus" type="info" size="large">
                             {{ $t('create') }}
                         </el-button>
                     </router-link>

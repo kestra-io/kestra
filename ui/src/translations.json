@@ -218,7 +218,7 @@
     "Total": "Total",
     "sub flow": "Sub-flow",
     "New execution": "New execution",
-    "execute the flow": "Trigger the flow",
+    "execute the flow": "Execute the flow <code>{id}</code>",
     "execute flow now ?": "Do you want to execute this flow?",
     "Default namespace": "Default namespace",
     "Default log level": "Default log level",
@@ -249,7 +249,7 @@
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "selection": {
       "selected": "<strong>{count}</strong> selected",
-      "all": "select all ({count})"
+      "all": "Select all <em>({count})</em>"
     },
     "cancel": "Cancel",
     "homeDashboard": {
@@ -503,7 +503,7 @@
     "Total": "Total",
     "sub flow": "Sous-flow",
     "New execution": "Nouvelle execution",
-    "execute the flow": "Créer une exécution",
+    "execute the flow": "Exécuter le flow <code>{id}</code>",
     "execute flow now ?": "Voulez-vous exécuter ce flow ?",
     "Default namespace": "Espace de nom par défaut",
     "Default log level": "Niveau de log par défaut",
@@ -533,7 +533,7 @@
     "bulk kill": "Êtes-vous sur de vouloir arrêter <code>{executionCount}</code> execution(s) ?",
     "selection": {
       "selected": "<strong>{count}</strong> sélectionnés",
-      "all": "tous sélectionnés ({count})"
+      "all": "Tous sélectionnés ({count})"
     },
     "cancel": "Annuler",
     "homeDashboard": {
@@ -787,7 +787,7 @@
     "Total": "Gesamt",
     "sub flow": "Sub-flow",
     "New execution": "Neue Ausführung",
-    "execute the flow": "Flow auslösen",
+    "execute the flow": "Führen Sie den Flow <code>{id}</code> aus",
     "execute flow now ?": "Möchten Sie diesen Flow ausführen?",
     "Default namespace": "Standard namespace",
     "Default log level": "Standardprotokollebene",

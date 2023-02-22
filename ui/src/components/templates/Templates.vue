@@ -65,17 +65,16 @@
         <bottom-line v-if="user && user.hasAnyAction(permission.TEMPLATE, action.CREATE)">
             <ul>
                 <ul v-if="templatesSelection.length !== 0 && canRead">
-                    <bottom-line-counter v-model="queryBulkAction" :selections="templatesSelection" :total="total" @update:model-value="selectAll()" />
-                    <li v-if="canRead">
-                        <el-button :icon="Download" type="info" class="bulk-button" @click="exportTemplates()">
+                    <bottom-line-counter v-model="queryBulkAction" :selections="templatesSelection" :total="total" @update:model-value="selectAll()">
+                        <el-button v-if="canRead" :icon="Download" size="large" @click="exportTemplates()">
                             {{ $t('export') }}
                         </el-button>
-                    </li>
+                    </bottom-line-counter>
                 </ul>
 
                 <li class="spacer" />
                 <li>
-                    <div class="el-input el-input-file custom-upload">
+                    <div class="el-input el-input-file el-input--large custom-upload">
                         <div class="el-input__wrapper">
                             <label for="importFlows">
                                 <Upload />
@@ -93,7 +92,7 @@
                 </li>
                 <li>
                     <router-link :to="{name: 'templates/create'}">
-                        <el-button :icon="Plus" type="primary">
+                        <el-button :icon="Plus" type="info" size="large">
                             {{ $t('create') }}
                         </el-button>
                     </router-link>

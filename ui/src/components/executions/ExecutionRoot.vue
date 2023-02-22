@@ -6,16 +6,18 @@
         <bottom-line v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul>
                 <li>
-                    <el-button :icon="Delete" type="danger" v-if="canDelete" @click="deleteExecution">
+                    <el-button :icon="Delete" type="danger" size="large" v-if="canDelete" @click="deleteExecution">
                         {{ $t('delete') }}
                     </el-button>
-
+                </li>
+                <li>
                     <template v-if="isAllowedTrigger">
-                        <trigger-flow :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
+                        <trigger-flow type="default" :flow-id="$route.params.flowId" :namespace="$route.params.namespace" />
                     </template>
-
+                </li>
+                <li>
                     <template v-if="isAllowedEdit">
-                        <el-button :icon="Pencil" @click="editFlow">
+                        <el-button :icon="Pencil" type="default" size="large" @click="editFlow">
                             {{ $t('edit flow') }}
                         </el-button>
                     </template>

@@ -16,15 +16,12 @@
         <bottom-line v-if="canSave">
             <ul>
                 <li>
-                    <el-button
-                        @click="addSchedule"
-                        v-if="canSave"
-                    >
+                    <el-button @click="addSchedule" v-if="canSave" size="large">
                         <plus />
                         {{ $t("add schedule") }}
                     </el-button>
 
-                    <el-button @click="save" v-if="canSave" type="primary">
+                    <el-button @click="save" v-if="canSave" type="info" size="large">
                         <content-save />
                         <span>{{ $t("save") }}</span>
                     </el-button>

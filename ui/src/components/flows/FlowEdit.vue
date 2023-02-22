@@ -4,25 +4,25 @@
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
-                    <el-button :icon="icon.Delete" type="danger" v-if="canDelete" @click="deleteFile">
+                    <el-button :icon="icon.Delete" type="danger" size="large" v-if="canDelete" @click="deleteFile">
                         {{ $t('delete') }}
                     </el-button>
                 </li>
 
                 <li>
                     <router-link v-if="flow" :to="{name: 'flows/create', query: {copy: true}}">
-                        <el-button :icon="icon.ContentCopy">
+                        <el-button :icon="icon.ContentCopy" size="large">
                             {{ $t('copy') }}
                         </el-button>
                     </router-link>
                 </li>
 
                 <li>
-                    <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
+                    <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" type="default" :namespace="flow.namespace" />
                 </li>
 
                 <li>
-                    <el-button :icon="icon.ContentSave" @click="save" v-if="canSave" type="primary">
+                    <el-button :icon="icon.ContentSave" size="large" @click="save" v-if="canSave" type="info">
                         {{ $t('save') }}
                     </el-button>
                 </li>

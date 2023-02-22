@@ -8,6 +8,7 @@
     --el-button-disabled-border-color: var(--bs-border-color);
     --el-button-hover-text-color: var(--bs-body-color);
 
+
     html.dark & {
         --el-button-disabled-text-color: var(--bs-gray-200);
     }
@@ -23,6 +24,11 @@
 
     [class*=el-icon] + span:empty {
         margin-left: 0;
+    }
+
+    &.el-button--large {
+        font-size: var(--bs-body-font-size);
+        line-height: var(--bs-body-font-size);
     }
 }
 
@@ -55,10 +61,9 @@
 
 
 .el-input-file.custom-upload {
-    border-color: var(--el-button-border-color);
     font-size: var(--el-font-size-base);
     border-radius: var(--el-border-radius-base);
-    color: var(--el-button-text-color);
+    border: var(--el-border);
 
     .el-input__wrapper {
         background-color: transparent;
@@ -85,6 +90,22 @@
 
     ::file-selector-button {
         display: none;
+    }
+
+    &:hover {
+        border-color: var(--el-color-primary-light-7);
+        background-color: var(--el-color-primary-light-9);
+        outline: none;
+    }
+
+    &.el-input--large {
+
+        label {
+            margin-left: 19px;
+            line-height: 38px;
+            margin-right: 10px;
+            font-size: var(--bs-body-font-size);
+        }
     }
 }
 

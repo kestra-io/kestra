@@ -16,12 +16,12 @@
         border-top: 1px solid var(--bs-border-color);
         z-index: 90;
         background-color: var(--bs-white);
-        padding: 0.5rem 1rem;
+        padding: var(--spacer);
         text-align: right;
         transition: margin-left ease 0.2s;
 
         html.dark & {
-            background-color: var(--bs-gray-100-darken-3);
+            background-color: var(--bs-gray-100-darken-5);
         }
 
         button {

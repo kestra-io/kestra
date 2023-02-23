@@ -34,6 +34,7 @@ import "./global"
 import TaskArray from "../components/flows/tasks/TaskArray.vue";
 import TaskBoolean from "../components/flows/tasks/TaskBoolean.vue";
 import TaskComplex from "../components/flows/tasks/TaskComplex.vue";
+import TaskCondition from "../components/flows/tasks/TaskCondition.vue";
 import TaskDict from "../components/flows/tasks/TaskDict.vue";
 import TaskDynamic from "../components/flows/tasks/TaskDynamic.vue";
 import TaskEnum from "../components/flows/tasks/TaskEnum.vue";
@@ -124,6 +125,7 @@ export default (app, routes, stores, translations) => {
     // Task have some recursion and need to be register globally
     app.component("TaskArray", TaskArray)
     app.component("TaskBoolean", TaskBoolean)
+    app.component("TaskCondition", TaskCondition)
     app.component("TaskDict", TaskDict)
     app.component("TaskDynamic", TaskDynamic)
     app.component("TaskEnum", TaskEnum)

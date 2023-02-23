@@ -40,13 +40,12 @@
         computed: {
             values() {
                 if (this.modelValue === undefined) {
-                    return {key: "", data: undefined};
+                    return {"": undefined};
                 }
 
                 return this.modelValue;
             },
         },
-        keyDebounce: undefined,
         methods:{
             onInput(key, value) {
                 const local = this.modelValue || {};
@@ -75,7 +74,6 @@
 
                 this.$emit("update:modelValue", local);
             },
-
-        }
+        },
     };
 </script>

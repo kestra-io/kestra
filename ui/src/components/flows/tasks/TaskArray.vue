@@ -1,7 +1,6 @@
 <template>
     <div class="d-flex w-100 task-array" v-for="(item, index) in values" :key="'array-' + index">
         <div class="flex-fill flex-grow-1 w-100 me-2">
-            <!--{{ `task-${getType(schema.items)}` + schema.items }}-->
             <component
                 :is="`task-${getType(schema.items)}`"
                 :model-value="item"

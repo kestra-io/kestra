@@ -34,7 +34,12 @@
             TaskIcon
         },
         props: {
-            modelValue : {
+            modelValue: {
+                type: String,
+                required: false,
+                default: undefined,
+            },
+            section: {
                 type: String,
                 required: false,
                 default: undefined,
@@ -49,7 +54,7 @@
             taskModels() {
                 const taskModels = [];
                 for (const plugin of this.plugins || []) {
-                    taskModels.push.apply(taskModels, plugin.tasks);
+                    taskModels.push.apply(taskModels, plugin[this.section]);
                 }
                 return taskModels;
             },

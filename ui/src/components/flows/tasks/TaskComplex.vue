@@ -10,12 +10,15 @@
 
 
     <el-drawer
+        v-if="isOpen"
         v-model="isOpen"
-        :title="root"
         destroy-on-close
         size=""
         :append-to-body="true"
     >
+        <template #header>
+            <code>{{ root }}</code>
+        </template>
         <el-form label-position="top">
             <task-object
                 v-if="schema"

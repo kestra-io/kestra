@@ -11,6 +11,7 @@
     <el-drawer
         v-if="isOpen"
         v-model="isOpen"
+        :title="root"
         destroy-on-close
         size=""
         :append-to-body="true"
@@ -21,11 +22,12 @@
         <el-form label-position="top">
             <task-editor
                 ref="editor"
+                section="conditions"
                 :model-value="taskYaml"
-                section="tasks"
                 @update:model-value="onInput"
             />
         </el-form>
+
         <template #footer>
             <el-button :icon="ContentSave" @click="isOpen = false" type="primary">
                 {{ $t('save') }}
@@ -61,7 +63,7 @@
             onInput(value) {
                 this.$emit("update:modelValue", YamlUtils.parse(value));
             },
-        }
+        },
     };
 </script>
 

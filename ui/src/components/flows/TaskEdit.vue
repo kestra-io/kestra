@@ -6,7 +6,6 @@
     >
         <span v-if="component !== 'el-button'">{{ $t('show task source') }}</span>
         <el-drawer
-            :title="`Task ${taskId || task.id}`"
             v-if="isModalOpen"
             v-model="isModalOpen"
             destroy-on-close
@@ -14,6 +13,9 @@
             size=""
             :append-to-body="true"
         >
+            <template #header>
+                <code>{{ taskId || task.id }}</code>
+            </template>
             <template #footer>
                 <div v-loading="isLoading">
                     <el-button :icon="ContentSave" @click="saveTask" v-if="canSave && !isReadOnly" type="primary">
@@ -52,6 +54,7 @@
                     <task-editor
                         ref="editor"
                         v-model="taskYaml"
+                        :section="section"
                     />
                 </el-tab-pane>
             </el-tabs>

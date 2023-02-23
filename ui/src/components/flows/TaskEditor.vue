@@ -6,6 +6,7 @@
             </template>
             <plugin-select
                 v-model="selectedTaskType"
+                :section="section"
                 @update:model-value="onTaskTypeSelect"
             />
         </el-form-item>
@@ -41,11 +42,16 @@
             }
         },
         props: {
-            modelValue : {
+            modelValue: {
                 type: String,
                 required: false,
                 default: undefined,
             },
+            section: {
+                type: String,
+                required: true,
+                default: undefined,
+            }
         },
         data() {
             return {
@@ -54,15 +60,6 @@
                 isLoading: false,
                 plugin: undefined
             };
-        },
-        computed: {
-            taskModels() {
-                const taskModels = [];
-                for (const plugin of this.plugins || []) {
-                    taskModels.push.apply(taskModels, plugin.tasks);
-                }
-                return taskModels;
-            },
         },
         methods: {
             load() {
@@ -84,10 +81,15 @@
             onTaskTypeSelect() {
                 this.load();
 
-                this.onInput({
-                    id: this.taskObject && this.taskObject.id ? this.taskObject.id : "",
+                const value = {
                     type: this.selectedTaskType
-                });
+                };
+
+                if (this.section !== "conditions") {
+                    value["id"] = this.taskObject && this.taskObject.id ? this.taskObject.id : "";
+                }
+
+                this.onInput(value);
             },
         },
     };

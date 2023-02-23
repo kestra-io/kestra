@@ -42,6 +42,10 @@ export default {
                 if (property.$ref.includes("Task")) {
                     return "task"
                 }
+
+                if (property.$ref.includes(".conditions.")) {
+                    return "condition"
+                }
             }
 
             if (Object.prototype.hasOwnProperty.call(property, "additionalProperties")) {

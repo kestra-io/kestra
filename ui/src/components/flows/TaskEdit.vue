@@ -77,6 +77,7 @@
 
     export default {
         components: {Editor, TaskEditor},
+        emits: ["update:task"],
         props: {
             component: {
                 type: String,
@@ -105,6 +106,10 @@
             section: {
                 type: String,
                 default: "tasks"
+            },
+            emitOnly: {
+                type: Boolean,
+                default: false
             }
         },
         methods: {
@@ -141,10 +146,16 @@
 
                     return;
                 }
-                saveFlowTemplate(this, updatedSource, "flow")
-                    .then(() => {
-                        this.isModalOpen = false;
-                    })
+
+                if (this.emitOnly) {
+                    this.$emit("update:task", updatedSource);
+                    this.isModalOpen = false;
+                } else {
+                    saveFlowTemplate(this, updatedSource, "flow")
+                        .then(() => {
+                            this.isModalOpen = false;
+                        })
+                }
             },
             onShow() {
                 this.isModalOpen = !this.isModalOpen;

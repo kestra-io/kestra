@@ -2,7 +2,7 @@
     import {Handle} from "@vue-flow/core"
     import TreeTriggerNode from "../TreeTriggerNode.vue";
 
-    const emit = defineEmits(["mouseover", "mouseleave"])
+    const emit = defineEmits(["mouseover", "mouseleave", "edit"])
 
     const props = defineProps({
         sourcePosition: {
@@ -26,6 +26,10 @@
     const mouseleave = () => {
         emit("mouseleave", props.data.node);
     };
+
+    const forwardEvent = (type, event) => {
+        emit(type, event);
+    };
 </script>
 
 <script>
@@ -41,6 +45,7 @@
         :namespace="data.namespace"
         :flow-id="data.flowId"
         :revision="data.revision"
+        @edit="forwardEvent('edit', $event)"
         @mouseover="mouseover"
         @mouseleave="mouseleave"
     />

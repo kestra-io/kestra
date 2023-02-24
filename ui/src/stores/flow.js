@@ -120,12 +120,28 @@ export default {
         loadGraph({commit}, flow) {
             return this.$http.get(`/api/v1/flows/${flow.namespace}/${flow.id}/graph?revision=${flow.revision}`).then(response => {
                 commit("setFlowGraph", response.data)
-                commit("setflowGraphParam", {
+                commit("setFlowGraphParam", {
                     namespace: flow.namespace,
                     id: flow.id,
                     revision: flow.revision
                 })
 
+                return response.data;
+            })
+        },
+        loadGraphFromSource({commit}, options) {
+            return this.$http.post(`/api/v1/flows/graph`, options.flow, textYamlHeader).then(response => {
+                commit("setFlowGraph", response.data)
+
+                let flow = YamlUtils.parse(options.flow);
+                flow.source = options.flow;
+
+                commit("setFlow", flow)
+                commit("setFlowGraphParam", {
+                    namespace: flow.namespace,
+                    id: flow.id,
+                    revision: flow.revision
+                })
 
                 return response.data;
             })
@@ -173,7 +189,7 @@ export default {
             }
 
         },
-        setflowGraphParam(state, flow) {
+        setFlowGraphParam(state, flow) {
             state.flowGraphParam = flow
         },
         setTask(state, task) {

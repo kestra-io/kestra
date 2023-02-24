@@ -1,11 +1,15 @@
 <script setup>
-    import {ref, onMounted, nextTick, watch} from "vue";
+    import {ref, onMounted, nextTick, watch, getCurrentInstance} from "vue";
+    import {useStore} from 'vuex'
     import {VueFlow, useVueFlow, Position, MarkerType} from "@vue-flow/core"
     import {Controls, ControlButton} from "@vue-flow/controls"
     import dagre from "dagre"
     import ArrowCollapseRight from "vue-material-design-icons/ArrowCollapseRight.vue";
     import ArrowCollapseDown from "vue-material-design-icons/ArrowCollapseDown.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
+    import BottomLine from "../../components/layout/BottomLine.vue";
+    import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import {cssVariable} from "../../utils/global"
     import Cluster from "./nodes/Cluster.vue";
     import Dot from "./nodes/Dot.vue"
@@ -13,10 +17,16 @@
     import Trigger from "./nodes/Trigger.vue";
     import Edge from "./nodes/Edge.vue";
     import {linkedElements} from "../../utils/vueFlow";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import {saveFlowTemplate} from "../../utils/flowTemplate";
 
     const {id, getNodes, removeNodes, getEdges, removeEdges, fitView, addSelectedElements, removeSelectedNodes, removeSelectedEdges} = useVueFlow()
-
+    const store = useStore();
     const emit = defineEmits(["follow"])
+    const user = store.getters['user/user'];
+    const flow = store.getters['flow/flow'];
+    const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
     const props = defineProps({
         flowGraph: {
@@ -40,6 +50,8 @@
     const isHorizontal = ref(localStorage.getItem("topology-orientation") !== "0");
     const isLoading = ref(false);
     const elements = ref([])
+    const haveChange = ref(false)
+    const flowYaml = ref({})
 
     const generateDagreGraph = () => {
         const dagreGraph = new dagre.graphlib.Graph({compound:true})
@@ -206,6 +218,11 @@
         regenerateGraph()
     });
 
+
+    const isAllowedEdit = () => {
+        return user.isAllowed(permission.FLOW, action.UPDATE, flow.namespace);
+    };
+
     const onMouseOver = (node) => {
         addSelectedElements(linkedElements(id, node.uid));
     }
@@ -218,6 +235,25 @@
     const forwardEvent = (type, event) => {
         emit(type, event);
     };
+
+    const onEdit = (event) => {
+        store.dispatch("flow/loadGraphFromSource", {flow: event})
+            .then(value => {
+                flowYaml.value = event;
+                haveChange.value = true;
+                store.dispatch("core/isUnsaved", true);
+            })
+    }
+
+    const save = () => {
+        store
+            .dispatch(`flow/saveFlow`, {flow: flowYaml.value})
+            .then((response) => {
+                toast.saved(response.id);
+                store.dispatch("core/isUnsaved", false);
+            })
+    };
+
 </script>
 
 <template>
@@ -243,6 +279,7 @@
                 <Task
                     v-bind="props"
                     @follow="forwardEvent('follow', $event)"
+                    @edit="onEdit"
                     @mouseover="onMouseOver"
                     @mouseleave="onMouseLeave"
                 />
@@ -251,6 +288,7 @@
             <template #node-trigger="props">
                 <Trigger
                     v-bind="props"
+                    @edit="onEdit"
                     @mouseover="onMouseOver"
                     @mouseleave="onMouseLeave"
                 />
@@ -268,6 +306,18 @@
             </Controls>
         </VueFlow>
     </el-card>
+    <bottom-line>
+        <ul>
+            <li>
+                <trigger-flow type="default" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
+            </li>
+            <li>
+                <el-button :icon="ContentSave" size="large" @click="save" v-if="isAllowedEdit" :disabled="!haveChange" type="info">
+                    {{ $t('save') }}
+                </el-button>
+            </li>
+        </ul>
+    </bottom-line>
 </template>
 
 <style lang="scss" scoped>

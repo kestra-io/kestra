@@ -30,6 +30,8 @@
                     :namespace="namespace"
                     :revision="revision"
                     section="triggers"
+                    :emit-only="true"
+                    @update:task="forwardEvent('edit', $event)"
                 />
             </el-button-group>
         </template>
@@ -47,6 +49,7 @@
             TaskEdit,
             TreeNode,
         },
+        emits: ["edit"],
         props: {
             n: {
                 type: Object,
@@ -65,7 +68,11 @@
                 default: undefined
             },
         },
-        methods: {},
+        methods: {
+            forwardEvent(type, event) {
+                this.$emit(type, event);
+            },
+        },
         data() {
             return {
                 filter: undefined,

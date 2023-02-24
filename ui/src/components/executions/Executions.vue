@@ -114,9 +114,9 @@
             </template>
         </data-table>
 
-        <bottom-line v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
+        <bottom-line>
             <ul>
-                <li>
+                <li v-if="executionsSelection.length !== 0 && (canUpdate || canDelete)">
                     <bottom-line-counter v-model="queryBulkAction" :selections="executionsSelection" :total="total" @update:model-value="selectAll()">
                         <el-button v-if="canUpdate" :icon="Restart" size="large" @click="restartExecutions()">
                             {{ $t('restart') }}
@@ -131,6 +131,19 @@
                 </li>
 
                 <li class="spacer" />
+
+                <template v-if="$route.name === 'flows/update'">
+                    <li>
+                        <template v-if="isAllowedEdit">
+                            <el-button :icon="Pencil" size="large" @click="editFlow">
+                                {{ $t('edit flow') }}
+                            </el-button>
+                        </template>
+                    </li>
+                    <li>
+                        <trigger-flow v-if="flow" :disabled="flow.disabled" :flow-id="flow.id" :namespace="flow.namespace" />
+                    </li>
+                </template>
             </ul>
         </bottom-line>
     </div>
@@ -140,6 +153,7 @@
     import Restart from "vue-material-design-icons/Restart.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
+    import Pencil from "vue-material-design-icons/Pencil.vue";
 </script>
 
 <script>
@@ -166,6 +180,7 @@
     import BottomLineCounter from "../layout/BottomLineCounter.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import TriggerFlow from "../../components/flows/TriggerFlow.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -184,7 +199,8 @@
             Kicon,
             Id,
             BottomLine,
-            BottomLineCounter
+            BottomLineCounter,
+            TriggerFlow
         },
         props: {
             embed: {
@@ -214,6 +230,7 @@
             ...mapState("execution", ["executions", "total"]),
             ...mapState("stat", ["daily"]),
             ...mapState("auth", ["user"]),
+            ...mapState("flow", ["flow"]),
             routeInfo() {
                 return {
                     title: this.$t("executions")
@@ -232,6 +249,9 @@
             },
             canDelete() {
                 return this.user && this.user.isAllowed(permission.EXECUTION, action.DELETE);
+            },
+            isAllowedEdit() {
+                return this.user.isAllowed(permission.FLOW, action.UPDATE, this.flow.namespace);
             },
         },
         methods: {
@@ -291,7 +311,6 @@
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
             },
-
             restartExecutions() {
                 this.$toast().confirm(
                     this.$t("bulk restart", {"executionCount": this.queryBulkAction ? this.total : this.executionsSelection.length}),
@@ -375,6 +394,13 @@
                     },
                     () => {}
                 )
+            },
+            editFlow() {
+                this.$router.push({name:"flows/update", params: {
+                        namespace: this.flow.namespace,
+                        id: this.flow.id,
+                        tab: "source"
+                    }})
             },
         }
     };

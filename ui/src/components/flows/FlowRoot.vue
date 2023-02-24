@@ -20,7 +20,6 @@
     </div>
 </template>
 
-
 <script setup>
     import Pencil from "vue-material-design-icons/Pencil.vue";
 </script>
@@ -163,7 +162,7 @@
             },
             displayBottomLine() {
                 const name = this.activeTabName();
-                return name != null &&  this.canExecute && name !== "execute" && name !== "source" && name !== "schedule" && name !== "topology";
+                return name != null && this.canExecute && name !== "executions" && name !== "source" && name !== "schedule" && name !== "topology";
             },
             editFlow() {
                 this.$router.push({name:"flows/update", params: {

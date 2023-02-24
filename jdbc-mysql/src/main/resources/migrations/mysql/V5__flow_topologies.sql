@@ -11,8 +11,7 @@ CREATE TABLE IF NOT EXISTS `flow_topologies` (
 ) ENGINE INNODB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
-
-ALTER TABLE queues MODIFY `consumers` ENUM(
+ALTER TABLE queues CHANGE consumers consumers SET(
     'indexer',
     'executor',
     'worker',

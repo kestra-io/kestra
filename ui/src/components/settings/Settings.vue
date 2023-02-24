@@ -45,14 +45,30 @@
             <el-form-item :label="$t('Default log level')">
                 <log-level-selector clearable :value="defaultLogLevel" @update:model-value="onLevelChange" />
             </el-form-item>
+
+            <el-form-item v-if="canReadFlows || canReadTemplates" :label="$t('exports')">
+                <el-button v-if="canReadFlows" :icon="Download" size="large" @click="exportFlows()">
+                    {{ $t('export all flows') }}
+                </el-button>
+                <el-button v-if="canReadTemplates" :icon="Download" size="large" @click="exportTemplates()">
+                    {{ $t('export all templates') }}
+                </el-button>
+            </el-form-item>
         </el-form>
     </div>
 </template>
+
+<script setup>
+    import Download from "vue-material-design-icons/Download.vue";
+</script>
 
 <script>
     import RouteContext from "../../mixins/routeContext";
     import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+    import {mapState} from "vuex";
 
     export default {
         mixins: [RouteContext],
@@ -125,6 +141,7 @@
             },
         },
         computed: {
+            ...mapState("auth", ["user"]),
             routeInfo() {
                 return {
                     title: this.$t("settings")
@@ -147,7 +164,27 @@
                     {value: "vs", text: "Light"},
                     {value: "dark", text: "Dark"}
                 ]
-            }
+            },
+            canReadFlows() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+            },
+            canReadTemplates() {
+                return this.user && this.user.isAllowed(permission.TEMPLATE, action.READ);
+            },
+            exportFlows() {
+                return this.$store
+                    .dispatch("flow/exportFlowByQuery", {})
+                    .then(_ => {
+                        this.$toast().success(this.$t("flows exported"));
+                    })
+            },
+            exportTemplates() {
+                return this.$store
+                    .dispatch("template/exportTemplateByQuery", {})
+                    .then(_ => {
+                        this.$toast().success(this.$t("templates exported"));
+                    })
+            },
         }
     };
 </script>

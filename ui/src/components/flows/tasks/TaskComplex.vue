@@ -21,10 +21,10 @@
         </template>
         <el-form label-position="top">
             <task-object
-                v-if="schema"
+                v-if="currentSchema"
                 :model-value="modelValue"
                 @update:model-value="onInput"
-                :schema="schema"
+                :schema="currentSchema"
                 :definitions="definitions"
             />
         </el-form>
@@ -49,6 +49,14 @@
             return {
                 isOpen: false,
             };
+        },
+        computed: {
+            currentSchema() {
+                let ref = this.schema.$ref.substring(8);
+                if (this.definitions[ref]) {
+                    return this.definitions[ref];
+                }
+            }
         },
     };
 </script>

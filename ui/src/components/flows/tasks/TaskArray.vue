@@ -7,6 +7,7 @@
                 @update:model-value="onInput(index, $event)"
                 :root="getKey(index)"
                 :schema="schema.items"
+                :definitions="definitions"
             />
         </div>
         <div class="flex-shrink-1">

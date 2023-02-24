@@ -68,25 +68,8 @@
         computed: {
             properties() {
                 if (this.schema) {
-                    // if (
-                    //     this.schema.properties &&
-                    //     this.schema.properties.type &&
-                    //     this.schema.properties.type.const ===
-                    //     "io.kestra.core.tasks.scripts.Bash"
-                    // ) {
-                    //     return undefined;
-                    // }
-
                     const properties = this.schema.properties
 
-                    // for (let prop in properties) {
-                    // if (Object.prototype.hasOwnProperty.call(properties[prop], "$ref")) {
-                    //     properties[prop] = this.definitions[properties[prop].$ref.toString().replace("#/$defs/", "")]
-                    // }
-                    // if (properties[prop].type === "array" && Object.prototype.hasOwnProperty.call(properties[prop].items, "$ref")) {
-                    //     properties[prop].items = this.definitions[properties[prop].items.$ref.toString().replace("#/$defs/", "")]
-                    // }
-                    // }
                     return this.sortProperties(properties)
                 }
 
@@ -117,8 +100,8 @@
                             return 1;
                         }
 
-                        const aRequired = this.schema.required.includes(a[0]);
-                        const bRequired = this.schema.required.includes(b[0]);
+                        const aRequired = (this.schema.required || []).includes(a[0]);
+                        const bRequired = (this.schema.required || []).includes(b[0]);
 
                         if (aRequired && !bRequired) {
                             return -1;

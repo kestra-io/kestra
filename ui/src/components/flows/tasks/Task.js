@@ -27,8 +27,8 @@ export default {
         // }
     },
     methods: {
-        getKey(property) {
-            return this.root ? this.root + "." + property : property;
+        getKey(addKey) {
+            return this.root ? this.root + "." + addKey : addKey;
         },
         isRequired(key) {
             return this.schema.required && this.schema.required.includes(key);
@@ -46,6 +46,8 @@ export default {
                 if (property.$ref.includes(".conditions.")) {
                     return "condition"
                 }
+
+                return "complex";
             }
 
             if (Object.prototype.hasOwnProperty.call(property, "additionalProperties")) {
@@ -54,10 +56,6 @@ export default {
 
             if (property.type === "integer") {
                 return "number";
-            }
-
-            if (property.type === "object" && property.properties && Object.keys(property.properties).length >= 1) {
-                return "complex";
             }
 
             return property.type || "dynamic";

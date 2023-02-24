@@ -57,12 +57,13 @@
 
                 <task-edit
                     class="node-action"
-                    :modal-id="`modal-source-${hash}`"
                     :task="task"
                     :flow-id="flowId"
                     size="small"
                     :namespace="namespace"
                     :revision="revision"
+                    :emit-only="true"
+                    @update:task="forwardEvent('edit', $event)"
                 />
             </el-button-group>
             <el-drawer
@@ -122,6 +123,7 @@
             Duration,
             TreeNode,
         },
+        emits: ["follow", "edit"],
         props: {
             n: {
                 type: Object,
@@ -153,7 +155,7 @@
             },
             onLevelChange(level) {
                 this.logLevel = level;
-            }
+            },
         },
         data() {
             return {

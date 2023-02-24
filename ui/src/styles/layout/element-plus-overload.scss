@@ -5,16 +5,10 @@
 
 // button
 .el-button {
-    --el-button-disabled-border-color: var(--bs-border-color);
-    --el-button-hover-text-color: var(--bs-body-color);
-
-
     html.dark & {
-        --el-button-disabled-text-color: var(--bs-gray-200);
-    }
-
-    a:hover & {
-        color:  var(--el-button-text-color) !important;
+        &:not(.el-button--primary):not(.el-button--success):not(.el-button--warning):not(.el-button--danger):not(.el-button--error):not(.el-button--info) {
+            --el-button-hover-text-color: var(--bs-body-color);
+        }
     }
 
     .el-input-group--append & [class*=el-icon] + span {

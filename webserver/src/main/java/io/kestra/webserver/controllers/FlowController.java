@@ -70,6 +70,9 @@ public class FlowController {
     @Inject
     private FlowTopologyRepositoryInterface flowTopologyRepository;
 
+    @Inject
+    private YamlFlowParser yamlFlowParser;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph", produces = MediaType.TEXT_JSON)
     @Operation(tags = {"Flows"}, summary = "Generate a graph for a flow")
@@ -82,6 +85,17 @@ public class FlowController {
             .findById(namespace, id, revision)
             .map(throwFunction(FlowGraph::of))
             .orElse(null);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "graph", produces = MediaType.TEXT_JSON, consumes = MediaType.APPLICATION_YAML)
+    @Operation(tags = {"Flows"}, summary = "Generate a graph for a flow source")
+    public FlowGraph flowGraphSource(
+        @Parameter(description = "The flow") @Body String flow
+    ) throws ConstraintViolationException, IllegalVariableEvaluationException {
+        Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
+
+        return FlowGraph.of(flowParsed);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -176,7 +190,7 @@ public class FlowController {
     public HttpResponse<FlowWithSource> create(
         @Parameter(description = "The flow") @Body String flow
     ) throws ConstraintViolationException {
-        Flow flowParsed = new YamlFlowParser().parse(flow, Flow.class);
+        Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
         return HttpResponse.ok(flowRepository.create(flowParsed, flow, taskDefaultService.injectDefaults(flowParsed)));
     }
@@ -209,7 +223,7 @@ public class FlowController {
             namespace,
             sources
                 .stream()
-                .map(flow -> new YamlFlowParser().parse(flow, Flow.class))
+                .map(flow -> yamlFlowParser.parse(flow, Flow.class))
                 .collect(Collectors.toList()),
             sources,
             delete
@@ -330,7 +344,7 @@ public class FlowController {
 
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        Flow flowParsed = new YamlFlowParser().parse(flow, Flow.class);
+        Flow flowParsed = yamlFlowParser.parse(flow, Flow.class);
 
         return HttpResponse.ok(flowRepository.update(flowParsed, existingFlow.get(), flow, taskDefaultService.injectDefaults(flowParsed)));
     }
@@ -434,7 +448,7 @@ public class FlowController {
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
 
                 try {
-                    Flow flowParse = new YamlFlowParser().parse(flow, Flow.class);
+                    Flow flowParse = yamlFlowParser.parse(flow, Flow.class);
 
                     validateConstraintViolationBuilder.flow(flowParse.getId());
                     validateConstraintViolationBuilder.namespace(flowParse.getNamespace());
@@ -513,7 +527,7 @@ public class FlowController {
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
-                Flow parsed = new YamlFlowParser().parse(source, Flow.class);
+                Flow parsed = yamlFlowParser.parse(source, Flow.class);
                 importFlow(source, parsed);
             }
         } else if (fileName.endsWith(".zip")) {
@@ -525,7 +539,7 @@ public class FlowController {
                     }
 
                     String source = new String(archive.readAllBytes());
-                    Flow parsed = new YamlFlowParser().parse(source, Flow.class);
+                    Flow parsed = yamlFlowParser.parse(source, Flow.class);
                     importFlow(source, parsed);
                 }
             }

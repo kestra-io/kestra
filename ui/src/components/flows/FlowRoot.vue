@@ -30,7 +30,6 @@
     import Schedule from "./Schedule.vue";
     import FlowSource from "./FlowSource.vue";
     import FlowRevisions from "./FlowRevisions.vue";
-    import FlowRun from "./FlowRun.vue";
     import FlowLogs from "./FlowLogs.vue";
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
@@ -164,7 +163,7 @@
             },
             displayBottomLine() {
                 const name = this.activeTabName();
-                return name != null &&  this.canExecute && name !== "execute" && name !== "source" && name !== "schedule";
+                return name != null &&  this.canExecute && name !== "execute" && name !== "source" && name !== "schedule" && name !== "topology";
             },
             editFlow() {
                 this.$router.push({name:"flows/update", params: {

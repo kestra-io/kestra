@@ -102,6 +102,10 @@
                                     "flow/loadFlow",
                                     {namespace: execution.namespace, id: execution.flowId, revision: execution.flowRevision}
                                 );
+                                this.$store.dispatch("flow/loadRevisions", {
+                                    namespace: execution.namespace,
+                                    id: execution.flowId
+                                })
                             }
 
                             this.$store.commit("execution/setExecution", execution);
@@ -177,7 +181,7 @@
             },
         },
         computed: {
-            ...mapState("flow", ["flow"]),
+            ...mapState("flow", ["flow", "revisions"]),
             ...mapState("execution", ["execution"]),
             ...mapState("auth", ["user"]),
             tabs() {

@@ -114,8 +114,8 @@
         },
         methods: {
             load(taskId) {
-                if(this.revision){
-                    return YamlUtils.extractTask(this.revisions[this.revision-1].source, taskId, this.section).toString();
+                if (this.revision) {
+                    return YamlUtils.extractTask(this.revisions[this.revision - 1].source, taskId, this.section).toString();
                 }
                 return YamlUtils.extractTask(this.flow.source, taskId, this.section).toString();
             },
@@ -171,7 +171,7 @@
                 uuid: Utils.uid(),
                 taskYaml: undefined,
                 isModalOpen: false,
-                activeTabs: "form",
+                activeTabs: "source",
             };
         },
         created() {

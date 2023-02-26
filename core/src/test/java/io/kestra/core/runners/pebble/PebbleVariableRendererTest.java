@@ -75,6 +75,31 @@ class PebbleVariableRendererTest {
     }
 
     @Test
+    void autoJson() throws IllegalVariableEvaluationException {
+        Map<String, Object> vars = Map.of(
+            "map", Map.of("a", "1", "b", "2"),
+            "collection", List.of("1","2", "3"),
+            "array",  new String[]{"1", "2", "3"},
+            "inta",  new Integer[]{1, 2, 3}
+        );
+
+        Map<String, Object> in = Map.of(
+            "map", "{{ map }}",
+            "collection", "{{ collection }}",
+            "array",  "{{ array }}",
+            "inta",  "{{ inta }}"
+        );
+
+        Map<String, Object> render = variableRenderer.render(in, vars);
+
+        assertThat((String)render.get("map"), containsString("\"a\":\"1\""));
+        assertThat((String)render.get("map"), containsString("\"b\":\"2\""));
+        assertThat(render.get("collection"), is("[\"1\",\"2\",\"3\"]"));
+        assertThat(render.get("array"), is("[\"1\",\"2\",\"3\"]"));
+        assertThat(render.get("inta"), is("[1,2,3]"));
+    }
+
+    @Test
     void exception() {
         assertThrows(IllegalVariableEvaluationException.class, () -> {
             Rethrow.throwSupplier(() -> {

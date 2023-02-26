@@ -12,7 +12,7 @@
                                     {{ $t("attempt") }} {{ index + 1 }}
                                 </div>
                                 <div class="task-icon me-1" v-loading="this.tasksIcons[currentTaskRun.id] === undefined">
-                                    <task-icon :cls="tasksIcons[currentTaskRun.id]" only-icon />
+                                    <task-icon :cls="tasksIcons[currentTaskRun.id]" v-if="this.tasksIcons[currentTaskRun.id]" only-icon />
                                 </div>
                                 <div class="task-id flex-grow-1" :id="`attempt-${index}-${currentTaskRun.id}`">
                                     <el-tooltip :persistent="false" transition="" :hide-after="0">
@@ -204,7 +204,7 @@
                         taskId: currentTaskRun.taskId,
                         revision: currentTaskRun.revision
                     }).then(value => {
-                        this.tasksIcons[currentTaskRun.id] = value.type
+                        this.tasksIcons[currentTaskRun.id] = value ? value.type : null
                     })
                 }
             }

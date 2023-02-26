@@ -68,11 +68,23 @@ export default {
                 })
         },
         loadTask({commit}, options) {
-            return this.$http.get(`/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`).then(response => {
-                commit("setTask", response.data)
+            return this.$http.get(
+                `/api/v1/flows/${options.namespace}/${options.id}/tasks/${options.taskId}${options.revision ? "?revision=" + options.revision : ""}`,
+                {
+                    validateStatus: (status) => {
+                        return status === 200 || status === 404;
+                    }
+                }
+            )
+                .then(response => {
+                    if (response.status === 200) {
+                        commit("setTask", response.data)
 
-                return response.data;
-            })
+                        return response.data;
+                    } else {
+                        return null;
+                    }
+                })
         },
         saveFlow({commit, dispatch}, options) {
             const flowData = YamlUtils.parse(options.flow)

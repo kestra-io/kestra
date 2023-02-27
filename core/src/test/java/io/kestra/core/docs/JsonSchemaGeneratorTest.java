@@ -4,6 +4,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.VoidOutput;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.tasks.scripts.ScriptOutput;
 import io.kestra.core.Helpers;
@@ -99,6 +100,22 @@ class JsonSchemaGeneratorTest {
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
             var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
+            var allOf = (List<Object>) task.get("allOf");
+
+            assertThat(allOf.size(), is(1));
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void trigger() throws URISyntaxException {
+        Helpers.runApplicationContext((applicationContext) -> {
+            JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
+
+            Map<String, Object> generate = jsonSchemaGenerator.schemas(AbstractTrigger.class);
+
+            var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+            var task = (Map<String, Object>) definitions.get("io.kestra.core.models.triggers.AbstractTrigger-2");
             var allOf = (List<Object>) task.get("allOf");
 
             assertThat(allOf.size(), is(1));

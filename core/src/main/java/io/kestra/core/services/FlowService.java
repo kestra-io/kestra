@@ -15,6 +15,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.ListUtils;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jakarta.inject.Inject;
@@ -213,6 +214,15 @@ public class FlowService {
 
     public static String cleanupSource(String source) {
         return source.replaceFirst("(?m)^revision: \\d+\n?","");
+    }
+
+    public static String injectDisabledTrue(String source) {
+        Pattern p = Pattern.compile("^disabled\\s*:\\s*false\\s*", Pattern.MULTILINE);
+        if (p.matcher(source).find()) {
+            return p.matcher(source).replaceAll("disabled: true\n");
+        }
+
+        return source + "\ndisabled: true";
     }
 
     @AllArgsConstructor

@@ -49,7 +49,7 @@ public class DefaultScheduler extends AbstractScheduler {
         });
 
         triggerQueue.receive(trigger -> {
-            if (trigger.getExecutionId() != null) {
+            if (trigger != null && trigger.getExecutionId() != null) {
                 this.watchingTrigger.put(trigger.getExecutionId(), trigger);
             }
         });

@@ -180,6 +180,18 @@ export default {
         },
         importFlows(_, options) {
             return this.$http.post("/api/v1/flows/import", options, {headers: {"Content-Type": "multipart/form-data"}})
+        },
+        disableFlowByIds(_, options) {
+            return this.$http.post("/api/v1/flows/disable/by-ids", options.ids)
+        },
+        disableFlowByQuery(_, options) {
+            return this.$http.post("/api/v1/flows/disable/by-query", options, {params: options})
+        },
+        deleteFlowByIds(_, options) {
+            return this.$http.delete("/api/v1/flows/delete/by-ids", {data: options.ids})
+        },
+        deleteFlowByQuery(_, options) {
+            return this.$http.delete("/api/v1/flows/delete/by-query", options, {params: options})
         }
     },
     mutations: {

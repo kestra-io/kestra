@@ -69,6 +69,9 @@
                         <el-button v-if="canRead" :icon="Download" size="large" @click="exportTemplates()">
                             {{ $t('export') }}
                         </el-button>
+                        <el-button v-if="canDelete" @click="deleteTemplates" size="large" :icon="TrashCan">
+                            {{ $t('delete') }}
+                        </el-button>
                     </bottom-line-counter>
                 </ul>
 
@@ -76,12 +79,12 @@
                 <li>
                     <div class="el-input el-input-file el-input--large custom-upload">
                         <div class="el-input__wrapper">
-                            <label for="importFlows">
+                            <label for="importTemplates">
                                 <Upload />
                                 {{ $t('import') }}
                             </label>
                             <input
-                                id="importFlows"
+                                id="importTemplates"
                                 class="el-input__inner"
                                 type="file"
                                 @change="importTemplates()"
@@ -105,6 +108,7 @@
 <script setup>
     import Plus from "vue-material-design-icons/Plus.vue";
     import Download from "vue-material-design-icons/Download.vue";
+    import TrashCan from "vue-material-design-icons/TrashCan.vue";
 </script>
 
 <script>
@@ -158,6 +162,9 @@
             },
             canRead() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.READ);
+            },
+            canDelete() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.DELETE);
             },
         },
         methods: {
@@ -226,6 +233,32 @@
                         this.$toast().success(this.$t("templates imported"));
                         this.loadData(() => {})
                     })
+            },
+            deleteTemplates(){
+                this.$toast().confirm(
+                    this.$t("template delete", {"templateCount": this.queryBulkAction ? this.total : this.templatesSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("template/deleteTemplateByQuery", this.loadQuery({
+                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
+                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
+                                }, false))
+                                .then(r => {
+                                    this.$toast().success(this.$t("templates deleted", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("template/deleteTemplateByIds", {ids: this.templatesSelection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("templates deleted", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        }
+                    },
+                    () => {}
+                )
             },
         },
     };

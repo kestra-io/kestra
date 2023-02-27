@@ -109,6 +109,12 @@
                         <el-button v-if="canRead" :icon="Download" size="large" @click="exportFlows()">
                             {{ $t('export') }}
                         </el-button>
+                        <el-button v-if="canDelete" @click="deleteFlows" size="large" :icon="TrashCan">
+                            {{ $t('delete') }}
+                        </el-button>
+                        <el-button v-if="canDisable" @click="disableFlows" size="large" :icon="FileDocumentRemoveOutline">
+                            {{ $t('disable') }}
+                        </el-button>
                     </bottom-line-counter>
                 </ul>
                 <li class="spacer" />
@@ -152,6 +158,8 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Download from "vue-material-design-icons/Download.vue";
+    import TrashCan from "vue-material-design-icons/TrashCan.vue";
+    import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
 </script>
 
 <script>
@@ -224,6 +232,12 @@
             canRead() {
                 return this.user && this.user.isAllowed(permission.FLOW, action.READ);
             },
+            canDelete() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.DELETE);
+            },
+            canDisable() {
+                return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE);
+            },
         },
         methods: {
             handleSelectionChange(val) {
@@ -260,6 +274,58 @@
                                 .dispatch("flow/exportFlowByIds", {ids: this.flowsSelection})
                                 .then(_ => {
                                     this.$toast().success(this.$t("flows exported"));
+                                })
+                        }
+                    },
+                    () => {}
+                )
+            },
+            disableFlows(){
+                this.$toast().confirm(
+                    this.$t("flow disable", {"flowCount": this.queryBulkAction ? this.total : this.flowsSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("flow/disableFlowByQuery", this.loadQuery({
+                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
+                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
+                                }, false))
+                                .then(r => {
+                                    this.$toast().success(this.$t("flows disabled", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("flow/disableFlowByIds", {ids: this.flowsSelection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("flows disabled", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        }
+                    },
+                    () => {}
+                )
+            },
+            deleteFlows(){
+                this.$toast().confirm(
+                    this.$t("flow delete", {"flowCount": this.queryBulkAction ? this.total : this.flowsSelection.length}),
+                    () => {
+                        if (this.queryBulkAction) {
+                            return this.$store
+                                .dispatch("flow/deleteFlowByQuery", this.loadQuery({
+                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
+                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
+                                }, false))
+                                .then(r => {
+                                    this.$toast().success(this.$t("flows deleted", {count: r.data.count}));
+                                    this.loadData(() => {})
+                                })
+                        } else {
+                            return this.$store
+                                .dispatch("flow/deleteFlowByIds", {ids: this.flowsSelection})
+                                .then(r => {
+                                    this.$toast().success(this.$t("flows deleted", {count: r.data.count}));
+                                    this.loadData(() => {})
                                 })
                         }
                     },

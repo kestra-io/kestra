@@ -115,9 +115,9 @@
         methods: {
             load(taskId) {
                 if (this.revision) {
-                    return YamlUtils.extractTask(this.revisions[this.revision - 1].source, taskId, this.section).toString();
+                    return YamlUtils.extractTask(this.revisions[this.revision - 1].source, taskId).toString();
                 }
-                return YamlUtils.extractTask(this.flow.source, taskId, this.section).toString();
+                return YamlUtils.extractTask(this.flow.source, taskId).toString();
             },
             mapSectionWithSchema() {
                 switch (this.section) {
@@ -135,8 +135,7 @@
                     updatedSource = YamlUtils.replaceTaskInDocument(
                         this.flow.source,
                         this.taskId ? this.taskId : this.task.id,
-                        this.taskYaml,
-                        this.section
+                        this.taskYaml
                     );
                 } catch (err) {
                     this.$toast().warning(

@@ -23,13 +23,13 @@ export default class YamlUtils {
         return JsYaml.load(item);
     }
 
-    static extractTask(source, taskId, section) {
+    static extractTask(source, taskId) {
         const yamlDoc = yaml.parseDocument(source);
-        let taskNode = YamlUtils._extractTask(yamlDoc, taskId, section);
+        let taskNode = YamlUtils._extractTask(yamlDoc, taskId);
         return taskNode === undefined ? undefined : new yaml.Document(taskNode).toString();
     }
 
-    static _extractTask(yamlDoc, taskId, section, callback) {
+    static _extractTask(yamlDoc, taskId, callback) {
         const find = (element) => {
             if (element === undefined) {
                 return;
@@ -65,7 +65,7 @@ export default class YamlUtils {
                 }
             }
         }
-        let result = find(yamlDoc.contents.items.find(r => r.key.value === section).value)
+        let result = find(yamlDoc.contents)
 
         if (result === undefined) {
             return undefined;
@@ -78,11 +78,11 @@ export default class YamlUtils {
         }
     }
 
-    static replaceTaskInDocument(source, taskId, newContent, section) {
+    static replaceTaskInDocument(source, taskId, newContent) {
         const yamlDoc = yaml.parseDocument(source);
         const newItem = yamlDoc.createNode(yaml.parseDocument(newContent))
 
-        YamlUtils._extractTask(yamlDoc, taskId, section, (oldValue) => {
+        YamlUtils._extractTask(yamlDoc, taskId, (oldValue) => {
             YamlUtils.replaceCommentInTask(oldValue, newItem)
 
             return newItem;

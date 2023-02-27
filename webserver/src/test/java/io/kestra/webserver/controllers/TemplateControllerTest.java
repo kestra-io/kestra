@@ -5,7 +5,9 @@ import io.kestra.core.models.templates.Template;
 import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.repository.memory.MemoryTemplateRepository;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -17,10 +19,12 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
@@ -36,6 +40,17 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
     @Inject
     @Client("/")
     RxHttpClient client;
+
+    @Inject
+    MemoryTemplateRepository templateRepository;
+
+    @BeforeEach
+    protected void init() throws IOException, URISyntaxException {
+        templateRepository.findAll()
+            .forEach(templateRepository::delete);
+
+        super.init();
+    }
 
     private Template createTemplate() {
         Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format("test").build();
@@ -228,16 +243,22 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void deleteTemplatesByIds(){
+    void deleteTemplatesByIds() {
         postTemplate("template-a", "kestra.test.delete");
         postTemplate("template-b", "kestra.test.delete");
         postTemplate("template-c", "kestra.test.delete");
+
         List<IdWithNamespace> ids = List.of(
             new IdWithNamespace("kestra.test.delete", "template-a"),
             new IdWithNamespace("kestra.test.delete", "template-b"),
-            new IdWithNamespace("kestra.test.delete", "template-c"));
+            new IdWithNamespace("kestra.test.delete", "template-c")
+        );
 
-        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/templates/delete/by-ids", ids));
+        HttpResponse<BulkResponse> response = client
+            .toBlocking()
+            .exchange(DELETE("/api/v1/templates/delete/by-ids", ids), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount(), is(3));
 
         HttpClientResponseException templateA = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/kestra.test.delete/template-a"));
@@ -248,17 +269,22 @@ class TemplateControllerTest extends AbstractMemoryRunnerTest {
         HttpClientResponseException templateC = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/kestra.test.delete/template-c"));
         });
+
         assertThat(templateA.getStatus(), is(HttpStatus.NOT_FOUND));
         assertThat(templateB.getStatus(), is(HttpStatus.NOT_FOUND));
         assertThat(templateC.getStatus(), is(HttpStatus.NOT_FOUND));
     }
 
     @Test
-    void deleteTemplatesByQuery(){
+    void deleteTemplatesByQuery() {
         Template template = createTemplate("toDelete", "kestra.test.delete");
         client.toBlocking().retrieve(POST("/api/v1/templates", template), String.class);
 
-        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/templates/delete/by-query?namespace=kestra.test.delete"));
+        HttpResponse<BulkResponse> response = client
+            .toBlocking()
+            .exchange(DELETE("/api/v1/templates/delete/by-query?namespace=kestra.test.delete"), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount(), is(1));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/kestra.test.delete/toDelete"));

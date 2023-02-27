@@ -15,9 +15,11 @@ import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.TaskDefaultService;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
@@ -43,7 +45,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -500,80 +501,105 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/delete/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Delete(uri = "/delete/by-query")
     @Operation(
         tags = {"Flows"},
         summary = "Delete flows returned by the query parameters."
     )
-    public HttpResponse<Void> deleteByQuery(
+    public HttpResponse<BulkResponse> deleteByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels){
-        List<FlowWithSource> flows = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));
-        flows.stream().forEach(flowRepository::delete);
+        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+    ) {
+        List<Flow> list = flowRepository
+            .findWithSource(query, namespace, RequestUtils.toMap(labels))
+            .stream()
+            .peek(flowRepository::delete)
+            .collect(Collectors.toList());
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT);
+        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/delete/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Delete(uri = "/delete/by-ids")
     @Operation(
         tags = {"Flows"},
         summary = "Delete flows by their IDs."
     )
-    public HttpResponse<Void> deleteByIds(
-        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids){
-        ids.stream()
+    public HttpResponse<BulkResponse> deleteByIds(
+        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids
+    ) {
+        List<Flow> list = ids
+            .stream()
             .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
-            .forEach(flowRepository::delete);
+            .peek(flowRepository::delete)
+            .collect(Collectors.toList());
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT);
+        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
     }
 
-
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/disable/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Post(uri = "/disable/by-query")
     @Operation(
         tags = {"Flows"},
         summary = "Disable flows returned by the query parameters."
     )
-    public HttpResponse<Void> disableByQuery(
+    public HttpResponse<BulkResponse> disableByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels){
-        List<FlowWithSource> flows = flowRepository.findWithSource(query, namespace, RequestUtils.toMap(labels));
-        flows.forEach(flow -> {
-            FlowWithSource flowUpdated = flow.toBuilder().disabled(true).source(injectDisabledTrue(flow.getSource())).build();
-            flowRepository.update(flowUpdated, flow, flowUpdated.getSource(), taskDefaultService.injectDefaults(flowUpdated));
-        });
+        @Parameter(description = "A labels filter") @Nullable @QueryValue List<String> labels
+    ) {
+        List<FlowWithSource> list = flowRepository
+            .findWithSource(query, namespace, RequestUtils.toMap(labels))
+            .stream()
+            .filter(flowWithSource -> !flowWithSource.isDisabled())
+            .peek(flow -> {
+                FlowWithSource flowUpdated = flow.toBuilder()
+                    .disabled(true)
+                    .source(FlowService.injectDisabledTrue(flow.getSource()))
+                    .build();
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT);
+                flowRepository.update(
+                    flowUpdated,
+                    flow,
+                    flowUpdated.getSource(),
+                    taskDefaultService.injectDefaults(flowUpdated)
+                );
+            })
+            .collect(Collectors.toList());
+
+        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/disable/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Post(uri = "/disable/by-ids")
     @Operation(
         tags = {"Flows"},
         summary = "Disable flows by their IDs."
     )
-    public HttpResponse<Void> disableByIds(
-        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids){
-        ids.stream()
+    public HttpResponse<BulkResponse> disableByIds(
+        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids
+    ) {
+        List<FlowWithSource> list = ids
+            .stream()
             .map(id -> flowRepository.findByIdWithSource(id.getNamespace(), id.getId()).orElseThrow())
-            .forEach(flow -> {
-                FlowWithSource flowUpdated = flow.toBuilder().disabled(true).source(injectDisabledTrue(flow.getSource())).build();
-                flowRepository.update(flowUpdated, flow, flowUpdated.getSource(), taskDefaultService.injectDefaults(flowUpdated));
-            });
+            .filter(flowWithSource -> !flowWithSource.isDisabled())
+            .peek(flow -> {
+                FlowWithSource flowUpdated = flow.toBuilder()
+                    .disabled(true)
+                    .source(FlowService.injectDisabledTrue(flow.getSource()))
+                    .build();
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT);
-    }
+                flowRepository.update(
+                    flowUpdated,
+                    flow,
+                    flowUpdated.getSource(),
+                    taskDefaultService.injectDefaults(flowUpdated)
+                );
+            })
+            .collect(Collectors.toList());
 
-    private static String injectDisabledTrue(String source) {
-        Pattern p = Pattern.compile("^disabled\\s*:\\s*false\\s*", Pattern.MULTILINE);
-        if(p.matcher(source).find()) {
-            return p.matcher(source).replaceAll("disabled: true\n");
-        }
-        return source + "\ndisabled: true";
+        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -622,5 +648,4 @@ public class FlowController {
                 () -> flowRepository.create(parsed, source, taskDefaultService.injectDefaults(parsed))
             );
     }
-
 }

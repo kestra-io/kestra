@@ -7,6 +7,7 @@ import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.serializers.YamlFlowParser;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.core.annotation.Nullable;
@@ -279,33 +280,40 @@ public class TemplateController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/delete/by-query", produces = MediaType.APPLICATION_OCTET_STREAM)
+    @Delete(uri = "/delete/by-query")
     @Operation(
         tags = {"Flows"},
         summary = "Delete flows returned by the query parameters."
     )
-    public HttpResponse<Void> deleteByQuery(
+    public HttpResponse<BulkResponse> deleteByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace){
-        List<Template> templates = templateRepository.find(query, namespace);
-        templates.stream().forEach(templateRepository::delete);
+        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
+    ){
+        List<Template> list = templateRepository
+            .find(query, namespace)
+            .stream()
+            .peek(templateRepository::delete)
+            .collect(Collectors.toList());
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT);
+        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "/delete/by-ids", produces = MediaType.APPLICATION_OCTET_STREAM, consumes = MediaType.APPLICATION_JSON)
+    @Delete(uri = "/delete/by-ids")
     @Operation(
         tags = {"Flows"},
         summary = "Delete flows by their IDs."
     )
-    public HttpResponse<Void> deleteByIds(
-        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids){
-        ids.stream()
+    public HttpResponse<BulkResponse> deleteByIds(
+        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids
+    ) {
+        List<Template> list = ids
+            .stream()
             .map(id -> templateRepository.findById(id.getNamespace(), id.getId()).orElseThrow())
-            .forEach(templateRepository::delete);
+            .peek(templateRepository::delete)
+            .collect(Collectors.toList());
 
-        return HttpResponse.status(HttpStatus.NO_CONTENT);
+        return HttpResponse.ok(BulkResponse.builder().count(list.size()).build());
     }
 
     private static byte[] zipTemplates(List<Template> templates) throws IOException {

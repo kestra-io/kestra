@@ -5,6 +5,8 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.webserver.responses.BulkErrorResponse;
+import io.kestra.webserver.responses.BulkResponse;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.convert.format.Format;
@@ -108,21 +110,6 @@ public class ExecutionController {
 
     @Inject
     private RunContextFactory runContextFactory;
-
-    @SuperBuilder
-    @Getter
-    @NoArgsConstructor
-    public static class BulkResponse {
-        Integer count;
-    }
-
-    @SuperBuilder
-    @Getter
-    @NoArgsConstructor
-    public static class BulkErrorResponse {
-        String message;
-        Set<ManualConstraintViolation<String>> invalids;
-    }
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "executions/search", produces = MediaType.TEXT_JSON)

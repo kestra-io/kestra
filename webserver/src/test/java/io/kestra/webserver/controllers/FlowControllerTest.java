@@ -14,7 +14,9 @@ import io.kestra.core.tasks.debugs.Return;
 import io.kestra.core.tasks.flows.Sequential;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.repository.memory.MemoryFlowRepository;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -27,10 +29,12 @@ import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.rxjava2.http.client.RxHttpClient;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -51,6 +55,19 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     @Inject
     @Client("/")
     RxHttpClient client;
+
+    @Inject
+    MemoryFlowRepository memoryFlowRepository;
+
+    @BeforeEach
+    protected void init() throws IOException, URISyntaxException {
+        memoryFlowRepository.findAll()
+            .forEach(memoryFlowRepository::delete);
+
+        super.init();
+
+        TestsUtils.loads(repositoryLoader);
+    }
 
     @Test
     void id() {
@@ -218,7 +235,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
                     .contentType(MediaType.APPLICATION_YAML),
                 Argument.listOf(FlowWithSource.class)
             );
-        assertThat(updated.size(), is(5));
+        assertThat(updated.size(), is(3));
 
         client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow1"));
         client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow2"));
@@ -361,7 +378,7 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size(), is(3));
+        assertThat(namespaces.size(), is(2));
     }
 
     @Test
@@ -527,8 +544,14 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         List<IdWithNamespace> ids = List.of(
             new IdWithNamespace("io.kestra.tests", "each-object"),
             new IdWithNamespace("io.kestra.tests", "webhook"),
-            new IdWithNamespace("io.kestra.tests", "task-flow"));
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/flows/disable/by-ids", ids));
+            new IdWithNamespace("io.kestra.tests", "task-flow")
+        );
+
+        HttpResponse<BulkResponse> response = client
+            .toBlocking()
+            .exchange(POST("/api/v1/flows/disable/by-ids", ids), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount(), is(3));
 
         Flow eachObject = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/each-object"), String.class));
         Flow webhook = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/webhook"), String.class));
@@ -540,11 +563,16 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void disableFlowsByQuery() {
+    void disableFlowsByQuery() throws InterruptedException {
         Flow flow = generateFlow("toDisable","io.kestra.unittest.disabled", "a");
         client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class);
 
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/flows/disable/by-query?namespace=io.kestra.unittest.disabled",null));
+        HttpResponse<BulkResponse> response = client
+            .toBlocking()
+            .exchange(POST("/api/v1/flows/disable/by-query?namespace=io.kestra.unittest.disabled", Map.of()), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount(), is(1));
+
         Flow toDisable = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/toDisable"), String.class));
 
         assertThat(toDisable.isDisabled(), is(true));
@@ -555,12 +583,18 @@ class FlowControllerTest extends AbstractMemoryRunnerTest {
         postFlow("flow-a","io.kestra.tests.delete", "a");
         postFlow("flow-b","io.kestra.tests.delete", "b");
         postFlow("flow-c","io.kestra.tests.delete", "c");
+
         List<IdWithNamespace> ids = List.of(
             new IdWithNamespace("io.kestra.tests.delete", "flow-a"),
             new IdWithNamespace("io.kestra.tests.delete", "flow-b"),
-            new IdWithNamespace("io.kestra.tests.delete", "flow-c"));
+            new IdWithNamespace("io.kestra.tests.delete", "flow-c")
+        );
 
-        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/flows/delete/by-ids", ids));
+        HttpResponse<BulkResponse> response = client
+            .toBlocking()
+            .exchange(DELETE("/api/v1/flows/delete/by-ids", ids), BulkResponse.class);
+
+        assertThat(response.getBody().get().getCount(), is(3));
 
         HttpClientResponseException flowA = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.disabled/flow-a"));

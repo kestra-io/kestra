@@ -69,7 +69,7 @@
                         <el-button v-if="canRead" :icon="Download" size="large" @click="exportTemplates()">
                             {{ $t('export') }}
                         </el-button>
-                        <el-button v-if="canDelete" @click="deleteTemplates" size="large" type="danger" :icon="TrashCan">
+                        <el-button v-if="canDelete" @click="deleteTemplates" size="large" :icon="TrashCan">
                             {{ $t('delete') }}
                         </el-button>
                     </bottom-line-counter>
@@ -244,15 +244,15 @@
                                     namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
                                     q: this.$route.query.q ? [this.$route.query.q] : undefined,
                                 }, false))
-                                .then(_ => {
-                                    this.$toast().success(this.$t("templates deleted"));
+                                .then(r => {
+                                    this.$toast().success(this.$t("templates deleted", {count: r.data.count}));
                                     this.loadData(() => {})
                                 })
                         } else {
                             return this.$store
                                 .dispatch("template/deleteTemplateByIds", {ids: this.templatesSelection})
-                                .then(_ => {
-                                    this.$toast().success(this.$t("templates deleted"));
+                                .then(r => {
+                                    this.$toast().success(this.$t("templates deleted", {count: r.data.count}));
                                     this.loadData(() => {})
                                 })
                         }

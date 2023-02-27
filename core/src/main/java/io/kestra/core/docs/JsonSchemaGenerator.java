@@ -301,7 +301,8 @@ public class JsonSchemaGenerator {
                     ArrayNode required = context.getGeneratorConfig().createArrayNode();
 
                     collectedTypeAttributes.get("required").forEach(jsonNode -> {
-                        if (!collectedTypeAttributes.get("properties").get(jsonNode.asText()).has("default")) {
+                        if (!collectedTypeAttributes.get("properties").get(jsonNode.asText()).has("default")
+                            && !defaultInAllOf(collectedTypeAttributes.get("properties").get(jsonNode.asText()))) {
                             required.add(jsonNode.asText());
                         }
                     });
@@ -351,6 +352,18 @@ public class JsonSchemaGenerator {
                 }
             });
         }
+    }
+
+    private boolean defaultInAllOf(JsonNode property) {
+        if (property.has("allOf")) {
+            for (Iterator<JsonNode> it = property.get("allOf").elements(); it.hasNext(); ) {
+                JsonNode child = it.next();
+                if(child.has("default")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     protected <T> Map<String, Object> generate(Class<? extends T> cls, @Nullable Class<T> base) {

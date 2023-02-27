@@ -25,10 +25,7 @@ services:
     user: "root"
     command:
       - -c
-      - |
-        curl -s -o /tmp/examples.zip https://kestra.io/examples.zip && \
-        unzip -o -d /tmp/examples /tmp/examples.zip > /dev/null && \
-        /app/kestra server standalone --flow-path=/tmp/examples --worker-thread=128
+      - /app/kestra server standalone --worker-thread=128
     volumes:
       - kestra-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock

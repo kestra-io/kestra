@@ -101,7 +101,7 @@ class JsonSchemaGeneratorTest {
             var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
             var allOf = (List<Object>) task.get("allOf");
 
-            assertThat(allOf.size(), is(2));
+            assertThat(allOf.size(), is(1));
         });
     }
 

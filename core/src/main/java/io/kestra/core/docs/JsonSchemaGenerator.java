@@ -63,8 +63,9 @@ public class JsonSchemaGenerator {
             // hack
             if (cls == Flow.class) {
                 fixFlow(map);
+            } else if (cls == Task.class) {
+                fixTask(map);
             }
-
 
             return map;
         } catch (IllegalArgumentException e) {
@@ -112,6 +113,14 @@ public class JsonSchemaGenerator {
 
         var properties = (Map<String, Object>) flow.get("properties");
         properties.remove("deleted");
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void fixTask(Map<String, Object> map) {
+        var definitions = (Map<String, Map<String, Object>>) map.get("definitions");
+        var task = (Map<String, Object>) definitions.get("io.kestra.core.models.tasks.Task-2");
+        var allOf = (List<Object>) task.get("allOf");
+        allOf.remove(1);
     }
 
     public <T> Map<String, Object> properties(Class<T> base, Class<? extends T> cls) {

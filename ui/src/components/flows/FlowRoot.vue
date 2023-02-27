@@ -26,7 +26,6 @@
 
 <script>
     import Topology from "./Topology.vue";
-    import Schedule from "./Schedule.vue";
     import FlowSource from "./FlowSource.vue";
     import FlowRevisions from "./FlowRevisions.vue";
     import FlowLogs from "./FlowLogs.vue";
@@ -119,12 +118,6 @@
                         name: "source",
                         component: FlowSource,
                         title: this.$t("source"),
-                    });
-
-                    tabs.push({
-                        name: "schedule",
-                        component: Schedule,
-                        title: this.$t("schedule"),
                     });
                 }
 

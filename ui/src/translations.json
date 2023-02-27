@@ -175,15 +175,6 @@
     "update aborted": "update aborted",
     "invalid flow": "Invalid flow",
     "invalid yaml": "Invalid YAML",
-    "add schedule": "Add a schedule",
-    "schedule": "Schedule",
-    "schedules": {
-      "cron": {
-        "expression": "Expression",
-        "backfilll": "Backfill",
-        "invalid": "Invalid cron expression"
-      }
-    },
     "inputs": "Inputs",
     "input": "Input",
     "variables": "Variables",
@@ -472,15 +463,6 @@
     "update aborted": "Mise à jour annulée",
     "invalid flow": "Flow invalide",
     "invalid yaml": "YAML invalide",
-    "add schedule": "Ajouter un planifications",
-    "schedule": "Tâche planifié",
-    "schedules": {
-      "cron": {
-        "expression": "Expression",
-        "backfilll": "Remblayage",
-        "invalid": "Expression cron invalide"
-      }
-    },
     "inputs": "Entrées",
     "input": "Entré",
     "variables": "Variables",

@@ -52,7 +52,7 @@
     "@rushstack/eslint-patch": "^1.1.4",
     "@vitejs/plugin-vue": "^4.0.0",
     "@vue/eslint-config-prettier": "^7.0.0",
-    "@vue/test-utils": "^2.2.10",
+    "@vue/test-utils": "^2.3.0",
     "eslint": "^8.33.0",
     "eslint-plugin-vue": "^9.9.0",
     "jsdom": "^21.1.0",

@@ -30,12 +30,12 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 @Schema(
     title = "Trigger a flow from a webhook",
-    description = "Webbook trigger allow you to trigger a flow from a webhook url.\n" +
-        "The trigger will generate a `key` that must be used on url : `/api/v1/executions/webhook/{namespace}/[flowId]/{key}`.\n" +
-        "Kestra accept `GET`, `POST` & `PUT` request on this url.\n" +
+    description = "Webbook trigger allow you to trigger a flow from a webhook url. " +
+        "The trigger will generate a `key` that must be used on url : `/api/v1/executions/webhook/{namespace}/[flowId]/{key}`. " +
+        "Kestra accept `GET`, `POST` & `PUT` request on this url. " +
         "The whole body & headers will be available as variable:\n " +
-        "- `trigger.variables.body`\n" +
-        "- `trigger.variables.headers`"
+        "- `trigger.body`\n" +
+        "- `trigger.headers`"
 )
 @Plugin(
     examples = {

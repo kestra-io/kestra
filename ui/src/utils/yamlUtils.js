@@ -2,6 +2,8 @@ import JsYaml from "js-yaml";
 import yaml, {Document, YAMLMap} from "yaml";
 import _cloneDeep from "lodash/cloneDeep"
 
+const TOSTRING_OPTIONS = {lineWidth: 0};
+
 export default class YamlUtils {
     static stringify(value) {
         if (typeof value === "undefined") {
@@ -26,7 +28,7 @@ export default class YamlUtils {
     static extractTask(source, taskId) {
         const yamlDoc = yaml.parseDocument(source);
         let taskNode = YamlUtils._extractTask(yamlDoc, taskId);
-        return taskNode === undefined ? undefined : new yaml.Document(taskNode).toString();
+        return taskNode === undefined ? undefined : new yaml.Document(taskNode).toString(TOSTRING_OPTIONS);
     }
 
     static _extractTask(yamlDoc, taskId, callback) {
@@ -88,7 +90,7 @@ export default class YamlUtils {
             return newItem;
         })
 
-        return yamlDoc.toString();
+        return yamlDoc.toString(TOSTRING_OPTIONS);
     }
 
     static replaceCommentInTask(oldTask, newTask) {

@@ -53,6 +53,7 @@ services:
           url: http://localhost:8080/
     ports:
       - "8080:8080"
+      - "8081:8081"
     depends_on:
       postgres:
         condition: service_started

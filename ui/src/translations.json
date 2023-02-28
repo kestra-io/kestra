@@ -556,6 +556,7 @@
     "exports": "Exporter",
     "template export": "Êtes vous sûr de vouloir exporter <code>{templateCount}</code> template(s)?",
     "templates exported": "Templates exportés",
+    "export all templates": "Exporter tous les templates",
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
     "flows exported": "Flows exportés",
     "export all flows": "Exporter tous les flows",

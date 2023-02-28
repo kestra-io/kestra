@@ -113,10 +113,20 @@
             }
         },
         methods: {
-            load(taskId) {
+            async load(taskId) {
                 if (this.revision) {
+                    if (this.revisions[this.revision - 1] === undefined) {
+                        await this.$store
+                            .dispatch("flow/loadRevisions", {
+                                namespace: this.flow.namespace,
+                                id: this.flow.id
+                            });
+
+                    }
+
                     return YamlUtils.extractTask(this.revisions[this.revision - 1].source, taskId).toString();
                 }
+
                 return YamlUtils.extractTask(this.flow.source, taskId).toString();
             },
             mapSectionWithSchema() {
@@ -156,10 +166,10 @@
                         })
                 }
             },
-            onShow() {
+            async onShow() {
                 this.isModalOpen = !this.isModalOpen;
                 if (this.taskId || this.task.id) {
-                    this.taskYaml = this.load(this.taskId ? this.taskId : this.task.id);
+                    this.taskYaml = await this.load(this.taskId ? this.taskId : this.task.id);
                 } else {
                     this.taskYaml = YamlUtils.stringify(this.task);
                 }

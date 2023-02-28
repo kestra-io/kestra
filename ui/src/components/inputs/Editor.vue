@@ -49,7 +49,7 @@
 
     export default {
         props: {
-            modelValue: {type: String, required: true},
+            modelValue: {type: String, default: ""},
             original: {type: String, default: undefined},
             lang: {type: String, default: undefined},
             schemaType: {type: String, default: undefined},
@@ -66,7 +66,7 @@
         components: {
             MonacoEditor,
         },
-        emits: ["save", "focusout", "update:modelValue"],
+        emits: ["save", "focusout", "tab", "update:modelValue"],
         editor: undefined,
         data() {
             return {

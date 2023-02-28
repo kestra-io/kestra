@@ -44,9 +44,7 @@ export default {
             return state.unsavedChange;
         },
         guidedProperties(state) {
-            if (state.guidedProperties) {
-                return state.guidedProperties;
-            }
+            return state.guidedProperties;
         },
     }
 }

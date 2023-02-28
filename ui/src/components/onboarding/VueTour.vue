@@ -1,15 +1,11 @@
 <template>
-    <v-tour name="guidedTour" :steps="steps">
+    <v-tour name="guidedTour" :steps="steps" :options="tourOptions">
         <template #default="tour">
             <transition name="fade">
                 <v-step
                     v-if="tour.steps[tour.currentStep]"
                     :key="tour.currentStep"
                     :step="tour.steps[tour.currentStep]"
-                    :previous-step="previousStep"
-                    :next-step="nextStep"
-                    :stop="skipTour"
-                    :skip="skipTour"
                     :is-first="tour.isFirst"
                     :is-last="tour.isLast"
                     :labels="tour.labels"
@@ -28,12 +24,12 @@
                         </div>
                     </template>
                     <template #actions v-if="tour.isFirst">
-                        <el-button class="v-step-button" @click="skipTour" type="default" :icon="Close">
+                        <el-button class="v-step-button" @click="skipTour(tour.currentStep)" type="default" :icon="Close">
                             {{ $t("Skip tour") }}
                         </el-button>
                         <el-button
                             class="v-step-button"
-                            @click="nextStep"
+                            @click="nextStep(tour.currentStep)"
                             type="primary"
                             :icon="ArrowRightCircleOutline"
                         >
@@ -41,29 +37,44 @@
                         </el-button>
                     </template>
                     <template #actions v-else-if="tour.isLast">
-                        <el-button class="v-step-button" @click="finishTour" type="primary">
+                        <el-button class="v-step-button" @click="finishTour(tour.currentStep)" type="primary">
                             {{ $t("Finish") }}
                         </el-button>
                     </template>
                     <template #actions v-else>
-                        <el-button
-                            size="small"
-                            class="v-step-button"
-                            @click="previousStep"
-                            type="default"
-                            :icon="Close"
-                        >
-                            {{ $t("Previous step") }}
-                        </el-button>
-                        <el-button
-                            size="small"
-                            class="v-step-button"
-                            @click="nextStep"
-                            type="primary"
-                            :icon="ArrowRightCircleOutline"
-                        >
-                            {{ $t("Next step") }}
-                        </el-button>
+                        <el-col>
+                            <el-row justify="center">
+                                <el-button
+                                    size="small"
+                                    class="v-step-button"
+                                    @click="previousStep(tour.currentStep)"
+                                    type="default"
+                                    :icon="ArrowLeftCircleOutline"
+                                >
+                                    {{ $t("Previous step") }}
+                                </el-button>
+                                <el-button
+                                    size="small"
+                                    class="v-step-button"
+                                    @click="nextStep(tour.currentStep)"
+                                    type="primary"
+                                    :icon="ArrowRightCircleOutline"
+                                >
+                                    {{ $t("Next step") }}
+                                </el-button>
+                            </el-row>
+                            <el-row justify="center">
+                                <el-button
+                                    size="small"
+                                    class="v-step-button"
+                                    @click="skipTour(tour.currentStep)"
+                                    type="default"
+                                    :icon="Close"
+                                >
+                                    {{ $t("Skip tour") }}
+                                </el-button>
+                            </el-row>
+                        </el-col>
                     </template>
                 </v-step>
             </transition>
@@ -73,14 +84,19 @@
 <script setup>
     import Close from "vue-material-design-icons/Close.vue";
     import ArrowRightCircleOutline from "vue-material-design-icons/ArrowRightCircleOutline.vue";
+    import ArrowLeftCircleOutline from "vue-material-design-icons/ArrowLeftCircleOutline.vue";
 </script>
 <script>
     import {mapGetters} from "vuex";
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+    import {pageFromRoute} from "../../utils/eventsRouter";
     export default {
         name: "VueTour",
         data() {
             return {
+                tourOptions: {
+                    useKeyboardNavigation: false,
+                },
                 steps: [
                     {
                         highlightElement: ".v-step",
@@ -91,7 +107,7 @@
                     },
                     {
                         target: "nav",
-                        highlightElement: "#edit-flow-editor",
+                        highlightElement: ".edit-flow-editor",
                         header: {
                             title: this.$t("onboarding-content.step2.title"),
                         },
@@ -111,7 +127,7 @@
                     },
                     {
                         target: "#guided-right",
-                        highlightElement: "#edit-flow-editor",
+                        highlightElement: ".edit-flow-editor",
                         header: {
                             title: this.$t("onboarding-content.step3.title"),
                         },
@@ -130,7 +146,7 @@
                     },
                     {
                         target: "#guided-right",
-                        highlightElement: "#edit-flow-editor",
+                        highlightElement: ".edit-flow-editor",
                         header: {
                             title: this.$t("onboarding-content.step4.title"),
                         },
@@ -150,7 +166,7 @@
                     },
                     {
                         target: "#guided-right",
-                        highlightElement: "#edit-flow-editor",
+                        highlightElement: ".edit-flow-editor",
                         header: {
                             title: this.$t("onboarding-content.step5.title"),
                         },
@@ -170,7 +186,7 @@
                     },
                     {
                         target: "#guided-right",
-                        highlightElement: "#edit-flow-editor",
+                        highlightElement: ".edit-flow-editor",
                         header: {
                             title: this.$t("onboarding-content.step6.title"),
                         },
@@ -190,7 +206,7 @@
                     },
                     {
                         target: "#guided-right",
-                        highlightElement: "#edit-flow-editor",
+                        highlightElement: ".edit-flow-editor",
                         header: {
                             title: this.$t("onboarding-content.step7.title"),
                         },
@@ -210,7 +226,7 @@
                     },
                     {
                         target: "#guided-right",
-                        highlightElement: "#edit-flow-editor",
+                        highlightElement: ".edit-flow-editor",
                         header: {
                             title: this.$t("onboarding-content.step8.title"),
                         },
@@ -229,7 +245,7 @@
                         }),
                     },
                     {
-                        target: "#edit-flow-save-button",
+                        target: ".edit-flow-save-button",
                         header: {
                             title: this.$t("onboarding-content.step9.title"),
                         },
@@ -248,7 +264,7 @@
                         }),
                     },
                     {
-                        target: "#edit-flow-trigger-button",
+                        target: ".edit-flow-trigger-button",
                         header: {
                             title: this.$t("onboarding-content.step10.title"),
                         },
@@ -258,13 +274,14 @@
                         },
                         before: () => new Promise((resolve) => {
                             this.$store.commit("core/setGuidedProperties", {...this.guidedProperties, saveFlow: true});
+                            this.dispatchEvent(this.$tours["guidedTour"].currentStep._value, "created")
                             setTimeout(() => {
                                 resolve(true);
                             }, 200);
                         }),
                     },
                     {
-                        target: "#flow-run-trigger-button",
+                        target: ".flow-run-trigger-button",
                         header: {
                             title: this.$t("onboarding-content.step11.title"),
                         },
@@ -277,48 +294,48 @@
                             localStorage.setItem("tourDoneOrSkip", "true");
                             setTimeout(() => {
                                 resolve(true);
-                            }, 200);
+                            }, 300);
                         }),
                     }
                 ],
                 flowParts: [
-                    "# " + this.$t("onboarding-flow.comment1") + "\n" +
-                        "# " + this.$t("onboarding-flow.comment2") + "\n" +
+                    "# " + this.$t("onboarding-flow.onboardComment1") + "\n" +
+                        "# " + this.$t("onboarding-flow.onboardComment2") + "\n" +
                         "id: kestra-tour\n" +
                         "namespace: io.kestra.tour\n" +
                         "description: Kestra guided tour",
-                    "# " + this.$t("onboarding-flow.comment3") + "\n" +
+                    "# " + this.$t("onboarding-flow.inputs") + "\n" +
                         "inputs:\n" +
-                        "  # " + this.$t("onboarding-flow.comment4") + "\n" +
-                        "  # " + this.$t("onboarding-flow.comment5") + "\n" +
+                        "  # " + this.$t("onboarding-flow.inputsDetails1") + "\n" +
+                        "  # " + this.$t("onboarding-flow.inputsDetails2") + "\n" +
                         "  - name: csvUrl\n" +
                         "    type: STRING\n" +
                         "    defaults: https://www.data.gouv.fr/fr/datasets/r/d33eabc9-e2fd-4787-83e5-a5fcfb5af66d",
-                    "# " + this.$t("onboarding-flow.comment6") + "\n" +
-                        "# " + this.$t("onboarding-flow.comment7") + "\n" +
-                        "# " + this.$t("onboarding-flow.comment8") + "\n" +
+                    "# " + this.$t("onboarding-flow.tasks1") + "\n" +
+                        "# " + this.$t("onboarding-flow.tasks2") + "\n" +
+                        "# " + this.$t("onboarding-flow.tasks3") + "\n" +
                         "tasks:",
-                    "  # " + this.$t("onboarding-flow.comment9") + "\n" +
-                        "  # " + this.$t("onboarding-flow.comment10") + "\n" +
+                    "  # " + this.$t("onboarding-flow.taskLog1") + "\n" +
+                        "  # " + this.$t("onboarding-flow.taskLog2") + "\n" +
                         "  - id: log\n" +
                         "    type: io.kestra.core.tasks.debugs.Echo\n" +
                         "    format: The flow starts",
-                    "  # " + this.$t("onboarding-flow.comment11") + "\n" +
+                    "  # " + this.$t("onboarding-flow.taskDL") + "\n" +
                         "  - id: downloadData\n" +
                         "    type: io.kestra.plugin.fs.http.Download\n" +
-                        "    # " + this.$t("onboarding-flow.comment12") + "\n" +
-                        "    # " + this.$t("onboarding-flow.comment13") + "\n" +
+                        "    # " + this.$t("onboarding-flow.taskDLUri1") + "\n" +
+                        "    # " + this.$t("onboarding-flow.taskDLUri2") + "\n" +
                         "    uri: \"{{inputs.csvUrl}}\"",
-                    "  # " + this.$t("onboarding-flow.comment14") + "\n" +
+                    "  # " + this.$t("onboarding-flow.taskPython") + "\n" +
                         "  - id: analyseData\n" +
                         "    type: io.kestra.core.tasks.scripts.Python\n" +
                         "    inputFiles:\n" +
-                        "      # " + this.$t("onboarding-flow.comment15") + "\n" +
-                        "      # " + this.$t("onboarding-flow.comment16") + "\n" +
+                        "      # " + this.$t("onboarding-flow.taskPythonCSV1") + "\n" +
+                        "      # " + this.$t("onboarding-flow.taskPythonCSV2") + "\n" +
                         "      data.csv: \"{{outputs.downloadData.uri}}\"\n" +
-                        "      # " + this.$t("onboarding-flow.comment17") + "\n" +
-                        "      # " + this.$t("onboarding-flow.comment18") + "\n" +
-                        "      # " + this.$t("onboarding-flow.comment19") + "\n" +
+                        "      # " + this.$t("onboarding-flow.taskPythonMain1") + "\n" +
+                        "      # " + this.$t("onboarding-flow.taskPythonMain2") + "\n" +
+                        "      # " + this.$t("onboarding-flow.taskPythonMain3") + "\n" +
                         "      main.py: |\n" +
                         "        import pandas as pd\n" +
                         "        from kestra import Kestra\n" +
@@ -326,7 +343,7 @@
                         "        data.info()\n" +
                         "        sumOfConsumption = data['conso'].sum()\n" +
                         "        Kestra.outputs({'sumOfConsumption': int(sumOfConsumption)})\n" +
-                        "    # " + this.$t("onboarding-flow.comment20") + "\n" +
+                        "    # " + this.$t("onboarding-flow.taskPythonRequirements") + "\n" +
                         "    requirements:\n" +
                         "      - pandas"
                 ]
@@ -336,38 +353,33 @@
             ...mapGetters("core", ["guidedProperties"]),
         },
         methods: {
-            nextStep(currentStep){
+            dispatchEvent(step, action) {
                 this.$store.dispatch("api/events", {
                     type: "ONBOARDING",
-                    step: currentStep,
-                    action: "next"
+                    onboarding: {
+                        step: step,
+                        action: action,
+                    },
+                    page: pageFromRoute(this.$router.currentRoute.value)
                 });
-                this.$tours["guidedTour"].nextStep();
+            },
+            nextStep(currentStep){
+                this.dispatchEvent(currentStep,"next")
+                return this.$tours["guidedTour"].nextStep();
 
             },
             previousStep(currentStep){
-                this.$store.dispatch("api/events", {
-                    type: "ONBOARDING",
-                    step: currentStep,
-                    action: "previous"
-                });
-                this.$tours["guidedTour"].previousStep();
+                this.dispatchEvent(currentStep,"previous")
+                return this.$tours["guidedTour"].previousStep();
             },
             skipTour(currentStep) {
-                this.$store.dispatch("api/events", {
-                    type: "ONBOARDING",
-                    step: currentStep,
-                    action: "skip"
-                });
+                this.dispatchEvent(currentStep,"skip")
                 localStorage.setItem("tourDoneOrSkip", "true");
-                this.$tours["guidedTour"].stop();
+                return this.$tours["guidedTour"].stop();
             },
             finishTour(currentStep) {
-                this.$store.dispatch("api/events", {
-                    type: "ONBOARDING",
-                    step: currentStep,
-                    action: "finish"
-                });
+                this.dispatchEvent(currentStep,"finish")
+                this.dispatchEvent(currentStep,"executed")
                 localStorage.setItem("tourDoneOrSkip", "true");
                 this.$store.commit("core/setGuidedProperties", {
                     tourStarted:false,
@@ -377,7 +389,7 @@
                     validateInputs: true,
                     monacoRange: undefined,
                     monacoDisableRange: undefined});
-                this.$tours["guidedTour"].finish();
+                return this.$tours["guidedTour"].finish();
             },
         }
     }

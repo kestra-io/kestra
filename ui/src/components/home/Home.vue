@@ -1,6 +1,6 @@
 <template>
     <div class="home">
-        <div v-if="displayCharts">
+        <div>
             <collapse v-if="!flowId">
                 <el-form-item>
                     <namespace-select
@@ -78,9 +78,6 @@
                 </el-col>
             </el-row>
         </div>
-        <div v-else>
-            <create-flow />
-        </div>
     </div>
 </template>
 <script>
@@ -97,7 +94,6 @@
     import HomeSummaryNamespace from "./HomeSummaryNamespace.vue";
     import HomeDescription from "./HomeDescription.vue";
     import _merge from "lodash/merge";
-    import CreateFlow from "../onboarding/CreateFlow.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
@@ -110,7 +106,6 @@
             HomeSummaryLog,
             HomeSummaryNamespace,
             HomeDescription,
-            CreateFlow
         },
         props: {
             namespace: {
@@ -124,7 +119,6 @@
         },
         created() {
             this.loadStats();
-            this.loadFlows();
         },
         watch: {
             $route(newValue, oldValue) {
@@ -142,7 +136,6 @@
                 yesterday: undefined,
                 alls: undefined,
                 namespacesStats: undefined,
-                displayCharts: true
             };
         },
         methods: {
@@ -213,21 +206,17 @@
                     query: {...this.$route.query, namespace}
                 });
             },
-            loadFlows() {
-                this.$store.dispatch("flow/findFlows", this.loadQuery({}))
-                    .then(flows => {
-                        if (flows.total === 0) {
-                            this.displayCharts = false;
-                        }
-                    });
-            },
         },
         computed: {
             ...mapState("stat", ["daily", "dailyGroupByFlow"]),
+            ...mapState("flow", ["overallTotal"]),
             routeInfo() {
                 return {
                     title: this.$t("home"),
                 };
+            },
+            displayCharts() {
+                return !this.overallTotal || this.overallTotal >= 1;
             },
             defaultFilters() {
                 return {

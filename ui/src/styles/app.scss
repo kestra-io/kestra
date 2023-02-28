@@ -4,6 +4,10 @@
 // element-plus
 @use "layout/element-plus-overload";
 
+// vue-tour
+@use "vue3-tour/dist/vue3-tour.css";
+@use "layout/vue-tour-overload.scss";
+
 // layout
 @use "layout/root";
 @use "layout/root-dark";

@@ -1,6 +1,6 @@
 <template>
     <div class="edit-flow-div">
-        <editor id="edit-flow-editor" @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" />
+        <editor class="edit-flow-editor" @save="save" v-model="content" schema-type="flow" lang="yaml" @update:model-value="onChange($event)" />
         <bottom-line v-if="canSave || canDelete || canExecute">
             <ul>
                 <li>
@@ -18,11 +18,11 @@
                 </li>
 
                 <li>
-                    <trigger-flow id="edit-flow-trigger-button" v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" type="default" :namespace="flow.namespace" />
+                    <trigger-flow v-if="flow && canExecute" :disabled="flow.disabled" :flow-id="flow.id" type="default" :namespace="flow.namespace" />
                 </li>
 
                 <li>
-                    <el-button id="edit-flow-save-button" :icon="icon.ContentSave" size="large" @click="save" v-if="canSave" type="info">
+                    <el-button class="edit-flow-save-button" :icon="icon.ContentSave" size="large" @click="save" v-if="canSave" type="info">
                         {{ $t('save') }}
                     </el-button>
                 </li>

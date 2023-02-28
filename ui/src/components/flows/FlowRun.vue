@@ -72,7 +72,7 @@
                 <small v-if="input.description" class="text-muted">{{ input.description }}</small>
             </el-form-item>
             <el-form-item class="submit">
-                <el-button :icon="Flash" id="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled">
+                <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled">
                     {{ $t('launch execution') }}
                 </el-button>
             </el-form-item>
@@ -85,9 +85,10 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapGetters, mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
     import Editor from "../../components/inputs/Editor.vue";
+    import {pageFromRoute} from "../../utils/eventsRouter";
 
     export default {
         components: {Editor},
@@ -138,7 +139,10 @@
         methods: {
             onSubmit(formRef) {
                 if(this.$tours["guidedTour"]){
-                    this.$tours["guidedTour"].finish();
+                    console.log(this.$tours["guidedTour"])
+                    console.log("currentste", this.$tours["guidedTour"].currentStep._value)
+                    console.log("isLast", this.$tours["guidedTour"].isLast)
+                    this.finishTour();
                 }
                 if (formRef) {
                     formRef.validate((valid) => {
@@ -154,6 +158,34 @@
                         this.$emit("executionTrigger");
                     });
                 }
+            },
+            finishTour() {
+                this.$store.dispatch("api/events", {
+                    type: "ONBOARDING",
+                    onboarding: {
+                        step: this.$tours["guidedTour"].currentStep._value,
+                        action: "execute",
+                    },
+                    page: pageFromRoute(this.$router.currentRoute.value)
+                });
+                this.$store.dispatch("api/events", {
+                    type: "ONBOARDING",
+                    onboarding: {
+                        step: this.$tours["guidedTour"].currentStep._value,
+                        action: "finish",
+                    },
+                    page: pageFromRoute(this.$router.currentRoute.value)
+                });
+                localStorage.setItem("tourDoneOrSkip", "true");
+                this.$store.commit("core/setGuidedProperties", {
+                    tourStarted:false,
+                    flowSource: undefined,
+                    saveFlow: false,
+                    executeFlow: false,
+                    validateInputs: false,
+                    monacoRange: undefined,
+                    monacoDisableRange: undefined});
+                return this.$tours["guidedTour"].finish();
             },
             onFileChange(input, e) {
                 if (!e.target) {

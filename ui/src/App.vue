@@ -12,9 +12,11 @@
         <VueTour />
     </el-config-provider>
 </template>
+
 <script setup>
     import Errors from "./components/errors/Errors.vue";
 </script>
+
 <script>
     import LeftMenu from "override/components/LeftMenu.vue";
     import TopNavBar from "./components/layout/TopNavBar.vue";
@@ -83,6 +85,13 @@
                             uid: uid,
                         });
                     })
+                this.$store.dispatch("flow/findFlows", {limit: 1})
+                    .then(flows => {
+                        this.$store.commit("flow/setOverallTotal", flows.total);
+                        if(flows.total === 0 && this.$router.currentRoute.value.name === "home") {
+                            this.$router.push({name: "welcome"});
+                        }
+                    });
             }
         }
     };

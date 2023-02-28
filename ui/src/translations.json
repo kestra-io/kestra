@@ -290,45 +290,47 @@
     "onboarding-content": {
       "step1": {
         "title": "Welcome to Kestra's flow editor!",
-        "content": "Did you know that Kestra uses YAML, a simple and easy-to-read declarative language? This means that you can easily define your flows by writing out the steps in plain text. Don't worry if you're not familiar with YAML yet,  we'll guide you through it step by step."
+        "content": "Did you know that Kestra uses YAML, a simple and easy-to-read declarative language? This means that you can easily define your flows by writing out the steps in plain text. Don't worry if you still need to become familiar with YAML; we'll guide you through it step by step."
       },
       "step2": {
-        "title": "This is the Kestra Editor"
+        "title": "This is the Kestra Editor",
+        "content": "The Kestra editor is where you will write the YAML that describes your flow. Comments start with '#'. Tasks type and attributes can be searched thanks to the autocomplete feature with CTRL-ENTER."
       },
       "step3": {
-        "title": "Let's start with a simple flow",
-        "content": "The first step in a flow is to initialize it. This is done by giving it an ID, a namespace and maybe a description !"
+        "title": "Let's start with your first flow",
+        "content": "The first step to define a flow is to give it an ID, a namespace, and, optionally, a description."
       },
       "step4": {
-        "title": "Set inputs",
-        "content": "The next step is to define the inputs of your flow. This is done by giving it a name and a type."
+        "title": "Define inputs",
+        "content": "The next step is to define the inputs of your flow. This is done by giving each input a name and a type."
       },
       "step5": {
-        "title": "Tasks in a flow",
-        "content": "Then, you can add tasks to your flow. A task is a step in your flow that will execute a specific action. For example, you can use a task to execute a SQL query, or to send an email."
+        "title": "Add tasks",
+        "content": "Then, you can add tasks to your flow. A task is a step in your flow that will execute a specific action. For example, you can use a task to execute a SQL query or to send an email."
       },
       "step6": {
         "title": "Logs some information",
-        "content": "First, let's start by adding a task that will log some informations. This task will be executed when the flow is triggered."
+        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log 'The flow starts'."
       },
       "step7": {
         "title": "Download a file",
-        "content": "Sometimes, you may want to download a file from a remote server. This can be done by using the download task."
+        "content": "Sometimes, you want to download a file from a remote server. This can be done by using the Download task. This task will download the file into Kestra's internal storage."
       },
       "step8": {
         "title": "Use Python to do analytics",
-        "content": "Maybe this file contains some interesting data ? Let's use Python to do some analytics on it !"
+        "content": "Maybe this file contains some interesting data? Let's use Python and Pandas to do some analytics on it!<br> This task uses the output of the previous task via the 'outputs.downloadData.ui' variable and defines an output named 'sumOfConsumption' thanks to the Kestra Python library."
       },
       "step9": {
         "title": "Save your flow",
-        "content": "You're all set ! Now, you can save your flow by clicking on the save button."
+        "content": "You're all set! Now, you can save your flow by clicking on the Save button."
       },
       "step10": {
-        "title": "Now execute your flow !"
+        "title": "Now execute your flow!",
+        "content": "You can execute your flow by clicking on the New execution button."
       },
       "step11": {
         "title": "Enter inputs",
-        "content": "Finally, if your flow have inputs, you will be asked to enter them before executing the flow. Here, we already input it for you with the default values."
+        "content": "Finally, if your flow has inputs, you will be asked to enter them before executing the flow. We have already set the input for you with the default values."
       }
     },
     "onboarding-flow": {
@@ -651,45 +653,47 @@
     "onboarding-content": {
       "step1": {
         "title": "Welcome to Kestra's flow editor!",
-        "content": "Did you know that Kestra uses YAML, a simple and easy-to-read declarative language? This means that you can easily define your flows by writing out the steps in plain text. Don't worry if you're not familiar with YAML yet,  we'll guide you through it step by step."
+        "content": "Did you know that Kestra uses YAML, a simple and easy-to-read declarative language? This means that you can easily define your flows by writing out the steps in plain text. Don't worry if you still need to become familiar with YAML; we'll guide you through it step by step."
       },
       "step2": {
-        "title": "This is the Kestra Editor"
+        "title": "This is the Kestra Editor",
+        "content": "The Kestra editor is where you will write the YAML that describes your flow. Comments start with '#'. Tasks type and attributes can be searched thanks to the autocomplete feature with CTRL-ENTER."
       },
       "step3": {
-        "title": "Let's start with a simple flow",
-        "content": "The first step in a flow is to initialize it. This is done by giving it an ID, a namespace and maybe a description !"
+        "title": "Let's start with your first flow",
+        "content": "The first step to define a flow is to give it an ID, a namespace, and, optionally, a description."
       },
       "step4": {
-        "title": "Set inputs",
-        "content": "The next step is to define the inputs of your flow. This is done by giving it a name and a type. This input will be available among all the others variables of Kestra like outputs or executions information's."
+        "title": "Define inputs",
+        "content": "The next step is to define the inputs of your flow. This is done by giving each input a name and a type."
       },
       "step5": {
-        "title": "Tasks in a flow",
-        "content": "Then, you can add tasks to your flow. A task is a step in your flow that will execute a specific action. For example, you can use a task to execute a SQL query, or to send an email."
+        "title": "Add tasks",
+        "content": "Then, you can add tasks to your flow. A task is a step in your flow that will execute a specific action. For example, you can use a task to execute a SQL query or to send an email."
       },
       "step6": {
         "title": "Logs some information",
-        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered."
+        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log 'The flow starts'."
       },
       "step7": {
         "title": "Download a file",
-        "content": "Sometimes, you may want to download a file from a remote server. This can be done by using the download task. Kestra has a system to manage files of all sizes called Internal Storage. This stores all files created by tasks and moves them between tasks as necessary."
+        "content": "Sometimes, you want to download a file from a remote server. This can be done by using the Download task. This task will download the file into Kestra's internal storage."
       },
       "step8": {
         "title": "Use Python to do analytics",
-        "content": "Maybe this file contains some interesting data ? Let's use Python to do some analytics on it ! As you can see, we use the output of the previous task as an input file for this one."
+        "content": "Maybe this file contains some interesting data? Let's use Python and Pandas to do some analytics on it!<br> This task uses the output of the previous task via the 'outputs.downloadData.ui' variable and defines an output named 'sumOfConsumption' thanks to the Kestra Python library."
       },
       "step9": {
         "title": "Save your flow",
-        "content": "You're all set ! Now, you can save your flow by clicking on the save button."
+        "content": "You're all set! Now, you can save your flow by clicking on the Save button."
       },
       "step10": {
-        "title": "Now execute your flow !"
+        "title": "Now execute your flow!",
+        "content": "You can execute your flow by clicking on the New execution button."
       },
       "step11": {
         "title": "Enter inputs",
-        "content": "Finally, if your flow have inputs, you will be asked to enter them before executing the flow. Here, we already input it for you with the default values."
+        "content": "Finally, if your flow has inputs, you will be asked to enter them before executing the flow. We have already set the input for you with the default values."
       }
     },
     "onboarding-flow": {

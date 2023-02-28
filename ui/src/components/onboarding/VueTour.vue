@@ -95,6 +95,7 @@
                         header: {
                             title: this.$t("onboarding-content.step2.title"),
                         },
+                        content: this.$t("onboarding-content.step2.content"),
                         params: {
                             placement: "bottom"
                         },
@@ -251,6 +252,7 @@
                         header: {
                             title: this.$t("onboarding-content.step10.title"),
                         },
+                        content: this.$t("onboarding-content.step10.content"),
                         params: {
                             placement: "top"
                         },

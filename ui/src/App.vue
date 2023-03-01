@@ -3,7 +3,7 @@
         <left-menu @menu-collapse="onMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
         <main :class="menuCollapsed" v-if="loaded">
-            <top-nav-bar :menu-collapsed="menuCollapsed" v-if="this.$router.currentRoute.value.name !== 'welcome'" />
+            <top-nav-bar :menu-collapsed="menuCollapsed" v-if="displayNavBar" />
             <router-view v-if="!error" />
             <template v-else>
                 <errors :code="error" />
@@ -45,6 +45,12 @@
         computed: {
             ...mapState("core", ["message", "error"]),
             ...mapGetters("core", ["guidedProperties"]),
+            displayNavBar() {
+                if(this.$router) {
+                    return this.$route.name !== "welcome";
+                }
+                return true;
+            }
         },
         created() {
             if (this.created === false) {
@@ -88,7 +94,7 @@
                 this.$store.dispatch("flow/findFlows", {limit: 1})
                     .then(flows => {
                         this.$store.commit("flow/setOverallTotal", flows.total);
-                        if(flows.total === 0 && this.$router.currentRoute.value.name === "home") {
+                        if(flows.total === 0 && this.$route.name === "home") {
                             this.$router.push({name: "welcome"});
                         }
                     });
@@ -100,7 +106,7 @@
                     this.$store.dispatch("flow/findFlows", {limit: 1})
                         .then(flows => {
                             this.$store.commit("flow/setOverallTotal", flows.total);
-                            if(flows.total === 0) {
+                            if(flows.total === 0 && this.$router) {
                                 this.$router.push({name: "welcome"});
                             }
                         });

@@ -1,6 +1,7 @@
 <template>
-    <div class="home">
-        <div>
+    <div class="home" v-loading="!dailyReady">
+
+        <div v-if="displayCharts">
             <collapse v-if="!flowId">
                 <el-form-item>
                     <namespace-select
@@ -78,7 +79,30 @@
                 </el-col>
             </el-row>
         </div>
+        <div v-else-if="dailyReady">
+            <el-card class="pb-3">
+                <el-row justify="center">
+                    <span class="new-execution-img" />
+                </el-row>
+                <el-row justify="center" class="mb-4">
+                    <el-col>
+                        <h3 class="text-center">
+                            {{ $t('homeDashboard.no executions') }}
+                        </h3>
+                    </el-col>
+                </el-row>
+                <el-row justify="center">
+                    <trigger-flow v-if="flowId" :disabled="!isAllowedTrigger" :flow-id="flowId" :namespace="namespace" />
+                    <router-link v-else :to="{name: 'flows/list'}">
+                        <el-button size="large" type="primary">
+                            {{ $t('New execution') }}
+                        </el-button>
+                    </router-link>
+                </el-row>
+            </el-card>
+        </div>
     </div>
+
 </template>
 <script>
     import Collapse from "../layout/Collapse.vue";
@@ -94,6 +118,9 @@
     import HomeSummaryNamespace from "./HomeSummaryNamespace.vue";
     import HomeDescription from "./HomeDescription.vue";
     import _merge from "lodash/merge";
+    import TriggerFlow from "../flows/TriggerFlow.vue";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
@@ -105,7 +132,8 @@
             HomeSummaryFailed,
             HomeSummaryLog,
             HomeSummaryNamespace,
-            HomeDescription
+            HomeDescription,
+            TriggerFlow
         },
         props: {
             namespace: {
@@ -134,6 +162,7 @@
                 dailyGroupByFlowReady: false,
                 today: undefined,
                 yesterday: undefined,
+                executionCounts: undefined,
                 alls: undefined,
                 namespacesStats: undefined
             };
@@ -167,6 +196,10 @@
                         this.today = sorted.shift();
                         this.yesterday = sorted.shift();
                         this.alls = this.mergeStats(sorted);
+                        this.executionCounts = daily
+                            .reduce((accumulator, value)  => {
+                                return accumulator + Object.values(value.executionCounts).reduce((a, b) => a + b, 0);
+                            }, 0);
                         this.dailyReady = true;
                     });
 
@@ -209,6 +242,7 @@
         },
         computed: {
             ...mapState("stat", ["daily", "dailyGroupByFlow"]),
+            ...mapState("auth", ["user"]),
             routeInfo() {
                 return {
                     title: this.$t("home"),
@@ -219,6 +253,22 @@
                     start: this.$moment(this.startDate).unix() * 1000,
                     end: this.$moment(this.endDate).unix() * 1000 ,
                 }
+            },
+            displayCharts() {
+                if (this.executionCounts > 0) {
+                    return true
+                }
+
+                // not flow home
+                if (!this.flowId) {
+                    if (!this.$route.query.namespace && this.executionCounts === 0) {
+                        return false;
+                    }
+                } else if (this.executionCounts === 0) {
+                    return false;
+                }
+
+                return true;
             },
             selectedNamespace() {
                 return this.namespace || this.$route.query.namespace;
@@ -231,16 +281,29 @@
                     .add(-30, "days")
                     .startOf("day")
                     .toISOString(true)
-            }
+            },
+            isAllowedTrigger() {
+                return this.user && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.namespace);
+            },
         }
     };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
     .home {
         .auto-height {
             .el-card {
                 height: 100%;
+            }
+        }
+
+        .new-execution-img {
+            height: 300px;
+            width: 100%;
+            background: url("../../assets/home/execute-light.svg") no-repeat center;
+
+            html.dark & {
+                background: url("../../assets/home/execute-dark.svg") no-repeat center;
             }
         }
     }

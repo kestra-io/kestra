@@ -253,7 +253,8 @@
       "namespacesExecutions": "Executions per namespace",
       "namespacesErrorExecutions": "Executions errors per namespace",
       "failedExecutions": "Failed executions",
-      "errorLogs": "Errors logs"
+      "errorLogs": "Errors logs",
+      "no executions": "Ready to see your Kestra flow in action?"
     },
     "executions restarted": "<code>{executionCount}</code> executions(s) restarted",
     "executions killed": "<code>{executionCount}</code> executions(s) killed",
@@ -626,7 +627,8 @@
       "namespacesExecutions": "Exécutions par espace de nom",
       "namespacesErrorExecutions": "Exécutions en erreur par espace de nom",
       "failedExecutions": "Exécutions en échec",
-      "errorLogs": "Journaux d'erreurs"
+      "errorLogs": "Journaux d'erreurs",
+      "no executions": "Prêt à voir votre flux Kestra en action ?"
     },
     "executions restarted": "<code>{executionCount}</code> exécution(s) redémarrée(s)",
     "executions killed": "<code>{executionCount}</code> exécution(s) arrêtée(s)",

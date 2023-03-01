@@ -56,6 +56,7 @@
             if (this.created === false) {
                 this.displayApp()
                 this.loadGeneralRessources()
+                this.initGuidedTour();
             }
         },
         methods: {
@@ -91,10 +92,8 @@
                             uid: uid,
                         });
                     })
-                this.redirectToWelcome();
-
             },
-            redirectToWelcome() {
+            initGuidedTour() {
                 this.$store.dispatch("flow/findFlows", {limit: 1})
                     .then(flows => {
                         this.$store.commit("flow/setOverallTotal", flows.total);
@@ -102,9 +101,7 @@
                             this.$router.push({name: "welcome"});
                         }
                     });
-
-
-            }
+            },
         },
         watch: {
             $route(to) {

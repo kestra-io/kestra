@@ -9,6 +9,7 @@ import RouteContext from "./routeContext";
 import YamlUtils from "../utils/yamlUtils";
 import action from "../models/action";
 import permission from "../models/permission";
+import {pageFromRoute} from "../utils/eventsRouter";
 
 export default {
     mixins: [RouteContext],
@@ -32,6 +33,7 @@ export default {
         ...mapGetters("flow", ["flow"]),
         ...mapGetters("template", ["template"]),
         ...mapGetters("core", ["isUnsaved"]),
+        ...mapState("core", ["guidedProperties"]),
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&
@@ -177,6 +179,19 @@ export default {
             this.$store.dispatch("core/isUnsaved", this.previousContent !== this.content);
         },
         save() {
+            if (this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.saveFlow) {
+                this.$store.dispatch("api/events", {
+                    type: "ONBOARDING",
+                    onboarding: {
+                        step: this.$tours["guidedTour"].currentStep._value,
+                        action: "next",
+                    },
+                    page: pageFromRoute(this.$router.currentRoute.value)
+                });
+                this.$tours["guidedTour"].nextStep();
+                return;
+            }
+
             if (this.item) {
                 let item;
                 try {

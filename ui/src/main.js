@@ -1,6 +1,6 @@
 import {createApp} from "vue"
 import VueAxios from "vue-axios";
-
+import Vue3Tour from "vue3-tour"
 
 import App from "./App.vue"
 import initApp from "./utils/init"
@@ -20,6 +20,8 @@ configureAxios((instance) => {
     store.$http = app.$http;
     store.axios = app.axios;
 }, store, router);
+
+app.use(Vue3Tour)
 
 // mount
 app.mount("#app")

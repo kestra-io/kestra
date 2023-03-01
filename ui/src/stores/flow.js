@@ -14,6 +14,7 @@ export default {
         task: undefined,
         search: undefined,
         total: 0,
+        overallTotal: 0,
         flowGraph: undefined,
         flowGraphParam: undefined,
         revisions: undefined,
@@ -142,7 +143,7 @@ export default {
             })
         },
         loadGraphFromSource({commit}, options) {
-            return this.$http.post(`/api/v1/flows/graph`, options.flow, textYamlHeader).then(response => {
+            return this.$http.post("/api/v1/flows/graph", options.flow, textYamlHeader).then(response => {
                 commit("setFlowGraph", response.data)
 
                 let flow = YamlUtils.parse(options.flow);
@@ -255,6 +256,9 @@ export default {
         },
         setTotal(state, total) {
             state.total = total
+        },
+        setOverallTotal(state, total) {
+            state.overallTotal = total
         },
         setFlowGraph(state, flowGraph) {
             state.flowGraph = flowGraph

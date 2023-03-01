@@ -17,7 +17,8 @@
                     :input="true"
                     :navbar="false"
                     v-if="input.type === 'STRING' || input.type === 'URI'"
-                    v-model="inputs[input.name]" />
+                    v-model="inputs[input.name]"
+                />
                 <el-input-number
                     v-if="input.type === 'INT'"
                     v-model="inputs[input.name]"
@@ -65,12 +66,13 @@
                     :navbar="false"
                     v-if="input.type === 'JSON'"
                     lang="json"
-                    v-model="inputs[input.name]" />
+                    v-model="inputs[input.name]"
+                />
 
                 <small v-if="input.description" class="text-muted">{{ input.description }}</small>
             </el-form-item>
             <el-form-item class="submit">
-                <el-button :icon="Flash" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled">
+                <el-button :icon="Flash" class="flow-run-trigger-button" @click="onSubmit($refs.form)" type="primary" :disabled="flow.disabled">
                     {{ $t('launch execution') }}
                 </el-button>
             </el-form-item>
@@ -86,6 +88,7 @@
     import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
     import Editor from "../../components/inputs/Editor.vue";
+    import {pageFromRoute} from "../../utils/eventsRouter";
 
     export default {
         components: {Editor},
@@ -131,9 +134,13 @@
         },
         computed: {
             ...mapState("flow", ["flow"]),
+            ...mapState("core", ["guidedProperties"]),
         },
         methods: {
             onSubmit(formRef) {
+                if (this.$tours["guidedTour"].isRunning.value) {
+                    this.finishTour();
+                }
                 if (formRef) {
                     formRef.validate((valid) => {
                         if (!valid) {
@@ -148,6 +155,39 @@
                         this.$emit("executionTrigger");
                     });
                 }
+            },
+            finishTour() {
+                this.$store.dispatch("api/events", {
+                    type: "ONBOARDING",
+                    onboarding: {
+                        step: this.$tours["guidedTour"].currentStep._value,
+                        action: "execute",
+                    },
+                    page: pageFromRoute(this.$router.currentRoute.value)
+                });
+
+                this.$store.dispatch("api/events", {
+                    type: "ONBOARDING",
+                    onboarding: {
+                        step: this.$tours["guidedTour"].currentStep._value,
+                        action: "finish",
+                    },
+                    page: pageFromRoute(this.$router.currentRoute.value)
+                });
+
+                localStorage.setItem("tourDoneOrSkip", "true");
+
+                this.$store.commit("core/setGuidedProperties", {
+                    tourStarted: false,
+                    flowSource: undefined,
+                    saveFlow: false,
+                    executeFlow: false,
+                    validateInputs: false,
+                    monacoRange: undefined,
+                    monacoDisableRange: undefined
+                });
+
+                return this.$tours["guidedTour"].finish();
             },
             onFileChange(input, e) {
                 if (!e.target) {
@@ -173,7 +213,16 @@
 
                 return true;
             }
-
+        },
+        watch: {
+            guidedProperties: {
+                handler() {
+                    if (this.guidedProperties.validateInputs) {
+                        this.onSubmit(this.$refs.form);
+                    }
+                },
+                deep: true
+            }
         }
     };
 </script>

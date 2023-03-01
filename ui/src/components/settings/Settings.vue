@@ -66,9 +66,10 @@
     import RouteContext from "../../mixins/routeContext";
     import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
+    import Utils from "../../utils/utils";
+    import {mapGetters, mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {mapState} from "vuex";
 
     export default {
         mixins: [RouteContext],
@@ -84,6 +85,7 @@
                 theme: undefined,
                 editorTheme: undefined,
                 autofoldTextEditor: undefined,
+                guidedTour: undefined
             };
         },
         created() {
@@ -95,6 +97,7 @@
             this.theme = localStorage.getItem("theme") || "light";
             this.editorTheme = localStorage.getItem("editorTheme") || (darkTheme ? "dark" : "vs");
             this.autofoldTextEditor = localStorage.getItem("autofoldTextEditor") === "true";
+            this.guidedTour = localStorage.getItem("tourDoneOrSkip") === "true";
         },
         methods: {
             onNamespaceSelect(value) {
@@ -120,12 +123,12 @@
             onLang(value) {
                 localStorage.setItem("lang", value);
                 this.$moment.locale(value);
-                this.$root.$i18n.locale = value;
+                this.$i18n.locale = value;
                 this.lang = value;
                 this.$toast().saved();
             },
             onTheme(value) {
-                this.$root.switchTheme(value)
+                Utils.switchTheme(value)
                 this.theme = value;
                 this.$toast().saved();
             },
@@ -141,6 +144,7 @@
             },
         },
         computed: {
+            ...mapGetters("core", ["guidedProperties"]),
             ...mapState("auth", ["user"]),
             routeInfo() {
                 return {

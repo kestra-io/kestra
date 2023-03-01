@@ -8,6 +8,9 @@
                 <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
                     <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
                 </el-tooltip>
+                <el-tooltip v-if="schemaType === 'flow'" :content="$t('Reset guided tour')" :persistent="false" transition="" :hide-after="0">
+                    <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
+                </el-tooltip>
             </el-button-group>
         </nav>
 
@@ -42,6 +45,8 @@
     import {defineAsyncComponent, shallowRef} from "vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
+    import Help from "vue-material-design-icons/Help.vue";
+    import {mapGetters} from "vuex";
 
     const MonacoEditor = defineAsyncComponent(() =>
         import("./MonacoEditor.vue")
@@ -73,8 +78,10 @@
                 focus: false,
                 icon: {
                     UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
-                    UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal)
-                }
+                    UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
+                    Help: shallowRef(Help),
+                },
+                oldDecorations: [],
             };
         },
         computed: {
@@ -164,7 +171,8 @@
                     },
                     ...options
                 };
-            }
+            },
+            ...mapGetters("core", ["guidedProperties"]),
         },
         methods: {
             editorDidMount(editor) {
@@ -251,6 +259,34 @@
                     });
                 }
 
+                this.editor.onDidContentSizeChange(_ => {
+                    if (this.guidedProperties.monacoRange) {
+                        editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
+                        let decorations = [
+                            {
+                                range: this.guidedProperties.monacoRange,
+                                options: {
+                                    isWholeLine: true,
+                                    inlineClassName: "highlight-text"
+                                },
+                                className: "highlight-text",
+                            }
+                        ];
+                        decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
+                            {
+                                range: this.guidedProperties.monacoDisableRange,
+                                options: {
+                                    isWholeLine: true,
+                                    inlineClassName: "disable-text"
+                                },
+                                className: "disable-text",
+                            },
+                        ]) : decorations;
+                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
+                    } else {
+                        this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
+                    }
+                });
             },
             autoFold(autoFold) {
                 if (autoFold) {
@@ -266,6 +302,19 @@
             onPlaceholderClick() {
                 this.editor.layout()
                 this.editor.focus()
+            },
+            restartGuidedTour() {
+                localStorage.setItem("tourDoneOrSkip", undefined);
+                this.$store.commit("core/setGuidedProperties", {
+                    tourStarted:false,
+                    flowSource: undefined,
+                    saveFlow: false,
+                    executeFlow: false,
+                    validateInputs: false,
+                    monacoRange: undefined,
+                    monacoDisableRange: undefined}
+                );
+                this.$tours["guidedTour"].start();
             },
         },
     };
@@ -360,4 +409,19 @@
             background-color: var(--bs-gray-100-darken-5);
         }
     }
+
+    .highlight-text {
+        cursor: pointer;
+        font-weight: 700;
+        box-shadow: 0 19px 44px rgba(157, 29, 236, 0.31);
+
+        html.dark & {
+            background-color: rgba(255,255,255,0.2);
+        }
+    }
+
+    .disable-text {
+        color: grey !important;
+    }
+
 </style>

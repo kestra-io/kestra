@@ -146,4 +146,33 @@ export default class Utils {
         document.body.appendChild(link);
         link.click();
     }
+
+    static switchTheme(theme) {
+        // default theme
+        if (theme === undefined) {
+            if (localStorage.getItem("theme")) {
+                theme =  localStorage.getItem("theme");
+            } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+                theme = "dark";
+            } else {
+                theme = "light";
+            }
+        }
+
+        // class name
+        let htmlClass = document.getElementsByTagName("html")[0].classList;
+
+        htmlClass.forEach((cls) => {
+            if (cls === "dark" || cls === "light") {
+                htmlClass.remove(cls);
+            }
+        })
+
+        htmlClass.add(theme);
+        localStorage.setItem("theme", theme);
+    }
+
+    static getTheme() {
+        return localStorage.getItem("theme") || "light";
+    }
 }

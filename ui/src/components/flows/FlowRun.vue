@@ -138,10 +138,7 @@
         },
         methods: {
             onSubmit(formRef) {
-                if(this.$tours["guidedTour"]){
-                    console.log(this.$tours["guidedTour"])
-                    console.log("currentste", this.$tours["guidedTour"].currentStep._value)
-                    console.log("isLast", this.$tours["guidedTour"].isLast)
+                if(this.$tours["guidedTour"].isRunning.value){
                     this.finishTour();
                 }
                 if (formRef) {

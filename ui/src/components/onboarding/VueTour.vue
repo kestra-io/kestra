@@ -275,9 +275,10 @@
                         before: () => new Promise((resolve) => {
                             this.$store.commit("core/setGuidedProperties", {...this.guidedProperties, saveFlow: true});
                             this.dispatchEvent(this.$tours["guidedTour"].currentStep._value, "created")
+                            console.log("save, still passing here")
                             setTimeout(() => {
                                 resolve(true);
-                            }, 200);
+                            }, 300);
                         }),
                     },
                     {
@@ -394,3 +395,14 @@
         }
     }
 </script>
+<style lang="scss">
+.onboarding-card-img-yaml {
+        margin: auto;
+    // image height
+    height: 130px;
+        background: url("../../assets/onboarding/onboarding-yaml-light.svg") no-repeat center;
+    html.dark & {
+        background: url("../../assets/onboarding/onboarding-yaml-dark.svg") no-repeat center;
+    }
+}
+</style>

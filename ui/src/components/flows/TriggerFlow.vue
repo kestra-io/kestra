@@ -19,6 +19,8 @@
     import {executeTask} from "../../utils/submitTask"
     import Flash from "vue-material-design-icons/Flash.vue";
     import {shallowRef} from "vue";
+    import {pageFromRoute} from "../../utils/eventsRouter";
+    import action from "../../models/action";
 
     export default {
         components: {
@@ -62,6 +64,18 @@
         },
         methods: {
             onClick() {
+                if(this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.executeFlow){
+                    this.$store.dispatch("api/events", {
+                        type: "ONBOARDING",
+                        onboarding: {
+                            step: this.$tours["guidedTour"].currentStep._value,
+                            action: "next",
+                        },
+                        page: pageFromRoute(this.$router.currentRoute.value)
+                    });
+                    this.$tours["guidedTour"].nextStep();
+                    return;
+                }
                 if (!this.flow.inputs || this.flow.inputs.length === 0) {
                     this.$toast().confirm(
                         this.$t("execute flow now ?"),

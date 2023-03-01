@@ -255,16 +255,16 @@
                 }
 
                 this.editor.onDidContentSizeChange(_ => {
-                    if(this.guidedProperties.monacoRange) {
+                    if (this.guidedProperties.monacoRange) {
                         editor.revealLine(this.guidedProperties.monacoRange.endLineNumber);
                         let decorations = [
                             {
                                 range: this.guidedProperties.monacoRange,
                                 options: {
                                     isWholeLine: true,
-                                    inlineClassName: "highlightText"
+                                    inlineClassName: "highlight-text"
                                 },
-                                className: "highlightText",
+                                className: "highlight-text",
                             }
                         ];
                         decorations = this.guidedProperties.monacoDisableRange ? decorations.concat([
@@ -272,9 +272,9 @@
                                 range: this.guidedProperties.monacoDisableRange,
                                 options: {
                                     isWholeLine: true,
-                                    inlineClassName: "disableText"
+                                    inlineClassName: "disable-text"
                                 },
-                                className: "disableText",
+                                className: "disable-text",
                             },
                         ]) : decorations;
                         this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, decorations)
@@ -282,7 +282,6 @@
                         this.oldDecorations = this.editor.deltaDecorations(this.oldDecorations, []);
                     }
                 });
-
             },
             autoFold(autoFold) {
                 if (autoFold) {
@@ -393,16 +392,17 @@
         }
     }
 
-    .highlightText {
+    .highlight-text {
         cursor: pointer;
         font-weight: 700;
-        box-shadow: 0px 19px 44px rgba(157, 29, 236, 0.31);
-            html.dark & {
-                background-color: rgba(255,255,255,0.2);
-            }
+        box-shadow: 0 19px 44px rgba(157, 29, 236, 0.31);
+
+        html.dark & {
+            background-color: rgba(255,255,255,0.2);
+        }
     }
 
-    .disableText {
+    .disable-text {
         color: grey !important;
     }
 

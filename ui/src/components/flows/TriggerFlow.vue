@@ -64,7 +64,7 @@
         },
         methods: {
             onClick() {
-                if(this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.executeFlow){
+                if (this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.executeFlow) {
                     this.$store.dispatch("api/events", {
                         type: "ONBOARDING",
                         onboarding: {
@@ -76,6 +76,7 @@
                     this.$tours["guidedTour"].nextStep();
                     return;
                 }
+
                 if (!this.flow.inputs || this.flow.inputs.length === 0) {
                     this.$toast().confirm(
                         this.$t("execute flow now ?"),

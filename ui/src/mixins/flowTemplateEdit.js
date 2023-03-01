@@ -179,7 +179,7 @@ export default {
             this.$store.dispatch("core/isUnsaved", this.previousContent !== this.content);
         },
         save() {
-            if(this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.saveFlow) {
+            if (this.$tours["guidedTour"].isRunning.value && !this.guidedProperties.saveFlow) {
                 this.$store.dispatch("api/events", {
                     type: "ONBOARDING",
                     onboarding: {
@@ -191,6 +191,7 @@ export default {
                 this.$tours["guidedTour"].nextStep();
                 return;
             }
+
             if (this.item) {
                 let item;
                 try {

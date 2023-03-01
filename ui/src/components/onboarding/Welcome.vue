@@ -95,32 +95,34 @@
 </script>
 
 <style scoped lang="scss">
-.main-col {
-    padding-top: calc(var(--spacer) * 2);
-}
-
-h3 { text-align: center; }
-h3, h4 {
-    line-height: var(--line-height-lg);
-}
-
-.el-col {
-    margin-bottom: var(--spacer);
-}
-
-.onboarding-img {
-    height: 300px;
-    width:100%;
-    background: url("../../assets/onboarding/onboarding-light.svg") no-repeat center;
-
-    html.dark & {
-        background: url("../../assets/onboarding/onboarding-dark.svg") no-repeat center;
+    .main-col {
+        padding-top: calc(var(--spacer) * 2);
     }
-}
 
-.el-button {
-    font-size: var(--font-size-lg);
-    margin-bottom: calc(var(--spacer) * 2);
-}
+    h3 {
+        text-align: center;
+    }
 
+    h3, h4 {
+        line-height: var(--line-height-lg);
+    }
+
+    .el-col {
+        margin-bottom: var(--spacer);
+    }
+
+    .onboarding-img {
+        height: 300px;
+        width:100%;
+        background: url("../../assets/onboarding/onboarding-light.svg") no-repeat center;
+
+        html.dark & {
+            background: url("../../assets/onboarding/onboarding-dark.svg") no-repeat center;
+        }
+    }
+
+    .el-button {
+        font-size: var(--font-size-lg);
+        margin-bottom: calc(var(--spacer) * 2);
+    }
 </style>

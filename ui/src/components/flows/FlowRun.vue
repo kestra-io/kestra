@@ -138,7 +138,7 @@
         },
         methods: {
             onSubmit(formRef) {
-                if(this.$tours["guidedTour"].isRunning.value){
+                if (this.$tours["guidedTour"].isRunning.value) {
                     this.finishTour();
                 }
                 if (formRef) {
@@ -165,6 +165,7 @@
                     },
                     page: pageFromRoute(this.$router.currentRoute.value)
                 });
+
                 this.$store.dispatch("api/events", {
                     type: "ONBOARDING",
                     onboarding: {
@@ -173,15 +174,19 @@
                     },
                     page: pageFromRoute(this.$router.currentRoute.value)
                 });
+
                 localStorage.setItem("tourDoneOrSkip", "true");
+
                 this.$store.commit("core/setGuidedProperties", {
-                    tourStarted:false,
+                    tourStarted: false,
                     flowSource: undefined,
                     saveFlow: false,
                     executeFlow: false,
                     validateInputs: false,
                     monacoRange: undefined,
-                    monacoDisableRange: undefined});
+                    monacoDisableRange: undefined
+                });
+
                 return this.$tours["guidedTour"].finish();
             },
             onFileChange(input, e) {
@@ -212,7 +217,7 @@
         watch: {
             guidedProperties: {
                 handler() {
-                    if(this.guidedProperties.validateInputs){
+                    if (this.guidedProperties.validateInputs) {
                         this.onSubmit(this.$refs.form);
                     }
                 },

@@ -24,7 +24,6 @@
     import {mapGetters, mapState} from "vuex";
     import Utils from "./utils/utils";
     import {pageFromRoute} from "./utils/eventsRouter";
-    import "./styles/layout/vue-tour-overload.scss"
     import VueTour from "./components/onboarding/VueTour.vue";
 
     export default {
@@ -46,9 +45,10 @@
             ...mapState("core", ["message", "error"]),
             ...mapGetters("core", ["guidedProperties"]),
             displayNavBar() {
-                if(this.$router) {
+                if (this.$router) {
                     return this.$route.name !== "welcome";
                 }
+
                 return true;
             }
         },
@@ -94,7 +94,7 @@
                 this.$store.dispatch("flow/findFlows", {limit: 1})
                     .then(flows => {
                         this.$store.commit("flow/setOverallTotal", flows.total);
-                        if(flows.total === 0 && this.$route.name === "home") {
+                        if (flows.total === 0 && this.$route.name === "home") {
                             this.$router.push({name: "welcome"});
                         }
                     });

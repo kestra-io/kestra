@@ -275,7 +275,6 @@
                         before: () => new Promise((resolve) => {
                             this.$store.commit("core/setGuidedProperties", {...this.guidedProperties, saveFlow: true});
                             this.dispatchEvent(this.$tours["guidedTour"].currentStep._value, "created")
-                            console.log("save, still passing here")
                             setTimeout(() => {
                                 resolve(true);
                             }, 300);
@@ -384,7 +383,7 @@
                 localStorage.setItem("tourDoneOrSkip", "true");
                 this.$store.commit("core/setGuidedProperties", {
                     tourStarted:false,
-                    flowSource: undefined,
+                    flowSource: "",
                     saveFlow: false,
                     executeFlow: false,
                     validateInputs: true,

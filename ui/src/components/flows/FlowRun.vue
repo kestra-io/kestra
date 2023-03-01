@@ -85,7 +85,7 @@
 </script>
 
 <script>
-    import {mapGetters, mapState} from "vuex";
+    import {mapState} from "vuex";
     import {executeTask} from "../../utils/submitTask"
     import Editor from "../../components/inputs/Editor.vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
@@ -176,7 +176,7 @@
                 localStorage.setItem("tourDoneOrSkip", "true");
                 this.$store.commit("core/setGuidedProperties", {
                     tourStarted:false,
-                    flowSource: undefined,
+                    flowSource: "",
                     saveFlow: false,
                     executeFlow: false,
                     validateInputs: false,

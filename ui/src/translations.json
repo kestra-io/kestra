@@ -298,7 +298,7 @@
       },
       "step3": {
         "title": "Let's start with your first flow",
-        "content": "The first step to define a flow is to give it an ID, a namespace, and, optionally, a description."
+        "content": "The first step to define a flow is to give it<br> an ID, a namespace, and, optionally,<br> a description."
       },
       "step4": {
         "title": "Define inputs",
@@ -306,11 +306,11 @@
       },
       "step5": {
         "title": "Add tasks",
-        "content": "Then, you can add tasks to your flow. A task is a step in your flow that will execute a specific action. For example, you can use a task to execute a SQL query or to send an email."
+        "content": "Then, you can add tasks to your flow.<br> A task is a step in your flow that will execute a specific action.<br> For example, you can use a task to execute a SQL query or to send an email."
       },
       "step6": {
         "title": "Logs some information",
-        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log 'The flow starts'."
+        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log<br> 'The flow starts'."
       },
       "step7": {
         "title": "Download a file",
@@ -671,7 +671,7 @@
       },
       "step3": {
         "title": "Let's start with your first flow",
-        "content": "The first step to define a flow is to give it an ID, a namespace, and, optionally, a description."
+        "content": "The first step to define a flow is to give it<br> an ID, a namespace, and, optionally,<br> a description."
       },
       "step4": {
         "title": "Define inputs",
@@ -679,11 +679,11 @@
       },
       "step5": {
         "title": "Add tasks",
-        "content": "Then, you can add tasks to your flow. A task is a step in your flow that will execute a specific action. For example, you can use a task to execute a SQL query or to send an email."
+        "content": "Then, you can add tasks to your flow.<br> A task is a step in your flow that will execute a specific action.<br> For example, you can use a task to execute a SQL query or to send an email."
       },
       "step6": {
         "title": "Logs some information",
-        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log 'The flow starts'."
+        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log<br> 'The flow starts'."
       },
       "step7": {
         "title": "Download a file",

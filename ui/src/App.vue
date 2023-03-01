@@ -3,7 +3,7 @@
         <left-menu @menu-collapse="onMenuCollapse" />
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
         <main :class="menuCollapsed" v-if="loaded">
-            <top-nav-bar :menu-collapsed="menuCollapsed" />
+            <top-nav-bar :menu-collapsed="menuCollapsed" v-if="this.$router.currentRoute.value.name !== 'welcome'" />
             <router-view v-if="!error" />
             <template v-else>
                 <errors :code="error" />
@@ -92,6 +92,19 @@
                             this.$router.push({name: "welcome"});
                         }
                     });
+            }
+        },
+        watch: {
+            $route(to) {
+                if(to.name === "home") {
+                    this.$store.dispatch("flow/findFlows", {limit: 1})
+                        .then(flows => {
+                            this.$store.commit("flow/setOverallTotal", flows.total);
+                            if(flows.total === 0) {
+                                this.$router.push({name: "welcome"});
+                            }
+                        });
+                }
             }
         }
     };

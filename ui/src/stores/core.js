@@ -5,7 +5,7 @@ export default {
         error: undefined,
         unsavedChange: false,
         guidedProperties: {
-            tourStarted:false,
+            tourStarted: false,
             flowSource: undefined,
             saveFlow: false,
             executeFlow: false,

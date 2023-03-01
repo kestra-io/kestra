@@ -61,8 +61,8 @@
             ...mapGetters("core", ["guidedProperties"]),
             ...mapState("flow", ["total"])
         },
-        methods : {
-            stopTour () {
+        methods: {
+            stopTour() {
                 this.$tours["guidedTour"].stop();
                 this.$store.commit("core/setGuidedProperties", {
                     ...this.guidedProperties,
@@ -75,7 +75,7 @@
         },
         mounted() {
             setTimeout(() => {
-                if(!this.guidedProperties.tourStarted
+                if (!this.guidedProperties.tourStarted
                     && localStorage.getItem("tourDoneOrSkip") !== "true"
                     && this.total === 0) {
                     this.$tours["guidedTour"].start();
@@ -86,8 +86,8 @@
             });
         },
         watch: {
-            guidedProperties: function() {
-                if(localStorage.getItem("tourDoneOrSkip") !== "true") {
+            guidedProperties: function () {
+                if (localStorage.getItem("tourDoneOrSkip") !== "true") {
                     if (this.guidedProperties.source !== undefined) {
                         this.content = this.guidedProperties.source
                     }

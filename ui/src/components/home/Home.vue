@@ -105,7 +105,7 @@
             HomeSummaryFailed,
             HomeSummaryLog,
             HomeSummaryNamespace,
-            HomeDescription,
+            HomeDescription
         },
         props: {
             namespace: {
@@ -135,7 +135,7 @@
                 today: undefined,
                 yesterday: undefined,
                 alls: undefined,
-                namespacesStats: undefined,
+                namespacesStats: undefined
             };
         },
         methods: {
@@ -209,14 +209,10 @@
         },
         computed: {
             ...mapState("stat", ["daily", "dailyGroupByFlow"]),
-            ...mapState("flow", ["overallTotal"]),
             routeInfo() {
                 return {
                     title: this.$t("home"),
                 };
-            },
-            displayCharts() {
-                return !this.overallTotal || this.overallTotal >= 1;
             },
             defaultFilters() {
                 return {

@@ -181,6 +181,7 @@
     "download": "Download",
     "documentation": {
       "documentation": "Documentation",
+      "examples": "Flow examples",
       "developer": "Developer Guide",
       "github": "GitHub Issues"
     },
@@ -554,6 +555,7 @@
     "download": "Télécharger",
     "documentation": {
       "documentation": "Documentation",
+      "examples": "Examples de Flow",
       "developer": "Guide développeur",
       "github": "Bugs GitHub"
     },

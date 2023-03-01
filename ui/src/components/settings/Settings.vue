@@ -54,12 +54,6 @@
                     {{ $t('export all templates') }}
                 </el-button>
             </el-form-item>
-
-            <el-form-item :label="$t('Reset guided tour')">
-                <el-button type="primary" @click="resetGuidedTour">
-                    {{ $t('reset') }}
-                </el-button>
-            </el-form-item>
         </el-form>
     </div>
 </template>
@@ -147,18 +141,6 @@
                 localStorage.setItem("autofoldTextEditor", value);
                 this.autofoldTextEditor = value;
                 this.$toast().saved();
-            },
-            resetGuidedTour() {
-                localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {
-                    tourStarted:false,
-                    flowSource: undefined,
-                    saveFlow: false,
-                    executeFlow: false,
-                    validateInputs: false,
-                    monacoRange: undefined,
-                    monacoDisableRange: undefined}
-                );
             },
         },
         computed: {

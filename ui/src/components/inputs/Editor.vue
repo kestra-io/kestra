@@ -8,6 +8,9 @@
                 <el-tooltip :content="$t('Unfold content lines')" :persistent="false" transition="" :hide-after="0">
                     <el-button :icon="icon.UnfoldMoreHorizontal" @click="unfoldAll" size="small" />
                 </el-tooltip>
+                <el-tooltip v-if="schemaType === 'flow'" :content="$t('Reset guided tour')" :persistent="false" transition="" :hide-after="0">
+                    <el-button :icon="icon.Help" @click="restartGuidedTour" size="small" />
+                </el-tooltip>
             </el-button-group>
         </nav>
 
@@ -42,6 +45,7 @@
     import {defineAsyncComponent, shallowRef} from "vue"
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
+    import Help from "vue-material-design-icons/Help.vue";
     import {mapGetters} from "vuex";
 
     const MonacoEditor = defineAsyncComponent(() =>
@@ -74,7 +78,8 @@
                 focus: false,
                 icon: {
                     UnfoldLessHorizontal: shallowRef(UnfoldLessHorizontal),
-                    UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal)
+                    UnfoldMoreHorizontal: shallowRef(UnfoldMoreHorizontal),
+                    Help: shallowRef(Help),
                 },
                 oldDecorations: [],
             };
@@ -297,6 +302,19 @@
             onPlaceholderClick() {
                 this.editor.layout()
                 this.editor.focus()
+            },
+            restartGuidedTour() {
+                localStorage.setItem("tourDoneOrSkip", undefined);
+                this.$store.commit("core/setGuidedProperties", {
+                    tourStarted:false,
+                    flowSource: undefined,
+                    saveFlow: false,
+                    executeFlow: false,
+                    validateInputs: false,
+                    monacoRange: undefined,
+                    monacoDisableRange: undefined}
+                );
+                this.$tours["guidedTour"].start();
             },
         },
     };

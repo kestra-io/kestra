@@ -1,17 +1,11 @@
 <template>
     <el-col class="main-col">
-        <el-row>
-            <el-col :lg="8">
-                <el-row>
-                    <h1>{{ $t('welcome aboard') }}</h1>
-                </el-row>
-                <el-row>
-                    <h4>
-                        {{ $t('welcome aboard content') }}
-                    </h4>
-                </el-row>
-            </el-col>
-        </el-row>
+        <div>
+            <h1>{{ $t('welcome aboard') }}</h1>
+            <h4>
+                {{ $t('welcome aboard content') }}
+            </h4>
+        </div>
         <el-row>
             <el-col :lg="24">
                 <el-card>
@@ -24,9 +18,11 @@
                         </el-col>
                     </el-row>
                     <el-row justify="center">
-                        <el-button size="large" @click="startFlowCreation" type="primary">
-                            {{ $t('welcome button create') }}
-                        </el-button>
+                        <router-link :to="{name: 'flows/create'}">
+                            <el-button size="large" type="primary">
+                                {{ $t('welcome button create') }}
+                            </el-button>
+                        </router-link>
                     </el-row>
                 </el-card>
             </el-col>
@@ -65,19 +61,19 @@
                     {
                         title: this.$t("get started"),
                         content: this.$t("get started content"),
-                        imgClass: "onboarding-card-img-get-started",
+                        imgClass: "get-started",
                         link: "https://kestra.io/docs/getting-started/"
                     },
                     {
                         title: this.$t("watch demo"),
                         content: this.$t("watch demo content"),
-                        imgClass: "onboarding-card-img-demo-video",
+                        imgClass: "demo-video",
                         link: "https://api.kestra.io/r/onboarding-video"
                     },
                     {
                         title: this.$t("need help?"),
                         content: this.$t("need help? content"),
-                        imgClass: "onboarding-card-img-help",
+                        imgClass: "help",
                         link: "https://api.kestra.io/v1/communities/slack/redirect"
                     }
                 ]
@@ -85,11 +81,6 @@
         },
         computed: {
             ...mapGetters("core", ["guidedProperties"])
-        },
-        methods: {
-            startFlowCreation: function () {
-                this.$router.push({name: "flows/create"})
-            }
         }
     }
 </script>
@@ -111,9 +102,13 @@
         margin-bottom: var(--spacer);
     }
 
+    h4 {
+        margin-bottom: var(--spacer);
+    }
+
     .onboarding-img {
         height: 300px;
-        width:100%;
+        width: 100%;
         background: url("../../assets/onboarding/onboarding-light.svg") no-repeat center;
 
         html.dark & {

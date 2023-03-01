@@ -294,7 +294,7 @@
       },
       "step2": {
         "title": "This is the Kestra Editor",
-        "content": "The Kestra editor is where you will write the YAML that describes your flow. Comments start with '#'. Tasks type and attributes can be searched thanks to the autocomplete feature with CTRL-ENTER."
+        "content": "The Kestra editor is where you will write the YAML that describes your flow. Comments start with <code>#</code>. Tasks type and attributes can be searched thanks to the autocomplete feature with <kbd>CTRL or ⌘ + ENTER</kbd>."
       },
       "step3": {
         "title": "Let's start with your first flow",
@@ -310,7 +310,7 @@
       },
       "step6": {
         "title": "Logs some information",
-        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log 'The flow starts'."
+        "content": "First, let's start by adding a task that will log some information. This task will be executed when the flow is triggered and log <code>The flow starts</code>."
       },
       "step7": {
         "title": "Download a file",
@@ -318,7 +318,7 @@
       },
       "step8": {
         "title": "Use Python to do analytics",
-        "content": "Maybe this file contains some interesting data? Let's use Python and Pandas to do some analytics on it! This task uses the output of the previous task via the 'outputs.downloadData.uri' variable and defines an output named 'sumOfConsumption' thanks to the Kestra Python library."
+        "content": "Maybe this file contains some interesting data? Let's use Python and Pandas to do some analytics on it! This task uses the output of the previous task via the <code>outputs.downloadData.uri</code> variable and defines an output named <code>sumOfConsumption</code> thanks to the Kestra Python library."
       },
       "step9": {
         "title": "Save your flow",
@@ -330,7 +330,7 @@
       },
       "step11": {
         "title": "Enter inputs",
-        "content": "Finally, if your flow has inputs, you will be asked to enter them before executing the flow. We have already set the input for you with the default values."
+        "content": "Finally, if your flow has inputs, you will be asked to enter them before executing the flow. We have already fill the input for you with a default value."
       }
     },
     "onboarding-flow": {
@@ -362,7 +362,7 @@
     "Step": "Step",
     "welcome aboard": "\uD83D\uDE80 Welcome aboard!",
     "welcome aboard content": "You're all set up with Kestra, start creating your first flow and see the magic in action!",
-    "welcome display require": "To display the dashboard you need to <b>create a flow!<b/>",
+    "welcome display require": "Ready to start using Kestra? Let's create <strong>your first flow</strong> together!",
     "welcome button create": "Create my first flow",
     "get started": "Get started",
     "get started content": "Ready to dive in? Check out our documentation for step-by-step guides.",
@@ -667,7 +667,7 @@
       },
       "step2": {
         "title": "Ceci est l'éditeur Kestra",
-        "content": "L'éditeur Kestra est l'endroit où vous allez rédigez le YAML qui décrira vos flows. Les commentaires commencent par '#'. Les différents Types de tâches et leurs attributs peuvent être retrouvé grâce à la fonctionnalité d'auto-completion avec CTRL-ENTER."
+        "content": "L'éditeur Kestra est l'endroit où vous allez rédigez le YAML qui décrira vos flows. Les commentaires commencent par <code>#</code>. Les différents types de tâches et leurs attributs peuvent être retrouvé grâce à la fonctionnalité d'auto-completion avec <kbd>CTRL ou ⌘ + ENTER</kbd>."
       },
       "step3": {
         "title": "Commençons par votre premier flow",
@@ -683,7 +683,7 @@
       },
       "step6": {
         "title": "Afficher des informations",
-        "content": "En premier, commençons par ajouter une tâche qui affiche quelques informations. Cette tâche sera exécutée quand le flux est déclenché et affichera 'The flow starts'."
+        "content": "En premier, commençons par ajouter une tâche qui affiche quelques informations. Cette tâche sera exécutée quand le flux est déclenché et affichera <code>The flow starts</code>."
       },
       "step7": {
         "title": "Télécharger un fichier",
@@ -691,7 +691,7 @@
       },
       "step8": {
         "title": "Python pour l'analytique",
-        "content": "Peut-être que ce fichier contient des données intéressantes ? Utilisons Python et Pandas pour faire quelques analyses dessus! Cette tâche utilise la sortie de la tâche précédente via la variable 'outputs.downloadData.uri' et définit une nouvelle sortie nommée 'sumOfConsumption' grâce à la librairie Python de Kestra."
+        "content": "Peut-être que ce fichier contient des données intéressantes ? Utilisons Python et Pandas pour faire quelques analyses dessus! Cette tâche utilise la sortie de la tâche précédente via la variable <code>>outputs.downloadData.uri</code> et définit une nouvelle sortie nommée <code>sumOfConsumption</code> grâce à la librairie Python de Kestra."
       },
       "step9": {
         "title": "Sauvegarde de votre flow",
@@ -735,7 +735,7 @@
     "Step": "Étape",
     "welcome aboard": "\uD83D\uDE80 Bienvenue à bord !",
     "welcome aboard content": "Tout est prêt pour Kestra, commencez la création de votre flow et admirez la magie !",
-    "welcome display require": "Pour afficher le tableau de bord vous devez <b>créer un flow !<b/>",
+    "welcome display require": "Prêt à commencer à utiliser Kestra ? Créons ensemble <strong>votre premier flux</strong> !",
     "welcome button create": "Créer mon premier flow",
     "get started": "Démarrer",
     "get started content": "Prêt à faire le grand saut? Jetez un oeil à notre documentation pour un guide étape par étape.",

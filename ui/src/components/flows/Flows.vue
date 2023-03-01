@@ -200,11 +200,6 @@
             BottomLineCounter,
             Upload
         },
-        updated() {
-            if(this.flows.length === 0) {
-                this.$router.push({name: "flows/create"});
-            }
-        },
         data() {
             return {
                 isDefaultNamespaceAllow: true,

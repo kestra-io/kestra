@@ -37,26 +37,22 @@
     .v-step-indicator {
         margin-bottom: var(--spacer);
         width: fit-content;
-        padding: calc(var(--spacer)/8);
+        padding: calc(var(--spacer)/8) calc(var(--spacer)/2);
         border-radius: var(--el-border-radius-base);
         background: $indigo;
     }
 
     .v-step__content {
         font-size: var(--font-size-sm);
-        line-height: var(--line-height-lg);
         text-align: center;
         border: none;
         color: var(--bs-gray-500);
         background-color: var(--bs-white);
+        margin-bottom: var(--spacer);
 
         html.dark & {
             background-color: var(--el-bg-color);
         }
-    }
-
-    .v-tour__target--highlighted {
-        box-shadow: 0px 19px 44px rgba(157, 29, 236, 0.31) !important;
     }
 
     #guided-right {
@@ -74,4 +70,6 @@
     }
 }
 
-
+.v-tour__target--highlighted {
+    box-shadow: 0px 19px 44px rgba(157, 29, 236, 0.31) !important;
+}

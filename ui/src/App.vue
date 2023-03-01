@@ -91,25 +91,25 @@
                             uid: uid,
                         });
                     })
+                this.redirectToWelcome();
+
+            },
+            redirectToWelcome() {
                 this.$store.dispatch("flow/findFlows", {limit: 1})
                     .then(flows => {
                         this.$store.commit("flow/setOverallTotal", flows.total);
-                        if (flows.total === 0 && this.$route.name === "home") {
+                        if (flows.total === 0 && this.$route.name === "home" && localStorage.getItem("tourDoneOrSkip") !== "true") {
                             this.$router.push({name: "welcome"});
                         }
                     });
+
+
             }
         },
         watch: {
             $route(to) {
-                if(to.name === "home") {
-                    this.$store.dispatch("flow/findFlows", {limit: 1})
-                        .then(flows => {
-                            this.$store.commit("flow/setOverallTotal", flows.total);
-                            if(flows.total === 0 && this.$router) {
-                                this.$router.push({name: "welcome"});
-                            }
-                        });
+                if (to.name === "home" && localStorage.getItem("tourDoneOrSkip") !== "true") {
+                    this.redirectToWelcome();
                 }
             }
         }

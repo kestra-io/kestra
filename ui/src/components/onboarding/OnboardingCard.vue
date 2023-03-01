@@ -1,15 +1,17 @@
 <template>
     <el-card @click="openLink">
         <Export class="icon" />
-        <el-row :gutter="12" align="middle">
-            <el-col :md="6" :lg="8">
-                <div :class="imgClass" />
-            </el-col>
-            <el-col :md="12" :lg="14">
+        <div class="content">
+            <div>
+                <div class="img" :class="imgClass" />
+            </div>
+            <div>
                 <h3>{{ title }}</h3>
                 <p>{{ content }}</p>
-            </el-col>
-        </el-row>
+            </div>
+
+        </div>
+
     </el-card>
 </template>
 
@@ -57,46 +59,52 @@
 
     p {
         color: var(--bs-gray-500);
+        margin-bottom: 0;
     }
 
     .icon {
         position: absolute;
-        top: var(--spacer);
-        right: var(--spacer);
+        top: calc(var(--spacer) / 2);
+        right: calc(var(--spacer) / 2);
         color: var(--bs-gray-500);
         font-size: var(--font-size-lg);
     }
 
-    .onboarding-card-img {
-        // Image size
+    .content {
+        display: flex;
+
+        > div:first-child {
+            min-width: 160px;
+            flex-wrap: nowrap;
+        }
+    }
+
+    div.img {
         min-height: 130px;
         height: 100%;
-    }
 
-    .onboarding-card-img-get-started {
-        @extend .onboarding-card-img;
-        background: url("../../assets/onboarding/onboarding-started-light.svg") no-repeat center;
+        &.get-started {
+            background: url("../../assets/onboarding/onboarding-started-light.svg") no-repeat top left;
 
-        html.dark & {
-            background: url("../../assets/onboarding/onboarding-started-dark.svg") no-repeat center;
+            html.dark & {
+                background: url("../../assets/onboarding/onboarding-started-dark.svg") no-repeat top left;
+            }
         }
-    }
 
-    .onboarding-card-img-demo-video {
-        @extend .onboarding-card-img;
-        background: url("../../assets/onboarding/onboarding-demo-light.svg") no-repeat center;
+        &.demo-video {
+            background: url("../../assets/onboarding/onboarding-demo-light.svg") no-repeat top left;
 
-        html.dark & {
-            background: url("../../assets/onboarding/onboarding-demo-dark.svg") no-repeat center;
+            html.dark & {
+                background: url("../../assets/onboarding/onboarding-demo-dark.svg") no-repeat top left;
+            }
         }
-    }
 
-    .onboarding-card-img-help {
-        @extend .onboarding-card-img;
-        background: url("../../assets/onboarding/onboarding-help-light.svg") no-repeat center;
+        &.help {
+            background: url("../../assets/onboarding/onboarding-help-light.svg") no-repeat top left;
 
-        html.dark & {
-            background: url("../../assets/onboarding/onboarding-help-dark.svg") no-repeat center;
+            html.dark & {
+                background: url("../../assets/onboarding/onboarding-help-dark.svg") no-repeat top left;
+            }
         }
     }
 </style>

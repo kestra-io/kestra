@@ -313,6 +313,27 @@ form.ks-horizontal {
 .el-message-box {
     --el-messagebox-title-color: var(--bs-body-text);
     border: 1px solid var(--bs-border-color);
+
+    &.full-screen {
+        max-width:80%;
+        height: 80%;
+
+        .el-message-box__content {
+            height: calc(100% - 75px);
+
+            .el-message-box__container {
+                height: 100%;
+
+                .el-message-box__message {
+                    height: 100%;
+
+                    p {
+                        height: 100%;
+                    }
+                }
+            }
+        }
+    }
 }
 
 // popper

@@ -17,6 +17,7 @@
 
 <script>
     import Export from "vue-material-design-icons/Export.vue";
+    import {ElMessageBox} from 'element-plus'
 
     export default {
         name: "OnboardingCard",
@@ -43,7 +44,19 @@
         },
         methods: {
             openLink() {
-                window.open(this.link, "_blank");
+                if (this.link.indexOf("<") >= 0) {
+                    ElMessageBox.alert(
+                        this.link,
+                        this.title,
+                        {
+                            customClass: "full-screen",
+                            confirmButtonText: this.$t("close"),
+                            dangerouslyUseHTMLString: true,
+                        }
+                    )
+                } else {
+                    window.open(this.link, "_blank");
+                }
             }
         }
     }

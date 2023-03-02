@@ -226,6 +226,7 @@ public class RunContext {
             builder
                 .put("execution", ImmutableMap.of(
                     "id", execution.getId(),
+                    "originalId", execution.getOriginalId(),
                     "startDate", execution.getState().getStartDate()
                 ));
 

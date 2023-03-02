@@ -19,7 +19,7 @@
                     </el-row>
                     <el-row justify="center">
                         <router-link :to="{name: 'flows/create'}">
-                            <el-button size="large" type="primary">
+                            <el-button size="large" type="info">
                                 {{ $t('welcome button create') }}
                             </el-button>
                         </router-link>

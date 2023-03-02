@@ -1,12 +1,12 @@
 <template>
-    <el-col class="main-col">
+    <el-col class="mt-4">
         <div>
             <h1>{{ $t('welcome aboard') }}</h1>
             <h4>
                 {{ $t('welcome aboard content') }}
             </h4>
         </div>
-        <el-row>
+        <el-row class="mt-4">
             <el-col :lg="24">
                 <el-card>
                     <el-row justify="center">
@@ -17,7 +17,7 @@
                             <h3 v-html="$t('welcome display require')" />
                         </el-col>
                     </el-row>
-                    <el-row justify="center">
+                    <el-row justify="center" class="mt-4">
                         <router-link :to="{name: 'flows/create'}">
                             <el-button size="large" type="info">
                                 {{ $t('welcome button create') }}
@@ -27,57 +27,18 @@
                 </el-card>
             </el-col>
         </el-row>
-        <el-row :gutter="32" justify="center">
-            <el-col
-                v-for="card in cards"
-                :key="card.title"
-                :lg="8"
-                :md="24"
-                :offset="32"
-            >
-                <onboarding-card
-                    :title="card.title"
-                    :content="card.content"
-                    :img-class="card.imgClass"
-                    :link="card.link"
-                />
-            </el-col>
-        </el-row>
+        <onboarding-bottom />
     </el-col>
 </template>
 
 <script>
     import {mapGetters} from "vuex";
-    import OnboardingCard from "./OnboardingCard.vue";
+    import OnboardingBottom from "./OnboardingBottom.vue";
 
     export default {
         name: "CreateFlow",
         components: {
-            OnboardingCard
-        },
-        data() {
-            return {
-                cards: [
-                    {
-                        title: this.$t("get started"),
-                        content: this.$t("get started content"),
-                        imgClass: "get-started",
-                        link: "https://kestra.io/docs/getting-started/"
-                    },
-                    {
-                        title: this.$t("watch demo"),
-                        content: this.$t("watch demo content"),
-                        imgClass: "demo-video",
-                        link: "https://api.kestra.io/r/onboarding-video"
-                    },
-                    {
-                        title: this.$t("need help?"),
-                        content: this.$t("need help? content"),
-                        imgClass: "help",
-                        link: "https://api.kestra.io/v1/communities/slack/redirect"
-                    }
-                ]
-            }
+            OnboardingBottom
         },
         computed: {
             ...mapGetters("core", ["guidedProperties"])
@@ -86,24 +47,8 @@
 </script>
 
 <style scoped lang="scss">
-    .main-col {
-        padding-top: calc(var(--spacer) * 2);
-    }
-
     h3 {
         text-align: center;
-    }
-
-    h3, h4 {
-        line-height: var(--line-height-lg);
-    }
-
-    .el-col {
-        margin-bottom: var(--spacer);
-    }
-
-    h4 {
-        margin-bottom: var(--spacer);
     }
 
     .onboarding-img {

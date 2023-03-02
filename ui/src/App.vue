@@ -106,7 +106,7 @@
         watch: {
             $route(to) {
                 if (to.name === "home" && localStorage.getItem("tourDoneOrSkip") !== "true") {
-                    this.redirectToWelcome();
+                    this.redirectToWelcome && this.redirectToWelcome();
                 }
             }
         }

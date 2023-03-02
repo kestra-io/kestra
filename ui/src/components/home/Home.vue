@@ -100,6 +100,7 @@
                     </router-link>
                 </el-row>
             </el-card>
+            <onboarding-bottom v-if="!flowId" />
         </div>
     </div>
 
@@ -121,10 +122,12 @@
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import OnboardingBottom from "../onboarding/OnboardingBottom.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl],
         components: {
+            OnboardingBottom,
             Collapse,
             StateGlobalChart,
             NamespaceSelect,

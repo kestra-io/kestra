@@ -292,7 +292,7 @@ jobs:
           python-version: "3.10"
 
       - name: Copy gradle properties
-        run: >-
+        run: |
           cp gradle.properties core/src/main/resources/scripts/python/gradle.properties
           cp README.md core/src/main/resources/scripts/python/README.md
 

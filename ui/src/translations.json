@@ -298,7 +298,7 @@
       },
       "step2": {
         "title": "This is the Kestra Editor",
-        "content": "The Kestra editor is where you will write the YAML that describes your flow. Comments start with <code>#</code>. Tasks type and attributes can be searched thanks to the autocomplete feature with <kbd>CTRL or ⌘ + ENTER</kbd>."
+        "content": "The Kestra editor is where you will write the YAML that describes your flow. Comments start with <code>#</code>. Tasks type and attributes can be searched thanks to the autocomplete feature with <kbd>CTRL or ⌘ + SPACE</kbd>."
       },
       "step3": {
         "title": "Let's start with your first flow",
@@ -675,7 +675,7 @@
       },
       "step2": {
         "title": "Ceci est l'éditeur Kestra",
-        "content": "L'éditeur Kestra est l'endroit où vous allez rédigez le YAML qui décrira vos flows. Les commentaires commencent par <code>#</code>. Les différents types de tâches et leurs attributs peuvent être retrouvé grâce à la fonctionnalité d'auto-completion avec <kbd>CTRL ou ⌘ + ENTER</kbd>."
+        "content": "L'éditeur Kestra est l'endroit où vous allez rédigez le YAML qui décrira vos flows. Les commentaires commencent par <code>#</code>. Les différents types de tâches et leurs attributs peuvent être retrouvé grâce à la fonctionnalité d'auto-completion avec <kbd>CTRL ou ⌘ + SPACE</kbd>."
       },
       "step3": {
         "title": "Commençons par votre premier flow",
